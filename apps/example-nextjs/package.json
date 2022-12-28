@@ -1,9 +1,9 @@
 {
-  "name": "docs",
+  "name": "example-nextjs",
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --port 3001",
+    "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
