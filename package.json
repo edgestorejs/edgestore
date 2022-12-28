@@ -1,5 +1,5 @@
 {
-  "name": "edge-store",
+  "name": "root",
   "version": "0.0.0",
   "private": true,
   "workspaces": [
@@ -7,7 +7,7 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "turbo run build",
+    "build": "turbo run build --filter=edge-store",
     "dev": "turbo run dev --parallel",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\""
