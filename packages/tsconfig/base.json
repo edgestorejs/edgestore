@@ -6,6 +6,7 @@
     "forceConsistentCasingInFileNames": true,
     "esModuleInterop": true,
     "declaration": true,
+    "declarationMap": true,
     "skipLibCheck": true,
     "module": "commonjs",
     "strict": true
