@@ -1,13 +1,13 @@
 {
-  "name": "edge-store",
-  "version": "0.0.0",
+  "name": "@edge-store/core",
+  "version": "0.0.0-beta.2",
   "description": "Image Handling for Next.js",
   "homepage": "https://edge-store.com",
   "repository": "https://github.com/edgestorejs/edge-store.git",
   "author": "Ravi <me@ravi.com>",
-  "main": "index.js",
-  "module": "index.js",
-  "types": "index.d.ts",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
   "keywords": [
     "react",
     "nodejs",
@@ -18,15 +18,20 @@
     "edge-store"
   ],
   "exports": {
-    ".": "./index.js",
-    "./react": "./react/index.js",
-    "./core": "./core/index.js",
-    "./next": "./next/index.js"
+    ".": "./dist/index.js"
+  },
+  "private": false,
+  "publishConfig": {
+    "access": "public"
   },
   "scripts": {
-    "build": "tsc",
-    "dev": "tsc -w"
+    "build": "rm -rf dist && tsc",
+    "dev": "tsc -w",
+    "prepublishOnly": "npm run build"
   },
+  "files": [
+    "dist"
+  ],
   "license": "MIT",
   "dependencies": {},
   "peerDependencies": {},
