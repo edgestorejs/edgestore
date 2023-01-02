@@ -5,7 +5,7 @@ type UploadImageHandler = (
   options?: {
     onProgressChange?: (progress: number) => void;
   }
-) => Promise<void>;
+) => Promise<string>;
 
 type GetImgSrcHandler = (id: string) => string;
 
@@ -21,16 +21,28 @@ const EdgeStoreContext = React.createContext<EdgeStoreContextValue | undefined>(
 export const EdgeStoreProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
+  React.useEffect(() => {
+    fetch("/api/edgestore/init", {
+      method: "POST",
+    });
+  }, []);
+
   const uploadImage: UploadImageHandler = async (
     file,
     { onProgressChange } = {}
   ) => {
-    // TODO: implement
-    console.log("uploadImage");
-    for (let i = 0; i < 20; i++) {
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      onProgressChange?.((100 / 20) * i);
+    try {
+      // TODO: implement
+      console.log("uploadImage");
+      onProgressChange?.(0);
+      for (let i = 0; i < 20; i++) {
+        await new Promise((resolve) => setTimeout(resolve, 300));
+        onProgressChange?.((100 / 20) * i);
+      }
+    } finally {
+      onProgressChange?.(100);
     }
+    return "";
   };
   const getImgSrc: GetImgSrcHandler = (id) => {
     // TODO: implement
@@ -60,7 +72,7 @@ export const useEdgeStore = () => {
   const value: EdgeStoreContextValue = React.useContext(EdgeStoreContext);
   if (!value && process.env.NODE_ENV !== "production") {
     throw new Error(
-      "[next-auth]: `useSession` must be wrapped in a <SessionProvider />"
+      "[edge-store]: `useEdgeStore` must be wrapped in a <EdgeStoreProvider />"
     );
   }
 

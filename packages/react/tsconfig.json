@@ -3,11 +3,11 @@
   "include": ["**/*.ts", "**/*.tsx"],
   "compilerOptions": {
     "jsx": "react-jsx",
-    "outDir": "dist",
+    "outDir": ".",
     "rootDir": "src",
     "paths": {
       "next/*": ["../next/*"]
     }
   },
-  "exclude": ["node_modules", "dist"]
+  "exclude": ["node_modules", "./*.js", "./*.d.ts", "next"]
 }

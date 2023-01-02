@@ -34,3 +34,9 @@ yarn-error.log*
 
 # build
 dist
+
+# React
+packages/react/*.js
+packages/react/*.d.ts
+packages/react/*.d.ts.map
+packages/react/next
