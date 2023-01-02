@@ -4,7 +4,10 @@
   "compilerOptions": {
     "jsx": "react-jsx",
     "outDir": "dist",
-    "rootDir": "src"
+    "rootDir": "src",
+    "paths": {
+      "next/*": ["../next/*"]
+    }
   },
   "exclude": ["node_modules", "dist"]
 }

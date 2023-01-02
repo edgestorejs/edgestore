@@ -10,6 +10,6 @@ export default function EdgeStore() {
         maxAge: 60 * 60 * 8, // 8 hours
       })
     );
-    res.status(200).send();
+    res.status(200).end();
   };
 }
