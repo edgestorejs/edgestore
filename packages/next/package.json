@@ -41,6 +41,7 @@
   },
   "devDependencies": {
     "@types/cookie": "^0.5.1",
+    "@types/node": "^18.11.18",
     "next": "^13.0.0",
     "tsconfig": "*"
   },
