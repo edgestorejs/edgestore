@@ -1,23 +1,27 @@
+---
+sidebar_position: 1
+---
+
 # Getting Started
 
 ### Next.js Setup
 
 #### Install
 
-```bash
+```shell
 npm install @edge-store/react
 ```
 
 #### Environment Variables
 
-```bash title=".env"
+```shell
 EDGE_STORE_ACCESS_KEY=your-access-key
 EDGE_STORE_SECRET_KEY=your-secret-key
 ```
 
 #### API Route
 
-```jsx title="pages/api/edgestore/[...edgestore].js"
+```jsx
 import EdgeStore from "@edge-store/react/next";
 
 export default EdgeStore();
@@ -25,7 +29,7 @@ export default EdgeStore();
 
 #### Provider
 
-```jsx title="pages/_app.jsx"
+```jsx
 import { EdgeStoreProvider } from "@edge-store/react";
 
 export default function App({ Component, pageProps }) {
