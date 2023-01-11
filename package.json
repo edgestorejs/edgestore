@@ -4,11 +4,13 @@
   "private": true,
   "workspaces": [
     "apps/*",
+    "docs",
     "packages/*"
   ],
   "scripts": {
     "build": "turbo run build --filter=@edge-store/*",
     "dev": "turbo run dev --parallel --filter=example-nextjs",
+    "docs": "npm -w docs run start",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "publish": "npm -w @edge-store/core publish"
