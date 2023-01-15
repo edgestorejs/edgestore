@@ -12,8 +12,7 @@
     "dev": "turbo run dev --parallel --filter=example-nextjs",
     "docs": "npm -w docs run start",
     "lint": "turbo run lint",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "publish": "npm -w @edge-store/core publish"
+    "format": "prettier --write \"**/*.{ts,tsx,md}\""
   },
   "devDependencies": {
     "eslint-config-custom": "*",
