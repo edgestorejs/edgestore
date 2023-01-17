@@ -12,16 +12,18 @@
     "dev": "turbo run dev --parallel --filter=example-nextjs",
     "docs": "npm -w docs run start",
     "lint": "turbo run lint",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\""
-  },
-  "devDependencies": {
-    "eslint-config-custom": "*",
-    "prettier": "latest",
-    "turbo": "latest"
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "clear-modules": "rimraf ./**/node_modules",
+    "postinstall": "manypkg check"
   },
   "engines": {
     "node": ">=14.0.0"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@manypkg/cli": "latest",
+    "eslint-config-custom": "*",
+    "prettier": "latest",
+    "turbo": "latest"
+  },
   "packageManager": "npm@9.2.0"
 }
