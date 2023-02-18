@@ -6,7 +6,7 @@ const darkCodeTheme = require("prism-react-renderer/themes/dracula");
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: "EDGE STORE",
+  title: "Edge Store",
   tagline: "Handling images should be easy",
   url: "https://edge-store.com",
   baseUrl: "/",
