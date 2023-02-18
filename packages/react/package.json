@@ -27,7 +27,7 @@
   },
   "scripts": {
     "build": "npm run clean && tsc",
-    "clean": "rm -rf next index.d.ts index.d.ts.map index.js",
+    "clean": "rm -rf next libs index.d.ts index.d.ts.map index.js",
     "dev": "npm run clean && tsc -w",
     "prepublishOnly": "npm run build"
   },

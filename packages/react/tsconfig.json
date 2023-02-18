@@ -9,5 +9,5 @@
       "next/*": ["../next/*"]
     }
   },
-  "exclude": ["node_modules", "./*.js", "./*.d.ts", "next"]
+  "exclude": ["node_modules", "./*.js", "./*.d.ts", "next", "libs"]
 }

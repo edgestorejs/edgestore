@@ -4,17 +4,26 @@ import { useState } from "react";
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
   const [progress, setProgress] = useState<number | null>(null);
-  const { uploadImage } = useEdgeStore();
+  const [url, setUrl] = useState<string | null>(null);
+  const { uploadProtectedImage, getImgSrc } = useEdgeStore();
 
   const handleUpload = async () => {
     if (!file) {
       return;
     }
-    const url = await uploadImage(file, {
-      onProgressChange: (progress) => {
-        setProgress(progress);
-      },
-    });
+    try {
+      const { path } = await uploadProtectedImage(file, {
+        onProgressChange: (progress) => {
+          setProgress(progress);
+        },
+      });
+      // wait 2 seconds to make sure the image is available
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      setUrl(getImgSrc(path));
+    } catch (e) {
+      console.error(e);
+      return;
+    }
   };
   return (
     <div>
@@ -36,6 +45,11 @@ export default function Home() {
         />
       </div>
       <ProgressBar progress={progress} />
+      {url && (
+        <div style={{ marginTop: "20px" }}>
+          <img src={url} alt="Example" />
+        </div>
+      )}
     </div>
   );
 }
