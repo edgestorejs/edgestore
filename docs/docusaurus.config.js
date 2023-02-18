@@ -57,6 +57,7 @@ const config = {
       colorMode: {
         defaultMode: "dark",
         respectPrefersColorScheme: false,
+        disableSwitch: true,
       },
       navbar: {
         title: "Edge Store",
@@ -70,8 +71,21 @@ const config = {
           // { to: "/blog", label: "Blog", position: "left" },
           {
             href: "https://github.com/edgestorejs/edge-store",
-            label: "GitHub",
             position: "right",
+            className: "header-social-link header-github-link",
+            "aria-label": "GitHub",
+          },
+          {
+            href: "https://discord.gg/HvrnhRTfgQ",
+            position: "right",
+            className: "header-social-link header-discord-link",
+            "aria-label": "GitHub",
+          },
+          {
+            href: "https://app.edge-store.com",
+            position: "right",
+            className: "header-sign-in-link",
+            label: "Sign In",
           },
         ],
       },
@@ -91,8 +105,8 @@ const config = {
             title: "Community",
             items: [
               {
-                label: "Stack Overflow",
-                href: "https://stackoverflow.com/questions/tagged/docusaurus",
+                label: "YouTube",
+                href: "https://www.youtube.com/@perfectbase",
               },
               {
                 label: "Discord",
@@ -116,6 +130,19 @@ const config = {
         darkTheme: darkCodeTheme,
       },
     }),
+  plugins: [
+    async function myPlugin(context, options) {
+      return {
+        name: "docusaurus-tailwindcss",
+        configurePostCss(postcssOptions) {
+          // Appends TailwindCSS and AutoPrefixer.
+          postcssOptions.plugins.push(require("tailwindcss"));
+          postcssOptions.plugins.push(require("autoprefixer"));
+          return postcssOptions;
+        },
+      };
+    },
+  ],
 };
 
 module.exports = config;
