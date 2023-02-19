@@ -1,6 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
 import React from "react";
-import Responsive from "../Responsive";
 
 export const useScrollPosition = () => {
   const [scrollPosition, setScrollPosition] = React.useState(0);
@@ -84,67 +83,32 @@ const Homepage = () => {
             description="As your project grows, you can upgrade your plan to get more storage and more bandwidth."
           />
         </div>
-        <div className="flex flex-col items-center justify-center -z-10">
-          <p className="mb-6 text-3xl font-bold">Examples</p>
-          <div className="relative">
-            <div className="absolute top-6 left-16">Client</div>
-            <Responsive
-              desktop={
-                <img
-                  className="w-[800px]"
-                  src="/img/lp-code/edge-store_client.png"
-                  alt="Edge Store Client"
-                />
-              }
-              mobile={
-                <img
-                  className="w-[800px]"
-                  src="/img/lp-code/edge-store_client_mobile.png"
-                  alt="Edge Store Client"
-                />
-              }
-            />
+        <div className="flex flex-col items-center justify-center max-w-md -z-10">
+          <h2>Step 1 - Server</h2>
+          <div className="text-gray-300">
+            Add the service environment variables to your Next.js app. Then
+            export the Edge Store API from the Next.js API routes.
           </div>
-          <div className="relative">
-            <div className="absolute top-6 left-16">Server</div>
-            <Responsive
-              desktop={
-                <img
-                  className="w-[800px]"
-                  src="/img/lp-code/edge-store_server.png"
-                  alt="Edge Store Server"
-                />
-              }
-              mobile={
-                <img
-                  className="w-[800px]"
-                  src="/img/lp-code/edge-store_server_mobile.png"
-                  alt="Edge Store Server"
-                />
-              }
-            />
+          <div className="mb-6" />
+          <h2>Step 2 - Client</h2>
+          <div className="text-gray-300">
+            Wrap your app with the Edge Store provider component. This will
+            enable you to access Edge Store methods anywhere in your app.
           </div>
-          <div className="relative">
-            <div className="absolute top-6 left-16">React</div>
-            <Responsive
-              desktop={
-                <img
-                  className="w-[800px]"
-                  src="/img/lp-code/edge-store_react.png"
-                  alt="Edge Store React"
-                />
-              }
-              mobile={
-                <img
-                  className="w-[800px]"
-                  src="/img/lp-code/edge-store_react_mobile.png"
-                  alt="Edge Store React"
-                />
-              }
-            />
+          <div className="mb-6" />
+          <h2>Step 3 - Start using</h2>
+          <div className="text-gray-300">
+            Use the useEdgeStore hook to upload and fetch images from Edge
+            Store. You can also use Edge Store features like:
+            <ul>
+              <li>Getting real-time progress of image uploads</li>
+              <li>Controlling access to images with permissions</li>
+              <li>Optimizing images for different devices and resolutions</li>
+              <li>And more!</li>
+            </ul>
           </div>
         </div>
-        <div className="mb-16">
+        <div className="my-16">
           <JoinButton />
         </div>
       </main>
