@@ -9,7 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@edge-store/react": "^0.0.0-beta.0",
+    "@edge-store/react": "^0.0.0-alpha.1",
     "@next/font": "13.1.1",
     "@types/node": "^18.11.18",
     "@types/react": "18.0.26",
