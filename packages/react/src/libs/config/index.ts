@@ -1,6 +1,6 @@
 const config = {
-  edgeStoreApiEndpoint: "https://api-dev.edge-store.com",
-  edgeStoreBaseUrl: "https://files-dev.edge-store.com",
+  edgeStoreApiEndpoint: "https://api.edge-store.com",
+  edgeStoreBaseUrl: "https://files.edge-store.com",
 };
 
 export default config;
