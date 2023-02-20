@@ -8,7 +8,7 @@ export default function Home(): JSX.Element {
   return (
     <Layout
       title={`Easily handle images in your app - ${siteConfig.title}`}
-      description="Description will go into a meta tag in <head />"
+      description="A simple image storage for all project sizes. Easily integrate with your existing projects. Fast, reliable and secure."
     >
       <Homepage />
     </Layout>
