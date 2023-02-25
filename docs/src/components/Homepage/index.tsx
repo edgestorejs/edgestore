@@ -35,7 +35,7 @@ const Homepage = () => {
 
       <main className="flex min-h-screen flex-col items-center text-white mt-[calc(var(--ifm-navbar-height)*-1)]">
         <div className="flex w-full flex-col items-center justify-center bg-[radial-gradient(#1F0B3E,#000000)] py-28 px-3">
-          <h1 className="text-center text-5xl md:text-6xl font-[Futura]  bg-gradient-to-b from-primary-100 to-primary-400 bg-clip-text text-transparent">
+          <h1 className="text-center text-5xl md:text-6xl font-[Futura] bg-gradient-to-b from-primary-100 to-primary-400 bg-clip-text text-transparent">
             EDGE STORE
           </h1>
           <h2 className="pt-3 text-center text-lg text-gray-300 md:text-xl">
@@ -50,10 +50,10 @@ const Homepage = () => {
           <div className="max-w-4xl">
             <p className="pb-4 text-xl font-bold">Why Edge Store?</p>
             <p>
-              Edge Store is a simple image store for all project sizes. It is
+              Edge Store is a simple image storage for all project sizes. It is
               designed to be easy to use and easy to integrate into your
               project. It is built leveraging s3, cloudfront and lambda@edge to
-              give you a fast, reliable and secure image store.
+              give you a fast, reliable and secure image storage.
             </p>
           </div>
         </div>
