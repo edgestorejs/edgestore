@@ -9,7 +9,9 @@
   ],
   "scripts": {
     "build": "turbo run build --filter=@edge-store/*",
+    "watch": "turbo run watch --parallel",
     "dev": "turbo run dev --parallel --filter=example-nextjs --filter=@edge-store/*",
+    "aws-example": "turbo run dev --parallel --filter=example-nextjs-aws",
     "docs": "npm -w docs run start",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",

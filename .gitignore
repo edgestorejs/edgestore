@@ -41,3 +41,4 @@ packages/react/*.d.ts
 packages/react/*.d.ts.map
 packages/react/next
 packages/react/libs
+packages/react/providers

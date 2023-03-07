@@ -19,7 +19,8 @@
   ],
   "exports": {
     ".": "./index.js",
-    "./next": "./next/index.js"
+    "./next": "./next/index.js",
+    "./providers": "./providers/index.js"
   },
   "private": false,
   "publishConfig": {
@@ -27,8 +28,8 @@
   },
   "scripts": {
     "build": "npm run clean && tsc",
-    "clean": "rm -rf next libs index.d.ts index.d.ts.map index.js",
-    "dev": "npm run clean && tsc -w",
+    "clean": "rm -rf next libs providers index.d.ts index.d.ts.map index.js",
+    "watch": "npm run clean && tsc -w",
     "prepublishOnly": "npm run build"
   },
   "files": [
@@ -42,12 +43,16 @@
     "cookie": "^0.5.0"
   },
   "peerDependencies": {
-    "next": "^13.0.0 || ^12.0.0"
+    "next": "^13.0.0 || ^12.0.0",
+    "react": "^17.0.2 || ^18",
+    "react-dom": "^17.0.2 || ^18"
   },
   "devDependencies": {
     "@types/cookie": "^0.5.1",
     "@types/node": "^18.11.18",
-    "next": "13.1.1",
+    "next": "^13",
+    "react": "^18",
+    "react-dom": "^18",
     "tsconfig": "*"
   },
   "engines": {

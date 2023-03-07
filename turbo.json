@@ -8,8 +8,10 @@
     "lint": {
       "outputs": []
     },
+    "watch": {},
     "dev": {
-      "cache": false
+      "cache": false,
+      "dependsOn": ["@edge-store/react#build"]
     }
   }
 }

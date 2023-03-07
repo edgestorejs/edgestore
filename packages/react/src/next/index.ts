@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import EdgeStoreProvider from "../libs/providers/EdgeStoreProvider";
-import { Provider } from "../libs/providers/types";
+import EdgeStoreProvider from "../providers/EdgeStoreProvider";
+import { Provider } from "../providers/types";
 
 export type Config = {
   provider: Provider;
