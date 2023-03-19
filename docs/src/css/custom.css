@@ -35,7 +35,7 @@ html[data-theme="dark"] {
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
 }
 
-.navbar {
+.homepage .navbar {
   background-color: transparent;
 }
 
