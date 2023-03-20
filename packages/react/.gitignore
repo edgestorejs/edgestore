@@ -1,0 +1,6 @@
+index.js
+*.d.ts
+*.d.ts.map
+next
+libs
+providers
