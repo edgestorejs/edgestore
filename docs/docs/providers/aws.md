@@ -45,3 +45,47 @@ export default EdgeStore({
   provider: AWSProvider(),
 });
 ```
+
+## Provider Options
+
+### createContext
+
+Type: `(params: { req: NextApiRequest; res: NextApiResponse; }) => C | Promise<C>`
+
+You can pass a function to create a context object that will be passed to the other functions on the provider.
+
+### pathPrefix
+
+Type: `(params: { req: NextApiRequest; res: NextApiResponse; ctx: C; }) => string | Promise<string>`
+
+You can pass a function to create a path prefix for the upload URL.
+
+### onRequestUpload
+
+Type: `(params: { req: NextApiRequest; res: NextApiResponse; ctx: C; }) => void | Promise<void>`
+
+You can pass a function that will be called before returning the upload URL.
+
+### accessKeyId
+
+Type: `string`
+
+The access key id for your AWS account. Does the same thing as the `ES_AWS_ACCESS_KEY_ID` environment variable.
+
+### secretAccessKey
+
+Type: `string`
+
+The secret access key for your AWS account. Does the same thing as the `ES_AWS_SECRET_ACCESS_KEY` environment variable.
+
+### region
+
+Type: `string`
+
+The region of your S3 bucket. Does the same thing as the `ES_AWS_REGION` environment variable.
+
+### bucketName
+
+Type: `string`
+
+The name of your S3 bucket. Does the same thing as the `ES_AWS_BUCKET_NAME` environment variable.

@@ -82,6 +82,7 @@ export default function EdgeStoreProvider(
       if (!json.signedUrl) {
         console.error(json);
         res.status(500).end();
+        return;
       }
       res.status(200).json(json);
     },

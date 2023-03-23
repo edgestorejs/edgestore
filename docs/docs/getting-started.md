@@ -60,11 +60,12 @@ const Page = () => {
       <input type="file" onChange={(e) => setFile(e.target.files[0])} />
       <button
         onClick={async () => {
-          const { path } = await uploadImage(file, {
+          const { url } = await uploadImage(file, {
             onProgressChange: (progress) => {
-              setProgress(progress);
+              console.log(progress);
             },
           });
+          console.log(url);
         }}
       >
         Upload
@@ -86,7 +87,7 @@ const Page = () => {
 
   return (
     <div>
-      <img src={getImgSrc("/path/to/image.jpg")} />
+      <img src={getImgSrc("https://my-image-domain.com/path/to/image.jpg")} />
     </div>
   );
 };

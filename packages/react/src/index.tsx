@@ -26,15 +26,15 @@ type UploadImageHandler = (
     onProgressChange?: (progress: number) => void;
   }
 ) => Promise<{
-  path: string;
+  url: string;
 }>;
 
 type GetImgSrcHandler = (
   /**
-   * The path of the image.
-   * @example - "/images/example.png"
+   * The url of the image.
+   * @example - "https://my-domain.com/images/example.png"
    */
-  path: string
+  url: string
 ) => string;
 
 type EdgeStoreContextValue = {
@@ -47,13 +47,22 @@ const EdgeStoreContext = React.createContext<EdgeStoreContextValue | undefined>(
   undefined
 );
 
-export const EdgeStoreProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
+export const EdgeStoreProvider: React.FC<{
+  children: React.ReactNode;
+  /**
+   * In case your app is not hosted at the root of your domain, you can specify the base path here.
+   * If you set this, make sure to set the full path to the EdgeStore API.
+   * e.g. `/my-app/api/edgestore` or `https://example.com/my-app/api/edgestore`
+   *
+   * @example - If your app is hosted at `https://example.com/my-app`, you can set the `basePath` to `/my-app/api/edgestore`.
+   */
+  basePath?: string;
+}> = ({ children, basePath }) => {
+  const apiPath = basePath ? `${basePath}` : "/api/edgestore";
   const [token, setToken] = React.useState<string | null>(null);
   const [baseUrl, setBaseUrl] = React.useState<string | null>(null);
   React.useEffect(() => {
-    fetch("/api/edgestore/init", {
+    fetch(`${apiPath}/init`, {
       method: "POST",
     }).then((res) => {
       if (res.ok) {
@@ -82,7 +91,7 @@ export const EdgeStoreProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   ) => {
     try {
-      const res = await fetch("/api/edgestore/request-upload", {
+      const res = await fetch(`${apiPath}/request-upload`, {
         method: "POST",
         body: JSON.stringify({
           path,
@@ -102,7 +111,7 @@ export const EdgeStoreProvider: React.FC<{ children: React.ReactNode }> = ({
       }
       // Upload the file to the signed URL and get the progress
       await uploadFile(file, json.signedUrl, onProgressChange);
-      return { path: `${json.path}` };
+      return { url: `${baseUrl}${json.path}` };
     } catch (e) {
       onProgressChange?.(0);
       throw e;
@@ -137,11 +146,11 @@ export const EdgeStoreProvider: React.FC<{ children: React.ReactNode }> = ({
     });
   };
 
-  const getImgSrc: GetImgSrcHandler = (path) => {
-    if (path.match(/^\/[^\/]+\/_public\/.+/)) {
-      return `${baseUrl}${path}`;
+  const getImgSrc: GetImgSrcHandler = (url) => {
+    if (url.match(/^https?:\/\/[^\/]+\/[^\/]+\/_public\/.+/)) {
+      return `${url}`;
     } else {
-      return `${baseUrl}${path}?token=${token}`;
+      return `${url}?token=${token}`;
     }
   };
 

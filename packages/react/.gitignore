@@ -1,6 +1,12 @@
 index.js
 *.d.ts
 *.d.ts.map
-next
-libs
-providers
+next/**/*.js
+next/**/*.d.ts
+next/**/*.d.ts.map
+libs/**/*.js
+libs/**/*.d.ts
+libs/**/*.d.ts.map
+providers/**/*.js
+providers/**/*.d.ts
+providers/**/*.d.ts.map

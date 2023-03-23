@@ -12,14 +12,14 @@ export default function Home() {
       return;
     }
     try {
-      const { path } = await uploadProtectedImage(file, {
+      const { url } = await uploadProtectedImage(file, {
         onProgressChange: (progress) => {
           setProgress(progress);
         },
       });
       // wait 2 seconds to make sure the image is available
       await new Promise((resolve) => setTimeout(resolve, 2000));
-      setUrl(getImgSrc(path));
+      setUrl(getImgSrc(url));
     } catch (e) {
       console.error(e);
       return;

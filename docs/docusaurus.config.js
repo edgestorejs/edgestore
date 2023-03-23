@@ -61,6 +61,10 @@ const config = {
       },
       navbar: {
         title: "Edge Store",
+        logo: {
+          alt: "Edge Store Logo",
+          src: "img/logo-sm.png",
+        },
         items: [
           {
             type: "doc",

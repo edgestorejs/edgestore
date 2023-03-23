@@ -34,7 +34,7 @@ const Homepage = () => {
       />
 
       <main className="flex min-h-screen flex-col items-center text-white mt-[calc(var(--ifm-navbar-height)*-1)]">
-        <div className="flex w-full flex-col items-center justify-center bg-[radial-gradient(#1F0B3E,#000000)] py-28 px-3">
+        <div className="flex w-full flex-col items-center justify-center bg-[radial-gradient(theme(colors.primary.999),#000000)] py-28 px-3">
           <h1 className="text-center text-5xl md:text-6xl font-[Futura] bg-gradient-to-b from-primary-100 to-primary-400 bg-clip-text text-transparent">
             EDGE STORE
           </h1>
@@ -46,7 +46,7 @@ const Homepage = () => {
           </h3>
           <JoinButton />
         </div>
-        <div className="flex w-full justify-center bg-[#1F0B3E] py-10 px-3 text-center">
+        <div className="flex w-full justify-center bg-primary-999 py-10 px-3 text-center">
           <div className="max-w-4xl">
             <p className="pb-4 text-xl font-bold">Why Edge Store?</p>
             <p>
@@ -123,7 +123,7 @@ const TechCard: React.FC<{ title: string; description: string }> = ({
   description,
 }) => {
   return (
-    <div className="my-4 min-h-[170px] w-[90%] rounded-lg p-6 shadow-[0px_0px_19px_3px_#7C3AED60] md:w-[30%]">
+    <div className="my-4 min-h-[170px] w-[90%] rounded-lg p-6 shadow-[0px_0px_19px_0px_theme(colors.primary.900)] md:w-[30%]">
       <p className="mb-2 text-lg font-bold">{title}</p>
       <p className="text-gray-400">{description}</p>
     </div>
