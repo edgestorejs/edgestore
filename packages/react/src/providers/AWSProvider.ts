@@ -28,6 +28,10 @@ export type AWSProviderOptions<
     req: NextApiRequest;
     res: NextApiResponse;
     ctx: C;
+    fileInfo: {
+      key: string;
+      size: number;
+    };
   }) => void | Promise<void>;
   pathPrefix?: (params: {
     req: NextApiRequest;
@@ -116,7 +120,15 @@ export default function AWSProvider<
         expiresIn: 60 * 60, // 1 hour
       });
       if (options?.onRequestUpload) {
-        await options.onRequestUpload({ req, res, ctx });
+        await options.onRequestUpload({
+          req,
+          res,
+          ctx,
+          fileInfo: {
+            key: fileKey,
+            size: req.body.size,
+          },
+        });
       }
 
       const url = `${baseUrl}/${fileKey}`;
