@@ -62,7 +62,7 @@ You can pass a function to create a path prefix for the upload URL.
 
 ### onRequestUpload
 
-Type: `(params: { req: NextApiRequest; res: NextApiResponse; ctx: C; }) => void | Promise<void>`
+Type: `(params: { req: NextApiRequest; res: NextApiResponse; ctx: C; fileInfo: { key: string; size: number; }; }) => void | Promise<void>`
 
 You can pass a function that will be called before returning the upload URL.
 
