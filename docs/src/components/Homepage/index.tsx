@@ -35,7 +35,7 @@ const Homepage = () => {
 
       <main className="flex min-h-screen flex-col items-center text-white mt-[calc(var(--ifm-navbar-height)*-1)]">
         <div className="flex w-full flex-col items-center justify-center bg-[radial-gradient(theme(colors.primary.999),#000000)] py-28 px-3">
-          <h1 className="text-center text-5xl md:text-6xl font-[Futura] bg-gradient-to-b from-primary-100 to-primary-400 bg-clip-text text-transparent">
+          <h1 className="text-center text-5xl md:text-6xl font-[Futura,'Trebuchet_MS'] bg-gradient-to-b from-primary-100 to-primary-400 bg-clip-text text-transparent">
             EDGE STORE
           </h1>
           <h2 className="pt-3 text-center text-lg text-gray-300 md:text-xl">
@@ -135,7 +135,7 @@ const JoinButton: React.FC = () => {
     <a
       target="_blank"
       rel="noreferrer"
-      className="rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-gray-600 focus:border-transparent font-[futura] font-semibold transition-colors duration-200 text-gray-100 hover:text-gray-100 hover:no-underline bg-primary hover:bg-primary-800 focus:bg-primary-800 active:bg-primary-800"
+      className="rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-gray-600 focus:border-transparent font-[Futura,'Trebuchet_MS'] font-semibold transition-colors duration-200 text-gray-100 hover:text-gray-100 hover:no-underline bg-primary hover:bg-primary-800 focus:bg-primary-800 active:bg-primary-800"
       href="https://app.edge-store.com/subscribe"
     >
       APPLY FOR EARLY ACCESS
