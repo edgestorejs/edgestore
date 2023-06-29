@@ -83,24 +83,24 @@ const Homepage = () => {
             description="As your project grows, you can upgrade your plan to get more storage and more bandwidth."
           />
         </div>
-        <div className="flex flex-col items-center justify-center max-w-md -z-10">
+        <div className="flex flex-col items-center justify-center max-w-md -z-10 text-center">
           <h2>Step 1 - Server</h2>
-          <div className="text-gray-300">
+          <div className="text-gray-300 px-8">
             Add the service environment variables to your Next.js app. Then
             export the Edge Store API from the Next.js API routes.
           </div>
           <div className="mb-6" />
           <h2>Step 2 - Client</h2>
-          <div className="text-gray-300">
+          <div className="text-gray-300 px-8">
             Wrap your app with the Edge Store provider component. This will
             enable you to access Edge Store methods anywhere in your app.
           </div>
           <div className="mb-6" />
           <h2>Step 3 - Start using</h2>
-          <div className="text-gray-300">
+          <div className="text-gray-300 px-8">
             Use the useEdgeStore hook to upload and fetch images from Edge
             Store. You can also use Edge Store features like:
-            <ul>
+            <ul className="text-start">
               <li>Getting real-time progress of image uploads</li>
               <li>Controlling access to images with permissions</li>
               <li>Optimizing images for different devices and resolutions</li>
