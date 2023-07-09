@@ -2,31 +2,43 @@
   "name": "root",
   "version": "0.0.0",
   "private": true,
-  "workspaces": [
-    "apps/*",
-    "docs",
-    "packages/*"
-  ],
   "scripts": {
     "build": "turbo run build --filter=@edge-store/*",
     "watch": "turbo run watch --parallel",
     "dev": "turbo run dev --parallel --filter=example-nextjs --filter=@edge-store/*",
     "aws-example": "turbo run dev --parallel --filter=example-nextjs-aws",
-    "docs": "npm -w docs run start",
+    "docs:dev": "pnpm --filter docs run start",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "clear-modules": "rimraf ./**/node_modules",
-    "postinstall": "manypkg check"
+    "clean": "find . -name node_modules -o -name .turbo -o -name .next -o -name dist -type d -prune | xargs rm -rf"
   },
   "engines": {
-    "node": ">=14.0.0"
+    "node": "^18.0.0",
+    "pnpm": ">=8.0.0"
   },
-  "dependencies": {
-    "@manypkg/cli": "latest",
-    "@trpc/server": "^10.33.0",
-    "eslint-config-custom": "*",
+  "packageManager": "pnpm@8.6.6",
+  "devDependencies": {
+    "@ianvs/prettier-plugin-sort-imports": "^4.0.2",
+    "@manypkg/cli": "^0.21.0",
+    "@rollup/plugin-node-resolve": "^15.0.2",
+    "@typescript-eslint/eslint-plugin": "6.0.0-alpha.158",
+    "@typescript-eslint/parser": "6.0.0-alpha.158",
+    "eslint": "^8.40.0",
+    "eslint-config-prettier": "^8.8.0",
+    "eslint-plugin-no-only-tests": "^3.1.0",
+    "eslint-plugin-react": "^7.32.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-turbo": "^1.9.3",
+    "eslint-plugin-unicorn": "47.0.0",
     "prettier": "^2.8.1",
+    "prettier-plugin-tailwindcss": "^0.3.0",
+    "rollup": "^2.79.1",
+    "rollup-plugin-analyzer": "^4.0.0",
+    "rollup-plugin-delete": "^2.0.0",
+    "rollup-plugin-multi-input": "^1.4.1",
+    "rollup-plugin-node-externals": "^5.1.3",
+    "rollup-plugin-swc3": "^0.9.0",
+    "rollup-plugin-typescript2": "^0.35.0",
     "turbo": "latest"
-  },
-  "packageManager": "npm@9.2.0"
+  }
 }

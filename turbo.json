@@ -1,5 +1,6 @@
 {
   "$schema": "https://turbo.build/schema.json",
+  "globalDependencies": ["**/.env.*local"],
   "pipeline": {
     "build": {
       "dependsOn": ["^build"],
@@ -11,7 +12,7 @@
     "watch": {},
     "dev": {
       "cache": false,
-      "dependsOn": ["@edge-store/react#build"]
+      "persistent": true
     }
   }
 }

@@ -1,6 +1,6 @@
-import { z } from "zod";
-import { MaybePromise, Simplify } from "../../types";
-import { createPathParamProxy } from "./createPathParamProxy";
+import { z } from 'zod';
+import { MaybePromise, Simplify } from '../../types';
+import { createPathParamProxy } from './createPathParamProxy';
 
 type Merge<TType, TWith> = {
   [TKey in keyof TType | keyof TWith]?: TKey extends keyof TType
@@ -20,8 +20,8 @@ type ConvertStringToFunction<T> = {
     : () => string;
 };
 
-type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends (
-  k: infer I
+type UnionToIntersection<T> = (T extends any ? (k: T) => void : never) extends (
+  k: infer I,
 ) => void
   ? I
   : never;
@@ -34,7 +34,7 @@ type PathParam<TPath extends BucketPath> = {
   path: keyof UnionToIntersection<TPath[number]>;
 };
 
-const unsetMarker = Symbol("unsetMarker");
+const unsetMarker = Symbol('unsetMarker');
 
 type UnsetMarker = typeof unsetMarker;
 
@@ -53,8 +53,8 @@ export type AccessControlSchema<TCtx, TDef extends AnyDef> = Merge<
   {
     [TKey in keyof TCtx]?:
       | string
-      | PathParam<TDef["path"]>
-      | Conditions<TDef["path"]>;
+      | PathParam<TDef['path']>
+      | Conditions<TDef['path']>;
   },
   {
     OR?: AccessControlSchema<TCtx, TDef>[];
@@ -65,19 +65,15 @@ export type AccessControlSchema<TCtx, TDef extends AnyDef> = Merge<
 
 type BeforeUploadFn<TCtx, TDef extends AnyDef> = (params: {
   ctx: TCtx;
-  input: z.infer<TDef["input"]>;
+  input: z.infer<TDef['input']>;
 }) => MaybePromise<boolean>;
 
 type MetadataFn<TCtx, TDef extends AnyDef> = (params: {
   ctx: TCtx;
-  input: z.infer<TDef["input"]>;
+  input: z.infer<TDef['input']>;
 }) => MaybePromise<Record<string, any>>;
 
-type BucketPathParams<TPath extends BucketPath> = Simplify<
-  Record<keyof UnionToIntersection<TPath[number]>, PathParam<TPath>>
->;
-
-type BucketType = "IMAGE" | "FILE";
+type BucketType = 'IMAGE' | 'FILE';
 
 type Def<TInput extends InputZodObject, TPath extends BucketPath> = {
   type: BucketType;
@@ -96,59 +92,59 @@ type Builder<TCtx, TDef extends AnyDef> = {
    */
   _def: TDef;
   input<TInput extends InputZodObject>(
-    input: TInput
+    input: TInput,
   ): Builder<
     TCtx,
     {
-      type: TDef["type"];
-      input: OverwriteIfDefined<TDef["input"], TInput>;
-      path: TDef["path"];
-      accessControl: TDef["accessControl"];
-      beforeUpload: TDef["beforeUpload"];
+      type: TDef['type'];
+      input: OverwriteIfDefined<TDef['input'], TInput>;
+      path: TDef['path'];
+      accessControl: TDef['accessControl'];
+      beforeUpload: TDef['beforeUpload'];
     }
   >;
   path<TParams extends BucketPath>(
     pathResolver: (params: {
       ctx: Simplify<ConvertStringToFunction<TCtx>>;
-      input: Simplify<ConvertStringToFunction<z.infer<TDef["input"]>>>;
-    }) => [...TParams]
+      input: Simplify<ConvertStringToFunction<z.infer<TDef['input']>>>;
+    }) => [...TParams],
   ): Builder<
     TCtx,
     {
-      type: TDef["type"];
-      input: TDef["input"];
+      type: TDef['type'];
+      input: TDef['input'];
       path: TParams;
-      accessControl: TDef["accessControl"];
-      beforeUpload: TDef["beforeUpload"];
+      accessControl: TDef['accessControl'];
+      beforeUpload: TDef['beforeUpload'];
     }
   >;
   metadata(metadata: MetadataFn<TCtx, TDef>): Builder<
     TCtx,
     {
-      type: TDef["type"];
-      input: TDef["input"];
-      path: TDef["path"];
-      accessControl: TDef["accessControl"];
-      beforeUpload: TDef["beforeUpload"];
+      type: TDef['type'];
+      input: TDef['input'];
+      path: TDef['path'];
+      accessControl: TDef['accessControl'];
+      beforeUpload: TDef['beforeUpload'];
     }
   >;
   accessControl(accessControl: AccessControlSchema<TCtx, TDef>): Builder<
     TCtx,
     {
-      type: TDef["type"];
-      input: TDef["input"];
-      path: TDef["path"];
+      type: TDef['type'];
+      input: TDef['input'];
+      path: TDef['path'];
       accessControl: AccessControlSchema<any, any>;
-      beforeUpload: TDef["beforeUpload"];
+      beforeUpload: TDef['beforeUpload'];
     }
   >;
   beforeUpload(beforeUpload: BeforeUploadFn<TCtx, TDef>): Builder<
     TCtx,
     {
-      type: TDef["type"];
-      input: TDef["input"];
-      path: TDef["path"];
-      accessControl: TDef["accessControl"];
+      type: TDef['type'];
+      input: TDef['input'];
+      path: TDef['path'];
+      accessControl: TDef['accessControl'];
       beforeUpload: BeforeUploadFn<TCtx, TDef>;
     }
   >;
@@ -165,13 +161,13 @@ const createNewBuilder = (initDef: AnyDef, newDef: Partial<AnyDef>) => {
     {
       type: mergedDef.type,
     },
-    mergedDef
+    mergedDef,
   );
 };
 
 function createBuilder<TCtx>(
   opts: { type: BucketType },
-  initDef?: Partial<AnyDef>
+  initDef?: Partial<AnyDef>,
 ): Builder<
   TCtx,
   {
@@ -224,16 +220,6 @@ function createBuilder<TCtx>(
   };
 }
 
-function pathToObject(path: BucketPath) {
-  return path.reduce<Record<string, { path: string }>>((acc, curr) => {
-    const [key, value] = Object.entries(curr)[0];
-    return {
-      ...acc,
-      [key]: { path: value() },
-    };
-  }, {});
-}
-
 class EdgeStoreBuilder<TCtx = object> {
   context<TNewContext extends Record<string, string>>() {
     return new EdgeStoreBuilder<TNewContext>();
@@ -250,7 +236,7 @@ export type AnyEdgeStoreRouter<TCtx> = {
 
 function createRouterFactory<TCtx>() {
   return function createRouterInner<
-    TRoutes extends AnyEdgeStoreRouter<TCtx>["routes"]
+    TRoutes extends AnyEdgeStoreRouter<TCtx>['routes'],
   >(routes: TRoutes) {
     return {
       routes,
@@ -264,11 +250,11 @@ function createEdgeStoreInner<TCtx>() {
       /**
        * Builder object for creating an image bucket
        */
-      imageBucket: createBuilder<TCtx>({ type: "IMAGE" }),
+      imageBucket: createBuilder<TCtx>({ type: 'IMAGE' }),
       /**
        * Builder object for creating a file bucket
        */
-      fileBucket: createBuilder<TCtx>({ type: "FILE" }),
+      fileBucket: createBuilder<TCtx>({ type: 'FILE' }),
       /**
        * Create a router
        */

@@ -5,9 +5,9 @@
   "homepage": "https://edge-store.com",
   "repository": "https://github.com/edgestorejs/edge-store.git",
   "author": "Ravi <me@ravi.com>",
-  "main": "index.js",
-  "module": "index.js",
-  "types": "index.d.ts",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "typings": "dist/index.d.ts",
   "keywords": [
     "react",
     "nodejs",
@@ -17,28 +17,49 @@
     "edgestore",
     "edge-store"
   ],
-  "exports": {
-    ".": "./index.js",
-    "./server": "./server/index.js",
-    "./server/providers": "./server/providers/index.js",
-    "./server/adapters": "./server/adapters/index.js"
-  },
-  "private": false,
-  "publishConfig": {
-    "access": "public"
-  },
   "scripts": {
-    "build": "npm run clean && tsc",
+    "build": "rollup --config rollup.config.ts --configPlugin rollup-plugin-swc3",
     "clean": "rm -rf libs server index.d.ts index.d.ts.map index.js",
     "watch": "npm run clean && tsc -w",
     "prepublishOnly": "npm run build"
   },
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./server": {
+      "import": "./dist/server/index.mjs",
+      "require": "./dist/server/index.js",
+      "default": "./dist/server/index.js"
+    },
+    "./server/adapters/next": {
+      "import": "./dist/server/adapters/next/index.mjs",
+      "require": "./dist/server/adapters/next/index.js",
+      "default": "./dist/server/adapters/next/index.js"
+    },
+    "./server/providers": {
+      "import": "./dist/server/providers/index.mjs",
+      "require": "./dist/server/providers/index.js",
+      "default": "./dist/server/providers/index.js"
+    }
+  },
   "files": [
+    "dist",
+    "src",
+    "README.md",
+    "package.json",
+    "adapters",
+    "providers",
     "server",
-    "libs",
-    "index.d.ts",
-    "index.js"
+    "!**/*.test.*"
   ],
+  "private": false,
+  "publishConfig": {
+    "access": "public"
+  },
   "license": "MIT",
   "dependencies": {
     "@aws-sdk/client-s3": "^3.294.0",
@@ -51,7 +72,8 @@
   "peerDependencies": {
     "next": "^13 || ^12",
     "react": "^17.0.2 || ^18",
-    "react-dom": "^17.0.2 || ^18"
+    "react-dom": "^17.0.2 || ^18",
+    "zod": "^3"
   },
   "devDependencies": {
     "@types/cookie": "^0.5.1",
@@ -60,9 +82,6 @@
     "next": "^13",
     "react": "^18",
     "react-dom": "^18",
-    "tsconfig": "*"
-  },
-  "engines": {
-    "node": "^16.13.0 || ^18.12.0"
+    "typescript": "^5.1.6"
   }
 }

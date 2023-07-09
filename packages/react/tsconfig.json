@@ -1,13 +1,4 @@
 {
-  "extends": "tsconfig/base.json",
-  "include": ["**/*.ts", "**/*.tsx"],
-  "compilerOptions": {
-    "jsx": "react-jsx",
-    "outDir": ".",
-    "rootDir": "src",
-    "paths": {
-      "server/*": ["../server/*"]
-    }
-  },
-  "exclude": ["node_modules", "./*.js", "./*.d.ts", "server", "libs"]
+  "extends": "../../tsconfig.json",
+  "include": ["src"]
 }

@@ -1,20 +1,20 @@
-import { initEdgeStore } from "@edge-store/react/server";
+import { initEdgeStore } from '@edge-store/react/server';
 import {
-  CreateNextContextOptions,
   createEdgeStoreNextHandler,
-} from "@edge-store/react/server/adapters";
-import { AnyEdgeStoreRouter } from "@edge-store/react/server/core/internals/bucketBuilder";
-import { z } from "zod";
+  CreateNextContextOptions,
+} from '@edge-store/react/server/adapters/next';
+import { AnyEdgeStoreRouter } from '@edge-store/react/server/core/internals/bucketBuilder';
+import { z } from 'zod';
 
 type Context = {
   userId: string;
-  userRole: "admin" | "visitor";
+  userRole: 'admin' | 'visitor';
 };
 
 function createContext(_opts: CreateNextContextOptions): Context {
   return {
-    userId: "123",
-    userRole: "admin",
+    userId: '123',
+    userRole: 'admin',
   };
 }
 
@@ -23,9 +23,9 @@ const es = initEdgeStore.context<Context>().create();
 const imagesBucket = es.imageBucket
   .input(
     z.object({
-      type: z.enum(["profile", "post"]),
+      type: z.enum(['profile', 'post']),
       extension: z.string().optional(),
-    })
+    }),
   )
   .path(({ ctx, input }) => [{ author: ctx.userId }, { type: input.type }])
   .metadata(({ ctx, input }) => ({
@@ -45,10 +45,10 @@ const filesBucket = es.fileBucket
   .accessControl({
     OR: [
       {
-        userId: { path: "author" }, // this will check if the userId is the same as the author in the path parameter
+        userId: { path: 'author' }, // this will check if the userId is the same as the author in the path parameter
       },
       {
-        userRole: "admin", // this is the same as { userRole: { eq: "admin" } }
+        userRole: 'admin', // this is the same as { userRole: { eq: "admin" } }
       },
     ],
   });

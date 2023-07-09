@@ -1,16 +1,16 @@
-import { NextApiRequest, NextApiResponse } from "next/types";
-import { EdgeStoreProvider } from "../../providers/EdgeStoreProvider";
-import { Provider } from "../../providers/types";
-import { MaybePromise } from "../../types";
+import { hkdf } from '@panva/hkdf';
+import { serialize } from 'cookie';
+import { EncryptJWT, jwtDecrypt } from 'jose';
+import { NextApiRequest, NextApiResponse } from 'next/types';
+import { v4 as uuidv4 } from 'uuid';
 import {
   AnyBuilder,
   AnyEdgeStoreRouter,
   BucketPath,
-} from "../../core/internals/bucketBuilder";
-import { serialize } from "cookie";
-import { v4 as uuidv4 } from "uuid";
-import { EncryptJWT, jwtDecrypt } from "jose";
-import { hkdf } from "@panva/hkdf";
+} from '../../core/internals/bucketBuilder';
+import { EdgeStoreProvider } from '../../providers/EdgeStoreProvider';
+import { Provider } from '../../providers/types';
+import { MaybePromise } from '../../types';
 
 // TODO: change it to 1 hour when we have a way to refresh the token
 const DEFAULT_MAX_AGE = 30 * 24 * 60 * 60; // 30 days
@@ -38,46 +38,49 @@ type RequestUploadBody = {
 export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
   const { provider = EdgeStoreProvider() } = config;
   return async (req: NextApiRequest, res: NextApiResponse) => {
-    if (req.url === "/api/edgestore/init") {
+    if (req.url === '/api/edgestore/init') {
       const ctx = await config.createContext({ req, res });
       const ctxToken = await encryptJWT(ctx);
       const { token } = await provider.init({
         ctx,
         router: config.router,
       });
-      console.log("token", token);
+      console.log('token', token);
       const cookiesToSet = [
-        serialize("edgestore-ctx", ctxToken, {
-          path: "/",
+        serialize('edgestore-ctx', ctxToken, {
+          path: '/',
           maxAge: DEFAULT_MAX_AGE,
         }),
       ];
       if (token) {
         cookiesToSet.push(
-          serialize("edgestore-token", token, {
-            path: "/",
+          serialize('edgestore-token', token, {
+            path: '/',
             maxAge: DEFAULT_MAX_AGE,
-          })
+          }),
         );
       }
       const baseUrl = provider.getBaseUrl();
-      res.setHeader("Set-Cookie", cookiesToSet);
+      res.setHeader('Set-Cookie', cookiesToSet);
       res.json({
         token,
         baseUrl,
       });
-    } else if (req.url === "/api/edgestore/request-upload") {
+    } else if (req.url === '/api/edgestore/request-upload') {
       const { input, fileInfo } = req.body as RequestUploadBody;
-      const ctxToken = req.cookies["edgestore-ctx"];
+      const ctxToken = req.cookies['edgestore-ctx'];
       if (!ctxToken) {
-        console.error("Missing edgestore-ctx cookie");
+        console.error('Missing edgestore-ctx cookie');
         res.status(401).end();
         return;
       }
       const ctx = await getContext(ctxToken);
-      console.log("TESTING");
-      console.log("router", JSON.stringify(config.router, null, 2));
+      console.log('TESTING');
+      console.log('router', JSON.stringify(config.router, null, 2));
       const route = config.router.routes[fileInfo.routeName];
+      if (!route) {
+        throw new Error(`Route ${fileInfo.routeName} not found`);
+      }
       await route._def.beforeUpload?.({ ctx, input });
       const path = buildPath({
         fileInfo,
@@ -103,7 +106,7 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
 }
 
 function buildPath(params: {
-  fileInfo: RequestUploadBody["fileInfo"];
+  fileInfo: RequestUploadBody['fileInfo'];
   route: AnyBuilder;
   pathAttrs: {
     ctx: any;
@@ -111,15 +114,19 @@ function buildPath(params: {
   };
 }) {
   const { route } = params;
-  console.log("route", JSON.stringify(route, null, 2));
+  console.log('route', JSON.stringify(route, null, 2));
   const pathParams = route._def.path as BucketPath;
-  console.log("pathParams", JSON.stringify(pathParams, null, 2));
+  console.log('pathParams', JSON.stringify(pathParams, null, 2));
   const path = pathParams.map((param) => {
-    const [key, value] = Object.entries(param)[0];
+    const paramEntries = Object.entries(param);
+    if (paramEntries[0] === undefined) {
+      throw new Error('Missing path param');
+    }
+    const [key, value] = paramEntries[0];
     // this is a string like: "ctx.xxx" or "input.yyy.zzz"
     const currParamVal = value()
-      .split(".")
-      .reduce((acc2, key) => {
+      .split('.')
+      .reduce((acc2: any, key: string) => {
         if (acc2[key] === undefined) {
           throw new Error(`Missing key ${key} in ${JSON.stringify(acc2)}`);
         }
@@ -130,18 +137,18 @@ function buildPath(params: {
       value: currParamVal,
     };
   });
-  console.log("path", path);
+  console.log('path', path);
   return path;
 }
 
 async function encryptJWT(ctx: any) {
   const secret = process.env.EDGE_STORE_JWT_SECRET;
   if (!secret) {
-    throw new Error("EDGE_STORE_JWT_SECRET is not defined");
+    throw new Error('EDGE_STORE_JWT_SECRET is not defined');
   }
   const encryptionSecret = await getDerivedEncryptionKey(secret);
   return await new EncryptJWT(ctx)
-    .setProtectedHeader({ alg: "dir", enc: "A256GCM" })
+    .setProtectedHeader({ alg: 'dir', enc: 'A256GCM' })
     .setIssuedAt()
     .setExpirationTime(Date.now() / 1000 + DEFAULT_MAX_AGE)
     .setJti(uuidv4())
@@ -151,7 +158,7 @@ async function encryptJWT(ctx: any) {
 async function decryptJWT(token: string) {
   const secret = process.env.EDGE_STORE_JWT_SECRET;
   if (!secret) {
-    throw new Error("EDGE_STORE_JWT_SECRET is not defined");
+    throw new Error('EDGE_STORE_JWT_SECRET is not defined');
   }
   const encryptionSecret = await getDerivedEncryptionKey(secret);
   const { payload } = await jwtDecrypt(token, encryptionSecret, {
@@ -162,17 +169,17 @@ async function decryptJWT(token: string) {
 
 async function getDerivedEncryptionKey(secret: string) {
   return await hkdf(
-    "sha256",
+    'sha256',
     secret,
-    "",
-    "Edge Store Generated Encryption Key",
-    32
+    '',
+    'Edge Store Generated Encryption Key',
+    32,
   );
 }
 
 async function getContext(token?: string) {
   if (!token) {
-    throw new Error("No token");
+    throw new Error('No token');
   }
   return await decryptJWT(token);
 }

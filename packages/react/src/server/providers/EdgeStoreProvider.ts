@@ -1,10 +1,10 @@
-import { AnyEdgeStoreRouter } from "../core/internals/bucketBuilder";
-import { Provider } from "./types";
+import { AnyEdgeStoreRouter } from '../core/internals/bucketBuilder';
+import { Provider } from './types';
 
 const API_ENDPOINT =
-  process.env.EDGE_STORE_API_ENDPOINT || "https://api.edge-store.com";
+  process.env.EDGE_STORE_API_ENDPOINT || 'https://api.edge-store.com';
 const DEFAULT_BASE_URL =
-  process.env.EDGE_STORE_BASE_URL || "https://files.edge-store.com";
+  process.env.EDGE_STORE_BASE_URL || 'https://files.edge-store.com';
 
 export type EdgeStoreProviderOptions = {
   accessKey?: string;
@@ -13,7 +13,7 @@ export type EdgeStoreProviderOptions = {
 };
 
 export function EdgeStoreProvider(
-  options?: EdgeStoreProviderOptions
+  options?: EdgeStoreProviderOptions,
 ): Provider {
   const {
     accessKey = process.env.EDGE_STORE_ACCESS_KEY!,
@@ -24,7 +24,7 @@ export function EdgeStoreProvider(
     init: async ({ ctx, router }) => {
       if (!accessKey || !secretKey) {
         throw new Error(
-          "Missing EDGE_STORE_ACCESS_KEY or EDGE_STORE_SECRET_KEY"
+          'Missing EDGE_STORE_ACCESS_KEY or EDGE_STORE_SECRET_KEY',
         );
       }
       const token = await getToken({
@@ -41,9 +41,9 @@ export function EdgeStoreProvider(
       return baseUrl;
     },
     requestUpload: async ({ route, fileInfo }) => {
-      console.log("requestUpload", fileInfo);
+      console.log('requestUpload', fileInfo);
       const reqUploadResponse = await fetch(`${API_ENDPOINT}/request-upload`, {
-        method: "POST",
+        method: 'POST',
         body: JSON.stringify({
           bucketName: fileInfo.routeName,
           bucketType: route._def.type,
@@ -54,14 +54,14 @@ export function EdgeStoreProvider(
           metadata: fileInfo.metadata,
         }),
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
           Authorization: `Basic ${Buffer.from(
-            `${accessKey}:${secretKey}`
-          ).toString("base64")}`,
+            `${accessKey}:${secretKey}`,
+          ).toString('base64')}`,
         },
       });
       const json = await reqUploadResponse.json();
-      console.log("requestUpload", JSON.stringify(json, null, 2));
+      console.log('requestUpload', JSON.stringify(json, null, 2));
       if (!json.signedUrl) {
         throw new Error(json);
       }
@@ -83,7 +83,11 @@ const getToken = async (params: {
     (acc, [routeName, route]) => {
       acc[routeName] = {
         path: route._def.path.map((p: { [key: string]: () => string }) => {
-          const [key, value] = Object.entries(p)[0];
+          const paramEntries = Object.entries(p);
+          if (paramEntries[0] === undefined) {
+            throw new Error('Missing path param');
+          }
+          const [key, value] = paramEntries[0];
           return {
             key,
             value: value(),
@@ -93,7 +97,7 @@ const getToken = async (params: {
       };
       return acc;
     },
-    {} as any
+    {} as any,
   );
   console.log(
     JSON.stringify(
@@ -102,24 +106,24 @@ const getToken = async (params: {
         routes: reqRoutes,
       },
       null,
-      2
-    )
+      2,
+    ),
   );
   const res = await fetch(`${API_ENDPOINT}/get-token`, {
-    method: "POST",
+    method: 'POST',
     body: JSON.stringify({
       ctx: params.ctx,
       routes: reqRoutes,
     }),
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
       Authorization: `Basic ${Buffer.from(
-        `${params.accessKey}:${params.secretKey}`
-      ).toString("base64")}`,
+        `${params.accessKey}:${params.secretKey}`,
+      ).toString('base64')}`,
     },
   });
   if (!res.ok) {
-    throw new Error("Failed to get token");
+    throw new Error('Failed to get token');
   }
   const { token } = await res.json();
   return token;
