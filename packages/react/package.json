@@ -19,8 +19,9 @@
   ],
   "exports": {
     ".": "./index.js",
-    "./next": "./next/index.js",
-    "./providers": "./providers/index.js"
+    "./server": "./server/index.js",
+    "./server/providers": "./server/providers/index.js",
+    "./server/adapters": "./server/adapters/index.js"
   },
   "private": false,
   "publishConfig": {
@@ -28,14 +29,13 @@
   },
   "scripts": {
     "build": "npm run clean && tsc",
-    "clean": "rm -rf next libs providers index.d.ts index.d.ts.map index.js",
+    "clean": "rm -rf libs server index.d.ts index.d.ts.map index.js",
     "watch": "npm run clean && tsc -w",
     "prepublishOnly": "npm run build"
   },
   "files": [
-    "next",
+    "server",
     "libs",
-    "providers",
     "index.d.ts",
     "index.js"
   ],

@@ -23,8 +23,9 @@
   },
   "dependencies": {
     "@manypkg/cli": "latest",
+    "@trpc/server": "^10.33.0",
     "eslint-config-custom": "*",
-    "prettier": "latest",
+    "prettier": "^2.8.1",
     "turbo": "latest"
   },
   "packageManager": "npm@9.2.0"

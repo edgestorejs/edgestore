@@ -6,9 +6,8 @@
     "outDir": ".",
     "rootDir": "src",
     "paths": {
-      "next/*": ["../next/*"],
-      "providers/*": ["../providers/*"]
+      "server/*": ["../server/*"]
     }
   },
-  "exclude": ["node_modules", "./*.js", "./*.d.ts", "providers", "next", "libs"]
+  "exclude": ["node_modules", "./*.js", "./*.d.ts", "server", "libs"]
 }

@@ -1,25 +1,30 @@
-import { useEdgeStore } from "@edge-store/react";
 import { useState } from "react";
+import { useEdgeStore } from "../utils/edgestore";
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
   const [progress, setProgress] = useState<number | null>(null);
   const [url, setUrl] = useState<string | null>(null);
-  const { uploadProtectedImage, getImgSrc } = useEdgeStore();
+  const { edgestore, getSrc } = useEdgeStore();
 
   const handleUpload = async () => {
     if (!file) {
       return;
     }
     try {
-      const { url } = await uploadProtectedImage(file, {
+      const { url } = await edgestore.images.upload({
+        file,
+        input: {
+          type: "post",
+          extension: "jpg",
+        },
         onProgressChange: (progress) => {
           setProgress(progress);
         },
       });
       // wait 2 seconds to make sure the image is available
       await new Promise((resolve) => setTimeout(resolve, 2000));
-      setUrl(getImgSrc(url));
+      setUrl(getSrc(url));
     } catch (e) {
       console.error(e);
       return;
@@ -41,7 +46,7 @@ export default function Home() {
           type="button"
           value="Upload"
           onClick={handleUpload}
-          disabled={!file || progress !== null}
+          // disabled={!file || progress !== null}
         />
       </div>
       <ProgressBar progress={progress} />
