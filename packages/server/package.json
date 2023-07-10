@@ -1,6 +1,6 @@
 {
   "name": "@edge-store/server",
-  "version": "0.0.0-alpha.9",
+  "version": "0.0.0-alpha.10",
   "description": "Image Handling for React/Next.js",
   "homepage": "https://edge-store.com",
   "repository": "https://github.com/edgestorejs/edge-store.git",
