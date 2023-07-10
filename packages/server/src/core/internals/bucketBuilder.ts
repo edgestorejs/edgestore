@@ -14,15 +14,15 @@ type OverwriteIfDefined<TType, TWith> = UnsetMarker extends TType
   ? TWith
   : Simplify<TType & TWith>;
 
-type ConvertStringToFunction<T> = {
-  [K in keyof T]: T[K] extends object
-    ? Simplify<ConvertStringToFunction<T[K]>>
+type ConvertStringToFunction<TType> = {
+  [K in keyof TType]: TType[K] extends object
+    ? Simplify<ConvertStringToFunction<TType[K]>>
     : () => string;
 };
 
-type UnionToIntersection<T> = (T extends any ? (k: T) => void : never) extends (
-  k: infer I,
-) => void
+type UnionToIntersection<TType> = (
+  TType extends any ? (k: TType) => void : never
+) extends (k: infer I) => void
   ? I
   : never;
 
@@ -230,13 +230,13 @@ class EdgeStoreBuilder<TCtx = object> {
   }
 }
 
-export type AnyEdgeStoreRouter<TCtx> = {
+export type EdgeStoreRouter<TCtx> = {
   routes: Record<string, Builder<TCtx, AnyDef>>;
 };
 
 function createRouterFactory<TCtx>() {
   return function createRouterInner<
-    TRoutes extends AnyEdgeStoreRouter<TCtx>['routes'],
+    TRoutes extends EdgeStoreRouter<TCtx>['routes'],
   >(routes: TRoutes) {
     return {
       routes,

@@ -1,12 +1,12 @@
-import { z } from "zod";
-import { AnyEdgeStoreRouter } from "./server/core/internals/bucketBuilder";
-import EdgeStoreError from "./libs/errors/EdgeStoreError";
+import { AnyEdgeStoreRouter } from '@edge-store/server/core';
+import { z } from 'zod';
+import EdgeStoreError from './libs/errors/EdgeStoreError';
 
-export type BucketFunctions<T extends AnyEdgeStoreRouter<any>> = {
-  [K in keyof T["routes"]]: {
+export type BucketFunctions<TRouter extends AnyEdgeStoreRouter> = {
+  [K in keyof TRouter['routes']]: {
     upload: (params: {
       file: File;
-      input: z.infer<T["routes"][K]["_def"]["input"]>;
+      input: z.infer<TRouter['routes'][K]['_def']['input']>;
       onProgressChange?: (progress: number) => void;
     }) => Promise<{
       url: string;
@@ -16,18 +16,18 @@ export type BucketFunctions<T extends AnyEdgeStoreRouter<any>> = {
 
 type OnProgressChangeHandler = (progress: number) => void;
 
-export function createNextProxy<T extends AnyEdgeStoreRouter<any>>({
+export function createNextProxy<TRouter extends AnyEdgeStoreRouter>({
   apiPath,
 }: {
   apiPath: string;
 }) {
-  return new Proxy<BucketFunctions<T>>({} as BucketFunctions<T>, {
+  return new Proxy<BucketFunctions<TRouter>>({} as BucketFunctions<TRouter>, {
     get(_, prop) {
-      const routeName = prop as keyof T["routes"];
-      const routeFunctions: BucketFunctions<T>[string] = {
+      const routeName = prop as keyof TRouter['routes'];
+      const routeFunctions: BucketFunctions<TRouter>[string] = {
         upload: async (params: {
           file: File;
-          input: z.infer<T["routes"][typeof routeName]["_def"]["input"]>;
+          input: z.infer<TRouter['routes'][typeof routeName]['_def']['input']>;
           onProgressChange?: OnProgressChangeHandler;
         }) => {
           return await uploadFile(params, {
@@ -57,26 +57,26 @@ async function uploadFile(
   }: {
     apiPath: string;
     routeName: string;
-  }
+  },
 ) {
   try {
     const res = await fetch(`${apiPath}/request-upload`, {
-      method: "POST",
+      method: 'POST',
       body: JSON.stringify({
         input,
         fileInfo: {
           routeName,
-          extension: file.name.split(".").pop(),
+          extension: file.name.split('.').pop(),
           size: file.size,
         },
       }),
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
     });
     const json = await res.json();
     if (!json.uploadUrl) {
-      throw new EdgeStoreError("An error occurred");
+      throw new EdgeStoreError('An error occurred');
     }
     // Upload the file to the signed URL and get the progress
     await uploadFileInner(file, json.uploadUrl, onProgressChange);
@@ -92,28 +92,28 @@ async function uploadFile(
 const uploadFileInner = async (
   file: File,
   uploadUrl: string,
-  onProgressChange?: OnProgressChangeHandler
+  onProgressChange?: OnProgressChangeHandler,
 ) => {
   const promise = new Promise<void>((resolve, reject) => {
     const request = new XMLHttpRequest();
-    request.open("PUT", uploadUrl);
-    request.addEventListener("loadstart", () => {
+    request.open('PUT', uploadUrl);
+    request.addEventListener('loadstart', () => {
       onProgressChange?.(0);
     });
-    request.upload.addEventListener("progress", (e) => {
+    request.upload.addEventListener('progress', (e) => {
       if (e.lengthComputable) {
         // 2 decimal progress
         const progress = Math.round((e.loaded / e.total) * 10000) / 100;
         onProgressChange?.(progress);
       }
     });
-    request.addEventListener("error", () => {
-      reject(new Error("Error uploading file"));
+    request.addEventListener('error', () => {
+      reject(new Error('Error uploading file'));
     });
-    request.addEventListener("abort", () => {
-      reject(new Error("File upload aborted"));
+    request.addEventListener('abort', () => {
+      reject(new Error('File upload aborted'));
     });
-    request.addEventListener("loadend", () => {
+    request.addEventListener('loadend', () => {
       resolve();
     });
 

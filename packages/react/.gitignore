@@ -1,9 +1,0 @@
-index.js
-*.d.ts
-*.d.ts.map
-server/**/*.js
-server/**/*.d.ts
-server/**/*.d.ts.map
-libs/**/*.js
-libs/**/*.d.ts
-libs/**/*.d.ts.map

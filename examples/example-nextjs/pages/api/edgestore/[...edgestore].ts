@@ -1,8 +1,8 @@
-import { initEdgeStore } from '@edge-store/react/server';
+import { initEdgeStore } from '@edge-store/server';
 import {
   createEdgeStoreNextHandler,
   CreateNextContextOptions,
-} from '@edge-store/react/server/adapters/next';
+} from '@edge-store/server/adapters/next';
 import { z } from 'zod';
 
 type Context = {

@@ -5,10 +5,10 @@ import { NextApiRequest, NextApiResponse } from 'next/types';
 import { v4 as uuidv4 } from 'uuid';
 import {
   AnyBuilder,
-  AnyEdgeStoreRouter,
   BucketPath,
+  EdgeStoreRouter,
 } from '../../core/internals/bucketBuilder';
-import { EdgeStoreProvider } from '../../providers/EdgeStoreProvider';
+import { EdgeStoreProvider } from '../../providers/edgestore';
 import { Provider } from '../../providers/types';
 import { MaybePromise } from '../../types';
 
@@ -22,7 +22,7 @@ export type CreateNextContextOptions = {
 
 export type Config<TCtx> = {
   provider?: Provider;
-  router: AnyEdgeStoreRouter<TCtx>;
+  router: EdgeStoreRouter<TCtx>;
   createContext: (opts: CreateNextContextOptions) => MaybePromise<TCtx>;
 };
 

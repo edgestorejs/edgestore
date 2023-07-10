@@ -1,5 +1,5 @@
-import { AnyEdgeStoreRouter } from '../core/internals/bucketBuilder';
-import { Provider } from './types';
+import { EdgeStoreRouter } from '../../core/internals/bucketBuilder';
+import { Provider } from '../types';
 
 const API_ENDPOINT =
   process.env.EDGE_STORE_API_ENDPOINT || 'https://api.edge-store.com';
@@ -77,7 +77,7 @@ const getToken = async (params: {
   accessKey: string;
   secretKey: string;
   ctx: any;
-  router: AnyEdgeStoreRouter<any>;
+  router: EdgeStoreRouter<any>;
 }) => {
   const reqRoutes = Object.entries(params.router.routes).reduce(
     (acc, [routeName, route]) => {

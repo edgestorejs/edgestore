@@ -1,5 +1,5 @@
 {
-  "name": "@edge-store/react",
+  "name": "@edge-store/server",
   "version": "0.0.0-alpha.8",
   "description": "Image Handling for React/Next.js",
   "homepage": "https://edge-store.com",
@@ -28,6 +28,26 @@
       "import": "./dist/index.mjs",
       "require": "./dist/index.js",
       "default": "./dist/index.js"
+    },
+    "./core": {
+      "import": "./dist/core/index.mjs",
+      "require": "./dist/core/index.js",
+      "default": "./dist/core/index.js"
+    },
+    "./adapters/next": {
+      "import": "./dist/adapters/next/index.mjs",
+      "require": "./dist/adapters/next/index.js",
+      "default": "./dist/adapters/next/index.js"
+    },
+    "./providers/aws": {
+      "import": "./dist/providers/aws/index.mjs",
+      "require": "./dist/providers/aws/index.js",
+      "default": "./dist/providers/aws/index.js"
+    },
+    "./providers/edgestore": {
+      "import": "./dist/providers/edgestore/index.mjs",
+      "require": "./dist/providers/edgestore/index.js",
+      "default": "./dist/providers/edgestore/index.js"
     }
   },
   "files": [
@@ -35,6 +55,9 @@
     "src",
     "README.md",
     "package.json",
+    "core",
+    "adapters",
+    "providers",
     "!**/*.test.*"
   ],
   "private": false,
@@ -51,14 +74,9 @@
     "uuid": "^9.0.0"
   },
   "peerDependencies": {
-    "@edge-store/server": "^0.0.0-alpha.8",
-    "next": "^13 || ^12",
-    "react": "^17.0.2 || ^18",
-    "react-dom": "^17.0.2 || ^18",
     "zod": "^3.0.0"
   },
   "devDependencies": {
-    "@edge-store/server": "^0.0.0-alpha.8",
     "@types/cookie": "^0.5.1",
     "@types/node": "^18.11.18",
     "@types/uuid": "^9.0.1",

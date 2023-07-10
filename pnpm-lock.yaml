@@ -132,6 +132,9 @@ importers:
       '@edge-store/react':
         specifier: ^0.0.0-alpha.8
         version: link:../../packages/react
+      '@edge-store/server':
+        specifier: ^0.0.0-alpha.8
+        version: link:../../packages/server
       '@next/font':
         specifier: ^13
         version: 13.0.0
@@ -174,6 +177,55 @@ importers:
         version: link:../../packages/react
 
   packages/react:
+    dependencies:
+      '@aws-sdk/client-s3':
+        specifier: ^3.294.0
+        version: 3.294.0
+      '@aws-sdk/s3-request-presigner':
+        specifier: ^3.294.0
+        version: 3.294.0
+      '@panva/hkdf':
+        specifier: ^1.0.4
+        version: 1.0.4
+      cookie:
+        specifier: ^0.5.0
+        version: 0.5.0
+      jose:
+        specifier: ^4.13.1
+        version: 4.13.1
+      uuid:
+        specifier: ^9.0.0
+        version: 9.0.0
+      zod:
+        specifier: ^3.0.0
+        version: 3.21.4
+    devDependencies:
+      '@edge-store/server':
+        specifier: ^0.0.0-alpha.8
+        version: link:../server
+      '@types/cookie':
+        specifier: ^0.5.1
+        version: 0.5.1
+      '@types/node':
+        specifier: ^18.11.18
+        version: 18.11.18
+      '@types/uuid':
+        specifier: ^9.0.1
+        version: 9.0.1
+      next:
+        specifier: ^13
+        version: 13.0.0(@babel/core@7.22.8)(react-dom@18.0.0)(react@18.0.0)
+      react:
+        specifier: ^18
+        version: 18.0.0
+      react-dom:
+        specifier: ^18
+        version: 18.0.0(react@18.0.0)
+      typescript:
+        specifier: ^5.1.6
+        version: 5.1.6
+
+  packages/server:
     dependencies:
       '@aws-sdk/client-s3':
         specifier: ^3.294.0

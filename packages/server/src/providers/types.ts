@@ -1,12 +1,9 @@
-import { MaybePromise } from "../types";
-import {
-  AnyBuilder,
-  AnyEdgeStoreRouter,
-} from "../core/internals/bucketBuilder";
+import { AnyBuilder, EdgeStoreRouter } from '../core/internals/bucketBuilder';
+import { MaybePromise } from '../types';
 
 export type InitParams = {
   ctx: any;
-  router: AnyEdgeStoreRouter<any>;
+  router: EdgeStoreRouter<any>;
 };
 
 export type RequestUploadBody = {

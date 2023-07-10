@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@edge-store/react": "^0.0.0-alpha.8",
+    "@edge-store/server": "^0.0.0-alpha.8",
     "@next/font": "^13",
     "next": "^13",
     "react": "^18",
