@@ -1,6 +1,6 @@
 {
   "name": "example-nextjs",
-  "version": "0.0.0",
+  "version": "0.0.0-alpha.9",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -10,8 +10,8 @@
     "lint-fix": "pnpm lint --fix"
   },
   "dependencies": {
-    "@edge-store/react": "^0.0.0-alpha.8",
-    "@edge-store/server": "^0.0.0-alpha.8",
+    "@edge-store/react": "^0.0.0-alpha.9",
+    "@edge-store/server": "^0.0.0-alpha.9",
     "@next/font": "^13",
     "next": "^13",
     "react": "^18",

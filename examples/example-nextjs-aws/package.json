@@ -1,6 +1,6 @@
 {
   "name": "example-nextjs-aws",
-  "version": "0.1.0",
+  "version": "0.0.0-alpha.9",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -10,6 +10,6 @@
     "lint-fix": "pnpm lint --fix"
   },
   "dependencies": {
-    "@edge-store/react": "^0.0.0-alpha.1"
+    "@edge-store/react": "^0.0.0-alpha.9"
   }
 }

@@ -145,10 +145,10 @@ importers:
   examples/example-nextjs:
     dependencies:
       '@edge-store/react':
-        specifier: ^0.0.0-alpha.8
+        specifier: ^0.0.0-alpha.9
         version: link:../../packages/react
       '@edge-store/server':
-        specifier: ^0.0.0-alpha.8
+        specifier: ^0.0.0-alpha.9
         version: link:../../packages/server
       '@next/font':
         specifier: ^13
@@ -188,7 +188,7 @@ importers:
   examples/example-nextjs-aws:
     dependencies:
       '@edge-store/react':
-        specifier: ^0.0.0-alpha.1
+        specifier: ^0.0.0-alpha.9
         version: link:../../packages/react
 
   packages/react:
@@ -213,7 +213,7 @@ importers:
         version: 9.0.0
     devDependencies:
       '@edge-store/server':
-        specifier: ^0.0.0-alpha.8
+        specifier: ^0.0.0-alpha.9
         version: link:../server
       '@types/cookie':
         specifier: ^0.5.1
