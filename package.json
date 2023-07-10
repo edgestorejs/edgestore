@@ -12,7 +12,12 @@
     "lint-fix": "turbo lint -- --fix && manypkg fix && pnpm format:write",
     "format": "prettier \"**/*\" --ignore-unknown",
     "format:write": "pnpm format --write --list-different",
-    "clean": "find . -name node_modules -o -name .turbo -o -name .next -o -name dist -type d -prune | xargs rm -rf"
+    "clean": "find . -name node_modules -o -name .turbo -o -name .next -o -name dist -type d -prune | xargs rm -rf",
+    "prepublish": "pnpm build",
+    "prepack": "tsx scripts/version.ts",
+    "version": "tsx scripts/version.ts",
+    "release": "changeset publish",
+    "lll": "lerna version prerelease"
   },
   "engines": {
     "node": "^18.0.0",
@@ -20,6 +25,8 @@
   },
   "packageManager": "pnpm@8.6.6",
   "dependencies": {
+    "@changesets/changelog-github": "^0.4.8",
+    "@changesets/cli": "^2.26.1",
     "@ianvs/prettier-plugin-sort-imports": "^4.0.2",
     "@manypkg/cli": "^0.21.0",
     "@rollup/plugin-node-resolve": "^15.0.2",
@@ -33,6 +40,8 @@
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-turbo": "^1.9.3",
     "eslint-plugin-unicorn": "47.0.0",
+    "lerna": "^7.1.1",
+    "npm-run-all": "^4.1.5",
     "prettier": "^2.8.1",
     "prettier-plugin-tailwindcss": "^0.3.0",
     "rollup": "^2.79.1",

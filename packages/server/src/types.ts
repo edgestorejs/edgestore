@@ -107,7 +107,7 @@ export type Unwrap<TType> = TType extends (...args: any[]) => infer R
   : TType;
 
 /**
- * Makes the object recursively optional
+ * Makes the object recursively optional.
  * @internal
  */
 export type DeepPartial<TObject> = TObject extends object
