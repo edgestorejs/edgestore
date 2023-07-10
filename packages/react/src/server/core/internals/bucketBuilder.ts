@@ -277,6 +277,21 @@ export const initEdgeStore = new EdgeStoreBuilder();
 
 // const es = initEdgeStore.context<Context>().create();
 
+// const imagesBucket = es.imageBucket
+//   .input(
+//     z.object({
+//       type: z.enum(['profile', 'post']),
+//       extension: z.string().optional(),
+//     }),
+//   )
+//   .path(({ ctx, input }) => [{ author: ctx.userId }, { type: input.type }])
+//   .metadata(({ ctx, input }) => ({
+//     extension: input.extension,
+//     role: ctx.userRole,
+//   }))
+//   .beforeUpload(() => {
+//     return true;
+//   });
 // const a = es.imageBucket
 //   .input(z.object({ type: z.string(), someMeta: z.string().optional() }))
 //   .path(({ ctx, input }) => [{ author: ctx.userId }, { type: input.type }])

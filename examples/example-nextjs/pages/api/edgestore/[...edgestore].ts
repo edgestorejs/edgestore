@@ -3,7 +3,6 @@ import {
   createEdgeStoreNextHandler,
   CreateNextContextOptions,
 } from '@edge-store/react/server/adapters/next';
-import { AnyEdgeStoreRouter } from '@edge-store/react/server/core/internals/bucketBuilder';
 import { z } from 'zod';
 
 type Context = {
@@ -57,8 +56,6 @@ const edgeStoreRouter = es.router({
   images: imagesBucket,
   files: filesBucket,
 });
-
-edgeStoreRouter satisfies AnyEdgeStoreRouter<Context>;
 
 export type EdgeStoreRouter = typeof edgeStoreRouter;
 

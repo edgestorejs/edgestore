@@ -35,5 +35,12 @@ yarn-error.log*
 # build
 dist
 
+# Ignore all folders except `src/` in every published package
+packages/*/*/
+!packages/*/src/
+# and all folders inside `tests` package, which is handled separately
+!packages/tests/*/
+packages/tests/node_modules
+
 # local
 .local
