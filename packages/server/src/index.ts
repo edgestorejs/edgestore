@@ -1,1 +1,1 @@
-export { initEdgeStore } from "./core/internals/bucketBuilder";
+export { initEdgeStore } from './core/internals/bucketBuilder';

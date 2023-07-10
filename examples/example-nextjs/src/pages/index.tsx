@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useEdgeStore } from "../utils/edgestore";
+import { useState } from 'react';
+import { useEdgeStore } from '../utils/edgestore';
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
@@ -15,8 +15,8 @@ export default function Home() {
       const { url } = await edgestore.images.upload({
         file,
         input: {
-          type: "post",
-          extension: "jpg",
+          type: 'post',
+          extension: 'jpg',
         },
         onProgressChange: (progress) => {
           setProgress(progress);
@@ -51,7 +51,7 @@ export default function Home() {
       </div>
       <ProgressBar progress={progress} />
       {url && (
-        <div style={{ marginTop: "20px" }}>
+        <div style={{ marginTop: '20px' }}>
           <img src={url} alt="Example" />
         </div>
       )}
@@ -67,17 +67,17 @@ function ProgressBar({ progress }: { progress: number | null }) {
           {progress !== 100 ? (
             <div
               style={{
-                border: "1px solid white",
-                width: "300px",
-                height: "10px",
-                margin: "4px 0",
+                border: '1px solid white',
+                width: '300px',
+                height: '10px',
+                margin: '4px 0',
               }}
             >
               <div
                 style={{
-                  height: "100%",
+                  height: '100%',
                   width: `${progress ?? 0}%`,
-                  backgroundColor: "blue",
+                  backgroundColor: 'blue',
                 }}
               />
             </div>

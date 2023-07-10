@@ -20,7 +20,7 @@ EDGE_STORE_SECRET_KEY=your-secret-key
 
 ```jsx
 // pages/api/edgestore/[...edgestore].js
-import EdgeStore from "@edge-store/react/next";
+import EdgeStore from '@edge-store/react/next';
 
 export default EdgeStore();
 ```
@@ -29,7 +29,7 @@ export default EdgeStore();
 
 ```jsx
 // pages/_app.jsx
-import { EdgeStoreProvider } from "@edge-store/react";
+import { EdgeStoreProvider } from '@edge-store/react';
 
 export default function App({ Component, pageProps }) {
   return (
@@ -43,7 +43,7 @@ export default function App({ Component, pageProps }) {
 ### Upload image
 
 ```jsx
-import { useEdgeStore } from "@edge-store/react";
+import { useEdgeStore } from '@edge-store/react';
 
 const Page = () => {
   const [file, setFile] = useState(null);
@@ -56,7 +56,7 @@ const Page = () => {
         onClick={async () => {
           await upload({
             file,
-            key: "path/to/image.jpg",
+            key: 'path/to/image.jpg',
           });
         }}
       >
@@ -72,14 +72,14 @@ export default Page;
 ### Show image
 
 ```jsx
-import { useEdgeStore } from "@edge-store/react";
+import { useEdgeStore } from '@edge-store/react';
 
 const Page = () => {
   const { getImgSrc } = useEdgeStore();
 
   return (
     <div>
-      <img src={getImgSrc("path/to/image.jpg")} />
+      <img src={getImgSrc('path/to/image.jpg')} />
     </div>
   );
 };

@@ -44,6 +44,7 @@ const config = {
       {
         case: 'camelCase',
         ignore: [
+          'EdgeStore',
           '\\.config\\.js',
           '\\.d\\.ts$',
           'issue-\\d+-.*\\.test\\.tsx?$',

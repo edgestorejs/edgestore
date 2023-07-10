@@ -19,7 +19,7 @@ EDGE_STORE_SECRET_KEY=your-secret-key
 The Edge Store provider is the default provider, so you don't need to pass it to the `EdgeStore` function.
 
 ```jsx title="pages/api/edgestore/[...edgestore].ts"
-import EdgeStore from "@edge-store/react/next";
+import EdgeStore from '@edge-store/react/next';
 
 export default EdgeStore();
 ```

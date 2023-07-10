@@ -45,7 +45,6 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
         ctx,
         router: config.router,
       });
-      console.log('token', token);
       const cookiesToSet = [
         serialize('edgestore-ctx', ctxToken, {
           path: '/',
@@ -70,13 +69,10 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
       const { input, fileInfo } = req.body as RequestUploadBody;
       const ctxToken = req.cookies['edgestore-ctx'];
       if (!ctxToken) {
-        console.error('Missing edgestore-ctx cookie');
-        res.status(401).end();
+        res.status(401).send('Missing edgestore-ctx cookie');
         return;
       }
       const ctx = await getContext(ctxToken);
-      console.log('TESTING');
-      console.log('router', JSON.stringify(config.router, null, 2));
       const route = config.router.routes[fileInfo.routeName];
       if (!route) {
         throw new Error(`Route ${fileInfo.routeName} not found`);
@@ -114,9 +110,7 @@ function buildPath(params: {
   };
 }) {
   const { route } = params;
-  console.log('route', JSON.stringify(route, null, 2));
   const pathParams = route._def.path as BucketPath;
-  console.log('pathParams', JSON.stringify(pathParams, null, 2));
   const path = pathParams.map((param) => {
     const paramEntries = Object.entries(param);
     if (paramEntries[0] === undefined) {
@@ -137,7 +131,6 @@ function buildPath(params: {
       value: currParamVal,
     };
   });
-  console.log('path', path);
   return path;
 }
 

@@ -20,7 +20,7 @@ type RecursivePathProxy = {
 export function createPathParamProxy(): RecursivePathProxy {
   const getPath = (
     target: string,
-    _prop: string | symbol
+    _prop: string | symbol,
   ): RecursivePathProxy => {
     const proxyFunction: RecursivePathProxy = (() =>
       target) as RecursivePathProxy;
@@ -32,7 +32,7 @@ export function createPathParamProxy(): RecursivePathProxy {
     });
   };
 
-  return new Proxy((() => "") as RecursivePathProxy, {
+  return new Proxy((() => '') as RecursivePathProxy, {
     get: (_target, prop) => {
       return getPath(String(prop), String(prop));
     },

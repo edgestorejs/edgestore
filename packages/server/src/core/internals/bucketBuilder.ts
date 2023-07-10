@@ -310,7 +310,6 @@ export const initEdgeStore = new EdgeStoreBuilder();
 //     ],
 //   })
 //   .beforeUpload(({ ctx, input }) => {
-//     console.log(ctx, input);
 //     return true;
 //   });
 

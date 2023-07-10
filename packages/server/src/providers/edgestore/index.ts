@@ -2,9 +2,9 @@ import { EdgeStoreRouter } from '../../core/internals/bucketBuilder';
 import { Provider } from '../types';
 
 const API_ENDPOINT =
-  process.env.EDGE_STORE_API_ENDPOINT || 'https://api.edge-store.com';
+  process.env.EDGE_STORE_API_ENDPOINT ?? 'https://api.edge-store.com';
 const DEFAULT_BASE_URL =
-  process.env.EDGE_STORE_BASE_URL || 'https://files.edge-store.com';
+  process.env.EDGE_STORE_BASE_URL ?? 'https://files.edge-store.com';
 
 export type EdgeStoreProviderOptions = {
   accessKey?: string;
@@ -16,10 +16,10 @@ export function EdgeStoreProvider(
   options?: EdgeStoreProviderOptions,
 ): Provider {
   const {
-    accessKey = process.env.EDGE_STORE_ACCESS_KEY!,
-    secretKey = process.env.EDGE_STORE_SECRET_KEY!,
-    baseUrl = process.env.EDGE_STORE_BASE_URL || DEFAULT_BASE_URL,
-  } = options || {};
+    accessKey = process.env.EDGE_STORE_ACCESS_KEY,
+    secretKey = process.env.EDGE_STORE_SECRET_KEY,
+    baseUrl = process.env.EDGE_STORE_BASE_URL ?? DEFAULT_BASE_URL,
+  } = options ?? {};
   return {
     init: async ({ ctx, router }) => {
       if (!accessKey || !secretKey) {
@@ -41,7 +41,6 @@ export function EdgeStoreProvider(
       return baseUrl;
     },
     requestUpload: async ({ route, fileInfo }) => {
-      console.log('requestUpload', fileInfo);
       const reqUploadResponse = await fetch(`${API_ENDPOINT}/request-upload`, {
         method: 'POST',
         body: JSON.stringify({
@@ -61,7 +60,6 @@ export function EdgeStoreProvider(
         },
       });
       const json = await reqUploadResponse.json();
-      console.log('requestUpload', JSON.stringify(json, null, 2));
       if (!json.signedUrl) {
         throw new Error(json);
       }
@@ -98,16 +96,6 @@ const getToken = async (params: {
       return acc;
     },
     {} as any,
-  );
-  console.log(
-    JSON.stringify(
-      {
-        ctx: params.ctx,
-        routes: reqRoutes,
-      },
-      null,
-      2,
-    ),
   );
   const res = await fetch(`${API_ENDPOINT}/get-token`, {
     method: 'POST',
