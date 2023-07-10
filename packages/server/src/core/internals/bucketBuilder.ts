@@ -264,7 +264,7 @@ function createEdgeStoreInner<TCtx>() {
 }
 
 /**
- * Initialize tRPC - be done exactly once per backend
+ * Initialize EdgeStore - be done exactly once per backend
  */
 export const initEdgeStore = new EdgeStoreBuilder();
 
