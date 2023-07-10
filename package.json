@@ -17,7 +17,9 @@
     "prepack": "tsx scripts/version.ts",
     "version": "tsx scripts/version.ts",
     "release": "changeset publish",
-    "lll": "lerna version prerelease"
+    "current-branch": "echo \"$(git rev-parse --abbrev-ref HEAD)\" | sed -E 's/refs\\/heads\\///' | sed -E 's/\\W|_/-/g' | sed -e 's/\\//-/'",
+    "publish-canary": "lerna publish --force-publish --canary --preid alpha-$(pnpm --silent canary-preid) --dist-tag $(pnpm --silent current-branch)",
+    "publish-prerelease": "pnpm install && lerna publish prerelease --force-publish --dist-tag next --no-push && sleep 60 && git push --follow-tags"
   },
   "engines": {
     "node": "^18.0.0",
