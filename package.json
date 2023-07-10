@@ -8,8 +8,10 @@
     "dev": "turbo run dev --parallel --filter=example-nextjs --filter=@edge-store/*",
     "aws-example": "turbo run dev --parallel --filter=example-nextjs-aws",
     "docs:dev": "pnpm --filter docs run start",
-    "lint": "turbo run lint",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "lint": "turbo lint",
+    "lint-fix": "turbo lint -- --fix && manypkg fix && pnpm format:write",
+    "format": "prettier \"**/*\" --ignore-unknown",
+    "format:write": "pnpm format --write --list-different",
     "clean": "find . -name node_modules -o -name .turbo -o -name .next -o -name dist -type d -prune | xargs rm -rf"
   },
   "engines": {

@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "eslint --cache --ext \".js,.ts,.tsx\" --report-unused-disable-directives --report-unused-disable-directives src",
+    "lint-fix": "pnpm lint --fix"
   },
   "dependencies": {
     "@edge-store/react": "^0.0.0-alpha.8",
