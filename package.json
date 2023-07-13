@@ -58,5 +58,11 @@
     "tsx": "^3.12.7",
     "turbo": "latest",
     "typescript": "^5.1.6"
+  },
+  "pnpm": {
+    "overrides": {
+      "@edge-store/server": "link:./packages/server",
+      "@edge-store/react": "link:./packages/react"
+    }
   }
 }
