@@ -51,7 +51,7 @@ export function generateEntrypoints(inputs: string[]) {
    *  src/adapters/express.ts -> exports['adapters/express'] = { import: './dist/adapters/express.mjs', ... }
    */
   inputs
-    .filter((i) => !i.match(/^src\/index.tsx?$/)) // index included by default above
+    .filter((i) => i !== 'src/index.ts') // index included by default above
     .forEach((i) => {
       // first, exclude 'src' part of the path
       const parts = i.split('/').slice(1);
