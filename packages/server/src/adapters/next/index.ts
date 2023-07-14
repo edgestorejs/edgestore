@@ -32,7 +32,13 @@ type RequestUploadBody = {
     routeName: string;
     size: number;
     extension: string;
+    replaceTargetUrl?: string;
   };
+};
+
+type DeleteFileBody = {
+  routeName: string;
+  url: string;
 };
 
 export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
@@ -95,6 +101,23 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
         },
       });
       res.json(requestUploadRes);
+    } else if (req.url === '/api/edgestore/delete-file') {
+      const { routeName, url } = req.body as DeleteFileBody;
+      const ctxToken = req.cookies['edgestore-ctx'];
+      if (!ctxToken) {
+        res.status(401).send('Missing edgestore-ctx cookie');
+        return;
+      }
+      await getContext(ctxToken); // just to check if the token is valid
+      const route = config.router.routes[routeName];
+      if (!route) {
+        throw new Error(`Route ${routeName} not found`);
+      }
+      await provider.deleteFile({
+        route,
+        url,
+      });
+      res.status(200).end();
     } else {
       res.status(404).end();
     }

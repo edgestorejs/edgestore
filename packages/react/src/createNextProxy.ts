@@ -11,10 +11,17 @@ export type BucketFunctions<TRouter extends AnyEdgeStoreRouter> = {
     }) => Promise<{
       url: string;
     }>;
+    delete: (params: { url: string }) => Promise<{
+      success: boolean;
+    }>;
   };
 };
 
 type OnProgressChangeHandler = (progress: number) => void;
+
+type UploadOptions = {
+  replaceTargetUrl?: string;
+};
 
 export function createNextProxy<TRouter extends AnyEdgeStoreRouter>({
   apiPath,
@@ -29,8 +36,15 @@ export function createNextProxy<TRouter extends AnyEdgeStoreRouter>({
           file: File;
           input: z.infer<TRouter['routes'][typeof routeName]['_def']['input']>;
           onProgressChange?: OnProgressChangeHandler;
+          options?: UploadOptions;
         }) => {
           return await uploadFile(params, {
+            routeName: routeName as string,
+            apiPath,
+          });
+        },
+        delete: async (params: { url: string }) => {
+          return await deleteFile(params, {
             routeName: routeName as string,
             apiPath,
           });
@@ -46,10 +60,12 @@ async function uploadFile(
     file,
     input,
     onProgressChange,
+    options,
   }: {
     file: File;
     input: object;
     onProgressChange?: OnProgressChangeHandler;
+    options?: UploadOptions;
   },
   {
     apiPath,
@@ -68,6 +84,7 @@ async function uploadFile(
           routeName,
           extension: file.name.split('.').pop(),
           size: file.size,
+          replaceTargetUrl: options?.replaceTargetUrl,
         },
       }),
       headers: {
@@ -121,3 +138,34 @@ const uploadFileInner = async (
   });
   return promise;
 };
+
+async function deleteFile(
+  {
+    url,
+  }: {
+    url: string;
+  },
+  {
+    apiPath,
+    routeName,
+  }: {
+    apiPath: string;
+    routeName: string;
+  },
+) {
+  const res = await fetch(`${apiPath}/delete-file`, {
+    method: 'POST',
+    body: JSON.stringify({
+      url,
+      routeName,
+    }),
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+  const json = await res.json();
+  if (!json.success) {
+    throw new EdgeStoreError('An error occurred');
+  }
+  return { success: true };
+}

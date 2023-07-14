@@ -41,6 +41,7 @@ export function EdgeStoreProvider(
       return baseUrl;
     },
     requestUpload: async ({ route, fileInfo }) => {
+      // TODO: create an EdgeStoreClient to avoid the fetch boilerplate
       const reqUploadResponse = await fetch(`${API_ENDPOINT}/request-upload`, {
         method: 'POST',
         body: JSON.stringify({
@@ -51,6 +52,7 @@ export function EdgeStoreProvider(
           extension: fileInfo.extension,
           size: fileInfo.size,
           metadata: fileInfo.metadata,
+          replaceTargetUrl: fileInfo.replaceTargetUrl,
         }),
         headers: {
           'Content-Type': 'application/json',
@@ -66,6 +68,24 @@ export function EdgeStoreProvider(
       return {
         uploadUrl: json.signedUrl,
         accessUrl: json.url,
+      };
+    },
+    deleteFile: async ({ url }) => {
+      const deleteResponse = await fetch(`${API_ENDPOINT}/delete-file`, {
+        method: 'POST',
+        body: JSON.stringify({
+          url,
+        }),
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Basic ${Buffer.from(
+            `${accessKey}:${secretKey}`,
+          ).toString('base64')}`,
+        },
+      });
+      const json = await deleteResponse.json();
+      return {
+        success: json.success,
       };
     },
   };

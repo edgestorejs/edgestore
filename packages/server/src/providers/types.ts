@@ -20,7 +20,13 @@ export type RequestUploadBody = {
     metadata?: {
       [key: string]: string;
     };
+    replaceTargetUrl?: string;
   };
+};
+
+export type DeleteFileBody = {
+  route: AnyBuilder;
+  url: string;
 };
 
 type InitRes = {
@@ -33,5 +39,8 @@ export type Provider = {
   requestUpload: (params: RequestUploadBody) => MaybePromise<{
     uploadUrl: string;
     accessUrl: string;
+  }>;
+  deleteFile: (params: DeleteFileBody) => MaybePromise<{
+    success: boolean;
   }>;
 };
