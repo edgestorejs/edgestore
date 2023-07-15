@@ -1,4 +1,8 @@
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import {
+  DeleteObjectCommand,
+  PutObjectCommand,
+  S3Client,
+} from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { v4 as uuidv4 } from 'uuid';
 import { Provider } from '../types';
@@ -64,6 +68,18 @@ export function AWSProvider(options?: AWSProviderOptions): Provider {
       return {
         uploadUrl: signedUrl,
         accessUrl: url,
+      };
+    },
+    async deleteFile({ url }) {
+      const path = url.replace(`${baseUrl}/`, '');
+      await s3Client.send(
+        new DeleteObjectCommand({
+          Bucket: bucketName,
+          Key: path,
+        }),
+      );
+      return {
+        success: true,
       };
     },
   };

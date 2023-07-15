@@ -83,7 +83,15 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
       if (!route) {
         throw new Error(`Route ${fileInfo.routeName} not found`);
       }
-      await route._def.beforeUpload?.({ ctx, input });
+      await route._def.beforeUpload?.({
+        ctx,
+        input,
+        fileInfo: {
+          size: fileInfo.size,
+          extension: fileInfo.extension,
+          replaceTargetUrl: fileInfo.replaceTargetUrl,
+        },
+      });
       const path = buildPath({
         fileInfo,
         route,

@@ -63,9 +63,16 @@ export type AccessControlSchema<TCtx, TDef extends AnyDef> = Merge<
   }
 >;
 
+type FileInfo = {
+  size: number;
+  extension: string;
+  replaceTargetUrl?: string;
+};
+
 type BeforeUploadFn<TCtx, TDef extends AnyDef> = (params: {
   ctx: TCtx;
   input: z.infer<TDef['input']>;
+  fileInfo: FileInfo;
 }) => MaybePromise<boolean>;
 
 type MetadataFn<TCtx, TDef extends AnyDef> = (params: {
@@ -87,6 +94,10 @@ type Def<TInput extends InputZodObject, TPath extends BucketPath> = {
 type AnyDef = Def<any, any>;
 
 type Builder<TCtx, TDef extends AnyDef> = {
+  /** only used for types */
+  $config: {
+    ctx: TCtx;
+  };
   /**
    * @internal
    */
@@ -186,6 +197,9 @@ function createBuilder<TCtx>(
   };
 
   return {
+    $config: {
+      ctx: undefined as TCtx,
+    },
     _def,
     input(input) {
       return createNewBuilder(_def, {
@@ -272,7 +286,7 @@ export const initEdgeStore = new EdgeStoreBuilder();
 
 // type Context = {
 //   userId: string;
-//   userRole: "admin" | "visitor";
+//   userRole: 'admin' | 'visitor';
 // };
 
 // const es = initEdgeStore.context<Context>().create();
@@ -302,10 +316,10 @@ export const initEdgeStore = new EdgeStoreBuilder();
 //   .accessControl({
 //     OR: [
 //       {
-//         userId: { path: "author" }, // this will check if the userId is the same as the author in the path parameter
+//         userId: { path: 'author' }, // this will check if the userId is the same as the author in the path parameter
 //       },
 //       {
-//         userRole: "admin", // this is the same as { userRole: { eq: "admin" } }
+//         userRole: 'admin', // this is the same as { userRole: { eq: "admin" } }
 //       },
 //     ],
 //   })
@@ -319,6 +333,8 @@ export const initEdgeStore = new EdgeStoreBuilder();
 //   imageBucket: a,
 //   imageBucket2: b,
 // });
+
+// export { router };
 
 // type EdgeStoreRouter = typeof router;
 
