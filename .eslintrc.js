@@ -107,6 +107,7 @@ const config = {
         '@typescript-eslint/no-floating-promises': 'error',
         '@typescript-eslint/no-unused-vars': 'off',
         '@typescript-eslint/no-empty-function': 'off',
+        '@typescript-eslint/naming-convention': 'off',
         'unicorn/filename-case': 'off',
       },
     },
