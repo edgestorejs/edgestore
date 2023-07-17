@@ -1,9 +1,6 @@
 // @ts-check
 // Note: type annotations allow type checking and IDEs autocompletion
 
-const lightCodeTheme = require('prism-react-renderer/themes/github');
-const darkCodeTheme = require('prism-react-renderer/themes/dracula');
-
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: 'Edge Store',
@@ -49,6 +46,12 @@ const config = {
         },
       }),
     ],
+    [
+      'docusaurus-preset-shiki-twoslash',
+      {
+        themes: ['github-dark'],
+      },
+    ],
   ],
 
   themeConfig:
@@ -70,7 +73,7 @@ const config = {
             type: 'doc',
             docId: 'getting-started',
             position: 'left',
-            label: 'Tutorial',
+            label: 'Docs',
           },
           // { to: "/blog", label: "Blog", position: "left" },
           {
@@ -100,7 +103,7 @@ const config = {
             title: 'Docs',
             items: [
               {
-                label: 'Tutorial',
+                label: 'Docs',
                 to: '/docs/getting-started',
               },
             ],
@@ -129,13 +132,9 @@ const config = {
           },
         ],
       },
-      prism: {
-        theme: lightCodeTheme,
-        darkTheme: darkCodeTheme,
-      },
     }),
   plugins: [
-    async function myPlugin(context, options) {
+    function myPlugin() {
       return {
         name: 'docusaurus-tailwindcss',
         configurePostCss(postcssOptions) {

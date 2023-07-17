@@ -75,16 +75,12 @@ const config = {
     'max-params': ['error', 3],
   },
   overrides: [
-    // {
-    //   files: ['www/**/*', 'examples/next-prisma-websockets-starter/**/*'],
-    //   extends: ['plugin:tailwindcss/recommended'],
-    //   rules: {
-    //     'tailwindcss/classnames-order': 'error',
-    //     'tailwindcss/enforces-negative-arbitrary-values': 'error',
-    //     'tailwindcss/enforces-shorthand': 'error',
-    //     'tailwindcss/no-arbitrary-value': 'warn',
-    //   },
-    // },
+    {
+      files: ['docs/**/*'],
+      rules: {
+        '@typescript-eslint/prefer-nullish-coalescing': 'off',
+      },
+    },
     {
       files: ['examples/**/*', 'packages/*/**/*', 'scripts/**/*', 'www/**/*'],
       rules: {

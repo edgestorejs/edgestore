@@ -1,5 +1,5 @@
-/* eslint-disable @next/next/no-img-element */
 import React from 'react';
+import CodeBlock1 from '../../../docs/landing-code/CodeBlock1.md';
 
 export const useScrollPosition = () => {
   const [scrollPosition, setScrollPosition] = React.useState(0);
@@ -13,11 +13,39 @@ export const useScrollPosition = () => {
 
     updatePosition();
 
+    // eslint-disable-next-line @typescript-eslint/no-confusing-void-expression
     return () => window.removeEventListener('scroll', updatePosition);
   }, []);
 
   return scrollPosition;
 };
+
+type CodeBlockItem = {
+  title: string;
+  description: string;
+  code: React.ReactNode;
+};
+
+const codeBlocks: CodeBlockItem[] = [
+  {
+    title: 'Step 1 - Server',
+    description:
+      'Add the service environment variables to your Next.js app. Then export the Edge Store API from the Next.js API routes.',
+    code: <CodeBlock1 />,
+  },
+  {
+    title: 'Step 2 - Client',
+    description:
+      'Wrap your app with the Edge Store provider component. This will enable you to access Edge Store methods anywhere in your app.',
+    code: <CodeBlock1 />,
+  },
+  {
+    title: 'Step 3 - Start using',
+    description:
+      'Use the useEdgeStore hook to upload and fetch images from Edge Store. You can also use Edge Store features like:',
+    code: <CodeBlock1 />,
+  },
+];
 
 const Homepage = () => {
   const scrollPosition = useScrollPosition();
@@ -28,12 +56,12 @@ const Homepage = () => {
         style={{
           boxShadow: 'inset 0px -6px 2px -5px #ffffff10',
         }}
-        className={`sticky top-0 mt-[calc(var(--ifm-navbar-height)*-1)] h-[var(--ifm-navbar-height)] w-full bg-[#00000040] backdrop-blur-sm transition-opacity duration-700 ${
+        className={`sticky top-0 z-10 mt-[calc(var(--ifm-navbar-height)*-1)] h-[var(--ifm-navbar-height)] w-full bg-[#00000040] backdrop-blur-sm transition-opacity duration-700 ${
           scrollPosition > 0 ? 'opacity-100' : 'opacity-0'
         }`}
       />
 
-      <main className="mt-[calc(var(--ifm-navbar-height)*-1)] flex min-h-screen flex-col items-center text-white">
+      <main className="mt-[calc(var(--ifm-navbar-height)*-1)] min-h-screen text-white">
         <div className="flex w-full flex-col items-center justify-center bg-[radial-gradient(theme(colors.primary.999),#000000)] py-28 px-3">
           <h1 className="bg-gradient-to-b from-primary-100 to-primary-400 bg-clip-text text-center font-[Futura] text-5xl text-transparent md:text-6xl">
             EDGE STORE
@@ -57,7 +85,7 @@ const Homepage = () => {
             </p>
           </div>
         </div>
-        <div className="my-20 flex w-full max-w-4xl flex-wrap justify-center px-6 md:justify-between">
+        <div className="my-20 mx-auto grid w-full max-w-4xl auto-rows-fr grid-cols-1 gap-10 px-6 md:grid-cols-3 md:justify-between">
           <TechCard
             title="Easy to use"
             description="Use our server side and client side libraries to easily integrate Edge Store into your project."
@@ -83,32 +111,12 @@ const Homepage = () => {
             description="As your project grows, you can upgrade your plan to get more storage and more bandwidth."
           />
         </div>
-        <div className="-z-10 flex max-w-md flex-col items-center justify-center">
-          <h2>Step 1 - Server</h2>
-          <div className="text-gray-300">
-            Add the service environment variables to your Next.js app. Then
-            export the Edge Store API from the Next.js API routes.
-          </div>
-          <div className="mb-6" />
-          <h2>Step 2 - Client</h2>
-          <div className="text-gray-300">
-            Wrap your app with the Edge Store provider component. This will
-            enable you to access Edge Store methods anywhere in your app.
-          </div>
-          <div className="mb-6" />
-          <h2>Step 3 - Start using</h2>
-          <div className="text-gray-300">
-            Use the useEdgeStore hook to upload and fetch images from Edge
-            Store. You can also use Edge Store features like:
-            <ul>
-              <li>Getting real-time progress of image uploads</li>
-              <li>Controlling access to images with permissions</li>
-              <li>Optimizing images for different devices and resolutions</li>
-              <li>And more!</li>
-            </ul>
-          </div>
+        <div className="mx-6 flex flex-col items-center gap-12">
+          {codeBlocks.map((block) => (
+            <CodeBlockItem key={block.title} block={block} />
+          ))}
         </div>
-        <div className="my-16">
+        <div className="my-16 text-center">
           <JoinButton />
         </div>
       </main>
@@ -123,7 +131,7 @@ const TechCard: React.FC<{ title: string; description: string }> = ({
   description,
 }) => {
   return (
-    <div className="my-4 min-h-[170px] w-[90%] rounded-lg p-6 shadow-[0px_0px_19px_0px_theme(colors.primary.900)] md:w-[30%]">
+    <div className="min-h-[170px] w-full rounded-lg p-6 shadow-[0px_0px_19px_0px_theme(colors.primary.900)]">
       <p className="mb-2 text-lg font-bold">{title}</p>
       <p className="text-gray-400">{description}</p>
     </div>
@@ -140,5 +148,17 @@ const JoinButton: React.FC = () => {
     >
       APPLY FOR EARLY ACCESS
     </a>
+  );
+};
+
+const CodeBlockItem: React.FC<{ block: CodeBlockItem }> = ({ block }) => {
+  return (
+    <div className="flex max-w-full flex-col justify-between gap-12 md:max-w-6xl md:flex-row">
+      <div className="flex-[3]">{block.code}</div>
+      <div className="flex-[2]">
+        <h2>{block.title}</h2>
+        <div>{block.description}</div>
+      </div>
+    </div>
   );
 };

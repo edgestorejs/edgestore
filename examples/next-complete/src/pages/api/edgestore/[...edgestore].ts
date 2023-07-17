@@ -75,5 +75,3 @@ export default createEdgeStoreNextHandler<Context>({
 export const edgeStoreClient = initEdgeStoreClient({
   router: edgeStoreRouter,
 });
-
-edgeStoreRouter.$config.ctx;
