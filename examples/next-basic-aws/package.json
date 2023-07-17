@@ -1,5 +1,5 @@
 {
-  "name": "example-nextjs-aws",
+  "name": "next-basic-aws",
   "version": "0.0.0-alpha.11",
   "private": true,
   "scripts": {

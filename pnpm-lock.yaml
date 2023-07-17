@@ -146,13 +146,7 @@ importers:
         specifier: ^5.1.6
         version: 5.1.6
 
-  examples/example-nextjs-aws:
-    dependencies:
-      '@edge-store/react':
-        specifier: link:../../packages/react
-        version: link:../../packages/react
-
-  examples/example-nextjs-basic:
+  examples/next-basic:
     dependencies:
       '@edge-store/react':
         specifier: link:../../packages/react
@@ -195,7 +189,13 @@ importers:
         specifier: ^5.1.6
         version: 5.1.6
 
-  examples/example-nextjs-complete:
+  examples/next-basic-aws:
+    dependencies:
+      '@edge-store/react':
+        specifier: link:../../packages/react
+        version: link:../../packages/react
+
+  examples/next-complete:
     dependencies:
       '@edge-store/react':
         specifier: link:../../packages/react
@@ -236,7 +236,7 @@ importers:
     devDependencies:
       '@types/node':
         specifier: ^18.11.18
-        version: 18.16.19
+        version: 18.11.18
       '@types/react':
         specifier: 18.0.26
         version: 18.0.26
