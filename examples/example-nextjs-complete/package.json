@@ -14,10 +14,12 @@
     "@edge-store/server": "^0.0.0-alpha.11",
     "@next/font": "^13.4.9",
     "next": "^13.4.9",
+    "next-superjson-plugin": "^0.5.9",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-dropzone": "^14.2.3",
     "react-icons": "^4.10.1",
+    "superjson": "^1.12.4",
     "tailwind-merge": "^1.13.2",
     "zod": "^3.21.4"
   },

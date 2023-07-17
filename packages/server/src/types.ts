@@ -115,3 +115,25 @@ export type DeepPartial<TObject> = TObject extends object
       [P in keyof TObject]?: DeepPartial<TObject[P]>;
     }
   : TObject;
+
+/**
+ * Get the keys of a union type.
+ * @internal
+ */
+export type KeysOfUnion<TUnion> = TUnion extends TUnion
+  ? keyof TUnion extends string
+    ? keyof TUnion
+    : string
+  : never;
+
+/**
+ * Unify a union of objects into a single object.
+ * @internal
+ */
+export type UnifyUnion<TUnion> = Simplify<
+  (TUnion extends any ? (k: TUnion) => void : never) extends (
+    k: infer I,
+  ) => void
+    ? I
+    : never
+>;

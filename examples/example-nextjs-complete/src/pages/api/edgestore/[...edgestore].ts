@@ -3,6 +3,7 @@ import {
   createEdgeStoreNextHandler,
   CreateNextContextOptions,
 } from '@edge-store/server/adapters/next';
+import { initEdgeStoreClient } from '@edge-store/server/core';
 import { z } from 'zod';
 
 type Context = {
@@ -34,6 +35,10 @@ const imagesBucket = es.imageBucket
   .beforeUpload(({ ctx, input }) => {
     console.log(ctx, input);
     return true;
+  })
+  .beforeDelete(({ ctx, file }) => {
+    console.log(ctx, file);
+    return true;
   });
 
 const filesBucket = es.fileBucket
@@ -63,3 +68,12 @@ export default createEdgeStoreNextHandler<Context>({
   router: edgeStoreRouter,
   createContext,
 });
+
+/**
+ * Use this to easily access the EdgeStore API from your backend.
+ */
+export const edgeStoreClient = initEdgeStoreClient({
+  router: edgeStoreRouter,
+});
+
+edgeStoreRouter.$config.ctx;

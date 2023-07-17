@@ -6,6 +6,7 @@
     "build": "turbo run build --filter=@edge-store/*",
     "watch": "turbo run watch --parallel",
     "dev": "turbo run dev --parallel --filter=example-nextjs-basic --filter=@edge-store/*",
+    "packages:dev": "turbo run dev --parallel --filter=@edge-store/*",
     "aws-example": "turbo run dev --parallel --filter=example-nextjs-aws",
     "docs:dev": "pnpm --filter docs run start",
     "lint": "turbo lint",

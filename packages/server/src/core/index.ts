@@ -1,6 +1,10 @@
 import { EdgeStoreRouter } from './internals/bucketBuilder';
 
-export { initEdgeStoreClient } from './client';
-export { initEdgeStoreSdk } from './sdk';
+export * from './client';
+export * from './sdk';
+export type {
+  InferBucketPathKeys,
+  InferMetadataObject,
+} from './internals/bucketBuilder';
 
-export type AnyEdgeStoreRouter = EdgeStoreRouter<any>;
+export type AnyRouter = EdgeStoreRouter<any>;

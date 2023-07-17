@@ -1,11 +1,11 @@
-import { AnyEdgeStoreRouter } from '@edge-store/server/core';
+import { AnyRouter } from '@edge-store/server/core';
 import * as React from 'react';
 import { BucketFunctions, createNextProxy } from './createNextProxy';
 
 const DEFAULT_BASE_URL =
   process.env.NEXT_PUBLIC_EDGE_STORE_BASE_URL ?? 'https://files.edge-store.com';
 
-type EdgeStoreContextValue<TRouter extends AnyEdgeStoreRouter> = {
+type EdgeStoreContextValue<TRouter extends AnyRouter> = {
   edgestore: BucketFunctions<TRouter>;
   /**
    * In development, if this is a protected file, this function will add the token as a query param to the url.
@@ -14,7 +14,7 @@ type EdgeStoreContextValue<TRouter extends AnyEdgeStoreRouter> = {
   getSrc: (url: string) => string;
 };
 
-export function createEdgeStoreProvider<TRouter extends AnyEdgeStoreRouter>() {
+export function createEdgeStoreProvider<TRouter extends AnyRouter>() {
   const EdgeStoreContext = React.createContext<
     EdgeStoreContextValue<TRouter> | undefined
   >(undefined);
@@ -64,7 +64,7 @@ export function createEdgeStoreProvider<TRouter extends AnyEdgeStoreRouter>() {
   };
 }
 
-function EdgeStoreProviderInner<TRouter extends AnyEdgeStoreRouter>({
+function EdgeStoreProviderInner<TRouter extends AnyRouter>({
   children,
   context,
   basePath,
@@ -97,7 +97,7 @@ function EdgeStoreProviderInner<TRouter extends AnyEdgeStoreRouter>({
       // in production we use cookies, so we don't need a token
       process.env.NODE_ENV === 'production' ||
       // public urls don't need a token
-      // e.g. https://files.edge-store.com/project/route/_public/...
+      // e.g. https://files.edge-store.com/project/bucket/_public/...
       url.match(/^https?:\/\/[^\/]+\/[^\/]+\/[^\/]+\/_public\/.+/)
     ) {
       return `${url}`;

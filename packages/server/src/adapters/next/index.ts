@@ -5,7 +5,7 @@ import { NextApiRequest, NextApiResponse } from 'next/types';
 import { v4 as uuidv4 } from 'uuid';
 import {
   AnyBuilder,
-  BucketPath,
+  AnyPath,
   EdgeStoreRouter,
 } from '../../core/internals/bucketBuilder';
 import { EdgeStoreProvider } from '../../providers/edgestore';
@@ -27,9 +27,9 @@ export type Config<TCtx> = {
 };
 
 type RequestUploadBody = {
+  bucketName: string;
   input: any;
   fileInfo: {
-    routeName: string;
     size: number;
     extension: string;
     replaceTargetUrl?: string;
@@ -37,7 +37,7 @@ type RequestUploadBody = {
 };
 
 type DeleteFileBody = {
-  routeName: string;
+  bucketName: string;
   url: string;
 };
 
@@ -72,35 +72,41 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
         baseUrl,
       });
     } else if (req.url === '/api/edgestore/request-upload') {
-      const { input, fileInfo } = req.body as RequestUploadBody;
+      const { bucketName, input, fileInfo } = req.body as RequestUploadBody;
       const ctxToken = req.cookies['edgestore-ctx'];
       if (!ctxToken) {
         res.status(401).send('Missing edgestore-ctx cookie');
         return;
       }
       const ctx = await getContext(ctxToken);
-      const route = config.router.routes[fileInfo.routeName];
-      if (!route) {
-        throw new Error(`Route ${fileInfo.routeName} not found`);
+      const bucket = config.router.buckets[bucketName];
+      if (!bucket) {
+        throw new Error(`Bucket ${bucketName} not found`);
       }
-      await route._def.beforeUpload?.({
-        ctx,
-        input,
-        fileInfo: {
-          size: fileInfo.size,
-          extension: fileInfo.extension,
-          replaceTargetUrl: fileInfo.replaceTargetUrl,
-        },
-      });
+      if (bucket._def.beforeUpload) {
+        const canUpload = await bucket._def.beforeUpload?.({
+          ctx,
+          input,
+          fileInfo: {
+            size: fileInfo.size,
+            extension: fileInfo.extension,
+            replaceTargetUrl: fileInfo.replaceTargetUrl,
+          },
+        });
+        if (!canUpload) {
+          throw new Error('Upload not allowed');
+        }
+      }
       const path = buildPath({
         fileInfo,
-        route,
+        bucket,
         pathAttrs: { ctx, input },
       });
-      const metadata = await route._def.metadata?.({ ctx, input });
-      const isPublic = route._def.accessControl === undefined;
+      const metadata = await bucket._def.metadata?.({ ctx, input });
+      const isPublic = bucket._def.accessControl === undefined;
       const requestUploadRes = await provider.requestUpload({
-        route,
+        bucketName,
+        bucketType: bucket._def.type,
         fileInfo: {
           ...fileInfo,
           path,
@@ -108,21 +114,44 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
           metadata,
         },
       });
-      res.json(requestUploadRes);
+      res.json({
+        ...requestUploadRes,
+        size: fileInfo.size,
+        uploadedAt: new Date().toISOString(),
+        path,
+        metadata,
+      });
     } else if (req.url === '/api/edgestore/delete-file') {
-      const { routeName, url } = req.body as DeleteFileBody;
+      const { bucketName, url } = req.body as DeleteFileBody;
       const ctxToken = req.cookies['edgestore-ctx'];
       if (!ctxToken) {
         res.status(401).send('Missing edgestore-ctx cookie');
         return;
       }
-      await getContext(ctxToken); // just to check if the token is valid
-      const route = config.router.routes[routeName];
-      if (!route) {
-        throw new Error(`Route ${routeName} not found`);
+      const ctx = await getContext(ctxToken);
+      const bucket = config.router.buckets[bucketName];
+      if (!bucket) {
+        throw new Error(`Bucket ${bucketName} not found`);
+      }
+
+      if (!bucket._def.beforeDelete) {
+        throw new Error(
+          'You need to define beforeDelete if you want to delete files directly from the frontend.',
+        );
+      }
+
+      const file = await provider.getFile({
+        url,
+      });
+      const canDelete = await bucket._def.beforeDelete({
+        ctx,
+        file,
+      });
+      if (!canDelete) {
+        throw new Error('Delete not allowed');
       }
       await provider.deleteFile({
-        route,
+        bucket,
         url,
       });
       res.status(200).end();
@@ -134,14 +163,14 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
 
 function buildPath(params: {
   fileInfo: RequestUploadBody['fileInfo'];
-  route: AnyBuilder;
+  bucket: AnyBuilder;
   pathAttrs: {
     ctx: any;
     input: any;
   };
 }) {
-  const { route } = params;
-  const pathParams = route._def.path as BucketPath;
+  const { bucket } = params;
+  const pathParams = bucket._def.path as AnyPath;
   const path = pathParams.map((param) => {
     const paramEntries = Object.entries(param);
     if (paramEntries[0] === undefined) {

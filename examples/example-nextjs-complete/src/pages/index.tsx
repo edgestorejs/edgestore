@@ -1,25 +1,27 @@
 import { GetServerSideProps, InferGetServerSidePropsType } from 'next';
+import Image from 'next/image';
 import { useState } from 'react';
 import { twMerge } from 'tailwind-merge';
 import ImageInput from '../components/ImageInput';
-import { useEdgeStore } from '../utils/edgestore';
+import { ClientResponse, useEdgeStore } from '../utils/edgestore';
+import { edgeStoreClient } from './api/edgestore/[...edgestore]';
 
 const MAX_SIZE = 1024 * 1024 * 5; // 5MB
 
 export default function Home({
-  numbers,
+  files: initFiles,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const [file, setFile] = useState<File>();
+  const [files, setFiles] = useState(initFiles);
   const [progress, setProgress] = useState<number | null>(null);
-  const [url, setUrl] = useState<string | null>(null);
-  const { edgestore, getSrc } = useEdgeStore();
+  const { edgestore } = useEdgeStore();
 
-  const handleUpload = async () => {
-    if (!file) {
-      return;
-    }
+  const uploadFile = async (options?: { replaceTargetUrl?: string }) => {
     try {
-      const { url } = await edgestore.images.upload({
+      if (!file) {
+        return;
+      }
+      const newFileData = await edgestore.images.upload({
         file,
         input: {
           type: 'post',
@@ -33,15 +35,30 @@ export default function Home({
             }, 1000);
           }
         },
+        options: {
+          replaceTargetUrl: options?.replaceTargetUrl,
+        },
       });
-      // wait 2 seconds to make sure the image is available
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      setUrl(getSrc(url));
+
+      const parsedNewFile: FileRes = {
+        ...newFileData,
+        base64Url: URL.createObjectURL(file),
+      };
+
+      if (options?.replaceTargetUrl) {
+        setFiles((files) => [
+          parsedNewFile,
+          ...files.filter((f) => f.url !== options.replaceTargetUrl),
+        ]);
+      } else {
+        setFiles((files) => [parsedNewFile, ...files]);
+      }
+      setFile(undefined);
     } catch (e) {
       console.error(e);
-      return;
     }
   };
+
   return (
     <div className="flex flex-col items-center">
       <div className="mb-3 text-lg font-bold">NextJS example</div>
@@ -58,19 +75,96 @@ export default function Home({
       </div>
       <div className="mt-3" />
       <div>
-        <Button onClick={handleUpload} disabled={!file || progress !== null}>
+        <Button
+          onClick={() => uploadFile()}
+          disabled={!file || progress !== null}
+        >
           Upload
         </Button>
       </div>
       <ProgressBar progress={progress} />
-      {url && (
-        <div className="mt-5">
-          <img src={url} alt="Example" />
-        </div>
-      )}
-      {numbers.map((number) => (
-        <div key={number}>{number}</div>
-      ))}
+      <div className="mt-5 grid w-full grid-cols-2 gap-3 px-10 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6">
+        {files.map((fileData) => (
+          <div className="mt-5 aspect-square" key={fileData.url}>
+            <ImageFileBlock
+              fileData={fileData}
+              // when the newFile is set, the replace button will be shown
+              newFile={progress !== null ? undefined : file}
+              onDelete={async (fileData) => {
+                await edgestore.images.delete({ url: fileData.url });
+                setFiles((files) =>
+                  files.filter((f) => f.url !== fileData.url),
+                );
+              }}
+              onReplace={async (originalFile) => {
+                await uploadFile({
+                  replaceTargetUrl: originalFile.url,
+                });
+              }}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ImageFileBlock(params: {
+  fileData: FileRes;
+  newFile?: File;
+  onDelete?: (fileData: FileRes) => void | Promise<void>;
+  onReplace?: (originalFile: FileRes, newFile: File) => void | Promise<void>;
+}) {
+  const { fileData, newFile, onDelete, onReplace } = params;
+  const [loading, setLoading] = useState(false);
+  return (
+    <div className="group relative h-full w-full">
+      <Image
+        fill
+        sizes="200px"
+        className="object-cover"
+        src={fileData.base64Url ?? fileData.thumbnailUrl ?? fileData.url}
+        alt="Example"
+      />
+      <div
+        className={twMerge(
+          'absolute left-0 top-0 flex h-full w-full flex-col items-center justify-center gap-2 bg-black bg-opacity-50 opacity-0 transition-all duration-300 group-hover:opacity-100',
+          loading && 'opacity-100',
+        )}
+      >
+        {loading ? (
+          <div className="text-white">Loading...</div>
+        ) : (
+          <>
+            <Button
+              onClick={async () => {
+                try {
+                  setLoading(true);
+                  await onDelete?.(fileData);
+                } finally {
+                  setLoading(false);
+                }
+              }}
+            >
+              Delete
+            </Button>
+            {newFile && (
+              <Button
+                onClick={async () => {
+                  try {
+                    setLoading(true);
+                    await onReplace?.(fileData, newFile);
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+              >
+                Replace
+              </Button>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }
@@ -98,13 +192,15 @@ const Button: React.FC<{
   children?: string;
   onClick?: () => void;
   disabled?: boolean;
-}> = ({ children, onClick, disabled }) => {
+  className?: string;
+}> = ({ children, onClick, disabled, className }) => {
   return (
     <button
       className={twMerge(
         'rounded bg-violet-600 px-2 py-1 font-bold uppercase text-white transition-colors duration-300 hover:bg-violet-500',
         disabled &&
           'pointer-events-none cursor-default bg-gray-800 text-opacity-50',
+        className,
       )}
       onClick={onClick}
       disabled={disabled}
@@ -114,10 +210,14 @@ const Button: React.FC<{
   );
 };
 
+type FileRes = ClientResponse['images']['listFiles']['data'][number] & {
+  base64Url?: string;
+};
+
 export const getServerSideProps: GetServerSideProps<{
-  numbers: number[];
+  files: FileRes[];
 }> = async () => {
-  // wait 1 second
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-  return { props: { numbers: [1, 2, 3, 4] } };
+  const res = await edgeStoreClient.images.listFiles();
+  console.log(res.data);
+  return { props: { files: res.data } };
 };

@@ -1,11 +1,11 @@
-import { AnyEdgeStoreRouter } from '..';
-import { AnyBuilder } from '../internals/bucketBuilder';
+import { AnyRouter } from '..';
+import EdgeStoreCredentialsError from '../../libs/errors/EdgeStoreCredentialsError';
+import { AnyContext } from '../internals/bucketBuilder';
 
 const API_ENDPOINT =
   process.env.EDGE_STORE_API_ENDPOINT ?? 'https://api.edge-store.com';
 
 type FileInfoForUpload = {
-  routeName: string;
   size: number;
   extension: string;
   isPublic: boolean;
@@ -72,13 +72,13 @@ export const edgeStoreRawSdk = {
   async getToken(params: {
     accessKey: string;
     secretKey: string;
-    ctx: any;
-    router: AnyEdgeStoreRouter;
+    ctx: AnyContext;
+    router: AnyRouter;
   }) {
-    const reqRoutes = Object.entries(params.router.routes).reduce(
-      (acc, [routeName, route]) => {
-        acc[routeName] = {
-          path: route._def.path.map((p: { [key: string]: () => string }) => {
+    const reqBuckets = Object.entries(params.router.buckets).reduce(
+      (acc, [bucketName, bucket]) => {
+        acc[bucketName] = {
+          path: bucket._def.path.map((p: { [key: string]: () => string }) => {
             const paramEntries = Object.entries(p);
             if (paramEntries[0] === undefined) {
               throw new Error('Missing path param');
@@ -89,7 +89,7 @@ export const edgeStoreRawSdk = {
               value: value(),
             };
           }),
-          accessControl: route._def.accessControl,
+          accessControl: bucket._def.accessControl,
         };
         return acc;
       },
@@ -98,7 +98,7 @@ export const edgeStoreRawSdk = {
     const { token } = await makeRequest<{ token: string }>({
       body: {
         ctx: params.ctx,
-        routes: reqRoutes,
+        buckets: reqBuckets,
       },
       accessKey: params.accessKey,
       secretKey: params.secretKey,
@@ -107,15 +107,42 @@ export const edgeStoreRawSdk = {
     return token;
   },
 
+  async getFile({
+    accessKey,
+    secretKey,
+    url,
+  }: {
+    accessKey: string;
+    secretKey: string;
+    url: string;
+  }) {
+    return await makeRequest<{
+      url: string;
+      size: number;
+      uploadedAt: string;
+      path: Record<string, string>;
+      metadata: Record<string, string>;
+    }>({
+      path: '/get-file',
+      accessKey,
+      secretKey,
+      body: {
+        url,
+      },
+    });
+  },
+
   async requestUpload({
     accessKey,
     secretKey,
-    route,
+    bucketName,
+    bucketType,
     fileInfo,
   }: {
     accessKey: string;
     secretKey: string;
-    route: AnyBuilder;
+    bucketName: string;
+    bucketType: string;
     fileInfo: FileInfoForUpload;
   }) {
     const res = await makeRequest<{
@@ -126,8 +153,8 @@ export const edgeStoreRawSdk = {
       accessKey,
       secretKey,
       body: {
-        bucketName: fileInfo.routeName,
-        bucketType: route._def.type,
+        bucketName,
+        bucketType,
         isPublic: fileInfo.isPublic,
         path: fileInfo.path,
         extension: fileInfo.extension,
@@ -177,6 +204,7 @@ export const edgeStoreRawSdk = {
     return await makeRequest<{
       data: {
         url: string;
+        thumbnailUrl: string | null;
         size: number;
         uploadedAt: string;
         path: Record<string, string>;
@@ -201,7 +229,7 @@ export const edgeStoreRawSdk = {
   },
 };
 
-export function initEdgeStoreSdk<TCtx>(params?: {
+export function initEdgeStoreSdk(params: {
   accessKey?: string;
   secretKey?: string;
 }) {
@@ -211,11 +239,11 @@ export function initEdgeStoreSdk<TCtx>(params?: {
   } = params ?? {};
 
   if (!accessKey || !secretKey) {
-    throw new Error('Missing EDGE_STORE_ACCESS_KEY or EDGE_STORE_SECRET_KEY');
+    throw new EdgeStoreCredentialsError();
   }
 
   return {
-    async getToken(params: { ctx: TCtx; router: AnyEdgeStoreRouter }) {
+    async getToken(params: { ctx: AnyContext; router: AnyRouter }) {
       return await edgeStoreRawSdk.getToken({
         accessKey,
         secretKey,
@@ -223,17 +251,27 @@ export function initEdgeStoreSdk<TCtx>(params?: {
         router: params.router,
       });
     },
+    async getFile({ url }: { url: string }) {
+      return await edgeStoreRawSdk.getFile({
+        accessKey,
+        secretKey,
+        url,
+      });
+    },
     async requestUpload({
-      route,
+      bucketName,
+      bucketType,
       fileInfo,
     }: {
-      route: AnyBuilder;
+      bucketName: string;
+      bucketType: string;
       fileInfo: FileInfoForUpload;
     }) {
       return await edgeStoreRawSdk.requestUpload({
         accessKey,
         secretKey,
-        route,
+        bucketName,
+        bucketType,
         fileInfo,
       });
     },
@@ -257,3 +295,5 @@ export function initEdgeStoreSdk<TCtx>(params?: {
     },
   };
 }
+
+export type EdgeStoreSdk = ReturnType<typeof initEdgeStoreSdk>;

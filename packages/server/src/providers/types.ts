@@ -6,10 +6,30 @@ export type InitParams = {
   router: EdgeStoreRouter<any>;
 };
 
-export type RequestUploadBody = {
-  route: AnyBuilder;
+export type InitRes = {
+  token?: string;
+};
+
+export type GetFileParams = {
+  url: string;
+};
+
+export type GetFileRes = {
+  url: string;
+  size: number;
+  uploadedAt: Date;
+  path: {
+    [key: string]: string;
+  };
+  metadata: {
+    [key: string]: string;
+  };
+};
+
+export type RequestUploadParams = {
+  bucketName: string;
+  bucketType: string;
   fileInfo: {
-    routeName: string;
     size: number;
     extension: string;
     isPublic: boolean;
@@ -24,23 +44,26 @@ export type RequestUploadBody = {
   };
 };
 
-export type DeleteFileBody = {
-  route: AnyBuilder;
+export type RequestUploadRes = {
+  uploadUrl: string;
+  accessUrl: string;
+};
+
+export type DeleteFileParams = {
+  bucket: AnyBuilder;
   url: string;
 };
 
-type InitRes = {
-  token?: string;
+export type DeleteFileRes = {
+  success: boolean;
 };
 
 export type Provider = {
   init: (params: InitParams) => MaybePromise<InitRes>;
   getBaseUrl: () => MaybePromise<string>;
-  requestUpload: (params: RequestUploadBody) => MaybePromise<{
-    uploadUrl: string;
-    accessUrl: string;
-  }>;
-  deleteFile: (params: DeleteFileBody) => MaybePromise<{
-    success: boolean;
-  }>;
+  getFile: (params: GetFileParams) => MaybePromise<GetFileRes>;
+  requestUpload: (
+    params: RequestUploadParams,
+  ) => MaybePromise<RequestUploadRes>;
+  deleteFile: (params: DeleteFileParams) => MaybePromise<DeleteFileRes>;
 };

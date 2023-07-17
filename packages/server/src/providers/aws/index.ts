@@ -1,5 +1,6 @@
 import {
   DeleteObjectCommand,
+  HeadObjectCommand,
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
@@ -42,10 +43,29 @@ export function AWSProvider(options?: AWSProviderOptions): Provider {
     getBaseUrl() {
       return baseUrl;
     },
-    async requestUpload({ fileInfo }) {
-      const pathPrefix = `${fileInfo.routeName}${
-        fileInfo.isPublic ? '/_public' : ''
-      }`;
+    async getFile({ url }) {
+      const path = url.replace(`${baseUrl}/`, '');
+      const { ContentLength, LastModified } = await s3Client.send(
+        new HeadObjectCommand({
+          Bucket: bucketName,
+          Key: path,
+        }),
+      );
+
+      if (!ContentLength || !LastModified) {
+        throw new Error('File not found');
+      }
+
+      return {
+        url,
+        metadata: {},
+        path: {},
+        size: ContentLength,
+        uploadedAt: LastModified,
+      };
+    },
+    async requestUpload({ bucketName, fileInfo }) {
+      const pathPrefix = `${bucketName}${fileInfo.isPublic ? '/_public' : ''}`;
       const nameId = uuidv4();
       const extension = fileInfo.extension
         ? `.${fileInfo.extension.replace('.', '')}`

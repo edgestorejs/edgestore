@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { MaybePromise, Simplify } from '../../types';
+import { KeysOfUnion, MaybePromise, Simplify } from '../../types';
 import { createPathParamProxy } from './createPathParamProxy';
 
 type Merge<TType, TWith> = {
@@ -26,11 +26,34 @@ type UnionToIntersection<TType> = (
   ? I
   : never;
 
-type InputZodObject = z.AnyZodObject;
+export type InferBucketPathKeys<TBucket extends Builder<any, AnyDef>> =
+  KeysOfUnion<TBucket['_def']['path'][number]>;
 
-export type BucketPath = Record<string, () => string>[];
+type InferBucketPathKeysFromDef<TDef extends AnyDef> = KeysOfUnion<
+  TDef['path'][number]
+>;
 
-type PathParam<TPath extends BucketPath> = {
+export type InferMetadataObject<TBucket extends Builder<any, AnyDef>> =
+  TBucket['_def']['metadata'] extends (...args: any) => any
+    ? Awaited<ReturnType<TBucket['_def']['metadata']>>
+    : TBucket['_def']['metadata'] extends ((...args: any) => any) | undefined
+    ? any
+    : never;
+
+type InferMetadataObjectFromDef<TDef extends AnyDef> =
+  TDef['metadata'] extends (...args: any) => any
+    ? Awaited<ReturnType<TDef['metadata']>>
+    : TDef['metadata'] extends ((...args: any) => any) | undefined
+    ? any
+    : never;
+
+export type AnyContext = Record<string, string | undefined | null>;
+
+export type AnyInput = z.AnyZodObject;
+
+export type AnyPath = Record<string, () => string>[];
+
+type PathParam<TPath extends AnyPath> = {
   path: keyof UnionToIntersection<TPath[number]>;
 };
 
@@ -38,7 +61,7 @@ const unsetMarker = Symbol('unsetMarker');
 
 type UnsetMarker = typeof unsetMarker;
 
-type Conditions<TPath extends BucketPath> = {
+type Conditions<TPath extends AnyPath> = {
   eq?: string | PathParam<TPath>;
   lt?: string | PathParam<TPath>;
   lte?: string | PathParam<TPath>;
@@ -75,20 +98,40 @@ type BeforeUploadFn<TCtx, TDef extends AnyDef> = (params: {
   fileInfo: FileInfo;
 }) => MaybePromise<boolean>;
 
-type MetadataFn<TCtx, TDef extends AnyDef> = (params: {
+type BeforeDeleteFn<TCtx, TDef extends AnyDef> = (params: {
+  ctx: TCtx;
+  file: {
+    url: string;
+    size: number;
+    uploadedAt: Date;
+    path: {
+      [TKey in InferBucketPathKeysFromDef<TDef>]: string;
+    };
+    metadata: InferMetadataObjectFromDef<TDef>;
+  };
+}) => MaybePromise<boolean>;
+
+type AnyMetadata = Record<string, string | undefined | null>;
+
+type MetadataFn<
+  TCtx,
+  TDef extends AnyDef,
+  TMetadata extends AnyMetadata,
+> = (params: {
   ctx: TCtx;
   input: z.infer<TDef['input']>;
-}) => MaybePromise<Record<string, any>>;
+}) => MaybePromise<TMetadata>;
 
 type BucketType = 'IMAGE' | 'FILE';
 
-type Def<TInput extends InputZodObject, TPath extends BucketPath> = {
-  type: BucketType;
+type Def<TInput extends AnyInput, TPath extends AnyPath> = {
+  type: any;
   input: TInput;
   path: TPath;
-  metadata?: MetadataFn<any, any>;
+  metadata?: MetadataFn<any, any, any>;
   accessControl?: AccessControlSchema<any, any>;
   beforeUpload?: BeforeUploadFn<any, any>;
+  beforeDelete?: BeforeDeleteFn<any, any>;
 };
 
 type AnyDef = Def<any, any>;
@@ -102,7 +145,7 @@ type Builder<TCtx, TDef extends AnyDef> = {
    * @internal
    */
   _def: TDef;
-  input<TInput extends InputZodObject>(
+  input<TInput extends AnyInput>(
     input: TInput,
   ): Builder<
     TCtx,
@@ -110,11 +153,13 @@ type Builder<TCtx, TDef extends AnyDef> = {
       type: TDef['type'];
       input: OverwriteIfDefined<TDef['input'], TInput>;
       path: TDef['path'];
+      metadata: TDef['metadata'];
       accessControl: TDef['accessControl'];
       beforeUpload: TDef['beforeUpload'];
+      beforeDelete: TDef['beforeDelete'];
     }
   >;
-  path<TParams extends BucketPath>(
+  path<TParams extends AnyPath>(
     pathResolver: (params: {
       ctx: Simplify<ConvertStringToFunction<TCtx>>;
       input: Simplify<ConvertStringToFunction<z.infer<TDef['input']>>>;
@@ -125,18 +170,24 @@ type Builder<TCtx, TDef extends AnyDef> = {
       type: TDef['type'];
       input: TDef['input'];
       path: TParams;
+      metadata: TDef['metadata'];
       accessControl: TDef['accessControl'];
       beforeUpload: TDef['beforeUpload'];
+      beforeDelete: TDef['beforeDelete'];
     }
   >;
-  metadata(metadata: MetadataFn<TCtx, TDef>): Builder<
+  metadata<TMetadata extends AnyMetadata>(
+    metadata: MetadataFn<TCtx, TDef, TMetadata>,
+  ): Builder<
     TCtx,
     {
       type: TDef['type'];
       input: TDef['input'];
       path: TDef['path'];
+      metadata: MetadataFn<any, any, TMetadata>;
       accessControl: TDef['accessControl'];
       beforeUpload: TDef['beforeUpload'];
+      beforeDelete: TDef['beforeDelete'];
     }
   >;
   accessControl(accessControl: AccessControlSchema<TCtx, TDef>): Builder<
@@ -145,8 +196,10 @@ type Builder<TCtx, TDef extends AnyDef> = {
       type: TDef['type'];
       input: TDef['input'];
       path: TDef['path'];
+      metadata: TDef['metadata'];
       accessControl: AccessControlSchema<any, any>;
       beforeUpload: TDef['beforeUpload'];
+      beforeDelete: TDef['beforeDelete'];
     }
   >;
   beforeUpload(beforeUpload: BeforeUploadFn<TCtx, TDef>): Builder<
@@ -155,8 +208,22 @@ type Builder<TCtx, TDef extends AnyDef> = {
       type: TDef['type'];
       input: TDef['input'];
       path: TDef['path'];
+      metadata: TDef['metadata'];
       accessControl: TDef['accessControl'];
-      beforeUpload: BeforeUploadFn<TCtx, TDef>;
+      beforeUpload: BeforeUploadFn<any, any>;
+      beforeDelete: TDef['beforeDelete'];
+    }
+  >;
+  beforeDelete(beforeDelete: BeforeDeleteFn<TCtx, TDef>): Builder<
+    TCtx,
+    {
+      type: TDef['type'];
+      input: TDef['input'];
+      path: TDef['path'];
+      metadata: TDef['metadata'];
+      accessControl: TDef['accessControl'];
+      beforeUpload: TDef['beforeUpload'];
+      beforeDelete: BeforeDeleteFn<any, any>;
     }
   >;
 };
@@ -176,17 +243,19 @@ const createNewBuilder = (initDef: AnyDef, newDef: Partial<AnyDef>) => {
   );
 };
 
-function createBuilder<TCtx>(
-  opts: { type: BucketType },
+function createBuilder<TCtx, TType extends BucketType>(
+  opts: { type: TType },
   initDef?: Partial<AnyDef>,
 ): Builder<
   TCtx,
   {
-    type: BucketType;
+    type: TType;
     input: UnsetMarker;
     path: UnsetMarker;
+    metadata?: MetadataFn<any, any, any>;
     accessControl?: AccessControlSchema<any, any>;
     beforeUpload?: BeforeUploadFn<any, any>;
+    beforeDelete?: BeforeDeleteFn<any, any>;
   }
 > {
   const _def: AnyDef = {
@@ -231,11 +300,16 @@ function createBuilder<TCtx>(
         beforeUpload,
       }) as any;
     },
+    beforeDelete(beforeDelete) {
+      return createNewBuilder(_def, {
+        beforeDelete,
+      }) as any;
+    },
   };
 }
 
 class EdgeStoreBuilder<TCtx = object> {
-  context<TNewContext extends Record<string, string>>() {
+  context<TNewContext extends AnyContext>() {
     return new EdgeStoreBuilder<TNewContext>();
   }
 
@@ -245,16 +319,26 @@ class EdgeStoreBuilder<TCtx = object> {
 }
 
 export type EdgeStoreRouter<TCtx> = {
-  routes: Record<string, Builder<TCtx, AnyDef>>;
+  /**
+   * Only used for types
+   * @internal
+   */
+  $config: {
+    ctx: TCtx;
+  };
+  buckets: Record<string, Builder<TCtx, AnyDef>>;
 };
 
 function createRouterFactory<TCtx>() {
   return function createRouterInner<
-    TRoutes extends EdgeStoreRouter<TCtx>['routes'],
-  >(routes: TRoutes) {
+    TBuckets extends EdgeStoreRouter<TCtx>['buckets'],
+  >(buckets: TBuckets) {
     return {
-      routes,
-    };
+      $config: {
+        ctx: undefined as TCtx,
+      },
+      buckets,
+    } satisfies EdgeStoreRouter<TCtx>;
   };
 }
 
@@ -264,11 +348,11 @@ function createEdgeStoreInner<TCtx>() {
       /**
        * Builder object for creating an image bucket
        */
-      imageBucket: createBuilder<TCtx>({ type: 'IMAGE' }),
+      imageBucket: createBuilder<TCtx, 'IMAGE'>({ type: 'IMAGE' }),
       /**
        * Builder object for creating a file bucket
        */
-      fileBucket: createBuilder<TCtx>({ type: 'FILE' }),
+      fileBucket: createBuilder<TCtx, 'FILE'>({ type: 'FILE' }),
       /**
        * Create a router
        */
@@ -325,17 +409,53 @@ export const initEdgeStore = new EdgeStoreBuilder();
 //   })
 //   .beforeUpload(({ ctx, input }) => {
 //     return true;
+//   })
+//   .beforeDelete(({ ctx, file }) => {
+//     return true;
 //   });
 
 // const b = es.imageBucket.path(({ ctx }) => [{ author: ctx.userId }]);
 
 // const router = es.router({
+//   original: imagesBucket,
 //   imageBucket: a,
 //   imageBucket2: b,
 // });
 
 // export { router };
 
-// type EdgeStoreRouter = typeof router;
+// type ListFilesResponse<TBucket extends AnyRouter['buckets'][string]> = {
+//   data: {
+//     // url: string;
+//     // size: number;
+//     // uploadedAt: Date;
+//     // metadata: InferMetadataObject<TBucket>;
+//     path: InferBucketPathKeys<TBucket> extends string ? {
+//       [key: string]: string;
+//     } :{
+//       [TKey in InferBucketPathKeys<TBucket>]: string;
+//     };
+//   }[];
+//   pagination: {
+//     currentPage: number;
+//     totalPages: number;
+//     totalCount: number;
+//   };
+// };
+
+// type TPathKeys = 'author' | 'type';
+// type TPathKeys2 = InferBucketPathKeys<AnyBuilder>;
+
+// type ObjectWithKeys<TKeys extends string> = {
+//   [TKey in TKeys]: string;
+// };
+
+// type Test1 = ObjectWithKeys<TPathKeys>;
+// type Test2 = ObjectWithKeys<TPathKeys2>;
+// type PathKeys = InferBucketPathKeys<typeof router.buckets.imageBucket>;
+
+// type MetadataKeys = InferMetadataObject<typeof router.buckets.imageBucket>;
+
+// type MyEdgeStoreRouter = typeof router;
 
 // type MyAccessControl = AccessControlSchema<Context, AnyDef>;

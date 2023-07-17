@@ -1,4 +1,5 @@
 import { initEdgeStoreSdk } from '../../core/sdk';
+import EdgeStoreCredentialsError from '../../libs/errors/EdgeStoreCredentialsError';
 import { Provider } from '../types';
 
 const DEFAULT_BASE_URL =
@@ -20,7 +21,7 @@ export function EdgeStoreProvider(
   } = options ?? {};
 
   if (!accessKey || !secretKey) {
-    throw new Error('Missing EDGE_STORE_ACCESS_KEY or EDGE_STORE_SECRET_KEY');
+    throw new EdgeStoreCredentialsError();
   }
 
   const edgeStoreSdk = initEdgeStoreSdk({
@@ -40,9 +41,19 @@ export function EdgeStoreProvider(
     getBaseUrl() {
       return baseUrl;
     },
-    requestUpload: async ({ route, fileInfo }) => {
+    getFile: async ({ url }) => {
+      const { uploadedAt, ...rest } = await edgeStoreSdk.getFile({
+        url,
+      });
+      return {
+        uploadedAt: new Date(uploadedAt),
+        ...rest,
+      };
+    },
+    requestUpload: async ({ bucketName, bucketType, fileInfo }) => {
       return await edgeStoreSdk.requestUpload({
-        route,
+        bucketName,
+        bucketType,
         fileInfo,
       });
     },

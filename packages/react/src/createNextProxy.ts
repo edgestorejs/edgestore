@@ -1,15 +1,29 @@
-import { AnyEdgeStoreRouter } from '@edge-store/server/core';
+import {
+  AnyRouter,
+  InferBucketPathKeys,
+  InferMetadataObject,
+} from '@edge-store/server/core';
 import { z } from 'zod';
 import EdgeStoreError from './libs/errors/EdgeStoreError';
 
-export type BucketFunctions<TRouter extends AnyEdgeStoreRouter> = {
-  [K in keyof TRouter['routes']]: {
+export type BucketFunctions<TRouter extends AnyRouter> = {
+  [K in keyof TRouter['buckets']]: {
     upload: (params: {
       file: File;
-      input: z.infer<TRouter['routes'][K]['_def']['input']>;
-      onProgressChange?: (progress: number) => void;
+      input: z.infer<TRouter['buckets'][K]['_def']['input']>;
+      onProgressChange?: OnProgressChangeHandler;
+      options?: UploadOptions;
     }) => Promise<{
       url: string;
+      thumbnailUrl: TRouter['buckets'][K]['_def']['type'] extends 'IMAGE'
+        ? string | null
+        : never;
+      size: number;
+      uploadedAt: Date;
+      metadata: InferMetadataObject<TRouter['buckets'][K]>;
+      path: {
+        [TKey in InferBucketPathKeys<TRouter['buckets'][K]>]: string;
+      };
     }>;
     delete: (params: { url: string }) => Promise<{
       success: boolean;
@@ -23,34 +37,29 @@ type UploadOptions = {
   replaceTargetUrl?: string;
 };
 
-export function createNextProxy<TRouter extends AnyEdgeStoreRouter>({
+export function createNextProxy<TRouter extends AnyRouter>({
   apiPath,
 }: {
   apiPath: string;
 }) {
   return new Proxy<BucketFunctions<TRouter>>({} as BucketFunctions<TRouter>, {
     get(_, prop) {
-      const routeName = prop as keyof TRouter['routes'];
-      const routeFunctions: BucketFunctions<TRouter>[string] = {
-        upload: async (params: {
-          file: File;
-          input: z.infer<TRouter['routes'][typeof routeName]['_def']['input']>;
-          onProgressChange?: OnProgressChangeHandler;
-          options?: UploadOptions;
-        }) => {
+      const bucketName = prop as keyof TRouter['buckets'];
+      const bucketFunctions: BucketFunctions<TRouter>[string] = {
+        upload: async (params) => {
           return await uploadFile(params, {
-            routeName: routeName as string,
+            bucketName: bucketName as string,
             apiPath,
           });
         },
         delete: async (params: { url: string }) => {
           return await deleteFile(params, {
-            routeName: routeName as string,
+            bucketName: bucketName as string,
             apiPath,
           });
         },
       };
-      return routeFunctions;
+      return bucketFunctions;
     },
   });
 }
@@ -69,19 +78,20 @@ async function uploadFile(
   },
   {
     apiPath,
-    routeName,
+    bucketName,
   }: {
     apiPath: string;
-    routeName: string;
+    bucketName: string;
   },
 ) {
   try {
+    onProgressChange?.(0);
     const res = await fetch(`${apiPath}/request-upload`, {
       method: 'POST',
       body: JSON.stringify({
+        bucketName,
         input,
         fileInfo: {
-          routeName,
           extension: file.name.split('.').pop(),
           size: file.size,
           replaceTargetUrl: options?.replaceTargetUrl,
@@ -97,7 +107,14 @@ async function uploadFile(
     }
     // Upload the file to the signed URL and get the progress
     await uploadFileInner(file, json.uploadUrl, onProgressChange);
-    return { url: json.accessUrl };
+    return {
+      url: json.accessUrl,
+      thumbnailUrl: json.thumbnailUrl,
+      size: json.size,
+      uploadedAt: new Date(json.uploadedAt),
+      path: json.path,
+      metadata: json.metadata,
+    };
   } catch (e) {
     onProgressChange?.(0);
     throw e;
@@ -147,24 +164,23 @@ async function deleteFile(
   },
   {
     apiPath,
-    routeName,
+    bucketName,
   }: {
     apiPath: string;
-    routeName: string;
+    bucketName: string;
   },
 ) {
   const res = await fetch(`${apiPath}/delete-file`, {
     method: 'POST',
     body: JSON.stringify({
       url,
-      routeName,
+      bucketName,
     }),
     headers: {
       'Content-Type': 'application/json',
     },
   });
-  const json = await res.json();
-  if (!json.success) {
+  if (!res.ok) {
     throw new EdgeStoreError('An error occurred');
   }
   return { success: true };
