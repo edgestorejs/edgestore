@@ -19,7 +19,7 @@ type FileInfoForUpload = {
   replaceTargetUrl?: string;
 };
 
-type SimpleOperator =
+export type SimpleOperator =
   | 'eq'
   | 'neq'
   | 'gt'
@@ -29,15 +29,26 @@ type SimpleOperator =
   | 'startsWith'
   | 'endsWith';
 
-type FilterOperator =
-  | string
-  | Record<string, SimpleOperator>
-  | Record<'between', [string, string]>;
+export type Comparison<TType = string> =
+  | TType
+  | Partial<
+      {
+        [K in SimpleOperator]: TType;
+      } & {
+        between: [TType, TType];
+      }
+    >;
 
 type ListFilesFilter = {
-  uploadedAt?: FilterOperator;
-  path?: Record<string, SimpleOperator>;
-  metadata?: Record<string, SimpleOperator>;
+  AND?: ListFilesFilter[];
+  OR?: ListFilesFilter[];
+  uploadedAt?: Comparison<Date>;
+  path?: Partial<{
+    [key: string]: Comparison;
+  }>;
+  metadata?: Partial<{
+    [key: string]: Comparison;
+  }>;
 };
 
 type Pagination = {

@@ -1,12 +1,13 @@
-import { AnyRouter } from '..';
+import { AnyRouter, Comparison } from '..';
 import { Simplify } from '../../types';
 import {
+  AnyBuilder,
   InferBucketPathKeys,
   InferMetadataObject,
 } from '../internals/bucketBuilder';
-import { EdgeStoreSdk, initEdgeStoreSdk } from '../sdk';
+import { initEdgeStoreSdk } from '../sdk';
 
-export type GetFileRes<TBucket extends AnyRouter['buckets'][string]> = {
+export type GetFileRes<TBucket extends AnyBuilder> = {
   url: string;
   size: number;
   uploadedAt: Date;
@@ -16,7 +17,27 @@ export type GetFileRes<TBucket extends AnyRouter['buckets'][string]> = {
   };
 };
 
-export type ListFilesResponse<TBucket extends AnyRouter['buckets'][string]> = {
+type Filter<TBucket extends AnyBuilder> = {
+  AND?: Filter<TBucket>[];
+  OR?: Filter<TBucket>[];
+  uploadedAt?: Comparison<Date>;
+  path?: {
+    [K in InferBucketPathKeys<TBucket>]?: Comparison;
+  };
+  metadata?: {
+    [K in keyof InferMetadataObject<TBucket>]?: Comparison;
+  };
+};
+
+export type ListFilesRequest<TBucket extends AnyBuilder> = {
+  filter?: Filter<TBucket>;
+  pagination?: {
+    currentPage: number;
+    pageSize: number;
+  };
+};
+
+export type ListFilesResponse<TBucket extends AnyBuilder> = {
   data: {
     url: string;
     thumbnailUrl: TBucket['_def']['type'] extends 'IMAGE'
@@ -66,9 +87,7 @@ type EdgeStoreClient<TRouter extends AnyRouter> = {
      * The results are paginated.
      */
     listFiles: (
-      params?: Simplify<
-        Omit<Parameters<EdgeStoreSdk['listFiles']>[0], 'bucketName'>
-      >,
+      params?: ListFilesRequest<TRouter['buckets'][K]>,
     ) => Promise<ListFilesResponse<TRouter['buckets'][K]>>;
   };
 };
