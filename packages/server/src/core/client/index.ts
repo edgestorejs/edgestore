@@ -62,18 +62,18 @@ type EdgeStoreClient<TRouter extends AnyRouter> = {
     getFile: (params: {
       url: string;
     }) => Promise<GetFileRes<TRouter['buckets'][K]>>;
-    // TODO: replace with upload
-    requestUpload: (params: {
-      file: File;
-      path: {
-        [TKey in InferBucketPathKeys<TRouter['buckets'][K]>]: string;
-      };
-      metadata: InferMetadataObject<TRouter['buckets'][K]>;
-      replaceTargetUrl?: string;
-    }) => Promise<{
-      uploadUrl: string;
-      accessUrl: string;
-    }>;
+    // TODO: replace with `upload`
+    // requestUpload: (params: {
+    //   file: File;
+    //   path: {
+    //     [TKey in InferBucketPathKeys<TRouter['buckets'][K]>]: string;
+    //   };
+    //   metadata: InferMetadataObject<TRouter['buckets'][K]>;
+    //   replaceTargetUrl?: string;
+    // }) => Promise<{
+    //   uploadUrl: string;
+    //   accessUrl: string;
+    // }>;
     /**
      * Programmatically delete a file.
      */
@@ -121,40 +121,41 @@ export function initEdgeStoreClient<TRouter extends AnyRouter>(config: {
             TRouter['buckets'][string]
           >;
         },
-        async requestUpload(params) {
-          const { file, path, metadata, replaceTargetUrl } = params;
-          const fileExtension = file.name.includes('.')
-            ? file.name.split('.').pop()
-            : undefined;
-          if (!fileExtension) {
-            throw new Error('Missing file extension');
-          }
-          const parsedPath = Object.keys(bucket._def.path).map((key) => {
-            const value = path[key as keyof typeof path];
-            if (value === undefined) {
-              throw new Error(`Missing path param ${key}`);
-            }
-            return {
-              key,
-              value,
-            };
-          });
+        // TODO: Replace with `upload`
+        // async requestUpload(params) {
+        //   const { file, path, metadata, replaceTargetUrl } = params;
+        //   const fileExtension = file.name.includes('.')
+        //     ? file.name.split('.').pop()
+        //     : undefined;
+        //   if (!fileExtension) {
+        //     throw new Error('Missing file extension');
+        //   }
+        //   const parsedPath = Object.keys(bucket._def.path).map((key) => {
+        //     const value = path[key as keyof typeof path];
+        //     if (value === undefined) {
+        //       throw new Error(`Missing path param ${key}`);
+        //     }
+        //     return {
+        //       key,
+        //       value,
+        //     };
+        //   });
 
-          const fileInfo = {
-            size: file.size,
-            extension: fileExtension,
-            isPublic: bucket._def.accessControl === undefined,
-            path: parsedPath,
-            metadata,
-            replaceTargetUrl,
-          };
+        //   const fileInfo = {
+        //     size: file.size,
+        //     extension: fileExtension,
+        //     isPublic: bucket._def.accessControl === undefined,
+        //     path: parsedPath,
+        //     metadata,
+        //     replaceTargetUrl,
+        //   };
 
-          return await sdk.requestUpload({
-            bucketName,
-            bucketType: bucket._def.type,
-            fileInfo,
-          });
-        },
+        //   return await sdk.requestUpload({
+        //     bucketName,
+        //     bucketType: bucket._def.type,
+        //     fileInfo,
+        //   });
+        // },
 
         async deleteFile(params) {
           return await sdk.deleteFile({
