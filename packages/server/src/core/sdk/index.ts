@@ -149,21 +149,33 @@ export const edgeStoreRawSdk = {
     bucketName,
     bucketType,
     fileInfo,
+    multipart,
   }: {
     accessKey: string;
     secretKey: string;
     bucketName: string;
     bucketType: string;
     fileInfo: FileInfoForUpload;
+    multipart?: {
+      parts: number[];
+    };
   }) {
     const res = await makeRequest<{
-      signedUrl: string;
+      multipart?: {
+        uploadId: string;
+        parts: {
+          partNumber: number;
+          signedUrl: string;
+        }[];
+      };
+      signedUrl?: string;
       url: string;
     }>({
       path: '/request-upload',
       accessKey,
       secretKey,
       body: {
+        multipart,
         bucketName,
         bucketType,
         isPublic: fileInfo.isPublic,
@@ -175,8 +187,45 @@ export const edgeStoreRawSdk = {
       },
     });
     return {
-      uploadUrl: res.signedUrl,
+      multipart: res.multipart,
+      signedUrl: res.signedUrl,
       accessUrl: res.url,
+    };
+  },
+
+  async requestUploadParts({
+    accessKey,
+    secretKey,
+    key,
+    multipart,
+  }: {
+    accessKey: string;
+    secretKey: string;
+    key: string;
+    multipart: {
+      uploadId?: string;
+      parts: number[];
+    };
+  }) {
+    const res = await makeRequest<{
+      multipart: {
+        uploadId: string;
+        parts: {
+          partNumber: number;
+          signedUrl: string;
+        }[];
+      };
+    }>({
+      path: '/request-upload-parts',
+      accessKey,
+      secretKey,
+      body: {
+        multipart,
+        key,
+      },
+    });
+    return {
+      multipart: res.multipart,
     };
   },
 
@@ -273,10 +322,14 @@ export function initEdgeStoreSdk(params: {
       bucketName,
       bucketType,
       fileInfo,
+      multipart,
     }: {
       bucketName: string;
       bucketType: string;
       fileInfo: FileInfoForUpload;
+      multipart?: {
+        parts: number[];
+      };
     }) {
       return await edgeStoreRawSdk.requestUpload({
         accessKey,
@@ -284,6 +337,24 @@ export function initEdgeStoreSdk(params: {
         bucketName,
         bucketType,
         fileInfo,
+        multipart,
+      });
+    },
+    async requestUploadParts({
+      key,
+      multipart,
+    }: {
+      key: string;
+      multipart: {
+        uploadId?: string;
+        parts: number[];
+      };
+    }) {
+      return await edgeStoreRawSdk.requestUploadParts({
+        accessKey,
+        secretKey,
+        key,
+        multipart,
       });
     },
     async deleteFile({ url }: { url: string }) {

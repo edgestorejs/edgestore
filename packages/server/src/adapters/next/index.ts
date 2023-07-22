@@ -36,6 +36,14 @@ type RequestUploadBody = {
   };
 };
 
+type RequestUploadPartsParams = {
+  multipart: {
+    uploadId: string;
+    parts: number[];
+  };
+  path: string;
+};
+
 type DeleteFileBody = {
   bucketName: string;
   url: string;
@@ -121,6 +129,21 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
         path,
         metadata,
       });
+    } else if (req.url === '/api/edgestore/request-upload-parts') {
+      const { multipart, path } = req.body as RequestUploadPartsParams;
+
+      const ctxToken = req.cookies['edgestore-ctx'];
+      if (!ctxToken) {
+        res.status(401).send('Missing edgestore-ctx cookie');
+        return;
+      }
+      await getContext(ctxToken); // just to check if the token is valid
+
+      const requestUploadRes = await provider.requestUploadParts({
+        multipart,
+        path,
+      });
+      res.json(requestUploadRes);
     } else if (req.url === '/api/edgestore/delete-file') {
       const { bucketName, url } = req.body as DeleteFileBody;
       const ctxToken = req.cookies['edgestore-ctx'];

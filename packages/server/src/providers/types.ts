@@ -27,6 +27,10 @@ export type GetFileRes = {
 };
 
 export type RequestUploadParams = {
+  multipart?: {
+    uploadId?: string;
+    parts: number[];
+  };
   bucketName: string;
   bucketType: string;
   fileInfo: {
@@ -44,10 +48,41 @@ export type RequestUploadParams = {
   };
 };
 
-export type RequestUploadRes = {
-  uploadUrl: string;
-  accessUrl: string;
+export type RequestUploadPartsParams = {
+  multipart: {
+    uploadId: string;
+    parts: number[];
+  };
+  path: string;
 };
+
+export type RequestUploadPartsRes = {
+  multipart: {
+    uploadId: string;
+    parts: {
+      partNumber: number;
+      uploadUrl: string;
+    }[];
+  };
+};
+
+export type RequestUploadRes =
+  | {
+      uploadUrl: string;
+      accessUrl: string;
+    }
+  | {
+      multipart: {
+        uploadId: string;
+        partSize: number;
+        totalParts: number;
+        parts: {
+          partNumber: number;
+          uploadUrl: string;
+        }[];
+      };
+      accessUrl: string;
+    };
 
 export type DeleteFileParams = {
   bucket: AnyBuilder;
@@ -65,5 +100,8 @@ export type Provider = {
   requestUpload: (
     params: RequestUploadParams,
   ) => MaybePromise<RequestUploadRes>;
+  requestUploadParts: (
+    params: RequestUploadPartsParams,
+  ) => MaybePromise<RequestUploadPartsRes>;
   deleteFile: (params: DeleteFileParams) => MaybePromise<DeleteFileRes>;
 };
