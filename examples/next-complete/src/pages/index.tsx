@@ -217,7 +217,13 @@ type FileRes = ClientResponse['images']['listFiles']['data'][number] & {
 export const getServerSideProps: GetServerSideProps<{
   files: FileRes[];
 }> = async () => {
-  const res = await edgeStoreClient.images.listFiles();
+  const res = await edgeStoreClient.images.listFiles({
+    filter: {
+      uploadedAt: {
+        gt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7), // 7 days
+      },
+    },
+  });
   console.log(res.data);
   return { props: { files: res.data } };
 };
