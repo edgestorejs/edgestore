@@ -35,10 +35,15 @@
       "require": "./dist/core/index.js",
       "default": "./dist/core/index.js"
     },
-    "./adapters/next": {
-      "import": "./dist/adapters/next/index.mjs",
-      "require": "./dist/adapters/next/index.js",
-      "default": "./dist/adapters/next/index.js"
+    "./adapters/next/pages": {
+      "import": "./dist/adapters/next/pages/index.mjs",
+      "require": "./dist/adapters/next/pages/index.js",
+      "default": "./dist/adapters/next/pages/index.js"
+    },
+    "./adapters/next/app": {
+      "import": "./dist/adapters/next/app/index.mjs",
+      "require": "./dist/adapters/next/app/index.js",
+      "default": "./dist/adapters/next/app/index.js"
     },
     "./providers/aws": {
       "import": "./dist/providers/aws/index.mjs",

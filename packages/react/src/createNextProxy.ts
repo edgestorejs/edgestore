@@ -8,12 +8,20 @@ import EdgeStoreError from './libs/errors/EdgeStoreError';
 
 export type BucketFunctions<TRouter extends AnyRouter> = {
   [K in keyof TRouter['buckets']]: {
-    upload: (params: {
-      file: File;
-      input: z.infer<TRouter['buckets'][K]['_def']['input']>;
-      onProgressChange?: OnProgressChangeHandler;
-      options?: UploadOptions;
-    }) => Promise<{
+    upload: (
+      params: z.infer<TRouter['buckets'][K]['_def']['input']> extends object
+        ? {
+            file: File;
+            input: z.infer<TRouter['buckets'][K]['_def']['input']>;
+            onProgressChange?: OnProgressChangeHandler;
+            options?: UploadOptions;
+          }
+        : {
+            file: File;
+            onProgressChange?: OnProgressChangeHandler;
+            options?: UploadOptions;
+          },
+    ) => Promise<{
       url: string;
       thumbnailUrl: TRouter['buckets'][K]['_def']['type'] extends 'IMAGE'
         ? string | null
@@ -72,7 +80,7 @@ async function uploadFile(
     options,
   }: {
     file: File;
-    input: object;
+    input?: object;
     onProgressChange?: OnProgressChangeHandler;
     options?: UploadOptions;
   },

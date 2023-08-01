@@ -90,6 +90,9 @@ export function AWSProvider(options?: AWSProviderOptions): Provider {
         accessUrl: url,
       };
     },
+    async requestUploadParts() {
+      throw new Error('Not implemented');
+    },
     async deleteFile({ url }) {
       const path = url.replace(`${baseUrl}/`, '');
       await s3Client.send(
