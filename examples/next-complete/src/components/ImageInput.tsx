@@ -115,7 +115,7 @@ const ImageInput: React.FC<{
         ) : (
           <div className="text-blue-gray-500 flex flex-col items-center justify-center text-xs">
             <IoCloudUploadOutline className="mb-2 h-7 w-7" />
-            <div>Drag & drop to upload</div>
+            <div>drag & drop to upload</div>
             <div className="mt-3">
               <Button disabled={disabled}>select</Button>
             </div>

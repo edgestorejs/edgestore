@@ -21,7 +21,7 @@ export default function Home({
       if (!file) {
         return;
       }
-      const newFileData = await edgestore.images.upload({
+      const newFileData = await edgestore.myPublicImages.upload({
         file,
         input: {
           type: 'post',
@@ -91,7 +91,7 @@ export default function Home({
               // when the newFile is set, the replace button will be shown
               newFile={progress !== null ? undefined : file}
               onDelete={async (fileData) => {
-                await edgestore.images.delete({ url: fileData.url });
+                await edgestore.myPublicImages.delete({ url: fileData.url });
                 setFiles((files) =>
                   files.filter((f) => f.url !== fileData.url),
                 );
@@ -210,14 +210,14 @@ const Button: React.FC<{
   );
 };
 
-type FileRes = ClientResponse['images']['listFiles']['data'][number] & {
+type FileRes = ClientResponse['myPublicImages']['listFiles']['data'][number] & {
   base64Url?: string;
 };
 
 export const getServerSideProps: GetServerSideProps<{
   files: FileRes[];
 }> = async () => {
-  const res = await edgeStoreClient.images.listFiles({
+  const res = await edgeStoreClient.myPublicImages.listFiles({
     filter: {
       uploadedAt: {
         gt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7), // 7 days

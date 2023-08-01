@@ -58,8 +58,8 @@ const filesBucket = es.fileBucket
   });
 
 const edgeStoreRouter = es.router({
-  images: imagesBucket,
-  files: filesBucket,
+  myPublicImages: imagesBucket,
+  myProtectedFiles: filesBucket,
 });
 
 export type EdgeStoreRouter = typeof edgeStoreRouter;
