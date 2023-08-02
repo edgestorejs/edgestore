@@ -175,7 +175,14 @@ const MultiFileDropzone = React.forwardRef<HTMLInputElement, InputProps>(
                 <div className="grow" />
                 <div className="flex w-12 justify-end text-xs">
                   {progress === 'PENDING' ? (
-                    <button className="rounded-md p-1 transition-colors duration-200 hover:bg-white/30">
+                    <button
+                      className="rounded-md p-1 transition-colors duration-200 hover:bg-white/30"
+                      onClick={async () => {
+                        await onChange?.(
+                          value.filter((_, index) => index !== i),
+                        );
+                      }}
+                    >
                       <Trash2Icon className="shrink-0" />
                     </button>
                   ) : progress === 'ERROR' ? (
