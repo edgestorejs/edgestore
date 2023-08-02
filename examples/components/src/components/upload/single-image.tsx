@@ -1,5 +1,6 @@
 'use client';
 
+import { formatFileSize } from '@/lib/utils';
 import { UploadCloudIcon, X } from 'lucide-react';
 import Image from 'next/image';
 import * as React from 'react';
@@ -7,7 +8,7 @@ import { DropzoneOptions, useDropzone } from 'react-dropzone';
 import { twMerge } from 'tailwind-merge';
 
 const variants = {
-  base: 'relative rounded-md flex justify-center items-center flex-col cursor-pointer min-h-[150px] min-w-[200px] border border-dashed border-[#C6CAD8] transition-colors duration-200 ease-in-out',
+  base: 'relative rounded-md flex justify-center items-center flex-col cursor-pointer min-h-[150px] min-w-[200px] border border-dashed border-gray-300 transition-colors duration-200 ease-in-out',
   image:
     'border-0 p-0 min-h-0 min-w-0 relative shadow-md bg-slate-900 rounded-md',
   active: 'border-2',
@@ -24,6 +25,21 @@ type InputProps = {
   onChange?: (file?: File) => void | Promise<void>;
   disabled?: boolean;
   dropzoneOptions?: Omit<DropzoneOptions, 'disabled'>;
+};
+
+const ERROR_MESSAGES = {
+  fileTooLarge(maxSize: number) {
+    return `The file is too large. Max size is ${formatFileSize(maxSize)}.`;
+  },
+  fileInvalidType() {
+    return 'Invalid file type.';
+  },
+  tooManyFiles(maxFiles: number) {
+    return `You can only add ${maxFiles} file(s).`;
+  },
+  fileNotSupported() {
+    return 'The file is not supported.';
+  },
 };
 
 const SingleImageDropzone = React.forwardRef<HTMLInputElement, InputProps>(
@@ -92,19 +108,17 @@ const SingleImageDropzone = React.forwardRef<HTMLInputElement, InputProps>(
       if (fileRejections[0]) {
         const { errors } = fileRejections[0];
         if (errors[0]?.code === 'file-too-large') {
-          return `The file is too large. Max size is ${formatFileSize(
-            dropzoneOptions?.maxSize,
-          )}.`;
+          return ERROR_MESSAGES.fileTooLarge(dropzoneOptions?.maxSize ?? 0);
         } else if (errors[0]?.code === 'file-invalid-type') {
-          return 'Invalid file type.';
+          return ERROR_MESSAGES.fileInvalidType();
         } else if (errors[0]?.code === 'too-many-files') {
-          return 'You can only upload one file.';
+          return ERROR_MESSAGES.tooManyFiles(dropzoneOptions?.maxFiles ?? 0);
         } else {
-          return 'The file is not supported.';
+          return ERROR_MESSAGES.fileNotSupported();
         }
       }
       return undefined;
-    }, [fileRejections, dropzoneOptions?.maxSize]);
+    }, [fileRejections, dropzoneOptions]);
 
     return (
       <div>
@@ -184,20 +198,5 @@ const Button = React.forwardRef<
   );
 });
 Button.displayName = 'Button';
-
-function formatFileSize(bytes?: number) {
-  if (!bytes) {
-    return '0 Bytes';
-  }
-  bytes = Number(bytes);
-  if (bytes === 0) {
-    return '0 Bytes';
-  }
-  const k = 1024;
-  const dm = 2;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
-}
 
 export { SingleImageDropzone };

@@ -14,7 +14,16 @@ type EdgeStoreContextValue<TRouter extends AnyRouter> = {
   getSrc: (url: string) => string;
 };
 
-export function createEdgeStoreProvider<TRouter extends AnyRouter>() {
+export function createEdgeStoreProvider<TRouter extends AnyRouter>(opts?: {
+  /**
+   * The maximum number of concurrent uploads.
+   *
+   * Uploads will automatically be queued if this limit is reached.
+   *
+   * @default 5
+   */
+  maxConcurrentUploads?: number;
+}) {
   const EdgeStoreContext = React.createContext<
     EdgeStoreContextValue<TRouter> | undefined
   >(undefined);
@@ -38,6 +47,7 @@ export function createEdgeStoreProvider<TRouter extends AnyRouter>() {
       children,
       context: EdgeStoreContext,
       basePath,
+      maxConcurrentUploads: opts?.maxConcurrentUploads,
     });
   };
 
@@ -68,13 +78,16 @@ function EdgeStoreProviderInner<TRouter extends AnyRouter>({
   children,
   context,
   basePath,
+  maxConcurrentUploads,
 }: {
   children: React.ReactNode;
   context: React.Context<EdgeStoreContextValue<TRouter> | undefined>;
   basePath?: string;
+  maxConcurrentUploads?: number;
 }) {
   const apiPath = basePath ? `${basePath}` : '/api/edgestore';
   const [token, setToken] = React.useState<string | null>(null);
+  const uploadingCountRef = React.useRef(0);
   React.useEffect(() => {
     void fetch(`${apiPath}/init`, {
       method: 'POST',
@@ -115,6 +128,8 @@ function EdgeStoreProviderInner<TRouter extends AnyRouter>({
         value={{
           edgestore: createNextProxy<TRouter>({
             apiPath,
+            uploadingCountRef,
+            maxConcurrentUploads,
           }),
           getSrc,
         }}

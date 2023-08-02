@@ -2,6 +2,8 @@ import { EdgeStoreProvider } from '@/lib/edgestore';
 import './globals.css';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
+import { twMerge } from 'tailwind-merge';
+import { Tabs } from './tabs';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -17,7 +19,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={twMerge(inter.className, 'm-6')}>
+        <Tabs />
         <EdgeStoreProvider>{children}</EdgeStoreProvider>
       </body>
     </html>

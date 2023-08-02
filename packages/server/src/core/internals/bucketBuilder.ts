@@ -88,6 +88,7 @@ export type AccessControlSchema<TCtx, TDef extends AnyDef> = Merge<
 
 type FileInfo = {
   size: number;
+  type: string;
   extension: string;
   replaceTargetUrl?: string;
 };

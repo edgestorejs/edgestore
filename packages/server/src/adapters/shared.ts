@@ -9,6 +9,7 @@ import {
 } from '../core/internals/bucketBuilder';
 import EdgeStoreError from '../libs/errors/EdgeStoreError';
 import { Provider } from '../providers/types';
+import { IMAGE_MIME_TYPES } from './imageTypes';
 
 // TODO: change it to 1 hour when we have a way to refresh the token
 const DEFAULT_MAX_AGE = 30 * 24 * 60 * 60; // 30 days
@@ -52,6 +53,7 @@ export type RequestUploadBody = {
   input: any;
   fileInfo: {
     size: number;
+    type: string;
     extension: string;
     replaceTargetUrl?: string;
   };
@@ -87,6 +89,7 @@ export async function requestUpload<TCtx>(params: {
       input,
       fileInfo: {
         size: fileInfo.size,
+        type: fileInfo.type,
         extension: fileInfo.extension,
         replaceTargetUrl: fileInfo.replaceTargetUrl,
       },
@@ -95,6 +98,16 @@ export async function requestUpload<TCtx>(params: {
       throw new Error('Upload not allowed');
     }
   }
+
+  if (bucket._def.type === 'IMAGE') {
+    if (!IMAGE_MIME_TYPES.includes(fileInfo.type)) {
+      throw new EdgeStoreError({
+        code: 'BAD_REQUEST',
+        message: 'Only images are allowed in this bucket',
+      });
+    }
+  }
+
   const path = buildPath({
     fileInfo,
     bucket,

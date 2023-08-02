@@ -4,16 +4,18 @@ import { createEdgeStoreNextHandler } from '@edge-store/server/adapters/next/app
 const es = initEdgeStore.context().create();
 
 /**
- * This is the simplest bucket you can create.
- * A public image bucket with no validation.
- */
-const imagesBucket = es.imageBucket;
-
-/**
  * This is the main router for the edgestore buckets.
  */
 const edgeStoreRouter = es.router({
-  myPublicImages: imagesBucket,
+  /**
+   * A public image bucket with no validation.
+   */
+  myPublicImages: es.imageBucket,
+
+  /**
+   * This accepts any file type.
+   */
+  myPublicFiles: es.fileBucket,
 });
 
 /**

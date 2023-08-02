@@ -47,18 +47,34 @@ type UploadOptions = {
 
 export function createNextProxy<TRouter extends AnyRouter>({
   apiPath,
+  uploadingCountRef,
+  maxConcurrentUploads = 5,
 }: {
   apiPath: string;
+  uploadingCountRef: React.MutableRefObject<number>;
+  maxConcurrentUploads?: number;
 }) {
   return new Proxy<BucketFunctions<TRouter>>({} as BucketFunctions<TRouter>, {
     get(_, prop) {
       const bucketName = prop as keyof TRouter['buckets'];
       const bucketFunctions: BucketFunctions<TRouter>[string] = {
         upload: async (params) => {
-          return await uploadFile(params, {
-            bucketName: bucketName as string,
-            apiPath,
-          });
+          try {
+            params.onProgressChange?.(0);
+            while (
+              uploadingCountRef.current >= maxConcurrentUploads &&
+              uploadingCountRef.current > 0
+            ) {
+              await new Promise((resolve) => setTimeout(resolve, 300));
+            }
+            uploadingCountRef.current++;
+            return await uploadFile(params, {
+              bucketName: bucketName as string,
+              apiPath,
+            });
+          } finally {
+            uploadingCountRef.current--;
+          }
         },
         delete: async (params: { url: string }) => {
           return await deleteFile(params, {
@@ -101,6 +117,7 @@ async function uploadFile(
         input,
         fileInfo: {
           extension: file.name.split('.').pop(),
+          type: file.type,
           size: file.size,
           replaceTargetUrl: options?.replaceTargetUrl,
         },
@@ -126,8 +143,6 @@ async function uploadFile(
   } catch (e) {
     onProgressChange?.(0);
     throw e;
-  } finally {
-    onProgressChange?.(100);
   }
 }
 
