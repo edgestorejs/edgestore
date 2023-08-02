@@ -35,8 +35,16 @@ html[data-theme='dark'] {
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
 }
 
+:not(.homepage) .navbar {
+  @apply border-x-0 border-t-0 border-b border-solid border-white/20 bg-black/40 backdrop-blur-lg;
+}
+
+.theme-doc-sidebar-container {
+  @apply !border-r-white/20;
+}
+
 .homepage .navbar {
-  background-color: transparent;
+  @apply border-none bg-transparent backdrop-blur-none;
 }
 
 .header-sign-in-link svg {

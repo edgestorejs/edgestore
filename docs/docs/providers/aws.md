@@ -1,6 +1,8 @@
 ---
-sidebar_position: 2
-title: AWS
+id: aws
+title: AWS Provider
+sidebar_label: AWS
+slug: /providers/aws
 ---
 
 # AWS Provider

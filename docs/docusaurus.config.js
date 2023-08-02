@@ -49,7 +49,7 @@ const config = {
     [
       'docusaurus-preset-shiki-twoslash',
       {
-        themes: ['github-dark'],
+        themes: ['dark-plus'],
       },
     ],
   ],
@@ -71,7 +71,7 @@ const config = {
         items: [
           {
             type: 'doc',
-            docId: 'getting-started',
+            docId: 'main/getting-started',
             position: 'left',
             label: 'Docs',
           },

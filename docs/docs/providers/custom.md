@@ -1,11 +1,11 @@
 ---
-id: edgestore
-title: Edge Store Provider
-sidebar_label: Edge Store
-slug: /providers/edgestore
+id: custom
+title: Custom Provider
+sidebar_label: Custom
+slug: /providers/custom
 ---
 
-# Edge Store Provider
+# Custom Provider
 
 ## Environment Variables
 
