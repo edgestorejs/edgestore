@@ -1,7 +1,7 @@
 ```ts twoslash
-import { initEdgeStore } from '@edge-store/server';
-import { CreateNextContextOptions } from '@edge-store/server/adapters/next';
-import { initEdgeStoreClient } from '@edge-store/server/core';
+import { initEdgeStore } from '@edgestore/server';
+import { CreateContextOptions } from '@edgestore/server/adapters/next/pages';
+import { initEdgeStoreClient } from '@edgestore/server/core';
 import { z } from 'zod';
 
 type Context = {
@@ -9,7 +9,7 @@ type Context = {
   userRole: 'admin' | 'visitor';
 };
 
-function createContext(_opts: CreateNextContextOptions): Context {
+function createContext(_opts: CreateContextOptions): Context {
   return {
     userId: '123',
     userRole: 'admin',

@@ -1,8 +1,8 @@
 import { initEdgeStore } from '@edgestore/server';
 import {
+  CreateContextOptions,
   createEdgeStoreNextHandler,
-  CreateNextContextOptions,
-} from '@edgestore/server/adapters/next';
+} from '@edgestore/server/adapters/next/pages';
 import { z } from 'zod';
 
 type Context = {
@@ -10,7 +10,7 @@ type Context = {
   userRole: 'admin' | 'visitor';
 };
 
-function createContext(_opts: CreateNextContextOptions): Context {
+function createContext(_opts: CreateContextOptions): Context {
   return {
     userId: '123',
     userRole: 'admin',

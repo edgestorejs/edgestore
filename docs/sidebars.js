@@ -21,15 +21,15 @@ const sidebars = {
   tutorialSidebar: [
     {
       type: 'category',
-      label: 'Introduction',
+      label: 'Getting Started',
       collapsed: false,
       link: {
         type: 'generated-index',
-        title: 'Introduction',
-        slug: '/introduction',
+        title: 'Getting Started',
+        slug: '/getting-started',
       },
       items: [
-        'main/getting-started',
+        'main/quick-start',
         'main/lifecycle-hooks',
         'main/protected-files',
         'main/validation',
