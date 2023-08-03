@@ -1,5 +1,5 @@
-import { initEdgeStore } from '@edge-store/server';
-import { createEdgeStoreNextHandler } from '@edge-store/server/adapters/next/app';
+import { initEdgeStore } from '@edgestore/server';
+import { createEdgeStoreNextHandler } from '@edgestore/server/adapters/next/app';
 
 const es = initEdgeStore.context().create();
 

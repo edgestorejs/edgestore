@@ -1,6 +1,6 @@
 {
-  "name": "@edge-store/react",
-  "version": "0.0.0-alpha.11",
+  "name": "@edgestore/react",
+  "version": "0.0.0-alpha.12",
   "description": "Image Handling for React/Next.js",
   "homepage": "https://edge-store.com",
   "repository": "https://github.com/edgestorejs/edge-store.git",
@@ -52,14 +52,14 @@
     "uuid": "^9.0.0"
   },
   "peerDependencies": {
-    "@edge-store/server": "0.0.0-alpha.11",
+    "@edgestore/server": "0.0.0-alpha.12",
     "next": "*",
     "react": ">=16.8.0",
     "react-dom": ">=16.8.0",
     "zod": ">=3.0.0"
   },
   "devDependencies": {
-    "@edge-store/server": "0.0.0-alpha.11",
+    "@edgestore/server": "0.0.0-alpha.12",
     "@types/cookie": "^0.5.1",
     "@types/node": "^18.11.18",
     "@types/uuid": "^9.0.1",

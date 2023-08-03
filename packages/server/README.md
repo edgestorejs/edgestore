@@ -5,7 +5,7 @@
 #### Install
 
 ```bash
-npm install @edge-store/react
+npm install @edgestore/react
 ```
 
 #### Environment Variables
@@ -20,7 +20,7 @@ EDGE_STORE_SECRET_KEY=your-secret-key
 
 ```jsx
 // pages/api/edgestore/[...edgestore].js
-import EdgeStore from '@edge-store/react/next';
+import EdgeStore from '@edgestore/react/next';
 
 export default EdgeStore();
 ```
@@ -29,7 +29,7 @@ export default EdgeStore();
 
 ```jsx
 // pages/_app.jsx
-import { EdgeStoreProvider } from '@edge-store/react';
+import { EdgeStoreProvider } from '@edgestore/react';
 
 export default function App({ Component, pageProps }) {
   return (
@@ -43,7 +43,7 @@ export default function App({ Component, pageProps }) {
 ### Upload image
 
 ```jsx
-import { useEdgeStore } from '@edge-store/react';
+import { useEdgeStore } from '@edgestore/react';
 
 const Page = () => {
   const [file, setFile] = useState(null);
@@ -72,7 +72,7 @@ export default Page;
 ### Show image
 
 ```jsx
-import { useEdgeStore } from '@edge-store/react';
+import { useEdgeStore } from '@edgestore/react';
 
 const Page = () => {
   const { getImgSrc } = useEdgeStore();

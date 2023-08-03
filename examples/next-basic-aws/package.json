@@ -1,6 +1,6 @@
 {
   "name": "next-basic-aws",
-  "version": "0.0.0-alpha.11",
+  "version": "0.0.0-alpha.12",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -10,6 +10,6 @@
     "lint-fix": "pnpm lint --fix"
   },
   "dependencies": {
-    "@edge-store/react": "^0.0.0-alpha.11"
+    "@edgestore/react": "^0.0.0-alpha.12"
   }
 }

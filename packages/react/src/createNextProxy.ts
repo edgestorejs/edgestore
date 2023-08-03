@@ -2,7 +2,7 @@ import {
   AnyRouter,
   InferBucketPathKeys,
   InferMetadataObject,
-} from '@edge-store/server/core';
+} from '@edgestore/server/core';
 import { z } from 'zod';
 import EdgeStoreError from './libs/errors/EdgeStoreError';
 

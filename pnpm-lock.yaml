@@ -5,8 +5,8 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  '@edge-store/server': link:./packages/server
-  '@edge-store/react': link:./packages/react
+  '@edgestore/server': link:./packages/server
+  '@edgestore/react': link:./packages/react
 
 importers:
 
@@ -108,10 +108,10 @@ importers:
       '@docusaurus/preset-classic':
         specifier: 2.4.1
         version: 2.4.1(@algolia/client-search@4.18.0)(@swc/core@1.3.69)(eslint@8.40.0)(react-dom@18.2.0)(react@18.2.0)(search-insights@2.7.0)(typescript@5.1.6)
-      '@edge-store/react':
+      '@edgestore/react':
         specifier: link:../packages/react
         version: link:../packages/react
-      '@edge-store/server':
+      '@edgestore/server':
         specifier: link:../packages/server
         version: link:../packages/server
       '@mdx-js/react':
@@ -160,10 +160,10 @@ importers:
 
   examples/components:
     dependencies:
-      '@edge-store/react':
+      '@edgestore/react':
         specifier: link:../../packages/react
         version: link:../../packages/react
-      '@edge-store/server':
+      '@edgestore/server':
         specifier: link:../../packages/server
         version: link:../../packages/server
       '@types/node':
@@ -211,10 +211,10 @@ importers:
 
   examples/next-basic:
     dependencies:
-      '@edge-store/react':
+      '@edgestore/react':
         specifier: link:../../packages/react
         version: link:../../packages/react
-      '@edge-store/server':
+      '@edgestore/server':
         specifier: link:../../packages/server
         version: link:../../packages/server
       '@next/font':
@@ -254,16 +254,16 @@ importers:
 
   examples/next-basic-aws:
     dependencies:
-      '@edge-store/react':
+      '@edgestore/react':
         specifier: link:../../packages/react
         version: link:../../packages/react
 
   examples/next-complete:
     dependencies:
-      '@edge-store/react':
+      '@edgestore/react':
         specifier: link:../../packages/react
         version: link:../../packages/react
-      '@edge-store/server':
+      '@edgestore/server':
         specifier: link:../../packages/server
         version: link:../../packages/server
       '@next/font':
@@ -346,7 +346,7 @@ importers:
         specifier: ^9.0.0
         version: 9.0.0
     devDependencies:
-      '@edge-store/server':
+      '@edgestore/server':
         specifier: link:../server
         version: link:../server
       '@types/cookie':

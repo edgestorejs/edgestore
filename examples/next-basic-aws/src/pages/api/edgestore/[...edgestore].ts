@@ -1,5 +1,5 @@
-import EdgeStore from '@edge-store/react/next';
-import { AWSProvider } from '@edge-store/react/providers';
+import EdgeStore from '@edgestore/react/next';
+import { AWSProvider } from '@edgestore/react/providers';
 
 type Context = {
   user: {

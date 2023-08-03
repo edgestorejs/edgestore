@@ -1,4 +1,4 @@
-import { useEdgeStore } from '@edge-store/react';
+import { useEdgeStore } from '@edgestore/react';
 import { useState } from 'react';
 
 export default function Home() {

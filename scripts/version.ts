@@ -24,11 +24,11 @@ for (const name of packages) {
   const content = fs.readFileSync(packageJSON).toString();
 
   const version = JSON.parse(content).version;
-  // matches `"@edge-store/*: ".*"` and replaces it with `"@edge-store/*: "${version}""`
+  // matches `"@edgestore/*: ".*"` and replaces it with `"@edgestore/*: "${version}""`
   const newContent = content.replace(
-    /\"@edge-store\/((\w|-)+)\": "([^"]|\\")*"/g,
-    `"@edge-store/$1": "${version}"`,
+    /\"@edgestore\/((\w|-)+)\": "([^"]|\\")*"/g,
+    `"@edgestore/$1": "${version}"`,
   );
   fs.writeFileSync(packageJSON, newContent);
-  console.log(`  📍 Pinned ${name} @edge-store/* dependencies`);
+  console.log(`  📍 Pinned ${name} @edgestore/* dependencies`);
 }

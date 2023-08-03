@@ -1,9 +1,9 @@
-import { initEdgeStore } from '@edge-store/server';
+import { initEdgeStore } from '@edgestore/server';
 import {
+  CreateContextOptions,
   createEdgeStoreNextHandler,
-  CreateNextContextOptions,
-} from '@edge-store/server/adapters/next';
-import { initEdgeStoreClient } from '@edge-store/server/core';
+} from '@edgestore/server/adapters/next/pages';
+import { initEdgeStoreClient } from '@edgestore/server/core';
 import { z } from 'zod';
 
 type Context = {
@@ -11,7 +11,7 @@ type Context = {
   userRole: 'admin' | 'visitor';
 };
 
-function createContext(_opts: CreateNextContextOptions): Context {
+function createContext(_opts: CreateContextOptions): Context {
   return {
     userId: '123',
     userRole: 'admin',

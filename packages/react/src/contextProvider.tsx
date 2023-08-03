@@ -1,4 +1,4 @@
-import { AnyRouter } from '@edge-store/server/core';
+import { AnyRouter } from '@edgestore/server/core';
 import * as React from 'react';
 import { BucketFunctions, createNextProxy } from './createNextProxy';
 
