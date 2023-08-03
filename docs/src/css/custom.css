@@ -35,8 +35,20 @@ html[data-theme='dark'] {
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
 }
 
-:not(.homepage) .navbar {
+.navbar {
   @apply border-x-0 border-t-0 border-b border-solid border-white/20 bg-black/40 backdrop-blur-lg;
+}
+
+.navbar.navbar-sidebar--show {
+  @apply backdrop-filter-none;
+}
+
+.navbar-sidebar {
+  @apply bg-black/70;
+}
+
+.navbar-sidebar__backdrop {
+  @apply bg-black/60 backdrop-blur-sm;
 }
 
 .theme-doc-sidebar-container {
@@ -44,7 +56,7 @@ html[data-theme='dark'] {
 }
 
 .homepage .navbar {
-  @apply border-none bg-transparent backdrop-blur-none;
+  @apply border-none bg-transparent backdrop-filter-none;
 }
 
 .header-sign-in-link svg {
