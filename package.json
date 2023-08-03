@@ -3,11 +3,11 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "build": "turbo run build --filter=@edge-store/*",
+    "build": "turbo run build --filter=@edgestore/*",
     "watch": "turbo run watch --parallel",
-    "dev": "turbo run dev --parallel --filter=next-basic --filter=@edge-store/*",
-    "packages:dev": "turbo run dev --parallel --filter=@edge-store/*",
-    "components:dev": "turbo run dev --parallel --filter=components --filter=@edge-store/*",
+    "dev": "turbo run dev --parallel --filter=next-basic --filter=@edgestore/*",
+    "packages:dev": "turbo run dev --parallel --filter=@edgestore/*",
+    "components:dev": "turbo run dev --parallel --filter=components --filter=@edgestore/*",
     "docs:dev": "pnpm --filter docs run start",
     "lint": "turbo lint",
     "lint-fix": "turbo lint -- --fix && manypkg fix && pnpm format:write",
@@ -62,8 +62,8 @@
   },
   "pnpm": {
     "overrides": {
-      "@edge-store/server": "link:./packages/server",
-      "@edge-store/react": "link:./packages/react"
+      "@edgestore/server": "link:./packages/server",
+      "@edgestore/react": "link:./packages/react"
     }
   }
 }
