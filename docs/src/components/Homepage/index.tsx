@@ -63,15 +63,12 @@ const Homepage = () => {
 
       <main className="mt-[calc(var(--ifm-navbar-height)*-1)] min-h-screen text-white">
         <div className="flex w-full flex-col items-center justify-center bg-[radial-gradient(theme(colors.primary.999),#000000)] py-28 px-3">
-          <h1 className="bg-gradient-to-b from-primary-100 to-primary-400 bg-clip-text text-center font-[Futura] text-5xl text-transparent md:text-6xl">
+          <h1 className="mb-2 bg-gradient-to-b from-primary-100 to-primary-400 bg-clip-text text-center font-[Futura] text-5xl text-transparent md:text-7xl">
             EDGE STORE
           </h1>
-          <h2 className="pt-3 text-center text-lg text-gray-300 md:text-xl">
-            The image storage all developers dream of.
+          <h2 className="mb-6 text-center text-lg font-normal text-gray-300">
+            The best DX for uploading files from your Next.js app.
           </h2>
-          <h3 className="pb-6 text-center text-sm text-gray-300">
-            Working with images should be easy.
-          </h3>
           <JoinButton />
         </div>
         <div className="flex w-full justify-center bg-primary-999 py-10 px-3 text-center">
@@ -143,10 +140,10 @@ const JoinButton: React.FC = () => {
     <a
       target="_blank"
       rel="noreferrer"
-      className="rounded-lg bg-primary px-4 py-2 font-[futura] font-semibold text-gray-100 transition-colors duration-200 hover:bg-primary-800 hover:text-gray-100 hover:no-underline focus:border-transparent focus:bg-primary-800 focus:outline-none focus:ring-2 focus:ring-gray-600 active:bg-primary-800"
-      href="https://app.edgestore.dev/subscribe"
+      className="rounded-lg bg-primary px-4 py-2 font-semibold text-gray-100 transition-colors duration-200 hover:bg-primary-800 hover:text-gray-100 hover:no-underline focus:border-transparent focus:bg-primary-800 focus:outline-none focus:ring-2 focus:ring-gray-600 active:bg-primary-800"
+      href="https://edgestore.dev/dashboard/sign-up"
     >
-      APPLY FOR EARLY ACCESS
+      Start for free
     </a>
   );
 };

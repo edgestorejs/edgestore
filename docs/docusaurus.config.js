@@ -89,10 +89,10 @@ const config = {
             'aria-label': 'GitHub',
           },
           {
-            href: 'https://app.edgestore.dev',
+            href: 'https://edgestore.dev/dashboard',
             position: 'right',
             className: 'header-sign-in-link',
-            label: 'Sign In',
+            label: 'Dashboard',
           },
         ],
       },
@@ -126,11 +126,13 @@ const config = {
             items: [
               {
                 label: 'Terms of Service',
-                href: '/legal/terms',
+                href: 'https://edgestore.dev/legal/terms',
+                target: '_blank',
               },
               {
                 label: 'Privacy Policy',
-                href: '/legal/privacy-policy',
+                href: 'https://edgestore.dev/legal/privacy-policy',
+                target: '_blank',
               },
             ],
           },
