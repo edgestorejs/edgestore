@@ -122,6 +122,19 @@ const config = {
             ],
           },
           {
+            title: 'Legal',
+            items: [
+              {
+                label: 'Terms of Service',
+                href: '/legal/terms',
+              },
+              {
+                label: 'Privacy Policy',
+                href: '/legal/privacy-policy',
+              },
+            ],
+          },
+          {
             title: 'More',
             items: [
               {
