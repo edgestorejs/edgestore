@@ -3,7 +3,7 @@ import EdgeStoreCredentialsError from '../../libs/errors/EdgeStoreCredentialsErr
 import { Provider, RequestUploadRes } from '../types';
 
 const DEFAULT_BASE_URL =
-  process.env.EDGE_STORE_BASE_URL ?? 'https://files.edge-store.com';
+  process.env.EDGE_STORE_BASE_URL ?? 'https://files.edgestore.dev';
 
 export type EdgeStoreProviderOptions = {
   accessKey?: string;

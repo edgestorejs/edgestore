@@ -104,7 +104,7 @@ export function generateEntrypoints(inputs: string[]) {
   // Exclude test files in builds
   pkgJson.files.push('!**/*.test.*');
   // Add `funding` in all packages
-  // pkgJson.funding = ['https://edge-store.com/sponsor'];
+  // pkgJson.funding = ['https://edgestore.dev/sponsor'];
 
   // write package.json
   const formattedPkgJson = prettier.format(JSON.stringify(pkgJson), {

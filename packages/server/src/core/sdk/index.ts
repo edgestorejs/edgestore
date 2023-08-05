@@ -3,7 +3,7 @@ import EdgeStoreCredentialsError from '../../libs/errors/EdgeStoreCredentialsErr
 import { AnyContext } from '../internals/bucketBuilder';
 
 const API_ENDPOINT =
-  process.env.EDGE_STORE_API_ENDPOINT ?? 'https://api.edge-store.com';
+  process.env.EDGE_STORE_API_ENDPOINT ?? 'https://api.edgestore.dev';
 
 type FileInfoForUpload = {
   size: number;

@@ -2,7 +2,7 @@
   "name": "@edgestore/server",
   "version": "0.0.0-alpha.12",
   "description": "Image Handling for React/Next.js",
-  "homepage": "https://edge-store.com",
+  "homepage": "https://edgestore.dev",
   "repository": "https://github.com/edgestorejs/edge-store.git",
   "author": "Ravi <me@ravi.com>",
   "main": "dist/index.js",

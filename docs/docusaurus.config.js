@@ -5,7 +5,7 @@
 const config = {
   title: 'Edge Store',
   tagline: 'Handling images should be easy',
-  url: 'https://edge-store.com',
+  url: 'https://edgestore.dev',
   baseUrl: '/',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
@@ -89,7 +89,7 @@ const config = {
             'aria-label': 'GitHub',
           },
           {
-            href: 'https://app.edge-store.com',
+            href: 'https://app.edgestore.dev',
             position: 'right',
             className: 'header-sign-in-link',
             label: 'Sign In',

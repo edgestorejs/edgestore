@@ -8,7 +8,7 @@ const nextConfig = {
   images: {
     domains: [
       process.env.NEXT_PUBLIC_EDGE_STORE_BASE_URL.replace('https://', ''),
-      'files.edge-store.com',
+      'files.edgestore.dev',
     ],
   },
 };

@@ -3,7 +3,7 @@ import * as React from 'react';
 import { BucketFunctions, createNextProxy } from './createNextProxy';
 
 const DEFAULT_BASE_URL =
-  process.env.NEXT_PUBLIC_EDGE_STORE_BASE_URL ?? 'https://files.edge-store.com';
+  process.env.NEXT_PUBLIC_EDGE_STORE_BASE_URL ?? 'https://files.edgestore.dev';
 
 type EdgeStoreContextValue<TRouter extends AnyRouter> = {
   edgestore: BucketFunctions<TRouter>;
@@ -110,7 +110,7 @@ function EdgeStoreProviderInner<TRouter extends AnyRouter>({
       // in production we use cookies, so we don't need a token
       process.env.NODE_ENV === 'production' ||
       // public urls don't need a token
-      // e.g. https://files.edge-store.com/project/bucket/_public/...
+      // e.g. https://files.edgestore.dev/project/bucket/_public/...
       url.match(/^https?:\/\/[^\/]+\/[^\/]+\/[^\/]+\/_public\/.+/)
     ) {
       return `${url}`;
