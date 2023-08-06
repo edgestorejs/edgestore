@@ -30,7 +30,7 @@ const sidebars = {
       },
       items: [
         'main/quick-start',
-        'main/lifecycle-hooks',
+        'main/bucket-config',
         'main/protected-files',
         'main/validation',
       ],
