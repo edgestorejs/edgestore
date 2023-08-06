@@ -309,7 +309,11 @@ function createBuilder<TCtx, TType extends BucketType>(
   };
 }
 
-class EdgeStoreBuilder<TCtx = object> {
+const noContext = Symbol('noContext');
+
+export type NoContext = typeof noContext;
+
+class EdgeStoreBuilder<TCtx = NoContext> {
   context<TNewContext extends AnyContext>() {
     return new EdgeStoreBuilder<TNewContext>();
   }

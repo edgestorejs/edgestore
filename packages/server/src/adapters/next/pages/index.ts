@@ -1,5 +1,8 @@
 import { NextApiRequest, NextApiResponse } from 'next/types';
-import { EdgeStoreRouter } from '../../../core/internals/bucketBuilder';
+import {
+  EdgeStoreRouter,
+  NoContext,
+} from '../../../core/internals/bucketBuilder';
 import EdgeStoreError, {
   EDGE_STORE_ERROR_CODES,
 } from '../../../libs/errors/EdgeStoreError';
@@ -21,18 +24,26 @@ export type CreateContextOptions = {
   res: NextApiResponse;
 };
 
-export type Config<TCtx> = {
-  provider?: Provider;
-  router: EdgeStoreRouter<TCtx>;
-  createContext: (opts: CreateContextOptions) => MaybePromise<TCtx>;
-};
+export type Config<TCtx> = TCtx extends NoContext
+  ? {
+      provider?: Provider;
+      router: EdgeStoreRouter<TCtx>;
+    }
+  : {
+      provider?: Provider;
+      router: EdgeStoreRouter<TCtx>;
+      createContext: (opts: CreateContextOptions) => MaybePromise<TCtx>;
+    };
 
 export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
   const { provider = EdgeStoreProvider() } = config;
   return async (req: NextApiRequest, res: NextApiResponse) => {
     try {
       if (req.url === '/api/edgestore/init') {
-        const ctx = await config.createContext({ req, res });
+        const ctx =
+          'createContext' in config
+            ? await config.createContext({ req, res })
+            : ({} as TCtx);
         const { newCookies, token, baseUrl } = await init({
           ctx,
           provider,

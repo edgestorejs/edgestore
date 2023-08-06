@@ -39,7 +39,7 @@ export async function init<TCtx>(params: {
       }),
     );
   }
-  const baseUrl = provider.getBaseUrl();
+  const baseUrl = await provider.getBaseUrl();
 
   return {
     newCookies,

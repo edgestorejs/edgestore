@@ -74,7 +74,7 @@ async function makeRequest<TOutput>(params: {
     },
   });
   if (!res.ok) {
-    throw new Error(`Failed to make request to ${path}`);
+    throw new Error(`Failed to make request to ${path}: ${await res.text()}`);
   }
   return (await res.json()) as TOutput;
 }

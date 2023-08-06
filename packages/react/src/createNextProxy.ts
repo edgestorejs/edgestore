@@ -21,18 +21,28 @@ export type BucketFunctions<TRouter extends AnyRouter> = {
             onProgressChange?: OnProgressChangeHandler;
             options?: UploadOptions;
           },
-    ) => Promise<{
-      url: string;
-      thumbnailUrl: TRouter['buckets'][K]['_def']['type'] extends 'IMAGE'
-        ? string | null
-        : never;
-      size: number;
-      uploadedAt: Date;
-      metadata: InferMetadataObject<TRouter['buckets'][K]>;
-      path: {
-        [TKey in InferBucketPathKeys<TRouter['buckets'][K]>]: string;
-      };
-    }>;
+    ) => Promise<
+      TRouter['buckets'][K]['_def']['type'] extends 'IMAGE'
+        ? {
+            url: string;
+            thumbnailUrl: string | null;
+            size: number;
+            uploadedAt: Date;
+            metadata: InferMetadataObject<TRouter['buckets'][K]>;
+            path: {
+              [TKey in InferBucketPathKeys<TRouter['buckets'][K]>]: string;
+            };
+          }
+        : {
+            url: string;
+            size: number;
+            uploadedAt: Date;
+            metadata: InferMetadataObject<TRouter['buckets'][K]>;
+            path: {
+              [TKey in InferBucketPathKeys<TRouter['buckets'][K]>]: string;
+            };
+          }
+    >;
     delete: (params: { url: string }) => Promise<{
       success: boolean;
     }>;
