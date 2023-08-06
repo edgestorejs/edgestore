@@ -89,7 +89,7 @@ const config = {
             'aria-label': 'GitHub',
           },
           {
-            href: 'https://edgestore.dev/dashboard',
+            href: 'https://dashboard.edgestore.dev',
             position: 'right',
             className: 'header-sign-in-link',
             label: 'Dashboard',
