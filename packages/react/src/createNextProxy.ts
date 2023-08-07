@@ -29,18 +29,22 @@ export type BucketFunctions<TRouter extends AnyRouter> = {
             size: number;
             uploadedAt: Date;
             metadata: InferMetadataObject<TRouter['buckets'][K]>;
-            path: {
-              [TKey in InferBucketPathKeys<TRouter['buckets'][K]>]: string;
-            };
+            path: InferBucketPathKeys<TRouter['buckets'][K]> extends never
+              ? Record<string, never>
+              : {
+                  [TKey in InferBucketPathKeys<TRouter['buckets'][K]>]: string;
+                };
           }
         : {
             url: string;
             size: number;
             uploadedAt: Date;
             metadata: InferMetadataObject<TRouter['buckets'][K]>;
-            path: {
-              [TKey in InferBucketPathKeys<TRouter['buckets'][K]>]: string;
-            };
+            path: InferBucketPathKeys<TRouter['buckets'][K]> extends never
+              ? Record<string, never>
+              : {
+                  [TKey in InferBucketPathKeys<TRouter['buckets'][K]>]: string;
+                };
           }
     >;
     delete: (params: { url: string }) => Promise<{

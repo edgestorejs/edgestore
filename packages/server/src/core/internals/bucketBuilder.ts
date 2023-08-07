@@ -36,16 +36,12 @@ type InferBucketPathKeysFromDef<TDef extends AnyDef> = KeysOfUnion<
 export type InferMetadataObject<TBucket extends Builder<any, AnyDef>> =
   TBucket['_def']['metadata'] extends (...args: any) => any
     ? Awaited<ReturnType<TBucket['_def']['metadata']>>
-    : TBucket['_def']['metadata'] extends ((...args: any) => any) | undefined
-    ? any
-    : never;
+    : Record<string, never>;
 
 type InferMetadataObjectFromDef<TDef extends AnyDef> =
   TDef['metadata'] extends (...args: any) => any
     ? Awaited<ReturnType<TDef['metadata']>>
-    : TDef['metadata'] extends ((...args: any) => any) | undefined
-    ? any
-    : never;
+    : Record<string, never>;
 
 export type AnyContext = Record<string, string | undefined | null>;
 
@@ -123,19 +119,25 @@ type MetadataFn<
   input: z.infer<TDef['input']>;
 }) => MaybePromise<TMetadata>;
 
+export type AnyMetadataFn = MetadataFn<any, AnyDef, AnyMetadata>;
+
 type BucketType = 'IMAGE' | 'FILE';
 
-type Def<TInput extends AnyInput, TPath extends AnyPath> = {
+type Def<
+  TInput extends AnyInput,
+  TPath extends AnyPath,
+  TMetadata extends AnyMetadataFn,
+> = {
   type: any;
   input: TInput;
   path: TPath;
-  metadata?: MetadataFn<any, any, any>;
+  metadata: TMetadata;
   accessControl?: AccessControlSchema<any, any>;
   beforeUpload?: BeforeUploadFn<any, any>;
   beforeDelete?: BeforeDeleteFn<any, any>;
 };
 
-type AnyDef = Def<any, any>;
+type AnyDef = Def<any, any, any>;
 
 type Builder<TCtx, TDef extends AnyDef> = {
   /** only used for types */
@@ -253,7 +255,7 @@ function createBuilder<TCtx, TType extends BucketType>(
     type: TType;
     input: UnsetMarker;
     path: UnsetMarker;
-    metadata?: MetadataFn<any, any, any>;
+    metadata: UnsetMarker;
     accessControl?: AccessControlSchema<any, any>;
     beforeUpload?: BeforeUploadFn<any, any>;
     beforeDelete?: BeforeDeleteFn<any, any>;
@@ -263,6 +265,7 @@ function createBuilder<TCtx, TType extends BucketType>(
     type: opts.type,
     input: z.never(),
     path: [],
+    metadata: () => ({}),
     ...initDef,
   };
 

@@ -103,6 +103,7 @@ function EdgeStoreProviderInner<TRouter extends AnyRouter>({
         });
       }
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function getSrc(url: string) {
