@@ -65,10 +65,10 @@ import { createEdgeStoreNextHandler } from '@edgestore/server/adapters/next/app'
 const es = initEdgeStore.create();
 
 /**
- * This is the main router for the edgestore buckets.
+ * This is the main router for the Edge Store buckets.
  */
 const edgeStoreRouter = es.router({
-  publicFiles: es.fileBucket,
+  publicFiles: es.fileBucket(),
 });
 
 const handler = createEdgeStoreNextHandler({
@@ -142,6 +142,7 @@ export { EdgeStoreProvider, useEdgeStore };
 // @filename: src/app/api/edgestore/[...edgestore]/route.ts
 // @include: router
 // @filename: src/lib/edgestore.ts
+// clear cache: v2
 // ---cut---
 // @include: provider
 ```
@@ -260,5 +261,29 @@ export default function Page() {
     </div>
   );
 }
+```
 
+### Replace file
+
+By passing the `replaceTargetUrl` option, you can replace an existing file with a new one.
+It will automatically delete the old file after the upload is complete.
+
+You can also just upload the file using the same file name, but in that case, you might still see the old file for a while becasue of the CDN cache.
+
+```tsx
+const res = await edgestore.publicFiles.upload({
+  file,
+  options: {
+    replaceTargetUrl: oldFileUrl,
+  },
+  // ...
+});
+```
+
+### Delete file
+
+```tsx
+await edgestore.publicFiles.delete({
+  url: urlToDelete,
+})
 ```

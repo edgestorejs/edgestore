@@ -19,7 +19,7 @@ function createContext(_opts: CreateContextOptions): Context {
 const es = initEdgeStore.context<Context>().create();
 
 // ---cut---
-const publicImages = es.imageBucket
+const publicImages = es.imageBucket()
   .input(
     z.object({
       type: z.enum(['profile', 'post']),
