@@ -38,18 +38,26 @@ export type ListFilesRequest<TBucket extends AnyBuilder> = {
 };
 
 export type ListFilesResponse<TBucket extends AnyBuilder> = {
-  data: {
-    url: string;
-    thumbnailUrl: TBucket['_def']['type'] extends 'IMAGE'
-      ? string | null
-      : never;
-    size: number;
-    uploadedAt: Date;
-    metadata: InferMetadataObject<TBucket>;
-    path: {
-      [TKey in InferBucketPathKeys<TBucket>]: string;
-    };
-  }[];
+  data: TBucket['_def']['type'] extends 'IMAGE'
+    ? {
+        url: string;
+        thumbnailUrl: string | null;
+        size: number;
+        uploadedAt: Date;
+        metadata: InferMetadataObject<TBucket>;
+        path: {
+          [TKey in InferBucketPathKeys<TBucket>]: string;
+        };
+      }[]
+    : {
+        url: string;
+        size: number;
+        uploadedAt: Date;
+        metadata: InferMetadataObject<TBucket>;
+        path: {
+          [TKey in InferBucketPathKeys<TBucket>]: string;
+        };
+      }[];
   pagination: {
     currentPage: number;
     totalPages: number;

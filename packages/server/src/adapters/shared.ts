@@ -2,11 +2,7 @@ import { hkdf } from '@panva/hkdf';
 import { serialize } from 'cookie';
 import { EncryptJWT, jwtDecrypt } from 'jose';
 import { v4 as uuidv4 } from 'uuid';
-import {
-  AnyBuilder,
-  AnyPath,
-  EdgeStoreRouter,
-} from '../core/internals/bucketBuilder';
+import { AnyBuilder, EdgeStoreRouter } from '../core/internals/bucketBuilder';
 import EdgeStoreError from '../libs/errors/EdgeStoreError';
 import { Provider } from '../providers/types';
 import { IMAGE_MIME_TYPES } from './imageTypes';
@@ -55,6 +51,7 @@ export type RequestUploadBody = {
     size: number;
     type: string;
     extension: string;
+    fileName?: string;
     replaceTargetUrl?: string;
   };
 };
@@ -90,6 +87,7 @@ export async function requestUpload<TCtx>(params: {
       fileInfo: {
         size: fileInfo.size,
         type: fileInfo.type,
+        fileName: fileInfo.fileName,
         extension: fileInfo.extension,
         replaceTargetUrl: fileInfo.replaceTargetUrl,
       },
@@ -104,6 +102,40 @@ export async function requestUpload<TCtx>(params: {
       throw new EdgeStoreError({
         code: 'BAD_REQUEST',
         message: 'Only images are allowed in this bucket',
+      });
+    }
+  }
+
+  if (bucket._def.bucketConfig?.maxSize) {
+    if (fileInfo.size > bucket._def.bucketConfig.maxSize) {
+      throw new EdgeStoreError({
+        code: 'BAD_REQUEST',
+        message: `File size is too big. Max size is ${bucket._def.bucketConfig.maxSize}`,
+      });
+    }
+  }
+
+  if (bucket._def.bucketConfig?.accept) {
+    const accept = bucket._def.bucketConfig.accept;
+    let accepted = false;
+    for (const acceptedMimeType of accept) {
+      if (acceptedMimeType.endsWith('/*')) {
+        const mimeType = acceptedMimeType.replace('/*', '');
+        if (fileInfo.type.startsWith(mimeType)) {
+          accepted = true;
+          break;
+        }
+      } else if (fileInfo.type === acceptedMimeType) {
+        accepted = true;
+        break;
+      }
+    }
+    if (!accepted) {
+      throw new EdgeStoreError({
+        code: 'BAD_REQUEST',
+        message: `"${
+          fileInfo.type
+        }" is not allowed. Accepted types are ${JSON.stringify(accept)}`,
       });
     }
   }
@@ -274,7 +306,7 @@ function buildPath(params: {
   };
 }) {
   const { bucket } = params;
-  const pathParams = bucket._def.path as AnyPath;
+  const pathParams = bucket._def.path;
   const path = pathParams.map((param) => {
     const paramEntries = Object.entries(param);
     if (paramEntries[0] === undefined) {

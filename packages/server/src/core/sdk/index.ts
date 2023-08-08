@@ -1,6 +1,6 @@
 import { AnyRouter } from '..';
 import EdgeStoreCredentialsError from '../../libs/errors/EdgeStoreCredentialsError';
-import { AnyContext } from '../internals/bucketBuilder';
+import { AnyContext, AnyMetadata } from '../internals/bucketBuilder';
 
 const API_ENDPOINT =
   process.env.EDGE_STORE_API_ENDPOINT ?? 'https://api.edgestore.dev';
@@ -8,14 +8,14 @@ const API_ENDPOINT =
 type FileInfoForUpload = {
   size: number;
   extension: string;
+  type?: string;
   isPublic: boolean;
   path: {
     key: string;
     value: string;
   }[];
-  metadata?: {
-    [key: string]: string;
-  };
+  metadata: AnyMetadata;
+  fileName?: string;
   replaceTargetUrl?: string;
 };
 
@@ -182,7 +182,9 @@ export const edgeStoreRawSdk = {
         path: fileInfo.path,
         extension: fileInfo.extension,
         size: fileInfo.size,
+        mimeType: fileInfo.type,
         metadata: fileInfo.metadata,
+        fileName: fileInfo.fileName,
         replaceTargetUrl: fileInfo.replaceTargetUrl,
       },
     });

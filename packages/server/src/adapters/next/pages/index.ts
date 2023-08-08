@@ -1,8 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next/types';
-import {
-  EdgeStoreRouter,
-  NoContext,
-} from '../../../core/internals/bucketBuilder';
+import { EdgeStoreRouter } from '../../../core/internals/bucketBuilder';
 import EdgeStoreError, {
   EDGE_STORE_ERROR_CODES,
 } from '../../../libs/errors/EdgeStoreError';
@@ -24,7 +21,7 @@ export type CreateContextOptions = {
   res: NextApiResponse;
 };
 
-export type Config<TCtx> = TCtx extends NoContext
+export type Config<TCtx> = TCtx extends Record<string, never>
   ? {
       provider?: Provider;
       router: EdgeStoreRouter<TCtx>;

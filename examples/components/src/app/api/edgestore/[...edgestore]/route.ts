@@ -1,7 +1,7 @@
 import { initEdgeStore } from '@edgestore/server';
 import { createEdgeStoreNextHandler } from '@edgestore/server/adapters/next/app';
 
-const es = initEdgeStore.context().create();
+const es = initEdgeStore.create();
 
 /**
  * This is the main router for the edgestore buckets.
@@ -10,12 +10,12 @@ const edgeStoreRouter = es.router({
   /**
    * A public image bucket with no validation.
    */
-  myPublicImages: es.imageBucket,
+  myPublicImages: es.imageBucket(),
 
   /**
    * This accepts any file type.
    */
-  myPublicFiles: es.fileBucket,
+  myPublicFiles: es.fileBucket(),
 });
 
 /**
@@ -28,7 +28,6 @@ export type EdgeStoreRouter = typeof edgeStoreRouter;
  */
 const handler = createEdgeStoreNextHandler({
   router: edgeStoreRouter,
-  createContext: () => ({}),
 });
 
 export { handler as GET, handler as POST };

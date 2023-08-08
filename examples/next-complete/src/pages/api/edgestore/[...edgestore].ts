@@ -20,7 +20,8 @@ function createContext(_opts: CreateContextOptions): Context {
 
 const es = initEdgeStore.context<Context>().create();
 
-const imagesBucket = es.imageBucket
+const imagesBucket = es
+  .imageBucket()
   .input(
     z.object({
       type: z.enum(['profile', 'post']),
@@ -41,7 +42,8 @@ const imagesBucket = es.imageBucket
     return true;
   });
 
-const filesBucket = es.fileBucket
+const filesBucket = es
+  .fileBucket()
   .path(({ ctx }) => [{ author: ctx.userId }])
   .metadata(({ ctx }) => ({
     role: ctx.userRole,

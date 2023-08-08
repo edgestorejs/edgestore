@@ -9,15 +9,15 @@ import EdgeStoreError from './libs/errors/EdgeStoreError';
 export type BucketFunctions<TRouter extends AnyRouter> = {
   [K in keyof TRouter['buckets']]: {
     upload: (
-      params: z.infer<TRouter['buckets'][K]['_def']['input']> extends object
+      params: z.infer<TRouter['buckets'][K]['_def']['input']> extends never
         ? {
             file: File;
-            input: z.infer<TRouter['buckets'][K]['_def']['input']>;
             onProgressChange?: OnProgressChangeHandler;
             options?: UploadOptions;
           }
         : {
             file: File;
+            input: z.infer<TRouter['buckets'][K]['_def']['input']>;
             onProgressChange?: OnProgressChangeHandler;
             options?: UploadOptions;
           },
@@ -56,6 +56,24 @@ export type BucketFunctions<TRouter extends AnyRouter> = {
 type OnProgressChangeHandler = (progress: number) => void;
 
 type UploadOptions = {
+  /**
+   * e.g. 'my-file-name.jpg'
+   *
+   * * Not Recommended *
+   *
+   * By default, a unique file name will be generated for each upload.
+   * If you want to use a custom file name, you can use this option.
+   * If you use the same file name for multiple uploads, the previous file will be overwritten.
+   * But it will take some time for the cache to be cleared.
+   * So you will keep seeing the old file for a while.
+   *
+   * If you want to replace an existing file immediately leave the `manualFileName` option empty and use the `replaceTargetUrl` option.
+   */
+  manualFileName?: string;
+  /**
+   * Use this to replace an existing file.
+   * It will automatically delete the existing file when the upload is complete.
+   */
   replaceTargetUrl?: string;
 };
 
@@ -133,6 +151,7 @@ async function uploadFile(
           extension: file.name.split('.').pop(),
           type: file.type,
           size: file.size,
+          fileName: options?.manualFileName,
           replaceTargetUrl: options?.replaceTargetUrl,
         },
       }),

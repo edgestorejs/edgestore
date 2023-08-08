@@ -1,4 +1,8 @@
-import { AnyBuilder, EdgeStoreRouter } from '../core/internals/bucketBuilder';
+import {
+  AnyBuilder,
+  AnyMetadata,
+  EdgeStoreRouter,
+} from '../core/internals/bucketBuilder';
 import { MaybePromise } from '../types';
 
 export type InitParams = {
@@ -41,9 +45,7 @@ export type RequestUploadParams = {
       key: string;
       value: string;
     }[];
-    metadata?: {
-      [key: string]: string;
-    };
+    metadata: AnyMetadata;
     replaceTargetUrl?: string;
   };
 };
