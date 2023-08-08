@@ -3,6 +3,7 @@ import { Simplify } from '../../types';
 import {
   AnyBuilder,
   InferBucketPathKeys,
+  InferBucketPathObject,
   InferMetadataObject,
 } from '../internals/bucketBuilder';
 import { initEdgeStoreSdk } from '../sdk';
@@ -12,9 +13,7 @@ export type GetFileRes<TBucket extends AnyBuilder> = {
   size: number;
   uploadedAt: Date;
   metadata: InferMetadataObject<TBucket>;
-  path: {
-    [TKey in InferBucketPathKeys<TBucket>]: string;
-  };
+  path: InferBucketPathObject<TBucket>;
 };
 
 type Filter<TBucket extends AnyBuilder> = {
@@ -45,18 +44,14 @@ export type ListFilesResponse<TBucket extends AnyBuilder> = {
         size: number;
         uploadedAt: Date;
         metadata: InferMetadataObject<TBucket>;
-        path: {
-          [TKey in InferBucketPathKeys<TBucket>]: string;
-        };
+        path: InferBucketPathObject<TBucket>;
       }[]
     : {
         url: string;
         size: number;
         uploadedAt: Date;
         metadata: InferMetadataObject<TBucket>;
-        path: {
-          [TKey in InferBucketPathKeys<TBucket>]: string;
-        };
+        path: InferBucketPathObject<TBucket>;
       }[];
   pagination: {
     currentPage: number;

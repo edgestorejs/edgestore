@@ -1,8 +1,5 @@
-import {
-  AnyRouter,
-  InferBucketPathKeys,
-  InferMetadataObject,
-} from '@edgestore/server/core';
+import { AnyRouter, InferMetadataObject } from '@edgestore/server/core';
+import { InferBucketPathObject } from 'packages/server/dist/core/internals/bucketBuilder';
 import { z } from 'zod';
 import EdgeStoreError from './libs/errors/EdgeStoreError';
 
@@ -29,22 +26,14 @@ export type BucketFunctions<TRouter extends AnyRouter> = {
             size: number;
             uploadedAt: Date;
             metadata: InferMetadataObject<TRouter['buckets'][K]>;
-            path: InferBucketPathKeys<TRouter['buckets'][K]> extends never
-              ? Record<string, never>
-              : {
-                  [TKey in InferBucketPathKeys<TRouter['buckets'][K]>]: string;
-                };
+            path: InferBucketPathObject<TRouter['buckets'][K]>;
           }
         : {
             url: string;
             size: number;
             uploadedAt: Date;
             metadata: InferMetadataObject<TRouter['buckets'][K]>;
-            path: InferBucketPathKeys<TRouter['buckets'][K]> extends never
-              ? Record<string, never>
-              : {
-                  [TKey in InferBucketPathKeys<TRouter['buckets'][K]>]: string;
-                };
+            path: InferBucketPathObject<TRouter['buckets'][K]>;
           }
     >;
     delete: (params: { url: string }) => Promise<{
@@ -59,13 +48,11 @@ type UploadOptions = {
   /**
    * e.g. 'my-file-name.jpg'
    *
-   * * Not Recommended *
-   *
    * By default, a unique file name will be generated for each upload.
    * If you want to use a custom file name, you can use this option.
    * If you use the same file name for multiple uploads, the previous file will be overwritten.
-   * But it will take some time for the cache to be cleared.
-   * So you will keep seeing the old file for a while.
+   * But it might take some time for the CDN cache to be cleared.
+   * So maybe you will keep seeing the old file for a while.
    *
    * If you want to replace an existing file immediately leave the `manualFileName` option empty and use the `replaceTargetUrl` option.
    */

@@ -29,6 +29,20 @@ type InferBucketPathKeysFromDef<TDef extends AnyDef> = KeysOfUnion<
   TDef['path'][number]
 >;
 
+export type InferBucketPathObject<TBucket extends Builder<any, AnyDef>> =
+  InferBucketPathKeys<TBucket> extends never
+    ? Record<string, never>
+    : {
+        [TKey in InferBucketPathKeys<TBucket>]: string;
+      };
+
+export type InferBucketPathObjectFromDef<TDef extends AnyDef> =
+  InferBucketPathKeysFromDef<TDef> extends never
+    ? Record<string, never>
+    : {
+        [TKey in InferBucketPathKeysFromDef<TDef>]: string;
+      };
+
 export type InferMetadataObject<TBucket extends Builder<any, AnyDef>> =
   TBucket['_def']['metadata'] extends (...args: any) => any
     ? Awaited<ReturnType<TBucket['_def']['metadata']>>
@@ -109,13 +123,11 @@ type BeforeUploadFn<TCtx, TDef extends AnyDef> = (params: {
 
 type BeforeDeleteFn<TCtx, TDef extends AnyDef> = (params: {
   ctx: TCtx;
-  file: {
+  fileInfo: {
     url: string;
     size: number;
     uploadedAt: Date;
-    path: {
-      [TKey in InferBucketPathKeysFromDef<TDef>]: string;
-    };
+    path: InferBucketPathObjectFromDef<TDef>;
     metadata: InferMetadataObjectFromDef<TDef>;
   };
 }) => MaybePromise<boolean>;
@@ -158,6 +170,11 @@ type Builder<TCtx, TDef extends AnyDef> = {
    * @internal
    */
   _def: TDef;
+  /**
+   * You can set an input that will be required in every upload from the client.
+   *
+   * This can be used to add additional information to the file, like choose the file path or add metadata.
+   */
   input<TInput extends AnyInput>(
     input: TInput,
   ): Builder<
@@ -173,6 +190,18 @@ type Builder<TCtx, TDef extends AnyDef> = {
       beforeDelete: TDef['beforeDelete'];
     }
   >;
+  /**
+   * The `path` is similar to folders in a file system.
+   * But in this case, every segment of the path must have a meaning.
+   *
+   * ```
+   * // e.g. 123/profile/file.jpg
+   * {
+   *   author: '123',
+   *   type: 'profile',
+   * }
+   * ```
+   */
   path<TParams extends AnyPath>(
     pathResolver: (params: {
       ctx: Simplify<ConvertStringToFunction<TCtx>>;
@@ -191,6 +220,11 @@ type Builder<TCtx, TDef extends AnyDef> = {
       beforeDelete: TDef['beforeDelete'];
     }
   >;
+  /**
+   * This metadata will be added to every file uploaded to this bucket.
+   *
+   * This can be used, for example, to filter files.
+   */
   metadata<TMetadata extends AnyMetadata>(
     metadata: MetadataFn<TCtx, TDef['input'], TMetadata>,
   ): Builder<
@@ -206,6 +240,12 @@ type Builder<TCtx, TDef extends AnyDef> = {
       beforeDelete: TDef['beforeDelete'];
     }
   >;
+  /**
+   * If you set this, your bucket will automatically be configured as a protected bucket.
+   *
+   * This means that images will only be accessible from within your app.
+   * And only if it passes the check set in this function.
+   */
   accessControl(accessControl: AccessControlSchema<TCtx, TDef>): Builder<
     TCtx,
     {
@@ -219,6 +259,11 @@ type Builder<TCtx, TDef extends AnyDef> = {
       beforeDelete: TDef['beforeDelete'];
     }
   >;
+  /**
+   * return `true` to allow upload
+   *
+   * By default every upload from your app is allowed.
+   */
   beforeUpload(beforeUpload: BeforeUploadFn<TCtx, TDef>): Builder<
     TCtx,
     {
@@ -232,6 +277,11 @@ type Builder<TCtx, TDef extends AnyDef> = {
       beforeDelete: TDef['beforeDelete'];
     }
   >;
+  /**
+   * return `true` to allow delete
+   *
+   * This function must be defined if you want to delete files directly from the client.
+   */
   beforeDelete(beforeDelete: BeforeDeleteFn<TCtx, TDef>): Builder<
     TCtx,
     {
