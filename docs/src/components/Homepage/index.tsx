@@ -1,5 +1,7 @@
 import React from 'react';
 import CodeBlock1 from '../../../docs/landing-code/CodeBlock1.md';
+import CodeBlock2 from '../../../docs/landing-code/CodeBlock2.md';
+import CodeBlock3 from '../../../docs/landing-code/CodeBlock3.md';
 
 export const useScrollPosition = () => {
   const [scrollPosition, setScrollPosition] = React.useState(0);
@@ -22,28 +24,59 @@ export const useScrollPosition = () => {
 
 type CodeBlockItem = {
   title: string;
-  description: string;
+  description: string | React.ReactNode;
   code: React.ReactNode;
 };
 
 const codeBlocks: CodeBlockItem[] = [
   {
     title: 'Step 1 - Server',
-    description:
-      'Add the service environment variables to your Next.js app. Then export the Edge Store API from the Next.js API routes.',
+    description: (
+      <>
+        <p>
+          Use our completely type-safe package to configure your storage. You
+          can configure who can upload and access files and even add metadata
+          that can be used for access control or search filtering.
+        </p>
+        <p>
+          You can also leverage the lifecycle hooks to run custom code when a
+          file is uploaded or deleted. Which can be used to sync data with your
+          database if needed.
+        </p>
+      </>
+    ),
     code: <CodeBlock1 />,
   },
   {
     title: 'Step 2 - Client',
-    description:
-      'Wrap your app with the Edge Store provider component. This will enable you to access Edge Store methods anywhere in your app.',
-    code: <CodeBlock1 />,
+    description: (
+      <>
+        <p>
+          Wrap your app with the Edge Store provider component. This will enable
+          you to access Edge Store methods anywhere in your app.
+        </p>
+      </>
+    ),
+    code: <CodeBlock2 />,
   },
   {
-    title: 'Step 3 - Start using',
-    description:
-      'Use the useEdgeStore hook to upload and fetch images from Edge Store. You can also use Edge Store features like:',
-    code: <CodeBlock1 />,
+    title: 'Step 3 - Start uploading',
+    description: (
+      <>
+        <p>
+          Use the useEdgeStore hook to upload files to Edge Store. You can also
+          use the onProgressChange callback to easily show a progress bar for
+          your uploads.
+        </p>
+        <p>
+          If it is a storage for images and the image is large, Edge Store will
+          automatically create a thumbnail for you. And return the url for the
+          thumbnail in the response. (Thumbnail images are not counted towards
+          your storage quota.)
+        </p>
+      </>
+    ),
+    code: <CodeBlock3 />,
   },
 ];
 
@@ -62,50 +95,65 @@ const Homepage = () => {
       />
 
       <main className="mt-[calc(var(--ifm-navbar-height)*-1)] min-h-screen text-white">
-        <div className="flex w-full flex-col items-center justify-center bg-[radial-gradient(theme(colors.primary.999),#000000)] py-28 px-3">
-          <h1 className="mb-2 bg-gradient-to-b from-primary-100 to-primary-400 bg-clip-text text-center font-[Futura] text-5xl text-transparent md:text-7xl">
+        <div className="flex w-full flex-col items-center justify-center bg-[radial-gradient(theme(colors.primary.999),#000000)] px-3 pb-16 pt-40">
+          <h1 className="mb-6 bg-gradient-to-b from-primary-100 to-primary-400 bg-clip-text text-center font-[Futura] text-5xl text-transparent md:text-7xl">
             EDGE STORE
           </h1>
-          <h2 className="mb-6 text-center text-lg font-normal text-gray-300">
+          <h2 className="mb-8 text-center text-lg font-normal text-gray-300">
             The best DX for uploading files from your Next.js app.
           </h2>
-          <JoinButton />
+          <div className="flex gap-3">
+            <JoinButton />
+            <LearnMoreButton />
+          </div>
         </div>
-        <div className="flex w-full justify-center bg-primary-999 py-10 px-3 text-center">
+        {/* <div className="flex w-full justify-center bg-primary-999 py-10 px-3 text-center">
           <div className="max-w-4xl">
             <p className="pb-4 text-xl font-bold">Why Edge Store?</p>
             <p>
-              Edge Store is a simple image storage for all project sizes. It is
+              Edge Store is a simple cloud storage for all project sizes. It is
               designed to be easy to use and easy to integrate into your
               project. It is built leveraging s3, cloudfront and lambda@edge to
-              give you a fast, reliable and secure image storage.
+              give you a fast, reliable and secure storage.
             </p>
           </div>
-        </div>
+        </div> */}
         <div className="my-20 mx-auto grid w-full max-w-4xl auto-rows-fr grid-cols-1 gap-10 px-6 md:grid-cols-3 md:justify-between">
           <TechCard
-            title="Easy to use"
-            description="Use our server side and client side libraries to easily integrate Edge Store into your project."
+            title="Start for free"
+            description="Get your free storage and start building. No credit card required."
           />
           <TechCard
-            title="Fast"
-            description="All your images are served from the edge, so they are fast to load."
+            title="Effortless Integration"
+            description="Use our type-safe npm package to seamlessly integrate Edge Store into your app."
           />
           <TechCard
-            title="Secure"
-            description="Have full control over who can access your images with a JWT based access control system that works on the Edge."
+            title="Easy-to-Use Dashboard"
+            description="Monitor, manage, and delete files with ease."
           />
           <TechCard
-            title="Reliable"
-            description="It leverages AWS serverless technologies that are known and trusted by millions of developers."
+            title="Ultra-Fast CDN"
+            description="All your files are served from the edge for a great performance anywhere in the world."
           />
           <TechCard
-            title="Free for small projects"
-            description="Just create an account and start using Edge Store for free."
+            title="Large file support"
+            description="Automatically uses multipart uploads for bigger files."
           />
           <TechCard
-            title="Pay as you grow"
-            description="As your project grows, you can upgrade your plan to get more storage and more bandwidth."
+            title="Protected Files"
+            description="Ensure your files are safe with custom edge validations."
+          />
+          <TechCard
+            title="Automatic Thumbnail Generation"
+            description="Images ready to use, without the extra effort."
+          />
+          <TechCard
+            title="Customizable Components"
+            description="Just copy one of our sample components and customize it to your needs."
+          />
+          <TechCard
+            title="And More..."
+            description="Temporary files, parallel uploads, and much more. Handle all scenarios with finesse."
           />
         </div>
         <div className="mx-6 flex flex-col items-center gap-12">
@@ -128,7 +176,7 @@ const TechCard: React.FC<{ title: string; description: string }> = ({
   description,
 }) => {
   return (
-    <div className="min-h-[170px] w-full rounded-lg p-6 shadow-[0px_0px_19px_0px_theme(colors.primary.900)]">
+    <div className="min-h-[170px] w-full rounded-lg p-6 shadow-[0px_0px_5px_0px_theme(colors.primary.500),0px_0px_20px_0px_theme(colors.primary.700)]">
       <p className="mb-2 text-lg font-bold">{title}</p>
       <p className="text-gray-400">{description}</p>
     </div>
@@ -144,6 +192,17 @@ const JoinButton: React.FC = () => {
       href="https://dashboard.edgestore.dev/sign-up"
     >
       Start for free
+    </a>
+  );
+};
+
+const LearnMoreButton: React.FC = () => {
+  return (
+    <a
+      className="rounded-lg bg-white/5 px-4 py-2 font-semibold text-gray-100 transition-colors duration-200 hover:bg-white/10 hover:text-gray-100 hover:no-underline focus:border-transparent focus:bg-primary-800 focus:outline-none focus:ring-2 focus:ring-gray-600 active:bg-primary-800"
+      href="/docs/quick-start"
+    >
+      Learn more
     </a>
   );
 };

@@ -77,6 +77,12 @@ const config = {
           },
           // { to: "/blog", label: "Blog", position: "left" },
           {
+            href: 'https://dashboard.edgestore.dev',
+            position: 'right',
+            className: 'header-sign-in-link',
+            label: 'Dashboard',
+          },
+          {
             href: 'https://github.com/edgestorejs/edge-store',
             position: 'right',
             className: 'header-social-link header-github-link',
@@ -87,12 +93,6 @@ const config = {
             position: 'right',
             className: 'header-social-link header-discord-link',
             'aria-label': 'GitHub',
-          },
-          {
-            href: 'https://dashboard.edgestore.dev',
-            position: 'right',
-            className: 'header-sign-in-link',
-            label: 'Dashboard',
           },
         ],
       },
