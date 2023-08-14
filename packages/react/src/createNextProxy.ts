@@ -1,5 +1,8 @@
-import { AnyRouter, InferMetadataObject } from '@edgestore/server/core';
-import { InferBucketPathObject } from 'packages/server/dist/core/internals/bucketBuilder';
+import {
+  AnyRouter,
+  InferBucketPathObject,
+  InferMetadataObject,
+} from '@edgestore/server/core';
 import { z } from 'zod';
 import EdgeStoreError from './libs/errors/EdgeStoreError';
 

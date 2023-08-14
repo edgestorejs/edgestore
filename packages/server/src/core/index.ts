@@ -4,6 +4,7 @@ export * from './client';
 export * from './sdk';
 export type {
   InferBucketPathKeys,
+  InferBucketPathObject,
   InferMetadataObject,
 } from './internals/bucketBuilder';
 

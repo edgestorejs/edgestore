@@ -34,8 +34,6 @@ async function createContext({ req }: CreateContextOptions): Promise<Context> {
 const es = initEdgeStore.context<Context>().create();
 ```
 
-# Bucket Configuration
-
 ## Bucket Types
 
 There are two types of file buckets: `IMAGE` and `FILE`. Both types of buckets work basically the same way, but the `IMAGE` bucket only accepts [certain mime types](#image-bucket-accepted-mime-types).
@@ -121,9 +119,38 @@ const edgeStoreRouter = es.router({
 });
 ```
 
-## Access Control (Protected files)
+## Access Control (Experimental)
 
+You can use the `accessControl` function to add bucket level logic to allow or deny access to files. If you have ever used Prisma, you will probably notice that the structure of the `accessControl` function is similar to how you would write a Prisma query.
 
+If you set the `accessControl` function, your bucket will automatically be configured as a **protected bucket**. You cannot change a protected bucket to a public bucket after it has been created. The opposite is also true, you cannot change a public bucket to a protected bucket.
+
+To access files from a **protected bucket** the user will need a specific encrypted cookie that is generated in your server by the Edge Store package. Which means that they will only be able to access the files from within your app. Sharing the url of a protected file will not work.
+
+The access control check is performed on an edge function without running any database queries, so you wont need to worry about bad performance on your protected files.
+
+```ts twoslash {4-17}
+// @noErrors
+const filesBucket = es
+  .fileBucket()
+  .path(({ ctx }) => [{ author: ctx.userId }])
+  .accessControl({
+    OR: [
+      {
+        // this will make sure that only the author of the file can access it
+        userId: { path: 'author' }, 
+      },
+      {
+        // or if the user is an admin
+        userRole: {
+          eq: 'admin',
+        }, // same as { userRole: 'admin' }
+      },
+    ],
+  });
+```
+
+Other available operators are: `eq`, `not`, `gt`, `gte`, `lt`, `lte`, `in`, `contains`
 
 ## IMAGE bucket accepted mime types
 
