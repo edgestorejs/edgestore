@@ -6,3 +6,5 @@ slug: /components/multi-file
 ---
 
 # Multi-file
+
+Coming Soon

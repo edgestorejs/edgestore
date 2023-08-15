@@ -28,12 +28,7 @@ const sidebars = {
         title: 'Getting Started',
         slug: '/getting-started',
       },
-      items: [
-        'main/quick-start',
-        'main/bucket-config',
-        'main/protected-files',
-        'main/validation',
-      ],
+      items: ['main/quick-start', 'main/bucket-config'],
     },
     {
       type: 'category',
@@ -46,17 +41,17 @@ const sidebars = {
       },
       items: ['components/image', 'components/multi-file'],
     },
-    {
-      type: 'category',
-      label: 'Adapters',
-      collapsed: false,
-      link: {
-        type: 'generated-index',
-        title: 'Adapters',
-        slug: '/adapters',
-      },
-      items: ['adapters/next-pages', 'adapters/next-app'],
-    },
+    // {
+    //   type: 'category',
+    //   label: 'Adapters',
+    //   collapsed: false,
+    //   link: {
+    //     type: 'generated-index',
+    //     title: 'Adapters',
+    //     slug: '/adapters',
+    //   },
+    //   items: ['adapters/next-pages', 'adapters/next-app'],
+    // },
     {
       type: 'category',
       label: 'Providers',

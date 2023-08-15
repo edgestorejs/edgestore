@@ -23,6 +23,10 @@
   --ifm-tabs-padding-vertical: 0.5rem;
 }
 
+.footer--dark {
+  @apply bg-primary-500/30;
+}
+
 /* For readability concerns, you should choose a lighter palette in dark mode. */
 html[data-theme='dark'] {
   --ifm-color-primary: theme(colors.primary.400);
@@ -34,6 +38,7 @@ html[data-theme='dark'] {
   --ifm-color-primary-lightest: theme(colors.primary.100);
   --ifm-background-color: #000000;
   --ifm-code-background: #313032;
+  --ifm-footer-background-color: #000000;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
 }
 
@@ -55,6 +60,10 @@ html[data-theme='dark'] {
 
 .theme-doc-sidebar-container {
   @apply !border-r-white/20;
+}
+
+.homepage {
+  @apply flex min-h-screen flex-col;
 }
 
 .homepage .navbar {

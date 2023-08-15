@@ -6,3 +6,5 @@ slug: /adapters/next-pages
 ---
 
 # Next.js (pages router)
+
+Coming Soon

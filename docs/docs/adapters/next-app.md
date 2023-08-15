@@ -6,3 +6,5 @@ slug: /adapters/next-app
 ---
 
 # Next.js (app router)
+
+Coming Soon

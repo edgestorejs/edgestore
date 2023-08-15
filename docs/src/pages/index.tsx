@@ -2,16 +2,19 @@ import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import Layout from '@theme/Layout';
 import React from 'react';
 import Homepage from '../components/Homepage';
+import { PageFrame } from '../components/PageFrame';
 
 export default function Home(): JSX.Element {
   const { siteConfig } = useDocusaurusContext();
   return (
     <div className="homepage">
       <Layout
-        title={`Easily handle images in your app - ${siteConfig.title}`}
-        description="A simple image storage for all project sizes. Easily integrate with your existing projects. Fast, reliable and secure."
+        title={`Easily handle file uploads in Next.js - ${siteConfig.title}`}
+        description="The best developer experience for uploading files from your Next.js app."
       >
-        <Homepage />
+        <PageFrame>
+          <Homepage />
+        </PageFrame>
       </Layout>
     </div>
   );
