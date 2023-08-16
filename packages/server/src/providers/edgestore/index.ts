@@ -2,13 +2,11 @@ import { initEdgeStoreSdk } from '../../core/sdk';
 import EdgeStoreCredentialsError from '../../libs/errors/EdgeStoreCredentialsError';
 import { Provider, RequestUploadRes } from '../types';
 
-const DEFAULT_BASE_URL =
-  process.env.EDGE_STORE_BASE_URL ?? 'https://files.edgestore.dev';
+const DEFAULT_BASE_URL = 'https://files.edgestore.dev';
 
 export type EdgeStoreProviderOptions = {
   accessKey?: string;
   secretKey?: string;
-  baseUrl?: string;
 };
 
 export function EdgeStoreProvider(
@@ -17,8 +15,9 @@ export function EdgeStoreProvider(
   const {
     accessKey = process.env.EDGE_STORE_ACCESS_KEY,
     secretKey = process.env.EDGE_STORE_SECRET_KEY,
-    baseUrl = process.env.EDGE_STORE_BASE_URL ?? DEFAULT_BASE_URL,
   } = options ?? {};
+
+  const baseUrl = process.env.EDGE_STORE_BASE_URL ?? DEFAULT_BASE_URL;
 
   if (!accessKey || !secretKey) {
     throw new EdgeStoreCredentialsError();

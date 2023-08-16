@@ -61,7 +61,7 @@ export function createEdgeStoreProvider<TRouter extends AnyRouter>(opts?: {
       React.useContext(EdgeStoreContext);
     if (!value && process.env.NODE_ENV !== 'production') {
       throw new Error(
-        '[edge-store]: `useEdgeStore` must be wrapped in a <EdgeStoreProvider />',
+        '[edgestore]: `useEdgeStore` must be wrapped in a <EdgeStoreProvider />',
       );
     }
 
