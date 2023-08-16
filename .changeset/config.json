@@ -1,6 +1,9 @@
 {
   "$schema": "https://unpkg.com/@changesets/config@2.3.1/schema.json",
-  "changelog": ["@changesets/changelog-github", { "repo": "edgestorejs/edge-store" }],
+  "changelog": [
+    "@changesets/changelog-github",
+    { "repo": "edgestorejs/edgestore" }
+  ],
   "commit": false,
   "fixed": [],
   "linked": [],

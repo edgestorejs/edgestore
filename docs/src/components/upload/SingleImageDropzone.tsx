@@ -182,9 +182,9 @@ const Button = React.forwardRef<
     <button
       className={twMerge(
         // base
-        'focus-visible:ring-ring inline-flex cursor-pointer items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50',
+        'focus-visible:ring-ring inline-flex cursor-pointer items-center justify-center rounded-md border-none text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50',
         // color
-        'border border-gray-600 bg-violet-500 text-gray-100 shadow hover:bg-violet-600',
+        'border border-gray-600 bg-violet-600 text-gray-100 shadow hover:bg-violet-700',
         // size
         'h-6 rounded-md px-2 text-xs',
         className,
