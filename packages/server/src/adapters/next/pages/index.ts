@@ -77,6 +77,25 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
           ctxToken: req.cookies['edgestore-ctx'],
         });
         res.status(200).end();
+      } else if (req.url?.startsWith('/api/edgestore/proxy-file')) {
+        const { url } = req.query;
+        if (typeof url === 'string') {
+          const proxyRes = await fetch(url, {
+            headers: {
+              cookie: req.headers.cookie ?? '',
+            },
+          });
+
+          const data = await proxyRes.arrayBuffer();
+          res.setHeader(
+            'Content-Type',
+            proxyRes.headers.get('Content-Type') ?? 'application/octet-stream',
+          );
+
+          res.end(Buffer.from(data));
+        } else {
+          res.status(400).end();
+        }
       } else {
         res.status(404).end();
       }

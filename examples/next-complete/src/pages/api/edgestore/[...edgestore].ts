@@ -37,8 +37,8 @@ const imagesBucket = es
     console.log(ctx, input);
     return true;
   })
-  .beforeDelete(({ ctx, file }) => {
-    console.log(ctx, file);
+  .beforeDelete(({ ctx, fileInfo }) => {
+    console.log(ctx, fileInfo);
     return true;
   });
 
@@ -76,4 +76,5 @@ export default createEdgeStoreNextHandler<Context>({
  */
 export const edgeStoreClient = initEdgeStoreClient({
   router: edgeStoreRouter,
+  baseUrl: 'http://localhost:3000/api/edgestore',
 });

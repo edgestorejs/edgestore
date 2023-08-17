@@ -99,6 +99,14 @@ export function initEdgeStoreClient<TRouter extends AnyRouter>(config: {
   router: TRouter;
   accessKey?: string;
   secretKey?: string;
+  /**
+   * The base URL of your application.
+   *
+   * This is only needed for getting protected files on a development environment.
+   *
+   * @example http://localhost:3000/api/edgestore
+   */
+  baseUrl?: string;
 }) {
   const sdk = initEdgeStoreSdk({
     accessKey: config.accessKey,
@@ -115,7 +123,7 @@ export function initEdgeStoreClient<TRouter extends AnyRouter>(config: {
         async getFile(params) {
           const res = await sdk.getFile(params);
           return {
-            url: res.url,
+            url: getUrl(res.url, config.baseUrl),
             size: res.size,
             uploadedAt: new Date(res.uploadedAt),
             metadata: res.metadata,
@@ -174,7 +182,7 @@ export function initEdgeStoreClient<TRouter extends AnyRouter>(config: {
 
           const files = res.data.map((file) => {
             return {
-              url: file.url,
+              url: getUrl(file.url, config.baseUrl),
               thumbnailUrl: file.thumbnailUrl,
               size: file.size,
               uploadedAt: new Date(file.uploadedAt),
@@ -194,6 +202,28 @@ export function initEdgeStoreClient<TRouter extends AnyRouter>(config: {
       return client;
     },
   });
+}
+
+/**
+ * Protected files need third-party cookies to work.
+ * Since third party cookies doesn't work on localhost,
+ * we need to proxy the file through the server.
+ */
+function getUrl(url: string, baseUrl?: string) {
+  if (process.env.NODE_ENV === 'development' && !url.includes('/_public/')) {
+    if (!baseUrl) {
+      throw new Error(
+        'Missing baseUrl. You need to pass the baseUrl to `initEdgeStoreClient` to get protected files in development.',
+      );
+    }
+    const proxyUrl = new URL(baseUrl);
+    proxyUrl.pathname = `${proxyUrl.pathname}/proxy-file`;
+    proxyUrl.search = new URLSearchParams({
+      url,
+    }).toString();
+    return proxyUrl.toString();
+  }
+  return url;
 }
 
 export type InferClientResponse<TRouter extends AnyRouter> = {

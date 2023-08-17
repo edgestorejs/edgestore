@@ -224,6 +224,5 @@ export const getServerSideProps: GetServerSideProps<{
       },
     },
   });
-  console.log(res.data);
   return { props: { files: res.data } };
 };

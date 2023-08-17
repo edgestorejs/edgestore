@@ -156,8 +156,10 @@ async function uploadFile(
     // Upload the file to the signed URL and get the progress
     await uploadFileInner(file, json.uploadUrl, onProgressChange);
     return {
-      url: json.accessUrl,
-      thumbnailUrl: json.thumbnailUrl,
+      url: getUrl(json.accessUrl, apiPath),
+      thumbnailUrl: json.thumbnailUrl
+        ? getUrl(json.thumbnailUrl, apiPath)
+        : null,
       size: json.size,
       uploadedAt: new Date(json.uploadedAt),
       path: json.path,
@@ -167,6 +169,23 @@ async function uploadFile(
     onProgressChange?.(0);
     throw e;
   }
+}
+
+/**
+ * Protected files need third-party cookies to work.
+ * Since third party cookies doesn't work on localhost,
+ * we need to proxy the file through the server.
+ */
+function getUrl(url: string, apiPath: string) {
+  if (process.env.NODE_ENV === 'development' && !url.includes('/_public/')) {
+    const proxyUrl = new URL(window.location.origin);
+    proxyUrl.pathname = `${apiPath}/proxy-file`;
+    proxyUrl.search = new URLSearchParams({
+      url,
+    }).toString();
+    return proxyUrl.toString();
+  }
+  return url;
 }
 
 const uploadFileInner = async (

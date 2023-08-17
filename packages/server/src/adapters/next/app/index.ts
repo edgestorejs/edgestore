@@ -96,6 +96,29 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
         return new Response(null, {
           status: 200,
         });
+      } else if (req.nextUrl.pathname === '/api/edgestore/proxy-file') {
+        const url = req.nextUrl.searchParams.get('url');
+        if (typeof url === 'string') {
+          const proxyRes = await fetch(url, {
+            headers: {
+              cookie: req.cookies.toString() ?? '',
+            },
+          });
+
+          const data = await proxyRes.arrayBuffer();
+          return new Response(data, {
+            status: proxyRes.status,
+            headers: {
+              'Content-Type':
+                proxyRes.headers.get('Content-Type') ??
+                'application/octet-stream',
+            },
+          });
+        } else {
+          return new Response(null, {
+            status: 400,
+          });
+        }
       } else {
         return new Response(null, {
           status: 404,
