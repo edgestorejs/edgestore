@@ -1,16 +1,16 @@
-import React from "react";
-import clsx from "clsx";
-import styles from "./styles.module.css";
+import clsx from 'clsx';
+import React from 'react';
+import styles from './styles.module.css';
 
 type FeatureItem = {
   title: string;
-  Svg?: React.ComponentType<React.ComponentProps<"svg">>;
+  Svg?: React.ComponentType<React.ComponentProps<'svg'>>;
   description: JSX.Element;
 };
 
 const FeatureList: FeatureItem[] = [
   {
-    title: "Easy to Use",
+    title: 'Easy to Use',
     description: (
       <>
         Edge Store seamlessly integrates with your existing Next.js project. You
@@ -19,7 +19,7 @@ const FeatureList: FeatureItem[] = [
     ),
   },
   {
-    title: "Focus on What Matters",
+    title: 'Focus on What Matters',
     description: (
       <>
         Edge Store lets you focus on your app features, and we&apos;ll do the
@@ -28,7 +28,7 @@ const FeatureList: FeatureItem[] = [
     ),
   },
   {
-    title: "Powered by AWS",
+    title: 'Powered by AWS',
     description: (
       <>
         Edge Store is powered by AWS and your images are accessible with great
@@ -40,7 +40,7 @@ const FeatureList: FeatureItem[] = [
 
 function Feature({ title, Svg, description }: FeatureItem) {
   return (
-    <div className={clsx("col col--4")}>
+    <div className={clsx('col col--4')}>
       {Svg && (
         <div className="text--center">
           <Svg className={styles.featureSvg} role="img" />

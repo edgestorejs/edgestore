@@ -1,0 +1,209 @@
+---
+id: configuration
+title: Configuration
+sidebar_label: Configuration
+slug: /configuration
+---
+
+``` twoslash include context
+declare function getUserSession(
+  req: any,
+): Promise<{ id: string; role: 'admin' | 'user' }>;
+// ---cut---
+import { initEdgeStore } from '@edgestore/server';
+import {
+  CreateContextOptions,
+  createEdgeStoreNextHandler,
+} from '@edgestore/server/adapters/next/app';
+import { z } from 'zod';
+
+type Context = {
+  userId: string;
+  userRole: 'admin' | 'user';
+};
+
+async function createContext({ req }: CreateContextOptions): Promise<Context> {
+  const { id, role } = await getUserSession(req); // replace with your own session logic
+
+  return {
+    userId: id,
+    userRole: role,
+  };
+}
+
+const es = initEdgeStore.context<Context>().create();
+```
+
+## Bucket Types
+
+There are two types of file buckets: `IMAGE` and `FILE`. Both types of buckets work basically the same way, but the `IMAGE` bucket only accepts [certain mime types](#image-bucket-accepted-mime-types).
+
+IMAGE buckets automatically generates a thumbnail version of the image file if the file is bigger than 200px in width or height. In case a thumbnail was generated, the url will be included in the response of the upload request.
+
+```ts
+const edgeStoreRouter = es.router({
+  publicFiles: es.fileBucket(),
+  publicImages: es.imageBucket(),
+});
+```
+
+## Basic File Validation
+
+You can set the maximum file size and the accepted mime types for every file bucket.
+
+```ts
+const edgeStoreRouter = es.router({
+  publicFiles: es.fileBucket({
+    maxSize: 1024 * 1024 * 10, // 10MB
+    accept: ['image/jpeg', 'image/png'], // wildcard also works: ['image/*']
+  }),
+});
+```
+
+## Metadata & File Path
+
+Every uploaded file can hold 2 types of data: `metadata` and `path`. you can use this data for access control or for filtering files. The `metadata` and `path` can be generated from the context (`ctx`) or from the `input` of the upload request.
+
+```ts twoslash
+// @include: context
+
+const edgeStoreRouter = es.router({
+  publicFiles: es
+    .fileBucket()
+    // this input will be required for every upload request
+    .input(
+      z.object({
+        category: z.string(),
+      }),
+    )
+    // e.g. /publicFiles/{category}/{author}
+    .path(({ ctx, input }) => [
+      { category: input.category },
+      { author: ctx.userId },
+    ])
+    // this metadata will be added to every file in this bucket
+    .metadata(({ ctx, input }) => ({
+      userRole: ctx.userRole,
+    })),
+});
+
+export default createEdgeStoreNextHandler({
+  router: edgeStoreRouter,
+  /**
+   * The context is generated and saved to a cookie
+   * in the first load of the page.
+   */
+  createContext,
+});
+```
+
+## Lifecycle Hooks
+
+You can use the `beforeUpload` and `beforeDelete` hooks to allow or deny file uploads and deletions. The `beforeDelete` hook must be defined if you want to delete files directly from the client.
+
+```ts twoslash {8-11, 16-19}
+// @include: context
+// ---cut---
+const edgeStoreRouter = es.router({
+  publicFiles: es
+    .fileBucket()
+    /**
+     * return `true` to allow upload
+     * By default every upload from your app is allowed.
+     */
+    .beforeUpload(({ ctx, input, fileInfo} ) => {
+      console.log('beforeUpload', ctx, input, fileInfo);
+      return true; // allow upload
+    })
+    /**
+     * return `true` to allow delete
+     * This function must be defined if you want to delete files directly from the client.
+     */
+    .beforeDelete(({ ctx, fileInfo } ) => {
+      console.log('beforeDelete', ctx, fileInfo);
+      return true; // allow delete
+    }),
+});
+```
+
+## Access Control (Experimental)
+
+You can use the `accessControl` function to add bucket level logic to allow or deny access to files. If you have ever used Prisma, you will probably notice that the structure of the `accessControl` function is similar to how you would write a Prisma query.
+
+If you set the `accessControl` function, your bucket will automatically be configured as a **protected bucket**. You cannot change a protected bucket to a public bucket after it has been created. The opposite is also true, you cannot change a public bucket to a protected bucket.
+
+To access files from a **protected bucket** the user will need a specific encrypted cookie that is generated in your server by the Edge Store package. Which means that they will only be able to access the files from within your app. Sharing the url of a protected file will not work.
+
+The access control check is performed on an edge function without running any database queries, so you wont need to worry about bad performance on your protected files.
+
+```ts twoslash {4-17}
+// @noErrors
+const filesBucket = es
+  .fileBucket()
+  .path(({ ctx }) => [{ author: ctx.userId }])
+  .accessControl({
+    OR: [
+      {
+        // this will make sure that only the author of the file can access it
+        userId: { path: 'author' }, 
+      },
+      {
+        // or if the user is an admin
+        userRole: {
+          eq: 'admin',
+        }, // same as { userRole: 'admin' }
+      },
+    ],
+  });
+```
+
+Other available operators are: `eq`, `not`, `gt`, `gte`, `lt`, `lte`, `in`, `contains`
+
+:::info Good to know
+The access control functionality uses third party cookies. Since third party cookies are not supported in localhost (without https), in development, all the protected files will be proxied through your app's api so that the cookies can be forwarded to the file request.
+
+Also, the `<Image />` component from `next/image` does not forward the cookies in the request, so protected images won't be displayed. You will need ot use the `<img />` tag instead.
+:::
+
+## Limit parallel uploads
+
+When creating the provider, you can set the maximum number of concurrent uploads.
+Edge Store's context provider will take care of queuing the uploads and will automatically upload the next file when the previous one is finished.
+
+```ts twoslash {3}
+// @noErrors
+const { EdgeStoreProvider, useEdgeStore } =
+  createEdgeStoreProvider<EdgeStoreRouter>({
+    maxConcurrentUploads: 5, // default is 5
+  });
+```
+
+## Base Path
+
+In case your app is not hosted at the root of your domain, you can specify the base path.
+If you set this, make sure to set the full path to the EdgeStore API.
+e.g. `/my-app/api/edgestore` or `https://example.com/my-app/api/edgestore`
+
+```tsx twoslash {3}
+// @noErrors
+export default function App({ Component, pageProps }: AppProps) {
+  return (
+    <EdgeStoreProvider basePath='/my-app/api/edgestore'>
+      <Component {...pageProps} />
+    </EdgeStoreProvider>
+  );
+}
+```
+
+## IMAGE bucket accepted mime types
+
+| mime type |
+| --- |
+| image/jpeg |
+| image/png |
+| image/gif |
+| image/webp |
+| image/svg+xml |
+| image/tiff |
+| image/bmp |
+| image/x-icon |

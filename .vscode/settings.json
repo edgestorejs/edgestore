@@ -1,0 +1,21 @@
+{
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.stickyScroll.enabled": true,
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true
+  },
+  "[markdown]": {
+    "editor.formatOnSave": false
+  },
+  "eslint.workingDirectories": [
+    { "pattern": "./examples/**" },
+    { "pattern": "./packages/*" },
+    { "pattern": "./docs/*" }
+  ],
+  // "files.exclude": {
+  //   "packages/server/{adapters,core,providers}": true
+  // },
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true
+}

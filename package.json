@@ -2,30 +2,70 @@
   "name": "root",
   "version": "0.0.0",
   "private": true,
-  "workspaces": [
-    "apps/*",
-    "docs",
-    "packages/*"
-  ],
   "scripts": {
-    "build": "turbo run build --filter=@edge-store/*",
+    "build": "turbo run build --filter=@edgestore/*",
     "watch": "turbo run watch --parallel",
-    "dev": "turbo run dev --parallel --filter=example-nextjs --filter=@edge-store/*",
-    "aws-example": "turbo run dev --parallel --filter=example-nextjs-aws",
-    "docs": "npm -w docs run start",
-    "lint": "turbo run lint",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "clear-modules": "rimraf ./**/node_modules",
-    "postinstall": "manypkg check"
+    "dev": "turbo run dev --parallel --filter=next-basic --filter=@edgestore/*",
+    "packages:dev": "turbo run dev --parallel --filter=@edgestore/*",
+    "components:dev": "turbo run dev --parallel --filter=components --filter=@edgestore/*",
+    "docs:dev": "pnpm --filter docs run start",
+    "lint": "turbo lint",
+    "lint-fix": "turbo lint -- --fix && manypkg fix && pnpm format:write",
+    "format": "prettier \"**/*\" --ignore-unknown",
+    "format:write": "pnpm format --write --list-different",
+    "clean": "find . -name node_modules -o -name .turbo -o -name .next -o -name dist -type d -prune | xargs rm -rf",
+    "prepublish": "pnpm build",
+    "prepack": "tsx scripts/version.ts",
+    "version": "tsx scripts/version.ts",
+    "release": "changeset publish",
+    "commit-date": "git log -n 1 --date=format:'%Y-%m-%d-%H-%M-%S' --pretty=format:'%ad'",
+    "canary-preid": "echo \"$(pnpm --silent current-branch)-$(pnpm --silent commit-date)\"",
+    "current-branch": "echo \"$(git rev-parse --abbrev-ref HEAD)\" | sed -E 's/refs\\/heads\\///' | sed -E 's/\\W|_/-/g' | sed -e 's/\\//-/'",
+    "publish-canary": "lerna publish --force-publish --canary --preid alpha-$(pnpm --silent canary-preid) --dist-tag $(pnpm --silent current-branch)",
+    "publish-prerelease": "pnpm install && lerna publish prerelease --force-publish --dist-tag next --no-push && sleep 60 && git push --follow-tags",
+    "publish-patch": "pnpm install && lerna publish patch --force-publish --no-push && sleep 60 && git push --follow-tags",
+    "publish-minor": "pnpm install && lerna publish minor --force-publish --no-push && sleep 60 && git push --follow-tags"
   },
   "engines": {
-    "node": ">=14.0.0"
+    "node": "^18.0.0",
+    "pnpm": ">=8.0.0"
   },
+  "packageManager": "pnpm@8.6.6",
   "dependencies": {
-    "@manypkg/cli": "latest",
-    "eslint-config-custom": "*",
-    "prettier": "latest",
-    "turbo": "latest"
+    "@changesets/changelog-github": "^0.4.8",
+    "@changesets/cli": "^2.26.1",
+    "@ianvs/prettier-plugin-sort-imports": "^4.0.2",
+    "@manypkg/cli": "^0.21.0",
+    "@rollup/plugin-node-resolve": "^15.0.2",
+    "@types/prettier": "^2.7.3",
+    "@typescript-eslint/eslint-plugin": "6.0.0-alpha.158",
+    "@typescript-eslint/parser": "6.0.0-alpha.158",
+    "eslint": "^8.40.0",
+    "eslint-config-prettier": "^8.8.0",
+    "eslint-plugin-no-only-tests": "^3.1.0",
+    "eslint-plugin-react": "^7.32.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-turbo": "^1.9.3",
+    "eslint-plugin-unicorn": "47.0.0",
+    "lerna": "^7.1.1",
+    "npm-run-all": "^4.1.5",
+    "prettier": "^2.8.1",
+    "prettier-plugin-tailwindcss": "^0.3.0",
+    "rollup": "^2.79.1",
+    "rollup-plugin-analyzer": "^4.0.0",
+    "rollup-plugin-delete": "^2.0.0",
+    "rollup-plugin-multi-input": "^1.4.1",
+    "rollup-plugin-node-externals": "^5.1.3",
+    "rollup-plugin-swc3": "^0.9.0",
+    "rollup-plugin-typescript2": "^0.35.0",
+    "tsx": "^3.12.7",
+    "turbo": "latest",
+    "typescript": "^5.1.6"
   },
-  "packageManager": "npm@9.2.0"
+  "pnpm": {
+    "overrides": {
+      "@edgestore/server": "link:./packages/server",
+      "@edgestore/react": "link:./packages/react"
+    }
+  }
 }

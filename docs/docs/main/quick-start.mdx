@@ -1,0 +1,296 @@
+---
+id: quick-start
+title: Quick Start
+sidebar_label: Quick Start
+slug: /quick-start
+---
+
+import TabItem from '@theme/TabItem';
+import Tabs from '@theme/Tabs';
+
+# Quick Start
+
+## Next.js Setup
+
+### Install
+
+Let's start by installing the required packages.
+
+<Tabs>
+<TabItem value="npm" label="npm">
+
+```shell
+npm install @edgestore/server @edgestore/react zod
+```
+
+</TabItem>
+<TabItem value="pnpm" label="pnpm">
+
+```shell
+pnpm add @edgestore/server @edgestore/react zod
+```
+
+</TabItem>
+<TabItem value="yarn" label="yarn">
+
+```shell
+yarn add @edgestore/server @edgestore/react zod
+```
+
+</TabItem>
+</Tabs>
+
+### Environment Variables
+
+Then go to your [Dashboard](https://dashboard.edgestore.dev), create a new project and copy the keys to your environment variables.
+
+```shell title=".env"
+EDGE_STORE_ACCESS_KEY=your-access-key
+EDGE_STORE_SECRET_KEY=your-secret-key
+```
+
+:::caution
+Make sure you add `.env` to your `.gitignore` file. <br />
+You don't want to commit your secrets keys to your repository.
+:::
+
+### Backend
+
+Now we can create the backend code for our Next.js app.<br/>
+Edge Store is compatible with both types of Next.js apps (`pages router` and `app router`).
+
+The example below is the simplest bucket you can create with Edge Store. Just a simple file bucket with no validation that will be accessible by anyone with the link.
+
+You can have multiple buckets in your app, each with its own configuration.
+
+```twoslash include router
+import { initEdgeStore } from '@edgestore/server';
+import { createEdgeStoreNextHandler } from '@edgestore/server/adapters/next/app';
+
+const es = initEdgeStore.create();
+
+/**
+ * This is the main router for the Edge Store buckets.
+ */
+const edgeStoreRouter = es.router({
+  publicFiles: es.fileBucket(),
+});
+
+const handler = createEdgeStoreNextHandler({
+  router: edgeStoreRouter,
+});
+
+export { handler as GET, handler as POST };
+
+/**
+ * This type is used to create the type-safe client for the frontend.
+ */
+export type EdgeStoreRouter = typeof edgeStoreRouter;
+```
+
+<Tabs>
+<TabItem value="app" label="app">
+
+```ts twoslash title="src/app/api/edgestore/[...edgestore]/route.ts"
+// @include: router
+```
+
+</TabItem>
+<TabItem value="pages" label="pages">
+
+```tsx title="src/pages/api/edgestore/[...edgestore].ts"
+import { initEdgeStore } from '@edgestore/server';
+import { createEdgeStoreNextHandler } from '@edgestore/server/adapters/next/pages';
+
+const es = initEdgeStore.create();
+
+/**
+ * This is the main router for the edgestore buckets.
+ */
+const edgeStoreRouter = es.router({
+  publicFiles: es.fileBucket(),
+});
+
+export default createEdgeStoreNextHandler({
+  router: edgeStoreRouter,
+});
+
+/**
+ * This type is used to create the type-safe client for the frontend.
+ */
+export type EdgeStoreRouter = typeof edgeStoreRouter;
+```
+
+</TabItem>
+</Tabs>
+
+### Frontend
+
+Now let's initiate our context provider.
+
+```twoslash include provider
+'use client';
+
+import { EdgeStoreRouter } from '../app/api/edgestore/[...edgestore]/route';
+import { createEdgeStoreProvider } from '@edgestore/react';
+
+const { EdgeStoreProvider, useEdgeStore } =
+  createEdgeStoreProvider<EdgeStoreRouter>();
+
+export { EdgeStoreProvider, useEdgeStore };
+```
+
+<Tabs>
+<TabItem value="app" label="app">
+
+```tsx twoslash title="src/lib/edgestore.ts"
+// @filename: src/app/api/edgestore/[...edgestore]/route.ts
+// @include: router
+// @filename: src/lib/edgestore.ts
+// clear cache: v2
+// ---cut---
+// @include: provider
+```
+
+</TabItem>
+<TabItem value="pages" label="pages">
+
+```tsx title="src/lib/edgestore.ts"
+'use client';
+
+import { EdgeStoreRouter } from '../pages/api/edgestore/[...edgestore]';
+import { createEdgeStoreProvider } from '@edgestore/react';
+
+const { EdgeStoreProvider, useEdgeStore } =
+  createEdgeStoreProvider<EdgeStoreRouter>();
+
+export { EdgeStoreProvider, useEdgeStore };
+```
+
+</TabItem>
+</Tabs>
+
+And then wrap our app with the provider.
+
+<Tabs>
+<TabItem value="app" label="app">
+
+```tsx {0, 13} title="src/app/layout.tsx"
+import { EdgeStoreProvider } from '../lib/edgestore';
+import './globals.css';
+
+// ...
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="en">
+      <body>
+        <EdgeStoreProvider>{children}</EdgeStoreProvider>
+      </body>
+    </html>
+  );
+}
+```
+
+</TabItem>
+<TabItem value="pages" label="pages">
+
+```tsx {2, 6, 8} title="src/pages/_app.tsx"
+import '../styles/globals.css';
+import type { AppProps } from 'next/app';
+import { EdgeStoreProvider } from '../lib/edgestore';
+
+export default function App({ Component, pageProps }: AppProps) {
+  return (
+    <EdgeStoreProvider>
+      <Component {...pageProps} />
+    </EdgeStoreProvider>
+  );
+}
+
+```
+
+</TabItem>
+</Tabs>
+
+### Upload file
+
+You can use the `useEdgeStore` hook to access typesafe frontend client and use it to upload files.
+
+```tsx twoslash {1, 6, 19-28}
+// clear cache: v2
+// @filename: src/app/api/edgestore/[...edgestore]/route.ts
+// @include: router
+// @filename: src/lib/edgestore.ts
+// @include: provider
+// @filename: src/app/page.tsx
+// ---cut---
+'use client';
+
+import { useEdgeStore } from '../lib/edgestore';
+import * as React from 'react';
+
+export default function Page() {
+  const [file, setFile] = React.useState<File>();
+  const { edgestore } = useEdgeStore();
+
+  return (
+    <div>
+      <input
+        type="file"
+        onChange={(e) => {
+          setFile(e.target.files?.[0]);
+        }}
+      />
+      <button
+        onClick={async () => {
+          if (file) {
+            const res = await edgestore.publicFiles.upload({
+              file,
+              onProgressChange: (progress) => {
+                // you can use this to show a progress bar
+                console.log(progress);
+              },
+            });
+            // you can run some server action or api here
+            // to add the necessary data to your database
+            console.log(res);
+            //           ^?
+          }
+        }}
+      >
+        Upload
+      </button>
+    </div>
+  );
+}
+```
+
+### Replace file
+
+By passing the `replaceTargetUrl` option, you can replace an existing file with a new one.
+It will automatically delete the old file after the upload is complete.
+
+You can also just upload the file using the same file name, but in that case, you might still see the old file for a while becasue of the CDN cache.
+
+```tsx
+const res = await edgestore.publicFiles.upload({
+  file,
+  options: {
+    replaceTargetUrl: oldFileUrl,
+  },
+  // ...
+});
+```
+
+### Delete file
+
+```tsx
+await edgestore.publicFiles.delete({
+  url: urlToDelete,
+})
+```

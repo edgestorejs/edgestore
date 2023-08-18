@@ -1,0 +1,21 @@
+{
+  "extends": "./tsconfig.build.json",
+  "include": [
+    "packages",
+    "types",
+    "scripts",
+    "examples",
+    "rollup.config.ts",
+    ".eslintrc.js"
+  ],
+  "exclude": [],
+  "compilerOptions": {
+    "allowJs": false,
+    "baseUrl": ".",
+    "paths": {
+      "@edgestore/react": ["packages/react/src"],
+      "@edgestore/react/*": ["packages/react/src/*"]
+    },
+    "types": ["node"]
+  }
+}

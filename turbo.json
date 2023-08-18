@@ -1,17 +1,29 @@
 {
   "$schema": "https://turbo.build/schema.json",
+  "globalDependencies": ["**/.env.*local"],
   "pipeline": {
+    "codegen:entrypoints": {
+      "outputs": [
+        "server/**",
+        "core/**",
+        "adapters/**",
+        "providers/**",
+        "package.json"
+      ]
+    },
     "build": {
-      "dependsOn": ["^build"],
-      "outputs": ["dist/**", ".next/**"]
+      "dependsOn": ["^build", "codegen:entrypoints"],
+      "outputs": [".next/**", "!.next/cache/**", "dist/**", "build/**"]
     },
     "lint": {
-      "outputs": []
+      "dependsOn": ["^build"],
+      "outputs": [],
+      "cache": true
     },
     "watch": {},
     "dev": {
       "cache": false,
-      "dependsOn": ["@edge-store/react#build"]
+      "persistent": true
     }
   }
 }

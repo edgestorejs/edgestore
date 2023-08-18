@@ -1,53 +1,56 @@
 // @ts-check
 // Note: type annotations allow type checking and IDEs autocompletion
 
-const lightCodeTheme = require("prism-react-renderer/themes/github");
-const darkCodeTheme = require("prism-react-renderer/themes/dracula");
-
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: "Edge Store",
-  tagline: "Handling images should be easy",
-  url: "https://edge-store.com",
-  baseUrl: "/",
-  onBrokenLinks: "throw",
-  onBrokenMarkdownLinks: "warn",
-  favicon: "img/favicon.ico",
+  title: 'Edge Store',
+  tagline: 'Handling images should be easy',
+  url: 'https://edgestore.dev',
+  baseUrl: '/',
+  onBrokenLinks: 'throw',
+  onBrokenMarkdownLinks: 'warn',
+  favicon: 'img/favicon.ico',
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
-  organizationName: "edgestorejs", // Usually your GitHub org/user name.
-  projectName: "edge-store", // Usually your repo name.
+  organizationName: 'edgestorejs', // Usually your GitHub org/user name.
+  projectName: 'edgestore', // Usually your repo name.
 
   // Even if you don't use internalization, you can use this field to set useful
   // metadata like html lang. For example, if your site is Chinese, you may want
   // to replace "en" with "zh-Hans".
   i18n: {
-    defaultLocale: "en",
-    locales: ["en"],
+    defaultLocale: 'en',
+    locales: ['en'],
   },
 
   presets: [
     [
-      "classic",
+      'classic',
       /** @type {import('@docusaurus/preset-classic').Options} */
       ({
         docs: {
-          sidebarPath: require.resolve("./sidebars.js"),
+          sidebarPath: require.resolve('./sidebars.js'),
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
-          editUrl: "https://github.com/edgestorejs/edge-store/tree/main/docs",
+          editUrl: 'https://github.com/edgestorejs/edgestore/tree/main/docs',
         },
-        blog: {
-          showReadingTime: true,
-          // Please change this to your repo.
-          // Remove this to remove the "edit this page" links.
-          editUrl: "https://github.com/edgestorejs/edge-store/tree/main/docs",
-        },
+        // blog: {
+        //   showReadingTime: true,
+        //   // Please change this to your repo.
+        //   // Remove this to remove the "edit this page" links.
+        //   editUrl: 'https://github.com/edgestorejs/edgestore/tree/main/docs',
+        // },
         theme: {
-          customCss: require.resolve("./src/css/custom.css"),
+          customCss: require.resolve('./src/css/custom.css'),
         },
       }),
+    ],
+    [
+      'docusaurus-preset-shiki-twoslash',
+      {
+        themes: ['dark-plus'],
+      },
     ],
   ],
 
@@ -55,93 +58,109 @@ const config = {
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
       colorMode: {
-        defaultMode: "dark",
+        defaultMode: 'dark',
         respectPrefersColorScheme: false,
         disableSwitch: true,
       },
       navbar: {
-        title: "Edge Store",
+        title: 'Edge Store',
         logo: {
-          alt: "Edge Store Logo",
-          src: "img/logo-sm.png",
+          alt: 'Edge Store Logo',
+          src: 'img/logo-sm.png',
         },
         items: [
           {
-            type: "doc",
-            docId: "getting-started",
-            position: "left",
-            label: "Tutorial",
+            type: 'doc',
+            docId: 'main/quick-start',
+            position: 'left',
+            label: 'Docs',
+          },
+          {
+            to: '/pricing',
+            label: 'Pricing',
+            position: 'right',
           },
           // { to: "/blog", label: "Blog", position: "left" },
           {
-            href: "https://github.com/edgestorejs/edge-store",
-            position: "right",
-            className: "header-social-link header-github-link",
-            "aria-label": "GitHub",
+            href: 'https://dashboard.edgestore.dev',
+            position: 'right',
+            className: 'header-sign-in-link',
+            label: 'Dashboard',
           },
           {
-            href: "https://discord.gg/HvrnhRTfgQ",
-            position: "right",
-            className: "header-social-link header-discord-link",
-            "aria-label": "GitHub",
+            href: 'https://github.com/edgestorejs/edgestore',
+            position: 'right',
+            className: 'header-social-link header-github-link',
+            'aria-label': 'GitHub',
           },
           {
-            href: "https://app.edge-store.com",
-            position: "right",
-            className: "header-sign-in-link",
-            label: "Sign In",
+            href: 'https://discord.gg/HvrnhRTfgQ',
+            position: 'right',
+            className: 'header-social-link header-discord-link',
+            'aria-label': 'GitHub',
           },
         ],
       },
       footer: {
-        style: "dark",
+        style: 'dark',
         links: [
           {
-            title: "Docs",
+            title: 'Docs',
             items: [
               {
-                label: "Tutorial",
-                to: "/docs/getting-started",
+                label: 'Docs',
+                to: '/docs/quick-start',
               },
             ],
           },
           {
-            title: "Community",
+            title: 'Community',
             items: [
               {
-                label: "YouTube",
-                href: "https://www.youtube.com/@perfectbase",
+                label: 'YouTube',
+                href: 'https://www.youtube.com/@perfectbase',
               },
               {
-                label: "Discord",
-                href: "https://discord.gg/HvrnhRTfgQ",
+                label: 'Discord',
+                href: 'https://discord.gg/HvrnhRTfgQ',
               },
             ],
           },
           {
-            title: "More",
+            title: 'Legal',
             items: [
               {
-                label: "GitHub",
-                href: "https://github.com/edgestorejs/edge-store",
+                label: 'Terms of Service',
+                href: 'https://edgestore.dev/legal/terms',
+                target: '_blank',
+              },
+              {
+                label: 'Privacy Policy',
+                href: 'https://edgestore.dev/legal/privacy-policy',
+                target: '_blank',
+              },
+            ],
+          },
+          {
+            title: 'More',
+            items: [
+              {
+                label: 'GitHub',
+                href: 'https://github.com/edgestorejs/edgestore',
               },
             ],
           },
         ],
       },
-      prism: {
-        theme: lightCodeTheme,
-        darkTheme: darkCodeTheme,
-      },
     }),
   plugins: [
-    async function myPlugin(context, options) {
+    function myPlugin() {
       return {
-        name: "docusaurus-tailwindcss",
+        name: 'docusaurus-tailwindcss',
         configurePostCss(postcssOptions) {
           // Appends TailwindCSS and AutoPrefixer.
-          postcssOptions.plugins.push(require("tailwindcss"));
-          postcssOptions.plugins.push(require("autoprefixer"));
+          postcssOptions.plugins.push(require('tailwindcss'));
+          postcssOptions.plugins.push(require('autoprefixer'));
           return postcssOptions;
         },
       };

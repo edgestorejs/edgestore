@@ -1,118 +1,139 @@
-/* eslint-disable @next/next/no-img-element */
-import React from "react";
+import React from 'react';
+import CodeBlock1 from '../../../docs/landing-code/CodeBlock1.md';
+import CodeBlock2 from '../../../docs/landing-code/CodeBlock2.md';
+import CodeBlock3 from '../../../docs/landing-code/CodeBlock3.md';
 
-export const useScrollPosition = () => {
-  const [scrollPosition, setScrollPosition] = React.useState(0);
-
-  React.useEffect(() => {
-    const updatePosition = () => {
-      setScrollPosition(window.pageYOffset);
-    };
-
-    window.addEventListener("scroll", updatePosition);
-
-    updatePosition();
-
-    return () => window.removeEventListener("scroll", updatePosition);
-  }, []);
-
-  return scrollPosition;
+type CodeBlockItem = {
+  title: string;
+  description: string | React.ReactNode;
+  code: React.ReactNode;
 };
 
+const codeBlocks: CodeBlockItem[] = [
+  {
+    title: 'Step 1 - Server',
+    description: (
+      <>
+        <p>
+          Use our completely type-safe package to configure your storage. You
+          can configure who can upload and access files and even add metadata
+          that can be used for access control or search filtering.
+        </p>
+        <p>
+          You can also leverage the lifecycle hooks to run custom code when a
+          file is uploaded or deleted. Which can be used to sync data with your
+          database if needed.
+        </p>
+      </>
+    ),
+    code: <CodeBlock1 />,
+  },
+  {
+    title: 'Step 2 - Client',
+    description: (
+      <>
+        <p>
+          Wrap your app with the Edge Store provider component. This will enable
+          you to access Edge Store methods anywhere in your app.
+        </p>
+      </>
+    ),
+    code: <CodeBlock2 />,
+  },
+  {
+    title: 'Step 3 - Start uploading',
+    description: (
+      <>
+        <p>
+          Use the useEdgeStore hook to upload files to Edge Store. You can also
+          use the onProgressChange callback to easily show a progress bar for
+          your uploads.
+        </p>
+        <p>
+          If it is a storage for images and the image is large, Edge Store will
+          automatically create a thumbnail for you. And return the url for the
+          thumbnail in the response. (Thumbnail images are not counted towards
+          your storage quota.)
+        </p>
+      </>
+    ),
+    code: <CodeBlock3 />,
+  },
+];
+
 const Homepage = () => {
-  const scrollPosition = useScrollPosition();
-
   return (
-    <>
-      <div
-        style={{
-          boxShadow: "inset 0px -6px 2px -5px #ffffff10",
-        }}
-        className={`sticky top-0 mt-[calc(var(--ifm-navbar-height)*-1)] w-full h-[var(--ifm-navbar-height)] backdrop-blur-sm bg-[#00000040] transition-opacity duration-700 ${
-          scrollPosition > 0 ? "opacity-100" : "opacity-0"
-        }`}
-      />
-
-      <main className="flex min-h-screen flex-col items-center text-white mt-[calc(var(--ifm-navbar-height)*-1)]">
-        <div className="flex w-full flex-col items-center justify-center bg-[radial-gradient(theme(colors.primary.999),#000000)] py-28 px-3">
-          <h1 className="text-center text-5xl md:text-6xl font-[Futura,'Trebuchet_MS'] bg-gradient-to-b from-primary-100 to-primary-400 bg-clip-text text-transparent">
-            EDGE STORE
-          </h1>
-          <h2 className="pt-3 text-center text-lg text-gray-300 md:text-xl">
-            The image storage all developers dream of.
-          </h2>
-          <h3 className="pb-6 text-center text-sm text-gray-300">
-            Working with images should be easy.
-          </h3>
+    <main className="mt-[calc(var(--ifm-navbar-height)*-1)] min-h-screen text-white">
+      <div className="flex w-full flex-col items-center justify-center bg-[radial-gradient(theme(colors.primary.999),#000000)] px-3 pb-16 pt-40">
+        <h1 className="mb-6 bg-gradient-to-b from-primary-100 to-primary-400 bg-clip-text text-center font-[Futura] text-5xl text-transparent md:text-7xl">
+          EDGE STORE
+        </h1>
+        <h2 className="mb-8 text-center text-lg font-normal text-gray-300">
+          The best DX for uploading files from your Next.js app.
+        </h2>
+        <div className="flex gap-3">
           <JoinButton />
+          <LearnMoreButton />
         </div>
-        <div className="flex w-full justify-center bg-primary-999 py-10 px-3 text-center">
+      </div>
+      {/* <div className="flex w-full justify-center bg-primary-999 py-10 px-3 text-center">
           <div className="max-w-4xl">
             <p className="pb-4 text-xl font-bold">Why Edge Store?</p>
             <p>
-              Edge Store is a simple image storage for all project sizes. It is
+              Edge Store is a simple cloud storage for all project sizes. It is
               designed to be easy to use and easy to integrate into your
               project. It is built leveraging s3, cloudfront and lambda@edge to
-              give you a fast, reliable and secure image storage.
+              give you a fast, reliable and secure storage.
             </p>
           </div>
-        </div>
-        <div className="my-20 flex w-full max-w-4xl flex-wrap justify-center px-6 md:justify-between">
-          <TechCard
-            title="Easy to use"
-            description="Use our server side and client side libraries to easily integrate Edge Store into your project."
-          />
-          <TechCard
-            title="Fast"
-            description="All your images are served from the edge, so they are fast to load."
-          />
-          <TechCard
-            title="Secure"
-            description="Have full control over who can access your images with a JWT based access control system that works on the Edge."
-          />
-          <TechCard
-            title="Reliable"
-            description="It leverages AWS serverless technologies that are known and trusted by millions of developers."
-          />
-          <TechCard
-            title="Free for small projects"
-            description="Just create an account and start using Edge Store for free."
-          />
-          <TechCard
-            title="Pay as you grow"
-            description="As your project grows, you can upgrade your plan to get more storage and more bandwidth."
-          />
-        </div>
-        <div className="flex flex-col items-center justify-center max-w-md -z-10 text-center">
-          <h2>Step 1 - Server</h2>
-          <div className="text-gray-300 px-8">
-            Add the service environment variables to your Next.js app. Then
-            export the Edge Store API from the Next.js API routes.
-          </div>
-          <div className="mb-6" />
-          <h2>Step 2 - Client</h2>
-          <div className="text-gray-300 px-8">
-            Wrap your app with the Edge Store provider component. This will
-            enable you to access Edge Store methods anywhere in your app.
-          </div>
-          <div className="mb-6" />
-          <h2>Step 3 - Start using</h2>
-          <div className="text-gray-300 px-8">
-            Use the useEdgeStore hook to upload and fetch images from Edge
-            Store. You can also use Edge Store features like:
-            <ul className="text-start">
-              <li>Getting real-time progress of image uploads</li>
-              <li>Controlling access to images with permissions</li>
-              <li>Optimizing images for different devices and resolutions</li>
-              <li>And more!</li>
-            </ul>
-          </div>
-        </div>
-        <div className="my-16">
-          <JoinButton />
-        </div>
-      </main>
-    </>
+        </div> */}
+      <div className="my-20 mx-auto grid w-full max-w-4xl auto-rows-fr grid-cols-1 gap-10 px-6 md:grid-cols-3 md:justify-between">
+        <TechCard
+          title="Start for free"
+          description="Get your free storage and start building. No credit card required."
+        />
+        <TechCard
+          title="Effortless Integration"
+          description="Use our type-safe npm package to seamlessly integrate Edge Store into your app."
+        />
+        <TechCard
+          title="Easy-to-Use Dashboard"
+          description="Monitor, manage, and delete files with ease."
+        />
+        <TechCard
+          title="Ultra-Fast CDN"
+          description="All your files are served from the edge for a great performance anywhere in the world."
+        />
+        <TechCard
+          title="Large file support"
+          description="Automatically uses multipart uploads for bigger files."
+        />
+        <TechCard
+          title="Protected Files"
+          description="Ensure your files are safe with custom edge validations."
+        />
+        <TechCard
+          title="Automatic Thumbnail Generation"
+          description="Images ready to use, without the extra effort."
+        />
+        <TechCard
+          title="Customizable Components"
+          description="Just copy one of our sample components and customize it to your needs."
+        />
+        <TechCard
+          title="And More..."
+          description="Temporary files, parallel uploads, and much more. Handle all scenarios with finesse."
+        />
+      </div>
+      <div className="mx-6 flex flex-col items-center gap-12">
+        {codeBlocks.map((block) => (
+          <CodeBlockItem key={block.title} block={block} />
+        ))}
+      </div>
+      <div className="my-16 text-center">
+        <JoinButton />
+      </div>
+    </main>
   );
 };
 
@@ -123,7 +144,7 @@ const TechCard: React.FC<{ title: string; description: string }> = ({
   description,
 }) => {
   return (
-    <div className="my-4 min-h-[170px] w-[90%] rounded-lg p-6 shadow-[0px_0px_19px_0px_theme(colors.primary.900)] md:w-[30%]">
+    <div className="min-h-[170px] w-full rounded-lg p-6 shadow-[0px_0px_5px_0px_theme(colors.primary.500),0px_0px_20px_0px_theme(colors.primary.700)]">
       <p className="mb-2 text-lg font-bold">{title}</p>
       <p className="text-gray-400">{description}</p>
     </div>
@@ -135,10 +156,33 @@ const JoinButton: React.FC = () => {
     <a
       target="_blank"
       rel="noreferrer"
-      className="rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-gray-600 focus:border-transparent font-[Futura,'Trebuchet_MS'] font-semibold transition-colors duration-200 text-gray-100 hover:text-gray-100 hover:no-underline bg-primary hover:bg-primary-800 focus:bg-primary-800 active:bg-primary-800"
-      href="https://app.edge-store.com/subscribe"
+      className="rounded-lg bg-primary px-4 py-2 font-semibold text-gray-100 transition-colors duration-200 hover:bg-primary-800 hover:text-gray-100 hover:no-underline focus:border-transparent focus:bg-primary-800 focus:outline-none focus:ring-2 focus:ring-gray-600 active:bg-primary-800"
+      href="https://dashboard.edgestore.dev/sign-up"
     >
-      APPLY FOR EARLY ACCESS
+      Start for free
     </a>
+  );
+};
+
+const LearnMoreButton: React.FC = () => {
+  return (
+    <a
+      className="rounded-lg bg-white/5 px-4 py-2 font-semibold text-gray-100 transition-colors duration-200 hover:bg-white/10 hover:text-gray-100 hover:no-underline focus:border-transparent focus:bg-white/10 focus:outline-none focus:ring-2 focus:ring-gray-600 active:bg-white/10"
+      href="/docs/quick-start"
+    >
+      Learn more
+    </a>
+  );
+};
+
+const CodeBlockItem: React.FC<{ block: CodeBlockItem }> = ({ block }) => {
+  return (
+    <div className="flex max-w-full flex-col justify-between md:max-w-6xl md:flex-row md:gap-12">
+      <div className="order-1 flex-[3] md:order-none">{block.code}</div>
+      <div className="flex-[2]">
+        <h2>{block.title}</h2>
+        <div>{block.description}</div>
+      </div>
+    </div>
   );
 };

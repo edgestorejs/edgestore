@@ -1,44 +1,49 @@
 {
-  "name": "@edge-store/react",
-  "version": "0.0.0-alpha.8",
-  "description": "Image Handling for React/Next.js",
-  "homepage": "https://edge-store.com",
-  "repository": "https://github.com/edgestorejs/edge-store.git",
+  "name": "@edgestore/react",
+  "version": "0.1.0",
+  "description": "The best DX for uploading files from your Next.js app",
+  "homepage": "https://edgestore.dev",
+  "repository": "https://github.com/edgestorejs/edgestore.git",
   "author": "Ravi <me@ravi.com>",
-  "main": "index.js",
-  "module": "index.js",
-  "types": "index.d.ts",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "typings": "dist/index.d.ts",
   "keywords": [
     "react",
     "nodejs",
     "nextjs",
+    "upload",
+    "file",
     "image",
     "cdn",
     "edgestore",
     "edge-store"
   ],
-  "exports": {
-    ".": "./index.js",
-    "./next": "./next/index.js",
-    "./providers": "./providers/index.js"
+  "scripts": {
+    "build": "rollup --config rollup.config.ts --configPlugin rollup-plugin-swc3",
+    "dev": "pnpm build --watch",
+    "codegen:entrypoints": "tsx entrypoints.script.ts",
+    "lint": "eslint --cache --ext \".js,.ts,.tsx\" --ignore-path ../../.gitignore --report-unused-disable-directives src"
   },
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src",
+    "README.md",
+    "package.json",
+    "!**/*.test.*"
+  ],
   "private": false,
   "publishConfig": {
     "access": "public"
   },
-  "scripts": {
-    "build": "npm run clean && tsc",
-    "clean": "rm -rf next libs providers index.d.ts index.d.ts.map index.js",
-    "watch": "npm run clean && tsc -w",
-    "prepublishOnly": "npm run build"
-  },
-  "files": [
-    "next",
-    "libs",
-    "providers",
-    "index.d.ts",
-    "index.js"
-  ],
   "license": "MIT",
   "dependencies": {
     "@aws-sdk/client-s3": "^3.294.0",
@@ -49,20 +54,21 @@
     "uuid": "^9.0.0"
   },
   "peerDependencies": {
-    "next": "^13 || ^12",
-    "react": "^17.0.2 || ^18",
-    "react-dom": "^17.0.2 || ^18"
+    "@edgestore/server": "0.1.0",
+    "next": "*",
+    "react": ">=16.8.0",
+    "react-dom": ">=16.8.0",
+    "zod": ">=3.0.0"
   },
   "devDependencies": {
+    "@edgestore/server": "0.1.0",
     "@types/cookie": "^0.5.1",
     "@types/node": "^18.11.18",
     "@types/uuid": "^9.0.1",
-    "next": "^13",
-    "react": "^18",
-    "react-dom": "^18",
-    "tsconfig": "*"
-  },
-  "engines": {
-    "node": "^16.13.0 || ^18.12.0"
+    "next": "^13.4.9",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "typescript": "^5.1.6",
+    "zod": "^3.21.4"
   }
 }

@@ -1,0 +1,7 @@
+__generated__/
+.docusaurus/
+.test/
+**/.next/
+**/docs/build/
+dist/
+pnpm-lock.yaml

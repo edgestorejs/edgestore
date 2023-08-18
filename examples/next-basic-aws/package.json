@@ -1,0 +1,15 @@
+{
+  "name": "next-basic-aws",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint --cache --ext \".js,.ts,.tsx\" --report-unused-disable-directives --report-unused-disable-directives src",
+    "lint-fix": "pnpm lint --fix"
+  },
+  "dependencies": {
+    "@edgestore/react": "^0.1.0"
+  }
+}
