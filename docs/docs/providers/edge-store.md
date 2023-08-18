@@ -7,21 +7,47 @@ slug: /providers/edgestore
 
 # Edge Store Provider
 
-## Environment Variables
+You can optionally pass in a provider to the `createEdgeStoreNextHandler` function. This is useful if you want to use a different provider than the default one or if you want to pass some custom options to the provider.
 
-### Credentials (required)
+The Edge Store Provider is the default provider. If you followed the documentation, you already have it configured in your app.
 
-```shell title=".env"
-EDGE_STORE_ACCESS_KEY=your-access-key
-EDGE_STORE_SECRET_KEY=your-secret-key
+```ts twoslash {1, 13}
+// @noErrors
+import { EdgeStoreProvider } from '@edgestore/server/providers/edgestore';
+import { initEdgeStoreClient } from '@edgestore/server/core';
+import { initEdgeStore } from '@edgestore/server';
+import {
+  CreateContextOptions,
+  createEdgeStoreNextHandler,
+} from '@edgestore/server/adapters/next/pages';
+import { z } from 'zod';
+
+// ...
+
+export default createEdgeStoreNextHandler<Context>({
+  provider: EdgeStoreProvider(), // this is the default provider and can be omitted
+  router: edgeStoreRouter,
+  createContext,
+});
 ```
 
-## Configuration
+## Options
 
-The Edge Store provider is the default provider, so you don't need to pass it to the `EdgeStore` function.
-
-```jsx title="pages/api/edgestore/[...edgestore].ts"
-import EdgeStore from '@edgestore/react/next';
-
-export default EdgeStore();
+```ts
+export type EdgeStoreProviderOptions = {
+  /**
+   * Access key for your EdgeStore project.
+   * Can be found in the EdgeStore dashboard.
+   * 
+   * This can be omitted if the `EDGE_STORE_ACCESS_KEY` environment variable is set.
+   */
+  accessKey?: string;
+  /**
+   * Secret key for your EdgeStore project.
+   * Can be found in the EdgeStore dashboard.
+   * 
+   * This can be omitted if the `EDGE_STORE_SECRET_KEY` environment variable is set.
+   */
+  secretKey?: string;
+};
 ```

@@ -9,10 +9,37 @@ import { v4 as uuidv4 } from 'uuid';
 import { Provider } from '../types';
 
 export type AWSProviderOptions = {
+  /**
+   * Access key for AWS credentials.
+   * Can also be set via the `ES_AWS_ACCESS_KEY_ID` environment variable.
+   *
+   * If unset, the SDK will attempt to use the default credentials provider chain.
+   */
   accessKeyId?: string;
+  /**
+   * Secret access key for AWS credentials.
+   * Can also be set via the `ES_AWS_SECRET_ACCESS_KEY` environment variable.
+   *
+   * If unset, the SDK will attempt to use the default credentials provider chain.
+   */
   secretAccessKey?: string;
+  /**
+   * AWS region to use.
+   * Can also be set via the `ES_AWS_REGION` environment variable.
+   */
   region?: string;
+  /**
+   * Name of the S3 bucket to use.
+   * Can also be set via the `ES_AWS_BUCKET_NAME` environment variable.
+   */
   bucketName?: string;
+  /**
+   * Base URL to use for accessing files.
+   * Only needed if you are using a custom domain or cloudfront.
+   *
+   * Can also be set via the `EDGE_STORE_BASE_URL` environment variable.
+   */
+  baseUrl?: string;
 };
 
 export function AWSProvider(options?: AWSProviderOptions): Provider {
@@ -23,6 +50,11 @@ export function AWSProvider(options?: AWSProviderOptions): Provider {
     bucketName = process.env.ES_AWS_BUCKET_NAME,
   } = options ?? {};
 
+  const baseUrl =
+    options?.baseUrl ??
+    process.env.EDGE_STORE_BASE_URL ??
+    `https://${bucketName}.s3.${region}.amazonaws.com`;
+
   const credentials =
     accessKeyId && secretAccessKey
       ? {
@@ -31,10 +63,6 @@ export function AWSProvider(options?: AWSProviderOptions): Provider {
         }
       : undefined;
   const s3Client = new S3Client({ region, credentials });
-
-  const baseUrl =
-    process.env.EDGE_STORE_BASE_URL ??
-    `https://${bucketName}.s3.${region}.amazonaws.com`;
 
   return {
     async init() {
