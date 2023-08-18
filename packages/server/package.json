@@ -1,6 +1,6 @@
 {
   "name": "@edgestore/server",
-  "version": "0.0.2-alpha.0",
+  "version": "0.0.2",
   "description": "The best DX for uploading files from your Next.js app",
   "homepage": "https://edgestore.dev",
   "repository": "https://github.com/edgestorejs/edgestore.git",
