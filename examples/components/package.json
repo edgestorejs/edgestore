@@ -1,6 +1,6 @@
 {
   "name": "components",
-  "version": "0.0.1-alpha.0",
+  "version": "0.0.1",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -9,8 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@edgestore/react": "^0.0.1-alpha.0",
-    "@edgestore/server": "^0.0.1-alpha.0",
+    "@edgestore/react": "^0.0.1",
+    "@edgestore/server": "^0.0.1",
     "@types/node": "^18.11.18",
     "@types/react": "18.0.26",
     "@types/react-dom": "18.0.10",
