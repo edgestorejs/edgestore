@@ -29,7 +29,6 @@ export function createEdgeStoreProvider<TRouter extends AnyRouter>(opts?: {
   >(undefined);
 
   const EdgeStoreProvider = ({
-    // TODO: Add basePath when custom domain is supported
     children,
     basePath,
   }: {

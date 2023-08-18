@@ -1,8 +1,8 @@
 ---
-id: bucket-config
-title: Bucket Configuration
-sidebar_label: Bucket Config
-slug: /bucket-config
+id: configuration
+title: Configuration
+sidebar_label: Configuration
+slug: /configuration
 ---
 
 ``` twoslash include context
@@ -151,6 +151,42 @@ const filesBucket = es
 ```
 
 Other available operators are: `eq`, `not`, `gt`, `gte`, `lt`, `lte`, `in`, `contains`
+
+:::info Good to know
+The access control functionality uses third party cookies. Since third party cookies are not supported in localhost (without https), in development, all the protected files will be proxied through your app's api so that the cookies can be forwarded to the file request.
+
+Also, the `<Image />` component from `next/image` does not forward the cookies in the request, so protected images won't be displayed. You will need ot use the `<img />` tag instead.
+:::
+
+## Limit parallel uploads
+
+When creating the provider, you can set the maximum number of concurrent uploads.
+Edge Store's context provider will take care of queuing the uploads and will automatically upload the next file when the previous one is finished.
+
+```ts twoslash {3}
+// @noErrors
+const { EdgeStoreProvider, useEdgeStore } =
+  createEdgeStoreProvider<EdgeStoreRouter>({
+    maxConcurrentUploads: 5, // default is 5
+  });
+```
+
+## Base Path
+
+In case your app is not hosted at the root of your domain, you can specify the base path.
+If you set this, make sure to set the full path to the EdgeStore API.
+e.g. `/my-app/api/edgestore` or `https://example.com/my-app/api/edgestore`
+
+```tsx twoslash {3}
+// @noErrors
+export default function App({ Component, pageProps }: AppProps) {
+  return (
+    <EdgeStoreProvider basePath='/my-app/api/edgestore'>
+      <Component {...pageProps} />
+    </EdgeStoreProvider>
+  );
+}
+```
 
 ## IMAGE bucket accepted mime types
 
