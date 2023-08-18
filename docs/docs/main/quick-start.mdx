@@ -49,6 +49,11 @@ EDGE_STORE_ACCESS_KEY=your-access-key
 EDGE_STORE_SECRET_KEY=your-secret-key
 ```
 
+:::caution
+Make sure you add `.env` to your `.gitignore` file. <br />
+You don't want to commit your secrets keys to your repository.
+:::
+
 ### Backend
 
 Now we can create the backend code for our Next.js app.<br/>
@@ -87,7 +92,28 @@ export type EdgeStoreRouter = typeof edgeStoreRouter;
 <TabItem value="app" label="app">
 
 ```ts twoslash title="src/app/api/edgestore/[...edgestore]/route.ts"
-// @include: router
+import { initEdgeStore } from '@edgestore/server';
+import { createEdgeStoreNextHandler } from '@edgestore/server/adapters/next/app';
+
+const es = initEdgeStore.create();
+
+/**
+ * This is the main router for the Edge Store buckets.
+ */
+const edgeStoreRouter = es.router({
+  publicFiles: es.fileBucket(),
+});
+
+const handler = createEdgeStoreNextHandler({
+  router: edgeStoreRouter,
+});
+
+export { handler as GET, handler as POST };
+
+/**
+ * This type is used to create the type-safe client for the frontend.
+ */
+export type EdgeStoreRouter = typeof edgeStoreRouter;
 ```
 
 </TabItem>
@@ -103,7 +129,7 @@ const es = initEdgeStore.create();
  * This is the main router for the edgestore buckets.
  */
 const edgeStoreRouter = es.router({
-  publicFiles: es.fileBucket,
+  publicFiles: es.fileBucket(),
 });
 
 export default createEdgeStoreNextHandler({
@@ -144,7 +170,15 @@ export { EdgeStoreProvider, useEdgeStore };
 // @filename: src/lib/edgestore.ts
 // clear cache: v2
 // ---cut---
-// @include: provider
+'use client';
+
+import { EdgeStoreRouter } from '../app/api/edgestore/[...edgestore]/route';
+import { createEdgeStoreProvider } from '@edgestore/react';
+
+const { EdgeStoreProvider, useEdgeStore } =
+  createEdgeStoreProvider<EdgeStoreRouter>();
+
+export { EdgeStoreProvider, useEdgeStore };
 ```
 
 </TabItem>
