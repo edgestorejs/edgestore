@@ -2,7 +2,6 @@
 
 import { formatFileSize } from '@/lib/utils';
 import { UploadCloudIcon, X } from 'lucide-react';
-import Image from 'next/image';
 import * as React from 'react';
 import { DropzoneOptions, useDropzone } from 'react-dropzone';
 import { twMerge } from 'tailwind-merge';
@@ -71,10 +70,10 @@ const SingleImageDropzone = React.forwardRef<HTMLInputElement, InputProps>(
       accept: { 'image/*': [] },
       multiple: false,
       disabled,
-      onDrop: async (acceptedFiles) => {
+      onDrop: (acceptedFiles) => {
         const file = acceptedFiles[0];
         if (file) {
-          await onChange?.(file);
+          void onChange?.(file);
         }
       },
       ...dropzoneOptions,
@@ -136,9 +135,8 @@ const SingleImageDropzone = React.forwardRef<HTMLInputElement, InputProps>(
 
           {imageUrl ? (
             // Image Preview
-            <Image
-              fill
-              className="rounded-md object-cover"
+            <img
+              className="h-full w-full rounded-md object-cover"
               src={imageUrl}
               alt={acceptedFiles[0]?.name}
             />
@@ -157,13 +155,13 @@ const SingleImageDropzone = React.forwardRef<HTMLInputElement, InputProps>(
           {imageUrl && !disabled && (
             <div
               className="group absolute right-0 top-0 -translate-y-1/4 translate-x-1/4 transform"
-              onClick={async (e) => {
+              onClick={(e) => {
                 e.stopPropagation();
-                await onChange?.(undefined);
+                void onChange?.(undefined);
               }}
             >
-              <div className="flex h-5 w-5 items-center justify-center rounded-md bg-gray-600 transition-all duration-300 hover:h-6 hover:w-6 hover:bg-gray-700">
-                <X color="white" width={16} height={16} />
+              <div className="flex h-5 w-5 items-center justify-center rounded-md border border-solid border-white/70 bg-black transition-all duration-300 hover:h-6 hover:w-6">
+                <X className="text-white/70" width={16} height={16} />
               </div>
             </div>
           )}
@@ -185,7 +183,7 @@ const Button = React.forwardRef<
     <button
       className={twMerge(
         // base
-        'focus-visible:ring-ring inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50',
+        'focus-visible:ring-ring inline-flex cursor-pointer items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50',
         // color
         'border border-gray-600 text-gray-100 shadow hover:bg-gray-600/80',
         // size

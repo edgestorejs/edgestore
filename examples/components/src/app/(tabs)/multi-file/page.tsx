@@ -7,6 +7,12 @@ import * as React from 'react';
 
 export default function MultiImageTab() {
   const [fileStates, setFileStates] = React.useState<FileState[]>([]);
+  const [uploadRes, setUploadRes] = React.useState<
+    {
+      url: string;
+      filename: string;
+    }[]
+  >([]);
   const { edgestore } = useEdgeStore();
 
   function updateFileProgress(key: string, progress: FileState['progress']) {
@@ -28,6 +34,7 @@ export default function MultiImageTab() {
         value={fileStates}
         dropzoneOptions={{
           maxFiles: 5,
+          maxSize: 1024 * 1024 * 1, // 1 MB
         }}
         onChange={setFileStates}
         onFilesAdded={async (addedFiles) => {
@@ -53,7 +60,13 @@ export default function MultiImageTab() {
                     }
                   },
                 });
-                console.log(res);
+                setUploadRes((uploadRes) => [
+                  ...uploadRes,
+                  {
+                    url: res.url,
+                    filename: fileState.file.name,
+                  },
+                ]);
               } catch (err) {
                 updateFileProgress(fileState.key, 'ERROR');
               }
@@ -67,6 +80,21 @@ export default function MultiImageTab() {
       >
         Upload
       </Button>
+      {uploadRes.length > 0 && (
+        <div className="mt-2">
+          {uploadRes.map((res) => (
+            <a
+              key={res.url}
+              className="mt-2 block"
+              href={res.url}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {res.filename}
+            </a>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

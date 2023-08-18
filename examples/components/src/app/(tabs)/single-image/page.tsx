@@ -3,13 +3,17 @@
 import { Button } from '@/components/ui/button';
 import { SingleImageDropzone } from '@/components/upload/single-image';
 import { useEdgeStore } from '@/lib/edgestore';
-import * as React from 'react';
+import { useState } from 'react';
 
 export default function SingleImageTab() {
-  const [file, setFile] = React.useState<File | undefined>(undefined);
-  const [progress, setProgress] = React.useState<
+  const [file, setFile] = useState<File>();
+  const [progress, setProgress] = useState<
     'PENDING' | 'COMPLETE' | 'ERROR' | number
   >('PENDING');
+  const [uploadRes, setUploadRes] = useState<{
+    url: string;
+    filename: string;
+  }>();
   const { edgestore } = useEdgeStore();
 
   return (
@@ -20,13 +24,16 @@ export default function SingleImageTab() {
         value={file}
         onChange={setFile}
         disabled={progress !== 'PENDING'}
+        dropzoneOptions={{
+          maxSize: 1024 * 1024 * 1, // 1 MB
+        }}
       />
       <Button
         className="mt-2"
         onClick={async () => {
           if (file) {
             try {
-              await edgestore.myPublicImages.upload({
+              const res = await edgestore.myPublicImages.upload({
                 file,
                 onProgressChange: async (newProgress) => {
                   setProgress(newProgress);
@@ -37,6 +44,10 @@ export default function SingleImageTab() {
                     setProgress('COMPLETE');
                   }
                 },
+              });
+              setUploadRes({
+                url: res.url,
+                filename: file.name,
               });
             } catch (err) {
               setProgress('ERROR');
@@ -53,6 +64,18 @@ export default function SingleImageTab() {
           ? `Uploading (${Math.round(progress)}%)`
           : 'Error'}
       </Button>
+      {uploadRes && (
+        <div className="mt-2">
+          <a
+            href={uploadRes.url}
+            target="_blank"
+            rel="noreferrer"
+            className="underline"
+          >
+            {uploadRes.filename}
+          </a>
+        </div>
+      )}
     </div>
   );
 }

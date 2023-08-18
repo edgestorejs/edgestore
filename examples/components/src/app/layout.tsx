@@ -21,7 +21,9 @@ export default function RootLayout({
     <html lang="en">
       <body className={twMerge(inter.className, 'm-6')}>
         <Tabs />
-        <EdgeStoreProvider>{children}</EdgeStoreProvider>
+        <EdgeStoreProvider basePath="/components/api/edgestore">
+          {children}
+        </EdgeStoreProvider>
       </body>
     </html>
   );
