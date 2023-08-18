@@ -20,7 +20,14 @@ const pricingBlocks: PricingBlockItem[] = [
     description: 'Best for individuals and non-commercial projects.',
     monthlyPrice: '$0', // <SponsorButton />,
     yearlyPrice: '$0', // <SponsorButton />,
-    features: ['1GB storage', 'Discord/Github standard support'],
+    features: [
+      <div className="inline space-x-1" key="storage">
+        <span className="line-through">1GB</span>
+        <span> 1.5GB storage</span>
+        <span className="text-xs text-gray-300"> early release promotion</span>
+      </div>,
+      'Discord/Github standard support',
+    ],
   },
   {
     title: 'Starter',
@@ -30,7 +37,11 @@ const pricingBlocks: PricingBlockItem[] = [
     yearlyPrice: '$50',
     features: [
       'Everything in Free',
-      '50GB storage',
+      <div className="inline space-x-1" key="storage">
+        <span className="line-through">50GB</span>
+        <span>80GB storage</span>
+        <span className="text-xs text-gray-300">early release promotion</span>
+      </div>,
       'Discord/Github priority support',
       'Email support',
     ],

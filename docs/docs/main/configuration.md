@@ -40,6 +40,13 @@ There are two types of file buckets: `IMAGE` and `FILE`. Both types of buckets w
 
 IMAGE buckets automatically generates a thumbnail version of the image file if the file is bigger than 200px in width or height. In case a thumbnail was generated, the url will be included in the response of the upload request.
 
+```ts
+const edgeStoreRouter = es.router({
+  publicFiles: es.fileBucket(),
+  publicImages: es.imageBucket(),
+});
+```
+
 ## Basic File Validation
 
 You can set the maximum file size and the accepted mime types for every file bucket.
