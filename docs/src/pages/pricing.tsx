@@ -23,8 +23,8 @@ const pricingBlocks: PricingBlockItem[] = [
     features: [
       <div className="inline space-x-1" key="storage">
         <span className="line-through">1GB</span>
-        <span> 1.5GB storage</span>
-        <span className="text-xs text-gray-300"> early release promotion</span>
+        <span>1.5GB storage</span>
+        <span className="text-xs text-gray-300">(early user bonus)</span>
       </div>,
       'Discord/Github standard support',
     ],
@@ -40,7 +40,7 @@ const pricingBlocks: PricingBlockItem[] = [
       <div className="inline space-x-1" key="storage">
         <span className="line-through">50GB</span>
         <span>80GB storage</span>
-        <span className="text-xs text-gray-300">early release promotion</span>
+        <span className="text-xs text-gray-300">(early user bonus)</span>
       </div>,
       'Discord/Github priority support',
       'Email support',
