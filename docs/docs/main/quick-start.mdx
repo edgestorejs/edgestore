@@ -92,28 +92,7 @@ export type EdgeStoreRouter = typeof edgeStoreRouter;
 <TabItem value="app" label="app">
 
 ```ts twoslash title="src/app/api/edgestore/[...edgestore]/route.ts"
-import { initEdgeStore } from '@edgestore/server';
-import { createEdgeStoreNextHandler } from '@edgestore/server/adapters/next/app';
-
-const es = initEdgeStore.create();
-
-/**
- * This is the main router for the Edge Store buckets.
- */
-const edgeStoreRouter = es.router({
-  publicFiles: es.fileBucket(),
-});
-
-const handler = createEdgeStoreNextHandler({
-  router: edgeStoreRouter,
-});
-
-export { handler as GET, handler as POST };
-
-/**
- * This type is used to create the type-safe client for the frontend.
- */
-export type EdgeStoreRouter = typeof edgeStoreRouter;
+// @include: router
 ```
 
 </TabItem>
@@ -170,15 +149,7 @@ export { EdgeStoreProvider, useEdgeStore };
 // @filename: src/lib/edgestore.ts
 // clear cache: v2
 // ---cut---
-'use client';
-
-import { EdgeStoreRouter } from '../app/api/edgestore/[...edgestore]/route';
-import { createEdgeStoreProvider } from '@edgestore/react';
-
-const { EdgeStoreProvider, useEdgeStore } =
-  createEdgeStoreProvider<EdgeStoreRouter>();
-
-export { EdgeStoreProvider, useEdgeStore };
+// @include: provider
 ```
 
 </TabItem>
