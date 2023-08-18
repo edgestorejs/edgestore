@@ -1,6 +1,6 @@
 {
   "name": "@edgestore/react",
-  "version": "0.0.0-alpha.13",
+  "version": "0.0.0-alpha.14",
   "description": "The best DX for uploading files from your Next.js app",
   "homepage": "https://edgestore.dev",
   "repository": "https://github.com/edgestorejs/edgestore.git",
@@ -54,14 +54,14 @@
     "uuid": "^9.0.0"
   },
   "peerDependencies": {
-    "@edgestore/server": "0.0.0-alpha.13",
+    "@edgestore/server": "0.0.0-alpha.14",
     "next": "*",
     "react": ">=16.8.0",
     "react-dom": ">=16.8.0",
     "zod": ">=3.0.0"
   },
   "devDependencies": {
-    "@edgestore/server": "0.0.0-alpha.13",
+    "@edgestore/server": "0.0.0-alpha.14",
     "@types/cookie": "^0.5.1",
     "@types/node": "^18.11.18",
     "@types/uuid": "^9.0.1",
