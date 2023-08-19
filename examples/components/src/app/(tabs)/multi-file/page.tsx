@@ -1,6 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import { ExampleFrame } from '@/components/ui/example-frame';
 import {
   MultiFileDropzone,
   type FileState,
@@ -8,7 +9,15 @@ import {
 import { useEdgeStore } from '@/lib/edgestore';
 import * as React from 'react';
 
-export default function MultiImageTab() {
+export default function Page() {
+  return (
+    <ExampleFrame details={<MultiFileDetails />}>
+      <MultiImageExample />
+    </ExampleFrame>
+  );
+}
+
+function MultiImageExample() {
   const [fileStates, setFileStates] = React.useState<FileState[]>([]);
   const [uploadRes, setUploadRes] = React.useState<
     {
@@ -98,6 +107,54 @@ export default function MultiImageTab() {
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+function MultiFileDetails() {
+  return (
+    <div className="flex flex-col items-center text-center">
+      <h3 className="mt-4 text-base font-bold">See in GitHub</h3>
+      <ul className="text-sm text-gray-300">
+        <li>
+          <a
+            href="https://github.com/edgestorejs/edgestore/blob/main/examples/components/src/app/(tabs)/multi-file/page.tsx"
+            target="_blank"
+            rel="noreferrer"
+            className="underline"
+          >
+            Usage
+          </a>
+        </li>
+        <li>
+          <a
+            href="https://github.com/edgestorejs/edgestore/blob/main/examples/components/src/components/upload/multi-file.tsx"
+            target="_blank"
+            rel="noreferrer"
+            className="underline"
+          >
+            Component
+          </a>
+        </li>
+      </ul>
+      <h3 className="mt-4 text-base font-bold">About</h3>
+      <div className="flex flex-col gap-2 text-justify text-sm text-gray-300">
+        <p>
+          This component is a dropzone to upload multiple files. It is
+          configured with a max file size of 1 MB and a max number of files of
+          5.
+        </p>
+        <p>
+          Here, the EdgeStoreProvider is configured for a maximum of 2 parallel
+          uploads. This means that if you upload 5 files, only 2 will be
+          uploaded at a time. The other 3 will be queued and uploaded in order
+          as soon as one of the first 2 uploads finishes.
+        </p>
+        <p>
+          p.s. The default value for maxParallelUploads is 5. Here we are
+          setting it to 2 just to make it easier to see the queue in action.
+        </p>
+      </div>
     </div>
   );
 }
