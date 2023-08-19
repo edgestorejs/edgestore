@@ -9,7 +9,7 @@ slug: /providers/aws
 
 You can also use the Edge Store package with your own AWS S3 bucket. You might want to do that in case you have strict company policies that require you to have all the data in your own AWS account.
 
-By using this provider you will be able to use most of the basic features of Edge Store, but for some of the more advanced features like access controll with protected files, you will have to create your own infrastructure and logic from scratch.
+By using this provider you will be able to use most of the basic features of Edge Store, but for some of the more advanced features like access control with protected files, you will have to create your own infrastructure and logic from scratch.
 
 ```ts twoslash {7, 13}
 // @noErrors
