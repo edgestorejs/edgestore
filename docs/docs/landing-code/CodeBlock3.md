@@ -26,7 +26,7 @@ export type EdgeStoreRouter = typeof edgeStoreRouter;
 // @filename: src/lib/edgestore.ts
 'use client';
 
-import { EdgeStoreRouter } from '../app/api/edgestore/[...edgestore]/route';
+import { type EdgeStoreRouter } from '../app/api/edgestore/[...edgestore]/route';
 import { createEdgeStoreProvider } from '@edgestore/react';
 
 const { EdgeStoreProvider, useEdgeStore } =

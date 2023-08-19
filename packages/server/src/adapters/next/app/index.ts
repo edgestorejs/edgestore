@@ -1,5 +1,5 @@
 import { type NextRequest } from 'next/server';
-import type { EdgeStoreRouter } from '../../../core/internals/bucketBuilder';
+import { type EdgeStoreRouter } from '../../../core/internals/bucketBuilder';
 import EdgeStoreError, {
   EDGE_STORE_ERROR_CODES,
 } from '../../../libs/errors/EdgeStoreError';
