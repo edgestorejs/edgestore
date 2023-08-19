@@ -26,6 +26,13 @@ const config = {
   rules: {
     // These rules aren't enabled in typescript-eslint's basic recommended config, but we like them
     '@typescript-eslint/no-non-null-assertion': 'error',
+    '@typescript-eslint/consistent-type-imports': [
+      'warn',
+      {
+        prefer: 'type-imports',
+        fixStyle: 'inline-type-imports',
+      },
+    ],
 
     // These rules enabled in typescript-eslint's configs don't apply here
     '@typescript-eslint/consistent-indexed-object-style': 'off',

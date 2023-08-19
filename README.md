@@ -64,8 +64,8 @@ Now let's initiate our context provider.
 ```tsx title="src/lib/edgestore.ts"
 'use client';
 
-import { EdgeStoreRouter } from '../app/api/edgestore/[...edgestore]/route';
 import { createEdgeStoreProvider } from '@edgestore/react';
+import { EdgeStoreRouter } from '../app/api/edgestore/[...edgestore]/route';
 
 const { EdgeStoreProvider, useEdgeStore } =
   createEdgeStoreProvider<EdgeStoreRouter>();
@@ -100,9 +100,9 @@ export default function RootLayout({
 
 You can use the `useEdgeStore` hook to access typesafe frontend client and use it to upload files.
 
-```tsx {1, 6, 19-28}
-import { useEdgeStore } from '../lib/edgestore';
+```tsx
 import * as React from 'react';
+import { useEdgeStore } from '../lib/edgestore';
 
 export default function Page() {
   const [file, setFile] = React.useState<File>();
@@ -161,5 +161,5 @@ const res = await edgestore.publicFiles.upload({
 ```tsx
 await edgestore.publicFiles.delete({
   url: urlToDelete,
-})
+});
 ```

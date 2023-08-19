@@ -11,15 +11,15 @@ You can also use the Edge Store package with your own AWS S3 bucket. You might w
 
 By using this provider you will be able to use most of the basic features of Edge Store, but for some of the more advanced features like access controll with protected files, you will have to create your own infrastructure and logic from scratch.
 
-```ts twoslash {1, 13}
+```ts twoslash {7, 13}
 // @noErrors
-import { AWSProvider } from '@edgestore/server/providers/aws';
-import { initEdgeStoreClient } from '@edgestore/server/core';
 import { initEdgeStore } from '@edgestore/server';
 import {
   CreateContextOptions,
   createEdgeStoreNextHandler,
 } from '@edgestore/server/adapters/next/pages';
+import { initEdgeStoreClient } from '@edgestore/server/core';
+import { AWSProvider } from '@edgestore/server/providers/aws';
 import { z } from 'zod';
 
 // ...
@@ -38,14 +38,14 @@ export type AWSProviderOptions = {
   /**
    * Access key for AWS credentials.
    * Can also be set via the `ES_AWS_ACCESS_KEY_ID` environment variable.
-   * 
+   *
    * If unset, the SDK will attempt to use the default credentials provider chain.
    */
   accessKeyId?: string;
   /**
    * Secret access key for AWS credentials.
    * Can also be set via the `ES_AWS_SECRET_ACCESS_KEY` environment variable.
-   * 
+   *
    * If unset, the SDK will attempt to use the default credentials provider chain.
    */
   secretAccessKey?: string;
@@ -62,7 +62,7 @@ export type AWSProviderOptions = {
   /**
    * Base URL to use for accessing files.
    * Only needed if you are using a custom domain or cloudfront.
-   * 
+   *
    * Can also be set via the `EDGE_STORE_BASE_URL` environment variable.
    */
   baseUrl?: string;

@@ -1,9 +1,9 @@
 import {
-  AnyBuilder,
-  AnyMetadata,
-  EdgeStoreRouter,
+  type AnyBuilder,
+  type AnyMetadata,
+  type EdgeStoreRouter,
 } from '../core/internals/bucketBuilder';
-import { MaybePromise } from '../types';
+import { type MaybePromise } from '../types';
 
 export type InitParams = {
   ctx: any;

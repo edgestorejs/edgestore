@@ -1,6 +1,9 @@
 'use client';
 
-import { FileState, MultiFileDropzone } from '@/components/upload/multi-file';
+import {
+  MultiFileDropzone,
+  type FileState,
+} from '@/components/upload/multi-file';
 import { useEdgeStore } from '@/lib/edgestore';
 import * as React from 'react';
 

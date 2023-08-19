@@ -5,7 +5,7 @@ sidebar_label: Configuration
 slug: /configuration
 ---
 
-``` twoslash include context
+```twoslash include context
 declare function getUserSession(
   req: any,
 ): Promise<{ id: string; role: 'admin' | 'user' }>;
@@ -111,7 +111,7 @@ const edgeStoreRouter = es.router({
      * return `true` to allow upload
      * By default every upload from your app is allowed.
      */
-    .beforeUpload(({ ctx, input, fileInfo} ) => {
+    .beforeUpload(({ ctx, input, fileInfo }) => {
       console.log('beforeUpload', ctx, input, fileInfo);
       return true; // allow upload
     })
@@ -119,7 +119,7 @@ const edgeStoreRouter = es.router({
      * return `true` to allow delete
      * This function must be defined if you want to delete files directly from the client.
      */
-    .beforeDelete(({ ctx, fileInfo } ) => {
+    .beforeDelete(({ ctx, fileInfo }) => {
       console.log('beforeDelete', ctx, fileInfo);
       return true; // allow delete
     }),
@@ -145,7 +145,7 @@ const filesBucket = es
     OR: [
       {
         // this will make sure that only the author of the file can access it
-        userId: { path: 'author' }, 
+        userId: { path: 'author' },
       },
       {
         // or if the user is an admin
@@ -188,7 +188,7 @@ e.g. `/my-app/api/edgestore` or `https://example.com/my-app/api/edgestore`
 // @noErrors
 export default function App({ Component, pageProps }: AppProps) {
   return (
-    <EdgeStoreProvider basePath='/my-app/api/edgestore'>
+    <EdgeStoreProvider basePath="/my-app/api/edgestore">
       <Component {...pageProps} />
     </EdgeStoreProvider>
   );
@@ -197,13 +197,13 @@ export default function App({ Component, pageProps }: AppProps) {
 
 ## IMAGE bucket accepted mime types
 
-| mime type |
-| --- |
-| image/jpeg |
-| image/png |
-| image/gif |
-| image/webp |
+| mime type     |
+| ------------- |
+| image/jpeg    |
+| image/png     |
+| image/gif     |
+| image/webp    |
 | image/svg+xml |
-| image/tiff |
-| image/bmp |
-| image/x-icon |
+| image/tiff    |
+| image/bmp     |
+| image/x-icon  |

@@ -1,7 +1,7 @@
 import { initEdgeStore } from '@edgestore/server';
 import {
-  CreateContextOptions,
   createEdgeStoreNextHandler,
+  type CreateContextOptions,
 } from '@edgestore/server/adapters/next/pages';
 import { initEdgeStoreClient } from '@edgestore/server/core';
 import { z } from 'zod';

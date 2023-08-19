@@ -1,9 +1,9 @@
 import {
-  AnyRouter,
-  InferBucketPathObject,
-  InferMetadataObject,
+  type AnyRouter,
+  type InferBucketPathObject,
+  type InferMetadataObject,
 } from '@edgestore/server/core';
-import { z } from 'zod';
+import { type z } from 'zod';
 import EdgeStoreError from './libs/errors/EdgeStoreError';
 
 export type BucketFunctions<TRouter extends AnyRouter> = {

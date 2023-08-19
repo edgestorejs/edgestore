@@ -1,9 +1,12 @@
-import { GetServerSideProps, InferGetServerSidePropsType } from 'next';
+import {
+  type GetServerSideProps,
+  type InferGetServerSidePropsType,
+} from 'next';
 import Image from 'next/image';
 import { useState } from 'react';
 import { twMerge } from 'tailwind-merge';
 import ImageInput from '../components/ImageInput';
-import { ClientResponse, useEdgeStore } from '../utils/edgestore';
+import { useEdgeStore, type ClientResponse } from '../utils/edgestore';
 import { edgeStoreClient } from './api/edgestore/[...edgestore]';
 
 const MAX_SIZE = 1024 * 1024 * 5; // 5MB

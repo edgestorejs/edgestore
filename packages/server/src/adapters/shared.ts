@@ -2,9 +2,12 @@ import { hkdf } from '@panva/hkdf';
 import { serialize } from 'cookie';
 import { EncryptJWT, jwtDecrypt } from 'jose';
 import { v4 as uuidv4 } from 'uuid';
-import { AnyBuilder, EdgeStoreRouter } from '../core/internals/bucketBuilder';
+import {
+  type AnyBuilder,
+  type EdgeStoreRouter,
+} from '../core/internals/bucketBuilder';
 import EdgeStoreError from '../libs/errors/EdgeStoreError';
-import { Provider } from '../providers/types';
+import { type Provider } from '../providers/types';
 import { IMAGE_MIME_TYPES } from './imageTypes';
 
 // TODO: change it to 1 hour when we have a way to refresh the token

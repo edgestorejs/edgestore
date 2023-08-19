@@ -1,4 +1,4 @@
-import { EdgeStoreRouter } from './internals/bucketBuilder';
+import { type EdgeStoreRouter } from './internals/bucketBuilder';
 
 export * from './client';
 export * from './sdk';

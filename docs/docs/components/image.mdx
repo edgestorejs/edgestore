@@ -21,11 +21,11 @@ import { SingleImageDropzoneUsage } from '../../src/components/upload/SingleImag
 <CollapsibleCode>
 
 ```tsx
-"use client";
+'use client';
 
-import { SingleImageDropzone } from "@/components/SingleImageDropzone";
-import { useEdgeStore } from "@/lib/edgestore";
-import { useState } from "react";
+import { SingleImageDropzone } from '@/components/SingleImageDropzone';
+import { useEdgeStore } from '@/lib/edgestore';
+import { useState } from 'react';
 
 export function SingleImageDropzoneUsage() {
   const [file, setFile] = useState<File>();
@@ -318,7 +318,6 @@ function formatFileSize(bytes?: number) {
 }
 
 export { SingleImageDropzone };
-
 ```
 
 </CollapsibleCode>

@@ -1,19 +1,19 @@
-import { NextApiRequest, NextApiResponse } from 'next/types';
-import { EdgeStoreRouter } from '../../../core/internals/bucketBuilder';
+import { type NextApiRequest, type NextApiResponse } from 'next/types';
+import { type EdgeStoreRouter } from '../../../core/internals/bucketBuilder';
 import EdgeStoreError, {
   EDGE_STORE_ERROR_CODES,
 } from '../../../libs/errors/EdgeStoreError';
 import { EdgeStoreProvider } from '../../../providers/edgestore';
-import { Provider } from '../../../providers/types';
-import { MaybePromise } from '../../../types';
+import { type Provider } from '../../../providers/types';
+import { type MaybePromise } from '../../../types';
 import {
   deleteFile,
-  DeleteFileBody,
   init,
   requestUpload,
-  RequestUploadBody,
   requestUploadParts,
-  RequestUploadPartsParams,
+  type DeleteFileBody,
+  type RequestUploadBody,
+  type RequestUploadPartsParams,
 } from '../../shared';
 
 export type CreateContextOptions = {
