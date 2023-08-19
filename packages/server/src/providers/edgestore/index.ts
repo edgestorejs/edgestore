@@ -1,6 +1,6 @@
 import { initEdgeStoreSdk } from '../../core/sdk';
 import EdgeStoreCredentialsError from '../../libs/errors/EdgeStoreCredentialsError';
-import { Provider, RequestUploadRes } from '../types';
+import { type Provider, type RequestUploadRes } from '../types';
 
 const DEFAULT_BASE_URL = 'https://files.edgestore.dev';
 

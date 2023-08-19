@@ -131,7 +131,7 @@ Now let's initiate our context provider.
 ```twoslash include provider
 'use client';
 
-import { EdgeStoreRouter } from '../app/api/edgestore/[...edgestore]/route';
+import { type EdgeStoreRouter } from '../app/api/edgestore/[...edgestore]/route';
 import { createEdgeStoreProvider } from '@edgestore/react';
 
 const { EdgeStoreProvider, useEdgeStore } =
@@ -158,8 +158,8 @@ export { EdgeStoreProvider, useEdgeStore };
 ```tsx title="src/lib/edgestore.ts"
 'use client';
 
-import { EdgeStoreRouter } from '../pages/api/edgestore/[...edgestore]';
 import { createEdgeStoreProvider } from '@edgestore/react';
+import { type EdgeStoreRouter } from '../pages/api/edgestore/[...edgestore]';
 
 const { EdgeStoreProvider, useEdgeStore } =
   createEdgeStoreProvider<EdgeStoreRouter>();
@@ -211,7 +211,6 @@ export default function App({ Component, pageProps }: AppProps) {
     </EdgeStoreProvider>
   );
 }
-
 ```
 
 </TabItem>
@@ -221,7 +220,7 @@ export default function App({ Component, pageProps }: AppProps) {
 
 You can use the `useEdgeStore` hook to access typesafe frontend client and use it to upload files.
 
-```tsx twoslash {1, 6, 19-28}
+```tsx twoslash {4, 8, 21-30}
 // clear cache: v2
 // @filename: src/app/api/edgestore/[...edgestore]/route.ts
 // @include: router
@@ -231,8 +230,8 @@ You can use the `useEdgeStore` hook to access typesafe frontend client and use i
 // ---cut---
 'use client';
 
-import { useEdgeStore } from '../lib/edgestore';
 import * as React from 'react';
+import { useEdgeStore } from '../lib/edgestore';
 
 export default function Page() {
   const [file, setFile] = React.useState<File>();
@@ -292,5 +291,5 @@ const res = await edgestore.publicFiles.upload({
 ```tsx
 await edgestore.publicFiles.delete({
   url: urlToDelete,
-})
+});
 ```

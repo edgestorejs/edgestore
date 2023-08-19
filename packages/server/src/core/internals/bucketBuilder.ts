@@ -1,5 +1,9 @@
 import { z } from 'zod';
-import { KeysOfUnion, MaybePromise, Simplify } from '../../types';
+import {
+  type KeysOfUnion,
+  type MaybePromise,
+  type Simplify,
+} from '../../types';
 import { createPathParamProxy } from './createPathParamProxy';
 
 type Merge<TType, TWith> = {

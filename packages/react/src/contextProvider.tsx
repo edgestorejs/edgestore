@@ -1,6 +1,6 @@
-import { AnyRouter } from '@edgestore/server/core';
+import { type AnyRouter } from '@edgestore/server/core';
 import * as React from 'react';
-import { BucketFunctions, createNextProxy } from './createNextProxy';
+import { createNextProxy, type BucketFunctions } from './createNextProxy';
 
 const DEFAULT_BASE_URL =
   process.env.NEXT_PUBLIC_EDGE_STORE_BASE_URL ?? 'https://files.edgestore.dev';

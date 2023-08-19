@@ -1,10 +1,10 @@
-import { AnyRouter, Comparison } from '..';
-import { Simplify } from '../../types';
+import { type AnyRouter, type Comparison } from '..';
+import { type Simplify } from '../../types';
 import {
-  AnyBuilder,
-  InferBucketPathKeys,
-  InferBucketPathObject,
-  InferMetadataObject,
+  type AnyBuilder,
+  type InferBucketPathKeys,
+  type InferBucketPathObject,
+  type InferMetadataObject,
 } from '../internals/bucketBuilder';
 import { initEdgeStoreSdk } from '../sdk';
 

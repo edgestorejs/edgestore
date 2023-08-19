@@ -21,21 +21,24 @@ import { MultiFileDropzoneUsage } from '../../src/components/upload/MultiFileDro
 <CollapsibleCode>
 
 ```tsx
-"use client";
+'use client';
 
-import { FileState, MultiFileDropzone } from "@/components/MultiFileDropzone";
-import { useEdgeStore } from "@/lib/edgestore";
-import { useState } from "react";
+import {
+  MultiFileDropzone,
+  type FileState,
+} from '@/components/MultiFileDropzone';
+import { useEdgeStore } from '@/lib/edgestore';
+import { useState } from 'react';
 
 export function MultiFileDropzoneUsage() {
   const [fileStates, setFileStates] = useState<FileState[]>([]);
   const { edgestore } = useEdgeStore();
 
-  function updateFileProgress(key: string, progress: FileState["progress"]) {
+  function updateFileProgress(key: string, progress: FileState['progress']) {
     setFileStates((fileStates) => {
       const newFileStates = structuredClone(fileStates);
       const fileState = newFileStates.find(
-        (fileState) => fileState.key === key
+        (fileState) => fileState.key === key,
       );
       if (fileState) {
         fileState.progress = progress;
@@ -64,15 +67,15 @@ export function MultiFileDropzoneUsage() {
                       // wait 1 second to set it to complete
                       // so that the user can see the progress bar at 100%
                       await new Promise((resolve) => setTimeout(resolve, 1000));
-                      updateFileProgress(addedFileState.key, "COMPLETE");
+                      updateFileProgress(addedFileState.key, 'COMPLETE');
                     }
                   },
                 });
                 console.log(res);
               } catch (err) {
-                updateFileProgress(addedFileState.key, "ERROR");
+                updateFileProgress(addedFileState.key, 'ERROR');
               }
-            })
+            }),
           );
         }}
       />

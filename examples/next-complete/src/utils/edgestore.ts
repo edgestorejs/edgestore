@@ -1,6 +1,6 @@
 import { createEdgeStoreProvider } from '@edgestore/react';
-import { InferClientResponse } from '@edgestore/server/core';
-import { EdgeStoreRouter } from '../pages/api/edgestore/[...edgestore]';
+import { type InferClientResponse } from '@edgestore/server/core';
+import { type EdgeStoreRouter } from '../pages/api/edgestore/[...edgestore]';
 
 const { EdgeStoreProvider, useEdgeStore } =
   createEdgeStoreProvider<EdgeStoreRouter>();
