@@ -12,7 +12,7 @@ declare function getUserSession(
 // ---cut---
 import { initEdgeStore } from '@edgestore/server';
 import {
-  CreateContextOptions,
+  type CreateContextOptions,
   createEdgeStoreNextHandler,
 } from '@edgestore/server/adapters/next/app';
 import { z } from 'zod';

@@ -15,7 +15,7 @@ The Edge Store Provider is the default provider. If you followed the documentati
 // @noErrors
 import { initEdgeStore } from '@edgestore/server';
 import {
-  CreateContextOptions,
+  type CreateContextOptions,
   createEdgeStoreNextHandler,
 } from '@edgestore/server/adapters/next/pages';
 import { initEdgeStoreClient } from '@edgestore/server/core';
