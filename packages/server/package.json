@@ -1,7 +1,7 @@
 {
   "name": "@edgestore/server",
   "version": "0.1.1",
-  "description": "The best DX for uploading files from your Next.js app",
+  "description": "Upload files with ease from React/Next.js",
   "homepage": "https://edgestore.dev",
   "repository": "https://github.com/edgestorejs/edgestore.git",
   "author": "Ravi <me@ravi.com>",

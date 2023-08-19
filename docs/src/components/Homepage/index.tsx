@@ -177,8 +177,8 @@ const LearnMoreButton: React.FC = () => {
 
 const CodeBlockItem: React.FC<{ block: CodeBlockItem }> = ({ block }) => {
   return (
-    <div className="flex max-w-full flex-col justify-between md:max-w-6xl md:flex-row md:gap-12">
-      <div className="order-1 flex-[3] md:order-none">{block.code}</div>
+    <div className="flex max-w-full flex-col justify-between lg:max-w-6xl lg:flex-row lg:gap-12">
+      <div className="order-1 min-w-0 flex-[3] lg:order-none">{block.code}</div>
       <div className="flex-[2]">
         <h2>{block.title}</h2>
         <div>{block.description}</div>
