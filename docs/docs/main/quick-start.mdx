@@ -158,8 +158,8 @@ export { EdgeStoreProvider, useEdgeStore };
 ```tsx title="src/lib/edgestore.ts"
 'use client';
 
-import { type EdgeStoreRouter } from '../pages/api/edgestore/[...edgestore]';
 import { createEdgeStoreProvider } from '@edgestore/react';
+import { type EdgeStoreRouter } from '../pages/api/edgestore/[...edgestore]';
 
 const { EdgeStoreProvider, useEdgeStore } =
   createEdgeStoreProvider<EdgeStoreRouter>();

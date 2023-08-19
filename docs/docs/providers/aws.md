@@ -15,8 +15,8 @@ By using this provider you will be able to use most of the basic features of Edg
 // @noErrors
 import { initEdgeStore } from '@edgestore/server';
 import {
-  type CreateContextOptions,
   createEdgeStoreNextHandler,
+  type CreateContextOptions,
 } from '@edgestore/server/adapters/next/pages';
 import { initEdgeStoreClient } from '@edgestore/server/core';
 import { AWSProvider } from '@edgestore/server/providers/aws';
