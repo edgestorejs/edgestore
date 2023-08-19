@@ -7,12 +7,25 @@ slug: /components/multi-file
 
 import TabItem from '@theme/TabItem';
 import Tabs from '@theme/Tabs';
+import { ExternalLink } from 'lucide-react';
 import { CollapsibleCode } from '../../src/components/CollapsibleCode';
+import { Button } from '../../src/components/ui/Button';
 import { MultiFileDropzoneUsage } from '../../src/components/upload/MultiFileDropzoneUsage';
 
 # Multi-file
 
-<div className="flex justify-center">
+<div className="flex flex-col items-center gap-4">
+  <Button asChild variant="outline">
+    <a
+      href="https://examples.edgestore.dev/components/multi-file-instant"
+      target="_blank"
+      rel="noreferrer"
+      className="flex items-center gap-2"
+    >
+      See it in action
+      <ExternalLink size={16} />
+    </a>
+  </Button>
   <MultiFileDropzoneUsage />
 </div>
 
