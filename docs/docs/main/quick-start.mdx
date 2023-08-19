@@ -288,6 +288,10 @@ const res = await edgestore.publicFiles.upload({
 
 ### Delete file
 
+You can delete a file by passing its url to the `delete` method.
+
+To be able to delete a file from a client component like this, you will need to set the `beforeDelete` [lifecycle hook](/docs/configuration#lifecycle-hooks) on the bucket.
+
 ```tsx
 await edgestore.publicFiles.delete({
   url: urlToDelete,
