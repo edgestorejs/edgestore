@@ -83,7 +83,7 @@ function MultiImageExample() {
           {uploadRes.map((res) => (
             <a
               key={res.url}
-              className="mt-2 block"
+              className="mt-2 block underline"
               href={res.url}
               target="_blank"
               rel="noopener noreferrer"
