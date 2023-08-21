@@ -121,6 +121,9 @@ export function AWSProvider(options?: AWSProviderOptions): Provider {
     async requestUploadParts() {
       throw new Error('Not implemented');
     },
+    async completeMultipartUpload() {
+      throw new Error('Not implemented');
+    },
     async deleteFile({ url }) {
       const path = url.replace(`${baseUrl}/`, '');
       await s3Client.send(

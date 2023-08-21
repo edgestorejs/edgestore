@@ -68,13 +68,28 @@ export type RequestUploadPartsRes = {
   };
 };
 
+export type CompleteMultipartUploadParams = {
+  uploadId: string;
+  key: string;
+  parts: {
+    partNumber: number;
+    eTag: string;
+  }[];
+};
+
+export type CompleteMultipartUploadRes = {
+  success: boolean;
+};
+
 export type RequestUploadRes =
   | {
       uploadUrl: string;
       accessUrl: string;
+      thumbnailUrl?: string | null;
     }
   | {
       multipart: {
+        key: string;
         uploadId: string;
         partSize: number;
         totalParts: number;
@@ -84,6 +99,7 @@ export type RequestUploadRes =
         }[];
       };
       accessUrl: string;
+      thumbnailUrl?: string | null;
     };
 
 export type DeleteFileParams = {
@@ -105,5 +121,8 @@ export type Provider = {
   requestUploadParts: (
     params: RequestUploadPartsParams,
   ) => MaybePromise<RequestUploadPartsRes>;
+  completeMultipartUpload: (
+    params: CompleteMultipartUploadParams,
+  ) => MaybePromise<CompleteMultipartUploadRes>;
   deleteFile: (params: DeleteFileParams) => MaybePromise<DeleteFileRes>;
 };

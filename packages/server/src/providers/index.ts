@@ -1,2 +1,1 @@
-export * from './aws';
-export * from './edgestore';
+export * from './types';

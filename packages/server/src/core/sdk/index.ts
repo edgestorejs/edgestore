@@ -162,6 +162,7 @@ export const edgeStoreRawSdk = {
   }) {
     const res = await makeRequest<{
       multipart?: {
+        key: string;
         uploadId: string;
         parts: {
           partNumber: number;
@@ -170,6 +171,8 @@ export const edgeStoreRawSdk = {
       };
       signedUrl?: string;
       url: string;
+      path: string;
+      thumbnailUrl: string | null;
     }>({
       path: '/request-upload',
       accessKey,
@@ -192,6 +195,8 @@ export const edgeStoreRawSdk = {
       multipart: res.multipart,
       signedUrl: res.signedUrl,
       accessUrl: res.url,
+      path: res.path,
+      thumbnailUrl: res.thumbnailUrl,
     };
   },
 
@@ -229,6 +234,34 @@ export const edgeStoreRawSdk = {
     return {
       multipart: res.multipart,
     };
+  },
+
+  async completeMultipartUpload({
+    accessKey,
+    secretKey,
+    uploadId,
+    key,
+    parts,
+  }: {
+    accessKey: string;
+    secretKey: string;
+    uploadId: string;
+    key: string;
+    parts: {
+      partNumber: number;
+      eTag: string;
+    }[];
+  }) {
+    return await makeRequest<{ success: boolean }>({
+      path: '/complete-multipart-upload',
+      accessKey,
+      secretKey,
+      body: {
+        uploadId,
+        key,
+        parts,
+      },
+    });
   },
 
   async deleteFile({
@@ -357,6 +390,26 @@ export function initEdgeStoreSdk(params: {
         secretKey,
         key,
         multipart,
+      });
+    },
+    async completeMultipartUpload({
+      uploadId,
+      key,
+      parts,
+    }: {
+      uploadId: string;
+      key: string;
+      parts: {
+        partNumber: number;
+        eTag: string;
+      }[];
+    }) {
+      return await edgeStoreRawSdk.completeMultipartUpload({
+        accessKey,
+        secretKey,
+        uploadId,
+        key,
+        parts,
       });
     },
     async deleteFile({ url }: { url: string }) {

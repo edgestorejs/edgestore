@@ -1,3 +1,4 @@
+import { type RequestUploadRes } from '@edgestore/server/adapters';
 import {
   type AnyRouter,
   type InferBucketPathObject,
@@ -149,12 +150,22 @@ async function uploadFile(
         'Content-Type': 'application/json',
       },
     });
-    const json = await res.json();
-    if (!json.uploadUrl) {
+    const json = (await res.json()) as RequestUploadRes;
+    if ('multipart' in json) {
+      await multipartUpload({
+        bucketName,
+        multipartInfo: json.multipart,
+        onProgressChange,
+        file,
+        apiPath,
+      });
+    } else if ('uploadUrl' in json) {
+      // Single part upload
+      // Upload the file to the signed URL and get the progress
+      await uploadFileInner(file, json.uploadUrl, onProgressChange);
+    } else {
       throw new EdgeStoreError('An error occurred');
     }
-    // Upload the file to the signed URL and get the progress
-    await uploadFileInner(file, json.uploadUrl, onProgressChange);
     return {
       url: getUrl(json.accessUrl, apiPath),
       thumbnailUrl: json.thumbnailUrl
@@ -162,8 +173,10 @@ async function uploadFile(
         : null,
       size: json.size,
       uploadedAt: new Date(json.uploadedAt),
-      path: json.path,
-      metadata: json.metadata,
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+      path: json.path as any,
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+      metadata: json.metadata as any,
     };
   } catch (e) {
     onProgressChange?.(0);
@@ -189,11 +202,11 @@ function getUrl(url: string, apiPath: string) {
 }
 
 const uploadFileInner = async (
-  file: File,
+  file: File | Blob,
   uploadUrl: string,
   onProgressChange?: OnProgressChangeHandler,
 ) => {
-  const promise = new Promise<void>((resolve, reject) => {
+  const promise = new Promise<string | null>((resolve, reject) => {
     const request = new XMLHttpRequest();
     request.open('PUT', uploadUrl);
     request.addEventListener('loadstart', () => {
@@ -213,13 +226,93 @@ const uploadFileInner = async (
       reject(new Error('File upload aborted'));
     });
     request.addEventListener('loadend', () => {
-      resolve();
+      // Return the ETag header (needed to complete multipart upload)
+      resolve(request.getResponseHeader('ETag'));
     });
 
     request.send(file);
   });
   return promise;
 };
+
+async function multipartUpload(params: {
+  bucketName: string;
+  multipartInfo: Extract<RequestUploadRes, { multipart: any }>['multipart'];
+  onProgressChange: OnProgressChangeHandler | undefined;
+  file: File;
+  apiPath: string;
+}) {
+  const { bucketName, multipartInfo, onProgressChange, file, apiPath } = params;
+  const { partSize, parts, totalParts, uploadId, key } = multipartInfo;
+  const uploadingParts: {
+    partNumber: number;
+    progress: number;
+  }[] = [];
+  const uploadPart = async (params: {
+    part: typeof parts[number];
+    chunk: Blob;
+  }) => {
+    const { part, chunk } = params;
+    const { uploadUrl } = part;
+    const eTag = await uploadFileInner(chunk, uploadUrl, (progress) => {
+      const uploadingPart = uploadingParts.find(
+        (p) => p.partNumber === part.partNumber,
+      );
+      if (uploadingPart) {
+        uploadingPart.progress = progress;
+      } else {
+        uploadingParts.push({
+          partNumber: part.partNumber,
+          progress,
+        });
+      }
+      const totalProgress =
+        Math.round(
+          uploadingParts.reduce((acc, p) => acc + p.progress * 100, 0) /
+            totalParts,
+        ) / 100;
+      onProgressChange?.(totalProgress);
+    });
+    if (!eTag) {
+      throw new EdgeStoreError('Could not get ETag from multipart response');
+    }
+    return {
+      partNumber: part.partNumber,
+      eTag,
+    };
+  };
+
+  // Upload the parts in parallel
+  const completedParts = await queuedPromises({
+    items: parts.map((part) => ({
+      part,
+      chunk: file.slice(
+        (part.partNumber - 1) * partSize,
+        part.partNumber * partSize,
+      ),
+    })),
+    fn: uploadPart,
+    maxParallel: 5,
+    maxRetries: 10, // retry 10 times per part
+  });
+
+  // Complete multipart upload
+  const res = await fetch(`${apiPath}/complete-multipart-upload`, {
+    method: 'POST',
+    body: JSON.stringify({
+      bucketName,
+      uploadId,
+      key,
+      parts: completedParts,
+    }),
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+  if (!res.ok) {
+    throw new EdgeStoreError('Multi-part upload failed');
+  }
+}
 
 async function deleteFile(
   {
@@ -249,4 +342,63 @@ async function deleteFile(
     throw new EdgeStoreError('An error occurred');
   }
   return { success: true };
+}
+
+async function queuedPromises<TType, TRes>({
+  items,
+  fn,
+  maxParallel,
+  maxRetries = 0,
+}: {
+  items: TType[];
+  fn: (item: TType) => Promise<TRes>;
+  maxParallel: number;
+  maxRetries?: number;
+}): Promise<TRes[]> {
+  const results: TRes[] = new Array(items.length);
+
+  const executeWithRetry = async (
+    func: () => Promise<TRes>,
+    retries: number,
+  ): Promise<TRes> => {
+    try {
+      return await func();
+    } catch (error) {
+      if (retries > 0) {
+        await new Promise((resolve) => setTimeout(resolve, 5000));
+        return executeWithRetry(func, retries - 1);
+      } else {
+        throw error;
+      }
+    }
+  };
+
+  const semaphore = {
+    count: maxParallel,
+    async wait() {
+      // If we've reached our maximum concurrency or it's the last item, wait
+      while (this.count <= 0)
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      this.count--;
+    },
+    signal() {
+      this.count++;
+    },
+  };
+
+  const tasks: Promise<void>[] = items.map((item, i) =>
+    (async () => {
+      await semaphore.wait();
+
+      try {
+        const result = await executeWithRetry(() => fn(item), maxRetries);
+        results[i] = result;
+      } finally {
+        semaphore.signal();
+      }
+    })(),
+  );
+
+  await Promise.all(tasks);
+  return results;
 }

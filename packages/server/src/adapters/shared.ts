@@ -206,6 +206,46 @@ export async function requestUploadParts<TCtx>(params: {
   });
 }
 
+export type CompleteMultipartUploadBody = {
+  bucketName: string;
+  uploadId: string;
+  key: string;
+  parts: {
+    partNumber: number;
+    eTag: string;
+  }[];
+};
+
+export async function completeMultipartUpload<TCtx>(params: {
+  provider: Provider;
+  router: EdgeStoreRouter<TCtx>;
+  ctxToken: string | undefined;
+  body: CompleteMultipartUploadBody;
+}) {
+  const {
+    provider,
+    router,
+    ctxToken,
+    body: { bucketName, uploadId, key, parts },
+  } = params;
+  if (!ctxToken) {
+    throw new EdgeStoreError({
+      message: 'Missing edgestore-ctx cookie',
+      code: 'UNAUTHORIZED',
+    });
+  }
+  await getContext(ctxToken); // just to check if the token is valid
+  const bucket = router.buckets[bucketName];
+  if (!bucket) {
+    throw new Error(`Bucket ${bucketName} not found`);
+  }
+  return await provider.completeMultipartUpload({
+    uploadId,
+    key,
+    parts,
+  });
+}
+
 export type DeleteFileBody = {
   bucketName: string;
   url: string;
@@ -339,3 +379,10 @@ async function getContext(token?: string) {
   }
   return await decryptJWT(token);
 }
+
+export type InitRes = Awaited<ReturnType<typeof init>>;
+export type RequestUploadRes = Awaited<ReturnType<typeof requestUpload>>;
+export type RequestUploadPartsRes = Awaited<
+  ReturnType<typeof requestUploadParts>
+>;
+export type DeleteFileRes = Awaited<ReturnType<typeof deleteFile>>;

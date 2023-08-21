@@ -7,10 +7,12 @@ import { EdgeStoreProvider } from '../../../providers/edgestore';
 import { type Provider } from '../../../providers/types';
 import { type MaybePromise } from '../../../types';
 import {
+  completeMultipartUpload,
   deleteFile,
   init,
   requestUpload,
   requestUploadParts,
+  type CompleteMultipartUploadBody,
   type DeleteFileBody,
   type RequestUploadBody,
   type RequestUploadPartsParams,
@@ -69,6 +71,14 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
             ctxToken: req.cookies['edgestore-ctx'],
           }),
         );
+      } else if (req.url === '/api/edgestore/complete-multipart-upload') {
+        await completeMultipartUpload({
+          provider,
+          router: config.router,
+          body: req.body as CompleteMultipartUploadBody,
+          ctxToken: req.cookies['edgestore-ctx'],
+        });
+        res.status(200).end();
       } else if (req.url === '/api/edgestore/delete-file') {
         await deleteFile({
           provider,
