@@ -188,7 +188,7 @@ const MultiFileDropzone = React.forwardRef<HTMLInputElement, InputProps>(
                   ) : progress === 'ERROR' ? (
                     <LucideFileWarning className="shrink-0 text-red-400" />
                   ) : progress !== 'COMPLETE' ? (
-                    <div>{progress}%</div>
+                    <div>{Math.round(progress)}%</div>
                   ) : (
                     <CheckCircleIcon className="shrink-0" />
                   )}
