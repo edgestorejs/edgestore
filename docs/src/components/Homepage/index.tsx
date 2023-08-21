@@ -69,24 +69,13 @@ const Homepage = () => {
           EDGE STORE
         </h1>
         <h2 className="mb-8 text-center text-lg font-normal text-gray-300">
-          The best DX for uploading files from your Next.js app.
+          File uploads in Next.js just got way easier.
         </h2>
         <div className="flex gap-3">
           <JoinButton />
           <LearnMoreButton />
         </div>
       </div>
-      {/* <div className="flex w-full justify-center bg-primary-999 py-10 px-3 text-center">
-          <div className="max-w-4xl">
-            <p className="pb-4 text-xl font-bold">Why Edge Store?</p>
-            <p>
-              Edge Store is a simple cloud storage for all project sizes. It is
-              designed to be easy to use and easy to integrate into your
-              project. It is built leveraging s3, cloudfront and lambda@edge to
-              give you a fast, reliable and secure storage.
-            </p>
-          </div>
-        </div> */}
       <div className="my-20 mx-auto grid w-full max-w-4xl auto-rows-fr grid-cols-1 gap-10 px-6 md:grid-cols-3 md:justify-between">
         <TechCard
           title="Start for free"
