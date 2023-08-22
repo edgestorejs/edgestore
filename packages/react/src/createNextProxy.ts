@@ -40,6 +40,9 @@ export type BucketFunctions<TRouter extends AnyRouter> = {
             path: InferBucketPathObject<TRouter['buckets'][K]>;
           }
     >;
+    confirmUpload: (params: { url: string }) => Promise<{
+      success: boolean;
+    }>;
     delete: (params: { url: string }) => Promise<{
       success: boolean;
     }>;
@@ -66,6 +69,16 @@ type UploadOptions = {
    * It will automatically delete the existing file when the upload is complete.
    */
   replaceTargetUrl?: string;
+  /**
+   * If true, the file needs to be confirmed by using the `confirmUpload` function.
+   * If the file is not confirmed within 24 hours, it will be deleted.
+   *
+   * This is useful for pages where the file is uploaded as soon as it is selected,
+   * but the user can leave the page without submitting the form.
+   *
+   * This avoids unnecessary zombie files in the bucket.
+   */
+  temporary?: boolean;
 };
 
 export function createNextProxy<TRouter extends AnyRouter>({
@@ -98,6 +111,12 @@ export function createNextProxy<TRouter extends AnyRouter>({
           } finally {
             uploadingCountRef.current--;
           }
+        },
+        confirmUpload: async (params: { url: string }) => {
+          return await confirmUpload(params, {
+            bucketName: bucketName as string,
+            apiPath,
+          });
         },
         delete: async (params: { url: string }) => {
           return await deleteFile(params, {
@@ -144,6 +163,7 @@ async function uploadFile(
           size: file.size,
           fileName: options?.manualFileName,
           replaceTargetUrl: options?.replaceTargetUrl,
+          temporary: options?.temporary,
         },
       }),
       headers: {
@@ -312,6 +332,36 @@ async function multipartUpload(params: {
   if (!res.ok) {
     throw new EdgeStoreError('Multi-part upload failed');
   }
+}
+
+async function confirmUpload(
+  {
+    url,
+  }: {
+    url: string;
+  },
+  {
+    apiPath,
+    bucketName,
+  }: {
+    apiPath: string;
+    bucketName: string;
+  },
+) {
+  const res = await fetch(`${apiPath}/confirm-upload`, {
+    method: 'POST',
+    body: JSON.stringify({
+      url,
+      bucketName,
+    }),
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+  if (!res.ok) {
+    throw new EdgeStoreError('An error occurred');
+  }
+  return { success: true };
 }
 
 async function deleteFile(

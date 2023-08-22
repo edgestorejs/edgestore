@@ -8,11 +8,13 @@ import { type Provider } from '../../../providers/types';
 import { type MaybePromise } from '../../../types';
 import {
   completeMultipartUpload,
+  confirmUpload,
   deleteFile,
   init,
   requestUpload,
   requestUploadParts,
   type CompleteMultipartUploadBody,
+  type ConfirmUploadBody,
   type DeleteFileBody,
   type RequestUploadBody,
   type RequestUploadPartsParams,
@@ -95,6 +97,16 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
           provider,
           router: config.router,
           body: (await req.json()) as CompleteMultipartUploadBody,
+          ctxToken: req.cookies.get('edgestore-ctx')?.value,
+        });
+        return new Response(null, {
+          status: 200,
+        });
+      } else if (req.nextUrl.pathname === '/api/edgestore/confirm-upload') {
+        await confirmUpload({
+          provider,
+          router: config.router,
+          body: (await req.json()) as ConfirmUploadBody,
           ctxToken: req.cookies.get('edgestore-ctx')?.value,
         });
         return new Response(null, {

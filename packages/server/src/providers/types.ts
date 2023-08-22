@@ -47,6 +47,7 @@ export type RequestUploadParams = {
     }[];
     metadata: AnyMetadata;
     replaceTargetUrl?: string;
+    temporary: boolean;
   };
 };
 
@@ -102,6 +103,15 @@ export type RequestUploadRes =
       thumbnailUrl?: string | null;
     };
 
+export type ConfirmUpload = {
+  bucket: AnyBuilder;
+  url: string;
+};
+
+export type ConfirmUploadRes = {
+  success: boolean;
+};
+
 export type DeleteFileParams = {
   bucket: AnyBuilder;
   url: string;
@@ -124,5 +134,6 @@ export type Provider = {
   completeMultipartUpload: (
     params: CompleteMultipartUploadParams,
   ) => MaybePromise<CompleteMultipartUploadRes>;
+  confirmUpload: (params: ConfirmUpload) => MaybePromise<ConfirmUploadRes>;
   deleteFile: (params: DeleteFileParams) => MaybePromise<DeleteFileRes>;
 };

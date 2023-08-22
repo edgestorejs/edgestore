@@ -56,6 +56,7 @@ export type RequestUploadBody = {
     extension: string;
     fileName?: string;
     replaceTargetUrl?: string;
+    temporary: boolean;
   };
 };
 
@@ -93,6 +94,7 @@ export async function requestUpload<TCtx>(params: {
         fileName: fileInfo.fileName,
         extension: fileInfo.extension,
         replaceTargetUrl: fileInfo.replaceTargetUrl,
+        temporary: fileInfo.temporary,
       },
     });
     if (!canUpload) {
@@ -243,6 +245,42 @@ export async function completeMultipartUpload<TCtx>(params: {
     uploadId,
     key,
     parts,
+  });
+}
+
+export type ConfirmUploadBody = {
+  bucketName: string;
+  url: string;
+};
+
+export async function confirmUpload<TCtx>(params: {
+  provider: Provider;
+  router: EdgeStoreRouter<TCtx>;
+  ctxToken: string | undefined;
+  body: ConfirmUploadBody;
+}) {
+  const {
+    provider,
+    router,
+    ctxToken,
+    body: { bucketName, url },
+  } = params;
+
+  if (!ctxToken) {
+    throw new EdgeStoreError({
+      message: 'Missing edgestore-ctx cookie',
+      code: 'UNAUTHORIZED',
+    });
+  }
+  await getContext(ctxToken); // just to check if the token is valid
+  const bucket = router.buckets[bucketName];
+  if (!bucket) {
+    throw new Error(`Bucket ${bucketName} not found`);
+  }
+
+  await provider.confirmUpload({
+    bucket,
+    url,
   });
 }
 

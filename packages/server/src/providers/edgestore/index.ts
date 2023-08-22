@@ -150,6 +150,11 @@ export function EdgeStoreProvider(
         parts,
       });
     },
+    confirmUpload: async ({ url }) => {
+      return await edgeStoreSdk.confirmUpload({
+        url,
+      });
+    },
     deleteFile: async ({ url }) => {
       return await edgeStoreSdk.deleteFile({
         url,

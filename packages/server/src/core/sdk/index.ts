@@ -17,6 +17,7 @@ type FileInfoForUpload = {
   metadata: AnyMetadata;
   fileName?: string;
   replaceTargetUrl?: string;
+  temporary: boolean;
 };
 
 export type SimpleOperator =
@@ -189,6 +190,7 @@ export const edgeStoreRawSdk = {
         metadata: fileInfo.metadata,
         fileName: fileInfo.fileName,
         replaceTargetUrl: fileInfo.replaceTargetUrl,
+        isTemporary: fileInfo.temporary,
       },
     });
     return {
@@ -260,6 +262,25 @@ export const edgeStoreRawSdk = {
         uploadId,
         key,
         parts,
+      },
+    });
+  },
+
+  async confirmUpload({
+    accessKey,
+    secretKey,
+    url,
+  }: {
+    accessKey: string;
+    secretKey: string;
+    url: string;
+  }) {
+    return await makeRequest<{ success: boolean }>({
+      path: '/confirm-upload',
+      accessKey,
+      secretKey,
+      body: {
+        url,
       },
     });
   },
@@ -410,6 +431,13 @@ export function initEdgeStoreSdk(params: {
         uploadId,
         key,
         parts,
+      });
+    },
+    async confirmUpload({ url }: { url: string }) {
+      return await edgeStoreRawSdk.confirmUpload({
+        accessKey,
+        secretKey,
+        url,
       });
     },
     async deleteFile({ url }: { url: string }) {
