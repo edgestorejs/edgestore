@@ -64,7 +64,7 @@ const codeBlocks: CodeBlockItem[] = [
 const Homepage = () => {
   return (
     <main className="mt-[calc(var(--ifm-navbar-height)*-1)] min-h-screen text-white">
-      <div className="flex w-full flex-col items-center justify-center bg-[radial-gradient(theme(colors.primary.999),#000000)] px-3 pb-16 pt-40">
+      <div className="flex w-full flex-col items-center justify-center bg-[radial-gradient(theme(colors.primary.999),#000000_85%)] px-3 pb-32 pt-40">
         <h1 className="mb-6 bg-gradient-to-b from-primary-100 to-primary-400 bg-clip-text text-center font-[Futura] text-5xl text-transparent md:text-7xl">
           EDGE STORE
         </h1>
@@ -76,7 +76,7 @@ const Homepage = () => {
           <LearnMoreButton />
         </div>
       </div>
-      <div className="my-20 mx-auto grid w-full max-w-4xl auto-rows-fr grid-cols-1 gap-10 px-6 md:grid-cols-3 md:justify-between">
+      <div className="mx-auto mb-20 grid w-full max-w-4xl auto-rows-fr grid-cols-1 gap-10 px-6 md:grid-cols-3 md:justify-between">
         <TechCard
           title="Start for free"
           description="Get your free storage and start building. No credit card required."
