@@ -65,6 +65,11 @@ const config = {
         respectPrefersColorScheme: false,
         disableSwitch: true,
       },
+      algolia: {
+        appId: 'ZF5MFIC7VK',
+        apiKey: 'ae568f14ad13b14f4c0cc72b8e722d94',
+        indexName: 'edgestore',
+      },
       navbar: {
         title: 'Edge Store',
         logo: {
