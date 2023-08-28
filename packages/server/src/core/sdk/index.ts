@@ -17,6 +17,7 @@ type FileInfoForUpload = {
   metadata: AnyMetadata;
   fileName?: string;
   replaceTargetUrl?: string;
+  temporary: boolean;
 };
 
 export type SimpleOperator =
@@ -162,6 +163,7 @@ export const edgeStoreRawSdk = {
   }) {
     const res = await makeRequest<{
       multipart?: {
+        key: string;
         uploadId: string;
         parts: {
           partNumber: number;
@@ -170,6 +172,8 @@ export const edgeStoreRawSdk = {
       };
       signedUrl?: string;
       url: string;
+      path: string;
+      thumbnailUrl: string | null;
     }>({
       path: '/request-upload',
       accessKey,
@@ -186,12 +190,15 @@ export const edgeStoreRawSdk = {
         metadata: fileInfo.metadata,
         fileName: fileInfo.fileName,
         replaceTargetUrl: fileInfo.replaceTargetUrl,
+        isTemporary: fileInfo.temporary,
       },
     });
     return {
       multipart: res.multipart,
       signedUrl: res.signedUrl,
       accessUrl: res.url,
+      path: res.path,
+      thumbnailUrl: res.thumbnailUrl,
     };
   },
 
@@ -229,6 +236,53 @@ export const edgeStoreRawSdk = {
     return {
       multipart: res.multipart,
     };
+  },
+
+  async completeMultipartUpload({
+    accessKey,
+    secretKey,
+    uploadId,
+    key,
+    parts,
+  }: {
+    accessKey: string;
+    secretKey: string;
+    uploadId: string;
+    key: string;
+    parts: {
+      partNumber: number;
+      eTag: string;
+    }[];
+  }) {
+    return await makeRequest<{ success: boolean }>({
+      path: '/complete-multipart-upload',
+      accessKey,
+      secretKey,
+      body: {
+        uploadId,
+        key,
+        parts,
+      },
+    });
+  },
+
+  async confirmUpload({
+    accessKey,
+    secretKey,
+    url,
+  }: {
+    accessKey: string;
+    secretKey: string;
+    url: string;
+  }) {
+    return await makeRequest<{ success: boolean }>({
+      path: '/confirm-upload',
+      accessKey,
+      secretKey,
+      body: {
+        url,
+      },
+    });
   },
 
   async deleteFile({
@@ -357,6 +411,33 @@ export function initEdgeStoreSdk(params: {
         secretKey,
         key,
         multipart,
+      });
+    },
+    async completeMultipartUpload({
+      uploadId,
+      key,
+      parts,
+    }: {
+      uploadId: string;
+      key: string;
+      parts: {
+        partNumber: number;
+        eTag: string;
+      }[];
+    }) {
+      return await edgeStoreRawSdk.completeMultipartUpload({
+        accessKey,
+        secretKey,
+        uploadId,
+        key,
+        parts,
+      });
+    },
+    async confirmUpload({ url }: { url: string }) {
+      return await edgeStoreRawSdk.confirmUpload({
+        accessKey,
+        secretKey,
+        url,
       });
     },
     async deleteFile({ url }: { url: string }) {

@@ -1,6 +1,6 @@
 {
   "name": "@edgestore/server",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Upload files with ease from React/Next.js",
   "homepage": "https://edgestore.dev",
   "repository": "https://github.com/edgestorejs/edgestore.git",
@@ -37,6 +37,11 @@
       "require": "./dist/core/index.js",
       "default": "./dist/core/index.js"
     },
+    "./adapters": {
+      "import": "./dist/adapters/index.mjs",
+      "require": "./dist/adapters/index.js",
+      "default": "./dist/adapters/index.js"
+    },
     "./adapters/next/pages": {
       "import": "./dist/adapters/next/pages/index.mjs",
       "require": "./dist/adapters/next/pages/index.js",
@@ -56,6 +61,11 @@
       "import": "./dist/providers/edgestore/index.mjs",
       "require": "./dist/providers/edgestore/index.js",
       "default": "./dist/providers/edgestore/index.js"
+    },
+    "./providers": {
+      "import": "./dist/providers/index.mjs",
+      "require": "./dist/providers/index.js",
+      "default": "./dist/providers/index.js"
     }
   },
   "files": [

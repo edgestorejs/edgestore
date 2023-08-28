@@ -66,31 +66,29 @@ export function EdgeStoreProvider(
       bucketType,
       fileInfo,
     }): Promise<RequestUploadRes> {
-      // multiplart upload if file is bigger than a certain size
+      // multipart upload if file is bigger than a certain size
       const MULTIPART_THRESHOLD = 10 * 1024 * 1024; // 10MB
-      const CONCURRENCY = 3;
       let partSize = 5 * 1024 * 1024; // 5MB
       if (fileInfo.size > MULTIPART_THRESHOLD) {
         let totalParts = Math.ceil(fileInfo.size / partSize);
-        if (totalParts > 10000) {
-          // the maximum number of parts is 10000
-          totalParts = 10000;
+        if (totalParts > 1000) {
+          // the maximum number of parts is 1000
+          totalParts = 1000;
           partSize = Math.ceil(fileInfo.size / totalParts);
         }
-        const requestParts =
-          totalParts > CONCURRENCY ? CONCURRENCY : totalParts;
         const res = await edgeStoreSdk.requestUpload({
           bucketName,
           bucketType,
           fileInfo,
           multipart: {
-            parts: Array.from({ length: requestParts }).map(
+            parts: Array.from({ length: totalParts }).map(
               (_, index) => index + 1,
             ),
           },
         });
         const multipart = res.multipart
           ? {
+              key: res.multipart.key,
               uploadId: res.multipart.uploadId,
               parts: res.multipart.parts.map((part) => ({
                 partNumber: part.partNumber,
@@ -103,12 +101,14 @@ export function EdgeStoreProvider(
         if (multipart) {
           return {
             accessUrl: res.accessUrl,
+            thumbnailUrl: res.thumbnailUrl,
             multipart,
           };
         } else if (res.signedUrl) {
           return {
             accessUrl: res.accessUrl,
             uploadUrl: res.signedUrl,
+            thumbnailUrl: res.thumbnailUrl,
           };
         } else {
           throw new Error('Could not get upload url');
@@ -123,6 +123,7 @@ export function EdgeStoreProvider(
         return {
           accessUrl: res.accessUrl,
           uploadUrl: res.signedUrl,
+          thumbnailUrl: res.thumbnailUrl,
         };
       }
       throw new Error('Could not get upload url');
@@ -141,6 +142,18 @@ export function EdgeStoreProvider(
           })),
         },
       };
+    },
+    completeMultipartUpload: async ({ uploadId, key, parts }) => {
+      return await edgeStoreSdk.completeMultipartUpload({
+        uploadId,
+        key,
+        parts,
+      });
+    },
+    confirmUpload: async ({ url }) => {
+      return await edgeStoreSdk.confirmUpload({
+        url,
+      });
     },
     deleteFile: async ({ url }) => {
       return await edgeStoreSdk.deleteFile({

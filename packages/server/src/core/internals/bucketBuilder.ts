@@ -117,6 +117,7 @@ type FileInfo = {
   extension: string;
   fileName?: string;
   replaceTargetUrl?: string;
+  temporary: boolean;
 };
 
 type BeforeUploadFn<TCtx, TDef extends AnyDef> = (params: {

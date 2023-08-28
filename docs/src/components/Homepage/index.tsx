@@ -64,30 +64,19 @@ const codeBlocks: CodeBlockItem[] = [
 const Homepage = () => {
   return (
     <main className="mt-[calc(var(--ifm-navbar-height)*-1)] min-h-screen text-white">
-      <div className="flex w-full flex-col items-center justify-center bg-[radial-gradient(theme(colors.primary.999),#000000)] px-3 pb-16 pt-40">
+      <div className="flex w-full flex-col items-center justify-center bg-[radial-gradient(theme(colors.primary.999),#000000_85%)] px-3 pb-32 pt-40">
         <h1 className="mb-6 bg-gradient-to-b from-primary-100 to-primary-400 bg-clip-text text-center font-[Futura] text-5xl text-transparent md:text-7xl">
           EDGE STORE
         </h1>
         <h2 className="mb-8 text-center text-lg font-normal text-gray-300">
-          The best DX for uploading files from your Next.js app.
+          File uploads in Next.js just got way easier.
         </h2>
         <div className="flex gap-3">
           <JoinButton />
           <LearnMoreButton />
         </div>
       </div>
-      {/* <div className="flex w-full justify-center bg-primary-999 py-10 px-3 text-center">
-          <div className="max-w-4xl">
-            <p className="pb-4 text-xl font-bold">Why Edge Store?</p>
-            <p>
-              Edge Store is a simple cloud storage for all project sizes. It is
-              designed to be easy to use and easy to integrate into your
-              project. It is built leveraging s3, cloudfront and lambda@edge to
-              give you a fast, reliable and secure storage.
-            </p>
-          </div>
-        </div> */}
-      <div className="my-20 mx-auto grid w-full max-w-4xl auto-rows-fr grid-cols-1 gap-10 px-6 md:grid-cols-3 md:justify-between">
+      <div className="mx-auto mb-20 grid w-full max-w-4xl auto-rows-fr grid-cols-1 gap-10 px-6 md:grid-cols-3 md:justify-between">
         <TechCard
           title="Start for free"
           description="Get your free storage and start building. No credit card required."

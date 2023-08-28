@@ -124,30 +124,32 @@ function SingleImageDetails() {
         </p>
       </div>
       <table className="mt-2 border text-xs text-gray-300">
-        <tr className="border">
-          <td className="p-1">image/jpeg</td>
-        </tr>
-        <tr className="border">
-          <td className="p-1">image/png</td>
-        </tr>
-        <tr className="border">
-          <td className="p-1">image/gif</td>
-        </tr>
-        <tr className="border">
-          <td className="p-1">image/webp</td>
-        </tr>
-        <tr className="border">
-          <td className="p-1">image/svg+xml</td>
-        </tr>
-        <tr className="border">
-          <td className="p-1">image/tiff</td>
-        </tr>
-        <tr className="border">
-          <td className="p-1">image/bmp</td>
-        </tr>
-        <tr className="border">
-          <td className="p-1">image/x-icon</td>
-        </tr>
+        <tbody>
+          <tr className="border">
+            <td className="p-1">image/jpeg</td>
+          </tr>
+          <tr className="border">
+            <td className="p-1">image/png</td>
+          </tr>
+          <tr className="border">
+            <td className="p-1">image/gif</td>
+          </tr>
+          <tr className="border">
+            <td className="p-1">image/webp</td>
+          </tr>
+          <tr className="border">
+            <td className="p-1">image/svg+xml</td>
+          </tr>
+          <tr className="border">
+            <td className="p-1">image/tiff</td>
+          </tr>
+          <tr className="border">
+            <td className="p-1">image/bmp</td>
+          </tr>
+          <tr className="border">
+            <td className="p-1">image/x-icon</td>
+          </tr>
+        </tbody>
       </table>
     </div>
   );

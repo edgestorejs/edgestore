@@ -78,6 +78,10 @@ type EdgeStoreClient<TRouter extends AnyRouter> = {
     //   accessUrl: string;
     // }>;
     /**
+     * Confirm a temporary file upload.
+     */
+    confirmUpload: (params: { url: string }) => Promise<{ success: boolean }>;
+    /**
      * Programmatically delete a file.
      */
     deleteFile: (params: { url: string }) => Promise<{
@@ -168,10 +172,12 @@ export function initEdgeStoreClient<TRouter extends AnyRouter>(config: {
         //   });
         // },
 
+        async confirmUpload(params) {
+          return await sdk.confirmUpload(params);
+        },
+
         async deleteFile(params) {
-          return await sdk.deleteFile({
-            ...params,
-          });
+          return await sdk.deleteFile(params);
         },
 
         async listFiles(params) {

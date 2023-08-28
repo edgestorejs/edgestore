@@ -56,6 +56,7 @@ export type RequestUploadBody = {
     extension: string;
     fileName?: string;
     replaceTargetUrl?: string;
+    temporary: boolean;
   };
 };
 
@@ -93,6 +94,7 @@ export async function requestUpload<TCtx>(params: {
         fileName: fileInfo.fileName,
         extension: fileInfo.extension,
         replaceTargetUrl: fileInfo.replaceTargetUrl,
+        temporary: fileInfo.temporary,
       },
     });
     if (!canUpload) {
@@ -203,6 +205,82 @@ export async function requestUploadParts<TCtx>(params: {
   return await provider.requestUploadParts({
     multipart,
     path,
+  });
+}
+
+export type CompleteMultipartUploadBody = {
+  bucketName: string;
+  uploadId: string;
+  key: string;
+  parts: {
+    partNumber: number;
+    eTag: string;
+  }[];
+};
+
+export async function completeMultipartUpload<TCtx>(params: {
+  provider: Provider;
+  router: EdgeStoreRouter<TCtx>;
+  ctxToken: string | undefined;
+  body: CompleteMultipartUploadBody;
+}) {
+  const {
+    provider,
+    router,
+    ctxToken,
+    body: { bucketName, uploadId, key, parts },
+  } = params;
+  if (!ctxToken) {
+    throw new EdgeStoreError({
+      message: 'Missing edgestore-ctx cookie',
+      code: 'UNAUTHORIZED',
+    });
+  }
+  await getContext(ctxToken); // just to check if the token is valid
+  const bucket = router.buckets[bucketName];
+  if (!bucket) {
+    throw new Error(`Bucket ${bucketName} not found`);
+  }
+  return await provider.completeMultipartUpload({
+    uploadId,
+    key,
+    parts,
+  });
+}
+
+export type ConfirmUploadBody = {
+  bucketName: string;
+  url: string;
+};
+
+export async function confirmUpload<TCtx>(params: {
+  provider: Provider;
+  router: EdgeStoreRouter<TCtx>;
+  ctxToken: string | undefined;
+  body: ConfirmUploadBody;
+}) {
+  const {
+    provider,
+    router,
+    ctxToken,
+    body: { bucketName, url },
+  } = params;
+
+  if (!ctxToken) {
+    throw new EdgeStoreError({
+      message: 'Missing edgestore-ctx cookie',
+      code: 'UNAUTHORIZED',
+    });
+  }
+  await getContext(ctxToken); // just to check if the token is valid
+  const bucket = router.buckets[bucketName];
+  if (!bucket) {
+    throw new Error(`Bucket ${bucketName} not found`);
+  }
+
+  await provider.confirmUpload({
+    bucket,
+    url,
   });
 }
 
@@ -339,3 +417,10 @@ async function getContext(token?: string) {
   }
   return await decryptJWT(token);
 }
+
+export type InitRes = Awaited<ReturnType<typeof init>>;
+export type RequestUploadRes = Awaited<ReturnType<typeof requestUpload>>;
+export type RequestUploadPartsRes = Awaited<
+  ReturnType<typeof requestUploadParts>
+>;
+export type DeleteFileRes = Awaited<ReturnType<typeof deleteFile>>;
