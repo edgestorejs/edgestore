@@ -8,10 +8,12 @@ const DEFAULT_BASE_URL =
 type EdgeStoreContextValue<TRouter extends AnyRouter> = {
   edgestore: BucketFunctions<TRouter>;
   /**
-   * In development, if this is a protected file, this function will add the token as a query param to the url.
-   * This is needed because third party cookies don't work with http urls.
+   * This will re-run the Edge Store initialization process,
+   * which will run the `createContext` function again.
+   *
+   * Can be used after a sign-in or sign-out, for example.
    */
-  getSrc: (url: string) => string;
+  reset: () => Promise<void>;
 };
 
 export function createEdgeStoreProvider<TRouter extends AnyRouter>(opts?: {
@@ -85,41 +87,29 @@ function EdgeStoreProviderInner<TRouter extends AnyRouter>({
   maxConcurrentUploads?: number;
 }) {
   const apiPath = basePath ? `${basePath}` : '/api/edgestore';
-  const [token, setToken] = React.useState<string | null>(null);
   const uploadingCountRef = React.useRef(0);
   React.useEffect(() => {
-    void fetch(`${apiPath}/init`, {
-      method: 'POST',
-    }).then(async (res) => {
-      if (res.ok) {
-        const json = await res.json();
-        setToken(json.token);
-        await fetch(`${DEFAULT_BASE_URL}/_init`, {
-          method: 'GET',
-          headers: {
-            'x-edgestore-token': json.token,
-          },
-        });
-      }
-    });
+    void init();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function getSrc(url: string) {
-    if (
-      // in production we use cookies, so we don't need a token
-      process.env.NODE_ENV === 'production' ||
-      // public urls don't need a token
-      // e.g. https://files.edgestore.dev/project/bucket/_public/...
-      url.match(/^https?:\/\/[^\/]+\/[^\/]+\/[^\/]+\/_public\/.+/)
-    ) {
-      return `${url}`;
-    } else {
-      // in development, third party cookies don't work, so we need to pass the token as a query param
-      const uri = new URL(url);
-      uri.searchParams.set('token', token ?? '');
-      return `${uri}`;
+  async function init() {
+    const res = await fetch(`${apiPath}/init`, {
+      method: 'POST',
+    });
+    if (res.ok) {
+      const json = await res.json();
+      await fetch(`${DEFAULT_BASE_URL}/_init`, {
+        method: 'GET',
+        headers: {
+          'x-edgestore-token': json.token,
+        },
+      });
     }
+  }
+
+  async function reset() {
+    await init();
   }
 
   return (
@@ -131,7 +121,7 @@ function EdgeStoreProviderInner<TRouter extends AnyRouter>({
             uploadingCountRef,
             maxConcurrentUploads,
           }),
-          getSrc,
+          reset,
         }}
       >
         {children}
