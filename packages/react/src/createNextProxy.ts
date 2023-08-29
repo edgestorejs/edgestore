@@ -193,9 +193,7 @@ async function uploadFile(
         : null,
       size: json.size,
       uploadedAt: new Date(json.uploadedAt),
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
       path: json.path as any,
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
       metadata: json.metadata as any,
     };
   } catch (e) {
