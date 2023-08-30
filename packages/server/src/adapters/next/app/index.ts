@@ -49,7 +49,7 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
           provider,
           router: config.router,
         });
-        return new Response(
+        const res = new Response(
           JSON.stringify({
             token,
             baseUrl,
@@ -58,10 +58,13 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
             status: 200,
             headers: {
               'Content-Type': 'application/json',
-              'Set-Cookie': newCookies.join('; '),
             },
           },
         );
+        for (const cookie of newCookies) {
+          res.headers.append('Set-Cookie', cookie);
+        }
+        return res;
       } else if (req.nextUrl.pathname === '/api/edgestore/request-upload') {
         const res = await requestUpload({
           provider,
