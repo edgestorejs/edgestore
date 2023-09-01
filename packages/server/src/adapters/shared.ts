@@ -278,9 +278,9 @@ export async function confirmUpload<TCtx>(params: {
     throw new Error(`Bucket ${bucketName} not found`);
   }
 
-  await provider.confirmUpload({
+  return await provider.confirmUpload({
     bucket,
-    url,
+    url: unproxyUrl(url),
   });
 }
 
@@ -330,9 +330,9 @@ export async function deleteFile<TCtx>(params: {
   if (!canDelete) {
     throw new Error('Delete not allowed');
   }
-  await provider.deleteFile({
+  return await provider.deleteFile({
     bucket,
-    url,
+    url: unproxyUrl(url),
   });
 }
 
@@ -416,6 +416,24 @@ async function getContext(token?: string) {
     throw new Error('No token');
   }
   return await decryptJWT(token);
+}
+
+/**
+ * On local development, protected files are proxied to the server,
+ * which changes the original URL.
+ *
+ * This function is used to get the original URL,
+ * so that we can delete or confirm the upload.
+ */
+function unproxyUrl(url: string) {
+  if (process.env.NODE_ENV === 'development' && url.startsWith('http://')) {
+    // get the url param from the query string
+    const urlParam = new URL(url).searchParams.get('url');
+    if (urlParam) {
+      return urlParam;
+    }
+  }
+  return url;
 }
 
 export type InitRes = Awaited<ReturnType<typeof init>>;
