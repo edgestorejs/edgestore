@@ -71,7 +71,6 @@ const config = {
         indexName: 'edgestore',
       },
       navbar: {
-        title: 'Edge Store',
         logo: {
           alt: 'Edge Store Logo',
           src: 'img/logo-sm.png',
