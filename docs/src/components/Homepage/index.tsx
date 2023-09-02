@@ -68,9 +68,9 @@ const Homepage = () => {
         <img
           src="/img/edgestore.svg"
           alt="Edge Store Text Logo"
-          className="mb-6 w-80 py-2 md:w-[30rem]"
+          className="mb-3 w-80 py-2 md:w-[30rem]"
         />
-        <h2 className="mb-8 text-center text-lg font-normal text-gray-300">
+        <h2 className="mb-10 bg-gradient-to-b from-primary-100 to-primary-200 bg-clip-text text-center text-lg font-medium text-transparent">
           File uploads in Next.js just got way easier.
         </h2>
         <div className="flex gap-3">
