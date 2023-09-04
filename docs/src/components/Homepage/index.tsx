@@ -92,7 +92,7 @@ const Homepage = () => {
           description="Monitor, manage, and delete files with ease."
         />
         <TechCard
-          title="Ultra-Fast CDN"
+          title="Fast CDN"
           description="All your files are served from the edge for a great performance anywhere in the world."
         />
         <TechCard
