@@ -1,6 +1,5 @@
 'use client';
 
-import { formatFileSize } from '@/lib/utils';
 import {
   CheckCircleIcon,
   FileIcon,
@@ -70,7 +69,7 @@ const MultiFileDropzone = React.forwardRef<HTMLInputElement, InputProps>(
       isDragReject,
     } = useDropzone({
       disabled,
-      onDrop: async (acceptedFiles) => {
+      onDrop: (acceptedFiles) => {
         const files = acceptedFiles;
         setCustomError(undefined);
         if (
@@ -86,8 +85,8 @@ const MultiFileDropzone = React.forwardRef<HTMLInputElement, InputProps>(
             key: Math.random().toString(36).slice(2),
             progress: 'PENDING',
           }));
-          await onFilesAdded?.(addedFiles);
-          await onChange?.([...(value ?? []), ...addedFiles]);
+          void onFilesAdded?.(addedFiles);
+          void onChange?.([...(value ?? []), ...addedFiles]);
         }
       },
       ...dropzoneOptions,
@@ -177,8 +176,8 @@ const MultiFileDropzone = React.forwardRef<HTMLInputElement, InputProps>(
                   {progress === 'PENDING' ? (
                     <button
                       className="rounded-md p-1 transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-700"
-                      onClick={async () => {
-                        await onChange?.(
+                      onClick={() => {
+                        void onChange?.(
                           value.filter((_, index) => index !== i),
                         );
                       }}
@@ -215,5 +214,20 @@ const MultiFileDropzone = React.forwardRef<HTMLInputElement, InputProps>(
   },
 );
 MultiFileDropzone.displayName = 'MultiFileDropzone';
+
+function formatFileSize(bytes?: number) {
+  if (!bytes) {
+    return '0 Bytes';
+  }
+  bytes = Number(bytes);
+  if (bytes === 0) {
+    return '0 Bytes';
+  }
+  const k = 1024;
+  const dm = 2;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+}
 
 export { MultiFileDropzone };
