@@ -113,9 +113,9 @@ function MultiImageExample() {
 
 function MultiFileDetails() {
   return (
-    <div className="flex flex-col items-center text-center">
+    <div className="flex flex-col">
       <h3 className="mt-4 text-base font-bold">See in GitHub</h3>
-      <ul className="text-sm text-gray-300">
+      <ul className="text-foreground/80 text-sm">
         <li>
           <a
             href="https://github.com/edgestorejs/edgestore/blob/main/examples/components/src/app/(tabs)/multi-file/page.tsx"
@@ -138,7 +138,7 @@ function MultiFileDetails() {
         </li>
       </ul>
       <h3 className="mt-4 text-base font-bold">About</h3>
-      <div className="flex flex-col gap-2 text-justify text-sm text-gray-300">
+      <div className="text-foreground/80 flex flex-col gap-2 text-sm">
         <p>
           This component is a dropzone to upload multiple files. It is
           configured with a max file size of 1 MB and a max number of files of
