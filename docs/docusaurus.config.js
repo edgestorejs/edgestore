@@ -88,6 +88,11 @@ const config = {
             label: 'Pricing',
             position: 'right',
           },
+          {
+            to: '/about',
+            label: 'About',
+            position: 'right',
+          },
           // { to: "/blog", label: "Blog", position: "left" },
           {
             href: 'https://dashboard.edgestore.dev',
@@ -155,6 +160,14 @@ const config = {
               {
                 label: 'GitHub',
                 href: 'https://github.com/edgestorejs/edgestore',
+              },
+              {
+                label: 'About Us',
+                to: '/about',
+              },
+              {
+                label: 'Contact Us',
+                to: '/about',
               },
             ],
           },
