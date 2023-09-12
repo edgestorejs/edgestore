@@ -162,11 +162,18 @@ export async function requestUpload<TCtx>(params: {
       metadata,
     },
   });
+  const parsedPath = path.reduce<Record<string, string>>((acc, curr) => {
+    acc[curr.key] = curr.value;
+    return acc;
+  }, {});
+
+  const pathOrder = path.map((p) => p.key);
   return {
     ...requestUploadRes,
     size: fileInfo.size,
     uploadedAt: new Date().toISOString(),
-    path,
+    path: parsedPath,
+    pathOrder,
     metadata,
   };
 }

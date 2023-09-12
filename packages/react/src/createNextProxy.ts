@@ -7,6 +7,15 @@ import {
 import { type z } from 'zod';
 import EdgeStoreError from './libs/errors/EdgeStoreError';
 
+/**
+ * @internal
+ * @see https://www.totaltypescript.com/concepts/the-prettify-helper
+ */
+export type Prettify<TType> = {
+  [K in keyof TType]: TType[K];
+  // eslint-disable-next-line @typescript-eslint/ban-types
+} & {};
+
 export type BucketFunctions<TRouter extends AnyRouter> = {
   [K in keyof TRouter['buckets']]: {
     upload: (
@@ -31,6 +40,9 @@ export type BucketFunctions<TRouter extends AnyRouter> = {
             uploadedAt: Date;
             metadata: InferMetadataObject<TRouter['buckets'][K]>;
             path: InferBucketPathObject<TRouter['buckets'][K]>;
+            pathOrder: Prettify<
+              keyof InferBucketPathObject<TRouter['buckets'][K]>
+            >[];
           }
         : {
             url: string;
@@ -38,6 +50,9 @@ export type BucketFunctions<TRouter extends AnyRouter> = {
             uploadedAt: Date;
             metadata: InferMetadataObject<TRouter['buckets'][K]>;
             path: InferBucketPathObject<TRouter['buckets'][K]>;
+            pathOrder: Prettify<
+              keyof InferBucketPathObject<TRouter['buckets'][K]>
+            >[];
           }
     >;
     confirmUpload: (params: { url: string }) => Promise<void>;
@@ -196,6 +211,7 @@ async function uploadFile(
       size: json.size,
       uploadedAt: new Date(json.uploadedAt),
       path: json.path as any,
+      pathOrder: json.pathOrder as any,
       metadata: json.metadata as any,
     };
   } catch (e) {
