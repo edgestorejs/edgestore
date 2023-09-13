@@ -31,6 +31,11 @@
       "import": "./dist/index.mjs",
       "require": "./dist/index.js",
       "default": "./dist/index.js"
+    },
+    "./utils": {
+      "import": "./dist/utils/index.mjs",
+      "require": "./dist/utils/index.js",
+      "default": "./dist/utils/index.js"
     }
   },
   "files": [
@@ -38,6 +43,7 @@
     "src",
     "README.md",
     "package.json",
+    "utils",
     "!**/*.test.*"
   ],
   "private": false,
