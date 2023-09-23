@@ -17,7 +17,7 @@ Edge Store is a service offered by Perfect Base, a business individually owned a
 
 ## Pricing
 
-Edge Store has a free plan that allows you to use the service for side projects and small startups. There are also some paid plans that offer more features and higher limits. You can check the [pricing](/pricing) page for more details.
+Edge Store has a free plan that should be enough for you to use the service for side projects and small startups. There are also some paid plans that offer more features and higher limits. You can check the [pricing](/pricing) page for more details.
 
 ## Additional Fees
 
