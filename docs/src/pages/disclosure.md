@@ -21,11 +21,11 @@ Edge Store has a free plan that should be enough for you to use the service for 
 
 ## Additional Fees
 
-Some plans may offer on demand charges for some metrics like storage and bandwidth. You can check the [pricing](/pricing) page for more details.
+Some plans may offer on demand charges for some metrics like storage and bandwidth. You can check the [pricing](https://edgestore.dev/pricing) page for more details.
 
 ## Refund Policy
 
-We typically do not offer refunds for paid subscriptions. For a more detailed explanation, please check the [refund section](/legal/terms#refund-policy) of our terms of service.
+We typically do not offer refunds for paid subscriptions. For a more detailed explanation, please check the [refund section](https://edgestore.dev/legal/terms#refund-policy) of our terms of service.
 
 ## Delivery Time
 
