@@ -160,10 +160,6 @@ const config = {
                 label: 'Disclosure',
                 to: '/disclosure',
               },
-              {
-                label: 'Contact Us',
-                to: '/disclosure',
-              },
             ],
           },
         ],
