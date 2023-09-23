@@ -1,7 +1,7 @@
 ---
 id: disclosure
 title: Disclosure | 特定商取引法に基づく表記
-slug: /disclosure
+slug: /legal/disclosure
 ---
 
 # Disclosure | 特定商取引法に基づく表記

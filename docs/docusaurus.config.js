@@ -147,6 +147,10 @@ const config = {
                 href: 'https://edgestore.dev/legal/privacy-policy',
                 target: '_blank',
               },
+              {
+                label: 'Disclosure',
+                to: '/legal/disclosure',
+              },
             ],
           },
           {
@@ -155,10 +159,6 @@ const config = {
               {
                 label: 'GitHub',
                 href: 'https://github.com/edgestorejs/edgestore',
-              },
-              {
-                label: 'Disclosure',
-                to: '/disclosure',
               },
             ],
           },
