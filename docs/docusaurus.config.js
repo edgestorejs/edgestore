@@ -146,6 +146,10 @@ const config = {
                 href: 'https://edgestore.dev/legal/privacy-policy',
                 target: '_blank',
               },
+              {
+                label: 'Disclosure',
+                to: '/legal/disclosure',
+              },
             ],
           },
           {
