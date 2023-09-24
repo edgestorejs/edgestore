@@ -49,7 +49,7 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
           provider,
           router: config.router,
         });
-        return new Response(
+        const res = new Response(
           JSON.stringify({
             token,
             baseUrl,
@@ -58,10 +58,13 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
             status: 200,
             headers: {
               'Content-Type': 'application/json',
-              'Set-Cookie': newCookies.join('; '),
             },
           },
         );
+        for (const cookie of newCookies) {
+          res.headers.append('Set-Cookie', cookie);
+        }
+        return res;
       } else if (req.nextUrl.pathname === '/api/edgestore/request-upload') {
         const res = await requestUpload({
           provider,
@@ -103,24 +106,30 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
           status: 200,
         });
       } else if (req.nextUrl.pathname === '/api/edgestore/confirm-upload') {
-        await confirmUpload({
+        const res = await confirmUpload({
           provider,
           router: config.router,
           body: (await req.json()) as ConfirmUploadBody,
           ctxToken: req.cookies.get('edgestore-ctx')?.value,
         });
-        return new Response(null, {
+        return new Response(JSON.stringify(res), {
           status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+          },
         });
       } else if (req.nextUrl.pathname === '/api/edgestore/delete-file') {
-        await deleteFile({
+        const res = await deleteFile({
           provider,
           router: config.router,
           body: (await req.json()) as DeleteFileBody,
           ctxToken: req.cookies.get('edgestore-ctx')?.value,
         });
-        return new Response(null, {
+        return new Response(JSON.stringify(res), {
           status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+          },
         });
       } else if (req.nextUrl.pathname === '/api/edgestore/proxy-file') {
         const url = req.nextUrl.searchParams.get('url');

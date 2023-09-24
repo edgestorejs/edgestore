@@ -1,8 +1,8 @@
 import { EdgeStoreProvider } from '@/lib/edgestore';
 import './globals.css';
+import { ModeToggle, ThemeProvider } from '@/components/theme-provider';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
-import { twMerge } from 'tailwind-merge';
 import { Tabs } from './tabs';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -19,11 +19,18 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={twMerge(inter.className, 'm-6')}>
-        <Tabs />
-        <EdgeStoreProvider basePath="/components/api/edgestore">
-          {children}
-        </EdgeStoreProvider>
+      <body className={inter.className}>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+          <div className="m-6 flex flex-col gap-3">
+            <div className="flex justify-center">
+              <ModeToggle />
+            </div>
+            <Tabs />
+            <EdgeStoreProvider basePath="/components/api/edgestore">
+              {children}
+            </EdgeStoreProvider>
+          </div>
+        </ThemeProvider>
       </body>
     </html>
   );

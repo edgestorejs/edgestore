@@ -58,6 +58,19 @@ html[data-theme='dark'] {
   @apply bg-black/60 backdrop-blur-sm;
 }
 
+.navbar__brand {
+  @apply mr-1;
+}
+
+.navbar__logo {
+  @apply flex items-center gap-2;
+}
+
+.navbar__logo::after {
+  @apply inline-block h-6 w-28 bg-contain bg-center bg-no-repeat content-[''];
+  background-image: url('/img/edgestore.svg');
+}
+
 .theme-doc-sidebar-container {
   @apply !border-r-white/20;
 }

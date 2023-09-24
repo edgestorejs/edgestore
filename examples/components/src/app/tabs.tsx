@@ -1,13 +1,13 @@
 'use client';
 
+import { TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Link from 'next/link';
 import { usePathname as useNextPathname } from 'next/navigation';
-import { twMerge } from 'tailwind-merge';
 
 const TABS = [
-  { label: 'Single Image', href: '/single-image' },
-  { label: 'Multi File', href: '/multi-file' },
-  { label: 'Multi File Instant', href: '/multi-file-instant' },
+  { label: 'single image', href: '/single-image' },
+  { label: 'multi file', href: '/multi-file' },
+  { label: 'multi file instant', href: '/multi-file-instant' },
 ] as const;
 
 export function Tabs() {
@@ -15,18 +15,13 @@ export function Tabs() {
 
   return (
     <div className="mb-6 flex flex-row justify-center">
-      {TABS.map((tab) => (
-        <Link
-          key={tab.href}
-          href={tab.href}
-          className={twMerge(
-            'mx-1 px-2 py-1 text-gray-500 transition-colors duration-200 ease-in-out hover:text-white',
-            pathname === tab.href && 'border-b-2 border-white text-white',
-          )}
-        >
-          {tab.label}
-        </Link>
-      ))}
+      <TabsList>
+        {TABS.map((tab) => (
+          <TabsTrigger key={tab.href} active={pathname === tab.href}>
+            <Link href={tab.href}>{tab.label}</Link>
+          </TabsTrigger>
+        ))}
+      </TabsList>
     </div>
   );
 }

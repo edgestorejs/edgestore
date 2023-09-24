@@ -65,10 +65,12 @@ const Homepage = () => {
   return (
     <main className="mt-[calc(var(--ifm-navbar-height)*-1)] min-h-screen text-white">
       <div className="flex w-full flex-col items-center justify-center bg-[radial-gradient(theme(colors.primary.999),#000000_85%)] px-3 pb-32 pt-40">
-        <h1 className="mb-6 bg-gradient-to-b from-primary-100 to-primary-400 bg-clip-text text-center font-[Futura] text-5xl text-transparent md:text-7xl">
-          EDGE STORE
-        </h1>
-        <h2 className="mb-8 text-center text-lg font-normal text-gray-300">
+        <img
+          src="/img/edgestore.svg"
+          alt="Edge Store Text Logo"
+          className="mb-3 w-80 py-2 md:w-[30rem]"
+        />
+        <h2 className="mb-10 bg-gradient-to-b from-primary-100 to-primary-200 bg-clip-text text-center text-lg font-medium text-transparent">
           File uploads in Next.js just got way easier.
         </h2>
         <div className="flex gap-3">
@@ -90,7 +92,7 @@ const Homepage = () => {
           description="Monitor, manage, and delete files with ease."
         />
         <TechCard
-          title="Ultra-Fast CDN"
+          title="Fast CDN"
           description="All your files are served from the edge for a great performance anywhere in the world."
         />
         <TechCard

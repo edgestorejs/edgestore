@@ -82,21 +82,23 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
         });
         res.status(200).end();
       } else if (req.url === '/api/edgestore/confirm-upload') {
-        await confirmUpload({
-          provider,
-          router: config.router,
-          body: req.body as ConfirmUploadBody,
-          ctxToken: req.cookies['edgestore-ctx'],
-        });
-        res.status(200).end();
+        res.json(
+          await confirmUpload({
+            provider,
+            router: config.router,
+            body: req.body as ConfirmUploadBody,
+            ctxToken: req.cookies['edgestore-ctx'],
+          }),
+        );
       } else if (req.url === '/api/edgestore/delete-file') {
-        await deleteFile({
-          provider,
-          router: config.router,
-          body: req.body as DeleteFileBody,
-          ctxToken: req.cookies['edgestore-ctx'],
-        });
-        res.status(200).end();
+        res.json(
+          await deleteFile({
+            provider,
+            router: config.router,
+            body: req.body as DeleteFileBody,
+            ctxToken: req.cookies['edgestore-ctx'],
+          }),
+        );
       } else if (req.url?.startsWith('/api/edgestore/proxy-file')) {
         const { url } = req.query;
         if (typeof url === 'string') {

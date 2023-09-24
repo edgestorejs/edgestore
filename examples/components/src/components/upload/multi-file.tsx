@@ -1,6 +1,5 @@
 'use client';
 
-import { formatFileSize } from '@/lib/utils';
 import {
   CheckCircleIcon,
   FileIcon,
@@ -13,10 +12,10 @@ import { useDropzone, type DropzoneOptions } from 'react-dropzone';
 import { twMerge } from 'tailwind-merge';
 
 const variants = {
-  base: 'relative rounded-md p-4 w-96 max-w-[100vw] flex justify-center items-center flex-col cursor-pointer border border-dashed border-gray-300 transition-colors duration-200 ease-in-out',
+  base: 'relative rounded-md p-4 w-96 max-w-[calc(100vw-1rem)] flex justify-center items-center flex-col cursor-pointer border border-dashed border-gray-400 dark:border-gray-300 transition-colors duration-200 ease-in-out',
   active: 'border-2',
   disabled:
-    'bg-gray-700 border-white/20 cursor-default pointer-events-none bg-opacity-30',
+    'bg-gray-200 border-gray-300 cursor-default pointer-events-none bg-opacity-30 dark:bg-gray-700 dark:border-gray-600',
   accept: 'border border-blue-500 bg-blue-500 bg-opacity-10',
   reject: 'border border-red-700 bg-red-700 bg-opacity-10',
 };
@@ -70,7 +69,7 @@ const MultiFileDropzone = React.forwardRef<HTMLInputElement, InputProps>(
       isDragReject,
     } = useDropzone({
       disabled,
-      onDrop: async (acceptedFiles) => {
+      onDrop: (acceptedFiles) => {
         const files = acceptedFiles;
         setCustomError(undefined);
         if (
@@ -86,8 +85,8 @@ const MultiFileDropzone = React.forwardRef<HTMLInputElement, InputProps>(
             key: Math.random().toString(36).slice(2),
             progress: 'PENDING',
           }));
-          await onFilesAdded?.(addedFiles);
-          await onChange?.([...(value ?? []), ...addedFiles]);
+          void onFilesAdded?.(addedFiles);
+          void onChange?.([...(value ?? []), ...addedFiles]);
         }
       },
       ...dropzoneOptions,
@@ -160,15 +159,15 @@ const MultiFileDropzone = React.forwardRef<HTMLInputElement, InputProps>(
           {value?.map(({ file, progress }, i) => (
             <div
               key={i}
-              className="flex h-16 w-96 max-w-[100vw] flex-col justify-center rounded border border-white/50 px-4 py-2"
+              className="flex h-16 w-96 max-w-[100vw] flex-col justify-center rounded border border-gray-300 px-4 py-2"
             >
-              <div className="flex items-center gap-2 text-white">
+              <div className="flex items-center gap-2 text-gray-500 dark:text-white">
                 <FileIcon size="30" className="shrink-0" />
                 <div className="min-w-0 text-sm">
                   <div className="overflow-hidden overflow-ellipsis whitespace-nowrap">
                     {file.name}
                   </div>
-                  <div className="text-xs text-white/70">
+                  <div className="text-xs text-gray-400 dark:text-gray-400">
                     {formatFileSize(file.size)}
                   </div>
                 </div>
@@ -176,9 +175,9 @@ const MultiFileDropzone = React.forwardRef<HTMLInputElement, InputProps>(
                 <div className="flex w-12 justify-end text-xs">
                   {progress === 'PENDING' ? (
                     <button
-                      className="rounded-md p-1 transition-colors duration-200 hover:bg-white/30"
-                      onClick={async () => {
-                        await onChange?.(
+                      className="rounded-md p-1 transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      onClick={() => {
+                        void onChange?.(
                           value.filter((_, index) => index !== i),
                         );
                       }}
@@ -186,20 +185,20 @@ const MultiFileDropzone = React.forwardRef<HTMLInputElement, InputProps>(
                       <Trash2Icon className="shrink-0" />
                     </button>
                   ) : progress === 'ERROR' ? (
-                    <LucideFileWarning className="shrink-0 text-red-400" />
+                    <LucideFileWarning className="shrink-0 text-red-600 dark:text-red-400" />
                   ) : progress !== 'COMPLETE' ? (
                     <div>{Math.round(progress)}%</div>
                   ) : (
-                    <CheckCircleIcon className="shrink-0" />
+                    <CheckCircleIcon className="shrink-0 text-green-600 dark:text-gray-400" />
                   )}
                 </div>
               </div>
               {/* Progress Bar */}
               {typeof progress === 'number' && (
                 <div className="relative h-0">
-                  <div className="absolute top-1 h-1 w-full overflow-clip rounded-full bg-white/30">
+                  <div className="absolute top-1 h-1 w-full overflow-clip rounded-full bg-gray-200 dark:bg-gray-700">
                     <div
-                      className="h-full bg-white transition-all duration-300 ease-in-out"
+                      className="h-full bg-gray-400 transition-all duration-300 ease-in-out dark:bg-white"
                       style={{
                         width: progress ? `${progress}%` : '0%',
                       }}
@@ -215,5 +214,20 @@ const MultiFileDropzone = React.forwardRef<HTMLInputElement, InputProps>(
   },
 );
 MultiFileDropzone.displayName = 'MultiFileDropzone';
+
+function formatFileSize(bytes?: number) {
+  if (!bytes) {
+    return '0 Bytes';
+  }
+  bytes = Number(bytes);
+  if (bytes === 0) {
+    return '0 Bytes';
+  }
+  const k = 1024;
+  const dm = 2;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+}
 
 export { MultiFileDropzone };

@@ -7,6 +7,15 @@ import {
 import { type z } from 'zod';
 import EdgeStoreError from './libs/errors/EdgeStoreError';
 
+/**
+ * @internal
+ * @see https://www.totaltypescript.com/concepts/the-prettify-helper
+ */
+export type Prettify<TType> = {
+  [K in keyof TType]: TType[K];
+  // eslint-disable-next-line @typescript-eslint/ban-types
+} & {};
+
 export type BucketFunctions<TRouter extends AnyRouter> = {
   [K in keyof TRouter['buckets']]: {
     upload: (
@@ -31,6 +40,9 @@ export type BucketFunctions<TRouter extends AnyRouter> = {
             uploadedAt: Date;
             metadata: InferMetadataObject<TRouter['buckets'][K]>;
             path: InferBucketPathObject<TRouter['buckets'][K]>;
+            pathOrder: Prettify<
+              keyof InferBucketPathObject<TRouter['buckets'][K]>
+            >[];
           }
         : {
             url: string;
@@ -38,14 +50,13 @@ export type BucketFunctions<TRouter extends AnyRouter> = {
             uploadedAt: Date;
             metadata: InferMetadataObject<TRouter['buckets'][K]>;
             path: InferBucketPathObject<TRouter['buckets'][K]>;
+            pathOrder: Prettify<
+              keyof InferBucketPathObject<TRouter['buckets'][K]>
+            >[];
           }
     >;
-    confirmUpload: (params: { url: string }) => Promise<{
-      success: boolean;
-    }>;
-    delete: (params: { url: string }) => Promise<{
-      success: boolean;
-    }>;
+    confirmUpload: (params: { url: string }) => Promise<void>;
+    delete: (params: { url: string }) => Promise<void>;
   };
 };
 
@@ -113,16 +124,22 @@ export function createNextProxy<TRouter extends AnyRouter>({
           }
         },
         confirmUpload: async (params: { url: string }) => {
-          return await confirmUpload(params, {
+          const { success } = await confirmUpload(params, {
             bucketName: bucketName as string,
             apiPath,
           });
+          if (!success) {
+            throw new EdgeStoreError('Failed to confirm upload');
+          }
         },
         delete: async (params: { url: string }) => {
-          return await deleteFile(params, {
+          const { success } = await deleteFile(params, {
             bucketName: bucketName as string,
             apiPath,
           });
+          if (!success) {
+            throw new EdgeStoreError('Failed to delete file');
+          }
         },
       };
       return bucketFunctions;
@@ -193,9 +210,8 @@ async function uploadFile(
         : null,
       size: json.size,
       uploadedAt: new Date(json.uploadedAt),
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
       path: json.path as any,
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+      pathOrder: json.pathOrder as any,
       metadata: json.metadata as any,
     };
   } catch (e) {
@@ -361,7 +377,7 @@ async function confirmUpload(
   if (!res.ok) {
     throw new EdgeStoreError('An error occurred');
   }
-  return { success: true };
+  return res.json();
 }
 
 async function deleteFile(
@@ -391,7 +407,7 @@ async function deleteFile(
   if (!res.ok) {
     throw new EdgeStoreError('An error occurred');
   }
-  return { success: true };
+  return res.json();
 }
 
 async function queuedPromises<TType, TRes>({

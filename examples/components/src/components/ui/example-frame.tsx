@@ -10,6 +10,7 @@ export function ExampleFrame({
       <div className="flex flex-1 justify-center md:justify-end">
         <div className="max-w-xs">{details}</div>
       </div>
+      <div className="my-2 border-b md:hidden" />
       <div className="flex-1">{children}</div>
       <div className="lg:flex-1"></div>
     </div>
