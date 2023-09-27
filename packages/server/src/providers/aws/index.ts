@@ -40,6 +40,13 @@ export type AWSProviderOptions = {
    * Can also be set via the `EDGE_STORE_BASE_URL` environment variable.
    */
   baseUrl?: string;
+  /**
+   * Secret to use for encrypting JWT tokens.
+   * Can be generated with `openssl rand -base64 32`.
+   *
+   * Can also be set via the `EDGE_STORE_JWT_SECRET` environment variable.
+   */
+  jwtSecret?: string;
 };
 
 export function AWSProvider(options?: AWSProviderOptions): Provider {
@@ -92,8 +99,10 @@ export function AWSProvider(options?: AWSProviderOptions): Provider {
         uploadedAt: LastModified,
       };
     },
-    async requestUpload({ bucketName, fileInfo }) {
-      const pathPrefix = `${bucketName}${fileInfo.isPublic ? '/_public' : ''}`;
+    async requestUpload({ bucketName: esBucketName, fileInfo }) {
+      const pathPrefix = `${esBucketName}${
+        fileInfo.isPublic ? '/_public' : ''
+      }`;
       const nameId = uuidv4();
       const extension = fileInfo.extension
         ? `.${fileInfo.extension.replace('.', '')}`
@@ -102,17 +111,18 @@ export function AWSProvider(options?: AWSProviderOptions): Provider {
       const filePath = fileInfo.path.reduce((acc, item) => {
         return `${acc}/${item.value}`;
       }, '');
+      const accessPath = `${pathPrefix}${filePath}/${fileName}`;
 
       const command = new PutObjectCommand({
         Bucket: bucketName,
-        Key: `${pathPrefix}/${filePath}/${fileName}`,
+        Key: accessPath,
       });
 
       const signedUrl = await getSignedUrl(s3Client, command, {
         expiresIn: 60 * 60, // 1 hour
       });
 
-      const url = `${baseUrl}/${fileInfo.path}`;
+      const url = `${baseUrl}/${accessPath}`;
       return {
         uploadUrl: signedUrl,
         accessUrl: url,

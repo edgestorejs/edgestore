@@ -84,17 +84,30 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.294.0",
-    "@aws-sdk/s3-request-presigner": "^3.294.0",
     "@panva/hkdf": "^1.0.4",
     "cookie": "^0.5.0",
     "jose": "^4.13.1",
     "uuid": "^9.0.0"
   },
   "peerDependencies": {
-    "zod": ">=3.0.0"
+    "zod": ">=3.0.0",
+    "@aws-sdk/client-s3": ">=3.0.0",
+    "@aws-sdk/s3-request-presigner": ">=3.0.0"
+  },
+  "peerDependenciesMeta": {
+    "zod": {
+      "optional": true
+    },
+    "@aws-sdk/client-s3": {
+      "optional": true
+    },
+    "@aws-sdk/s3-request-presigner": {
+      "optional": true
+    }
   },
   "devDependencies": {
+    "@aws-sdk/client-s3": "^3.420.0",
+    "@aws-sdk/s3-request-presigner": "^3.420.0",
     "@types/cookie": "^0.5.1",
     "@types/node": "^18.11.18",
     "@types/uuid": "^9.0.1",

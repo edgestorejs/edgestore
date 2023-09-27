@@ -11,6 +11,16 @@ You can also use the Edge Store package with your own AWS S3 bucket. You might w
 
 By using this provider you will be able to use most of the basic features of Edge Store, but for some of the more advanced features like access control with protected files, you will have to create your own infrastructure and logic from scratch.
 
+## Installation
+
+You need to install some peer dependencies to use this provider.
+
+```bash
+npm install @aws-sdk/client-s3 @aws-sdk/s3-request-presigner
+```
+
+Then you can set the provider in the router.
+
 ```ts twoslash {7, 13}
 // @noErrors
 import { initEdgeStore } from '@edgestore/server';
@@ -66,5 +76,12 @@ export type AWSProviderOptions = {
    * Can also be set via the `EDGE_STORE_BASE_URL` environment variable.
    */
   baseUrl?: string;
+  /**
+   * Secret to use for encrypting JWT tokens.
+   * Can be generated with `openssl rand -base64 32`.
+   * 
+   * Can also be set via the `EDGE_STORE_JWT_SECRET` environment variable.
+   */
+  jwtSecret?: string;
 };
 ```
