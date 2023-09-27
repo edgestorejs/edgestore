@@ -297,3 +297,30 @@ await edgestore.publicFiles.delete({
   url: urlToDelete,
 });
 ```
+
+### Temporary files
+
+You can upload temporary files by passing the `temporary` option to the `upload` method.
+Temporary files will be automatically deleted after 24 hours if they are not confirmed.
+
+```tsx {2-4}
+await edgestore.publicFiles.upload({
+  file: fileToUpload,
+  options: {
+    temporary: true,
+  },
+});
+```
+
+To confirm a temporary file, you can use the `confirmUpload` method.
+
+```tsx
+await edgestore.publicFiles.confirmUpload({
+  url: urlToConfirm,
+});
+```
+
+:::info
+You can check if a file is temporary in the dashboard. <br />
+Temporary files are marked with a clock icon.
+:::
