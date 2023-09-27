@@ -1,15 +1,25 @@
 {
   "name": "next-basic-aws",
-  "version": "0.1.3",
+  "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint --cache --ext \".js,.ts,.tsx\" --report-unused-disable-directives --report-unused-disable-directives src",
-    "lint-fix": "pnpm lint --fix"
+    "lint": "next lint"
   },
   "dependencies": {
-    "@edgestore/react": "^0.1.3"
+    "react": "latest",
+    "react-dom": "latest",
+    "next": "latest"
+  },
+  "devDependencies": {
+    "typescript": "latest",
+    "@types/react": "latest",
+    "@types/node": "latest",
+    "@types/react-dom": "latest",
+    "autoprefixer": "latest",
+    "postcss": "latest",
+    "tailwindcss": "latest"
   }
 }
