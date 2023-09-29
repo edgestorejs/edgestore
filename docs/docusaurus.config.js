@@ -159,6 +159,10 @@ const config = {
                 label: 'GitHub',
                 href: 'https://github.com/edgestorejs/edgestore',
               },
+              {
+                label: '❤️ Sponsor',
+                href: 'https://github.com/sponsors/perfectbase',
+              },
             ],
           },
         ],
