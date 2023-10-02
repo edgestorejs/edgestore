@@ -60,6 +60,7 @@ const config = {
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
+      image: 'img/opengraph-image.png',
       colorMode: {
         defaultMode: 'dark',
         respectPrefersColorScheme: false,
