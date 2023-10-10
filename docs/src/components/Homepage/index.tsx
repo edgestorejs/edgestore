@@ -81,7 +81,7 @@ const Homepage = () => {
       <div className="pointer-events-none -z-10 opacity-50">
         <BlurryBlob
           mouse={mouse}
-          width="100vh"
+          width="min(56rem, 100vw)"
           height="400px"
           left="50%"
           top="50px"

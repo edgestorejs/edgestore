@@ -16,9 +16,17 @@ export function BlurryBlob(props: {
   const { mouse, width, height, top, right, bottom, left } = props;
   const ref = useRef<HTMLDivElement>(null);
 
-  const posInfo = ref.current?.getBoundingClientRect();
-  const deltaX = mouse.x - ((posInfo?.left ?? 0) + (posInfo?.width ?? 0) / 2);
-  const deltaY = mouse.y - ((posInfo?.top ?? 0) + (posInfo?.height ?? 0) / 2);
+  // get window width
+  const windowWidth = window.innerWidth;
+
+  let deltaX = 0;
+  let deltaY = 0;
+
+  if (windowWidth > 768) {
+    const posInfo = ref.current?.getBoundingClientRect();
+    deltaX = mouse.x - ((posInfo?.left ?? 0) + (posInfo?.width ?? 0) / 2);
+    deltaY = mouse.y - ((posInfo?.top ?? 0) + (posInfo?.height ?? 0) / 2);
+  }
 
   return (
     <div
