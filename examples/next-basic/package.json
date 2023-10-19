@@ -1,6 +1,6 @@
 {
   "name": "next-basic",
-  "version": "0.1.4",
+  "version": "0.1.5-alpha.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -10,8 +10,8 @@
     "lint-fix": "pnpm lint --fix"
   },
   "dependencies": {
-    "@edgestore/react": "^0.1.4",
-    "@edgestore/server": "^0.1.4",
+    "@edgestore/react": "^0.1.5-alpha.0",
+    "@edgestore/server": "^0.1.5-alpha.0",
     "@next/font": "^13.4.9",
     "next": "^13.4.9",
     "react": "^18.2.0",
