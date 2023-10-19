@@ -65,7 +65,7 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
           res.headers.append('Set-Cookie', cookie);
         }
         return res;
-      } else if (req.nextUrl.pathname === '/api/edgestore/request-upload') {
+      } else if (req.nextUrl.pathname.endsWith('request-upload')) {
         const res = await requestUpload({
           provider,
           router: config.router,
@@ -79,7 +79,7 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
           },
         });
       } else if (
-        req.nextUrl.pathname === '/api/edgestore/request-upload-parts'
+        req.nextUrl.pathname.endsWith('request-upload-parts')
       ) {
         const res = await requestUploadParts({
           provider,
@@ -94,7 +94,7 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
           },
         });
       } else if (
-        req.nextUrl.pathname === '/api/edgestore/complete-multipart-upload'
+        req.nextUrl.pathname.endsWith('complete-multipart-upload')
       ) {
         await completeMultipartUpload({
           provider,
@@ -105,7 +105,7 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
         return new Response(null, {
           status: 200,
         });
-      } else if (req.nextUrl.pathname === '/api/edgestore/confirm-upload') {
+      } else if (req.nextUrl.pathname.endsWith('confirm-upload')) {
         const res = await confirmUpload({
           provider,
           router: config.router,
@@ -118,7 +118,7 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
             'Content-Type': 'application/json',
           },
         });
-      } else if (req.nextUrl.pathname === '/api/edgestore/delete-file') {
+      } else if (req.nextUrl.pathname.endsWith('delete-file')) {
         const res = await deleteFile({
           provider,
           router: config.router,
@@ -131,7 +131,7 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
             'Content-Type': 'application/json',
           },
         });
-      } else if (req.nextUrl.pathname === '/api/edgestore/proxy-file') {
+      } else if (req.nextUrl.pathname.endsWith('proxy-file')) {
         const url = req.nextUrl.searchParams.get('url');
         if (typeof url === 'string') {
           const proxyRes = await fetch(url, {
