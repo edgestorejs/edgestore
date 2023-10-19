@@ -39,7 +39,7 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
   const { provider = EdgeStoreProvider() } = config;
   return async (req: NextRequest) => {
     try {
-      if (req.nextUrl.pathname === '/api/edgestore/init') {
+      if (req.nextUrl.pathname.endsWith('/init')) {
         const ctx =
           'createContext' in config
             ? await config.createContext({ req })
@@ -65,7 +65,7 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
           res.headers.append('Set-Cookie', cookie);
         }
         return res;
-      } else if (req.nextUrl.pathname.endsWith('request-upload')) {
+      } else if (req.nextUrl.pathname.endsWith('/request-upload')) {
         const res = await requestUpload({
           provider,
           router: config.router,
@@ -78,9 +78,7 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
             'Content-Type': 'application/json',
           },
         });
-      } else if (
-        req.nextUrl.pathname.endsWith('request-upload-parts')
-      ) {
+      } else if (req.nextUrl.pathname.endsWith('/request-upload-parts')) {
         const res = await requestUploadParts({
           provider,
           router: config.router,
@@ -93,9 +91,7 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
             'Content-Type': 'application/json',
           },
         });
-      } else if (
-        req.nextUrl.pathname.endsWith('complete-multipart-upload')
-      ) {
+      } else if (req.nextUrl.pathname.endsWith('/complete-multipart-upload')) {
         await completeMultipartUpload({
           provider,
           router: config.router,
@@ -105,7 +101,7 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
         return new Response(null, {
           status: 200,
         });
-      } else if (req.nextUrl.pathname.endsWith('confirm-upload')) {
+      } else if (req.nextUrl.pathname.endsWith('/confirm-upload')) {
         const res = await confirmUpload({
           provider,
           router: config.router,
@@ -118,7 +114,7 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
             'Content-Type': 'application/json',
           },
         });
-      } else if (req.nextUrl.pathname.endsWith('delete-file')) {
+      } else if (req.nextUrl.pathname.endsWith('/delete-file')) {
         const res = await deleteFile({
           provider,
           router: config.router,
@@ -131,7 +127,7 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
             'Content-Type': 'application/json',
           },
         });
-      } else if (req.nextUrl.pathname.endsWith('proxy-file')) {
+      } else if (req.nextUrl.pathname.endsWith('/proxy-file')) {
         const url = req.nextUrl.searchParams.get('url');
         if (typeof url === 'string') {
           const proxyRes = await fetch(url, {

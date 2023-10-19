@@ -40,7 +40,7 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
   const { provider = EdgeStoreProvider() } = config;
   return async (req: NextApiRequest, res: NextApiResponse) => {
     try {
-      if (req.url === '/api/edgestore/init') {
+      if (req.url?.includes?.('/init')) {
         const ctx =
           'createContext' in config
             ? await config.createContext({ req, res })
@@ -55,7 +55,7 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
           token,
           baseUrl,
         });
-      } else if (req.url === '/api/edgestore/request-upload') {
+      } else if (req.url?.includes?.('/request-upload')) {
         res.json(
           await requestUpload({
             provider,
@@ -64,7 +64,7 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
             ctxToken: req.cookies['edgestore-ctx'],
           }),
         );
-      } else if (req.url === '/api/edgestore/request-upload-parts') {
+      } else if (req.url?.includes?.('/request-upload-parts')) {
         res.json(
           await requestUploadParts({
             provider,
@@ -73,7 +73,7 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
             ctxToken: req.cookies['edgestore-ctx'],
           }),
         );
-      } else if (req.url === '/api/edgestore/complete-multipart-upload') {
+      } else if (req.url?.includes?.('/complete-multipart-upload')) {
         await completeMultipartUpload({
           provider,
           router: config.router,
@@ -81,7 +81,7 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
           ctxToken: req.cookies['edgestore-ctx'],
         });
         res.status(200).end();
-      } else if (req.url === '/api/edgestore/confirm-upload') {
+      } else if (req.url?.includes?.('/confirm-upload')) {
         res.json(
           await confirmUpload({
             provider,
@@ -90,7 +90,7 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
             ctxToken: req.cookies['edgestore-ctx'],
           }),
         );
-      } else if (req.url === '/api/edgestore/delete-file') {
+      } else if (req.url?.includes?.('/delete-file')) {
         res.json(
           await deleteFile({
             provider,
@@ -99,7 +99,7 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
             ctxToken: req.cookies['edgestore-ctx'],
           }),
         );
-      } else if (req.url?.startsWith('/api/edgestore/proxy-file')) {
+      } else if (req.url?.includes?.('/proxy-file')) {
         const { url } = req.query;
         if (typeof url === 'string') {
           const proxyRes = await fetch(url, {
