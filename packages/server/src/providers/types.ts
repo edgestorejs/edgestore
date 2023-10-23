@@ -41,6 +41,7 @@ export type RequestUploadParams = {
     size: number;
     extension: string;
     isPublic: boolean;
+    fileName?: string;
     path: {
       key: string;
       value: string;

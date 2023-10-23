@@ -107,7 +107,7 @@ export function AWSProvider(options?: AWSProviderOptions): Provider {
       const extension = fileInfo.extension
         ? `.${fileInfo.extension.replace('.', '')}`
         : '';
-      const fileName = `${nameId}${extension}`;
+      const fileName = fileInfo.fileName ?? `${nameId}${extension}`;
       const filePath = fileInfo.path.reduce((acc, item) => {
         return `${acc}/${item.value}`;
       }, '');
