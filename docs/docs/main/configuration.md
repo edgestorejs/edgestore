@@ -82,7 +82,7 @@ export default createEdgeStoreNextHandler({
 });
 ```
 
-You might need to refresh the context (e.g. when the user logs in or logs out). You can do this by calling the `refreshContext` function from the `useEdgeStore` hook.
+You might need to refresh the context (e.g. when the user logs in or logs out). You can do this by calling the `reset` function from the `useEdgeStore` hook.
 
 ```tsx
 const { edgestore, reset } = useEdgeStore();
