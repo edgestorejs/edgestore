@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import CodeBlock1 from '../../../docs/landing-code/CodeBlock1.md';
 import CodeBlock2 from '../../../docs/landing-code/CodeBlock2.md';
 import CodeBlock3 from '../../../docs/landing-code/CodeBlock3.md';
+import { BlurryBlob } from '../BlurryBlob';
 
 type CodeBlockItem = {
   title: string;
@@ -62,18 +63,40 @@ const codeBlocks: CodeBlockItem[] = [
 ];
 
 const Homepage = () => {
+  const [mouse, setMouse] = useState({ x: 0, y: 0 });
+
+  function mouseMoveHandler(e: MouseEvent) {
+    setMouse({ x: e.clientX, y: e.clientY });
+  }
+
+  useEffect(() => {
+    window.addEventListener('mousemove', mouseMoveHandler);
+    return () => {
+      window.removeEventListener('mousemove', mouseMoveHandler);
+    };
+  });
+
   return (
     <main className="mt-[calc(var(--ifm-navbar-height)*-1)] min-h-screen text-white">
-      <div className="flex w-full flex-col items-center justify-center bg-[radial-gradient(theme(colors.primary.999),#000000_85%)] px-3 pb-32 pt-40">
+      <div className="pointer-events-none -z-10 opacity-50">
+        <BlurryBlob
+          mouse={mouse}
+          width="min(56rem, 100vw)"
+          height="400px"
+          left="50%"
+          top="50px"
+        />
+      </div>
+      <div className="flex w-full flex-col items-center justify-center px-3 pb-32 pt-40">
         <img
           src="/img/edgestore.svg"
           alt="Edge Store Text Logo"
-          className="mb-3 w-80 py-2 md:w-[30rem]"
+          className="z-0 mb-3 w-80 py-2 md:w-[30rem]"
         />
-        <h2 className="mb-10 bg-gradient-to-b from-primary-100 to-primary-200 bg-clip-text text-center text-lg font-medium text-transparent">
+        <h2 className="z-0 mb-10 bg-gradient-to-b from-primary-100 to-primary-200 bg-clip-text text-center text-lg font-medium text-transparent">
           File uploads in Next.js just got way easier.
         </h2>
-        <div className="flex gap-3">
+        <div className="z-0 flex gap-3 ">
           <JoinButton />
           <LearnMoreButton />
         </div>
