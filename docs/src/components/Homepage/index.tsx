@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import BrowserOnly from '@docusaurus/BrowserOnly';
+import React from 'react';
 import CodeBlock1 from '../../../docs/landing-code/CodeBlock1.md';
 import CodeBlock2 from '../../../docs/landing-code/CodeBlock2.md';
 import CodeBlock3 from '../../../docs/landing-code/CodeBlock3.md';
@@ -63,29 +64,19 @@ const codeBlocks: CodeBlockItem[] = [
 ];
 
 const Homepage = () => {
-  const [mouse, setMouse] = useState({ x: 0, y: 0 });
-
-  function mouseMoveHandler(e: MouseEvent) {
-    setMouse({ x: e.clientX, y: e.clientY });
-  }
-
-  useEffect(() => {
-    window.addEventListener('mousemove', mouseMoveHandler);
-    return () => {
-      window.removeEventListener('mousemove', mouseMoveHandler);
-    };
-  });
-
   return (
     <main className="mt-[calc(var(--ifm-navbar-height)*-1)] min-h-screen text-white">
       <div className="pointer-events-none -z-10 opacity-50">
-        <BlurryBlob
-          mouse={mouse}
-          width="min(56rem, 100vw)"
-          height="400px"
-          left="50%"
-          top="50px"
-        />
+        <BrowserOnly>
+          {() => (
+            <BlurryBlob
+              width="min(56rem, 100vw)"
+              height="400px"
+              left="50%"
+              top="50px"
+            />
+          )}
+        </BrowserOnly>
       </div>
       <div className="flex w-full flex-col items-center justify-center px-3 pb-32 pt-40">
         <img

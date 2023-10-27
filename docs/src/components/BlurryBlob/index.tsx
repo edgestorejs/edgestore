@@ -1,11 +1,7 @@
 import { motion } from 'framer-motion';
-import React, { useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 export function BlurryBlob(props: {
-  mouse: {
-    x: number;
-    y: number;
-  };
   width: number | string;
   height: number | string;
   top?: number | string;
@@ -13,8 +9,21 @@ export function BlurryBlob(props: {
   bottom?: number | string;
   left?: number | string;
 }) {
-  const { mouse, width, height, top, right, bottom, left } = props;
+  const [mouse, setMouse] = useState({ x: 0, y: 0 });
+
+  const { width, height, top, right, bottom, left } = props;
   const ref = useRef<HTMLDivElement>(null);
+
+  function mouseMoveHandler(e: MouseEvent) {
+    setMouse({ x: e.clientX, y: e.clientY });
+  }
+
+  useEffect(() => {
+    window.addEventListener('mousemove', mouseMoveHandler);
+    return () => {
+      window.removeEventListener('mousemove', mouseMoveHandler);
+    };
+  });
 
   // get window width
   const windowWidth = window.innerWidth;
