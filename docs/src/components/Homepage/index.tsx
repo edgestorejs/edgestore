@@ -68,17 +68,24 @@ const Homepage = () => {
     <main className="mt-[calc(var(--ifm-navbar-height)*-1)] min-h-screen text-white">
       <div className="pointer-events-none -z-10 opacity-50">
         <BrowserOnly>
-          {() => (
-            <BlurryBlob
-              width="min(56rem, 100vw)"
-              height="400px"
-              left="50%"
-              top="50px"
-            />
-          )}
+          {() => {
+            // get window width
+            const windowWidth = window.innerWidth;
+            // only desktop
+            return windowWidth > 768 ? (
+              <BlurryBlob
+                width="min(56rem, 100vw)"
+                height="400px"
+                left="50%"
+                top="50px"
+              />
+            ) : (
+              <></>
+            );
+          }}
         </BrowserOnly>
       </div>
-      <div className="flex w-full flex-col items-center justify-center px-3 pb-32 pt-40">
+      <div className="flex w-full flex-col items-center justify-center bg-[radial-gradient(theme(colors.primary.999),#000000_85%)] px-3 pb-32 pt-40 md:bg-none">
         <img
           src="/img/edgestore.svg"
           alt="Edge Store Text Logo"
