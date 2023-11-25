@@ -1,7 +1,9 @@
+'use client';
+
 import { useEdgeStore } from '@/lib/edgestore';
 import * as React from 'react';
 
-export default function Page() {
+export default function Home() {
   const [file, setFile] = React.useState<File | null>(null);
   const { edgestore } = useEdgeStore();
 
