@@ -56,7 +56,7 @@ const sidebars = {
       type: 'category',
       label: 'Providers',
       collapsed: false,
-      items: ['providers/edgestore', 'providers/aws', 'providers/custom'],
+      items: ['providers/edgestore', 'providers/aws', 'providers/azure', 'providers/custom'],
     },
   ],
 };
