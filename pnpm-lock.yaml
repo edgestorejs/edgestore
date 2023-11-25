@@ -242,6 +242,40 @@ importers:
         specifier: ^3.21.4
         version: 3.21.4
 
+  examples/next-advanced:
+    dependencies:
+      '@edgestore/react':
+        specifier: link:../../packages/react
+        version: link:../../packages/react
+      '@edgestore/server':
+        specifier: link:../../packages/server
+        version: link:../../packages/server
+      next:
+        specifier: 14.0.3
+        version: 14.0.3(@babel/core@7.22.9)(react-dom@18.2.0)(react@18.2.0)
+      react:
+        specifier: ^18
+        version: 18.2.0
+      react-dom:
+        specifier: ^18
+        version: 18.2.0(react@18.2.0)
+      zod:
+        specifier: ^3.21.4
+        version: 3.21.4
+    devDependencies:
+      '@types/node':
+        specifier: ^20
+        version: 20.10.0
+      '@types/react':
+        specifier: ^18
+        version: 18.2.38
+      '@types/react-dom':
+        specifier: ^18
+        version: 18.2.14
+      typescript:
+        specifier: ^5
+        version: 5.3.2
+
   examples/next-basic:
     dependencies:
       '@edgestore/react':
@@ -320,7 +354,7 @@ importers:
         version: 3.3.3
       typescript:
         specifier: latest
-        version: 5.2.2
+        version: 5.3.2
 
   examples/next-complete:
     dependencies:
@@ -16162,17 +16196,10 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
-  /typescript@5.2.2:
-    resolution: {integrity: sha512-mI4WrpHsbCIcwT9cF4FZvr80QUeKvsUsUvKDoR+X/7XHQH98xYD8YHZg7ANtz2GtZt/CBq2QJ0thkGJMHfqc1w==}
-    engines: {node: '>=14.17'}
-    hasBin: true
-    dev: true
-
   /typescript@5.3.2:
     resolution: {integrity: sha512-6l+RyNy7oAHDfxC4FzSJcz9vnjTKxrLpDG5M2Vu4SHRVNg6xzqZp6LYSR9zjqQTu8DU/f5xwxUdADOkbrIX2gQ==}
     engines: {node: '>=14.17'}
     hasBin: true
-    dev: false
 
   /ua-parser-js@1.0.35:
     resolution: {integrity: sha512-fKnGuqmTBnIE+/KXSzCn4db8RTigUzw1AN0DmdU6hJovUTbYJKyqj+8Mt1c4VfRDnOVJnENmfYkIPZ946UrSAA==}
