@@ -21,39 +21,39 @@ export type BucketFunctions<TRouter extends AnyRouter> = {
     upload: (
       params: z.infer<TRouter['buckets'][K]['_def']['input']> extends never
         ? {
-            file: File;
-            onProgressChange?: OnProgressChangeHandler;
-            options?: UploadOptions;
-          }
+          file: File;
+          onProgressChange?: OnProgressChangeHandler;
+          options?: UploadOptions;
+        }
         : {
-            file: File;
-            input: z.infer<TRouter['buckets'][K]['_def']['input']>;
-            onProgressChange?: OnProgressChangeHandler;
-            options?: UploadOptions;
-          },
+          file: File;
+          input: z.infer<TRouter['buckets'][K]['_def']['input']>;
+          onProgressChange?: OnProgressChangeHandler;
+          options?: UploadOptions;
+        },
     ) => Promise<
       TRouter['buckets'][K]['_def']['type'] extends 'IMAGE'
-        ? {
-            url: string;
-            thumbnailUrl: string | null;
-            size: number;
-            uploadedAt: Date;
-            metadata: InferMetadataObject<TRouter['buckets'][K]>;
-            path: InferBucketPathObject<TRouter['buckets'][K]>;
-            pathOrder: Prettify<
-              keyof InferBucketPathObject<TRouter['buckets'][K]>
-            >[];
-          }
-        : {
-            url: string;
-            size: number;
-            uploadedAt: Date;
-            metadata: InferMetadataObject<TRouter['buckets'][K]>;
-            path: InferBucketPathObject<TRouter['buckets'][K]>;
-            pathOrder: Prettify<
-              keyof InferBucketPathObject<TRouter['buckets'][K]>
-            >[];
-          }
+      ? {
+        url: string;
+        thumbnailUrl: string | null;
+        size: number;
+        uploadedAt: Date;
+        metadata: InferMetadataObject<TRouter['buckets'][K]>;
+        path: InferBucketPathObject<TRouter['buckets'][K]>;
+        pathOrder: Prettify<
+          keyof InferBucketPathObject<TRouter['buckets'][K]>
+        >[];
+      }
+      : {
+        url: string;
+        size: number;
+        uploadedAt: Date;
+        metadata: InferMetadataObject<TRouter['buckets'][K]>;
+        path: InferBucketPathObject<TRouter['buckets'][K]>;
+        pathOrder: Prettify<
+          keyof InferBucketPathObject<TRouter['buckets'][K]>
+        >[];
+      }
     >;
     confirmUpload: (params: { url: string }) => Promise<void>;
     delete: (params: { url: string }) => Promise<void>;
@@ -185,6 +185,7 @@ async function uploadFile(
       }),
       headers: {
         'Content-Type': 'application/json',
+        'x-ms-blob-type': 'BlockBlob'
       },
     });
     const json = (await res.json()) as RequestUploadRes;
@@ -210,9 +211,9 @@ async function uploadFile(
         : null,
       size: json.size,
       uploadedAt: new Date(json.uploadedAt),
-      path: json.path as any,
-      pathOrder: json.pathOrder as any,
-      metadata: json.metadata as any,
+      path: json.path,
+      pathOrder: json.pathOrder,
+      metadata: json.metadata,
     };
   } catch (e) {
     onProgressChange?.(0);
@@ -245,6 +246,7 @@ const uploadFileInner = async (
   const promise = new Promise<string | null>((resolve, reject) => {
     const request = new XMLHttpRequest();
     request.open('PUT', uploadUrl);
+    request.setRequestHeader('x-ms-blob-type', 'BlockBlob');
     request.addEventListener('loadstart', () => {
       onProgressChange?.(0);
     });
@@ -305,7 +307,7 @@ async function multipartUpload(params: {
       const totalProgress =
         Math.round(
           uploadingParts.reduce((acc, p) => acc + p.progress * 100, 0) /
-            totalParts,
+          totalParts,
         ) / 100;
       onProgressChange?.(totalProgress);
     });

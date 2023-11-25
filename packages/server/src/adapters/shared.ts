@@ -138,9 +138,8 @@ export async function requestUpload<TCtx>(params: {
     if (!accepted) {
       throw new EdgeStoreError({
         code: 'BAD_REQUEST',
-        message: `"${
-          fileInfo.type
-        }" is not allowed. Accepted types are ${JSON.stringify(accept)}`,
+        message: `"${fileInfo.type
+          }" is not allowed. Accepted types are ${JSON.stringify(accept)}`,
       });
     }
   }
@@ -330,6 +329,7 @@ export async function deleteFile<TCtx>(params: {
   const fileInfo = await provider.getFile({
     url,
   });
+
   const canDelete = await bucket._def.beforeDelete({
     ctx,
     fileInfo,
