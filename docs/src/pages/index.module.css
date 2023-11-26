@@ -3,6 +3,18 @@
  * and scoped locally.
  */
 
+ body, p, blockquote, a, abbr, address, cite, del, dfn, em, kbd, q, samp, small, strong, sub, sup, var {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen-Sans, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Inter', sans-serif; /* Specific styling for heading elements */
+}
+
+code {
+  font-family: 'Source Code Pro';
+}
+
 .heroBanner {
   padding: 4rem 0;
   text-align: center;

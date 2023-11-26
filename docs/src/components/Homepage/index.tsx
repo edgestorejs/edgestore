@@ -4,6 +4,8 @@ import CodeBlock1 from '../../../docs/landing-code/CodeBlock1.md';
 import CodeBlock2 from '../../../docs/landing-code/CodeBlock2.md';
 import CodeBlock3 from '../../../docs/landing-code/CodeBlock3.md';
 import { BlurryBlob } from '../BlurryBlob';
+import Hero from './Hero';
+import HomepageFeatures from '../HomepageFeatures';
 
 type CodeBlockItem = {
   title: string;
@@ -76,7 +78,7 @@ const Homepage = () => {
               <BlurryBlob
                 width="min(56rem, 100vw)"
                 height="400px"
-                left="50%"
+                left="45%"
                 top="50px"
               />
             ) : (
@@ -85,58 +87,14 @@ const Homepage = () => {
           }}
         </BrowserOnly>
       </div>
-      <div className="flex w-full flex-col items-center justify-center bg-[radial-gradient(theme(colors.primary.999),#000000_85%)] px-3 pb-32 pt-40 md:bg-none">
-        <img
-          src="/img/edgestore.svg"
-          alt="Edge Store Text Logo"
-          className="z-0 mb-3 w-80 py-2 md:w-[30rem]"
-        />
-        <h2 className="z-0 mb-10 bg-gradient-to-b from-primary-100 to-primary-200 bg-clip-text text-center text-lg font-medium text-transparent">
-          File uploads in Next.js just got way easier.
-        </h2>
-        <div className="z-0 flex gap-3 ">
-          <JoinButton />
-          <LearnMoreButton />
-        </div>
+      <div className="flex w-full flex-col items-center justify-center bg-[radial-gradient(theme(colors.primary.999),#000000_85%)] px-3 pb-20 pt-40 md:bg-none">
+        <Hero />
       </div>
-      <div className="mx-auto mb-20 grid w-full max-w-4xl auto-rows-fr grid-cols-1 gap-10 px-6 md:grid-cols-3 md:justify-between">
-        <TechCard
-          title="Start for free"
-          description="Get your free storage and start building. No credit card required."
-        />
-        <TechCard
-          title="Effortless Integration"
-          description="Use our type-safe npm package to seamlessly integrate Edge Store into your app."
-        />
-        <TechCard
-          title="Easy-to-Use Dashboard"
-          description="Monitor, manage, and delete files with ease."
-        />
-        <TechCard
-          title="Fast CDN"
-          description="All your files are served from the edge for a great performance anywhere in the world."
-        />
-        <TechCard
-          title="Large file support"
-          description="Automatically uses multipart uploads for bigger files."
-        />
-        <TechCard
-          title="Protected Files"
-          description="Ensure your files are safe with custom edge validations."
-        />
-        <TechCard
-          title="Automatic Thumbnail Generation"
-          description="Images ready to use, without the extra effort."
-        />
-        <TechCard
-          title="Customizable Components"
-          description="Just copy one of our sample components and customize it to your needs."
-        />
-        <TechCard
-          title="And More..."
-          description="Temporary files, parallel uploads, and much more. Handle all scenarios with finesse."
-        />
+      
+      <div className="mb-20">
+        <HomepageFeatures />
       </div>
+
       <div className="mx-6 flex flex-col items-center gap-12">
         {codeBlocks.map((block) => (
           <CodeBlockItem key={block.title} block={block} />
@@ -156,33 +114,40 @@ const TechCard: React.FC<{ title: string; description: string }> = ({
   description,
 }) => {
   return (
-    <div className="min-h-[170px] w-full rounded-lg p-6 shadow-[0px_0px_5px_0px_theme(colors.primary.500),0px_0px_20px_0px_theme(colors.primary.700)]">
+     <div className="min-h-[170px] w-full rounded-xl p-5"
+     style={{
+      border: "1px solid #222"
+     }}
+    >
       <p className="mb-2 text-lg font-bold">{title}</p>
       <p className="text-gray-400">{description}</p>
     </div>
   );
 };
 
-const JoinButton: React.FC = () => {
+export const JoinButton: React.FC = () => {
   return (
-    <a
+    <a 
       target="_blank"
       rel="noreferrer"
-      className="rounded-lg bg-primary px-4 py-2 font-semibold text-gray-100 transition-colors duration-200 hover:bg-primary-800 hover:text-gray-100 hover:no-underline focus:border-transparent focus:bg-primary-800 focus:outline-none focus:ring-2 focus:ring-gray-600 active:bg-primary-800"
       href="https://dashboard.edgestore.dev/sign-up"
+      className="max-w-[250px] hover:no-underline focus:border-transparent focus:outline-none no-underline flex items-center justify-center gap-x-2 py-2 px-4 text-white hover:text-white font-medium bg-primary duration-150 hover:bg-primary-800 active:bg-primary-800 rounded-md md:inline-flex"
     >
-      Start for free
+        Get started for free
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
+            <path fillRule="evenodd" d="M2 10a.75.75 0 01.75-.75h12.59l-2.1-1.95a.75.75 0 111.02-1.1l3.5 3.25a.75.75 0 010 1.1l-3.5 3.25a.75.75 0 11-1.02-1.1l2.1-1.95H2.75A.75.75 0 012 10z" clipRule="evenodd" />
+        </svg>
     </a>
   );
 };
 
-const LearnMoreButton: React.FC = () => {
+export const LearnMoreButton: React.FC = () => {
   return (
-    <a
-      className="rounded-lg bg-white/5 px-4 py-2 font-semibold text-gray-100 transition-colors duration-200 hover:bg-white/10 hover:text-gray-100 hover:no-underline focus:border-transparent focus:bg-white/10 focus:outline-none focus:ring-2 focus:ring-gray-600 active:bg-white/10"
-      href="/docs/quick-start"
-    >
+    <a  href="/docs/quick-start"  className="max-w-[250px] hover:no-underline focus:border-transparent focus:outline-none no-underline flex items-center justify-center gap-x-2 py-2 px-4 text-gray-300 hover:text-white hover:bg-[#3334] font-medium duration-150 active:bg-gray-100 border rounded-md md:inline-flex">
       Learn more
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
+          <path fillRule="evenodd" d="M2 10a.75.75 0 01.75-.75h12.59l-2.1-1.95a.75.75 0 111.02-1.1l3.5 3.25a.75.75 0 010 1.1l-3.5 3.25a.75.75 0 11-1.02-1.1l2.1-1.95H2.75A.75.75 0 012 10z" clipRule="evenodd" />
+      </svg>
     </a>
   );
 };
@@ -190,7 +155,7 @@ const LearnMoreButton: React.FC = () => {
 const CodeBlockItem: React.FC<{ block: CodeBlockItem }> = ({ block }) => {
   return (
     <div className="flex max-w-full flex-col justify-between lg:max-w-6xl lg:flex-row lg:gap-12">
-      <div className="order-1 min-w-0 flex-[3] lg:order-none">{block.code}</div>
+      <code className="order-1 min-w-0 flex-[3] lg:order-none">{block.code}</code>
       <div className="flex-[2]">
         <h2>{block.title}</h2>
         <div>{block.description}</div>
