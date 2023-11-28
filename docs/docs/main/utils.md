@@ -14,7 +14,7 @@ import { getDownloadUrl } from '@edgestore/react/utils';
 
 getDownloadUrl(
   url, // the url of the file
-  'overwrite-file-name.jpg' // optional, the name of the file to download
+  'overwrite-file-name.jpg', // optional, the name of the file to download
 );
 ```
 

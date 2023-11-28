@@ -138,8 +138,9 @@ export async function requestUpload<TCtx>(params: {
     if (!accepted) {
       throw new EdgeStoreError({
         code: 'BAD_REQUEST',
-        message: `"${fileInfo.type
-          }" is not allowed. Accepted types are ${JSON.stringify(accept)}`,
+        message: `"${
+          fileInfo.type
+        }" is not allowed. Accepted types are ${JSON.stringify(accept)}`,
       });
     }
   }

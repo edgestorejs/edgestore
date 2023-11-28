@@ -27,14 +27,14 @@ export type CreateContextOptions = {
 
 export type Config<TCtx> = TCtx extends Record<string, never>
   ? {
-    provider?: Provider;
-    router: EdgeStoreRouter<TCtx>;
-  }
+      provider?: Provider;
+      router: EdgeStoreRouter<TCtx>;
+    }
   : {
-    provider?: Provider;
-    router: EdgeStoreRouter<TCtx>;
-    createContext: (opts: CreateContextOptions) => MaybePromise<TCtx>;
-  };
+      provider?: Provider;
+      router: EdgeStoreRouter<TCtx>;
+      createContext: (opts: CreateContextOptions) => MaybePromise<TCtx>;
+    };
 
 export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
   const { provider = EdgeStoreProvider() } = config;

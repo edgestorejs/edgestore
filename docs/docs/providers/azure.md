@@ -9,7 +9,7 @@ slug: /providers/azure
 
 You can also use the Edge Store package with your own Azure Blob Storage. You might want to do that in case you have strict company policies that require you to have all the data in your own Azure account.
 
-By using this provider, you will be able to use most of the basic features of Edge Store. However, for some of the more advanced features like access control with protected files, you will have to create your own infrastructure and logic from scratch. 
+By using this provider, you will be able to use most of the basic features of Edge Store. However, for some of the more advanced features like access control with protected files, you will have to create your own infrastructure and logic from scratch.
 
 ## Installation
 

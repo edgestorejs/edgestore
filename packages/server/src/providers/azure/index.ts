@@ -1,4 +1,4 @@
-import { BlobServiceClient } from "@azure/storage-blob"
+import { BlobServiceClient } from '@azure/storage-blob';
 import { v4 as uuidv4 } from 'uuid';
 import { type Provider } from '../types';
 
@@ -29,7 +29,9 @@ export function AzureProvider(options?: AzureProviderOptions): Provider {
 
   const baseUrl = `https://${storageAccountName}.blob.core.windows.net`;
   const blobServiceClient = new BlobServiceClient(`${baseUrl}?${sasToken}`);
-  const containerClient = blobServiceClient.getContainerClient(containerName ?? '');
+  const containerClient = blobServiceClient.getContainerClient(
+    containerName ?? '',
+  );
 
   return {
     async init() {

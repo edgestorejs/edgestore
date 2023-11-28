@@ -19,10 +19,10 @@ export type UndefinedKeys<TType> = {
 export type FlatOverwrite<TType, TWith> = InferOptional<
   {
     [TKey in keyof TType | keyof TWith]: TKey extends keyof TWith
-    ? TWith[TKey]
-    : TKey extends keyof TType
-    ? TType[TKey]
-    : never;
+      ? TWith[TKey]
+      : TKey extends keyof TType
+      ? TType[TKey]
+      : never;
   },
   UndefinedKeys<TType> | UndefinedKeys<TWith>
 >;
@@ -113,8 +113,8 @@ export type Unwrap<TType> = TType extends (...args: any[]) => infer R
  */
 export type DeepPartial<TObject> = TObject extends object
   ? {
-    [P in keyof TObject]?: DeepPartial<TObject[P]>;
-  }
+      [P in keyof TObject]?: DeepPartial<TObject[P]>;
+    }
   : TObject;
 
 /**
@@ -123,8 +123,8 @@ export type DeepPartial<TObject> = TObject extends object
  */
 export type KeysOfUnion<TUnion> = TUnion extends TUnion
   ? keyof TUnion extends string
-  ? keyof TUnion
-  : string
+    ? keyof TUnion
+    : string
   : never;
 
 /**
@@ -135,6 +135,6 @@ export type UnifyUnion<TUnion> = Simplify<
   (TUnion extends any ? (k: TUnion) => void : never) extends (
     k: infer I,
   ) => void
-  ? I
-  : never
+    ? I
+    : never
 >;
