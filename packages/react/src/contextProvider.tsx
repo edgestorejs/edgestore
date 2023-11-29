@@ -101,6 +101,7 @@ function EdgeStoreProviderInner<TRouter extends AnyRouter>({
       const json = await res.json();
       await fetch(`${DEFAULT_BASE_URL}/_init`, {
         method: 'GET',
+        credentials: 'include',
         headers: {
           'x-edgestore-token': json.token,
         },
