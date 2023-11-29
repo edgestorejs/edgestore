@@ -57,6 +57,11 @@
       "require": "./dist/providers/aws/index.js",
       "default": "./dist/providers/aws/index.js"
     },
+    "./providers/azure": {
+      "import": "./dist/providers/azure/index.mjs",
+      "require": "./dist/providers/azure/index.js",
+      "default": "./dist/providers/azure/index.js"
+    },
     "./providers/edgestore": {
       "import": "./dist/providers/edgestore/index.mjs",
       "require": "./dist/providers/edgestore/index.js",
@@ -90,6 +95,7 @@
     "uuid": "^9.0.0"
   },
   "peerDependencies": {
+    "@azure/storage-blob": "^12.17.0",
     "@aws-sdk/client-s3": ">=3.0.0",
     "@aws-sdk/s3-request-presigner": ">=3.0.0",
     "zod": ">=3.0.0"
@@ -103,9 +109,13 @@
     },
     "@aws-sdk/s3-request-presigner": {
       "optional": true
+    },
+    "@azure/storage-blob": {
+      "optional": true
     }
   },
   "devDependencies": {
+    "@azure/storage-blob": "^12.17.0",
     "@aws-sdk/client-s3": "^3.420.0",
     "@aws-sdk/s3-request-presigner": "^3.420.0",
     "@types/cookie": "^0.5.1",
