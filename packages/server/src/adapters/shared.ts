@@ -162,12 +162,8 @@ export async function requestUpload<TCtx>(params: {
       metadata,
     },
   });
-  const parsedPath = path.reduce<Record<string, string>>((acc, curr) => {
-    acc[curr.key] = curr.value;
-    return acc;
-  }, {});
+  const { parsedPath, pathOrder } = parsePath(path);
 
-  const pathOrder = path.map((p) => p.key);
   return {
     ...requestUploadRes,
     size: fileInfo.size,
@@ -386,7 +382,7 @@ async function getDerivedEncryptionKey(secret: string) {
   );
 }
 
-function buildPath(params: {
+export function buildPath(params: {
   fileInfo: RequestUploadBody['fileInfo'];
   bucket: AnyBuilder;
   pathAttrs: {
@@ -417,6 +413,18 @@ function buildPath(params: {
     };
   });
   return path;
+}
+
+export function parsePath(path: { key: string; value: string }[]) {
+  const parsedPath = path.reduce<Record<string, string>>((acc, curr) => {
+    acc[curr.key] = curr.value;
+    return acc;
+  }, {});
+  const pathOrder = path.map((p) => p.key);
+  return {
+    parsedPath,
+    pathOrder,
+  };
 }
 
 async function getContext(token?: string) {

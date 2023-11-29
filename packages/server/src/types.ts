@@ -62,6 +62,14 @@ export type Simplify<TType> = TType extends any[] | Date
   : { [K in keyof TType]: TType[K] };
 
 /**
+ * @internal
+ */
+export type Prettify<TType> = {
+  [K in keyof TType]: TType[K];
+  // eslint-disable-next-line @typescript-eslint/ban-types
+} & {};
+
+/**
  * @public
  */
 export type Dict<TType> = Record<string, TType | undefined>;

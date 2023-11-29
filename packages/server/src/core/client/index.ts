@@ -1,5 +1,8 @@
+/* eslint-disable @typescript-eslint/ban-types */
+import { type z, type ZodNever } from 'zod';
 import { type AnyRouter, type Comparison } from '..';
-import { type Simplify } from '../../types';
+import { buildPath, parsePath } from '../../adapters/shared';
+import { type Prettify, type Simplify } from '../../types';
 import {
   type AnyBuilder,
   type InferBucketPathKeys,
@@ -14,6 +17,63 @@ export type GetFileRes<TBucket extends AnyBuilder> = {
   uploadedAt: Date;
   metadata: InferMetadataObject<TBucket>;
   path: InferBucketPathObject<TBucket>;
+};
+
+export type UploadOptions = {
+  /**
+   * e.g. 'my-file-name.jpg'
+   *
+   * By default, a unique file name will be generated for each upload.
+   * If you want to use a custom file name, you can use this option.
+   * If you use the same file name for multiple uploads, the previous file will be overwritten.
+   * But it might take some time for the CDN cache to be cleared.
+   * So maybe you will keep seeing the old file for a while.
+   *
+   * If you want to replace an existing file immediately leave the `manualFileName` option empty and use the `replaceTargetUrl` option.
+   */
+  manualFileName?: string;
+  /**
+   * Use this to replace an existing file.
+   * It will automatically delete the existing file when the upload is complete.
+   */
+  replaceTargetUrl?: string;
+  /**
+   * If true, the file needs to be confirmed by using the `confirmUpload` function.
+   * If the file is not confirmed within 24 hours, it will be deleted.
+   *
+   * This is useful for pages where the file is uploaded as soon as it is selected,
+   * but the user can leave the page without submitting the form.
+   *
+   * This avoids unnecessary zombie files in the bucket.
+   */
+  temporary?: boolean;
+};
+
+export type UploadFileRequest<TBucket extends AnyBuilder> = {
+  content:
+    | string
+    | {
+        blob: Blob;
+        extension: string;
+      };
+  options?: UploadOptions;
+} & (TBucket['$config']['ctx'] extends Record<string, never>
+  ? {}
+  : {
+      ctx: TBucket['$config']['ctx'];
+    }) &
+  (TBucket['_def']['input'] extends ZodNever
+    ? {}
+    : {
+        input: z.infer<TBucket['_def']['input']>;
+      });
+
+export type UploadFileRes<TBucket extends AnyBuilder> = {
+  url: string;
+  size: number;
+  metadata: InferMetadataObject<TBucket>;
+  path: InferBucketPathObject<TBucket>;
+  pathOrder: (keyof InferBucketPathObject<TBucket>)[];
 };
 
 type Filter<TBucket extends AnyBuilder> = {
@@ -65,18 +125,9 @@ type EdgeStoreClient<TRouter extends AnyRouter> = {
     getFile: (params: {
       url: string;
     }) => Promise<GetFileRes<TRouter['buckets'][K]>>;
-    // TODO: replace with `upload`
-    // requestUpload: (params: {
-    //   file: File;
-    //   path: {
-    //     [TKey in InferBucketPathKeys<TRouter['buckets'][K]>]: string;
-    //   };
-    //   metadata: InferMetadataObject<TRouter['buckets'][K]>;
-    //   replaceTargetUrl?: string;
-    // }) => Promise<{
-    //   uploadUrl: string;
-    //   accessUrl: string;
-    // }>;
+    upload: (
+      params: UploadFileRequest<TRouter['buckets'][K]>,
+    ) => Promise<Prettify<UploadFileRes<TRouter['buckets'][K]>>>;
     /**
      * Confirm a temporary file upload.
      */
@@ -124,6 +175,86 @@ export function initEdgeStoreClient<TRouter extends AnyRouter>(config: {
         throw new Error(`Bucket ${bucketName} not found`);
       }
       const client: EdgeStoreClient<TRouter>[string] = {
+        async upload(params) {
+          const content = params.content;
+          const ctx = 'ctx' in params ? params.ctx : {};
+          const input = 'input' in params ? params.input : {};
+
+          const { blob, extension } = (() => {
+            if (typeof content === 'string') {
+              return {
+                blob: new Blob([content], { type: 'text/plain' }),
+                extension: 'txt',
+              };
+            } else {
+              return {
+                blob: content.blob,
+                extension: content.extension,
+              };
+            }
+          })();
+
+          const path = buildPath({
+            bucket,
+            pathAttrs: {
+              ctx,
+              input,
+            },
+            fileInfo: {
+              type: blob.type,
+              size: blob.size,
+              extension,
+              temporary: false,
+              fileName: params.options?.manualFileName,
+              replaceTargetUrl: params.options?.replaceTargetUrl,
+            },
+          });
+          const metadata = await bucket._def.metadata({
+            ctx,
+            input,
+          });
+
+          const requestUploadRes = await sdk.requestUpload({
+            bucketName,
+            bucketType: bucket._def.type,
+            fileInfo: {
+              fileName: params.options?.manualFileName,
+              replaceTargetUrl: params.options?.replaceTargetUrl,
+              type: blob.type,
+              size: blob.size,
+              extension,
+              isPublic: bucket._def.accessControl === undefined,
+              temporary: params.options?.temporary ?? false,
+              path,
+              metadata,
+            },
+          });
+
+          const { signedUrl, multipart } = requestUploadRes;
+
+          if (multipart) {
+            // TODO
+            throw new Error('Multipart upload not implemented');
+          } else if (signedUrl) {
+            await fetch(signedUrl, {
+              method: 'PUT',
+              body: blob,
+            });
+          } else {
+            throw new Error('Missing signedUrl');
+          }
+          const { parsedPath, pathOrder } = parsePath(path);
+          return {
+            url: requestUploadRes.accessUrl,
+            size: blob.size,
+            metadata,
+            path: parsedPath,
+            pathOrder,
+          } satisfies UploadFileRes<typeof bucket> as UploadFileRes<
+            TRouter['buckets'][string]
+          >;
+        },
+
         async getFile(params) {
           const res = await sdk.getFile(params);
           return {
@@ -136,41 +267,6 @@ export function initEdgeStoreClient<TRouter extends AnyRouter>(config: {
             TRouter['buckets'][string]
           >;
         },
-        // TODO: Replace with `upload`
-        // async requestUpload(params) {
-        //   const { file, path, metadata, replaceTargetUrl } = params;
-        //   const fileExtension = file.name.includes('.')
-        //     ? file.name.split('.').pop()
-        //     : undefined;
-        //   if (!fileExtension) {
-        //     throw new Error('Missing file extension');
-        //   }
-        //   const parsedPath = Object.keys(bucket._def.path).map((key) => {
-        //     const value = path[key as keyof typeof path];
-        //     if (value === undefined) {
-        //       throw new Error(`Missing path param ${key}`);
-        //     }
-        //     return {
-        //       key,
-        //       value,
-        //     };
-        //   });
-
-        //   const fileInfo = {
-        //     size: file.size,
-        //     extension: fileExtension,
-        //     isPublic: bucket._def.accessControl === undefined,
-        //     path: parsedPath,
-        //     metadata,
-        //     replaceTargetUrl,
-        //   };
-
-        //   return await sdk.requestUpload({
-        //     bucketName,
-        //     bucketType: bucket._def.type,
-        //     fileInfo,
-        //   });
-        // },
 
         async confirmUpload(params) {
           return await sdk.confirmUpload(params);
