@@ -79,7 +79,7 @@ export type AWSProviderOptions = {
   /**
    * Secret to use for encrypting JWT tokens.
    * Can be generated with `openssl rand -base64 32`.
-   * 
+   *
    * Can also be set via the `EDGE_STORE_JWT_SECRET` environment variable.
    */
   jwtSecret?: string;

@@ -216,6 +216,8 @@ const uploadFileInner = async (
   const promise = new Promise<string | null>((resolve, reject) => {
     const request = new XMLHttpRequest();
     request.open('PUT', uploadUrl);
+    // This is for Azure provider. Specifies the blob type
+    request.setRequestHeader('x-ms-blob-type', 'BlockBlob');
     request.addEventListener('loadstart', () => {
       onProgressChange?.(0);
     });

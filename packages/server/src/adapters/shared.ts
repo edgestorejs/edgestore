@@ -326,6 +326,7 @@ export async function deleteFile<TCtx>(params: {
   const fileInfo = await provider.getFile({
     url,
   });
+
   const canDelete = await bucket._def.beforeDelete({
     ctx,
     fileInfo,

@@ -8,6 +8,7 @@ export const input = [
   'src/adapters/next/pages/index.ts',
   'src/adapters/next/app/index.ts',
   'src/providers/aws/index.ts',
+  'src/providers/azure/index.ts',
   'src/providers/edgestore/index.ts',
   'src/providers/index.ts',
 ];
