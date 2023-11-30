@@ -1,8 +1,11 @@
+/* eslint-disable @typescript-eslint/ban-types */
 import { type NextRequest } from 'next/server';
 import { type EdgeStoreRouter } from '../../../core/internals/bucketBuilder';
 import EdgeStoreError, {
   EDGE_STORE_ERROR_CODES,
+  type EdgeStoreErrorCodeKey,
 } from '../../../libs/errors/EdgeStoreError';
+import Logger, { type LogLevel } from '../../../libs/logger';
 import { EdgeStoreProvider } from '../../../providers/edgestore';
 import { type Provider } from '../../../providers/types';
 import { type MaybePromise } from '../../../types';
@@ -24,26 +27,43 @@ export type CreateContextOptions = {
   req: NextRequest;
 };
 
-export type Config<TCtx> = TCtx extends Record<string, never>
-  ? {
-      provider?: Provider;
-      router: EdgeStoreRouter<TCtx>;
-    }
+export type Config<TCtx> = {
+  provider?: Provider;
+  router: EdgeStoreRouter<TCtx>;
+  logLevel?: LogLevel;
+} & (TCtx extends Record<string, never>
+  ? {}
   : {
       provider?: Provider;
       router: EdgeStoreRouter<TCtx>;
       createContext: (opts: CreateContextOptions) => MaybePromise<TCtx>;
-    };
+    });
 
 export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
   const { provider = EdgeStoreProvider() } = config;
+  const log = new Logger(config.logLevel);
   return async (req: NextRequest) => {
     try {
+      if (!('nextUrl' in req))
+        throw new EdgeStoreError({
+          message:
+            'Error running the app adapter. Make sure you are importing the correct adapter in your router configuration',
+          code: 'SERVER_ERROR',
+        });
       if (req.nextUrl.pathname.endsWith('/init')) {
-        const ctx =
-          'createContext' in config
-            ? await config.createContext({ req })
-            : ({} as TCtx);
+        let ctx = {} as TCtx;
+        try {
+          ctx =
+            'createContext' in config
+              ? await config.createContext({ req })
+              : ({} as TCtx);
+        } catch (err) {
+          throw new EdgeStoreError({
+            message: 'Error creating context',
+            code: 'CREATE_CONTEXT_ERROR',
+            cause: err instanceof Error ? err : undefined,
+          });
+        }
         const { newCookies, token, baseUrl } = await init({
           ctx,
           provider,
@@ -157,17 +177,30 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
       }
     } catch (err) {
       if (err instanceof EdgeStoreError) {
-        return new Response(err.message, {
-          status: EDGE_STORE_ERROR_CODES[err.code],
-        });
-      } else if (err instanceof Error) {
-        return new Response(err.message, {
-          status: 500,
+        log[err.level](err.formattedMessage());
+        if (err.cause) log[err.level](err.cause);
+        return new Response(JSON.stringify(err.formattedJson()), {
+          status: EDGE_STORE_ERROR_CODES[err.code as EdgeStoreErrorCodeKey],
+          headers: {
+            'Content-Type': 'application/json',
+          },
         });
       }
-      return new Response('Internal server error', {
-        status: 500,
-      });
+      log.error(err);
+      return new Response(
+        JSON.stringify(
+          new EdgeStoreError({
+            message: 'Internal server error',
+            code: 'SERVER_ERROR',
+          }).formattedJson(),
+        ),
+        {
+          status: 500,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        },
+      );
     }
   };
 }

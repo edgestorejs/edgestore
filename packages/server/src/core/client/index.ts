@@ -50,6 +50,26 @@ export type UploadOptions = {
 };
 
 export type UploadFileRequest<TBucket extends AnyBuilder> = {
+  /**
+   * Can be a string or a blob.
+   *
+   * If it's a string, it will be converted to a blob with the type `text/plain`.
+   *
+   * @example
+   * ```ts
+   * // string
+   * content: "some text"
+   * ```
+   *
+   * @example
+   * ```ts
+   * // blob
+   * content: {
+   *   blob: new Blob([text], { type: "text/csv" }),
+   *   extension: "csv",
+   * }
+   * ```
+   */
   content:
     | string
     | {
@@ -125,15 +145,50 @@ type EdgeStoreClient<TRouter extends AnyRouter> = {
     getFile: (params: {
       url: string;
     }) => Promise<GetFileRes<TRouter['buckets'][K]>>;
+
+    /**
+     * Use this function to upload a file to the bucket directly from your backend.
+     *
+     * @example
+     * ```ts
+     * // simple example
+     * await backendClient.myBucket.upload({
+     *   content: "some text",
+     * });
+     * ```
+     *
+     * @example
+     * ```ts
+     * // complete example
+     * await backendClient.myBucket.upload({
+     *   content: {
+     *     blob: new Blob([text], { type: "text/csv" }),
+     *     extension: "csv",
+     *   },
+     *   options: {
+     *     temporary: true,
+     *     replaceTargetUrl: replaceUrl,
+     *     manualFileName: "test.csv",
+     *   },
+     *   ctx: {
+     *     userId: "123",
+     *     userRole: "admin",
+     *   },
+     *   input: {
+     *     type: "post",
+     *   },
+     * });
+     * ```
+     */
     upload: (
       params: UploadFileRequest<TRouter['buckets'][K]>,
     ) => Promise<Prettify<UploadFileRes<TRouter['buckets'][K]>>>;
     /**
-     * Confirm a temporary file upload.
+     * Confirm a temporary file upload directly from your backend.
      */
     confirmUpload: (params: { url: string }) => Promise<{ success: boolean }>;
     /**
-     * Programmatically delete a file.
+     * Programmatically delete a file directly from your backend.
      */
     deleteFile: (params: { url: string }) => Promise<{
       success: boolean;

@@ -25,12 +25,23 @@ const es = initEdgeStore.context<Context>().create();
  */
 const edgeStoreRouter = es.router({
   publicFiles: es
-    .fileBucket()
+    .fileBucket({
+      maxSize: 1 * 1024 * 1024, // 1MB
+      accept: ['image/jpeg', 'image/png'],
+    })
     .input(z.object({ type: z.enum(['post', 'article']) }))
     .path(({ ctx, input }) => [{ type: input.type }, { author: ctx.userId }])
     .metadata(({ ctx }) => ({
       role: ctx.userRole,
-    })),
+    }))
+    .beforeUpload(({ ctx, input, fileInfo }) => {
+      // forbid 50% of the time (for demo purposes)
+      return Math.random() < 0.5;
+    })
+    .beforeDelete(({ ctx, fileInfo }) => {
+      // forbid 50% of the time (for demo purposes)
+      return Math.random() < 0.5;
+    }),
 });
 
 const handler = createEdgeStoreNextHandler({

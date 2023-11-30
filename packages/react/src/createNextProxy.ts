@@ -1,12 +1,13 @@
 import { type RequestUploadRes } from '@edgestore/server/adapters';
 import {
+  EdgeStoreApiClientError,
   type AnyRouter,
   type InferBucketPathObject,
   type InferMetadataObject,
   type UploadOptions,
 } from '@edgestore/server/core';
 import { type z } from 'zod';
-import EdgeStoreError from './libs/errors/EdgeStoreError';
+import EdgeStoreClientError from './libs/errors/EdgeStoreError';
 
 /**
  * @internal
@@ -100,7 +101,7 @@ export function createNextProxy<TRouter extends AnyRouter>({
             apiPath,
           });
           if (!success) {
-            throw new EdgeStoreError('Failed to confirm upload');
+            throw new EdgeStoreClientError('Failed to confirm upload');
           }
         },
         delete: async (params: { url: string }) => {
@@ -109,7 +110,7 @@ export function createNextProxy<TRouter extends AnyRouter>({
             apiPath,
           });
           if (!success) {
-            throw new EdgeStoreError('Failed to delete file');
+            throw new EdgeStoreClientError('Failed to delete file');
           }
         },
       };
@@ -158,6 +159,11 @@ async function uploadFile(
         'Content-Type': 'application/json',
       },
     });
+    if (!res.ok) {
+      throw new EdgeStoreApiClientError({
+        response: await res.json(),
+      });
+    }
     const json = (await res.json()) as RequestUploadRes;
     if ('multipart' in json) {
       await multipartUpload({
@@ -172,7 +178,7 @@ async function uploadFile(
       // Upload the file to the signed URL and get the progress
       await uploadFileInner(file, json.uploadUrl, onProgressChange);
     } else {
-      throw new EdgeStoreError('An error occurred');
+      throw new EdgeStoreClientError('An error occurred');
     }
     return {
       url: getUrl(json.accessUrl, apiPath),
@@ -283,7 +289,9 @@ async function multipartUpload(params: {
       onProgressChange?.(totalProgress);
     });
     if (!eTag) {
-      throw new EdgeStoreError('Could not get ETag from multipart response');
+      throw new EdgeStoreClientError(
+        'Could not get ETag from multipart response',
+      );
     }
     return {
       partNumber: part.partNumber,
@@ -319,7 +327,9 @@ async function multipartUpload(params: {
     },
   });
   if (!res.ok) {
-    throw new EdgeStoreError('Multi-part upload failed');
+    throw new EdgeStoreApiClientError({
+      response: await res.json(),
+    });
   }
 }
 
@@ -348,7 +358,9 @@ async function confirmUpload(
     },
   });
   if (!res.ok) {
-    throw new EdgeStoreError('An error occurred');
+    throw new EdgeStoreApiClientError({
+      response: await res.json(),
+    });
   }
   return res.json();
 }
@@ -378,7 +390,9 @@ async function deleteFile(
     },
   });
   if (!res.ok) {
-    throw new EdgeStoreError('An error occurred');
+    throw new EdgeStoreApiClientError({
+      response: await res.json(),
+    });
   }
   return res.json();
 }

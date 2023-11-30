@@ -82,7 +82,10 @@ export async function requestUpload<TCtx>(params: {
   const ctx = await getContext(ctxToken);
   const bucket = router.buckets[bucketName];
   if (!bucket) {
-    throw new Error(`Bucket ${bucketName} not found`);
+    throw new EdgeStoreError({
+      message: `Bucket ${bucketName} not found`,
+      code: 'BAD_REQUEST',
+    });
   }
   if (bucket._def.beforeUpload) {
     const canUpload = await bucket._def.beforeUpload?.({
@@ -98,15 +101,22 @@ export async function requestUpload<TCtx>(params: {
       },
     });
     if (!canUpload) {
-      throw new Error('Upload not allowed');
+      throw new EdgeStoreError({
+        message: 'Upload not allowed for the current context',
+        code: 'UPLOAD_NOT_ALLOWED',
+      });
     }
   }
 
   if (bucket._def.type === 'IMAGE') {
     if (!IMAGE_MIME_TYPES.includes(fileInfo.type)) {
       throw new EdgeStoreError({
-        code: 'BAD_REQUEST',
+        code: 'MIME_TYPE_NOT_ALLOWED',
         message: 'Only images are allowed in this bucket',
+        details: {
+          allowedMimeTypes: IMAGE_MIME_TYPES,
+          mimeType: fileInfo.type,
+        },
       });
     }
   }
@@ -114,8 +124,12 @@ export async function requestUpload<TCtx>(params: {
   if (bucket._def.bucketConfig?.maxSize) {
     if (fileInfo.size > bucket._def.bucketConfig.maxSize) {
       throw new EdgeStoreError({
-        code: 'BAD_REQUEST',
+        code: 'FILE_TOO_LARGE',
         message: `File size is too big. Max size is ${bucket._def.bucketConfig.maxSize}`,
+        details: {
+          maxFileSize: bucket._def.bucketConfig.maxSize,
+          fileSize: fileInfo.size,
+        },
       });
     }
   }
@@ -137,10 +151,14 @@ export async function requestUpload<TCtx>(params: {
     }
     if (!accepted) {
       throw new EdgeStoreError({
-        code: 'BAD_REQUEST',
+        code: 'MIME_TYPE_NOT_ALLOWED',
         message: `"${
           fileInfo.type
         }" is not allowed. Accepted types are ${JSON.stringify(accept)}`,
+        details: {
+          allowedMimeTypes: accept,
+          mimeType: fileInfo.type,
+        },
       });
     }
   }
@@ -190,7 +208,6 @@ export async function requestUploadParts<TCtx>(params: {
 }) {
   const {
     provider,
-    router,
     ctxToken,
     body: { multipart, path },
   } = params;
@@ -201,10 +218,6 @@ export async function requestUploadParts<TCtx>(params: {
     });
   }
   await getContext(ctxToken); // just to check if the token is valid
-  const bucket = router.buckets[multipart.uploadId];
-  if (!bucket) {
-    throw new Error(`Bucket ${multipart.uploadId} not found`);
-  }
   return await provider.requestUploadParts({
     multipart,
     path,
@@ -242,7 +255,10 @@ export async function completeMultipartUpload<TCtx>(params: {
   await getContext(ctxToken); // just to check if the token is valid
   const bucket = router.buckets[bucketName];
   if (!bucket) {
-    throw new Error(`Bucket ${bucketName} not found`);
+    throw new EdgeStoreError({
+      message: `Bucket ${bucketName} not found`,
+      code: 'BAD_REQUEST',
+    });
   }
   return await provider.completeMultipartUpload({
     uploadId,
@@ -278,7 +294,10 @@ export async function confirmUpload<TCtx>(params: {
   await getContext(ctxToken); // just to check if the token is valid
   const bucket = router.buckets[bucketName];
   if (!bucket) {
-    throw new Error(`Bucket ${bucketName} not found`);
+    throw new EdgeStoreError({
+      message: `Bucket ${bucketName} not found`,
+      code: 'BAD_REQUEST',
+    });
   }
 
   return await provider.confirmUpload({
@@ -314,13 +333,18 @@ export async function deleteFile<TCtx>(params: {
   const ctx = await getContext(ctxToken);
   const bucket = router.buckets[bucketName];
   if (!bucket) {
-    throw new Error(`Bucket ${bucketName} not found`);
+    throw new EdgeStoreError({
+      message: `Bucket ${bucketName} not found`,
+      code: 'BAD_REQUEST',
+    });
   }
 
   if (!bucket._def.beforeDelete) {
-    throw new Error(
-      'You need to define beforeDelete if you want to delete files directly from the frontend.',
-    );
+    throw new EdgeStoreError({
+      message:
+        'You need to define beforeDelete if you want to delete files directly from the frontend.',
+      code: 'SERVER_ERROR',
+    });
   }
 
   const fileInfo = await provider.getFile({
@@ -332,7 +356,10 @@ export async function deleteFile<TCtx>(params: {
     fileInfo,
   });
   if (!canDelete) {
-    throw new Error('Delete not allowed');
+    throw new EdgeStoreError({
+      message: 'Delete not allowed for the current context',
+      code: 'DELETE_NOT_ALLOWED',
+    });
   }
   return await provider.deleteFile({
     bucket,
@@ -344,9 +371,10 @@ async function encryptJWT(ctx: any) {
   const secret =
     process.env.EDGE_STORE_JWT_SECRET ?? process.env.EDGE_STORE_SECRET_KEY;
   if (!secret) {
-    throw new Error(
-      'EDGE_STORE_JWT_SECRET or EDGE_STORE_SECRET_KEY is not defined',
-    );
+    throw new EdgeStoreError({
+      message: 'EDGE_STORE_JWT_SECRET or EDGE_STORE_SECRET_KEY is not defined',
+      code: 'SERVER_ERROR',
+    });
   }
   const encryptionSecret = await getDerivedEncryptionKey(secret);
   return await new EncryptJWT(ctx)
@@ -361,9 +389,10 @@ async function decryptJWT(token: string) {
   const secret =
     process.env.EDGE_STORE_JWT_SECRET ?? process.env.EDGE_STORE_SECRET_KEY;
   if (!secret) {
-    throw new Error(
-      'EDGE_STORE_JWT_SECRET or EDGE_STORE_SECRET_KEY is not set',
-    );
+    throw new EdgeStoreError({
+      message: 'EDGE_STORE_JWT_SECRET or EDGE_STORE_SECRET_KEY is not defined',
+      code: 'SERVER_ERROR',
+    });
   }
   const encryptionSecret = await getDerivedEncryptionKey(secret);
   const { payload } = await jwtDecrypt(token, encryptionSecret, {
@@ -395,7 +424,10 @@ export function buildPath(params: {
   const path = pathParams.map((param) => {
     const paramEntries = Object.entries(param);
     if (paramEntries[0] === undefined) {
-      throw new Error('Missing path param');
+      throw new EdgeStoreError({
+        message: `Empty path param found in: ${JSON.stringify(pathParams)}`,
+        code: 'SERVER_ERROR',
+      });
     }
     const [key, value] = paramEntries[0];
     // this is a string like: "ctx.xxx" or "input.yyy.zzz"
@@ -403,7 +435,10 @@ export function buildPath(params: {
       .split('.')
       .reduce((acc2: any, key: string) => {
         if (acc2[key] === undefined) {
-          throw new Error(`Missing key ${key} in ${JSON.stringify(acc2)}`);
+          throw new EdgeStoreError({
+            message: `Missing key ${key} in ${JSON.stringify(acc2)}`,
+            code: 'BAD_REQUEST',
+          });
         }
         return acc2[key];
       }, params.pathAttrs as any) as string;
@@ -427,10 +462,7 @@ export function parsePath(path: { key: string; value: string }[]) {
   };
 }
 
-async function getContext(token?: string) {
-  if (!token) {
-    throw new Error('No token');
-  }
+async function getContext(token: string) {
   return await decryptJWT(token);
 }
 

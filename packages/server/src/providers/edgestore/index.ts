@@ -1,5 +1,6 @@
 import { initEdgeStoreSdk } from '../../core/sdk';
 import EdgeStoreCredentialsError from '../../libs/errors/EdgeStoreCredentialsError';
+import EdgeStoreError from '../../libs/errors/EdgeStoreError';
 import { type Provider, type RequestUploadRes } from '../types';
 
 const DEFAULT_BASE_URL = 'https://files.edgestore.dev';
@@ -111,7 +112,10 @@ export function EdgeStoreProvider(
             thumbnailUrl: res.thumbnailUrl,
           };
         } else {
-          throw new Error('Could not get upload url');
+          throw new EdgeStoreError({
+            message: 'Could not get upload url',
+            code: 'SERVER_ERROR',
+          });
         }
       }
       const res = await edgeStoreSdk.requestUpload({
@@ -126,7 +130,10 @@ export function EdgeStoreProvider(
           thumbnailUrl: res.thumbnailUrl,
         };
       }
-      throw new Error('Could not get upload url');
+      throw new EdgeStoreError({
+        message: 'Could not get upload url',
+        code: 'SERVER_ERROR',
+      });
     },
     requestUploadParts: async ({ multipart, path }) => {
       const res = await edgeStoreSdk.requestUploadParts({
