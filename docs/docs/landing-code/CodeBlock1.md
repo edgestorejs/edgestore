@@ -1,7 +1,6 @@
 ```ts twoslash
 import { initEdgeStore } from '@edgestore/server';
 import { type CreateContextOptions } from '@edgestore/server/adapters/next/pages';
-import { initEdgeStoreClient } from '@edgestore/server/core';
 import { z } from 'zod';
 
 type Context = {

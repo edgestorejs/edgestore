@@ -28,7 +28,6 @@ import {
   createEdgeStoreNextHandler,
   type CreateContextOptions,
 } from '@edgestore/server/adapters/next/pages';
-import { initEdgeStoreClient } from '@edgestore/server/core';
 import { AzureProvider } from '@edgestore/server/providers/azure';
 import { z } from 'zod';
 
