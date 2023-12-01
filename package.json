@@ -7,6 +7,7 @@
     "watch": "turbo run watch --parallel",
     "dev": "turbo run dev --parallel --filter=next-basic --filter=@edgestore/*",
     "advanced:dev": "turbo run dev --parallel --filter=next-advanced --filter=@edgestore/*",
+    "basic-access-control:dev": "turbo run dev --parallel --filter=basic-access-control --filter=@edgestore/*",
     "aws:dev": "turbo run dev --parallel --filter=next-basic-aws --filter=@edgestore/*",
     "packages:dev": "turbo run dev --parallel --filter=@edgestore/*",
     "components:dev": "turbo run dev --parallel --filter=components --filter=@edgestore/*",

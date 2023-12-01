@@ -19,8 +19,8 @@
   },
   "devDependencies": {
     "@types/node": "latest",
-    "@types/react": "latest",
-    "@types/react-dom": "latest",
+    "@types/react": "18.2.38",
+    "@types/react-dom": "18.2.17",
     "autoprefixer": "latest",
     "postcss": "latest",
     "tailwindcss": "latest",
