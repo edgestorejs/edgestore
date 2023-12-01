@@ -42,6 +42,11 @@
       "require": "./dist/adapters/index.js",
       "default": "./dist/adapters/index.js"
     },
+    "./adapters/express": {
+      "import": "./dist/adapters/express/index.mjs",
+      "require": "./dist/adapters/express/index.js",
+      "default": "./dist/adapters/express/index.js"
+    },
     "./adapters/next/pages": {
       "import": "./dist/adapters/next/pages/index.mjs",
       "require": "./dist/adapters/next/pages/index.js",
