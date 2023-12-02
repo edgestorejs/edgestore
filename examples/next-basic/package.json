@@ -1,6 +1,6 @@
 {
   "name": "next-basic",
-  "version": "0.1.5-alpha.6",
+  "version": "0.1.5-alpha.7",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -9,8 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@edgestore/react": "^0.1.5-alpha.6",
-    "@edgestore/server": "^0.1.5-alpha.6",
+    "@edgestore/react": "^0.1.5-alpha.7",
+    "@edgestore/server": "^0.1.5-alpha.7",
     "next": "14.0.3",
     "react": "^18",
     "react-dom": "^18",
