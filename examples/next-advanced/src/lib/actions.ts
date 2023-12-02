@@ -11,7 +11,7 @@ export async function serverSideUpload(url: string) {
   }
   const res = await backendClient.publicFiles.upload({
     content: {
-      url: url,
+      url,
       extension,
     },
     options: {
