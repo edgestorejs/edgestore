@@ -9,7 +9,7 @@ class Logger {
 
   constructor(logLevel?: LogLevel) {
     this.logLevel =
-      logLevel ?? process.env.NODE_ENV === 'production' ? 'error' : 'info';
+      logLevel ?? (process.env.NODE_ENV === 'production' ? 'error' : 'info');
   }
 
   private shouldLog(level: LogLevel): boolean {
@@ -18,25 +18,25 @@ class Logger {
 
   debug(message?: any, ...optionalParams: any[]): void {
     if (this.shouldLog('debug')) {
-      console.debug(message, ...optionalParams);
+      console.debug('[EdgeStoreDebug]', message, ...optionalParams);
     }
   }
 
   info(message?: any, ...optionalParams: any[]): void {
     if (this.shouldLog('info')) {
-      console.info(message, ...optionalParams);
+      console.info('[EdgeStoreInfo]', message, ...optionalParams);
     }
   }
 
   warn(message?: any, ...optionalParams: any[]): void {
     if (this.shouldLog('warn')) {
-      console.warn(message, ...optionalParams);
+      console.warn('[EdgeStoreWarn]', message, ...optionalParams);
     }
   }
 
   error(message?: any, ...optionalParams: any[]): void {
     if (this.shouldLog('error')) {
-      console.error(message, ...optionalParams);
+      console.error('[EdgeStoreError]', message, ...optionalParams);
     }
   }
 }

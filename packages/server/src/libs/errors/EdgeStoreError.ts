@@ -74,11 +74,9 @@ class EdgeStoreError<TCode extends EdgeStoreErrorCodeKey> extends Error {
   }
 
   formattedMessage(): string {
-    return `EdgeStore${this.level === 'error' ? 'Error' : 'Info'}: ${
-      this.message
-    }${this.details ? `\n    Details: ${JSON.stringify(this.details)}` : ''}${
-      this.cause ? `\n    Caused by: ${this.cause.message}` : ''
-    }`;
+    return `${this.message}${
+      this.details ? `\n    Details: ${JSON.stringify(this.details)}` : ''
+    }${this.cause ? `\n    Caused by: ${this.cause.message}` : ''}`;
   }
 
   formattedJson(): EdgeStoreJsonResponse {

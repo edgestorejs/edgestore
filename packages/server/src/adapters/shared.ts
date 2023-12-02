@@ -7,18 +7,25 @@ import {
   type EdgeStoreRouter,
 } from '../core/internals/bucketBuilder';
 import EdgeStoreError from '../libs/errors/EdgeStoreError';
+import type Logger from '../libs/logger';
 import { type Provider } from '../providers/types';
 import { IMAGE_MIME_TYPES } from './imageTypes';
 
 // TODO: change it to 1 hour when we have a way to refresh the token
 const DEFAULT_MAX_AGE = 30 * 24 * 60 * 60; // 30 days
 
+declare const globalThis: {
+  _EDGE_STORE_LOGGER: Logger;
+};
+
 export async function init<TCtx>(params: {
   provider: Provider;
   router: EdgeStoreRouter<TCtx>;
   ctx: TCtx;
 }) {
+  const log = globalThis._EDGE_STORE_LOGGER;
   const { ctx, provider, router } = params;
+  log.debug('Running [init]', { ctx });
   const ctxToken = await encryptJWT(ctx);
   const { token } = await provider.init({
     ctx,
@@ -39,6 +46,8 @@ export async function init<TCtx>(params: {
     );
   }
   const baseUrl = await provider.getBaseUrl();
+
+  log.debug('Finished [init]', { ctx, newCookies, token, baseUrl });
 
   return {
     newCookies,
@@ -72,6 +81,8 @@ export async function requestUpload<TCtx>(params: {
     ctxToken,
     body: { bucketName, input, fileInfo },
   } = params;
+  const log = globalThis._EDGE_STORE_LOGGER;
+  log.debug('Running [requestUpload]', { bucketName, input, fileInfo });
 
   if (!ctxToken) {
     throw new EdgeStoreError({
@@ -80,6 +91,9 @@ export async function requestUpload<TCtx>(params: {
     });
   }
   const ctx = await getContext(ctxToken);
+
+  log.debug('Decrypted Context', { ctx });
+
   const bucket = router.buckets[bucketName];
   if (!bucket) {
     throw new EdgeStoreError({
@@ -88,6 +102,7 @@ export async function requestUpload<TCtx>(params: {
     });
   }
   if (bucket._def.beforeUpload) {
+    log.debug('Running [beforeUpload]');
     const canUpload = await bucket._def.beforeUpload?.({
       ctx,
       input,
@@ -100,6 +115,7 @@ export async function requestUpload<TCtx>(params: {
         temporary: fileInfo.temporary,
       },
     });
+    log.debug('Finished [beforeUpload]', { canUpload });
     if (!canUpload) {
       throw new EdgeStoreError({
         message: 'Upload not allowed for the current context',
@@ -170,6 +186,14 @@ export async function requestUpload<TCtx>(params: {
   });
   const metadata = await bucket._def.metadata?.({ ctx, input });
   const isPublic = bucket._def.accessControl === undefined;
+
+  log.debug('upload info', {
+    path,
+    metadata,
+    isPublic,
+    bucketType: bucket._def.type,
+  });
+
   const requestUploadRes = await provider.requestUpload({
     bucketName,
     bucketType: bucket._def.type,
@@ -181,6 +205,8 @@ export async function requestUpload<TCtx>(params: {
     },
   });
   const { parsedPath, pathOrder } = parsePath(path);
+
+  log.debug('Finished [requestUpload]');
 
   return {
     ...requestUploadRes,
@@ -211,6 +237,10 @@ export async function requestUploadParts<TCtx>(params: {
     ctxToken,
     body: { multipart, path },
   } = params;
+
+  const log = globalThis._EDGE_STORE_LOGGER;
+  log.debug('Running [requestUploadParts]', { multipart, path });
+
   if (!ctxToken) {
     throw new EdgeStoreError({
       message: 'Missing edgestore-ctx cookie',
@@ -218,10 +248,15 @@ export async function requestUploadParts<TCtx>(params: {
     });
   }
   await getContext(ctxToken); // just to check if the token is valid
-  return await provider.requestUploadParts({
+
+  const res = await provider.requestUploadParts({
     multipart,
     path,
   });
+
+  log.debug('Finished [requestUploadParts]');
+
+  return res;
 }
 
 export type CompleteMultipartUploadBody = {
@@ -246,6 +281,14 @@ export async function completeMultipartUpload<TCtx>(params: {
     ctxToken,
     body: { bucketName, uploadId, key, parts },
   } = params;
+
+  const log = globalThis._EDGE_STORE_LOGGER;
+  log.debug('Running [completeMultipartUpload]', {
+    bucketName,
+    uploadId,
+    key,
+  });
+
   if (!ctxToken) {
     throw new EdgeStoreError({
       message: 'Missing edgestore-ctx cookie',
@@ -260,11 +303,16 @@ export async function completeMultipartUpload<TCtx>(params: {
       code: 'BAD_REQUEST',
     });
   }
-  return await provider.completeMultipartUpload({
+
+  const res = await provider.completeMultipartUpload({
     uploadId,
     key,
     parts,
   });
+
+  log.debug('Finished [completeMultipartUpload]');
+
+  return res;
 }
 
 export type ConfirmUploadBody = {
@@ -285,6 +333,9 @@ export async function confirmUpload<TCtx>(params: {
     body: { bucketName, url },
   } = params;
 
+  const log = globalThis._EDGE_STORE_LOGGER;
+  log.debug('Running [confirmUpload]', { bucketName, url });
+
   if (!ctxToken) {
     throw new EdgeStoreError({
       message: 'Missing edgestore-ctx cookie',
@@ -300,10 +351,13 @@ export async function confirmUpload<TCtx>(params: {
     });
   }
 
-  return await provider.confirmUpload({
+  const res = await provider.confirmUpload({
     bucket,
     url: unproxyUrl(url),
   });
+
+  log.debug('Finished [confirmUpload]');
+  return res;
 }
 
 export type DeleteFileBody = {
@@ -323,6 +377,9 @@ export async function deleteFile<TCtx>(params: {
     ctxToken,
     body: { bucketName, url },
   } = params;
+
+  const log = globalThis._EDGE_STORE_LOGGER;
+  log.debug('Running [deleteFile]', { bucketName, url });
 
   if (!ctxToken) {
     throw new EdgeStoreError({
@@ -361,10 +418,14 @@ export async function deleteFile<TCtx>(params: {
       code: 'DELETE_NOT_ALLOWED',
     });
   }
-  return await provider.deleteFile({
+  const res = await provider.deleteFile({
     bucket,
     url: unproxyUrl(url),
   });
+
+  log.debug('Finished [deleteFile]');
+
+  return res;
 }
 
 async function encryptJWT(ctx: any) {

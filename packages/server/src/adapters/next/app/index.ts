@@ -38,9 +38,16 @@ export type Config<TCtx> = {
       createContext: (opts: CreateContextOptions) => MaybePromise<TCtx>;
     });
 
+declare const globalThis: {
+  _EDGE_STORE_LOGGER: Logger;
+};
+
 export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
   const { provider = EdgeStoreProvider() } = config;
   const log = new Logger(config.logLevel);
+  globalThis._EDGE_STORE_LOGGER = log;
+  log.debug('Creating Edge Store Next handler (app adapter)');
+
   return async (req: NextRequest) => {
     try {
       if (!('nextUrl' in req))
