@@ -6,7 +6,7 @@
     "build": "turbo run build --filter=@edgestore/*",
     "watch": "turbo run watch --parallel",
     "dev": "turbo run dev --parallel --filter=next-basic --filter=@edgestore/*",
-    "express:dev": "turbo  run dev --parellel --filter=express --",
+    "express:dev": "turbo  run dev --parallel --filter=express --",
     "aws:dev": "turbo run dev --parallel --filter=next-basic-aws --filter=@edgestore/*",
     "packages:dev": "turbo run dev --parallel --filter=@edgestore/*",
     "components:dev": "turbo run dev --parallel --filter=components --filter=@edgestore/*",

@@ -1,7 +1,6 @@
 import { initEdgeStore } from '@edgestore/server';
 import express from 'express';
-import { z } from 'zod';
-import { createEdgeStoreExpressHandler } from '../../packages/server/dist/adapters/express/index';
+import { createEdgeStoreExpressHandler } from '../../../packages/server/dist/adapters/express';
 
 const es = initEdgeStore.create();
 
@@ -18,13 +17,13 @@ const handler = createEdgeStoreExpressHandler({
 
 const app = express();
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT ?? 3001;
 app.use(handler);
 
 app.get('/', (req, res) => {
   console.log(req), res.send('Hello from server!');
 });
 
-app.listen(PORT, () =>
-  console.log(`⚡Server is running here 👉 https://localhost:${PORT}`),
-);
+app.listen(PORT, () => {
+  console.log(`⚡Server is running here 👉 https://localhost:${PORT}`);
+});
