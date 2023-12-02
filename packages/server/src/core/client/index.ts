@@ -49,9 +49,32 @@ export type UploadOptions = {
   temporary?: boolean;
 };
 
+type TextContent = string;
+type BlobContent = {
+  blob: Blob;
+  extension: string;
+};
+type UrlContent = {
+  url: string;
+  extension: string;
+};
+
+// type guard for `content`
+function isTextContent(
+  content: TextContent | BlobContent | UrlContent,
+): content is TextContent {
+  return typeof content === 'string';
+}
+
+function isBlobContent(
+  content: TextContent | BlobContent | UrlContent,
+): content is BlobContent {
+  return typeof content !== 'string' && 'blob' in content;
+}
+
 export type UploadFileRequest<TBucket extends AnyBuilder> = {
   /**
-   * Can be a string or a blob.
+   * Can be a string, a blob or an url.
    *
    * If it's a string, it will be converted to a blob with the type `text/plain`.
    *
@@ -69,13 +92,16 @@ export type UploadFileRequest<TBucket extends AnyBuilder> = {
    *   extension: "csv",
    * }
    * ```
+   *
+   * @example
+   * ```ts
+   * // url
+   * content: {
+   *  url: "https://example.com/my-file.csv",
+   * }
+   * ```
    */
-  content:
-    | string
-    | {
-        blob: Blob;
-        extension: string;
-      };
+  content: TextContent | BlobContent | UrlContent;
   options?: UploadOptions;
 } & (TBucket['$config']['ctx'] extends Record<string, never>
   ? {}
@@ -235,15 +261,20 @@ export function initEdgeStoreClient<TRouter extends AnyRouter>(config: {
           const ctx = 'ctx' in params ? params.ctx : {};
           const input = 'input' in params ? params.input : {};
 
-          const { blob, extension } = (() => {
-            if (typeof content === 'string') {
+          const { blob, extension } = await (async () => {
+            if (isTextContent(content)) {
               return {
                 blob: new Blob([content], { type: 'text/plain' }),
                 extension: 'txt',
               };
-            } else {
+            } else if (isBlobContent(content)) {
               return {
                 blob: content.blob,
+                extension: content.extension,
+              };
+            } else {
+              return {
+                blob: await getBlobFromUrl(content.url),
                 extension: content.extension,
               };
             }
@@ -381,6 +412,11 @@ function getUrl(url: string, baseUrl?: string) {
     return proxyUrl.toString();
   }
   return url;
+}
+
+async function getBlobFromUrl(url: string) {
+  const res = await fetch(url);
+  return await res.blob();
 }
 
 export type InferClientResponse<TRouter extends AnyRouter> = {
