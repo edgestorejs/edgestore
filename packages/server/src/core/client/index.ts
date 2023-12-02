@@ -201,7 +201,7 @@ type EdgeStoreClient<TRouter extends AnyRouter> = {
      */
     listFiles: (
       params?: ListFilesRequest<TRouter['buckets'][K]>,
-    ) => Promise<ListFilesResponse<TRouter['buckets'][K]>>;
+    ) => Promise<Prettify<ListFilesResponse<TRouter['buckets'][K]>>>;
   };
 };
 
