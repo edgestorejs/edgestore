@@ -11,6 +11,7 @@
   "dependencies": {
     "@edgestore/server": "^0.1.5-alpha.1",
     "express": "^4.18.2",
+    "nodemon": "^3.0.1",
     "zod": "^3.22.4"
   },
   "devDependencies": {
@@ -19,7 +20,6 @@
     "dotenv": "^16.3.1",
     "eslint": "^8.40.0",
     "eslint-config-next": "^13.4.9",
-    "nodemon": "^3.0.1",
     "tsx": "^4.1.4",
     "typescript": "^5.2.2"
   }
