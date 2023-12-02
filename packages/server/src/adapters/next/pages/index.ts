@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-types */
 import { type NextApiRequest, type NextApiResponse } from 'next/types';
 import { type EdgeStoreRouter } from '../../../core/internals/bucketBuilder';
 import EdgeStoreError, {
@@ -33,7 +32,7 @@ export type Config<TCtx> = {
   router: EdgeStoreRouter<TCtx>;
   logLevel?: LogLevel;
 } & (TCtx extends Record<string, never>
-  ? {}
+  ? object
   : {
       provider?: Provider;
       router: EdgeStoreRouter<TCtx>;
