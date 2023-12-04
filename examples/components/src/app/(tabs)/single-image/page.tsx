@@ -8,7 +8,7 @@ import { useState } from 'react';
 
 export default function Page() {
   return (
-    <ExampleFrame details={<SingleImageDetails />}>
+    <ExampleFrame details={<SingleImageDetails />} centered>
       <SingleImageExample />
     </ExampleFrame>
   );

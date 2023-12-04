@@ -22,10 +22,15 @@ export default function RootLayout({
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
           <div className="m-6 flex flex-col gap-3">
-            <div className="flex justify-center">
-              <ModeToggle />
+            <div className="flex flex-row items-center gap-3">
+              <div className="hidden flex-1 sm:block" />
+              <div className="flex flex-1 justify-center">
+                <Tabs />
+              </div>
+              <div className="flex flex-1 justify-end">
+                <ModeToggle />
+              </div>
             </div>
-            <Tabs />
             <EdgeStoreProvider basePath="/components/api/edgestore">
               {children}
             </EdgeStoreProvider>
