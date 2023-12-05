@@ -1,6 +1,10 @@
-import { type AnyRouter } from '@edgestore/server/core';
+import {
+  EdgeStoreApiClientError,
+  type AnyRouter,
+} from '@edgestore/server/core';
 import * as React from 'react';
 import { createNextProxy, type BucketFunctions } from './createNextProxy';
+import EdgeStoreClientError from './libs/errors/EdgeStoreError';
 
 const DEFAULT_BASE_URL =
   process.env.NEXT_PUBLIC_EDGE_STORE_BASE_URL ?? 'https://files.edgestore.dev';
@@ -14,6 +18,13 @@ type EdgeStoreContextValue<TRouter extends AnyRouter> = {
    * Can be used after a sign-in or sign-out, for example.
    */
   reset: () => Promise<void>;
+  /**
+   * The current state of the Edge Store provider.
+   *
+   * You can use this to wait for the provider to be initialized
+   * before trying to show private images on your app.
+   */
+  state: ProviderState;
 };
 
 export function createEdgeStoreProvider<TRouter extends AnyRouter>(opts?: {
@@ -75,6 +86,23 @@ export function createEdgeStoreProvider<TRouter extends AnyRouter>(opts?: {
   };
 }
 
+type ProviderState =
+  | {
+      loading: true;
+      initialized: false;
+      error: false;
+    }
+  | {
+      loading: false;
+      initialized: false;
+      error: true;
+    }
+  | {
+      loading: false;
+      initialized: true;
+      error: false;
+    };
+
 function EdgeStoreProviderInner<TRouter extends AnyRouter>({
   children,
   context,
@@ -87,25 +115,75 @@ function EdgeStoreProviderInner<TRouter extends AnyRouter>({
   maxConcurrentUploads?: number;
 }) {
   const apiPath = basePath ? `${basePath}` : '/api/edgestore';
+  const [state, setState] = React.useState<ProviderState>({
+    loading: true,
+    initialized: false,
+    error: false,
+  });
   const uploadingCountRef = React.useRef(0);
+  const initExecuted = React.useRef(false); // to make sure we don't run init twice
   React.useEffect(() => {
-    void init();
+    if (!initExecuted.current) {
+      void init();
+    }
+
+    return () => {
+      initExecuted.current = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function init() {
-    const res = await fetch(`${apiPath}/init`, {
-      method: 'POST',
-    });
-    if (res.ok) {
-      const json = await res.json();
-      await fetch(`${DEFAULT_BASE_URL}/_init`, {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          'x-edgestore-token': json.token,
-        },
+    try {
+      setState({
+        loading: true,
+        initialized: false,
+        error: false,
       });
+      const res = await fetch(`${apiPath}/init`, {
+        method: 'POST',
+      });
+      if (res.ok) {
+        const json = await res.json();
+        const innerRes = await fetch(`${DEFAULT_BASE_URL}/_init`, {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            'x-edgestore-token': json.token,
+          },
+        });
+        if (innerRes.ok) {
+          // update state
+          setState({
+            loading: false,
+            initialized: true,
+            error: false,
+          });
+        } else {
+          setState({
+            loading: false,
+            initialized: false,
+            error: true,
+          });
+          throw new EdgeStoreClientError("Couldn't initialize Edge Store.");
+        }
+      } else {
+        setState({
+          loading: false,
+          initialized: false,
+          error: true,
+        });
+        throw new EdgeStoreApiClientError({
+          response: await res.json(),
+        });
+      }
+    } catch (err) {
+      setState({
+        loading: false,
+        initialized: false,
+        error: true,
+      });
+      throw err;
     }
   }
 
@@ -123,6 +201,7 @@ function EdgeStoreProviderInner<TRouter extends AnyRouter>({
             maxConcurrentUploads,
           }),
           reset,
+          state,
         }}
       >
         {children}
