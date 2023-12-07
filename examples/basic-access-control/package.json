@@ -9,8 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@edgestore/react": "^0.1.5-alpha.8",
-    "@edgestore/server": "^0.1.5-alpha.8",
+    "@edgestore/react": "^0.1.5-alpha.1",
+    "@edgestore/server": "^0.1.5-alpha.1",
     "next": "14.0.3",
     "react": "^18",
     "react-dom": "^18",
