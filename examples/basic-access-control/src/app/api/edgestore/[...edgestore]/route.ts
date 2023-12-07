@@ -24,10 +24,8 @@ const es = initEdgeStore.context<Context>().create();
  * This is the main router for the Edge Store buckets.
  */
 const edgeStoreRouter = es.router({
-  privateFiles: es
-    .fileBucket({
-      accept: ['image/*'],
-    })
+  privateImages: es
+    .imageBucket()
     .input(z.object({ type: z.enum(['post', 'article']) }))
     .path(({ input }) => [{ type: input.type }])
     .accessControl({

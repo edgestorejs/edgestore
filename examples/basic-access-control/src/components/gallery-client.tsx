@@ -5,7 +5,7 @@ import { useEdgeStore, type ClientResponse } from '@/lib/edgestore';
 export function GalleryClient({
   files,
 }: {
-  files: ClientResponse['privateFiles']['listFiles']['data'];
+  files: ClientResponse['privateImages']['listFiles']['data'];
 }) {
   const { state } = useEdgeStore();
 
@@ -29,7 +29,7 @@ export function GalleryClient({
       {files.map((file) => (
         <div key={file.url}>
           <img
-            src={file.url}
+            src={file.thumbnailUrl ?? file.url}
             alt="Image"
             style={{
               width: '100%',

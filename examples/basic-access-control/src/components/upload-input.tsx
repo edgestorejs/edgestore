@@ -20,7 +20,7 @@ export function UploadInput() {
       <button
         onClick={async () => {
           if (file) {
-            const res = await edgestore.privateFiles.upload({
+            const res = await edgestore.privateImages.upload({
               file,
               input: {
                 type: 'post',

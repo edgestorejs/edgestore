@@ -19,6 +19,6 @@ export default function Home() {
 
 async function Gallery() {
   unstable_noStore();
-  const files = await backendClient.privateFiles.listFiles();
+  const files = await backendClient.privateImages.listFiles();
   return <GalleryClient files={files.data} />;
 }
