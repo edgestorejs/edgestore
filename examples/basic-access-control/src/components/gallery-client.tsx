@@ -1,21 +1,21 @@
 'use client';
 
-import { useEdgeStore, type ClientResponse } from '@/lib/edgestore';
+import { type ClientResponse } from '@/lib/edgestore';
 
 export function GalleryClient({
   files,
 }: {
   files: ClientResponse['privateFiles']['listFiles']['data'];
 }) {
-  const { state } = useEdgeStore();
+  // const { state } = useEdgeStore();
 
-  if (state.error) {
-    return <div>Error</div>;
-  }
+  // if (state.error) {
+  //   return <div>Error</div>;
+  // }
 
-  if (!state.initialized) {
-    return <div>Loading...</div>;
-  }
+  // if (!state.initialized) {
+  //   return <div>Loading...</div>;
+  // }
 
   return (
     <div

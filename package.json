@@ -9,6 +9,7 @@
     "aws:dev": "turbo run dev --parallel --filter=next-basic-aws --filter=@edgestore/*",
     "packages:dev": "turbo run dev --parallel --filter=@edgestore/*",
     "components:dev": "turbo run dev --parallel --filter=components --filter=@edgestore/*",
+    "basic-access-control:dev": "turbo run dev --parallel --filter=basic-access-control --filter=@edgestore/*",
     "docs:dev": "pnpm --filter docs run start",
     "lint": "turbo lint",
     "lint-fix": "turbo lint -- --fix && manypkg fix && pnpm format:write",
