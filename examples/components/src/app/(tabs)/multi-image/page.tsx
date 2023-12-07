@@ -65,7 +65,7 @@ function MultiImageExample() {
                 ) {
                   return;
                 }
-                const res = await edgestore.myPublicFiles.upload({
+                const res = await edgestore.myPublicImages.upload({
                   file: fileState.file,
                   onProgressChange: async (progress) => {
                     updateFileProgress(fileState.key, progress);
