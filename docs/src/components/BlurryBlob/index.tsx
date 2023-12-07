@@ -41,7 +41,7 @@ export function BlurryBlob(props: {
         right,
         bottom,
         left,
-        filter: `blur(120px)`,
+        filter: `blur(180px)`,
         transform: `translate(-50%, 0)`,
       }}
     >
