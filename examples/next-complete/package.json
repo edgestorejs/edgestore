@@ -1,6 +1,6 @@
 {
   "name": "next-complete",
-  "version": "0.1.5-alpha.8",
+  "version": "0.1.5-alpha.9",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -10,8 +10,8 @@
     "lint-fix": "pnpm lint --fix"
   },
   "dependencies": {
-    "@edgestore/react": "^0.1.5-alpha.8",
-    "@edgestore/server": "^0.1.5-alpha.8",
+    "@edgestore/react": "^0.1.5-alpha.9",
+    "@edgestore/server": "^0.1.5-alpha.9",
     "@next/font": "^13.4.9",
     "next": "^13.4.9",
     "next-superjson-plugin": "^0.5.9",
