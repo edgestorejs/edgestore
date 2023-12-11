@@ -1,13 +1,13 @@
 import { type RequestUploadRes } from '@edgestore/server/adapters';
 import {
-  EdgeStoreApiClientError,
   type AnyRouter,
   type InferBucketPathObject,
   type InferMetadataObject,
   type UploadOptions,
 } from '@edgestore/server/core';
 import { type z } from 'zod';
-import EdgeStoreClientError from './libs/errors/EdgeStoreError';
+import EdgeStoreClientError from './libs/errors/EdgeStoreClientError';
+import { handleError } from './libs/errors/handleError';
 
 /**
  * @internal
@@ -160,9 +160,7 @@ async function uploadFile(
       },
     });
     if (!res.ok) {
-      throw new EdgeStoreApiClientError({
-        response: await res.json(),
-      });
+      await handleError(res);
     }
     const json = (await res.json()) as RequestUploadRes;
     if ('multipart' in json) {
@@ -327,9 +325,7 @@ async function multipartUpload(params: {
     },
   });
   if (!res.ok) {
-    throw new EdgeStoreApiClientError({
-      response: await res.json(),
-    });
+    await handleError(res);
   }
 }
 
@@ -358,9 +354,7 @@ async function confirmUpload(
     },
   });
   if (!res.ok) {
-    throw new EdgeStoreApiClientError({
-      response: await res.json(),
-    });
+    await handleError(res);
   }
   return res.json();
 }
@@ -390,9 +384,7 @@ async function deleteFile(
     },
   });
   if (!res.ok) {
-    throw new EdgeStoreApiClientError({
-      response: await res.json(),
-    });
+    await handleError(res);
   }
   return res.json();
 }

@@ -1,10 +1,8 @@
-import {
-  EdgeStoreApiClientError,
-  type AnyRouter,
-} from '@edgestore/server/core';
+import { type AnyRouter } from '@edgestore/server/core';
 import * as React from 'react';
 import { createNextProxy, type BucketFunctions } from './createNextProxy';
-import EdgeStoreClientError from './libs/errors/EdgeStoreError';
+import EdgeStoreClientError from './libs/errors/EdgeStoreClientError';
+import { handleError } from './libs/errors/handleError';
 
 const DEFAULT_BASE_URL =
   process.env.NEXT_PUBLIC_EDGE_STORE_BASE_URL ?? 'https://files.edgestore.dev';
@@ -173,9 +171,7 @@ function EdgeStoreProviderInner<TRouter extends AnyRouter>({
           initialized: false,
           error: true,
         });
-        throw new EdgeStoreApiClientError({
-          response: await res.json(),
-        });
+        await handleError(res);
       }
     } catch (err) {
       setState({
