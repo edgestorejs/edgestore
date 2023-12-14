@@ -21,7 +21,7 @@ npm install @aws-sdk/client-s3 @aws-sdk/s3-request-presigner
 
 Then you can set the provider in the router.
 
-```ts twoslash {7, 13}
+```ts twoslash {6, 12}
 // @noErrors
 import { initEdgeStore } from '@edgestore/server';
 import {

@@ -21,7 +21,7 @@ npm install @azure/storage-blob
 
 Then you can set the provider in the router.
 
-```ts twoslash {7, 13}
+```ts twoslash {6, 12}
 // @noErrors
 import { initEdgeStore } from '@edgestore/server';
 import {

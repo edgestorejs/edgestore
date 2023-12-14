@@ -11,7 +11,7 @@ You can optionally pass in a provider to the `createEdgeStoreNextHandler` functi
 
 The Edge Store Provider is the default provider. If you followed the documentation, you already have it configured in your app.
 
-```ts twoslash {7, 13}
+```ts twoslash {6, 12}
 // @noErrors
 import { initEdgeStore } from '@edgestore/server';
 import {
