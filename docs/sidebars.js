@@ -28,7 +28,12 @@ const sidebars = {
         title: 'Getting Started',
         slug: '/getting-started',
       },
-      items: ['main/quick-start', 'main/configuration', 'main/utils'],
+      items: [
+        'main/quick-start',
+        'main/configuration',
+        'main/backend-client',
+        'main/utils',
+      ],
     },
     {
       type: 'category',

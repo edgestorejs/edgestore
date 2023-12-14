@@ -79,27 +79,22 @@ export type UploadFileRequest<TBucket extends AnyBuilder> = {
    * If it's a string, it will be converted to a blob with the type `text/plain`.
    *
    * @example
-   * ```ts
    * // string
    * content: "some text"
-   * ```
    *
    * @example
-   * ```ts
    * // blob
    * content: {
    *   blob: new Blob([text], { type: "text/csv" }),
    *   extension: "csv",
    * }
-   * ```
    *
    * @example
-   * ```ts
    * // url
    * content: {
-   *  url: "https://example.com/my-file.csv",
+   *   url: "https://example.com/my-file.csv",
+   *   extension: "csv",
    * }
-   * ```
    */
   content: TextContent | BlobContent | UrlContent;
   options?: UploadOptions;
