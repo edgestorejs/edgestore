@@ -57,7 +57,9 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
             'Error running the pages adapter. Make sure you are importing the correct adapter in your router configuration',
           code: 'SERVER_ERROR',
         });
-      if (req.url?.includes?.('/init')) {
+      if (req.url?.includes?.('/health')) {
+        res.send('OK');
+      } else if (req.url?.includes?.('/init')) {
         let ctx = {} as TCtx;
         try {
           ctx =

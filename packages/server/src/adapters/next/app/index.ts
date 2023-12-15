@@ -56,7 +56,11 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
             'Error running the app adapter. Make sure you are importing the correct adapter in your router configuration',
           code: 'SERVER_ERROR',
         });
-      if (req.nextUrl.pathname.endsWith('/init')) {
+      if (req.nextUrl.pathname.endsWith('/health')) {
+        return new Response('OK', {
+          status: 200,
+        });
+      } else if (req.nextUrl.pathname.endsWith('/init')) {
         let ctx = {} as TCtx;
         try {
           ctx =
