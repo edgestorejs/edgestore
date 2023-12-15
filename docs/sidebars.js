@@ -33,6 +33,9 @@ const sidebars = {
         'main/configuration',
         'main/backend-client',
         'main/utils',
+        'main/error-handling',
+        'main/logging',
+        'main/troubleshooting',
       ],
     },
     {
