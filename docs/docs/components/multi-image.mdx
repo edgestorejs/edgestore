@@ -1,3 +1,147 @@
+---
+id: multi-image
+title: Multi-image Upload Component
+sidebar_label: Multi-image
+slug: /components/multi-image
+---
+
+import TabItem from '@theme/TabItem';
+import Tabs from '@theme/Tabs';
+import { ExternalLink } from 'lucide-react';
+import { CollapsibleCode } from '../../src/components/CollapsibleCode';
+import { Button } from '../../src/components/ui/Button';
+import { MultiImageDropzoneUsage } from '../../src/components/upload/MultiImageDropzoneUsage';
+
+# Multi-image
+
+<div className="flex flex-col items-center gap-4">
+  <Button asChild variant="outline">
+    <a
+      href="https://examples.edgestore.dev/components/multi-image"
+      target="_blank"
+      rel="noreferrer"
+      className="flex items-center gap-2"
+    >
+      See it in action
+      <ExternalLink size={16} />
+    </a>
+  </Button>
+  <div className="w-full">
+    <MultiImageDropzoneUsage />
+  </div>
+</div>
+
+## Usage
+
+<CollapsibleCode>
+
+```tsx
+'use client';
+
+import {
+  MultiImageDropzone,
+  type FileState,
+} from '@/components/MultiImageDropzone';
+import { useEdgeStore } from '@/lib/edgestore';
+import { useState } from 'react';
+
+export function MultiImageDropzoneUsage() {
+  const [fileStates, setFileStates] = useState<FileState[]>([]);
+  const { edgestore } = useEdgeStore();
+
+  function updateFileProgress(key: string, progress: FileState['progress']) {
+    setFileStates((fileStates) => {
+      const newFileStates = structuredClone(fileStates);
+      const fileState = newFileStates.find(
+        (fileState) => fileState.key === key,
+      );
+      if (fileState) {
+        fileState.progress = progress;
+      }
+      return newFileStates;
+    });
+  }
+
+  return (
+    <div>
+      <MultiImageDropzone
+        value={fileStates}
+        dropzoneOptions={{
+          maxFiles: 6,
+        }}
+        onChange={(files) => {
+          setFileStates(files);
+        }}
+        onFilesAdded={async (addedFiles) => {
+          setFileStates([...fileStates, ...addedFiles]);
+          await Promise.all(
+            addedFiles.map(async (addedFileState) => {
+              try {
+                const res = await edgestore.publicFiles.upload({
+                  file: addedFileState.file,
+                  onProgressChange: async (progress) => {
+                    updateFileProgress(addedFileState.key, progress);
+                    if (progress === 100) {
+                      // wait 1 second to set it to complete
+                      // so that the user can see the progress bar at 100%
+                      await new Promise((resolve) => setTimeout(resolve, 1000));
+                      updateFileProgress(addedFileState.key, 'COMPLETE');
+                    }
+                  },
+                });
+                console.log(res);
+              } catch (err) {
+                updateFileProgress(addedFileState.key, 'ERROR');
+              }
+            }),
+          );
+        }}
+      />
+    </div>
+  );
+}
+```
+
+</CollapsibleCode>
+
+## Installation
+
+:::info
+This component uses tailwind for styling.<br />
+Feel free to change `lucide-react` to any other icon library you prefer.
+:::
+
+First, let's install the required dependencies:
+
+<Tabs>
+<TabItem value="npm" label="npm">
+
+```bash
+npm install tailwind-merge react-dropzone lucide-react
+```
+
+</TabItem>
+<TabItem value="pnpm" label="pnpm">
+
+```bash
+pnpm add tailwind-merge react-dropzone lucide-react
+```
+
+</TabItem>
+<TabItem value="yarn" label="yarn">
+
+```bash
+yarn add tailwind-merge react-dropzone lucide-react
+```
+
+</TabItem>
+</Tabs>
+
+Now just copy the following component into your components folder.
+
+<CollapsibleCode>
+
+```tsx
 'use client';
 
 import { formatFileSize } from '@edgestore/react/utils';
@@ -146,7 +290,10 @@ const MultiImageDropzone = React.forwardRef<HTMLInputElement, InputProps>(
         <div className="grid grid-cols-[repeat(1,1fr)] gap-2 sm:grid-cols-[repeat(2,1fr)] lg:grid-cols-[repeat(3,1fr)] xl:grid-cols-[repeat(4,1fr)]">
           {/* Images */}
           {value?.map(({ file, progress }, index) => (
-            <div key={index} className={variants.image + ' aspect-square'}>
+            <div
+              key={index}
+              className={variants.image + ' aspect-square h-full'}
+            >
               <img
                 className="h-full w-full rounded-md object-cover"
                 src={imageUrls[index]}
@@ -276,3 +423,6 @@ function CircleProgress({ progress }: { progress: number }) {
     </div>
   );
 }
+```
+
+</CollapsibleCode>

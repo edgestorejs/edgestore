@@ -47,7 +47,11 @@ const sidebars = {
         title: 'Components',
         slug: '/components',
       },
-      items: ['components/image', 'components/multi-file'],
+      items: [
+        'components/image',
+        'components/multi-image',
+        'components/multi-file',
+      ],
     },
     // {
     //   type: 'category',
