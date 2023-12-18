@@ -1,6 +1,6 @@
 {
   "name": "ts-test",
-  "version": "1.0.0",
+  "version": "0.1.5-alpha.12",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -15,7 +15,7 @@
     "typescript": "^5.3.3"
   },
   "dependencies": {
-    "@edgestore/react": "^0.1.5-alpha.11",
-    "@edgestore/server": "^0.1.5-alpha.11"
+    "@edgestore/react": "^0.1.5-alpha.12",
+    "@edgestore/server": "^0.1.5-alpha.12"
   }
 }
