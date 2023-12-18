@@ -1,0 +1,17 @@
+{
+  "name": "express-basic",
+  "version": "0.1.5-alpha.11",
+  "private": true,
+  "scripts": {
+    "dev": "dotenv -e .env.local -- tsx src/index.ts"
+  },
+  "dependencies": {
+    "@edgestore/server": "^0.1.5-alpha.11",
+    "@edgestore/react": "^0.1.5-alpha.11"
+  },
+  "devDependencies": {
+    "dotenv": "^16.3.1",
+    "tsx": "^4.1.4",
+    "typescript": "^5.2.2"
+  }
+}
