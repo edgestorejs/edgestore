@@ -201,7 +201,13 @@ async function uploadFile(
  * we need to proxy the file through the server.
  */
 function getUrl(url: string, apiPath: string) {
-  if (process.env.NODE_ENV === 'development' && !url.includes('/_public/')) {
+  const mode =
+    process !== undefined
+      ? process.env.NODE_ENV
+      : import.meta.env?.DEV
+      ? 'development'
+      : 'production';
+  if (mode === 'development' && !url.includes('/_public/')) {
     const proxyUrl = new URL(window.location.origin);
     proxyUrl.pathname = `${apiPath}/proxy-file`;
     proxyUrl.search = new URLSearchParams({
