@@ -204,7 +204,8 @@ function getUrl(url: string, apiPath: string) {
   const mode =
     process !== undefined
       ? process.env.NODE_ENV
-      : import.meta.env?.DEV
+      : // @ts-expect-error - DEV is injected by Vite
+      import.meta.env?.DEV
       ? 'development'
       : 'production';
   if (mode === 'development' && !url.includes('/_public/')) {
