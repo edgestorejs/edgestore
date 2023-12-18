@@ -1,6 +1,6 @@
 {
   "name": "@edgestore/react",
-  "version": "0.1.5-alpha.12",
+  "version": "0.1.5-alpha.13",
   "description": "Upload files with ease from React/Next.js",
   "homepage": "https://edgestore.dev",
   "repository": "https://github.com/edgestorejs/edgestore.git",
@@ -60,14 +60,14 @@
     "uuid": "^9.0.0"
   },
   "peerDependencies": {
-    "@edgestore/server": "0.1.5-alpha.12",
+    "@edgestore/server": "0.1.5-alpha.13",
     "next": "*",
     "react": ">=16.8.0",
     "react-dom": ">=16.8.0",
     "zod": ">=3.0.0"
   },
   "devDependencies": {
-    "@edgestore/server": "0.1.5-alpha.12",
+    "@edgestore/server": "0.1.5-alpha.13",
     "@types/cookie": "^0.5.1",
     "@types/node": "^18.11.18",
     "@types/uuid": "^9.0.1",
@@ -77,5 +77,5 @@
     "typescript": "^5.1.6",
     "zod": "^3.21.4"
   },
-  "gitHead": "d83c9799cd38def8b37f6c752332c568c37cf329"
+  "gitHead": "ddd35396955072690b24e55c37f6423445d26644"
 }

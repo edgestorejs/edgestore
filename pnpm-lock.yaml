@@ -432,7 +432,7 @@ importers:
     devDependencies:
       '@types/node':
         specifier: latest
-        version: 20.10.4
+        version: 20.10.5
       '@types/react':
         specifier: 18.2.38
         version: 18.2.38
@@ -518,25 +518,6 @@ importers:
       typescript:
         specifier: ^5.1.6
         version: 5.1.6
-
-  examples/ts-test:
-    dependencies:
-      '@edgestore/react':
-        specifier: link:../../packages/react
-        version: link:../../packages/react
-      '@edgestore/server':
-        specifier: link:../../packages/server
-        version: link:../../packages/server
-    devDependencies:
-      dotenv:
-        specifier: ^16.3.1
-        version: 16.3.1
-      tsx:
-        specifier: ^4.6.2
-        version: 4.6.2
-      typescript:
-        specifier: ^5.3.3
-        version: 5.3.3
 
   examples/vite-basic:
     dependencies:
@@ -8256,6 +8237,12 @@ packages:
 
   /@types/node@20.10.4:
     resolution: {integrity: sha512-D08YG6rr8X90YB56tSIuBaddy/UXAA9RKJoFvrsnogAum/0pmjkgi4+2nx96A330FmioegBWmEYQ+syqCFaveg==}
+    dependencies:
+      undici-types: 5.26.5
+    dev: true
+
+  /@types/node@20.10.5:
+    resolution: {integrity: sha512-nNPsNE65wjMxEKI93yOP+NPGGBJz/PoN3kZsVLee0XMiJolxSekEVD8wRwBUBqkwc7UWop0edW50yrCQW4CyRw==}
     dependencies:
       undici-types: 5.26.5
     dev: true
