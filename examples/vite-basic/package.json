@@ -1,7 +1,7 @@
 {
   "name": "vite-basic",
   "private": true,
-  "version": "0.1.5-alpha.10",
+  "version": "0.1.5-alpha.11",
   "type": "module",
   "scripts": {
     "dev": "vite",
