@@ -1,4 +1,4 @@
-import { type Simplify } from '../../types';
+import { type Simplify } from '../types';
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 export const EDGE_STORE_ERROR_CODES = {
@@ -47,7 +47,7 @@ export type EdgeStoreJsonResponse = Simplify<
     }
 >;
 
-class EdgeStoreError<TCode extends EdgeStoreErrorCodeKey> extends Error {
+export class EdgeStoreError<TCode extends EdgeStoreErrorCodeKey> extends Error {
   public readonly cause?: Error;
   public readonly code: TCode;
   public readonly level: 'error' | 'warn';
@@ -88,5 +88,3 @@ class EdgeStoreError<TCode extends EdgeStoreErrorCodeKey> extends Error {
     } satisfies EdgeStoreJsonResponse;
   }
 }
-
-export default EdgeStoreError;

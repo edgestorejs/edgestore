@@ -1,13 +1,14 @@
-import { type NextRequest } from 'next/server';
-import { type EdgeStoreRouter } from '../../../core/internals/bucketBuilder';
-import EdgeStoreError, {
+import {
   EDGE_STORE_ERROR_CODES,
+  EdgeStoreError,
   type EdgeStoreErrorCodeKey,
-} from '../../../libs/errors/EdgeStoreError';
+  type EdgeStoreRouter,
+  type MaybePromise,
+  type Provider,
+} from '@edgestore/shared';
+import { type NextRequest } from 'next/server';
 import Logger, { type LogLevel } from '../../../libs/logger';
 import { EdgeStoreProvider } from '../../../providers/edgestore';
-import { type Provider } from '../../../providers/types';
-import { type MaybePromise } from '../../../types';
 import {
   completeMultipartUpload,
   confirmUpload,

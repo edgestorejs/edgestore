@@ -1,14 +1,18 @@
+import {
+  EdgeStoreError,
+  type AnyBuilder,
+  type EdgeStoreRouter,
+  type Provider,
+  type SharedDeleteFileRes,
+  type SharedInitRes,
+  type SharedRequestUploadPartsRes,
+  type SharedRequestUploadRes,
+} from '@edgestore/shared';
 import { hkdf } from '@panva/hkdf';
 import { serialize } from 'cookie';
 import { EncryptJWT, jwtDecrypt } from 'jose';
 import { v4 as uuidv4 } from 'uuid';
-import {
-  type AnyBuilder,
-  type EdgeStoreRouter,
-} from '../core/internals/bucketBuilder';
-import EdgeStoreError from '../libs/errors/EdgeStoreError';
 import type Logger from '../libs/logger';
-import { type Provider } from '../providers/types';
 import { IMAGE_MIME_TYPES } from './imageTypes';
 
 // TODO: change it to 1 hour when we have a way to refresh the token
@@ -22,7 +26,7 @@ export async function init<TCtx>(params: {
   provider: Provider;
   router: EdgeStoreRouter<TCtx>;
   ctx: TCtx;
-}) {
+}): Promise<SharedInitRes> {
   const log = globalThis._EDGE_STORE_LOGGER;
   const { ctx, provider, router } = params;
   log.debug('Running [init]', { ctx });
@@ -74,7 +78,7 @@ export async function requestUpload<TCtx>(params: {
   router: EdgeStoreRouter<TCtx>;
   ctxToken: string | undefined;
   body: RequestUploadBody;
-}) {
+}): Promise<SharedRequestUploadRes> {
   const {
     provider,
     router,
@@ -231,7 +235,7 @@ export async function requestUploadParts<TCtx>(params: {
   router: EdgeStoreRouter<TCtx>;
   ctxToken: string | undefined;
   body: RequestUploadPartsParams;
-}) {
+}): Promise<SharedRequestUploadPartsRes> {
   const {
     provider,
     ctxToken,
@@ -370,7 +374,7 @@ export async function deleteFile<TCtx>(params: {
   router: EdgeStoreRouter<TCtx>;
   ctxToken: string | undefined;
   body: DeleteFileBody;
-}) {
+}): Promise<SharedDeleteFileRes> {
   const {
     provider,
     router,
@@ -544,10 +548,3 @@ function unproxyUrl(url: string) {
   }
   return url;
 }
-
-export type InitRes = Awaited<ReturnType<typeof init>>;
-export type RequestUploadRes = Awaited<ReturnType<typeof requestUpload>>;
-export type RequestUploadPartsRes = Awaited<
-  ReturnType<typeof requestUploadParts>
->;
-export type DeleteFileRes = Awaited<ReturnType<typeof deleteFile>>;

@@ -1,10 +1,10 @@
-import { type RequestUploadRes } from '@edgestore/server/adapters';
 import {
   type AnyRouter,
   type InferBucketPathObject,
   type InferMetadataObject,
+  type SharedRequestUploadRes,
   type UploadOptions,
-} from '@edgestore/server/core';
+} from '@edgestore/shared';
 import { type z } from 'zod';
 import EdgeStoreClientError from './libs/errors/EdgeStoreClientError';
 import { handleError } from './libs/errors/handleError';
@@ -87,10 +87,11 @@ export function createNextProxy<TRouter extends AnyRouter>({
               await new Promise((resolve) => setTimeout(resolve, 300));
             }
             uploadingCountRef.current++;
-            return await uploadFile(params, {
+            const test = await uploadFile(params, {
               bucketName: bucketName as string,
               apiPath,
             });
+            return test;
           } finally {
             uploadingCountRef.current--;
           }
@@ -162,7 +163,7 @@ async function uploadFile(
     if (!res.ok) {
       await handleError(res);
     }
-    const json = (await res.json()) as RequestUploadRes;
+    const json = (await res.json()) as SharedRequestUploadRes;
     if ('multipart' in json) {
       await multipartUpload({
         bucketName,
@@ -257,7 +258,10 @@ const uploadFileInner = async (
 
 async function multipartUpload(params: {
   bucketName: string;
-  multipartInfo: Extract<RequestUploadRes, { multipart: any }>['multipart'];
+  multipartInfo: Extract<
+    SharedRequestUploadRes,
+    { multipart: any }
+  >['multipart'];
   onProgressChange: OnProgressChangeHandler | undefined;
   file: File;
   apiPath: string;

@@ -1,7 +1,10 @@
-import { type AnyRouter } from '..';
+import {
+  EdgeStoreError,
+  type AnyContext,
+  type AnyMetadata,
+  type AnyRouter,
+} from '@edgestore/shared';
 import EdgeStoreCredentialsError from '../../libs/errors/EdgeStoreCredentialsError';
-import EdgeStoreError from '../../libs/errors/EdgeStoreError';
-import { type AnyContext, type AnyMetadata } from '../internals/bucketBuilder';
 
 const API_ENDPOINT =
   process.env.EDGE_STORE_API_ENDPOINT ?? 'https://api.edgestore.dev';

@@ -70,6 +70,7 @@
   "pnpm": {
     "overrides": {
       "@edgestore/server": "link:./packages/server",
+      "@edgestore/shared": "link:./packages/shared",
       "@edgestore/react": "link:./packages/react"
     }
   }

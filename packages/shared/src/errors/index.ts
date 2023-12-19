@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
-
 import { type EdgeStoreJsonResponse } from './EdgeStoreError';
 
 export class EdgeStoreApiClientError extends Error {
@@ -12,3 +10,5 @@ export class EdgeStoreApiClientError extends Error {
     this.data = opts.response;
   }
 }
+
+export * from './EdgeStoreError';

@@ -1,6 +1,6 @@
 import { BlobServiceClient } from '@azure/storage-blob';
+import { type Provider } from '@edgestore/shared';
 import { v4 as uuidv4 } from 'uuid';
-import { type Provider } from '../types';
 
 export type AzureProviderOptions = {
   /**

@@ -1,14 +1,16 @@
 /* eslint-disable @typescript-eslint/ban-types */
-import { type z, type ZodNever } from 'zod';
-import { type AnyRouter, type Comparison } from '..';
-import { buildPath, parsePath } from '../../adapters/shared';
-import { type Prettify, type Simplify } from '../../types';
 import {
   type AnyBuilder,
+  type AnyRouter,
   type InferBucketPathKeys,
   type InferBucketPathObject,
   type InferMetadataObject,
-} from '../internals/bucketBuilder';
+  type Prettify,
+  type Simplify,
+} from '@edgestore/shared';
+import { type z, type ZodNever } from 'zod';
+import { type Comparison } from '..';
+import { buildPath, parsePath } from '../../adapters/shared';
 import { initEdgeStoreSdk } from '../sdk';
 
 export type GetFileRes<TBucket extends AnyBuilder> = {

@@ -1,4 +1,4 @@
-import { EdgeStoreApiClientError } from '@edgestore/server/core';
+import { EdgeStoreApiClientError } from '@edgestore/shared';
 import EdgeStoreClientError from './EdgeStoreClientError';
 
 export async function handleError(res: Response): Promise<never> {

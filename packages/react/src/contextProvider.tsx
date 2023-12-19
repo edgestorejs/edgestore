@@ -1,4 +1,4 @@
-import { type AnyRouter } from '@edgestore/server/core';
+import { type AnyRouter } from '@edgestore/shared';
 import * as React from 'react';
 import { createNextProxy, type BucketFunctions } from './createNextProxy';
 import EdgeStoreClientError from './libs/errors/EdgeStoreClientError';

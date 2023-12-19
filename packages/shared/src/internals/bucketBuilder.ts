@@ -1,9 +1,5 @@
 import { z } from 'zod';
-import {
-  type KeysOfUnion,
-  type MaybePromise,
-  type Simplify,
-} from '../../types';
+import { type KeysOfUnion, type MaybePromise, type Simplify } from '../types';
 import { createPathParamProxy } from './createPathParamProxy';
 
 type Merge<TType, TWith> = {
@@ -359,7 +355,7 @@ function createBuilder<
       }) as any;
     },
     path(pathResolver) {
-      // TODO: Should throw a runtime error in the followin cases:
+      // TODO: Should throw a runtime error in the following cases:
       // 1. in case of multiple keys in one object
       // 2. in case of duplicate keys
       const pathParamProxy = createPathParamProxy();
@@ -411,6 +407,8 @@ export type EdgeStoreRouter<TCtx> = {
   };
   buckets: Record<string, Builder<TCtx, AnyDef>>;
 };
+
+export type AnyRouter = EdgeStoreRouter<any>;
 
 function createRouterFactory<TCtx>() {
   return function createRouterInner<
