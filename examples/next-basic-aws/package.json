@@ -1,6 +1,6 @@
 {
   "name": "next-basic-aws",
-  "version": "0.1.5-alpha.14",
+  "version": "0.1.5-alpha.15",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -11,8 +11,8 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.420.0",
     "@aws-sdk/s3-request-presigner": "^3.420.0",
-    "@edgestore/react": "^0.1.5-alpha.14",
-    "@edgestore/server": "^0.1.5-alpha.14",
+    "@edgestore/react": "^0.1.5-alpha.15",
+    "@edgestore/server": "^0.1.5-alpha.15",
     "next": "latest",
     "react": "latest",
     "react-dom": "latest"

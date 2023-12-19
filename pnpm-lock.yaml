@@ -6,6 +6,7 @@ settings:
 
 overrides:
   '@edgestore/server': link:./packages/server
+  '@edgestore/shared': link:./packages/shared
   '@edgestore/react': link:./packages/react
 
 importers:
@@ -151,7 +152,7 @@ importers:
         specifier: ^1.13.2
         version: 1.13.2
       zod:
-        specifier: ^3.21.4
+        specifier: 3.21.4
         version: 3.21.4
     devDependencies:
       '@docusaurus/module-type-aliases':
@@ -197,7 +198,7 @@ importers:
         specifier: ^18
         version: 18.2.0(react@18.2.0)
       zod:
-        specifier: ^3.21.4
+        specifier: 3.21.4
         version: 3.21.4
     devDependencies:
       '@types/node':
@@ -279,7 +280,7 @@ importers:
         specifier: ^5.1.6
         version: 5.1.6
       zod:
-        specifier: ^3.21.4
+        specifier: 3.21.4
         version: 3.21.4
 
   examples/express:
@@ -356,7 +357,7 @@ importers:
         specifier: ^18
         version: 18.2.0(react@18.2.0)
       zod:
-        specifier: ^3.21.4
+        specifier: 3.21.4
         version: 3.21.4
     devDependencies:
       '@types/node':
@@ -390,7 +391,7 @@ importers:
         specifier: ^18
         version: 18.2.0(react@18.2.0)
       zod:
-        specifier: ^3.21.4
+        specifier: 3.21.4
         version: 3.21.4
     devDependencies:
       '@types/node':
@@ -488,7 +489,7 @@ importers:
         specifier: ^1.13.2
         version: 1.13.2
       zod:
-        specifier: ^3.21.4
+        specifier: 3.21.4
         version: 3.21.4
     devDependencies:
       '@types/node':
@@ -580,9 +581,9 @@ importers:
         specifier: ^9.0.0
         version: 9.0.0
     devDependencies:
-      '@edgestore/server':
-        specifier: link:../server
-        version: link:../server
+      '@edgestore/shared':
+        specifier: link:../shared
+        version: link:../shared
       '@types/cookie':
         specifier: ^0.5.1
         version: 0.5.1
@@ -605,7 +606,7 @@ importers:
         specifier: ^5.1.6
         version: 5.1.6
       zod:
-        specifier: ^3.21.4
+        specifier: 3.21.4
         version: 3.21.4
 
   packages/server:
@@ -632,6 +633,9 @@ importers:
       '@azure/storage-blob':
         specifier: ^12.17.0
         version: 12.17.0
+      '@edgestore/shared':
+        specifier: link:../shared
+        version: link:../shared
       '@types/cookie':
         specifier: ^0.5.1
         version: 0.5.1
@@ -654,7 +658,7 @@ importers:
         specifier: ^5.1.6
         version: 5.1.6
       zod:
-        specifier: ^3.21.4
+        specifier: 3.21.4
         version: 3.21.4
 
   packages/shared:
@@ -671,6 +675,9 @@ importers:
       typescript:
         specifier: ^5.1.6
         version: 5.3.3
+      zod:
+        specifier: 3.21.4
+        version: 3.21.4
 
 packages:
 

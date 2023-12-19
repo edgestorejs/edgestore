@@ -1,6 +1,6 @@
 {
   "name": "@edgestore/shared",
-  "version": "0.1.5-alpha.14",
+  "version": "0.1.5-alpha.15",
   "description": "Upload files with ease from React/Next.js",
   "homepage": "https://edgestore.dev",
   "repository": "https://github.com/edgestorejs/edgestore.git",
@@ -31,11 +31,6 @@
       "import": "./dist/index.mjs",
       "require": "./dist/index.js",
       "default": "./dist/index.js"
-    },
-    "./utils": {
-      "import": "./dist/utils/index.mjs",
-      "require": "./dist/utils/index.js",
-      "default": "./dist/utils/index.js"
     }
   },
   "files": [
@@ -43,7 +38,6 @@
     "src",
     "README.md",
     "package.json",
-    "utils",
     "!**/*.test.*"
   ],
   "private": false,
@@ -53,13 +47,20 @@
   "license": "MIT",
   "peerDependencies": {
     "react": ">=16.8.0",
-    "react-dom": ">=16.8.0"
+    "react-dom": ">=16.8.0",
+    "zod": ">=3.0.0"
+  },
+  "peerDependenciesMeta": {
+    "zod": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@types/node": "^18.11.18",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "typescript": "^5.1.6"
+    "typescript": "^5.1.6",
+    "zod": "3.21.4"
   },
   "gitHead": "ddd35396955072690b24e55c37f6423445d26644"
 }
