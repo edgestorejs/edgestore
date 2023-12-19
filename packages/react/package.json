@@ -68,6 +68,7 @@
   },
   "devDependencies": {
     "@edgestore/shared": "0.1.5-alpha.17",
+    "@swc/helpers": "0.5.3",
     "@types/cookie": "^0.5.1",
     "@types/node": "^18.11.18",
     "@types/uuid": "^9.0.1",

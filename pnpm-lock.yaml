@@ -285,9 +285,6 @@ importers:
 
   examples/express-basic:
     dependencies:
-      '@edgestore/react':
-        specifier: link:../../packages/react
-        version: link:../../packages/react
       '@edgestore/server':
         specifier: link:../../packages/server
         version: link:../../packages/server
@@ -491,6 +488,9 @@ importers:
 
   examples/vite-basic:
     dependencies:
+      '@edgestore/react':
+        specifier: link:../../packages/react
+        version: link:../../packages/react
       react:
         specifier: ^18.2.0
         version: 18.2.0
@@ -553,6 +553,9 @@ importers:
       '@edgestore/shared':
         specifier: link:../shared
         version: link:../shared
+      '@swc/helpers':
+        specifier: 0.5.3
+        version: 0.5.3
       '@types/cookie':
         specifier: ^0.5.1
         version: 0.5.1
@@ -7993,6 +7996,12 @@ packages:
     dependencies:
       tslib: 2.6.0
     dev: false
+
+  /@swc/helpers@0.5.3:
+    resolution: {integrity: sha512-FaruWX6KdudYloq1AHD/4nU+UsMTdNE8CKyrseXWEcgjDAbvkwJg2QGPAnfIJLIWsjZOSPLOAykK6fuYp4vp4A==}
+    dependencies:
+      tslib: 2.6.0
+    dev: true
 
   /@szmarczak/http-timer@1.1.2:
     resolution: {integrity: sha512-XIB2XbzHTN6ieIjfIMV9hlVcfPU26s2vafYWQcZHWXHOxiaRZYEDKEwdl129Zyg50+foYV2jCgtrqSA6qNuNSA==}

@@ -12,6 +12,8 @@ const edgeStoreRouter = es.router({
   publicFiles: es.fileBucket(),
 });
 
+export type EdgeStoreRouter = typeof edgeStoreRouter;
+
 const handler = createEdgeStoreExpressHandler({
   router: edgeStoreRouter,
 });
