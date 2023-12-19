@@ -203,7 +203,7 @@ async function uploadFile(
  */
 function getUrl(url: string, apiPath: string) {
   const mode =
-    process !== undefined
+    typeof process !== 'undefined'
       ? process.env.NODE_ENV
       : // @ts-expect-error - DEV is injected by Vite
       import.meta.env?.DEV

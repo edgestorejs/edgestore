@@ -5,7 +5,7 @@ import EdgeStoreClientError from './libs/errors/EdgeStoreClientError';
 import { handleError } from './libs/errors/handleError';
 
 const DEFAULT_BASE_URL =
-  (process !== undefined
+  (typeof process !== 'undefined'
     ? process.env.NEXT_PUBLIC_EDGE_STORE_BASE_URL
     : // @ts-expect-error - In Vite, the env variables are available on `import.meta`.
       import.meta.env?.EDGE_STORE_BASE_URL) ?? 'https://files.edgestore.dev';
