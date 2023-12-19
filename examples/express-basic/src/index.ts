@@ -1,6 +1,7 @@
 import { initEdgeStore } from '@edgestore/server';
+import { createEdgeStoreExpressHandler } from '@edgestore/server/adapters/express';
+import cors from 'cors';
 import express from 'express';
-import { createEdgeStoreExpressHandler } from '../../../packages/server/dist/adapters/express';
 
 const es = initEdgeStore.create();
 
@@ -16,13 +17,16 @@ const handler = createEdgeStoreExpressHandler({
 });
 
 const app = express();
+app.use(cors());
 
 const PORT = process.env.PORT ?? 3001;
-app.use(handler);
 
 app.get('/', (req, res) => {
   console.log(req), res.send('Hello from server!');
 });
+
+app.get('/edgestore/*', handler);
+app.post('/edgestore/*', handler);
 
 app.listen(PORT, () => {
   console.log(`⚡Server is running here 👉 https://localhost:${PORT}`);
