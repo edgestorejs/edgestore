@@ -1,8 +1,8 @@
 'use client';
 
 import { useEdgeStore } from '@/lib/edgestore';
+import { EdgeStoreApiClientError } from '@edgestore/react/shared';
 import { formatFileSize } from '@edgestore/react/utils';
-import { EdgeStoreApiClientError } from '@edgestore/server/core';
 import * as React from 'react';
 
 export default function Home() {
