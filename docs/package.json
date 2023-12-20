@@ -1,6 +1,6 @@
 {
   "name": "docs",
-  "version": "0.1.5-alpha.17",
+  "version": "0.1.5-alpha.18",
   "private": true,
   "scripts": {
     "docusaurus": "docusaurus",
@@ -33,8 +33,8 @@
   "dependencies": {
     "@docusaurus/core": "2.4.1",
     "@docusaurus/preset-classic": "2.4.1",
-    "@edgestore/react": "^0.1.5-alpha.17",
-    "@edgestore/server": "^0.1.5-alpha.17",
+    "@edgestore/react": "^0.1.5-alpha.18",
+    "@edgestore/server": "^0.1.5-alpha.18",
     "@mdx-js/react": "^1.6.22",
     "@radix-ui/react-dialog": "1.0.5",
     "@radix-ui/react-slot": "^1.0.2",

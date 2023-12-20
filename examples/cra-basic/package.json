@@ -1,10 +1,10 @@
 {
   "name": "cra-basic",
-  "version": "0.1.5-alpha.17",
+  "version": "0.1.5-alpha.18",
   "private": true,
   "dependencies": {
-    "@edgestore/react": "^0.1.5-alpha.17",
-    "@edgestore/server": "^0.1.5-alpha.17",
+    "@edgestore/react": "^0.1.5-alpha.18",
+    "@edgestore/server": "^0.1.5-alpha.18",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
