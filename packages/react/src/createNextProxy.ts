@@ -144,6 +144,7 @@ async function uploadFile(
     onProgressChange?.(0);
     const res = await fetch(`${apiPath}/request-upload`, {
       method: 'POST',
+      credentials: 'include',
       body: JSON.stringify({
         bucketName,
         input,
@@ -325,6 +326,7 @@ async function multipartUpload(params: {
   // Complete multipart upload
   const res = await fetch(`${apiPath}/complete-multipart-upload`, {
     method: 'POST',
+    credentials: 'include',
     body: JSON.stringify({
       bucketName,
       uploadId,
@@ -356,6 +358,7 @@ async function confirmUpload(
 ) {
   const res = await fetch(`${apiPath}/confirm-upload`, {
     method: 'POST',
+    credentials: 'include',
     body: JSON.stringify({
       url,
       bucketName,
@@ -386,6 +389,7 @@ async function deleteFile(
 ) {
   const res = await fetch(`${apiPath}/delete-file`, {
     method: 'POST',
+    credentials: 'include',
     body: JSON.stringify({
       url,
       bucketName,

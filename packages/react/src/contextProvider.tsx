@@ -143,6 +143,7 @@ function EdgeStoreProviderInner<TRouter extends AnyRouter>({
       });
       const res = await fetch(`${apiPath}/init`, {
         method: 'POST',
+        credentials: 'include',
       });
       if (res.ok) {
         const json = await res.json();
