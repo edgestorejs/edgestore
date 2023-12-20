@@ -1,7 +1,7 @@
-# Next.js Basic Access Control Example
+# Express Basic Example
 
-This app demonstrates how to use EdgeStore to implement basic access control.
-Only signed-in users can access the uploaded files.
+This app is just a backend for Edge Store using express.
+You will want to run it together with the frontend examples (e.g. Vite or CRA).
 
 ## How to run
 
