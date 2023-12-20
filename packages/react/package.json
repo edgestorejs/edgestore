@@ -36,6 +36,11 @@
       "import": "./dist/utils/index.mjs",
       "require": "./dist/utils/index.js",
       "default": "./dist/utils/index.js"
+    },
+    "./shared": {
+      "import": "./dist/shared/index.mjs",
+      "require": "./dist/shared/index.js",
+      "default": "./dist/shared/index.js"
     }
   },
   "files": [
@@ -44,6 +49,7 @@
     "README.md",
     "package.json",
     "utils",
+    "shared",
     "!**/*.test.*"
   ],
   "private": false,

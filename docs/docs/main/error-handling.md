@@ -10,7 +10,7 @@ slug: /error-handling
 You might need to handle specific server errors in your application. Here is an example of how you can do that.
 
 ```tsx
-import { EdgeStoreApiClientError } from '@edgestore/server/core';
+import { EdgeStoreApiClientError } from '@edgestore/react/shared';
 
 // ...
 
