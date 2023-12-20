@@ -7,10 +7,14 @@
   },
   "dependencies": {
     "@edgestore/server": "^0.1.5-alpha.17",
-    "cors": "2.8.5"
+    "body-parser": "1.20.2",
+    "cors": "2.8.5",
+    "cookie-parser": "1.4.6"
   },
   "devDependencies": {
+    "@types/body-parser": "1.19.5",
     "@types/cors": "2.8.17",
+    "@types/cookie-parser": "1.4.6",
     "dotenv": "^16.3.1",
     "tsx": "^4.1.4",
     "typescript": "^5.2.2"
