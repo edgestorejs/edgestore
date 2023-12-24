@@ -53,17 +53,17 @@ const sidebars = {
         'components/multi-file',
       ],
     },
-    // {
-    //   type: 'category',
-    //   label: 'Adapters',
-    //   collapsed: false,
-    //   link: {
-    //     type: 'generated-index',
-    //     title: 'Adapters',
-    //     slug: '/adapters',
-    //   },
-    //   items: ['adapters/next-pages', 'adapters/next-app'],
-    // },
+    {
+      type: 'category',
+      label: 'Adapters',
+      collapsed: false,
+      link: {
+        type: 'generated-index',
+        title: 'Adapters',
+        slug: '/adapters',
+      },
+      items: ['adapters/next-adapter', 'adapters/express-adapter'],
+    },
     {
       type: 'category',
       label: 'Providers',

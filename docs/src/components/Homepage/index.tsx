@@ -159,7 +159,7 @@ const VideoSection: React.FC = () => {
       <Dialog>
         <DialogTrigger asChild>
           <div className="group relative">
-            <img className="w-full max-w-xl" src="/img/video-thumb.png" />
+            <img className="w-full max-w-2xl" src="/img/video-thumb.png" />
             <div className="absolute inset-0 flex cursor-pointer items-center justify-center">
               <div className="flex h-32 w-32 items-center justify-center rounded-full bg-white/10 p-3 transition-all duration-200 group-hover:scale-110">
                 <div className="flex h-full w-full items-center justify-center rounded-full bg-primary-500/80 transition-all duration-200 group-hover:bg-primary-500">
