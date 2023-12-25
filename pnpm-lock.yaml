@@ -597,6 +597,9 @@ importers:
       '@aws-sdk/s3-request-presigner':
         specifier: ^3.294.0
         version: 3.294.0
+      '@edgestore/shared':
+        specifier: link:../shared
+        version: link:../shared
       '@panva/hkdf':
         specifier: ^1.0.4
         version: 1.0.4
@@ -610,9 +613,6 @@ importers:
         specifier: ^9.0.0
         version: 9.0.0
     devDependencies:
-      '@edgestore/shared':
-        specifier: link:../shared
-        version: link:../shared
       '@swc/helpers':
         specifier: 0.5.3
         version: 0.5.3
@@ -643,6 +643,9 @@ importers:
 
   packages/server:
     dependencies:
+      '@edgestore/shared':
+        specifier: link:../shared
+        version: link:../shared
       '@panva/hkdf':
         specifier: ^1.0.4
         version: 1.0.4
@@ -665,9 +668,6 @@ importers:
       '@azure/storage-blob':
         specifier: ^12.17.0
         version: 12.17.0
-      '@edgestore/shared':
-        specifier: link:../shared
-        version: link:../shared
       '@types/cookie':
         specifier: ^0.5.1
         version: 0.5.1
