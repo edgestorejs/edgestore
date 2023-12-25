@@ -60,20 +60,19 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.294.0",
     "@aws-sdk/s3-request-presigner": "^3.294.0",
+    "@edgestore/shared": "0.1.5",
     "@panva/hkdf": "^1.0.4",
     "cookie": "^0.5.0",
     "jose": "^4.13.1",
     "uuid": "^9.0.0"
   },
   "peerDependencies": {
-    "@edgestore/shared": "0.1.5",
     "next": "*",
     "react": ">=16.8.0",
     "react-dom": ">=16.8.0",
     "zod": ">=3.0.0"
   },
   "devDependencies": {
-    "@edgestore/shared": "0.1.5",
     "@swc/helpers": "0.5.3",
     "@types/cookie": "^0.5.1",
     "@types/node": "^18.11.18",
