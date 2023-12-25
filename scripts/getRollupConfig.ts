@@ -1,6 +1,6 @@
 import path from 'path';
 import nodeResolve from '@rollup/plugin-node-resolve';
-import { RollupOptions } from 'rollup';
+import { type RollupOptions } from 'rollup';
 import del from 'rollup-plugin-delete';
 // @ts-expect-error no typedefs exist for this plugin
 import multiInput from 'rollup-plugin-multi-input';
@@ -88,7 +88,9 @@ function lib({ input, packageDir }: Options): RollupOptions {
               useBuiltins: true,
             },
           },
-          externalHelpers: true,
+          // TODO: externalHelpers can make the bundle smaller,
+          // but for some reason it is breaking the `pnpm vite-express:dev` and `pnpm cra-express:dev` examples.
+          // externalHelpers: true,
         },
       }),
       !isWatchMode && analyzeSizeChange(packageDir),

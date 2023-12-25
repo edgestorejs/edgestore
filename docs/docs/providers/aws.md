@@ -21,14 +21,13 @@ npm install @aws-sdk/client-s3 @aws-sdk/s3-request-presigner
 
 Then you can set the provider in the router.
 
-```ts twoslash {7, 13}
+```ts twoslash {6, 12}
 // @noErrors
 import { initEdgeStore } from '@edgestore/server';
 import {
   createEdgeStoreNextHandler,
   type CreateContextOptions,
 } from '@edgestore/server/adapters/next/pages';
-import { initEdgeStoreClient } from '@edgestore/server/core';
 import { AWSProvider } from '@edgestore/server/providers/aws';
 import { z } from 'zod';
 
@@ -79,7 +78,7 @@ export type AWSProviderOptions = {
   /**
    * Secret to use for encrypting JWT tokens.
    * Can be generated with `openssl rand -base64 32`.
-   * 
+   *
    * Can also be set via the `EDGE_STORE_JWT_SECRET` environment variable.
    */
   jwtSecret?: string;

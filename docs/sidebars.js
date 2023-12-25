@@ -28,7 +28,15 @@ const sidebars = {
         title: 'Getting Started',
         slug: '/getting-started',
       },
-      items: ['main/quick-start', 'main/configuration', 'main/utils'],
+      items: [
+        'main/quick-start',
+        'main/configuration',
+        'main/backend-client',
+        'main/utils',
+        'main/error-handling',
+        'main/logging',
+        'main/troubleshooting',
+      ],
     },
     {
       type: 'category',
@@ -39,24 +47,33 @@ const sidebars = {
         title: 'Components',
         slug: '/components',
       },
-      items: ['components/image', 'components/multi-file'],
+      items: [
+        'components/image',
+        'components/multi-image',
+        'components/multi-file',
+      ],
     },
-    // {
-    //   type: 'category',
-    //   label: 'Adapters',
-    //   collapsed: false,
-    //   link: {
-    //     type: 'generated-index',
-    //     title: 'Adapters',
-    //     slug: '/adapters',
-    //   },
-    //   items: ['adapters/next-pages', 'adapters/next-app'],
-    // },
+    {
+      type: 'category',
+      label: 'Adapters',
+      collapsed: false,
+      link: {
+        type: 'generated-index',
+        title: 'Adapters',
+        slug: '/adapters',
+      },
+      items: ['adapters/next-adapter', 'adapters/express-adapter'],
+    },
     {
       type: 'category',
       label: 'Providers',
       collapsed: false,
-      items: ['providers/edgestore', 'providers/aws', 'providers/custom'],
+      items: [
+        'providers/edgestore',
+        'providers/aws',
+        'providers/azure',
+        'providers/custom',
+      ],
     },
   ],
 };

@@ -11,7 +11,7 @@ import * as React from 'react';
 
 export default function Page() {
   return (
-    <ExampleFrame details={<MultiFileDetails />}>
+    <ExampleFrame details={<MultiFileDetails />} centered>
       <MultiImageExample />
     </ExampleFrame>
   );

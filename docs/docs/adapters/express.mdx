@@ -1,0 +1,172 @@
+---
+id: express-adapter
+title: Express Adapter
+sidebar_label: Express
+slug: /express-adapter
+---
+
+import TabItem from '@theme/TabItem';
+import Tabs from '@theme/Tabs';
+
+# Express Adapter
+
+Some apps are built with React on the frontend (e.g. using `create-react-app` or `vite`) and have an `express.js` backend.
+
+You can also use Edge Store in these cases, even without using Next.js.
+
+## Setup
+
+### Install
+
+Let's start by installing the required packages.
+
+<Tabs>
+<TabItem value="npm" label="npm">
+
+```shell
+npm install @edgestore/server @edgestore/react zod
+```
+
+</TabItem>
+<TabItem value="pnpm" label="pnpm">
+
+```shell
+pnpm add @edgestore/server @edgestore/react zod
+```
+
+</TabItem>
+<TabItem value="yarn" label="yarn">
+
+```shell
+yarn add @edgestore/server @edgestore/react zod
+```
+
+</TabItem>
+</Tabs>
+
+### Environment Variables
+
+Then go to your [Dashboard](https://dashboard.edgestore.dev), create a new project and copy the keys to your environment variables.
+
+```shell title=".env"
+EDGE_STORE_ACCESS_KEY=your-access-key
+EDGE_STORE_SECRET_KEY=your-secret-key
+```
+
+:::caution
+Make sure you add `.env` to your `.gitignore` file. <br />
+You don't want to commit your secrets keys to your repository.
+:::
+
+### Backend
+
+Now we can create the backend code in our express app.
+
+The example below is the simplest bucket you can create with Edge Store. Just a simple file bucket with no validation that will be accessible by anyone with the link.
+
+You can have multiple buckets in your app, each with its own configuration.
+
+```ts
+import { initEdgeStore } from '@edgestore/server';
+import { createEdgeStoreExpressHandler } from '@edgestore/server/adapters/express';
+import bodyParser from 'body-parser';
+import cookieParser from 'cookie-parser';
+import cors from 'cors';
+import express from 'express';
+
+// --- EXPRESS CONFIG ---
+
+const PORT = process.env.PORT ?? 3001;
+
+const app = express();
+
+/**
+ * Your express app is probably running in a different port than your frontend app.
+ * To avoid CORS issues, we should use the cors middleware.
+ */
+app.use(
+  cors({
+    credentials: true,
+    origin: true,
+  }),
+);
+/**
+ * Edge Store uses cookies to store the context token.
+ * We need to use the cookie parser middleware to parse the cookies.
+ */
+app.use(cookieParser());
+/**
+ * We need to have access to the json request body.
+ * We can use the body parser middleware to parse the request.
+ */
+app.use(bodyParser.json());
+
+// --- EDGESTORE ROUTER CONFIG ---
+
+const es = initEdgeStore.create();
+
+const edgeStoreRouter = es.router({
+  publicFiles: es.fileBucket(),
+});
+
+export type EdgeStoreRouter = typeof edgeStoreRouter;
+
+const handler = createEdgeStoreExpressHandler({
+  router: edgeStoreRouter,
+});
+
+// --- EXPRESS ROUTES ---
+
+app.get('/', (req, res) => {
+  console.log(req), res.send('Hello from server!');
+});
+
+// set the get and post routes for the edgestore router
+app.get('/edgestore/*', handler);
+app.post('/edgestore/*', handler);
+
+app.listen(PORT, () => {
+  console.log(`⚡Server is running here 👉 http://localhost:${PORT}`);
+});
+```
+
+### Frontend
+
+Now let's initiate our context provider in the frontend app.
+
+```tsx title="src/lib/edgestore.ts"
+// You can import it from the other project if it's just the type
+import { type EdgeStoreRouter } from '../../../path/to/express-backend/src';
+import { createEdgeStoreProvider } from '@edgestore/react';
+
+const { EdgeStoreProvider, useEdgeStore } =
+  createEdgeStoreProvider<EdgeStoreRouter>();
+
+export { EdgeStoreProvider, useEdgeStore };
+```
+
+And then wrap our app with the provider.
+
+```tsx {0, 4, 6} title="src/App.tsx"
+import { EdgeStoreProvider } from '../lib/edgestore';
+
+function App() {
+  return (
+    <EdgeStoreProvider basePath="http://localhost:3001/edgestore">
+      {/* Rest of your app */}
+    </EdgeStoreProvider>
+  );
+}
+```
+
+## Usage
+
+To upload or use the other functionalities of Edge Store, you can look the main [Quick Start](../main/quick-start.mdx) guide. The usage should be the same.
+
+## Limitations
+
+:::caution
+For Edge Store to work properly in your deployed production app, Your frontend and backend should be in the same domain.
+
+If you are deploying to Vercel, you can take a look at the [Rewrites settings](https://vercel.com/docs/edge-network/rewrites). In case you are using Apache or Nginx, you can setup a reverse proxy to make sure your frontend and backend are in the same domain.
+:::

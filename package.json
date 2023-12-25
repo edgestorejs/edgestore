@@ -6,6 +6,10 @@
     "build": "turbo run build --filter=@edgestore/*",
     "watch": "turbo run watch --parallel",
     "dev": "turbo run dev --parallel --filter=next-basic --filter=@edgestore/*",
+    "advanced:dev": "turbo run dev --parallel --filter=next-advanced --filter=@edgestore/*",
+    "express:dev": "turbo run dev --parallel --filter=express-basic --filter=@edgestore/*",
+    "vite-express:dev": "turbo run dev --parallel --filter=vite-basic --filter=express-basic --filter=@edgestore/*",
+    "cra-express:dev": "turbo run dev --parallel --filter=cra-basic --filter=express-basic --filter=@edgestore/*",
     "aws:dev": "turbo run dev --parallel --filter=next-basic-aws --filter=@edgestore/*",
     "packages:dev": "turbo run dev --parallel --filter=@edgestore/*",
     "components:dev": "turbo run dev --parallel --filter=components --filter=@edgestore/*",
@@ -67,6 +71,7 @@
   "pnpm": {
     "overrides": {
       "@edgestore/server": "link:./packages/server",
+      "@edgestore/shared": "link:./packages/shared",
       "@edgestore/react": "link:./packages/react"
     }
   }

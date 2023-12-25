@@ -1,11 +1,14 @@
-import { type NextApiRequest, type NextApiResponse } from 'next/types';
-import { type EdgeStoreRouter } from '../../../core/internals/bucketBuilder';
-import EdgeStoreError, {
+import {
   EDGE_STORE_ERROR_CODES,
-} from '../../../libs/errors/EdgeStoreError';
+  EdgeStoreError,
+  type EdgeStoreErrorCodeKey,
+  type EdgeStoreRouter,
+  type MaybePromise,
+  type Provider,
+} from '@edgestore/shared';
+import { type NextApiRequest, type NextApiResponse } from 'next/types';
+import Logger, { type LogLevel } from '../../../libs/logger';
 import { EdgeStoreProvider } from '../../../providers/edgestore';
-import { type Provider } from '../../../providers/types';
-import { type MaybePromise } from '../../../types';
 import {
   completeMultipartUpload,
   confirmUpload,
@@ -25,26 +28,52 @@ export type CreateContextOptions = {
   res: NextApiResponse;
 };
 
-export type Config<TCtx> = TCtx extends Record<string, never>
-  ? {
-      provider?: Provider;
-      router: EdgeStoreRouter<TCtx>;
-    }
+export type Config<TCtx> = {
+  provider?: Provider;
+  router: EdgeStoreRouter<TCtx>;
+  logLevel?: LogLevel;
+} & (TCtx extends Record<string, never>
+  ? object
   : {
       provider?: Provider;
       router: EdgeStoreRouter<TCtx>;
       createContext: (opts: CreateContextOptions) => MaybePromise<TCtx>;
-    };
+    });
+
+declare const globalThis: {
+  _EDGE_STORE_LOGGER: Logger;
+};
 
 export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
   const { provider = EdgeStoreProvider() } = config;
+  const log = new Logger(config.logLevel);
+  globalThis._EDGE_STORE_LOGGER = log;
+  log.debug('Creating Edge Store Next handler (pages adapter)');
+
   return async (req: NextApiRequest, res: NextApiResponse) => {
     try {
-      if (req.url?.includes?.('/init')) {
-        const ctx =
-          'createContext' in config
-            ? await config.createContext({ req, res })
-            : ({} as TCtx);
+      if (!('json' in res))
+        throw new EdgeStoreError({
+          message:
+            'Error running the pages adapter. Make sure you are importing the correct adapter in your router configuration',
+          code: 'SERVER_ERROR',
+        });
+      if (req.url?.includes?.('/health')) {
+        res.send('OK');
+      } else if (req.url?.includes?.('/init')) {
+        let ctx = {} as TCtx;
+        try {
+          ctx =
+            'createContext' in config
+              ? await config.createContext({ req, res })
+              : ({} as TCtx);
+        } catch (err) {
+          throw new EdgeStoreError({
+            message: 'Error creating context',
+            code: 'CREATE_CONTEXT_ERROR',
+            cause: err instanceof Error ? err : undefined,
+          });
+        }
         const { newCookies, token, baseUrl } = await init({
           ctx,
           provider,
@@ -123,11 +152,20 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
       }
     } catch (err) {
       if (err instanceof EdgeStoreError) {
-        res.status(EDGE_STORE_ERROR_CODES[err.code]).send(err.message);
-      } else if (err instanceof Error) {
-        res.status(500).send(err.message);
+        log[err.level](err.formattedMessage());
+        if (err.cause) log[err.level](err.cause);
+        res
+          .status(EDGE_STORE_ERROR_CODES[err.code as EdgeStoreErrorCodeKey])
+          .json(err.formattedJson());
+      } else {
+        log.error(err);
+        res.status(500).send(
+          new EdgeStoreError({
+            message: 'Internal Server Error',
+            code: 'SERVER_ERROR',
+          }).formattedJson(),
+        );
       }
-      res.status(500).send('Internal server error');
     }
   };
 }

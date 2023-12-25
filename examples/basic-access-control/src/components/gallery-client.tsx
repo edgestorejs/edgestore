@@ -1,21 +1,21 @@
 'use client';
 
-import { type ClientResponse } from '@/lib/edgestore';
+import { useEdgeStore, type ClientResponse } from '@/lib/edgestore';
 
 export function GalleryClient({
   files,
 }: {
-  files: ClientResponse['privateFiles']['listFiles']['data'];
+  files: ClientResponse['privateImages']['listFiles']['data'];
 }) {
-  // const { state } = useEdgeStore();
+  const { state } = useEdgeStore();
 
-  // if (state.error) {
-  //   return <div>Error</div>;
-  // }
+  if (state.error) {
+    return <div>Error</div>;
+  }
 
-  // if (!state.initialized) {
-  //   return <div>Loading...</div>;
-  // }
+  if (!state.initialized) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div
@@ -29,7 +29,7 @@ export function GalleryClient({
       {files.map((file) => (
         <div key={file.url}>
           <img
-            src={file.url}
+            src={file.thumbnailUrl ?? file.url}
             alt="Image"
             style={{
               width: '100%',

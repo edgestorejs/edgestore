@@ -10,7 +10,7 @@ const { EdgeStoreProvider, useEdgeStore } =
 export { EdgeStoreProvider, useEdgeStore };
 
 /**
- * This helper type can be used to infer the response type of the vanilla client (used in your backend)
+ * This helper type can be used to infer the response type of the backend client
  *
  * @example
  * ```ts

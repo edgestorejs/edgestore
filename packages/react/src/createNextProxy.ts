@@ -1,11 +1,13 @@
-import { type RequestUploadRes } from '@edgestore/server/adapters';
 import {
   type AnyRouter,
   type InferBucketPathObject,
   type InferMetadataObject,
-} from '@edgestore/server/core';
+  type SharedRequestUploadRes,
+  type UploadOptions,
+} from '@edgestore/shared';
 import { type z } from 'zod';
-import EdgeStoreError from './libs/errors/EdgeStoreError';
+import EdgeStoreClientError from './libs/errors/EdgeStoreClientError';
+import { handleError } from './libs/errors/handleError';
 
 /**
  * @internal
@@ -62,36 +64,6 @@ export type BucketFunctions<TRouter extends AnyRouter> = {
 
 type OnProgressChangeHandler = (progress: number) => void;
 
-type UploadOptions = {
-  /**
-   * e.g. 'my-file-name.jpg'
-   *
-   * By default, a unique file name will be generated for each upload.
-   * If you want to use a custom file name, you can use this option.
-   * If you use the same file name for multiple uploads, the previous file will be overwritten.
-   * But it might take some time for the CDN cache to be cleared.
-   * So maybe you will keep seeing the old file for a while.
-   *
-   * If you want to replace an existing file immediately leave the `manualFileName` option empty and use the `replaceTargetUrl` option.
-   */
-  manualFileName?: string;
-  /**
-   * Use this to replace an existing file.
-   * It will automatically delete the existing file when the upload is complete.
-   */
-  replaceTargetUrl?: string;
-  /**
-   * If true, the file needs to be confirmed by using the `confirmUpload` function.
-   * If the file is not confirmed within 24 hours, it will be deleted.
-   *
-   * This is useful for pages where the file is uploaded as soon as it is selected,
-   * but the user can leave the page without submitting the form.
-   *
-   * This avoids unnecessary zombie files in the bucket.
-   */
-  temporary?: boolean;
-};
-
 export function createNextProxy<TRouter extends AnyRouter>({
   apiPath,
   uploadingCountRef,
@@ -115,10 +87,11 @@ export function createNextProxy<TRouter extends AnyRouter>({
               await new Promise((resolve) => setTimeout(resolve, 300));
             }
             uploadingCountRef.current++;
-            return await uploadFile(params, {
+            const test = await uploadFile(params, {
               bucketName: bucketName as string,
               apiPath,
             });
+            return test;
           } finally {
             uploadingCountRef.current--;
           }
@@ -129,7 +102,7 @@ export function createNextProxy<TRouter extends AnyRouter>({
             apiPath,
           });
           if (!success) {
-            throw new EdgeStoreError('Failed to confirm upload');
+            throw new EdgeStoreClientError('Failed to confirm upload');
           }
         },
         delete: async (params: { url: string }) => {
@@ -138,7 +111,7 @@ export function createNextProxy<TRouter extends AnyRouter>({
             apiPath,
           });
           if (!success) {
-            throw new EdgeStoreError('Failed to delete file');
+            throw new EdgeStoreClientError('Failed to delete file');
           }
         },
       };
@@ -171,6 +144,7 @@ async function uploadFile(
     onProgressChange?.(0);
     const res = await fetch(`${apiPath}/request-upload`, {
       method: 'POST',
+      credentials: 'include',
       body: JSON.stringify({
         bucketName,
         input,
@@ -187,7 +161,10 @@ async function uploadFile(
         'Content-Type': 'application/json',
       },
     });
-    const json = (await res.json()) as RequestUploadRes;
+    if (!res.ok) {
+      await handleError(res);
+    }
+    const json = (await res.json()) as SharedRequestUploadRes;
     if ('multipart' in json) {
       await multipartUpload({
         bucketName,
@@ -201,7 +178,7 @@ async function uploadFile(
       // Upload the file to the signed URL and get the progress
       await uploadFileInner(file, json.uploadUrl, onProgressChange);
     } else {
-      throw new EdgeStoreError('An error occurred');
+      throw new EdgeStoreClientError('An error occurred');
     }
     return {
       url: getUrl(json.accessUrl, apiPath),
@@ -226,7 +203,14 @@ async function uploadFile(
  * we need to proxy the file through the server.
  */
 function getUrl(url: string, apiPath: string) {
-  if (process.env.NODE_ENV === 'development' && !url.includes('/_public/')) {
+  const mode =
+    typeof process !== 'undefined'
+      ? process.env.NODE_ENV
+      : // @ts-expect-error - DEV is injected by Vite
+      import.meta.env?.DEV
+      ? 'development'
+      : 'production';
+  if (mode === 'development' && !url.includes('/_public/')) {
     const proxyUrl = new URL(window.location.origin);
     proxyUrl.pathname = `${apiPath}/proxy-file`;
     proxyUrl.search = new URLSearchParams({
@@ -245,6 +229,8 @@ const uploadFileInner = async (
   const promise = new Promise<string | null>((resolve, reject) => {
     const request = new XMLHttpRequest();
     request.open('PUT', uploadUrl);
+    // This is for Azure provider. Specifies the blob type
+    request.setRequestHeader('x-ms-blob-type', 'BlockBlob');
     request.addEventListener('loadstart', () => {
       onProgressChange?.(0);
     });
@@ -273,7 +259,10 @@ const uploadFileInner = async (
 
 async function multipartUpload(params: {
   bucketName: string;
-  multipartInfo: Extract<RequestUploadRes, { multipart: any }>['multipart'];
+  multipartInfo: Extract<
+    SharedRequestUploadRes,
+    { multipart: any }
+  >['multipart'];
   onProgressChange: OnProgressChangeHandler | undefined;
   file: File;
   apiPath: string;
@@ -310,7 +299,9 @@ async function multipartUpload(params: {
       onProgressChange?.(totalProgress);
     });
     if (!eTag) {
-      throw new EdgeStoreError('Could not get ETag from multipart response');
+      throw new EdgeStoreClientError(
+        'Could not get ETag from multipart response',
+      );
     }
     return {
       partNumber: part.partNumber,
@@ -335,6 +326,7 @@ async function multipartUpload(params: {
   // Complete multipart upload
   const res = await fetch(`${apiPath}/complete-multipart-upload`, {
     method: 'POST',
+    credentials: 'include',
     body: JSON.stringify({
       bucketName,
       uploadId,
@@ -346,7 +338,7 @@ async function multipartUpload(params: {
     },
   });
   if (!res.ok) {
-    throw new EdgeStoreError('Multi-part upload failed');
+    await handleError(res);
   }
 }
 
@@ -366,6 +358,7 @@ async function confirmUpload(
 ) {
   const res = await fetch(`${apiPath}/confirm-upload`, {
     method: 'POST',
+    credentials: 'include',
     body: JSON.stringify({
       url,
       bucketName,
@@ -375,7 +368,7 @@ async function confirmUpload(
     },
   });
   if (!res.ok) {
-    throw new EdgeStoreError('An error occurred');
+    await handleError(res);
   }
   return res.json();
 }
@@ -396,6 +389,7 @@ async function deleteFile(
 ) {
   const res = await fetch(`${apiPath}/delete-file`, {
     method: 'POST',
+    credentials: 'include',
     body: JSON.stringify({
       url,
       bucketName,
@@ -405,7 +399,7 @@ async function deleteFile(
     },
   });
   if (!res.ok) {
-    throw new EdgeStoreError('An error occurred');
+    await handleError(res);
   }
   return res.json();
 }

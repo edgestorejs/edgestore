@@ -4,6 +4,7 @@ import CodeBlock1 from '../../../docs/landing-code/CodeBlock1.md';
 import CodeBlock2 from '../../../docs/landing-code/CodeBlock2.md';
 import CodeBlock3 from '../../../docs/landing-code/CodeBlock3.md';
 import { BlurryBlob } from '../BlurryBlob';
+import { Dialog, DialogContent, DialogTrigger } from '../ui/Dialog';
 
 type CodeBlockItem = {
   title: string;
@@ -85,20 +86,21 @@ const Homepage = () => {
           }}
         </BrowserOnly>
       </div>
-      <div className="flex w-full flex-col items-center justify-center bg-[radial-gradient(theme(colors.primary.999),#000000_85%)] px-3 pb-32 pt-40 md:bg-none">
-        <img
-          src="/img/edgestore.svg"
-          alt="Edge Store Text Logo"
-          className="z-0 mb-3 w-80 py-2 md:w-[30rem]"
-        />
-        <h2 className="z-0 mb-10 bg-gradient-to-b from-primary-100 to-primary-200 bg-clip-text text-center text-lg font-medium text-transparent">
-          File uploads in Next.js just got way easier.
+      <div className="flex w-full flex-col items-center justify-center bg-[radial-gradient(theme(colors.primary.999),#000000_85%)] px-3 pb-10 pt-40 md:bg-none">
+        <h1 className="z-0 text-center text-2xl font-bold sm:text-5xl md:text-6xl">
+          Implementing file uploads
+          <br /> should be easy.
+        </h1>
+        <h2 className="z-0 mb-10 bg-gradient-to-b from-primary-100 to-primary-200 bg-clip-text text-center text-xs font-medium text-transparent sm:text-sm md:text-lg">
+          Storage, CDN and a super easy to use type-safe library. <br />
+          Created by a developer, for developers.
         </h2>
         <div className="z-0 flex gap-3 ">
           <JoinButton />
           <LearnMoreButton />
         </div>
       </div>
+      <VideoSection />
       <div className="mx-auto mb-20 grid w-full max-w-4xl auto-rows-fr grid-cols-1 gap-10 px-6 md:grid-cols-3 md:justify-between">
         <TechCard
           title="Start for free"
@@ -150,6 +152,43 @@ const Homepage = () => {
 };
 
 export default Homepage;
+
+const VideoSection: React.FC = () => {
+  return (
+    <div className="mb-10 flex justify-center">
+      <Dialog>
+        <DialogTrigger asChild>
+          <div className="group relative">
+            <img className="w-full max-w-2xl" src="/img/video-thumb.png" />
+            <div className="absolute inset-0 flex cursor-pointer items-center justify-center">
+              <div className="flex h-32 w-32 items-center justify-center rounded-full bg-white/10 p-3 transition-all duration-200 group-hover:scale-110">
+                <div className="flex h-full w-full items-center justify-center rounded-full bg-primary-500/80 transition-all duration-200 group-hover:bg-primary-500">
+                  <img
+                    className="h-10 translate-x-1"
+                    src="/img/icons/play-icon.svg"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </DialogTrigger>
+        <DialogContent className="max-w-2xl">
+          <div className="flex aspect-video w-full justify-center">
+            <iframe
+              width="100%"
+              height="100%"
+              src="https://www.youtube.com/embed/Acq9UEA2akU?si=7UjGbV6kaVPx1OxN&autoplay=1"
+              title="YouTube video player"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+            ></iframe>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
 
 const TechCard: React.FC<{ title: string; description: string }> = ({
   title,

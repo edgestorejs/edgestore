@@ -1,6 +1,10 @@
-import { type AnyRouter } from '..';
+import {
+  EdgeStoreError,
+  type AnyContext,
+  type AnyMetadata,
+  type AnyRouter,
+} from '@edgestore/shared';
 import EdgeStoreCredentialsError from '../../libs/errors/EdgeStoreCredentialsError';
-import { type AnyContext, type AnyMetadata } from '../internals/bucketBuilder';
 
 const API_ENDPOINT =
   process.env.EDGE_STORE_API_ENDPOINT ?? 'https://api.edgestore.dev';
@@ -93,7 +97,12 @@ export const edgeStoreRawSdk = {
           path: bucket._def.path.map((p: { [key: string]: () => string }) => {
             const paramEntries = Object.entries(p);
             if (paramEntries[0] === undefined) {
-              throw new Error('Missing path param');
+              throw new EdgeStoreError({
+                message: `Empty path param found in: ${JSON.stringify(
+                  bucket._def.path,
+                )}`,
+                code: 'SERVER_ERROR',
+              });
             }
             const [key, value] = paramEntries[0];
             return {

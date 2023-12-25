@@ -13,6 +13,7 @@ Edge Store is a service designed to simplify file uploads in Next.js projects. I
 The service offers functionalities such as customizable file validation and a dashboard to manage your projects and files. To facilitate quick deliveries worldwide, it utilizes CloudFront’s CDN. Edge Store also offers solutions for more efficient uploads with features like a queuing system for parallel uploads and auto-thumbnail generation for image buckets. It’s a straightforward solution aiming to make file handling in Next.js as efficient and hassle-free as possible.
 
 ## Who We Are
+
 Edge Store is a service offered by Perfect Base, a business individually owned and operated by Ravi Cavedagne Souza. Based in Tokyo, Japan, we are committed to improve the experience of handling files in your web app.
 
 ## Pricing
@@ -46,6 +47,7 @@ When signing up for a paid plan, you can choose between monthly and yearly payme
 - Phone: +81 70-4439-4122
 
 ## Business Information
+
 - Business Name: Perfect Base
 - Business Owner: Ravi Cavedagne Souza
 - Address: I will disclose it without delay if requested.

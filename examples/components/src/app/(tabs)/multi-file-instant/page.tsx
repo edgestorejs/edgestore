@@ -10,7 +10,7 @@ import * as React from 'react';
 
 export default function Page() {
   return (
-    <ExampleFrame details={<MultiFileInstantDetails />}>
+    <ExampleFrame details={<MultiFileInstantDetails />} centered>
       <MultiImageExample />
     </ExampleFrame>
   );

@@ -1,6 +1,6 @@
 {
   "name": "@edgestore/server",
-  "version": "0.1.5-alpha.1",
+  "version": "0.1.5-alpha.19",
   "description": "Upload files with ease from React/Next.js",
   "homepage": "https://edgestore.dev",
   "repository": "https://github.com/edgestorejs/edgestore.git",
@@ -37,10 +37,10 @@
       "require": "./dist/core/index.js",
       "default": "./dist/core/index.js"
     },
-    "./adapters": {
-      "import": "./dist/adapters/index.mjs",
-      "require": "./dist/adapters/index.js",
-      "default": "./dist/adapters/index.js"
+    "./adapters/express": {
+      "import": "./dist/adapters/express/index.mjs",
+      "require": "./dist/adapters/express/index.js",
+      "default": "./dist/adapters/express/index.js"
     },
     "./adapters/next/pages": {
       "import": "./dist/adapters/next/pages/index.mjs",
@@ -57,15 +57,15 @@
       "require": "./dist/providers/aws/index.js",
       "default": "./dist/providers/aws/index.js"
     },
+    "./providers/azure": {
+      "import": "./dist/providers/azure/index.mjs",
+      "require": "./dist/providers/azure/index.js",
+      "default": "./dist/providers/azure/index.js"
+    },
     "./providers/edgestore": {
       "import": "./dist/providers/edgestore/index.mjs",
       "require": "./dist/providers/edgestore/index.js",
       "default": "./dist/providers/edgestore/index.js"
-    },
-    "./providers": {
-      "import": "./dist/providers/index.mjs",
-      "require": "./dist/providers/index.js",
-      "default": "./dist/providers/index.js"
     }
   },
   "files": [
@@ -92,6 +92,8 @@
   "peerDependencies": {
     "@aws-sdk/client-s3": ">=3.0.0",
     "@aws-sdk/s3-request-presigner": ">=3.0.0",
+    "@azure/storage-blob": "^12.17.0",
+    "@edgestore/shared": "0.1.5-alpha.19",
     "zod": ">=3.0.0"
   },
   "peerDependenciesMeta": {
@@ -103,11 +105,16 @@
     },
     "@aws-sdk/s3-request-presigner": {
       "optional": true
+    },
+    "@azure/storage-blob": {
+      "optional": true
     }
   },
   "devDependencies": {
     "@aws-sdk/client-s3": "^3.420.0",
     "@aws-sdk/s3-request-presigner": "^3.420.0",
+    "@azure/storage-blob": "^12.17.0",
+    "@edgestore/shared": "0.1.5-alpha.19",
     "@types/cookie": "^0.5.1",
     "@types/node": "^18.11.18",
     "@types/uuid": "^9.0.1",
@@ -115,7 +122,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "typescript": "^5.1.6",
-    "zod": "^3.21.4"
+    "zod": "3.21.4"
   },
-  "gitHead": "d83c9799cd38def8b37f6c752332c568c37cf329"
+  "gitHead": "a223c4cb8df50e6b64f9db5dc2daf93848748da9"
 }

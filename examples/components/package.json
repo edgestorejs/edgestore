@@ -1,6 +1,6 @@
 {
   "name": "components",
-  "version": "0.1.5-alpha.1",
+  "version": "0.1.5-alpha.19",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -9,13 +9,14 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@edgestore/react": "^0.1.5-alpha.1",
-    "@edgestore/server": "^0.1.5-alpha.1",
+    "@edgestore/react": "^0.1.5-alpha.19",
+    "@edgestore/server": "^0.1.5-alpha.19",
     "@radix-ui/react-dropdown-menu": "^2.0.5",
+    "@radix-ui/react-popover": "^1.0.7",
     "@radix-ui/react-slot": "^1.0.2",
     "@types/node": "^18.11.18",
-    "@types/react": "18.0.26",
-    "@types/react-dom": "18.0.10",
+    "@types/react": "18.2.38",
+    "@types/react-dom": "18.2.17",
     "autoprefixer": "10.4.13",
     "class-variance-authority": "^0.7.0",
     "clsx": "^1.2.1",
@@ -29,6 +30,6 @@
     "tailwind-merge": "^1.13.2",
     "tailwindcss": "3.2.7",
     "typescript": "^5.1.6",
-    "zod": "^3.21.4"
+    "zod": "3.21.4"
   }
 }

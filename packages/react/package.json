@@ -1,6 +1,6 @@
 {
   "name": "@edgestore/react",
-  "version": "0.1.5-alpha.1",
+  "version": "0.1.5-alpha.19",
   "description": "Upload files with ease from React/Next.js",
   "homepage": "https://edgestore.dev",
   "repository": "https://github.com/edgestorejs/edgestore.git",
@@ -36,6 +36,11 @@
       "import": "./dist/utils/index.mjs",
       "require": "./dist/utils/index.js",
       "default": "./dist/utils/index.js"
+    },
+    "./shared": {
+      "import": "./dist/shared/index.mjs",
+      "require": "./dist/shared/index.js",
+      "default": "./dist/shared/index.js"
     }
   },
   "files": [
@@ -44,6 +49,7 @@
     "README.md",
     "package.json",
     "utils",
+    "shared",
     "!**/*.test.*"
   ],
   "private": false,
@@ -60,14 +66,15 @@
     "uuid": "^9.0.0"
   },
   "peerDependencies": {
-    "@edgestore/server": "0.1.5-alpha.1",
+    "@edgestore/shared": "0.1.5-alpha.19",
     "next": "*",
     "react": ">=16.8.0",
     "react-dom": ">=16.8.0",
     "zod": ">=3.0.0"
   },
   "devDependencies": {
-    "@edgestore/server": "0.1.5-alpha.1",
+    "@edgestore/shared": "0.1.5-alpha.19",
+    "@swc/helpers": "0.5.3",
     "@types/cookie": "^0.5.1",
     "@types/node": "^18.11.18",
     "@types/uuid": "^9.0.1",
@@ -75,7 +82,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "typescript": "^5.1.6",
-    "zod": "^3.21.4"
+    "zod": "3.21.4"
   },
-  "gitHead": "d83c9799cd38def8b37f6c752332c568c37cf329"
+  "gitHead": "a223c4cb8df50e6b64f9db5dc2daf93848748da9"
 }

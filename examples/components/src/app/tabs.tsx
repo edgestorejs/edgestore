@@ -6,6 +6,7 @@ import { usePathname as useNextPathname } from 'next/navigation';
 
 const TABS = [
   { label: 'single image', href: '/single-image' },
+  { label: 'multi image', href: '/multi-image' },
   { label: 'multi file', href: '/multi-file' },
   { label: 'multi file instant', href: '/multi-file-instant' },
 ] as const;
@@ -14,11 +15,13 @@ export function Tabs() {
   const pathname = usePathname();
 
   return (
-    <div className="mb-6 flex flex-row justify-center">
+    <div className="flex flex-row justify-center">
       <TabsList>
         {TABS.map((tab) => (
           <TabsTrigger key={tab.href} active={pathname === tab.href}>
-            <Link href={tab.href}>{tab.label}</Link>
+            <Link className="w-full" href={tab.href}>
+              {tab.label}
+            </Link>
           </TabsTrigger>
         ))}
       </TabsList>

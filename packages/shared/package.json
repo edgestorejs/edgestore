@@ -1,0 +1,66 @@
+{
+  "name": "@edgestore/shared",
+  "version": "0.1.5-alpha.19",
+  "description": "Upload files with ease from React/Next.js",
+  "homepage": "https://edgestore.dev",
+  "repository": "https://github.com/edgestorejs/edgestore.git",
+  "author": "Ravi <me@ravi.com>",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "typings": "dist/index.d.ts",
+  "keywords": [
+    "react",
+    "nodejs",
+    "nextjs",
+    "upload",
+    "file",
+    "image",
+    "cdn",
+    "edgestore",
+    "edge-store"
+  ],
+  "scripts": {
+    "build": "rollup --config rollup.config.ts --configPlugin rollup-plugin-swc3",
+    "dev": "pnpm build --watch",
+    "codegen:entrypoints": "tsx entrypoints.script.ts",
+    "lint": "eslint --cache --ext \".js,.ts,.tsx\" --ignore-path ../../.gitignore --report-unused-disable-directives src"
+  },
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src",
+    "README.md",
+    "package.json",
+    "!**/*.test.*"
+  ],
+  "private": false,
+  "publishConfig": {
+    "access": "public"
+  },
+  "license": "MIT",
+  "peerDependencies": {
+    "react": ">=16.8.0",
+    "react-dom": ">=16.8.0",
+    "zod": ">=3.0.0"
+  },
+  "peerDependenciesMeta": {
+    "zod": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^18.11.18",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "typescript": "^5.1.6",
+    "zod": "3.21.4"
+  },
+  "gitHead": "a223c4cb8df50e6b64f9db5dc2daf93848748da9"
+}
