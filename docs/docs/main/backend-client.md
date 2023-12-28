@@ -85,10 +85,10 @@ const res = await backendClient.publicFiles.confirmUpload({
 
 ## Backend Delete
 
-You can use the `delete` function to delete files from your backend.
+You can use the `deleteFile` function to delete files from your backend.
 
 ```ts
-const res = await backendClient.publicFiles.delete({
+const res = await backendClient.publicFiles.deleteFile({
   url: fileUrl,
 });
 ```
