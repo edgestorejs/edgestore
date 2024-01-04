@@ -11,10 +11,18 @@ Some times you might want to use the Edge Store functionality directly from your
 
 ## Setup
 
-You can export the backend client from your api route:
+You can use your Edge Store router to initialize the backend client.
 
-```ts title="src/app/api/edgestore/[...edgestore]/route.ts"
+Since Next.js doesn't allow exports in the api route, you will need to move your router to an external file.
+
+```ts {0, 10-12} title="src/lib/edgestore-server.ts"
 import { initEdgeStoreClient } from '@edgestore/server/core';
+
+// ...
+
+export const handler = createEdgeStoreNextHandler({
+  router: edgeStoreRouter,
+});
 
 // ...
 
@@ -22,6 +30,18 @@ export const backendClient = initEdgeStoreClient({
   router: edgeStoreRouter,
 });
 ```
+
+Then you will need to update your api route to use the exported handler.
+
+```ts title="src/app/api/edgestore/[...edgestore]/route.ts"
+import { handler } from '@/lib/edgestore-server';
+
+export { handler as GET, handler as POST };
+```
+
+:::info example
+You can find an example of the backend client usage in the [next-advanced](https://github.com/edgestorejs/edgestore/tree/main/examples/next-advanced) example.
+:::
 
 ## Backend Upload
 
