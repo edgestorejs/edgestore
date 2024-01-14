@@ -72,6 +72,7 @@ const sidebars = {
         'providers/edgestore',
         'providers/aws',
         'providers/azure',
+        'providers/s3-api',
         'providers/custom',
       ],
     },
