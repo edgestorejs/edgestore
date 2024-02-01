@@ -156,7 +156,7 @@ If you set the `accessControl` function, your bucket will automatically be confi
 
 To access files from a **protected bucket** the user will need a specific encrypted cookie that is generated in your server by the Edge Store package. Which means that they will only be able to access the files from within your app. Sharing the url of a protected file will not work.
 
-The access control check is performed on an edge function without running any database queries, so you wont need to worry about bad performance on your protected files.
+The access control check is performed on an edge function without running any database queries, so you won't need to worry about bad performance on your protected files.
 
 ```ts twoslash {4-17}
 // @noErrors

@@ -19,7 +19,7 @@ If you can see `OK` on the page, then the API is configured in the correct path.
 
 ## Set the log level to `debug`
 
-You can set the [log level](./logging.md) to `debug` to see in more details what is happening in the server. (this logs are for the server-side and will not be visible in the browser console)
+You can set the [log level](./logging.md) to `debug` to see in more details what is happening in the server. (These logs are for the server-side and will not be visible in the browser console)
 
 ## Check the browser console and network tab
 
@@ -42,7 +42,7 @@ You can try to run one of the example apps in your local machine to see if it wo
 - access the app
   - [http://localhost:3000](http://localhost:3000)
 
-There are also [other example apps](https://github.com/edgestorejs/edgestore/tree/main/examples) that you can try. Try to find the one that is closer to your use case.
+There are [other example apps](https://github.com/edgestorejs/edgestore/tree/main/examples) that you can try. Try to find the one that is closer to your use case.
 
 # Tried everything and still not working?
 

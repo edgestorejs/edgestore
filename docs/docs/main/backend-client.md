@@ -7,7 +7,7 @@ slug: /backend-client
 
 # Backend Client
 
-Some times you might want to use the Edge Store functionality directly from your backend. Things like deleting, uploading or even listing files can be done with the use of the backend client.
+Sometimes you might want to use the Edge Store functionality directly from your backend. Things like deleting, uploading or even listing files can be done with the use of the backend client.
 
 ## Setup
 

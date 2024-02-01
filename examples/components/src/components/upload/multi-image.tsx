@@ -58,7 +58,7 @@ const MultiImageDropzone = React.forwardRef<HTMLInputElement, InputProps>(
       if (value) {
         return value.map((fileState) => {
           if (typeof fileState.file === 'string') {
-            // in case a url is passed in, use it to display the image
+            // in case an url is passed in, use it to display the image
             return fileState.file;
           } else {
             // in case a file is passed in, create a base64 url to display the image

@@ -73,7 +73,7 @@ export function generateEntrypoints(inputs: string[]) {
         default: cjs,
       };
 
-      // create the barrelfile, linking the declared exports to the compiled files in dist
+      // create the barrel file, linking the declared exports to the compiled files in dist
       const importDepth = importPath.split('/').length || 1;
       const resolvedImport = path.join(
         ...Array(importDepth).fill('..'),
