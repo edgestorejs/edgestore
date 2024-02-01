@@ -51,13 +51,13 @@ export function generateEntrypoints(inputs: string[]) {
    *  src/adapters/express.ts -> exports['adapters/express'] = { import: './dist/adapters/express.mjs', ... }
    */
   inputs
-    .filter((i) => i !== 'src/index.ts') // index included by default above
+    .filter((i) => i !== 'src/index.ts') // index included by the default above
     .forEach((i) => {
       // first, exclude 'src' part of the path
       const parts = i.split('/').slice(1);
       const pathWithoutSrc = parts.join('/');
 
-      // if filename is index.ts, importPath is path until index.ts,
+      // if filename is index.ts, importPath is a path until index.ts,
       // otherwise, importPath is the path without the file extension
       const importPath =
         parts.at(-1) === 'index.ts'

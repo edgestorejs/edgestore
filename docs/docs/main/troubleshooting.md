@@ -27,7 +27,7 @@ Open the developer tools in your browser and check the console and network tab t
 
 ## Try to run one of the example apps
 
-You can try to run one of the example apps in your local machine to see if it works.
+You can try to run one of the example apps on your local machine to see if it works.
 
 - clone the repo
   - `git clone https://github.com/edgestorejs/edgestore.git`

@@ -199,7 +199,7 @@ async function uploadFile(
 
 /**
  * Protected files need third-party cookies to work.
- * Since third party cookies doesn't work on localhost,
+ * Since third party cookies don't work on localhost,
  * we need to proxy the file through the server.
  */
 function getUrl(url: string, apiPath: string) {

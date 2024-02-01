@@ -38,7 +38,7 @@ const es = initEdgeStore.context<Context>().create();
 
 There are two types of file buckets: `IMAGE` and `FILE`. Both types of buckets work basically the same way, but the `IMAGE` bucket only accepts [certain mime types](#image-bucket-accepted-mime-types).
 
-IMAGE buckets automatically generates a thumbnail version of the image file if the file is bigger than 200px in width or height. In case a thumbnail was generated, the url will be included in the response of the upload request.
+IMAGE buckets automatically generate a thumbnail version of the image file if the file is bigger than 200px in width or height. In case a thumbnail was generated, the url will be included in the response of the upload request.
 
 ```ts
 const edgeStoreRouter = es.router({
@@ -92,7 +92,7 @@ async function runAfterAuthChange() {
 
 ## Metadata & File Path
 
-Every uploaded file can hold 2 types of data: `metadata` and `path`. you can use this data for access control or for filtering files. The `metadata` and `path` can be generated from the context (`ctx`) or from the `input` of the upload request.
+Every uploaded file can hold two types of data: `metadata` and `path`. You can use this data for access control or for filtering files. The `metadata` and `path` can be generated from the context (`ctx`) or from the `input` of the upload request.
 
 ```ts twoslash
 // @include: context
@@ -154,7 +154,7 @@ You can use the `accessControl` function to add bucket level logic to allow or d
 
 If you set the `accessControl` function, your bucket will automatically be configured as a **protected bucket**. You cannot change a protected bucket to a public bucket after it has been created. The opposite is also true, you cannot change a public bucket to a protected bucket.
 
-To access files from a **protected bucket** the user will need a specific encrypted cookie that is generated in your server by the Edge Store package. Which means that they will only be able to access the files from within your app. Sharing the url of a protected file will not work.
+To access files from a **protected bucket** the user will need a specific encrypted cookie generated in your server by the Edge Store package. Which means that they will only be able to access the files from within your app. Sharing the url of a protected file will not work.
 
 The access control check is performed on an edge function without running any database queries, so you won't need to worry about bad performance on your protected files.
 
