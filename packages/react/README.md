@@ -98,7 +98,7 @@ export default function RootLayout({
 
 ### Upload file
 
-You can use the `useEdgeStore` hook to access typesafe frontend client and use it to upload files.
+You can use the `useEdgeStore` hook to access a typesafe frontend client and use it to upload files.
 
 ```tsx {1, 6, 19-28}
 import * as React from 'react';
@@ -144,7 +144,7 @@ export default function Page() {
 By passing the `replaceTargetUrl` option, you can replace an existing file with a new one.
 It will automatically delete the old file after the upload is complete.
 
-You can also just upload the file using the same file name, but in that case, you might still see the old file for a while because of the CDN cache.
+You can also upload the file using the same file name, but in that case, you might still see the old file for a while because of the CDN cache.
 
 ```tsx
 const res = await edgestore.publicFiles.upload({

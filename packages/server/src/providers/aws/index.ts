@@ -37,14 +37,14 @@ export type AWSProviderOptions = {
    * Base URL to use for accessing files.
    * Only needed if you are using a custom domain or cloudfront.
    *
-   * Can also be set via the `EDGE_STORE_BASE_URL` environment variable.
+   * It can also be set via the `EDGE_STORE_BASE_URL` environment variable.
    */
   baseUrl?: string;
   /**
    * Secret to use for encrypting JWT tokens.
    * Can be generated with `openssl rand -base64 32`.
    *
-   * Can also be set via the `EDGE_STORE_JWT_SECRET` environment variable.
+   * It can also be set via the `EDGE_STORE_JWT_SECRET` environment variable.
    */
   jwtSecret?: string;
 };

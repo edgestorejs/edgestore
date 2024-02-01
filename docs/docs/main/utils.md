@@ -7,7 +7,7 @@ slug: /utils
 
 ## Download links
 
-Sometimes the browser shows the file directly on the browser instead of downloading it. To force the browser to download the file, you can use the `getDownloadUrl` function.
+Sometimes the browser shows the file directly in the browser instead of downloading it. To force the browser to download the file, you can use the `getDownloadUrl` function.
 
 ```ts
 import { getDownloadUrl } from '@edgestore/react/utils';
@@ -20,7 +20,7 @@ getDownloadUrl(
 
 ## Format file size
 
-You might want to display the file size in a human readable format. You can use the `formatFileSize` function to do that.
+You might want to display the file size in a human-readable format. You can use the `formatFileSize` function to do that.
 
 ```ts
 import { formatFileSize } from '@edgestore/react/utils';

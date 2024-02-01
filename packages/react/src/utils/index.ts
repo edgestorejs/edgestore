@@ -11,7 +11,7 @@ export function getDownloadUrl(url: string, name?: string) {
 }
 
 /**
- * This will format the file size to a human readable format.
+ * This will format the file size to a human-readable format.
  *
  * @example 1024 => 1 KB
  */
