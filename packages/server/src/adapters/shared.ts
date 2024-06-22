@@ -215,7 +215,7 @@ export async function requestUpload<TCtx>(params: {
   return {
     ...requestUploadRes,
     size: fileInfo.size,
-    uploadedAt: new Date().toISOString(),
+    uploadedAt: new Date().toISOString(), // TODO: maybe delete this field since it's not the actual upload time
     path: parsedPath,
     pathOrder,
     metadata,

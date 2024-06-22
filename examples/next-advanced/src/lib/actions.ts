@@ -1,7 +1,7 @@
 'use server';
 
-import { backendClient } from '@/app/api/edgestore/[...edgestore]/route';
 import { unstable_noStore } from 'next/cache';
+import { backendClient } from './edgestore-server';
 
 export async function serverSideUpload(url: string) {
   unstable_noStore(); // to make sure the upload request is sent every time

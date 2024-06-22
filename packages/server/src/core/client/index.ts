@@ -111,13 +111,23 @@ export type UploadFileRequest<TBucket extends AnyBuilder> = {
         input: z.infer<TBucket['_def']['input']>;
       });
 
-export type UploadFileRes<TBucket extends AnyBuilder> = {
-  url: string;
-  size: number;
-  metadata: InferMetadataObject<TBucket>;
-  path: InferBucketPathObject<TBucket>;
-  pathOrder: (keyof InferBucketPathObject<TBucket>)[];
-};
+export type UploadFileRes<TBucket extends AnyBuilder> =
+  TBucket['_def']['type'] extends 'IMAGE'
+    ? {
+        url: string;
+        thumbnailUrl: string | null;
+        size: number;
+        metadata: InferMetadataObject<TBucket>;
+        path: InferBucketPathObject<TBucket>;
+        pathOrder: (keyof InferBucketPathObject<TBucket>)[];
+      }
+    : {
+        url: string;
+        size: number;
+        metadata: InferMetadataObject<TBucket>;
+        path: InferBucketPathObject<TBucket>;
+        pathOrder: (keyof InferBucketPathObject<TBucket>)[];
+      };
 
 type Filter<TBucket extends AnyBuilder> = {
   AND?: Filter<TBucket>[];
@@ -329,6 +339,9 @@ export function initEdgeStoreClient<TRouter extends AnyRouter>(config: {
           const { parsedPath, pathOrder } = parsePath(path);
           return {
             url: requestUploadRes.accessUrl,
+            ...{
+              thumbnailUrl: requestUploadRes.thumbnailUrl,
+            },
             size: blob.size,
             metadata,
             path: parsedPath,

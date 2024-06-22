@@ -42,6 +42,7 @@ const edgeStoreRouter = es.router({
       // forbid 50% of the time (for demo purposes)
       return Math.random() < 0.5;
     }),
+  publicImages: es.imageBucket(),
 });
 
 export const handler = createEdgeStoreNextHandler({

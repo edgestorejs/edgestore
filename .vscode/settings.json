@@ -17,5 +17,11 @@
   //   "packages/server/{adapters,core,providers}": true
   // },
   "typescript.tsdk": "node_modules/typescript/lib",
-  "typescript.enablePromptUseWorkspaceTsdk": true
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "workbench.colorCustomizations": {
+    "titleBar.activeBackground": "#c87208",
+    "titleBar.activeForeground": "#ffffff",
+    "titleBar.inactiveBackground": "#703e01",
+    "titleBar.inactiveForeground": "#ab640e"
+  }
 }
