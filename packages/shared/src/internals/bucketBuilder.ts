@@ -263,7 +263,7 @@ type Builder<TCtx, TDef extends AnyDef> = {
   /**
    * return `true` to allow upload
    *
-   * By default every upload from your app is allowed.
+   * By default, every upload from your app is allowed.
    */
   beforeUpload(beforeUpload: BeforeUploadFn<TCtx, TDef>): Builder<
     TCtx,

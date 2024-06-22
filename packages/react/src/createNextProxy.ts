@@ -199,7 +199,7 @@ async function uploadFile(
 
 /**
  * Protected files need third-party cookies to work.
- * Since third party cookies doesn't work on localhost,
+ * Since third party cookies don't work on localhost,
  * we need to proxy the file through the server.
  */
 function getUrl(url: string, apiPath: string) {
@@ -436,7 +436,7 @@ async function queuedPromises<TType, TRes>({
   const semaphore = {
     count: maxParallel,
     async wait() {
-      // If we've reached our maximum concurrency or it's the last item, wait
+      // If we've reached our maximum concurrency, or it's the last item, wait
       while (this.count <= 0)
         await new Promise((resolve) => setTimeout(resolve, 500));
       this.count--;

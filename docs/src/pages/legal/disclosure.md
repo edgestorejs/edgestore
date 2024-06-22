@@ -14,7 +14,7 @@ The service offers functionalities such as customizable file validation and a da
 
 ## Who We Are
 
-Edge Store is a service offered by Perfect Base, a business individually owned and operated by Ravi Cavedagne Souza. Based in Tokyo, Japan, we are committed to improve the experience of handling files in your web app.
+Edge Store is a service offered by Perfect Base, a business individually owned and operated by Ravi Cavedagne Souza. Based in Tokyo, Japan, we are committed to improving the experience of handling files in your web app.
 
 ## Pricing
 
@@ -38,7 +38,7 @@ We accept credit card payments through Stripe.
 
 ## Payment Period
 
-When signing up for a paid plan, you can choose between monthly and yearly payments. You can cancel your subscription at any time and your subscription will be valid until the end of the current billing period. Your subscription will be automatically renewed at the end of each billing period.
+When signing up for a paid plan, you can choose between monthly and yearly payments. You can cancel your subscription at any time, and your subscription will be valid until the end of the current billing period. Your subscription will be automatically renewed at the end of each billing period.
 
 ## Contact Us
 
@@ -50,4 +50,4 @@ When signing up for a paid plan, you can choose between monthly and yearly payme
 
 - Business Name: Perfect Base
 - Business Owner: Ravi Cavedagne Souza
-- Address: I will disclose it without delay if requested.
+- Address: I will disclose it without a delay if requested.

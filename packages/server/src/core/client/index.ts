@@ -31,7 +31,7 @@ export type UploadOptions = {
    * But it might take some time for the CDN cache to be cleared.
    * So maybe you will keep seeing the old file for a while.
    *
-   * If you want to replace an existing file immediately leave the `manualFileName` option empty and use the `replaceTargetUrl` option.
+   * If you want to replace an existing file, immediately leave the `manualFileName` option empty and use the `replaceTargetUrl` option.
    */
   manualFileName?: string;
   /**
@@ -245,7 +245,7 @@ export function initEdgeStoreClient<TRouter extends AnyRouter>(config: {
   /**
    * The base URL of your application.
    *
-   * This is only needed for getting protected files on a development environment.
+   * This is only needed for getting protected files in a development environment.
    *
    * @example http://localhost:3000/api/edgestore
    */
@@ -404,7 +404,7 @@ export function initEdgeStoreClient<TRouter extends AnyRouter>(config: {
 
 /**
  * Protected files need third-party cookies to work.
- * Since third party cookies doesn't work on localhost,
+ * Since third party cookies don't work on localhost,
  * we need to proxy the file through the server.
  */
 function getUrl(url: string, baseUrl?: string) {

@@ -8,7 +8,7 @@ export type UploadOptions = {
    * But it might take some time for the CDN cache to be cleared.
    * So maybe you will keep seeing the old file for a while.
    *
-   * If you want to replace an existing file immediately leave the `manualFileName` option empty and use the `replaceTargetUrl` option.
+   * If you want to replace an existing file, immediately leave the `manualFileName` option empty and use the `replaceTargetUrl` option.
    */
   manualFileName?: string;
   /**
