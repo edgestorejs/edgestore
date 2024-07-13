@@ -7,6 +7,7 @@ import {
   type FileState,
 } from '@/components/upload/multi-file';
 import { useEdgeStore } from '@/lib/edgestore';
+import { UploadAbortedError } from '@edgestore/react/errors';
 import * as React from 'react';
 
 export default function Page() {
@@ -27,16 +28,14 @@ function MultiImageExample() {
   >([]);
   const { edgestore } = useEdgeStore();
 
-  function updateFileProgress(key: string, progress: FileState['progress']) {
-    setFileStates((fileStates) => {
-      const newFileStates = structuredClone(fileStates);
-      const fileState = newFileStates.find(
-        (fileState) => fileState.key === key,
-      );
-      if (fileState) {
-        fileState.progress = progress;
-      }
-      return newFileStates;
+  function updateFileState(key: string, changes: Partial<FileState>) {
+    setFileStates((prevStates) => {
+      return prevStates.map((fileState) => {
+        if (fileState.key === key) {
+          return { ...fileState, ...changes };
+        }
+        return fileState;
+      });
     });
   }
 
@@ -60,15 +59,18 @@ function MultiImageExample() {
             fileStates.map(async (fileState) => {
               try {
                 if (fileState.progress !== 'PENDING') return;
+                const abortController = new AbortController();
+                updateFileState(fileState.key, { abortController });
                 const res = await edgestore.myPublicFiles.upload({
                   file: fileState.file,
+                  signal: abortController.signal,
                   onProgressChange: async (progress) => {
-                    updateFileProgress(fileState.key, progress);
+                    updateFileState(fileState.key, { progress });
                     if (progress === 100) {
                       // wait 1 second to set it to complete
                       // so that the user can see the progress bar
                       await new Promise((resolve) => setTimeout(resolve, 1000));
-                      updateFileProgress(fileState.key, 'COMPLETE');
+                      updateFileState(fileState.key, { progress: 'COMPLETE' });
                     }
                   },
                 });
@@ -80,7 +82,12 @@ function MultiImageExample() {
                   },
                 ]);
               } catch (err) {
-                updateFileProgress(fileState.key, 'ERROR');
+                console.error(err);
+                if (err instanceof UploadAbortedError) {
+                  updateFileState(fileState.key, { progress: 'PENDING' });
+                } else {
+                  updateFileState(fileState.key, { progress: 'ERROR' });
+                }
               }
             }),
           );

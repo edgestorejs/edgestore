@@ -5,6 +5,7 @@ export const input = [
   'src/index.ts',
   'src/utils/index.ts',
   'src/shared/index.ts',
+  'src/errors/index.ts',
 ];
 
 export default function rollup(): RollupOptions[] {

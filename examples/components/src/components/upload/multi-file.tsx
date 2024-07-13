@@ -7,6 +7,7 @@ import {
   LucideFileWarning,
   Trash2Icon,
   UploadCloudIcon,
+  XIcon,
 } from 'lucide-react';
 import * as React from 'react';
 import { useDropzone, type DropzoneOptions } from 'react-dropzone';
@@ -25,6 +26,7 @@ export type FileState = {
   file: File;
   key: string; // used to identify the file in the progress callback
   progress: 'PENDING' | 'COMPLETE' | 'ERROR' | number;
+  abortController?: AbortController;
 };
 
 type InputProps = {
@@ -157,7 +159,7 @@ const MultiFileDropzone = React.forwardRef<HTMLInputElement, InputProps>(
           </div>
 
           {/* Selected Files */}
-          {value?.map(({ file, progress }, i) => (
+          {value?.map(({ file, abortController, progress }, i) => (
             <div
               key={i}
               className="flex h-16 w-96 max-w-[100vw] flex-col justify-center rounded border border-gray-300 px-4 py-2"
@@ -188,7 +190,20 @@ const MultiFileDropzone = React.forwardRef<HTMLInputElement, InputProps>(
                   ) : progress === 'ERROR' ? (
                     <LucideFileWarning className="shrink-0 text-red-600 dark:text-red-400" />
                   ) : progress !== 'COMPLETE' ? (
-                    <div>{Math.round(progress)}%</div>
+                    <div className="flex flex-col items-end gap-0.5">
+                      {abortController && (
+                        <button
+                          className="rounded-md p-0.5 transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                          disabled={progress === 100}
+                          onClick={() => {
+                            abortController.abort();
+                          }}
+                        >
+                          <XIcon className="h-4 w-4 shrink-0 text-gray-400 dark:text-gray-400" />
+                        </button>
+                      )}
+                      <div>{Math.round(progress)}%</div>
+                    </div>
                   ) : (
                     <CheckCircleIcon className="shrink-0 text-green-600 dark:text-gray-400" />
                   )}

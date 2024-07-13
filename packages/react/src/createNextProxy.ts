@@ -8,6 +8,7 @@ import {
 import { type z } from 'zod';
 import EdgeStoreClientError from './libs/errors/EdgeStoreClientError';
 import { handleError } from './libs/errors/handleError';
+import { UploadAbortedError } from './libs/errors/uploadAbortedError';
 
 /**
  * @internal
@@ -20,15 +21,33 @@ export type Prettify<TType> = {
 
 export type BucketFunctions<TRouter extends AnyRouter> = {
   [K in keyof TRouter['buckets']]: {
+    /**
+     * Upload a file to the bucket
+     *
+     * @example
+     * await edgestore.myBucket.upload({
+     *  file: file,
+     *  signal: abortController.signal, // if you want to be able to cancel the ongoing upload
+     *  onProgressChange: (progress) => { console.log(progress) }, // if you want to show the progress of the upload
+     *  input: {...} // if the bucket has an input schema
+     *  options: {
+     *   manualFileName: file.name, // if you want to use a custom file name
+     *   replaceTargetUrl: url, // if you want to replace an existing file
+     *   temporary: true, // if you want to delete the file after 24 hours
+     *  }
+     * })
+     */
     upload: (
       params: z.infer<TRouter['buckets'][K]['_def']['input']> extends never
         ? {
             file: File;
+            signal?: AbortSignal;
             onProgressChange?: OnProgressChangeHandler;
             options?: UploadOptions;
           }
         : {
             file: File;
+            signal?: AbortSignal;
             input: z.infer<TRouter['buckets'][K]['_def']['input']>;
             onProgressChange?: OnProgressChangeHandler;
             options?: UploadOptions;
@@ -80,18 +99,37 @@ export function createNextProxy<TRouter extends AnyRouter>({
         upload: async (params) => {
           try {
             params.onProgressChange?.(0);
+
+            // This handles the case where the user cancels the upload while it's waiting in the queue
+            const abortPromise = new Promise<void>((resolve) => {
+              params.signal?.addEventListener(
+                'abort',
+                () => {
+                  resolve();
+                },
+                { once: true },
+              );
+            });
+
             while (
               uploadingCountRef.current >= maxConcurrentUploads &&
               uploadingCountRef.current > 0
             ) {
-              await new Promise((resolve) => setTimeout(resolve, 300));
+              await Promise.race([
+                new Promise((resolve) => setTimeout(resolve, 300)),
+                abortPromise,
+              ]);
+              if (params.signal?.aborted) {
+                throw new UploadAbortedError('File upload aborted');
+              }
             }
+
             uploadingCountRef.current++;
-            const test = await uploadFile(params, {
+            const fileInfo = await uploadFile(params, {
               bucketName: bucketName as string,
               apiPath,
             });
-            return test;
+            return fileInfo;
           } finally {
             uploadingCountRef.current--;
           }
@@ -123,11 +161,13 @@ export function createNextProxy<TRouter extends AnyRouter>({
 async function uploadFile(
   {
     file,
+    signal,
     input,
     onProgressChange,
     options,
   }: {
     file: File;
+    signal?: AbortSignal;
     input?: object;
     onProgressChange?: OnProgressChangeHandler;
     options?: UploadOptions;
@@ -145,6 +185,7 @@ async function uploadFile(
     const res = await fetch(`${apiPath}/request-upload`, {
       method: 'POST',
       credentials: 'include',
+      signal: signal,
       body: JSON.stringify({
         bucketName,
         input,
@@ -170,13 +211,19 @@ async function uploadFile(
         bucketName,
         multipartInfo: json.multipart,
         onProgressChange,
+        signal,
         file,
         apiPath,
       });
     } else if ('uploadUrl' in json) {
       // Single part upload
       // Upload the file to the signed URL and get the progress
-      await uploadFileInner(file, json.uploadUrl, onProgressChange);
+      await uploadFileInner({
+        file,
+        uploadUrl: json.uploadUrl,
+        onProgressChange,
+        signal,
+      });
     } else {
       throw new EdgeStoreClientError('An error occurred');
     }
@@ -192,6 +239,9 @@ async function uploadFile(
       metadata: json.metadata as any,
     };
   } catch (e) {
+    if (e instanceof Error && e.name === 'AbortError') {
+      throw new UploadAbortedError('File upload aborted');
+    }
     onProgressChange?.(0);
     throw e;
   }
@@ -221,12 +271,19 @@ function getUrl(url: string, apiPath: string) {
   return url;
 }
 
-const uploadFileInner = async (
-  file: File | Blob,
-  uploadUrl: string,
-  onProgressChange?: OnProgressChangeHandler,
-) => {
+async function uploadFileInner(props: {
+  file: File | Blob;
+  uploadUrl: string;
+  onProgressChange?: OnProgressChangeHandler;
+  signal?: AbortSignal;
+}) {
+  const { file, uploadUrl, onProgressChange, signal } = props;
   const promise = new Promise<string | null>((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(new UploadAbortedError('File upload aborted'));
+      return;
+    }
+
     const request = new XMLHttpRequest();
     request.open('PUT', uploadUrl);
     // This is for Azure provider. Specifies the blob type
@@ -245,17 +302,23 @@ const uploadFileInner = async (
       reject(new Error('Error uploading file'));
     });
     request.addEventListener('abort', () => {
-      reject(new Error('File upload aborted'));
+      reject(new UploadAbortedError('File upload aborted'));
     });
     request.addEventListener('loadend', () => {
       // Return the ETag header (needed to complete multipart upload)
       resolve(request.getResponseHeader('ETag'));
     });
 
+    if (signal) {
+      signal.addEventListener('abort', () => {
+        request.abort();
+      });
+    }
+
     request.send(file);
   });
   return promise;
-};
+}
 
 async function multipartUpload(params: {
   bucketName: string;
@@ -265,9 +328,11 @@ async function multipartUpload(params: {
   >['multipart'];
   onProgressChange: OnProgressChangeHandler | undefined;
   file: File;
+  signal: AbortSignal | undefined;
   apiPath: string;
 }) {
-  const { bucketName, multipartInfo, onProgressChange, file, apiPath } = params;
+  const { bucketName, multipartInfo, onProgressChange, file, signal, apiPath } =
+    params;
   const { partSize, parts, totalParts, uploadId, key } = multipartInfo;
   const uploadingParts: {
     partNumber: number;
@@ -279,24 +344,29 @@ async function multipartUpload(params: {
   }) => {
     const { part, chunk } = params;
     const { uploadUrl } = part;
-    const eTag = await uploadFileInner(chunk, uploadUrl, (progress) => {
-      const uploadingPart = uploadingParts.find(
-        (p) => p.partNumber === part.partNumber,
-      );
-      if (uploadingPart) {
-        uploadingPart.progress = progress;
-      } else {
-        uploadingParts.push({
-          partNumber: part.partNumber,
-          progress,
-        });
-      }
-      const totalProgress =
-        Math.round(
-          uploadingParts.reduce((acc, p) => acc + p.progress * 100, 0) /
-            totalParts,
-        ) / 100;
-      onProgressChange?.(totalProgress);
+    const eTag = await uploadFileInner({
+      file: chunk,
+      uploadUrl,
+      signal,
+      onProgressChange: (progress) => {
+        const uploadingPart = uploadingParts.find(
+          (p) => p.partNumber === part.partNumber,
+        );
+        if (uploadingPart) {
+          uploadingPart.progress = progress;
+        } else {
+          uploadingParts.push({
+            partNumber: part.partNumber,
+            progress,
+          });
+        }
+        const totalProgress =
+          Math.round(
+            uploadingParts.reduce((acc, p) => acc + p.progress * 100, 0) /
+              totalParts,
+          ) / 100;
+        onProgressChange?.(totalProgress);
+      },
     });
     if (!eTag) {
       throw new EdgeStoreClientError(
@@ -424,6 +494,9 @@ async function queuedPromises<TType, TRes>({
     try {
       return await func();
     } catch (error) {
+      if (error instanceof UploadAbortedError) {
+        throw error;
+      }
       if (retries > 0) {
         await new Promise((resolve) => setTimeout(resolve, 5000));
         return executeWithRetry(func, retries - 1);

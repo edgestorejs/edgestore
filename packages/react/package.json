@@ -41,6 +41,11 @@
       "import": "./dist/shared/index.mjs",
       "require": "./dist/shared/index.js",
       "default": "./dist/shared/index.js"
+    },
+    "./errors": {
+      "import": "./dist/errors/index.mjs",
+      "require": "./dist/errors/index.js",
+      "default": "./dist/errors/index.js"
     }
   },
   "files": [
@@ -50,6 +55,7 @@
     "package.json",
     "utils",
     "shared",
+    "errors",
     "!**/*.test.*"
   ],
   "private": false,
