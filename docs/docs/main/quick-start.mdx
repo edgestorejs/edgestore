@@ -298,6 +298,36 @@ await edgestore.publicFiles.delete({
 });
 ```
 
+### Cancel upload
+
+To cancel an ongoing file upload, you can use an AbortController the same way you would use it to cancel a fetch request.
+
+```tsx
+// prepare a state for the AbortController
+const [abortController, setAbortController] = useState<AbortController>();
+
+// ...
+
+// instantiate the AbortController and add the signal to the upload method
+const abortController = new AbortController();
+setAbortController(abortController);
+const res = await edgestore.publicFiles.upload({
+  file,
+  signal: abortController.signal,
+});
+
+// ...
+
+// to cancel the upload, call the controller's abort method
+abortController?.abort();
+```
+
+:::info
+When you cancel an upload, an `UploadAbortedError` will be thrown. <br />
+You can catch this error and handle it as needed. <br />
+For more information, check the [Error Handling](/docs/error-handling) page.
+:::
+
 ### Temporary files
 
 You can upload temporary files by passing the `temporary` option to the `upload` method.

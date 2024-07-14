@@ -1,13 +1,18 @@
 'use client';
 
 import { useEdgeStore } from '@/lib/edgestore';
-import { EdgeStoreApiClientError } from '@edgestore/react/shared';
+import {
+  EdgeStoreApiClientError,
+  UploadAbortedError,
+} from '@edgestore/react/errors';
 import { formatFileSize } from '@edgestore/react/utils';
-import * as React from 'react';
+import { useState } from 'react';
 
 export default function Home() {
-  const [file, setFile] = React.useState<File | null>(null);
-  const [uploadedUrl, setUploadedUrl] = React.useState<string | null>(null);
+  const [file, setFile] = useState<File>();
+  const [progress, setProgress] = useState<number>();
+  const [uploadedUrl, setUploadedUrl] = useState<string>();
+  const [abortController, setAbortController] = useState<AbortController>();
   const { edgestore } = useEdgeStore();
 
   return (
@@ -15,21 +20,23 @@ export default function Home() {
       <input
         type="file"
         onChange={(e) => {
-          setFile(e.target.files?.[0] ?? null);
+          setFile(e.target.files?.[0]);
         }}
       />
       <button
         onClick={async () => {
           try {
             if (file) {
+              const abortController = new AbortController();
+              setAbortController(abortController);
               const res = await edgestore.publicFiles.upload({
                 file,
+                signal: abortController.signal,
                 input: {
                   type: 'post',
                 },
                 onProgressChange: (progress) => {
-                  // you can use this to show a progress bar
-                  console.log(progress);
+                  setProgress(progress);
                 },
               });
               // you can run some server action or api here
@@ -38,6 +45,7 @@ export default function Home() {
               setUploadedUrl(res.url);
             }
           } catch (error) {
+            setProgress(undefined);
             if (error instanceof EdgeStoreApiClientError) {
               if (error.data.code === 'FILE_TOO_LARGE') {
                 alert(
@@ -56,6 +64,11 @@ export default function Home() {
               if (error.data.code === 'UPLOAD_NOT_ALLOWED') {
                 alert("You don't have permission to upload files here.");
               }
+            } else if (error instanceof UploadAbortedError) {
+              console.log('Upload aborted');
+            } else {
+              // unknown error
+              console.error(error);
             }
           }
         }}
@@ -64,7 +77,17 @@ export default function Home() {
         Upload
       </button>
       <button
-        className="rounded-md bg-gray-200 p-1 px-3 text-black hover:bg-gray-300 disabled:pointer-events-none disabled:opacity-50"
+        disabled={
+          !abortController || progress === 100 || progress === undefined
+        }
+        onClick={async () => {
+          abortController?.abort();
+          setProgress(undefined);
+        }}
+      >
+        Cancel
+      </button>
+      <button
         disabled={!uploadedUrl}
         onClick={async () => {
           if (uploadedUrl) {
@@ -72,7 +95,9 @@ export default function Home() {
               await edgestore.publicFiles.delete({
                 url: uploadedUrl,
               });
-              setUploadedUrl(null);
+              console.log('File deleted');
+              setUploadedUrl(undefined);
+              setProgress(undefined);
             } catch (error) {
               if (error instanceof EdgeStoreApiClientError) {
                 if (error.data.code === 'DELETE_NOT_ALLOWED') {
@@ -85,6 +110,7 @@ export default function Home() {
       >
         Delete
       </button>
+      {progress !== undefined && <div>{progress}%</div>}
     </div>
   );
 }
