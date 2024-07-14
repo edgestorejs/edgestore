@@ -67,6 +67,7 @@ export default function Home() {
             } else if (error instanceof UploadAbortedError) {
               console.log('Upload aborted');
             } else {
+              // unknown error
               console.error(error);
             }
           }
