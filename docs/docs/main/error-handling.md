@@ -10,7 +10,10 @@ slug: /error-handling
 You might need to handle specific server errors in your application. Here is an example of how you can do that.
 
 ```tsx
-import { EdgeStoreApiClientError } from '@edgestore/react/shared';
+import {
+  EdgeStoreApiClientError,
+  UploadAbortedError,
+} from '@edgestore/react/errors';
 
 // ...
 
@@ -45,6 +48,12 @@ import { EdgeStoreApiClientError } from '@edgestore/react/shared';
         if (error.data.code === 'UPLOAD_NOT_ALLOWED') {
           alert("You don't have permission to upload files here.");
         }
+      } else if (error instanceof UploadAbortedError) {
+        // if the upload was canceled from an AbortController's signal
+        console.log('Upload aborted');
+      } else {
+        // unknown error
+        console.error(error);
       }
     }
   }}
