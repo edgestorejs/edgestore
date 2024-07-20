@@ -16,7 +16,7 @@ export function ExampleFrame({
         centered ? 'lg:grid-cols-3' : 'md:grid-cols-3',
       )}
     >
-      <div className="justify-self-center md:justify-self-end">
+      <div className="md:justify-self-end">
         <div className="max-w-xs">{details}</div>
       </div>
       <div className="border-b md:hidden" />
