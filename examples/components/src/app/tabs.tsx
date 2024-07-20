@@ -9,6 +9,7 @@ const TABS = [
   { label: 'multi image', href: '/multi-image' },
   { label: 'multi file', href: '/multi-file' },
   { label: 'multi file instant', href: '/multi-file-instant' },
+  { label: 'forms', href: '/forms' },
 ] as const;
 
 export function Tabs() {
