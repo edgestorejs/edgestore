@@ -168,7 +168,7 @@ const SingleImageDropzone = React.forwardRef<HTMLInputElement, InputProps>(
   ) => {
     const imageUrl = React.useMemo(() => {
       if (typeof value === 'string') {
-        // in case a url is passed in, use it to display the image
+        // in case an url is passed in, use it to display the image
         return value;
       } else if (value) {
         // in case a file is passed in, create a base64 url to display the image
@@ -266,7 +266,9 @@ const SingleImageDropzone = React.forwardRef<HTMLInputElement, InputProps>(
               <UploadCloudIcon className="mb-2 h-7 w-7" />
               <div className="text-gray-400">drag & drop to upload</div>
               <div className="mt-3">
-                <Button disabled={disabled}>select</Button>
+                <Button type="button" disabled={disabled}>
+                  select
+                </Button>
               </div>
             </div>
           )}
