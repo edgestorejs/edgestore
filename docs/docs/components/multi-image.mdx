@@ -202,7 +202,7 @@ const MultiImageDropzone = React.forwardRef<HTMLInputElement, InputProps>(
       if (value) {
         return value.map((fileState) => {
           if (typeof fileState.file === 'string') {
-            // in case a url is passed in, use it to display the image
+            // in case an url is passed in, use it to display the image
             return fileState.file;
           } else {
             // in case a file is passed in, create a base64 url to display the image
@@ -290,10 +290,7 @@ const MultiImageDropzone = React.forwardRef<HTMLInputElement, InputProps>(
         <div className="grid grid-cols-[repeat(1,1fr)] gap-2 sm:grid-cols-[repeat(2,1fr)] lg:grid-cols-[repeat(3,1fr)] xl:grid-cols-[repeat(4,1fr)]">
           {/* Images */}
           {value?.map(({ file, progress }, index) => (
-            <div
-              key={index}
-              className={variants.image + ' aspect-square h-full'}
-            >
+            <div key={index} className={variants.image + ' aspect-square'}>
               <img
                 className="h-full w-full rounded-md object-cover"
                 src={imageUrls[index]}
@@ -339,7 +336,9 @@ const MultiImageDropzone = React.forwardRef<HTMLInputElement, InputProps>(
                 <UploadCloudIcon className="mb-2 h-7 w-7" />
                 <div className="text-gray-400">drag & drop to upload</div>
                 <div className="mt-3">
-                  <Button disabled={disabled}>select</Button>
+                  <Button type="button" disabled={disabled}>
+                    select
+                  </Button>
                 </div>
               </div>
             </div>
