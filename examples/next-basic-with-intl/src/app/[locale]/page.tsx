@@ -1,14 +1,19 @@
 'use client';
 
 import { useEdgeStore } from '@/lib/edgestore';
+import { useTranslations } from 'next-intl';
 import * as React from 'react';
 
 export default function Home() {
+  const t = useTranslations();
   const [file, setFile] = React.useState<File | null>(null);
   const { edgestore } = useEdgeStore();
 
   return (
     <div>
+      <div>
+        {t('Upload a file and check the console logs for the progress')}
+      </div>
       <input
         type="file"
         onChange={(e) => {

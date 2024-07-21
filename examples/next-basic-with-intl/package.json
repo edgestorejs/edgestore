@@ -12,6 +12,7 @@
     "@edgestore/react": "^0.2.0",
     "@edgestore/server": "^0.2.0",
     "next": "14.0.3",
+    "next-intl": "^3.17.2",
     "react": "^18",
     "react-dom": "^18",
     "zod": "3.21.4"
