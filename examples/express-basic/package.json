@@ -17,6 +17,7 @@
     "@types/cookie-parser": "^1.4.6",
     "@types/cors": "^2.8.17",
     "dotenv": "^16.3.1",
+    "dotenv-cli": "^7.4.2",
     "tsx": "^4.1.4",
     "typescript": "^5.2.2"
   }

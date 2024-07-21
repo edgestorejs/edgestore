@@ -6,10 +6,7 @@ const nextConfig = {
     swcPlugins: [['next-superjson-plugin', {}]],
   },
   images: {
-    domains: [
-      process.env.NEXT_PUBLIC_EDGE_STORE_BASE_URL.replace('https://', ''),
-      'files.edgestore.dev',
-    ],
+    domains: ['files.edgestore.dev'],
   },
 };
 
