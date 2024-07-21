@@ -8,6 +8,7 @@ import {
 } from '@edgestore/shared';
 import { type NextRequest } from 'next/server';
 import Logger, { type LogLevel } from '../../../libs/logger';
+import { matchPath } from '../../../libs/utils';
 import { EdgeStoreProvider } from '../../../providers/edgestore';
 import {
   completeMultipartUpload,
@@ -57,11 +58,14 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
             'Error running the app adapter. Make sure you are importing the correct adapter in your router configuration',
           code: 'SERVER_ERROR',
         });
-      if (req.nextUrl.pathname.endsWith('/health')) {
+
+      const pathname = req.nextUrl.pathname;
+
+      if (matchPath(pathname, '/health')) {
         return new Response('OK', {
           status: 200,
         });
-      } else if (req.nextUrl.pathname.endsWith('/init')) {
+      } else if (matchPath(pathname, '/init')) {
         let ctx = {} as TCtx;
         try {
           ctx =
@@ -96,7 +100,7 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
           res.headers.append('Set-Cookie', cookie);
         }
         return res;
-      } else if (req.nextUrl.pathname.endsWith('/request-upload')) {
+      } else if (matchPath(pathname, '/request-upload')) {
         const res = await requestUpload({
           provider,
           router: config.router,
@@ -109,7 +113,7 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
             'Content-Type': 'application/json',
           },
         });
-      } else if (req.nextUrl.pathname.endsWith('/request-upload-parts')) {
+      } else if (matchPath(pathname, '/request-upload-parts')) {
         const res = await requestUploadParts({
           provider,
           router: config.router,
@@ -122,7 +126,7 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
             'Content-Type': 'application/json',
           },
         });
-      } else if (req.nextUrl.pathname.endsWith('/complete-multipart-upload')) {
+      } else if (matchPath(pathname, '/complete-multipart-upload')) {
         await completeMultipartUpload({
           provider,
           router: config.router,
@@ -132,7 +136,7 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
         return new Response(null, {
           status: 200,
         });
-      } else if (req.nextUrl.pathname.endsWith('/confirm-upload')) {
+      } else if (matchPath(pathname, '/confirm-upload')) {
         const res = await confirmUpload({
           provider,
           router: config.router,
@@ -145,7 +149,7 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
             'Content-Type': 'application/json',
           },
         });
-      } else if (req.nextUrl.pathname.endsWith('/delete-file')) {
+      } else if (matchPath(pathname, '/delete-file')) {
         const res = await deleteFile({
           provider,
           router: config.router,
@@ -158,7 +162,7 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
             'Content-Type': 'application/json',
           },
         });
-      } else if (req.nextUrl.pathname.endsWith('/proxy-file')) {
+      } else if (matchPath(pathname, '/proxy-file')) {
         const url = req.nextUrl.searchParams.get('url');
         if (typeof url === 'string') {
           const proxyRes = await fetch(url, {

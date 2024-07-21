@@ -8,6 +8,7 @@ import {
 } from '@edgestore/shared';
 import { type Request, type Response } from 'express';
 import Logger, { type LogLevel } from '../../libs/logger';
+import { matchPath } from '../../libs/utils';
 import { EdgeStoreProvider } from '../../providers/edgestore';
 import {
   completeMultipartUpload,
@@ -52,9 +53,10 @@ export function createEdgeStoreExpressHandler<TCtx>(config: Config<TCtx>) {
 
   return async (req: Request, res: Response) => {
     try {
-      if (req.url?.includes?.('/health')) {
+      const pathname = req.url ?? '';
+      if (matchPath(pathname, '/health')) {
         res.send('OK');
-      } else if (req.url?.includes?.('/init')) {
+      } else if (matchPath(pathname, '/init')) {
         let ctx = {} as TCtx;
         try {
           ctx =
@@ -78,7 +80,7 @@ export function createEdgeStoreExpressHandler<TCtx>(config: Config<TCtx>) {
           token,
           baseUrl,
         });
-      } else if (req.url?.includes?.('/request-upload')) {
+      } else if (matchPath(pathname, '/request-upload')) {
         res.json(
           await requestUpload({
             provider,
@@ -87,7 +89,7 @@ export function createEdgeStoreExpressHandler<TCtx>(config: Config<TCtx>) {
             ctxToken: req.cookies['edgestore-ctx'],
           }),
         );
-      } else if (req.url?.includes?.('/request-upload-parts')) {
+      } else if (matchPath(pathname, '/request-upload-parts')) {
         res.json(
           await requestUploadParts({
             provider,
@@ -96,7 +98,7 @@ export function createEdgeStoreExpressHandler<TCtx>(config: Config<TCtx>) {
             ctxToken: req.cookies['edgestore-ctx'],
           }),
         );
-      } else if (req.url?.includes?.('/complete-multipart-upload')) {
+      } else if (matchPath(pathname, '/complete-multipart-upload')) {
         await completeMultipartUpload({
           provider,
           router: config.router,
@@ -104,7 +106,7 @@ export function createEdgeStoreExpressHandler<TCtx>(config: Config<TCtx>) {
           ctxToken: req.cookies['edgestore-ctx'],
         });
         res.status(200).end();
-      } else if (req.url?.includes?.('/confirm-upload')) {
+      } else if (matchPath(pathname, '/confirm-upload')) {
         res.json(
           await confirmUpload({
             provider,
@@ -113,7 +115,7 @@ export function createEdgeStoreExpressHandler<TCtx>(config: Config<TCtx>) {
             ctxToken: req.cookies['edgestore-ctx'],
           }),
         );
-      } else if (req.url?.includes?.('/delete-file')) {
+      } else if (matchPath(pathname, '/delete-file')) {
         res.json(
           await deleteFile({
             provider,
@@ -122,7 +124,7 @@ export function createEdgeStoreExpressHandler<TCtx>(config: Config<TCtx>) {
             ctxToken: req.cookies['edgestore-ctx'],
           }),
         );
-      } else if (req.url?.includes?.('/proxy-file')) {
+      } else if (matchPath(pathname, '/proxy-file')) {
         const { url } = req.query;
         if (typeof url === 'string') {
           const proxyRes = await fetch(url, {

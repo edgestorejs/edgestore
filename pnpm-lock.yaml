@@ -367,6 +367,9 @@ importers:
       dotenv:
         specifier: ^16.3.1
         version: 16.3.1
+      dotenv-cli:
+        specifier: ^7.4.2
+        version: 7.4.2
       tsx:
         specifier: ^4.1.4
         version: 4.6.2
@@ -13580,6 +13583,21 @@ packages:
     dependencies:
       is-obj: 2.0.0
 
+  /dotenv-cli@7.4.2:
+    resolution: {integrity: sha512-SbUj8l61zIbzyhIbg0FwPJq6+wjbzdn9oEtozQpZ6kW2ihCcapKVZj49oCT3oPM+mgQm+itgvUQcG5szxVrZTA==}
+    hasBin: true
+    dependencies:
+      cross-spawn: 7.0.3
+      dotenv: 16.3.1
+      dotenv-expand: 10.0.0
+      minimist: 1.2.8
+    dev: true
+
+  /dotenv-expand@10.0.0:
+    resolution: {integrity: sha512-GopVGCpVS1UKH75VKHGuQFqS1Gusej0z4FyQkPdwjil2gNIv+LNsqBlboOzpJFZKVT95GkCyWJbBSdFEFUWI2A==}
+    engines: {node: '>=12'}
+    dev: true
+
   /dotenv-expand@5.1.0:
     resolution: {integrity: sha512-YXQl1DSa4/PQyRfgrv6aoNjhasp/p4qs9FjJ4q4cQk+8m4r6k4ZSiEyytKG8f8W9gi8WsQtIObNmKd+tMzNTmA==}
     dev: false
@@ -13928,11 +13946,6 @@ packages:
       '@esbuild/win32-ia32': 0.19.9
       '@esbuild/win32-x64': 0.19.9
     dev: true
-
-  /escalade@3.1.1:
-    resolution: {integrity: sha512-k0er2gUkLf8O0zKJiAhmkTnJlTvINGv7ygDNPbeIsX/TJjGJZHuh9B2UxbsaEkmlEo9MfhrSzmhIlhRlI2GXnw==}
-    engines: {node: '>=6'}
-    dev: false
 
   /escalade@3.1.2:
     resolution: {integrity: sha512-ErCHMCae19vR8vQGe50xIsVomy19rg6gFu3+r3jkEO46suLMWBksvVyoGgQV+jOfl84ZSOSlmv6Gxa89PmTGmA==}
@@ -18317,7 +18330,7 @@ packages:
       '@next/env': 14.0.3
       '@swc/helpers': 0.5.2
       busboy: 1.6.0
-      caniuse-lite: 1.0.30001642
+      caniuse-lite: 1.0.30001540
       postcss: 8.4.31
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
@@ -24351,7 +24364,7 @@ packages:
     engines: {node: '>=10'}
     dependencies:
       cliui: 7.0.4
-      escalade: 3.1.1
+      escalade: 3.1.2
       get-caller-file: 2.0.5
       require-directory: 2.1.1
       string-width: 4.2.3
