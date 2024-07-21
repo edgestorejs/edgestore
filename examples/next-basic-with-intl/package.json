@@ -1,0 +1,25 @@
+{
+  "name": "next-basic-with-intl",
+  "version": "0.2.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@edgestore/react": "^0.2.0",
+    "@edgestore/server": "^0.2.0",
+    "next": "14.0.3",
+    "react": "^18",
+    "react-dom": "^18",
+    "zod": "3.21.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "18.2.38",
+    "@types/react-dom": "18.2.17",
+    "typescript": "^5"
+  }
+}
