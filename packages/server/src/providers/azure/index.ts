@@ -34,7 +34,6 @@ export type AzureProviderOptions = {
   /**
    * Optional base URL for the Azure Blob Storage.
    * Useful for local development with Azurite. For example: `http://localhost:10000/devstoreaccount1`
-   * Default: `http://localhost:10000/devstoreaccount1`
    * Can also be set via the `ES_AZURE_BASE_URL` environment variable.
    */
   customBaseUrl?: string;
