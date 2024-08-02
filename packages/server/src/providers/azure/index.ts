@@ -2,6 +2,19 @@ import { BlobServiceClient } from '@azure/storage-blob';
 import { type Provider } from '@edgestore/shared';
 import { v4 as uuidv4 } from 'uuid';
 
+/**
+ * Options for the Azure provider.Compatible with Azure Blob Storage and Azurite.
+ * Use Azure Storage Explorer for local development with Azurite.
+ * @see https://azure.microsoft.com/de-de/products/storage/storage-explorer
+ * @category Providers
+ * @example
+ *  AzureProvider({
+ *      storageAccountName: 'devstoreaccount1',
+ *      sasToken: 'some-generated-token-from-azure-storage-explorer',
+ *      containerName: 'some-container-name',
+ *      customBaseUrl: 'http://localhost:10000/devstoreaccount1',
+ *  })
+ */
 export type AzureProviderOptions = {
   /**
    * The storage account name for Azure Blob Storage
@@ -18,6 +31,12 @@ export type AzureProviderOptions = {
    * Can also be set via the `ES_AZURE_CONTAINER_NAME` environment variable.
    */
   containerName?: string;
+  /**
+   * Optional base URL for the Azure Blob Storage.
+   * Useful for local development with Azurite. For example: `http://localhost:10000/devstoreaccount1`
+   * Can also be set via the `ES_AZURE_BASE_URL` environment variable.
+   */
+  customBaseUrl?: string;
 };
 
 export function AzureProvider(options?: AzureProviderOptions): Provider {
@@ -25,9 +44,11 @@ export function AzureProvider(options?: AzureProviderOptions): Provider {
     storageAccountName = process.env.ES_AZURE_ACCOUNT_NAME,
     sasToken = process.env.ES_AZURE_SAS_TOKEN,
     containerName = process.env.ES_AZURE_CONTAINER_NAME,
+    customBaseUrl = process.env.ES_AZURE_BASE_URL,
   } = options ?? {};
 
-  const baseUrl = `https://${storageAccountName}.blob.core.windows.net`;
+  const baseUrl =
+    customBaseUrl ?? `https://${storageAccountName}.blob.core.windows.net`;
   const blobServiceClient = new BlobServiceClient(`${baseUrl}?${sasToken}`);
   const containerClient = blobServiceClient.getContainerClient(
     containerName ?? '',
