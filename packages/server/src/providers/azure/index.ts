@@ -3,7 +3,7 @@ import { type Provider } from '@edgestore/shared';
 import { v4 as uuidv4 } from 'uuid';
 
 /**
- * Options for the Azure provider.Compatible with Azure Blob Storage and Azurite.
+ * Options for the Azure provider. Compatible with Azure Blob Storage and Azurite.
  * Use Azure Storage Explorer for local development with Azurite.
  * @see https://azure.microsoft.com/de-de/products/storage/storage-explorer
  * @category Providers
