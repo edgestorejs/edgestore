@@ -62,7 +62,11 @@ const sidebars = {
         title: 'Adapters',
         slug: '/adapters',
       },
-      items: ['adapters/next-adapter', 'adapters/express-adapter'],
+      items: [
+        'adapters/next-adapter',
+        'adapters/express-adapter',
+        'adapters/tanstack-start-adapter',
+      ],
     },
     {
       type: 'category',
