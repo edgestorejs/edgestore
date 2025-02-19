@@ -52,6 +52,11 @@
       "require": "./dist/adapters/next/app/index.js",
       "default": "./dist/adapters/next/app/index.js"
     },
+    "./adapters/start": {
+      "import": "./dist/adapters/start/index.mjs",
+      "require": "./dist/adapters/start/index.js",
+      "default": "./dist/adapters/start/index.js"
+    },
     "./providers/aws": {
       "import": "./dist/providers/aws/index.mjs",
       "require": "./dist/providers/aws/index.js",
