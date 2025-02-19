@@ -7,6 +7,7 @@ export const input = [
   'src/adapters/express/index.ts',
   'src/adapters/next/pages/index.ts',
   'src/adapters/next/app/index.ts',
+  'src/adapters/start/index.ts',
   'src/providers/aws/index.ts',
   'src/providers/azure/index.ts',
   'src/providers/edgestore/index.ts',
