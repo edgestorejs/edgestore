@@ -95,7 +95,7 @@ importers:
         specifier: ^3.12.7
         version: 3.12.7
       turbo:
-        specifier: latest
+        specifier: 1.10.16
         version: 1.10.16
       typescript:
         specifier: ^5.1.6
@@ -21780,7 +21780,7 @@ snapshots:
 
   '@testing-library/dom@9.3.3':
     dependencies:
-      '@babel/code-frame': 7.23.5
+      '@babel/code-frame': 7.26.2
       '@babel/runtime': 7.22.6
       '@types/aria-query': 5.0.4
       aria-query: 5.1.3
