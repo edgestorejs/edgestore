@@ -73,7 +73,6 @@
     "uuid": "^9.0.0"
   },
   "peerDependencies": {
-    "next": "*",
     "react": ">=16.8.0",
     "react-dom": ">=16.8.0",
     "zod": ">=3.0.0"
