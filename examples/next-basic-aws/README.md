@@ -23,3 +23,12 @@ npm run dev
 ```
 
 4. Open [http://localhost:3000](http://localhost:3000) and try to upload something!
+
+## Run with Minio
+
+You can also run the development server with minio.
+
+```bash
+npm run dev:minio
+```
+
