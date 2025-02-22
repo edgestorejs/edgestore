@@ -485,52 +485,6 @@ importers:
         specifier: ^5
         version: 5.7.3
 
-  examples/next-basic-aws copy:
-    dependencies:
-      '@aws-sdk/client-s3':
-        specifier: ^3.420.0
-        version: 3.420.0
-      '@aws-sdk/s3-request-presigner':
-        specifier: ^3.420.0
-        version: 3.420.0
-      '@edgestore/react':
-        specifier: link:../../packages/react
-        version: link:../../packages/react
-      '@edgestore/server':
-        specifier: link:../../packages/server
-        version: link:../../packages/server
-      next:
-        specifier: ^14.2.24
-        version: 14.2.24(@babel/core@7.22.9)(@opentelemetry/api@1.7.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      react:
-        specifier: ^18
-        version: 18.3.1
-      react-dom:
-        specifier: ^18
-        version: 18.3.1(react@18.3.1)
-    devDependencies:
-      '@types/node':
-        specifier: ^20
-        version: 20.14.11
-      '@types/react':
-        specifier: 18.2.38
-        version: 18.2.38
-      '@types/react-dom':
-        specifier: 18.2.17
-        version: 18.2.17
-      autoprefixer:
-        specifier: 10.4.13
-        version: 10.4.13(postcss@8.4.21)
-      postcss:
-        specifier: 8.4.21
-        version: 8.4.21
-      tailwindcss:
-        specifier: 3.2.7
-        version: 3.2.7(postcss@8.4.21)
-      typescript:
-        specifier: ^5
-        version: 5.7.3
-
   examples/next-basic-with-intl:
     dependencies:
       '@edgestore/react':

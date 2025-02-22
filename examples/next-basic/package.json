@@ -1,6 +1,6 @@
 {
   "name": "next-basic",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -9,8 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@edgestore/react": "^0.3.2",
-    "@edgestore/server": "^0.3.2",
+    "@edgestore/react": "^0.3.3",
+    "@edgestore/server": "^0.3.3",
     "next": "^14.2.24",
     "react": "^18",
     "react-dom": "^18",
