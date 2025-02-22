@@ -34,6 +34,17 @@ export type AWSProviderOptions = {
    */
   bucketName?: string;
   /**
+   * Custom endpoint for S3-compatible storage providers (e.g., MinIO).
+   * Can also be set via the `ES_AWS_ENDPOINT` environment variable.
+   */
+  endpoint?: string;
+  /**
+   * Force path style for S3-compatible storage providers.
+   * Can also be set via the `ES_AWS_FORCE_PATH_STYLE` environment variable.
+   * Defaults to false for AWS S3, but should be true for most S3-compatible providers.
+   */
+  forcePathStyle?: boolean;
+  /**
    * Base URL to use for accessing files.
    * Only needed if you are using a custom domain or cloudfront.
    *
@@ -55,12 +66,16 @@ export function AWSProvider(options?: AWSProviderOptions): Provider {
     secretAccessKey = process.env.ES_AWS_SECRET_ACCESS_KEY,
     region = process.env.ES_AWS_REGION,
     bucketName = process.env.ES_AWS_BUCKET_NAME,
+    endpoint = process.env.ES_AWS_ENDPOINT,
+    forcePathStyle = process.env.ES_AWS_FORCE_PATH_STYLE === 'true',
   } = options ?? {};
 
   const baseUrl =
     options?.baseUrl ??
     process.env.EDGE_STORE_BASE_URL ??
-    `https://${bucketName}.s3.${region}.amazonaws.com`;
+    (endpoint
+      ? `${endpoint}/${bucketName}`
+      : `https://${bucketName}.s3.${region}.amazonaws.com`);
 
   const credentials =
     accessKeyId && secretAccessKey
@@ -69,7 +84,12 @@ export function AWSProvider(options?: AWSProviderOptions): Provider {
           secretAccessKey,
         }
       : undefined;
-  const s3Client = new S3Client({ region, credentials });
+  const s3Client = new S3Client({
+    region,
+    credentials,
+    endpoint,
+    forcePathStyle,
+  });
 
   return {
     async init() {
