@@ -7,8 +7,8 @@ export default function Home(): JSX.Element {
   return (
     <div className="homepage">
       <Layout
-        title={`Easily handle file uploads in Next.js`}
-        description="The best developer experience for uploading files from your Next.js app."
+        title={`Easily handle file uploads in React`}
+        description="The best developer experience for uploading files from your React app."
       >
         <PageFrame>
           <Homepage />
