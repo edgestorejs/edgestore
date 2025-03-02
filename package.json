@@ -14,7 +14,9 @@
     "packages:dev": "turbo run dev --parallel --filter=@edgestore/*",
     "components:dev": "turbo run dev --parallel --filter=components --filter=@edgestore/*",
     "basic-access-control:dev": "turbo run dev --parallel --filter=basic-access-control --filter=@edgestore/*",
+    "start-basic:dev": "turbo run dev --parallel --filter=start-basic --filter=@edgestore/*",
     "docs:dev": "pnpm --filter docs run start",
+    "docs:build": "pnpm build && pnpm --filter docs run build",
     "lint": "turbo lint",
     "lint-fix": "turbo lint -- --fix && manypkg fix && pnpm format:write",
     "format": "prettier \"**/*\" --ignore-unknown",
@@ -33,10 +35,10 @@
     "publish-minor": "pnpm install && lerna publish minor --force-publish --no-push && sleep 60 && git push --follow-tags"
   },
   "engines": {
-    "node": "^18.0.0",
-    "pnpm": ">=8.0.0"
+    "node": "^22.0.0",
+    "pnpm": ">=9.15.0"
   },
-  "packageManager": "pnpm@8.6.6",
+  "packageManager": "pnpm@9.15.0",
   "dependencies": {
     "@changesets/changelog-github": "^0.4.8",
     "@changesets/cli": "^2.26.1",
@@ -65,7 +67,7 @@
     "rollup-plugin-swc3": "^0.9.0",
     "rollup-plugin-typescript2": "^0.35.0",
     "tsx": "^3.12.7",
-    "turbo": "latest",
+    "turbo": "1.10.16",
     "typescript": "^5.1.6"
   },
   "pnpm": {
