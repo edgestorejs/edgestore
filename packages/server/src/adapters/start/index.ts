@@ -63,7 +63,7 @@ export function createEdgeStoreStartHandler<TCtx>(config: Config<TCtx>) {
   const { provider = EdgeStoreProvider() } = config;
   const log = new Logger(config.logLevel);
   globalThis._EDGE_STORE_LOGGER = log;
-  log.debug('Creating Edge Store TanStack Start handler');
+  log.debug('Creating EdgeStore TanStack Start handler');
 
   return async ({ request }: { request: Request }) => {
     try {

@@ -471,7 +471,7 @@ async function getDerivedEncryptionKey(secret: string) {
     'sha256',
     secret,
     '',
-    'Edge Store Generated Encryption Key',
+    'EdgeStore Generated Encryption Key',
     32,
   );
 }

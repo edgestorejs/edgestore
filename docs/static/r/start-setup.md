@@ -43,7 +43,7 @@ EDGE_STORE_SECRET_KEY=your-secret-key
 
 ## Backend
 
-In your TanStack Start application, create an API route for Edge Store with the following content:
+In your TanStack Start application, create an API route for EdgeStore with the following content:
 
 ```ts
 app/routes/api/edgestore.$.ts

@@ -26,9 +26,9 @@ EDGE_STORE_SECRET_KEY=your-secret-key
 ### Backend
 
 Now we can create the backend code for our Next.js app.<br/>
-Edge Store is compatible with both types of Next.js apps (`pages router` and `app router`).
+EdgeStore is compatible with both types of Next.js apps (`pages router` and `app router`).
 
-The example below is the simplest bucket you can create with Edge Store. Just a simple file bucket with no validation that will be accessible by anyone with the link.
+The example below is the simplest bucket you can create with EdgeStore. Just a simple file bucket with no validation that will be accessible by anyone with the link.
 
 You can have multiple buckets in your app, each with its own configuration.
 
@@ -39,7 +39,7 @@ import { createEdgeStoreNextHandler } from '@edgestore/server/adapters/next/app'
 const es = initEdgeStore.create();
 
 /**
- * This is the main router for the Edge Store buckets.
+ * This is the main router for the EdgeStore buckets.
  */
 const edgeStoreRouter = es.router({
   publicFiles: es.fileBucket(),

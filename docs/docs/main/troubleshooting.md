@@ -7,7 +7,7 @@ slug: /troubleshooting
 
 # Troubleshooting
 
-If you followed the docs to get started with Edge Store, but you are having issues, here are some things you can try to find out what the problem might be.
+If you followed the docs to get started with EdgeStore, but you are having issues, here are some things you can try to find out what the problem might be.
 
 ## Check if the API is correctly configured
 

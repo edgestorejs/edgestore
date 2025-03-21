@@ -49,7 +49,7 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
   const { provider = EdgeStoreProvider() } = config;
   const log = new Logger(config.logLevel);
   globalThis._EDGE_STORE_LOGGER = log;
-  log.debug('Creating Edge Store Next handler (pages adapter)');
+  log.debug('Creating EdgeStore Next handler (pages adapter)');
 
   return async (req: NextApiRequest, res: NextApiResponse) => {
     try {

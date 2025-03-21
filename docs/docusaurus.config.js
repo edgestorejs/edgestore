@@ -3,7 +3,7 @@
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: 'Edge Store',
+  title: 'EdgeStore',
   tagline: 'Handling images should be easy',
   url: 'https://edgestore.dev',
   baseUrl: '/',
@@ -60,7 +60,7 @@ const config = {
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
-      metadata: [{ name: 'og:site_name', content: 'Edge Store' }],
+      metadata: [{ name: 'og:site_name', content: 'EdgeStore' }],
       image: 'img/opengraph-image.png',
       colorMode: {
         defaultMode: 'dark',
@@ -74,7 +74,7 @@ const config = {
       },
       navbar: {
         logo: {
-          alt: 'Edge Store Logo',
+          alt: 'EdgeStore Logo',
           src: 'img/logo-sm.png',
         },
         items: [

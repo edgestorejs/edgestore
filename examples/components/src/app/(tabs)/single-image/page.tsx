@@ -119,7 +119,7 @@ function SingleImageDetails() {
       <div className="text-foreground/80 text-sm">
         <p>
           This component is a dropzone to upload an image. It is configured with
-          a max file size of 1 MB. And since it&apos;s using an Edge Store image
+          a max file size of 1 MB. And since it&apos;s using an EdgeStore image
           bucket, it will only accept images.
         </p>
       </div>

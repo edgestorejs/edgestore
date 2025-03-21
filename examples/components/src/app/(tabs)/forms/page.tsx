@@ -220,7 +220,7 @@ function MultiFileInstantDetails() {
       <h3 className="mt-4 text-base font-bold">About</h3>
       <div className="text-foreground/80 flex flex-col gap-2 text-sm">
         <p>
-          This example demonstrates how to use Edge Store with{' '}
+          This example demonstrates how to use EdgeStore with{' '}
           <a
             href="https://react-hook-form.com/"
             target="_blank"

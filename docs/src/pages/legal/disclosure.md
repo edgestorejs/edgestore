@@ -6,19 +6,19 @@ slug: /legal/disclosure
 
 # Disclosure | 特定商取引法に基づく表記
 
-## About Edge Store
+## About EdgeStore
 
-Edge Store is a service designed to simplify file uploads in Next.js projects. Initially focusing on Next.js, with plans to expand to other frameworks in the future, it provides developers with a range of tools to streamline the file management process. The core of the service is built around an easy integration through a type-safe npm package, allowing a smooth incorporation into your existing projects.
+EdgeStore is a service designed to simplify file uploads in Next.js projects. Initially focusing on Next.js, with plans to expand to other frameworks in the future, it provides developers with a range of tools to streamline the file management process. The core of the service is built around an easy integration through a type-safe npm package, allowing a smooth incorporation into your existing projects.
 
-The service offers functionalities such as customizable file validation and a dashboard to manage your projects and files. To facilitate quick deliveries worldwide, it utilizes CloudFront’s CDN. Edge Store also offers solutions for more efficient uploads with features like a queuing system for parallel uploads and auto-thumbnail generation for image buckets. It’s a straightforward solution aiming to make file handling in Next.js as efficient and hassle-free as possible.
+The service offers functionalities such as customizable file validation and a dashboard to manage your projects and files. To facilitate quick deliveries worldwide, it utilizes CloudFront’s CDN. EdgeStore also offers solutions for more efficient uploads with features like a queuing system for parallel uploads and auto-thumbnail generation for image buckets. It’s a straightforward solution aiming to make file handling in Next.js as efficient and hassle-free as possible.
 
 ## Who We Are
 
-Edge Store is a service offered by Perfect Base, a business individually owned and operated by Ravi Cavedagne Souza. Based in Tokyo, Japan, we are committed to improving the experience of handling files in your web app.
+EdgeStore is a service offered by Perfect Base, a business individually owned and operated by Ravi Cavedagne Souza. Based in Tokyo, Japan, we are committed to improving the experience of handling files in your web app.
 
 ## Pricing
 
-Edge Store has a free plan that should be enough for you to use the service for side projects and small startups. There are also some paid plans that offer more features and higher limits. You can check the [pricing](/pricing) page for more details.
+EdgeStore has a free plan that should be enough for you to use the service for side projects and small startups. There are also some paid plans that offer more features and higher limits. You can check the [pricing](/pricing) page for more details.
 
 ## Additional Fees
 

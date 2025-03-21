@@ -7,11 +7,11 @@ slug: /providers/aws
 
 # AWS Provider
 
-You can also use the Edge Store package with your own AWS S3 bucket. You might want to do that in case you have strict company policies that require you to have all the data in your own AWS account.
+You can also use the EdgeStore package with your own AWS S3 bucket. You might want to do that in case you have strict company policies that require you to have all the data in your own AWS account.
 
 You can also use the AWS Provider with other S3 compatible storage services like [Minio](https://min.io/).
 
-By using this provider, you will be able to use most of the basic features of Edge Store. However, for some of the more advanced features like access control with protected files, you will have to create your own infrastructure and logic from scratch.
+By using this provider, you will be able to use most of the basic features of EdgeStore. However, for some of the more advanced features like access control with protected files, you will have to create your own infrastructure and logic from scratch.
 
 ## Installation
 

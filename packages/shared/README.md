@@ -1,1 +1,1 @@
-# Internal Shared Package for Edge Store
+# Internal Shared Package for EdgeStore

@@ -1,6 +1,6 @@
 # Express Basic Example
 
-This app is just a backend for Edge Store using express.
+This app is just a backend for EdgeStore using express.
 You will want to run it together with the frontend examples (e.g. Vite or CRA).
 
 ## How to run

@@ -22,7 +22,7 @@ app.use(
   }),
 );
 /**
- * Edge Store uses cookies to store the context token.
+ * EdgeStore uses cookies to store the context token.
  * We need to use the cookie parser middleware to parse the cookies.
  */
 app.use(cookieParser());

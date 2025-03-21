@@ -1,6 +1,6 @@
 # Next.js Advanced Example
 
-This app uses some of the more advanced features of Edge Store.
+This app uses some of the more advanced features of EdgeStore.
 
 Things like:
 - Access control

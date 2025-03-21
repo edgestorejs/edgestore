@@ -36,8 +36,8 @@ const codeBlocks: CodeBlockItem[] = [
     description: (
       <>
         <p>
-          Wrap your app with the Edge Store provider component. This will enable
-          you to access Edge Store methods anywhere in your app.
+          Wrap your app with the EdgeStore provider component. This will enable
+          you to access EdgeStore methods anywhere in your app.
         </p>
       </>
     ),
@@ -48,12 +48,12 @@ const codeBlocks: CodeBlockItem[] = [
     description: (
       <>
         <p>
-          Use the useEdgeStore hook to upload files to Edge Store. You can also
+          Use the useEdgeStore hook to upload files to EdgeStore. You can also
           use the onProgressChange callback to easily show a progress bar for
           your uploads.
         </p>
         <p>
-          If it is a storage for images and the image is large, Edge Store will
+          If it is a storage for images and the image is large, EdgeStore will
           automatically create a thumbnail for you. And return the url for the
           thumbnail in the response. (Thumbnail images are not counted towards
           your storage quota.)
@@ -108,7 +108,7 @@ const Homepage = () => {
         />
         <TechCard
           title="Effortless Integration"
-          description="Use our type-safe npm package to seamlessly integrate Edge Store into your app."
+          description="Use our type-safe npm package to seamlessly integrate EdgeStore into your app."
         />
         <TechCard
           title="Easy-to-Use Dashboard"

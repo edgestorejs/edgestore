@@ -1,15 +1,15 @@
 ---
 id: edgestore
-title: Edge Store Provider
-sidebar_label: Edge Store
+title: EdgeStore Provider
+sidebar_label: EdgeStore
 slug: /providers/edgestore
 ---
 
-# Edge Store Provider
+# EdgeStore Provider
 
 You can optionally pass in a provider to the `createEdgeStoreNextHandler` function. This is useful if you want to use a different provider than the default one or if you want to pass some custom options to the provider.
 
-The Edge Store Provider is the default provider. If you followed the documentation, you already have it configured in your app.
+The EdgeStore Provider is the default provider. If you followed the documentation, you already have it configured in your app.
 
 ```ts twoslash {6, 12}
 // @noErrors

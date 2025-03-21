@@ -12,7 +12,7 @@ import Tabs from '@theme/Tabs';
 
 Some apps are built with React on the frontend (e.g. using `create-react-app` or `vite`) and have an `express.js` backend.
 
-You can also use Edge Store in these cases, even without using Next.js.
+You can also use EdgeStore in these cases, even without using Next.js.
 
 ## Setup
 
@@ -69,7 +69,7 @@ You don't want to commit your secrets keys to your repository.
 
 Now we can create the backend code in our express app.
 
-The example below is the simplest bucket you can create with Edge Store. Just a simple file bucket with no validation that will be accessible by anyone with the link.
+The example below is the simplest bucket you can create with EdgeStore. Just a simple file bucket with no validation that will be accessible by anyone with the link.
 
 You can have multiple buckets in your app, each with its own configuration.
 
@@ -98,7 +98,7 @@ app.use(
   }),
 );
 /**
- * Edge Store uses cookies to store the context token.
+ * EdgeStore uses cookies to store the context token.
  * We need to use the cookie parser middleware to parse the cookies.
  */
 app.use(cookieParser());
@@ -168,12 +168,12 @@ function App() {
 
 ## Usage
 
-To upload or use the other functionalities of Edge Store, you can look the main [Quick Start](../main/quick-start.mdx) guide. The usage should be the same.
+To upload or use the other functionalities of EdgeStore, you can look the main [Quick Start](../main/quick-start.mdx) guide. The usage should be the same.
 
 ## Limitations
 
 :::caution
-For Edge Store to work properly in your deployed production app, Your frontend and backend should be in the same domain.
+For EdgeStore to work properly in your deployed production app, Your frontend and backend should be in the same domain.
 
 If you are deploying to Vercel, you can take a look at the [Rewrites settings](https://vercel.com/docs/edge-network/rewrites). In case you are using Apache or Nginx, you can setup a reverse proxy to make sure your frontend and backend are in the same domain.
 :::

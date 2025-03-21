@@ -13,7 +13,7 @@ const FeatureList: FeatureItem[] = [
     title: 'Easy to Use',
     description: (
       <>
-        Edge Store seamlessly integrates with your existing Next.js project. You
+        EdgeStore seamlessly integrates with your existing Next.js project. You
         can start using it in minutes.
       </>
     ),
@@ -22,7 +22,7 @@ const FeatureList: FeatureItem[] = [
     title: 'Focus on What Matters',
     description: (
       <>
-        Edge Store lets you focus on your app features, and we&apos;ll do the
+        EdgeStore lets you focus on your app features, and we&apos;ll do the
         chores. Go ahead and build something great.
       </>
     ),
@@ -31,7 +31,7 @@ const FeatureList: FeatureItem[] = [
     title: 'Powered by AWS',
     description: (
       <>
-        Edge Store is powered by AWS and your images are accessible with great
+        EdgeStore is powered by AWS and your images are accessible with great
         performance from the edge.
       </>
     ),

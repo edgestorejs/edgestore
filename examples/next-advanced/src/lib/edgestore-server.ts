@@ -21,7 +21,7 @@ function createContext(_opts: CreateContextOptions): Context {
 const es = initEdgeStore.context<Context>().create();
 
 /**
- * This is the main router for the Edge Store buckets.
+ * This is the main router for the EdgeStore buckets.
  */
 const edgeStoreRouter = es.router({
   publicFiles: es

@@ -43,7 +43,7 @@ EDGE_STORE_SECRET_KEY=your-secret-key
 
 ## Backend
 
-Edge Store is compatible with both Next.js Pages Router and App Router.
+EdgeStore is compatible with both Next.js Pages Router and App Router.
 
 ### App Router
 
@@ -58,7 +58,7 @@ import { createEdgeStoreNextHandler } from '@edgestore/server/adapters/next/app'
 const es = initEdgeStore.create();
 
 /**
- * This is the main router for the Edge Store buckets.
+ * This is the main router for the EdgeStore buckets.
  */
 const edgeStoreRouter = es.router({
   publicFiles: es.fileBucket(),

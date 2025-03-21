@@ -13,14 +13,14 @@ const DEFAULT_BASE_URL =
 type EdgeStoreContextValue<TRouter extends AnyRouter> = {
   edgestore: BucketFunctions<TRouter>;
   /**
-   * This will re-run the Edge Store initialization process,
+   * This will re-run the EdgeStore initialization process,
    * which will run the `createContext` function again.
    *
    * Can be used after a sign-in or sign-out, for example.
    */
   reset: () => Promise<void>;
   /**
-   * The current state of the Edge Store provider.
+   * The current state of the EdgeStore provider.
    *
    * You can use this to wait for the provider to be initialized
    * before trying to show private images on your app.
@@ -167,7 +167,7 @@ function EdgeStoreProviderInner<TRouter extends AnyRouter>({
             initialized: false,
             error: true,
           });
-          throw new EdgeStoreClientError("Couldn't initialize Edge Store.");
+          throw new EdgeStoreClientError("Couldn't initialize EdgeStore.");
         }
       } else {
         setState({

@@ -7,11 +7,11 @@ slug: /backend-client
 
 # Backend Client
 
-Sometimes you might want to use the Edge Store functionality directly from your backend. Things like deleting, uploading or even listing files can be done with the use of the backend client.
+Sometimes you might want to use the EdgeStore functionality directly from your backend. Things like deleting, uploading or even listing files can be done with the use of the backend client.
 
 ## Setup
 
-You can use your Edge Store router to initialize the backend client.
+You can use your EdgeStore router to initialize the backend client.
 
 Since Next.js doesn't allow exports in the api route, you will need to move your router to an external file.
 
@@ -82,7 +82,7 @@ const res = await backendClient.publicFiles.upload({
 
 ### Copy an existing file
 
-You can use an existing file's URL to copy it into the Edge Store bucket. This can be an external file (from outside of Edge Store) or an existing Edge Store file.
+You can use an existing file's URL to copy it into the EdgeStore bucket. This can be an external file (from outside of EdgeStore) or an existing EdgeStore file.
 
 ```ts
 const res = await backendClient.publicFiles.upload({

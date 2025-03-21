@@ -1,4 +1,4 @@
-# Edge Store Cheatsheet
+# EdgeStore Cheatsheet
 
 ## Buckets
 - **File Bucket**: `es.fileBucket()`

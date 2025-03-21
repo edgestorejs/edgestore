@@ -54,9 +54,9 @@ You don't want to commit your secrets keys to your repository.
 
 Now we can create the backend code for our Next.js app.
 
-Edge Store is compatible with both types of Next.js apps ( `pages router` and `app router`).
+EdgeStore is compatible with both types of Next.js apps ( `pages router` and `app router`).
 
-The example below is the simplest bucket you can create with Edge Store. Just a simple file bucket with no validation that will be accessible by anyone with the link.
+The example below is the simplest bucket you can create with EdgeStore. Just a simple file bucket with no validation that will be accessible by anyone with the link.
 
 You can have multiple buckets in your app, each with its own configuration.
 
@@ -74,7 +74,7 @@ import { createEdgeStoreNextHandler } from '@edgestore/server/adapters/next/app'
 const es = initEdgeStore.create();
 
 /**
- * This is the main router for the Edge Store buckets.
+ * This is the main router for the EdgeStore buckets.
  */
 const edgeStoreRouter = es.router({
   publicFiles: es.fileBucket(),
@@ -369,7 +369,7 @@ Temporary files are marked with a clock icon.
 
 ## Troubleshooting [​](https://edgestore.dev/docs/quick-start#troubleshooting "Direct link to Troubleshooting")
 
-If you have any problems using Edge Store, please check the [Troubleshooting](https://edgestore.dev/docs/troubleshooting) page.
+If you have any problems using EdgeStore, please check the [Troubleshooting](https://edgestore.dev/docs/troubleshooting) page.
 
 - [Next.js Setup](https://edgestore.dev/docs/quick-start#nextjs-setup)
   - [Install](https://edgestore.dev/docs/quick-start#install)
@@ -540,7 +540,7 @@ You can use the `accessControl` function to add bucket level logic to allow or d
 
 If you set the `accessControl` function, your bucket will automatically be configured as a **protected bucket**. You cannot change a protected bucket to a public bucket after it has been created. The opposite is also true, you cannot change a public bucket to a protected bucket.
 
-To access files from a **protected bucket** the user will need a specific encrypted cookie generated in your server by the Edge Store package. Which means that they will only be able to access the files from within your app. Sharing the url of a protected file will not work.
+To access files from a **protected bucket** the user will need a specific encrypted cookie generated in your server by the EdgeStore package. Which means that they will only be able to access the files from within your app. Sharing the url of a protected file will not work.
 
 The access control check is performed on an edge function without running any database queries, so you won't need to worry about bad performance on your protected files.
 
@@ -578,7 +578,7 @@ Also, the `<Image />` component from `next/image` does not forward the cookies i
 ## Limit parallel uploads [​](https://edgestore.dev/docs/configuration\#limit-parallel-uploads "Direct link to Limit parallel uploads")
 
 When creating the provider, you can set the maximum number of concurrent uploads.
-Edge Store's context provider will take care of queuing the uploads and will automatically upload the next file when the previous one is finished.
+EdgeStore's context provider will take care of queuing the uploads and will automatically upload the next file when the previous one is finished.
 
 ```
 
@@ -638,11 +638,11 @@ On this page
 
 # Backend Client
 
-Sometimes you might want to use the Edge Store functionality directly from your backend. Things like deleting, uploading or even listing files can be done with the use of the backend client.
+Sometimes you might want to use the EdgeStore functionality directly from your backend. Things like deleting, uploading or even listing files can be done with the use of the backend client.
 
 ## Setup [​](https://edgestore.dev/docs/backend-client\#setup "Direct link to Setup")
 
-You can use your Edge Store router to initialize the backend client.
+You can use your EdgeStore router to initialize the backend client.
 
 Since Next.js doesn't allow exports in the api route, you will need to move your router to an external file.
 
@@ -727,7 +727,7 @@ const res = await backendClient.publicFiles.upload({
 
 ### Copy an existing file [​](https://edgestore.dev/docs/backend-client\#copy-an-existing-file "Direct link to Copy an existing file")
 
-You can use an existing file's URL to copy it into the Edge Store bucket. This can be an external file (from outside of Edge Store) or an existing Edge Store file.
+You can use an existing file's URL to copy it into the EdgeStore bucket. This can be an external file (from outside of EdgeStore) or an existing EdgeStore file.
 
 ```
 
@@ -962,7 +962,7 @@ On this page
 
 # Logging
 
-The Edge Store package outputs some logs on the server-side. You can configure the log level by passing the `logLevel` option when creating the api handler. You can set it to `debug` to see in more details what is happening in the server.
+The EdgeStore package outputs some logs on the server-side. You can configure the log level by passing the `logLevel` option when creating the api handler. You can set it to `debug` to see in more details what is happening in the server.
 
 ```
 
@@ -990,7 +990,7 @@ On this page
 
 # Troubleshooting
 
-If you followed the docs to get started with Edge Store, but you are having issues, here are some things you can try to find out what the problem might be.
+If you followed the docs to get started with EdgeStore, but you are having issues, here are some things you can try to find out what the problem might be.
 
 ## Check if the API is correctly configured [​](https://edgestore.dev/docs/troubleshooting#check-if-the-api-is-correctly-configured "Direct link to Check if the API is correctly configured")
 
@@ -2141,7 +2141,7 @@ On this page
 
 Some apps are built with React on the frontend (e.g. using `create-react-app` or `vite`) and have an `express.js` backend.
 
-You can also use Edge Store in these cases, even without using Next.js.
+You can also use EdgeStore in these cases, even without using Next.js.
 
 ## Setup [​](https://edgestore.dev/docs/express-adapter\#setup "Direct link to Setup")
 
@@ -2197,7 +2197,7 @@ You don't want to commit your secrets keys to your repository.
 
 Now we can create the backend code in our express app.
 
-The example below is the simplest bucket you can create with Edge Store. Just a simple file bucket with no validation that will be accessible by anyone with the link.
+The example below is the simplest bucket you can create with EdgeStore. Just a simple file bucket with no validation that will be accessible by anyone with the link.
 
 You can have multiple buckets in your app, each with its own configuration.
 
@@ -2229,7 +2229,7 @@ app.use(
   }),
 );
 /**
- * Edge Store uses cookies to store the context token.
+ * EdgeStore uses cookies to store the context token.
  * We need to use the cookie parser middleware to parse the cookies.
  */
 app.use(cookieParser());
@@ -2307,13 +2307,13 @@ function App() {
 
 ## Usage [​](https://edgestore.dev/docs/express-adapter\#usage "Direct link to Usage")
 
-To upload or use the other functionalities of Edge Store, you can look the main [Quick Start](https://edgestore.dev/docs/quick-start) guide. The usage should be the same.
+To upload or use the other functionalities of EdgeStore, you can look the main [Quick Start](https://edgestore.dev/docs/quick-start) guide. The usage should be the same.
 
 ## Limitations [​](https://edgestore.dev/docs/express-adapter\#limitations "Direct link to Limitations")
 
 caution
 
-For Edge Store to work properly in your deployed production app, Your frontend and backend should be in the same domain.
+For EdgeStore to work properly in your deployed production app, Your frontend and backend should be in the same domain.
 
 If you are deploying to Vercel, you can take a look at the [Rewrites settings](https://vercel.com/docs/edge-network/rewrites). In case you are using Apache or Nginx, you can setup a reverse proxy to make sure your frontend and backend are in the same domain.
 
@@ -2339,7 +2339,7 @@ On this page
 
 # TanStack Start Adapter
 
-TanStack Start integrates seamlessly with Edge Store, enabling you to build type-safe, full-stack React applications with robust file management capabilities.
+TanStack Start integrates seamlessly with EdgeStore, enabling you to build type-safe, full-stack React applications with robust file management capabilities.
 
 ## Setup [​](https://edgestore.dev/docs/tanstack-start-adapter#setup "Direct link to Setup")
 
@@ -2393,7 +2393,7 @@ You don't want to commit your secrets keys to your repository.
 
 ### Backend [​](https://edgestore.dev/docs/tanstack-start-adapter#backend "Direct link to Backend")
 
-In your TanStack Start application, create an API route for Edge Store with the following content:
+In your TanStack Start application, create an API route for EdgeStore with the following content:
 
 ```
 
@@ -2461,7 +2461,7 @@ function RootComponent() {
 
 ## Usage [​](https://edgestore.dev/docs/tanstack-start-adapter#usage "Direct link to Usage")
 
-To upload or use the other functionalities of Edge Store, you can look the main [Quick Start](https://edgestore.dev/docs/quick-start) guide. The usage should be the same.
+To upload or use the other functionalities of EdgeStore, you can look the main [Quick Start](https://edgestore.dev/docs/quick-start) guide. The usage should be the same.
 
 - [Setup](https://edgestore.dev/docs/tanstack-start-adapter#setup)
   - [Install](https://edgestore.dev/docs/tanstack-start-adapter#install)
@@ -2474,11 +2474,11 @@ To upload or use the other functionalities of Edge Store, you can look the main 
 
 On this page
 
-# Edge Store Provider
+# EdgeStore Provider
 
 You can optionally pass in a provider to the `createEdgeStoreNextHandler` function. This is useful if you want to use a different provider than the default one or if you want to pass some custom options to the provider.
 
-The Edge Store Provider is the default provider. If you followed the documentation, you already have it configured in your app.
+The EdgeStore Provider is the default provider. If you followed the documentation, you already have it configured in your app.
 
 ```
 
@@ -2533,11 +2533,11 @@ On this page
 
 # AWS Provider
 
-You can also use the Edge Store package with your own AWS S3 bucket. You might want to do that in case you have strict company policies that require you to have all the data in your own AWS account.
+You can also use the EdgeStore package with your own AWS S3 bucket. You might want to do that in case you have strict company policies that require you to have all the data in your own AWS account.
 
 You can also use the AWS Provider with other S3 compatible storage services like [Minio](https://min.io/).
 
-By using this provider, you will be able to use most of the basic features of Edge Store. However, for some of the more advanced features like access control with protected files, you will have to create your own infrastructure and logic from scratch.
+By using this provider, you will be able to use most of the basic features of EdgeStore. However, for some of the more advanced features like access control with protected files, you will have to create your own infrastructure and logic from scratch.
 
 ## Installation [​](https://edgestore.dev/docs/providers/aws\#installation "Direct link to Installation")
 
@@ -2656,9 +2656,9 @@ On this page
 
 # Azure Provider
 
-You can also use the Edge Store package with your own Azure Blob Storage. You might want to do that in case you have strict company policies that require you to have all the data in your own Azure account.
+You can also use the EdgeStore package with your own Azure Blob Storage. You might want to do that in case you have strict company policies that require you to have all the data in your own Azure account.
 
-By using this provider, you will be able to use most of the basic features of Edge Store. However, for some of the more advanced features like access control with protected files, you will have to create your own infrastructure and logic from scratch.
+By using this provider, you will be able to use most of the basic features of EdgeStore. However, for some of the more advanced features like access control with protected files, you will have to create your own infrastructure and logic from scratch.
 
 ## Installation [​](https://edgestore.dev/docs/providers/azure\#installation "Direct link to Installation")
 
@@ -2728,6 +2728,6 @@ export type AzureProviderOptions = {
 
 You can also create a custom provider for a different storage solution or just a different implementation for the existing providers.
 
-You can use the [Edge Store Provider](https://github.com/edgestorejs/edgestore/blob/next/packages/server/src/providers/edgestore/index.ts) as a reference implementation.
+You can use the [EdgeStore Provider](https://github.com/edgestorejs/edgestore/blob/next/packages/server/src/providers/edgestore/index.ts) as a reference implementation.
 
-If you build a provider that you believe could be useful for others, please consider contributing it to the Edge Store project by opening a pull request.
+If you build a provider that you believe could be useful for others, please consider contributing it to the EdgeStore project by opening a pull request.

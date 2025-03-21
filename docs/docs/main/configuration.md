@@ -154,7 +154,7 @@ You can use the `accessControl` function to add bucket level logic to allow or d
 
 If you set the `accessControl` function, your bucket will automatically be configured as a **protected bucket**. You cannot change a protected bucket to a public bucket after it has been created. The opposite is also true, you cannot change a public bucket to a protected bucket.
 
-To access files from a **protected bucket** the user will need a specific encrypted cookie generated in your server by the Edge Store package. Which means that they will only be able to access the files from within your app. Sharing the url of a protected file will not work.
+To access files from a **protected bucket** the user will need a specific encrypted cookie generated in your server by the EdgeStore package. Which means that they will only be able to access the files from within your app. Sharing the url of a protected file will not work.
 
 The access control check is performed on an edge function without running any database queries, so you won't need to worry about bad performance on your protected files.
 
@@ -190,7 +190,7 @@ Also, the `<Image />` component from `next/image` does not forward the cookies i
 ## Limit parallel uploads
 
 When creating the provider, you can set the maximum number of concurrent uploads.
-Edge Store's context provider will take care of queuing the uploads and will automatically upload the next file when the previous one is finished.
+EdgeStore's context provider will take care of queuing the uploads and will automatically upload the next file when the previous one is finished.
 
 ```ts twoslash {3}
 // @noErrors
