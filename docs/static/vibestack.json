@@ -1,0 +1,26 @@
+{
+  "category": "storage",
+  "name": "edgestore",
+  "files": [
+    {
+      "frameworks": "tanstack-react-start",
+      "name": "edgestore-setup.md",
+      "url": "https://edgestore.dev/r/start-setup.md"
+    },
+    {
+      "frameworks": "nextjs",
+      "name": "edgestore-setup.md",
+      "url": "https://edgestore.dev/r/nextjs-setup.md"
+    },
+    {
+      "frameworks": "_all",
+      "name": "edgestore-components.md",
+      "url": "https://edgestore.dev/r/components.md"
+    },
+    {
+      "frameworks": "_all",
+      "name": "edgestore-cheatcheet.md",
+      "url": "https://edgestore.dev/r/cheatcheet.md"
+    }
+  ]
+}
