@@ -35,6 +35,7 @@ const sidebars = {
         'main/utils',
         'main/error-handling',
         'main/logging',
+        'main/llms-ai-ides',
         'main/troubleshooting',
       ],
     },
