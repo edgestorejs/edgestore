@@ -1,5 +1,3 @@
-'use client';
-
 import * as React from 'react';
 
 // Types
@@ -12,6 +10,7 @@ export type FileState = {
   status: FileStatus;
   error?: string;
   abortController?: AbortController;
+  autoUpload?: boolean;
 };
 
 export type UploadFn = (options: {
@@ -26,9 +25,10 @@ type UploaderContextType = {
   updateFileState: (key: string, changes: Partial<FileState>) => void;
   removeFile: (key: string) => void;
   cancelUpload: (key: string) => void;
-  uploadFiles: () => Promise<void>;
+  uploadFiles: (keysToUpload?: string[]) => Promise<void>;
   resetFiles: () => void;
   isUploading: boolean;
+  autoUpload?: boolean;
 };
 
 type ProviderProps = {
@@ -38,6 +38,7 @@ type ProviderProps = {
   onChange?: (files: FileState[]) => void | Promise<void>;
   uploadFn: UploadFn;
   value?: FileState[];
+  autoUpload?: boolean;
 };
 
 // Context
@@ -58,11 +59,14 @@ export const UploaderProvider: React.FC<ProviderProps> = ({
   onChange,
   uploadFn,
   value: externalValue,
+  autoUpload = false,
 }) => {
   const [fileStates, setFileStates] = React.useState<FileState[]>(
     externalValue ?? [],
   );
-  const [isUploading, setIsUploading] = React.useState(false);
+  const [pendingAutoUploadKeys, setPendingAutoUploadKeys] = React.useState<
+    string[] | null
+  >(null);
 
   // Sync with external value if provided
   React.useEffect(() => {
@@ -85,15 +89,81 @@ export const UploaderProvider: React.FC<ProviderProps> = ({
     [],
   );
 
-  const addFiles = React.useCallback((files: File[]) => {
-    const newFileStates = files.map<FileState>((file) => ({
-      file,
-      key: `${file.name}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-      progress: 0,
-      status: 'PENDING',
-    }));
-    setFileStates((prev) => [...prev, ...newFileStates]);
-  }, []);
+  const uploadFiles = React.useCallback(
+    async (keysToUpload?: string[]) => {
+      const filesToUpload = fileStates.filter(
+        (fileState) =>
+          fileState.status === 'PENDING' &&
+          (!keysToUpload || keysToUpload.includes(fileState.key)),
+      );
+
+      if (filesToUpload.length === 0) return;
+
+      await Promise.all(
+        filesToUpload.map(async (fileState) => {
+          try {
+            const abortController = new AbortController();
+            updateFileState(fileState.key, {
+              abortController,
+              status: 'UPLOADING',
+              progress: 0,
+            });
+
+            await uploadFn({
+              file: fileState.file,
+              signal: abortController.signal,
+              onProgressChange: async (progress) => {
+                updateFileState(fileState.key, { progress });
+                if (progress === 100) {
+                  await new Promise((resolve) => setTimeout(resolve, 500));
+                  updateFileState(fileState.key, {
+                    status: 'COMPLETE',
+                    progress: 100,
+                  });
+                }
+              },
+            });
+          } catch (err: unknown) {
+            console.error(err);
+            if (err instanceof Error && err.name === 'AbortError') {
+              updateFileState(fileState.key, {
+                status: 'PENDING',
+                progress: 0,
+                error: 'Upload canceled',
+              });
+            } else {
+              const errorMessage =
+                err instanceof Error ? err.message : 'Upload failed';
+              updateFileState(fileState.key, {
+                status: 'ERROR',
+                error: errorMessage,
+              });
+            }
+          }
+        }),
+      );
+    },
+    [fileStates, updateFileState, uploadFn],
+  );
+
+  const addFiles = React.useCallback(
+    (files: File[]) => {
+      const newFileStates = files.map<FileState>((file) => ({
+        file,
+        key: `${file.name}-${Date.now()}-${Math.random()
+          .toString(36)
+          .slice(2)}`,
+        progress: 0,
+        status: 'PENDING',
+        autoUpload,
+      }));
+      setFileStates((prev) => [...prev, ...newFileStates]);
+      if (autoUpload) {
+        setPendingAutoUploadKeys(newFileStates.map((fs) => fs.key));
+      }
+    },
+    [autoUpload],
+  );
 
   const removeFile = React.useCallback((key: string) => {
     setFileStates((prev) => prev.filter((fileState) => fileState.key !== key));
@@ -114,64 +184,25 @@ export const UploaderProvider: React.FC<ProviderProps> = ({
     setFileStates([]);
   }, []);
 
-  const uploadFiles = React.useCallback(async () => {
-    setIsUploading(true);
-
-    try {
-      await Promise.all(
-        fileStates
-          .filter((fileState) => fileState.status === 'PENDING')
-          .map(async (fileState) => {
-            try {
-              const abortController = new AbortController();
-              updateFileState(fileState.key, {
-                abortController,
-                status: 'UPLOADING',
-                progress: 0,
-              });
-
-              await uploadFn({
-                file: fileState.file,
-                signal: abortController.signal,
-                onProgressChange: async (progress) => {
-                  updateFileState(fileState.key, { progress });
-                  if (progress === 100) {
-                    // wait a moment before updating status to complete
-                    await new Promise((resolve) => setTimeout(resolve, 500));
-                    updateFileState(fileState.key, {
-                      status: 'COMPLETE',
-                      progress: 100,
-                    });
-                  }
-                },
-              });
-            } catch (err: unknown) {
-              console.error(err);
-              if (err instanceof Error && err.name === 'AbortError') {
-                updateFileState(fileState.key, {
-                  status: 'PENDING',
-                  progress: 0,
-                  error: 'Upload canceled',
-                });
-              } else {
-                const errorMessage =
-                  err instanceof Error ? err.message : 'Upload failed';
-                updateFileState(fileState.key, {
-                  status: 'ERROR',
-                  error: errorMessage,
-                });
-              }
-            }
-          }),
-      );
-    } finally {
-      setIsUploading(false);
-    }
-  }, [fileStates, updateFileState, uploadFn]);
-
   React.useEffect(() => {
     void onChange?.(fileStates);
   }, [fileStates, onChange]);
+
+  // This effect watches for changes in `pendingAutoUploadKeys`.
+  // When keys are present (meaning files were added with autoUpload),
+  // it triggers `uploadFiles` for those specific keys and then resets the state.
+  React.useEffect(() => {
+    if (pendingAutoUploadKeys && pendingAutoUploadKeys.length > 0) {
+      void uploadFiles(pendingAutoUploadKeys);
+      setPendingAutoUploadKeys(null); // Reset the pending keys after triggering upload
+    }
+  }, [pendingAutoUploadKeys, uploadFiles]);
+
+  // Derive isUploading status from fileStates
+  const isUploading = React.useMemo(
+    () => fileStates.some((fs) => fs.status === 'UPLOADING'),
+    [fileStates],
+  );
 
   const value = React.useMemo(
     () => ({
@@ -183,6 +214,7 @@ export const UploaderProvider: React.FC<ProviderProps> = ({
       uploadFiles,
       resetFiles,
       isUploading,
+      autoUpload,
     }),
     [
       fileStates,
@@ -193,6 +225,7 @@ export const UploaderProvider: React.FC<ProviderProps> = ({
       uploadFiles,
       resetFiles,
       isUploading,
+      autoUpload,
     ],
   );
 

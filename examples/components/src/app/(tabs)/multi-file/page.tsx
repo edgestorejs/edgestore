@@ -58,7 +58,7 @@ function MultiFileExample() {
             />
             <Button
               variant="outline"
-              onClick={uploadFiles}
+              onClick={() => uploadFiles()}
               className="flex items-center gap-2 pl-3"
               disabled={
                 isUploading ||
