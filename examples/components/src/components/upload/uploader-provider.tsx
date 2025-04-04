@@ -8,16 +8,23 @@ export type FileState = {
   key: string;
   progress: number;
   status: FileStatus;
+  url?: string;
   error?: string;
   abortController?: AbortController;
   autoUpload?: boolean;
+};
+
+// Define a type for completed files where URL is guaranteed
+export type CompletedFileState = Omit<FileState, 'status' | 'url'> & {
+  status: 'COMPLETE';
+  url: string;
 };
 
 export type UploadFn = (options: {
   file: File;
   signal: AbortSignal;
   onProgressChange: (progress: number) => void | Promise<void>;
-}) => Promise<any>;
+}) => Promise<{ url: string }>;
 
 type UploaderContextType = {
   fileStates: FileState[];
@@ -35,7 +42,10 @@ type ProviderProps = {
   children:
     | React.ReactNode
     | ((context: UploaderContextType) => React.ReactNode);
-  onChange?: (files: FileState[]) => void | Promise<void>;
+  onChange?: (args: {
+    allFiles: FileState[];
+    completedFiles: CompletedFileState[];
+  }) => void | Promise<void>;
   uploadFn: UploadFn;
   value?: FileState[];
   autoUpload?: boolean;
@@ -109,19 +119,20 @@ export const UploaderProvider: React.FC<ProviderProps> = ({
               progress: 0,
             });
 
-            await uploadFn({
+            const uploadResult = await uploadFn({
               file: fileState.file,
               signal: abortController.signal,
               onProgressChange: async (progress) => {
                 updateFileState(fileState.key, { progress });
-                if (progress === 100) {
-                  await new Promise((resolve) => setTimeout(resolve, 500));
-                  updateFileState(fileState.key, {
-                    status: 'COMPLETE',
-                    progress: 100,
-                  });
-                }
               },
+            });
+
+            // Wait a bit to show the bar at 100%
+            await new Promise((resolve) => setTimeout(resolve, 500));
+            updateFileState(fileState.key, {
+              status: 'COMPLETE',
+              progress: 100,
+              url: uploadResult?.url,
             });
           } catch (err: unknown) {
             console.error(err);
@@ -185,20 +196,23 @@ export const UploaderProvider: React.FC<ProviderProps> = ({
   }, []);
 
   React.useEffect(() => {
-    void onChange?.(fileStates);
+    const completedFileStates = fileStates.filter(
+      (fs): fs is CompletedFileState => fs.status === 'COMPLETE' && !!fs.url,
+    );
+    void onChange?.({
+      allFiles: fileStates,
+      completedFiles: completedFileStates,
+    });
   }, [fileStates, onChange]);
 
-  // This effect watches for changes in `pendingAutoUploadKeys`.
-  // When keys are present (meaning files were added with autoUpload),
-  // it triggers `uploadFiles` for those specific keys and then resets the state.
+  // Handle auto-uploading files added to the queue
   React.useEffect(() => {
     if (pendingAutoUploadKeys && pendingAutoUploadKeys.length > 0) {
       void uploadFiles(pendingAutoUploadKeys);
-      setPendingAutoUploadKeys(null); // Reset the pending keys after triggering upload
+      setPendingAutoUploadKeys(null);
     }
   }, [pendingAutoUploadKeys, uploadFiles]);
 
-  // Derive isUploading status from fileStates
   const isUploading = React.useMemo(
     () => fileStates.some((fs) => fs.status === 'UPLOADING'),
     [fileStates],

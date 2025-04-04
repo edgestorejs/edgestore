@@ -41,6 +41,7 @@ function MultiImageExample() {
           filename: file.name,
         },
       ]);
+      return { url: res.url };
     },
     [edgestore],
   );

@@ -43,6 +43,7 @@ function MultiFileExample() {
           filename: file.name,
         },
       ]);
+      return { url: res.url };
     },
     [edgestore],
   );
