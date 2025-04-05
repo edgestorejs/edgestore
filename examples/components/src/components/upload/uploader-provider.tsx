@@ -135,14 +135,20 @@ export const UploaderProvider: React.FC<ProviderProps> = ({
               url: uploadResult?.url,
             });
           } catch (err: unknown) {
-            console.error(err);
-            if (err instanceof Error && err.name === 'AbortError') {
+            if (
+              err instanceof Error &&
+              // if using with EdgeStore, the error name is UploadAbortedError
+              (err.name === 'AbortError' || err.name === 'UploadAbortedError')
+            ) {
               updateFileState(fileState.key, {
                 status: 'PENDING',
                 progress: 0,
                 error: 'Upload canceled',
               });
             } else {
+              if (process.env.NODE_ENV === 'development') {
+                console.error(err);
+              }
               const errorMessage =
                 err instanceof Error ? err.message : 'Upload failed';
               updateFileState(fileState.key, {
@@ -183,12 +189,16 @@ export const UploaderProvider: React.FC<ProviderProps> = ({
   const cancelUpload = React.useCallback(
     (key: string) => {
       const fileState = fileStates.find((f) => f.key === key);
-      if (fileState?.abortController) {
+      if (fileState?.abortController && fileState.progress < 100) {
         fileState.abortController.abort();
         updateFileState(key, { status: 'PENDING', progress: 0 });
       }
+      // Remove file if it was an auto-upload
+      if (fileState?.autoUpload) {
+        removeFile(key);
+      }
     },
-    [fileStates, updateFileState],
+    [fileStates, updateFileState, removeFile],
   );
 
   const resetFiles = React.useCallback(() => {

@@ -1,10 +1,13 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
 import { ExampleFrame } from '@/components/ui/example-frame';
 import { SingleImageDropzone } from '@/components/upload/single-image';
+import {
+  UploaderProvider,
+  type UploadFn,
+} from '@/components/upload/uploader-provider';
 import { useEdgeStore } from '@/lib/edgestore';
-import { useState } from 'react';
+import * as React from 'react';
 
 export default function Page() {
   return (
@@ -15,77 +18,52 @@ export default function Page() {
 }
 
 function SingleImageExample() {
-  const [file, setFile] = useState<File>();
-  const [progress, setProgress] = useState<
-    'PENDING' | 'COMPLETE' | 'ERROR' | number
-  >('PENDING');
-  const [uploadRes, setUploadRes] = useState<{
+  const [uploadRes, setUploadRes] = React.useState<{
+    name: string;
     url: string;
-    filename: string;
   }>();
   const { edgestore } = useEdgeStore();
 
+  const uploadFn: UploadFn = React.useCallback(
+    async ({ file, onProgressChange, signal }) => {
+      const res = await edgestore.myPublicImages.upload({
+        file,
+        signal,
+        onProgressChange,
+      });
+      setUploadRes({
+        name: file.name,
+        url: res.url,
+      });
+      return res;
+    },
+    [edgestore],
+  );
+
   return (
-    <div className="flex flex-col items-center">
-      <SingleImageDropzone
-        height={200}
-        width={200}
-        value={file}
-        onChange={setFile}
-        disabled={progress !== 'PENDING'}
-        dropzoneOptions={{
-          maxSize: 1024 * 1024 * 1, // 1 MB
-        }}
-      />
-      <Button
-        className="mt-2"
-        onClick={async () => {
-          if (file) {
-            try {
-              const res = await edgestore.myPublicImages.upload({
-                file,
-                onProgressChange: async (newProgress) => {
-                  setProgress(newProgress);
-                  if (newProgress === 100) {
-                    // wait 1 second to set it to complete
-                    // so that the user can see it at 100%
-                    await new Promise((resolve) => setTimeout(resolve, 1000));
-                    setProgress('COMPLETE');
-                  }
-                },
-              });
-              setUploadRes({
-                url: res.url,
-                filename: file.name,
-              });
-            } catch (err) {
-              setProgress('ERROR');
-            }
-          }
-        }}
-        disabled={!file || progress !== 'PENDING'}
-      >
-        {progress === 'PENDING'
-          ? 'Upload'
-          : progress === 'COMPLETE'
-          ? 'Done'
-          : typeof progress === 'number'
-          ? `Uploading (${Math.round(progress)}%)`
-          : 'Error'}
-      </Button>
-      {uploadRes && (
-        <div className="mt-2">
-          <a
-            href={uploadRes.url}
-            target="_blank"
-            rel="noreferrer"
-            className="underline"
-          >
-            {uploadRes.filename}
-          </a>
-        </div>
-      )}
-    </div>
+    <UploaderProvider uploadFn={uploadFn} autoUpload>
+      <div className="flex flex-col items-center">
+        <SingleImageDropzone
+          height={200}
+          width={200}
+          dropzoneOptions={{
+            maxSize: 1024 * 1024 * 1, // 1 MB
+          }}
+        />
+        {uploadRes && (
+          <div className="mt-2">
+            <a
+              href={uploadRes.url}
+              target="_blank"
+              rel="noreferrer"
+              className="underline"
+            >
+              {uploadRes.name}
+            </a>
+          </div>
+        )}
+      </div>
+    </UploaderProvider>
   );
 }
 
