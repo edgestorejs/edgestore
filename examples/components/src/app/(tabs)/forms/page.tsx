@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { FileUploader } from '@/components/upload/multi-file';
 import {
   UploaderProvider,
+  type CompletedFileState,
   type UploadFn,
 } from '@/components/upload/uploader-provider';
 import { useEdgeStore } from '@/lib/edgestore';
@@ -115,16 +116,21 @@ function UploadInput<T extends FieldValues>(props: UseControllerProps<T>) {
     [edgestore],
   );
 
+  const handleUploaderChange = React.useCallback(
+    ({ completedFiles }: { completedFiles: CompletedFileState[] }) => {
+      const formValue = completedFiles.map((fs) => ({
+        filename: fs.file.name,
+        url: fs.url,
+      }));
+      onChange(formValue);
+    },
+    [onChange],
+  );
+
   return (
     <UploaderProvider
       uploadFn={uploadFn}
-      onChange={({ completedFiles }) => {
-        const formValue = completedFiles.map((fs) => ({
-          filename: fs.file.name,
-          url: fs.url,
-        }));
-        onChange(formValue);
-      }}
+      onChange={handleUploaderChange}
       autoUpload
     >
       <FileUploader maxFiles={10} maxSize={1024 * 1024 * 1} />

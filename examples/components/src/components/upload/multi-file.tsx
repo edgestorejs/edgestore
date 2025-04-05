@@ -140,87 +140,85 @@ export const FileList: React.FC<{
 
   return (
     <div className={twMerge('mt-3 flex w-full flex-col gap-2', className)}>
-      {fileStates.map(
-        ({ file, abortController, progress, status, error, key }) => {
-          return (
-            <div
-              key={key}
-              className="flex flex-col justify-center rounded border border-gray-300 px-4 py-3 shadow-sm dark:border-gray-700"
-            >
-              <div className="flex items-center gap-3 text-gray-700 dark:text-gray-200">
-                <FileIcon className="h-8 w-8 shrink-0 text-gray-500 dark:text-gray-400" />
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between text-xs">
-                    <div className="truncate text-sm">
-                      <div className="overflow-hidden overflow-ellipsis whitespace-nowrap font-medium">
-                        {file.name}
-                      </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">
-                        {formatFileSize(file.size)}
-                      </div>
+      {fileStates.map(({ file, abortController, progress, status, key }) => {
+        return (
+          <div
+            key={key}
+            className="flex flex-col justify-center rounded border border-gray-300 px-4 py-3 shadow-sm dark:border-gray-700"
+          >
+            <div className="flex items-center gap-3 text-gray-700 dark:text-gray-200">
+              <FileIcon className="h-8 w-8 shrink-0 text-gray-500 dark:text-gray-400" />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between text-xs">
+                  <div className="truncate text-sm">
+                    <div className="overflow-hidden overflow-ellipsis whitespace-nowrap font-medium">
+                      {file.name}
                     </div>
-
-                    <div className="ml-2 flex items-center gap-2">
-                      {status === 'ERROR' && (
-                        <div className="flex items-center text-xs text-red-500 dark:text-red-400">
-                          <AlertCircleIcon className="mr-1 h-4 w-4" />
-                        </div>
-                      )}
-
-                      {status === 'UPLOADING' && (
-                        <div className="flex flex-col items-end">
-                          {abortController && (
-                            <button
-                              type="button"
-                              className="rounded-md p-0.5 transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-700"
-                              disabled={progress === 100}
-                              onClick={() => {
-                                cancelUpload(key);
-                              }}
-                            >
-                              <XIcon className="h-4 w-4 shrink-0 text-gray-400 dark:text-gray-400" />
-                            </button>
-                          )}
-                          <div>{Math.round(progress)}%</div>
-                        </div>
-                      )}
-
-                      {status !== 'UPLOADING' && status !== 'COMPLETE' && (
-                        <button
-                          type="button"
-                          className="rounded-md p-1 text-gray-500 transition-colors duration-200 hover:bg-gray-100 hover:text-red-500 dark:hover:bg-gray-700"
-                          onClick={() => {
-                            removeFile(key);
-                          }}
-                          title="Remove"
-                        >
-                          <Trash2Icon className="h-4 w-4 shrink-0" />
-                        </button>
-                      )}
-
-                      {status === 'COMPLETE' && (
-                        <CheckCircleIcon className="h-5 w-5 shrink-0 text-green-500" />
-                      )}
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      {formatFileSize(file.size)}
                     </div>
+                  </div>
+
+                  <div className="ml-2 flex items-center gap-2">
+                    {status === 'ERROR' && (
+                      <div className="flex items-center text-xs text-red-500 dark:text-red-400">
+                        <AlertCircleIcon className="mr-1 h-4 w-4" />
+                      </div>
+                    )}
+
+                    {status === 'UPLOADING' && (
+                      <div className="flex flex-col items-end">
+                        {abortController && (
+                          <button
+                            type="button"
+                            className="rounded-md p-0.5 transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                            disabled={progress === 100}
+                            onClick={() => {
+                              cancelUpload(key);
+                            }}
+                          >
+                            <XIcon className="h-4 w-4 shrink-0 text-gray-400 dark:text-gray-400" />
+                          </button>
+                        )}
+                        <div>{Math.round(progress)}%</div>
+                      </div>
+                    )}
+
+                    {status !== 'UPLOADING' && status !== 'COMPLETE' && (
+                      <button
+                        type="button"
+                        className="rounded-md p-1 text-gray-500 transition-colors duration-200 hover:bg-gray-100 hover:text-red-500 dark:hover:bg-gray-700"
+                        onClick={() => {
+                          removeFile(key);
+                        }}
+                        title="Remove"
+                      >
+                        <Trash2Icon className="h-4 w-4 shrink-0" />
+                      </button>
+                    )}
+
+                    {status === 'COMPLETE' && (
+                      <CheckCircleIcon className="h-5 w-5 shrink-0 text-green-500" />
+                    )}
                   </div>
                 </div>
               </div>
-
-              {/* Progress Bar */}
-              {status === 'UPLOADING' && (
-                <div className="relative h-0">
-                  <div className="absolute top-1 h-1 w-full overflow-clip rounded-full bg-gray-200 dark:bg-gray-700">
-                    <div
-                      className="h-full bg-gray-400 transition-all duration-300 ease-in-out dark:bg-white"
-                      style={{ width: `${progress}%` }}
-                    />
-                  </div>
-                </div>
-              )}
             </div>
-          );
-        },
-      )}
+
+            {/* Progress Bar */}
+            {status === 'UPLOADING' && (
+              <div className="relative h-0">
+                <div className="absolute top-1 h-1 w-full overflow-clip rounded-full bg-gray-200 dark:bg-gray-700">
+                  <div
+                    className="h-full bg-gray-400 transition-all duration-300 ease-in-out dark:bg-white"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 };
@@ -235,8 +233,8 @@ export const FileUploader: React.FC<{
   dropzoneClassName?: string;
   fileListClassName?: string;
 }> = ({
-  maxFiles = 5,
-  maxSize = 1024 * 1024 * 10, // 10MB
+  maxFiles,
+  maxSize,
   accept,
   disabled,
   className,
