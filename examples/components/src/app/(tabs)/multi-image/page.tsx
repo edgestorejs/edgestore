@@ -1,24 +1,23 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
 import { ExampleFrame } from '@/components/ui/example-frame';
+import { ImageUploader } from '@/components/upload/multi-image';
 import {
-  MultiImageDropzone,
-  type FileState,
-} from '@/components/upload/multi-image';
+  UploaderProvider,
+  type UploadFn,
+} from '@/components/upload/uploader-provider';
 import { useEdgeStore } from '@/lib/edgestore';
 import * as React from 'react';
 
 export default function Page() {
   return (
-    <ExampleFrame details={<MultiFileDetails />}>
+    <ExampleFrame details={<MultiImageDetails />} centered>
       <MultiImageExample />
     </ExampleFrame>
   );
 }
 
 function MultiImageExample() {
-  const [fileStates, setFileStates] = React.useState<FileState[]>([]);
   const [uploadRes, setUploadRes] = React.useState<
     {
       url: string;
@@ -27,79 +26,36 @@ function MultiImageExample() {
   >([]);
   const { edgestore } = useEdgeStore();
 
-  function updateFileProgress(key: string, progress: FileState['progress']) {
-    setFileStates((fileStates) => {
-      const newFileStates = structuredClone(fileStates);
-      const fileState = newFileStates.find(
-        (fileState) => fileState.key === key,
-      );
-      if (fileState) {
-        fileState.progress = progress;
-      }
-      return newFileStates;
-    });
-  }
+  const uploadFn: UploadFn = React.useCallback(
+    async ({ file, onProgressChange, signal }) => {
+      const res = await edgestore.myPublicImages.upload({
+        file,
+        signal,
+        onProgressChange,
+      });
+
+      setUploadRes((prev) => [
+        ...prev,
+        {
+          url: res.url,
+          filename: file.name,
+        },
+      ]);
+
+      return res;
+    },
+    [edgestore],
+  );
 
   return (
     <div className="flex flex-col">
-      <MultiImageDropzone
-        value={fileStates}
-        dropzoneOptions={{
-          maxFiles: 6,
-          maxSize: 1024 * 1024 * 1, // 1 MB
-        }}
-        onChange={setFileStates}
-        onFilesAdded={async (addedFiles) => {
-          setFileStates([...fileStates, ...addedFiles]);
-        }}
-      />
-      <Button
-        className="mt-2"
-        onClick={async () => {
-          await Promise.all(
-            fileStates.map(async (fileState) => {
-              try {
-                if (
-                  fileState.progress !== 'PENDING' ||
-                  typeof fileState.file === 'string'
-                ) {
-                  return;
-                }
-                const res = await edgestore.myPublicImages.upload({
-                  file: fileState.file,
-                  onProgressChange: async (progress) => {
-                    updateFileProgress(fileState.key, progress);
-                    if (progress === 100) {
-                      // wait 1 second to set it to complete
-                      // so that the user can see the progress bar
-                      await new Promise((resolve) => setTimeout(resolve, 1000));
-                      updateFileProgress(fileState.key, 'COMPLETE');
-                    }
-                  },
-                });
-                setUploadRes((uploadRes) => [
-                  ...uploadRes,
-                  {
-                    url: res.url,
-                    filename:
-                      typeof fileState.file === 'string'
-                        ? fileState.file
-                        : fileState.file.name,
-                  },
-                ]);
-              } catch (err) {
-                updateFileProgress(fileState.key, 'ERROR');
-              }
-            }),
-          );
-        }}
-        disabled={
-          !fileStates.filter((fileState) => fileState.progress === 'PENDING')
-            .length
-        }
-      >
-        Upload
-      </Button>
+      <UploaderProvider uploadFn={uploadFn} autoUpload>
+        <ImageUploader
+          maxFiles={6}
+          maxSize={1024 * 1024 * 1} // 1 MB
+        />
+      </UploaderProvider>
+
       {uploadRes.length > 0 && (
         <div className="mt-2">
           {uploadRes.map((res) => (
@@ -119,7 +75,7 @@ function MultiImageExample() {
   );
 }
 
-function MultiFileDetails() {
+function MultiImageDetails() {
   return (
     <div className="flex flex-col">
       <h3 className="mt-4 text-base font-bold">See in GitHub</h3>
