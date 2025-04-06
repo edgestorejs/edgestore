@@ -36,7 +36,7 @@ const ProgressCircle = React.forwardRef<HTMLDivElement, ProgressCircleProps>(
             cy={size / 2}
             r={radius}
             strokeWidth={strokeWidth}
-            className="fill-none stroke-gray-600"
+            className="fill-none stroke-gray-500"
           />
           {/* Progress arc */}
           <circle

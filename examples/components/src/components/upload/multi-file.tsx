@@ -34,24 +34,24 @@ const FileList = React.forwardRef<HTMLDivElement, FileListProps>(
           return (
             <div
               key={key}
-              className="flex flex-col justify-center rounded border border-gray-300 px-4 py-3 shadow-xs dark:border-gray-700"
+              className="border-border shadow-xs flex flex-col justify-center rounded border px-4 py-3"
             >
-              <div className="flex items-center gap-3 text-gray-700 dark:text-gray-200">
-                <FileIcon className="h-8 w-8 shrink-0 text-gray-500 dark:text-gray-400" />
+              <div className="text-foreground flex items-center gap-3">
+                <FileIcon className="text-muted-foreground h-8 w-8 shrink-0" />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between text-xs">
                     <div className="truncate text-sm">
                       <div className="overflow-hidden text-ellipsis whitespace-nowrap font-medium">
                         {file.name}
                       </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                      <div className="text-muted-foreground text-xs">
                         {formatFileSize(file.size)}
                       </div>
                     </div>
 
                     <div className="ml-2 flex items-center gap-2">
                       {status === 'ERROR' && (
-                        <div className="flex items-center text-xs text-red-500 dark:text-red-400">
+                        <div className="text-destructive flex items-center text-xs">
                           <AlertCircleIcon className="mr-1 h-4 w-4" />
                         </div>
                       )}
@@ -61,13 +61,13 @@ const FileList = React.forwardRef<HTMLDivElement, FileListProps>(
                           {abortController && (
                             <button
                               type="button"
-                              className="rounded-md p-0.5 transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                              className="hover:bg-secondary rounded-md p-0.5 transition-colors duration-200"
                               disabled={progress === 100}
                               onClick={() => {
                                 cancelUpload(key);
                               }}
                             >
-                              <XIcon className="h-4 w-4 shrink-0 text-gray-400 dark:text-gray-400" />
+                              <XIcon className="text-muted-foreground h-4 w-4 shrink-0" />
                             </button>
                           )}
                           <div>{Math.round(progress)}%</div>
@@ -77,7 +77,7 @@ const FileList = React.forwardRef<HTMLDivElement, FileListProps>(
                       {status !== 'UPLOADING' && status !== 'COMPLETE' && (
                         <button
                           type="button"
-                          className="rounded-md p-1 text-gray-500 transition-colors duration-200 hover:bg-gray-100 hover:text-red-500 dark:hover:bg-gray-700"
+                          className="text-muted-foreground hover:bg-secondary hover:text-destructive rounded-md p-1 transition-colors duration-200"
                           onClick={() => {
                             removeFile(key);
                           }}
@@ -88,7 +88,7 @@ const FileList = React.forwardRef<HTMLDivElement, FileListProps>(
                       )}
 
                       {status === 'COMPLETE' && (
-                        <CheckCircleIcon className="h-5 w-5 shrink-0 text-green-500" />
+                        <CheckCircleIcon className="h-5 w-5 shrink-0 text-primary" />
                       )}
                     </div>
                   </div>

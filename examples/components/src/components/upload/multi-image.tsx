@@ -54,7 +54,7 @@ const ImageList = React.forwardRef<HTMLDivElement, ImageListProps>(
             <div
               key={fileState.key}
               className={
-                'relative aspect-square h-full w-full rounded-md border-0 bg-slate-200 p-0 shadow-md dark:bg-slate-900'
+                'bg-muted relative aspect-square h-full w-full rounded-md border-0 p-0 shadow-md'
               }
             >
               {displayUrl ? (
@@ -64,14 +64,16 @@ const ImageList = React.forwardRef<HTMLDivElement, ImageListProps>(
                   alt={fileState.file.name}
                 />
               ) : (
-                <div className="flex h-full w-full items-center justify-center bg-gray-200 dark:bg-gray-800">
-                  <span className="text-xs text-gray-500">No Preview</span>
+                <div className="bg-secondary flex h-full w-full items-center justify-center">
+                  <span className="text-muted-foreground text-xs">
+                    No Preview
+                  </span>
                 </div>
               )}
 
               {/* Upload progress indicator */}
               {fileState.status === 'UPLOADING' && (
-                <div className="absolute left-0 top-0 flex h-full w-full items-center justify-center rounded-md bg-black bg-opacity-70">
+                <div className="absolute left-0 top-0 flex h-full w-full items-center justify-center rounded-md bg-black/70">
                   <ProgressCircle progress={fileState.progress} />
                 </div>
               )}

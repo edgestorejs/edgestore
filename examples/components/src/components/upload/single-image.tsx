@@ -14,14 +14,13 @@ import { ProgressCircle } from './progress-circle';
 import { useUploader } from './uploader-provider';
 
 const DROPZONE_VARIANTS = {
-  base: 'relative rounded-md p-4 flex justify-center items-center flex-col cursor-pointer min-h-[150px] min-w-[200px] border-2 border-dashed border-gray-400 dark:border-gray-300 transition-colors duration-200 ease-in-out',
-  image:
-    'border-0 p-0 min-h-0 min-w-0 relative bg-slate-200 dark:bg-slate-900 shadow-md',
-  active: 'border-blue-500',
+  base: 'relative rounded-md p-4 flex justify-center items-center flex-col cursor-pointer min-h-[150px] min-w-[200px] border-2 border-dashed border-muted-foreground transition-colors duration-200 ease-in-out',
+  image: 'border-0 p-0 min-h-0 min-w-0 relative bg-muted shadow-md',
+  active: 'border-primary',
   disabled:
-    'bg-gray-200 border-gray-300 cursor-default pointer-events-none bg-opacity-30 dark:bg-gray-700 dark:border-gray-600',
-  accept: 'border-blue-500 bg-blue-500 bg-opacity-10',
-  reject: 'border-red-700 bg-red-700 bg-opacity-10',
+    'bg-muted/50 border-muted-foreground/50 cursor-default pointer-events-none',
+  accept: 'border-primary bg-primary/10',
+  reject: 'border-destructive bg-destructive/10',
 };
 
 export interface SingleImageDropzoneProps
@@ -144,22 +143,25 @@ const SingleImageDropzone = React.forwardRef<
           />
         ) : (
           // Placeholder content shown when no image is selected
-          <div className="flex flex-col items-center justify-center gap-2 text-center text-xs text-gray-500 dark:text-gray-400">
-            <UploadCloudIcon className="mb-1 h-7 w-7 text-gray-400" />
-            <div className="font-medium text-gray-600 dark:text-gray-300">
+          <div
+            className={cn(
+              'text-muted-foreground flex flex-col items-center justify-center gap-2 text-center text-xs',
+              isDisabled && 'opacity-50',
+            )}
+          >
+            <UploadCloudIcon className="mb-1 h-7 w-7" />
+            <div className="font-medium">
               drag & drop an image or click to select
             </div>
             {maxSize && (
-              <div className="text-xs text-gray-500 dark:text-gray-400">
-                Max size: {formatFileSize(maxSize)}
-              </div>
+              <div className="text-xs">Max size: {formatFileSize(maxSize)}</div>
             )}
           </div>
         )}
 
         {/* Upload progress overlay */}
         {displayUrl && fileState?.status === 'UPLOADING' && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center rounded-md bg-black bg-opacity-70">
+          <div className="absolute inset-0 flex flex-col items-center justify-center rounded-md bg-black/70">
             <ProgressCircle progress={fileState.progress} />
           </div>
         )}
@@ -193,7 +195,7 @@ const SingleImageDropzone = React.forwardRef<
 
       {/* Error message display */}
       {errorMessage && (
-        <div className="mt-2 flex items-center text-xs text-red-500 dark:text-red-400">
+        <div className="text-destructive mt-2 flex items-center text-xs">
           <AlertCircleIcon className="mr-1 h-4 w-4" />
           <span>{errorMessage}</span>
         </div>

@@ -8,12 +8,12 @@ import { useDropzone, type DropzoneOptions } from 'react-dropzone';
 import { useUploader } from './uploader-provider';
 
 const DROPZONE_VARIANTS = {
-  base: 'relative rounded-md p-4 w-full flex justify-center items-center flex-col cursor-pointer border-2 border-dashed border-gray-400 dark:border-gray-300 transition-colors duration-200 ease-in-out',
-  active: 'border-blue-500',
+  base: 'relative rounded-md p-4 w-full flex justify-center items-center flex-col cursor-pointer border-2 border-dashed border-muted-foreground transition-colors duration-200 ease-in-out',
+  active: 'border-primary',
   disabled:
-    'bg-gray-200 border-gray-300 cursor-default pointer-events-none bg-opacity-30 dark:bg-gray-700 dark:border-gray-600',
-  accept: 'border-blue-500 bg-blue-500 bg-opacity-10',
-  reject: 'border-red-700 bg-red-700 bg-opacity-10',
+    'bg-muted border-muted-foreground cursor-default pointer-events-none opacity-50',
+  accept: 'border-primary bg-primary/10',
+  reject: 'border-destructive bg-destructive/10',
 };
 
 export interface DropzoneProps extends React.HTMLAttributes<HTMLInputElement> {
@@ -110,13 +110,13 @@ const Dropzone = React.forwardRef<HTMLInputElement, DropzoneProps>(
           })}
         >
           <input ref={ref} {...getInputProps()} {...props} />
-          <div className="flex flex-col items-center justify-center gap-2 text-center">
-            <UploadCloudIcon className="h-10 w-10 text-gray-400" />
-            <div className="text-sm font-medium text-gray-600 dark:text-gray-300">
+          <div className="text-muted-foreground flex flex-col items-center justify-center gap-2 text-center">
+            <UploadCloudIcon className="h-10 w-10" />
+            <div className="text-sm font-medium">
               {isDragActive ? dropMessageActive : dropMessageDefault}
             </div>
             {maxSize && (
-              <div className="text-xs text-gray-500 dark:text-gray-400">
+              <div className="text-xs">
                 {maxFiles && maxFiles > 1 ? `Up to ${maxFiles} files, ` : ''}
                 Max size: {formatFileSize(maxSize)}
               </div>
@@ -126,7 +126,7 @@ const Dropzone = React.forwardRef<HTMLInputElement, DropzoneProps>(
 
         {/* Error Text */}
         {error && (
-          <div className="mt-1 flex items-center text-xs text-red-500 dark:text-red-400">
+          <div className="text-destructive mt-1 flex items-center text-xs">
             <AlertCircleIcon className="mr-1 h-4 w-4" />
             <span>{error}</span>
           </div>
