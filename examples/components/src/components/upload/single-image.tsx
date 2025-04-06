@@ -115,7 +115,7 @@ const SingleImageDropzone = React.forwardRef<
       onDropAccepted: (acceptedFiles) => {
         setError(undefined);
         // Remove existing file before adding a new one
-        if (fileStates.length > 0) {
+        if (fileStates[0]) {
           removeFile(fileStates[0].key);
         }
         addFiles(acceptedFiles);

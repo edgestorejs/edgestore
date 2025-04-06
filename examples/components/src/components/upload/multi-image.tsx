@@ -55,7 +55,6 @@ const ImageList = React.forwardRef<HTMLDivElement, ImageListProps>(
           URL.revokeObjectURL(url);
         });
       };
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [tempUrls]);
 
     if (!fileStates.length) return null;
