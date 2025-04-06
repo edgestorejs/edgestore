@@ -191,11 +191,13 @@ export const UploaderProvider: React.FC<ProviderProps> = ({
       const fileState = fileStates.find((f) => f.key === key);
       if (fileState?.abortController && fileState.progress < 100) {
         fileState.abortController.abort();
-        updateFileState(key, { status: 'PENDING', progress: 0 });
-      }
-      // Remove file if it was an auto-upload
-      if (fileState?.autoUpload) {
-        removeFile(key);
+        if (fileState?.autoUpload) {
+          // Remove file if it was an auto-upload
+          removeFile(key);
+        } else {
+          // If it was not an auto-upload, reset the file state
+          updateFileState(key, { status: 'PENDING', progress: 0 });
+        }
       }
     },
     [fileStates, updateFileState, removeFile],
