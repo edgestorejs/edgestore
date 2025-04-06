@@ -46,6 +46,9 @@ type ProviderProps = {
     allFiles: FileState[];
     completedFiles: CompletedFileState[];
   }) => void | Promise<void>;
+  onFileAdded?: (file: FileState) => void | Promise<void>;
+  onFileRemoved?: (key: string) => void | Promise<void>;
+  onUploadCompleted?: (file: CompletedFileState) => void | Promise<void>;
   uploadFn: UploadFn;
   value?: FileState[];
   autoUpload?: boolean;
@@ -67,6 +70,9 @@ export const useUploader = () => {
 export const UploaderProvider: React.FC<ProviderProps> = ({
   children,
   onChange,
+  onFileAdded,
+  onFileRemoved,
+  onUploadCompleted,
   uploadFn,
   value: externalValue,
   autoUpload = false,
@@ -129,11 +135,24 @@ export const UploaderProvider: React.FC<ProviderProps> = ({
 
             // Wait a bit to show the bar at 100%
             await new Promise((resolve) => setTimeout(resolve, 500));
+
+            const completedFile = {
+              ...fileState,
+              status: 'COMPLETE' as const,
+              progress: 100,
+              url: uploadResult?.url,
+            };
+
             updateFileState(fileState.key, {
               status: 'COMPLETE',
               progress: 100,
               url: uploadResult?.url,
             });
+
+            // Call onUploadCompleted when a file upload is completed
+            if (onUploadCompleted) {
+              void onUploadCompleted(completedFile);
+            }
           } catch (err: unknown) {
             if (
               err instanceof Error &&
@@ -160,7 +179,7 @@ export const UploaderProvider: React.FC<ProviderProps> = ({
         }),
       );
     },
-    [fileStates, updateFileState, uploadFn],
+    [fileStates, updateFileState, uploadFn, onUploadCompleted],
   );
 
   const addFiles = React.useCallback(
@@ -175,16 +194,34 @@ export const UploaderProvider: React.FC<ProviderProps> = ({
         autoUpload,
       }));
       setFileStates((prev) => [...prev, ...newFileStates]);
+
+      // Call onFileAdded for each new file
+      if (onFileAdded) {
+        newFileStates.forEach((fileState) => {
+          void onFileAdded(fileState);
+        });
+      }
+
       if (autoUpload) {
         setPendingAutoUploadKeys(newFileStates.map((fs) => fs.key));
       }
     },
-    [autoUpload],
+    [autoUpload, onFileAdded],
   );
 
-  const removeFile = React.useCallback((key: string) => {
-    setFileStates((prev) => prev.filter((fileState) => fileState.key !== key));
-  }, []);
+  const removeFile = React.useCallback(
+    (key: string) => {
+      setFileStates((prev) =>
+        prev.filter((fileState) => fileState.key !== key),
+      );
+
+      // Call onFileRemoved when a file is removed
+      if (onFileRemoved) {
+        void onFileRemoved(key);
+      }
+    },
+    [onFileRemoved],
+  );
 
   const cancelUpload = React.useCallback(
     (key: string) => {
