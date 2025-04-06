@@ -115,6 +115,7 @@ export interface FileUploaderProps
   disabled?: boolean;
   dropzoneClassName?: string;
   fileListClassName?: string;
+  inputRef?: React.Ref<HTMLInputElement>;
 }
 
 const FileUploader = React.forwardRef<HTMLDivElement, FileUploaderProps>(
@@ -127,6 +128,7 @@ const FileUploader = React.forwardRef<HTMLDivElement, FileUploaderProps>(
       className,
       dropzoneClassName,
       fileListClassName,
+      inputRef,
       ...props
     },
     ref,
@@ -134,6 +136,7 @@ const FileUploader = React.forwardRef<HTMLDivElement, FileUploaderProps>(
     return (
       <div ref={ref} className={cn('w-full space-y-4', className)} {...props}>
         <Dropzone
+          ref={inputRef}
           dropzoneOptions={{
             maxFiles,
             maxSize,

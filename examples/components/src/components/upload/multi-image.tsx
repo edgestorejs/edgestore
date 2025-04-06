@@ -8,42 +8,6 @@ import { Dropzone } from './dropzone';
 import { ProgressCircle } from './progress-circle';
 import { useUploader } from './uploader-provider';
 
-export interface MultiImageDropzoneProps
-  extends React.HTMLAttributes<HTMLDivElement> {
-  disabled?: boolean;
-  dropzoneOptions?: Omit<DropzoneOptions, 'disabled' | 'onDrop'>;
-}
-
-const MultiImageDropzone = React.forwardRef<
-  HTMLDivElement,
-  MultiImageDropzoneProps
->(({ dropzoneOptions, className, disabled, ...props }, ref) => {
-  const { fileStates } = useUploader();
-  // Reference to input is now internal to Dropzone, so we create our own ref
-  const inputRef = React.useRef<HTMLInputElement>(null);
-  const maxFiles = dropzoneOptions?.maxFiles;
-
-  // Disable if explicitly disabled or max files reached
-  const isDisabled =
-    !!disabled || (maxFiles !== undefined && fileStates.length >= maxFiles);
-
-  return (
-    <div ref={ref} className={className} {...props}>
-      <Dropzone
-        ref={inputRef}
-        dropzoneOptions={{
-          ...dropzoneOptions,
-          accept: { 'image/*': [] },
-        }}
-        disabled={isDisabled}
-        dropMessageActive="Drop images here..."
-        dropMessageDefault="drag & drop images here, or click to select"
-      />
-    </div>
-  );
-});
-MultiImageDropzone.displayName = 'MultiImageDropzone';
-
 export interface ImageListProps extends React.HTMLAttributes<HTMLDivElement> {
   disabled?: boolean;
 }
@@ -142,6 +106,33 @@ const ImageList = React.forwardRef<HTMLDivElement, ImageListProps>(
 );
 ImageList.displayName = 'ImageList';
 
+export interface ImageDropzoneProps
+  extends React.HTMLAttributes<HTMLDivElement> {
+  disabled?: boolean;
+  dropzoneOptions?: Omit<DropzoneOptions, 'disabled' | 'onDrop'>;
+  inputRef?: React.Ref<HTMLInputElement>;
+}
+
+const ImageDropzone = React.forwardRef<HTMLDivElement, ImageDropzoneProps>(
+  ({ dropzoneOptions, className, disabled, inputRef, ...props }, ref) => {
+    return (
+      <div ref={ref} className={className} {...props}>
+        <Dropzone
+          ref={inputRef}
+          dropzoneOptions={{
+            ...dropzoneOptions,
+            accept: { 'image/*': [] },
+          }}
+          disabled={disabled}
+          dropMessageActive="Drop images here..."
+          dropMessageDefault="drag & drop images here, or click to select"
+        />
+      </div>
+    );
+  },
+);
+ImageDropzone.displayName = 'ImageDropzone';
+
 export interface ImageUploaderProps
   extends React.HTMLAttributes<HTMLDivElement> {
   maxFiles?: number;
@@ -149,6 +140,7 @@ export interface ImageUploaderProps
   disabled?: boolean;
   dropzoneClassName?: string;
   imageListClassName?: string;
+  inputRef?: React.Ref<HTMLInputElement>;
 }
 
 const ImageUploader = React.forwardRef<HTMLDivElement, ImageUploaderProps>(
@@ -160,13 +152,15 @@ const ImageUploader = React.forwardRef<HTMLDivElement, ImageUploaderProps>(
       className,
       dropzoneClassName,
       imageListClassName,
+      inputRef,
       ...props
     },
     ref,
   ) => {
     return (
       <div ref={ref} className={cn('w-full space-y-4', className)} {...props}>
-        <MultiImageDropzone
+        <ImageDropzone
+          ref={inputRef}
           dropzoneOptions={{
             maxFiles,
             maxSize,
@@ -182,4 +176,4 @@ const ImageUploader = React.forwardRef<HTMLDivElement, ImageUploaderProps>(
 );
 ImageUploader.displayName = 'ImageUploader';
 
-export { MultiImageDropzone, ImageList, ImageUploader };
+export { ImageList, ImageDropzone, ImageUploader };

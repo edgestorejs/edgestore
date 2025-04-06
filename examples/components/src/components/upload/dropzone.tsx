@@ -55,6 +55,17 @@ const Dropzone = React.forwardRef<HTMLInputElement, DropzoneProps>(
       onDropAccepted: (acceptedFiles) => {
         if (acceptedFiles.length === 0) return;
         setError(undefined);
+
+        // Check if adding these files would exceed maxFiles limit
+        if (maxFiles) {
+          const remainingSlots = maxFiles - fileStates.length;
+          // If adding all files would exceed the limit, reject them all
+          if (acceptedFiles.length > remainingSlots) {
+            setError(`You can only add ${maxFiles} file(s).`);
+            return;
+          }
+        }
+
         addFiles(acceptedFiles);
       },
       onDropRejected: (rejections) => {
