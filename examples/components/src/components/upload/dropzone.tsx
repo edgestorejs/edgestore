@@ -1,11 +1,10 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { formatFileSize } from '@edgestore/react/utils';
 import { AlertCircleIcon, UploadCloudIcon } from 'lucide-react';
 import * as React from 'react';
 import { useDropzone, type DropzoneOptions } from 'react-dropzone';
-import { useUploader } from './uploader-provider';
+import { formatFileSize, useUploader } from './uploader-provider';
 
 const DROPZONE_VARIANTS = {
   base: 'relative rounded-md p-4 w-full flex justify-center items-center flex-col cursor-pointer border-2 border-dashed border-muted-foreground transition-colors duration-200 ease-in-out',

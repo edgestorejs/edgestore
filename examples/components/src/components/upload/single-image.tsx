@@ -1,7 +1,6 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { formatFileSize } from '@edgestore/react/utils';
 import {
   AlertCircleIcon,
   Trash2Icon,
@@ -11,7 +10,7 @@ import {
 import * as React from 'react';
 import { useDropzone, type DropzoneOptions } from 'react-dropzone';
 import { ProgressCircle } from './progress-circle';
-import { useUploader } from './uploader-provider';
+import { formatFileSize, useUploader } from './uploader-provider';
 
 const DROPZONE_VARIANTS = {
   base: 'relative rounded-md p-4 flex justify-center items-center flex-col cursor-pointer min-h-[150px] min-w-[200px] border-2 border-dashed border-muted-foreground transition-colors duration-200 ease-in-out',

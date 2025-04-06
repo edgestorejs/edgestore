@@ -1,7 +1,6 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { formatFileSize } from '@edgestore/react/utils';
 import {
   AlertCircleIcon,
   CheckCircleIcon,
@@ -13,7 +12,7 @@ import * as React from 'react';
 import { type DropzoneOptions } from 'react-dropzone';
 import { Dropzone } from './dropzone';
 import { ProgressBar } from './progress-bar';
-import { useUploader } from './uploader-provider';
+import { formatFileSize, useUploader } from './uploader-provider';
 
 // File List Component
 export interface FileListProps extends React.HTMLAttributes<HTMLDivElement> {}
