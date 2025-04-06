@@ -432,7 +432,15 @@ async function getBlobFromUrl(url: string) {
 export type InferClientResponse<TRouter extends AnyRouter> = {
   [TBucketName in keyof TRouter['buckets']]: {
     [TClienFn in keyof EdgeStoreClient<TRouter>[TBucketName]]: Simplify<
-      Awaited<ReturnType<EdgeStoreClient<TRouter>[TBucketName][TClienFn]>>
+      Awaited<
+        ReturnType<
+          EdgeStoreClient<TRouter>[TBucketName][TClienFn] extends (
+            ...args: any
+          ) => any
+            ? EdgeStoreClient<TRouter>[TBucketName][TClienFn]
+            : never
+        >
+      >
     >;
   };
 };

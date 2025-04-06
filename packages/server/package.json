@@ -120,12 +120,12 @@
     "@aws-sdk/s3-request-presigner": "^3.420.0",
     "@azure/storage-blob": "^12.17.0",
     "@types/cookie": "^0.5.1",
-    "@types/node": "^18.11.18",
+    "@types/node": "^20",
     "@types/uuid": "^9.0.1",
-    "next": "^13.4.9",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "typescript": "^5.1.6",
+    "next": "^15.2.4",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "typescript": "^5",
     "zod": "3.21.4"
   },
   "gitHead": "a223c4cb8df50e6b64f9db5dc2daf93848748da9"
