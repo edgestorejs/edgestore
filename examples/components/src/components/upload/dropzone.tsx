@@ -15,13 +15,49 @@ const DROPZONE_VARIANTS = {
   reject: 'border-destructive bg-destructive/10',
 };
 
+/**
+ * Props for the Dropzone component.
+ *
+ * @interface DropzoneProps
+ * @extends {React.HTMLAttributes<HTMLInputElement>}
+ */
 export interface DropzoneProps extends React.HTMLAttributes<HTMLInputElement> {
+  /**
+   * Options passed to the underlying react-dropzone component.
+   * Cannot include 'disabled' or 'onDrop' as they are handled internally.
+   */
   dropzoneOptions?: Omit<DropzoneOptions, 'disabled' | 'onDrop'>;
+
+  /**
+   * Whether the dropzone is disabled.
+   */
   disabled?: boolean;
+
+  /**
+   * Message shown when files are being dragged over the dropzone.
+   */
   dropMessageActive?: string;
+
+  /**
+   * Default message shown when the dropzone is idle.
+   */
   dropMessageDefault?: string;
 }
 
+/**
+ * A dropzone component for file uploads that integrates with the UploaderProvider.
+ *
+ * @component
+ * @example
+ * ```tsx
+ * <Dropzone
+ *   dropzoneOptions={{
+ *     maxFiles: 5,
+ *     maxSize: 1024 * 1024 * 10, // 10MB
+ *   }}
+ * />
+ * ```
+ */
 const Dropzone = React.forwardRef<HTMLInputElement, DropzoneProps>(
   (
     {

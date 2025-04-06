@@ -1,63 +1,144 @@
 import * as React from 'react';
 
-// Types
+/**
+ * Represents the possible statuses of a file in the uploader.
+ */
 export type FileStatus = 'PENDING' | 'UPLOADING' | 'COMPLETE' | 'ERROR';
 
+/**
+ * Represents the state of a file in the uploader.
+ */
 export type FileState = {
+  /** The file object being uploaded */
   file: File;
+
+  /** Unique identifier for the file */
   key: string;
+
+  /** Upload progress (0-100) */
   progress: number;
+
+  /** Current status of the file */
   status: FileStatus;
+
+  /** URL of the uploaded file (available when status is COMPLETE) */
   url?: string;
+
+  /** Error message if the upload failed */
   error?: string;
+
+  /** AbortController to cancel the upload */
   abortController?: AbortController;
+
+  /** Whether the file should be automatically uploaded */
   autoUpload?: boolean;
 };
 
-// Define a type for completed files where URL is guaranteed
+/**
+ * Represents a file that has completed uploading.
+ */
 export type CompletedFileState = Omit<FileState, 'status' | 'url'> & {
+  /** Status is guaranteed to be 'COMPLETE' */
   status: 'COMPLETE';
+
+  /** URL is guaranteed to be available */
   url: string;
 };
 
+/**
+ * Function type for handling file uploads.
+ */
 export type UploadFn = (options: {
+  /** The file to be uploaded */
   file: File;
+
+  /** AbortSignal to cancel the upload */
   signal: AbortSignal;
+
+  /** Callback to update progress */
   onProgressChange: (progress: number) => void | Promise<void>;
 }) => Promise<{ url: string }>;
 
+/**
+ * Context type for the UploaderProvider.
+ */
 type UploaderContextType = {
+  /** List of all files in the uploader */
   fileStates: FileState[];
+
+  /** Add files to the uploader */
   addFiles: (files: File[]) => void;
+
+  /** Update a file's state */
   updateFileState: (key: string, changes: Partial<FileState>) => void;
+
+  /** Remove a file from the uploader */
   removeFile: (key: string) => void;
+
+  /** Cancel an ongoing upload */
   cancelUpload: (key: string) => void;
+
+  /** Start uploading files */
   uploadFiles: (keysToUpload?: string[]) => Promise<void>;
+
+  /** Reset all files */
   resetFiles: () => void;
+
+  /** Whether any file is currently uploading */
   isUploading: boolean;
+
+  /** Whether files should be automatically uploaded */
   autoUpload?: boolean;
 };
 
+/**
+ * Props for the UploaderProvider component.
+ */
 type ProviderProps = {
+  /** React children or render function */
   children:
     | React.ReactNode
     | ((context: UploaderContextType) => React.ReactNode);
+
+  /** Callback when files change */
   onChange?: (args: {
     allFiles: FileState[];
     completedFiles: CompletedFileState[];
   }) => void | Promise<void>;
+
+  /** Callback when a file is added */
   onFileAdded?: (file: FileState) => void | Promise<void>;
+
+  /** Callback when a file is removed */
   onFileRemoved?: (key: string) => void | Promise<void>;
+
+  /** Callback when a file upload completes */
   onUploadCompleted?: (file: CompletedFileState) => void | Promise<void>;
+
+  /** Function to handle the actual upload */
   uploadFn: UploadFn;
+
+  /** External value to control the file states */
   value?: FileState[];
+
+  /** Whether files should be automatically uploaded when added */
   autoUpload?: boolean;
 };
 
 // Context
 const UploaderContext = React.createContext<UploaderContextType | null>(null);
 
-// Hook
+/**
+ * Hook to access the uploader context.
+ *
+ * @returns The uploader context
+ * @throws Error if used outside of UploaderProvider
+ *
+ * @example
+ * ```tsx
+ * const { fileStates, addFiles, uploadFiles } = useUploader();
+ * ```
+ */
 export const useUploader = () => {
   const context = React.useContext(UploaderContext);
   if (!context) {
@@ -66,7 +147,23 @@ export const useUploader = () => {
   return context;
 };
 
-// Provider Component
+/**
+ * Provider component for file upload functionality.
+ *
+ * @component
+ * @example
+ * ```tsx
+ * <UploaderProvider
+ *   uploadFn={async ({ file, signal, onProgressChange }) => {
+ *     // Upload implementation
+ *     return { url: 'https://example.com/uploads/image.jpg' };
+ *   }}
+ *   autoUpload={true}
+ * >
+ *   <ImageUploader maxFiles={5} maxSize={1024 * 1024 * 2} />
+ * </UploaderProvider>
+ * ```
+ */
 export const UploaderProvider: React.FC<ProviderProps> = ({
   children,
   onChange,
@@ -300,9 +397,16 @@ export const UploaderProvider: React.FC<ProviderProps> = ({
 };
 
 /**
- * This will format the file size to a human-readable format.
+ * Formats a file size in bytes to a human-readable string.
  *
- * @example 1024 => 1 KB
+ * @param bytes - The file size in bytes
+ * @returns A formatted string (e.g., "1.5 MB")
+ *
+ * @example
+ * ```ts
+ * formatFileSize(1024); // "1 KB"
+ * formatFileSize(1024 * 1024 * 2.5); // "2.5 MB"
+ * ```
  */
 export function formatFileSize(bytes?: number) {
   if (!bytes) return '0 B';

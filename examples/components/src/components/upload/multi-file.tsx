@@ -14,9 +14,23 @@ import { Dropzone } from './dropzone';
 import { ProgressBar } from './progress-bar';
 import { formatFileSize, useUploader } from './uploader-provider';
 
-// File List Component
+/**
+ * Props for the FileList component.
+ *
+ * @interface FileListProps
+ * @extends {React.HTMLAttributes<HTMLDivElement>}
+ */
 export interface FileListProps extends React.HTMLAttributes<HTMLDivElement> {}
 
+/**
+ * Displays a list of files with their upload status, progress, and controls.
+ *
+ * @component
+ * @example
+ * ```tsx
+ * <FileList className="my-4" />
+ * ```
+ */
 const FileList = React.forwardRef<HTMLDivElement, FileListProps>(
   ({ className, ...props }, ref) => {
     const { fileStates, removeFile, cancelUpload } = useUploader();
@@ -105,18 +119,68 @@ const FileList = React.forwardRef<HTMLDivElement, FileListProps>(
 );
 FileList.displayName = 'FileList';
 
-// Complete File Uploader Component
+/**
+ * Props for the FileUploader component.
+ *
+ * @interface FileUploaderProps
+ * @extends {React.HTMLAttributes<HTMLDivElement>}
+ */
 export interface FileUploaderProps
   extends React.HTMLAttributes<HTMLDivElement> {
+  /**
+   * Maximum number of files allowed.
+   */
   maxFiles?: number;
+
+  /**
+   * Maximum file size in bytes.
+   */
   maxSize?: number;
+
+  /**
+   * Accepted file types.
+   *
+   * @example
+   * ```tsx
+   * accept={{ 'image/*': ['.png', '.jpg', '.jpeg'] }}
+   * ```
+   */
   accept?: DropzoneOptions['accept'];
+
+  /**
+   * Whether the uploader is disabled.
+   */
   disabled?: boolean;
+
+  /**
+   * Additional className for the dropzone component.
+   */
   dropzoneClassName?: string;
+
+  /**
+   * Additional className for the file list component.
+   */
   fileListClassName?: string;
+
+  /**
+   * Ref for the input element inside the Dropzone.
+   */
   inputRef?: React.Ref<HTMLInputElement>;
 }
 
+/**
+ * A complete file uploader component with dropzone and file list.
+ *
+ * @component
+ * @example
+ * ```tsx
+ * <FileUploader
+ *   maxFiles={5}
+ *   maxSize={1024 * 1024 * 10} // 10MB
+ *   accept={{ 'application/pdf': [] }}
+ * />
+ * ```
+ */
 const FileUploader = React.forwardRef<HTMLDivElement, FileUploaderProps>(
   (
     {

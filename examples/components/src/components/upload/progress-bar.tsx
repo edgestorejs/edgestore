@@ -1,10 +1,28 @@
 import { cn } from '@/lib/utils';
 import * as React from 'react';
 
+/**
+ * Props for the ProgressBar component.
+ *
+ * @interface ProgressBarProps
+ * @extends {React.HTMLAttributes<HTMLDivElement>}
+ */
 export interface ProgressBarProps extends React.HTMLAttributes<HTMLDivElement> {
-  progress: number; // Percentage (0-100)
+  /**
+   * The progress value as a percentage (0-100).
+   */
+  progress: number;
 }
 
+/**
+ * A horizontal progress bar component that visualizes completion percentage.
+ *
+ * @component
+ * @example
+ * ```tsx
+ * <ProgressBar progress={75} />
+ * ```
+ */
 const ProgressBar = React.forwardRef<HTMLDivElement, ProgressBarProps>(
   ({ progress, className, ...props }, ref) => {
     return (

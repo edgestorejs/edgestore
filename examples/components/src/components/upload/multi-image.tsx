@@ -8,10 +8,28 @@ import { Dropzone } from './dropzone';
 import { ProgressCircle } from './progress-circle';
 import { useUploader } from './uploader-provider';
 
+/**
+ * Props for the ImageList component.
+ *
+ * @interface ImageListProps
+ * @extends {React.HTMLAttributes<HTMLDivElement>}
+ */
 export interface ImageListProps extends React.HTMLAttributes<HTMLDivElement> {
+  /**
+   * Whether the image deletion controls should be disabled.
+   */
   disabled?: boolean;
 }
 
+/**
+ * Displays a grid of image previews with upload status and controls.
+ *
+ * @component
+ * @example
+ * ```tsx
+ * <ImageList className="my-4" />
+ * ```
+ */
 const ImageList = React.forwardRef<HTMLDivElement, ImageListProps>(
   ({ className, disabled: initialDisabled, ...props }, ref) => {
     const { fileStates, removeFile, cancelUpload } = useUploader();
@@ -108,13 +126,45 @@ const ImageList = React.forwardRef<HTMLDivElement, ImageListProps>(
 );
 ImageList.displayName = 'ImageList';
 
+/**
+ * Props for the ImageDropzone component.
+ *
+ * @interface ImageDropzoneProps
+ * @extends {React.HTMLAttributes<HTMLDivElement>}
+ */
 export interface ImageDropzoneProps
   extends React.HTMLAttributes<HTMLDivElement> {
+  /**
+   * Whether the dropzone is disabled.
+   */
   disabled?: boolean;
+
+  /**
+   * Options passed to the underlying Dropzone component.
+   * Cannot include 'disabled' or 'onDrop' as they are handled internally.
+   */
   dropzoneOptions?: Omit<DropzoneOptions, 'disabled' | 'onDrop'>;
+
+  /**
+   * Ref for the input element inside the Dropzone.
+   */
   inputRef?: React.Ref<HTMLInputElement>;
 }
 
+/**
+ * A dropzone component specifically for image uploads.
+ *
+ * @component
+ * @example
+ * ```tsx
+ * <ImageDropzone
+ *   dropzoneOptions={{
+ *     maxFiles: 5,
+ *     maxSize: 1024 * 1024 * 2, // 2MB
+ *   }}
+ * />
+ * ```
+ */
 const ImageDropzone = React.forwardRef<HTMLDivElement, ImageDropzoneProps>(
   ({ dropzoneOptions, className, disabled, inputRef, ...props }, ref) => {
     return (
@@ -122,8 +172,8 @@ const ImageDropzone = React.forwardRef<HTMLDivElement, ImageDropzoneProps>(
         <Dropzone
           ref={inputRef}
           dropzoneOptions={{
-            ...dropzoneOptions,
             accept: { 'image/*': [] },
+            ...dropzoneOptions,
           }}
           disabled={disabled}
           dropMessageActive="Drop images here..."
@@ -135,16 +185,57 @@ const ImageDropzone = React.forwardRef<HTMLDivElement, ImageDropzoneProps>(
 );
 ImageDropzone.displayName = 'ImageDropzone';
 
+/**
+ * Props for the ImageUploader component.
+ *
+ * @interface ImageUploaderProps
+ * @extends {React.HTMLAttributes<HTMLDivElement>}
+ */
 export interface ImageUploaderProps
   extends React.HTMLAttributes<HTMLDivElement> {
+  /**
+   * Maximum number of images allowed.
+   */
   maxFiles?: number;
+
+  /**
+   * Maximum file size in bytes.
+   */
   maxSize?: number;
+
+  /**
+   * Whether the uploader is disabled.
+   */
   disabled?: boolean;
+
+  /**
+   * Additional className for the dropzone component.
+   */
   dropzoneClassName?: string;
+
+  /**
+   * Additional className for the image list component.
+   */
   imageListClassName?: string;
+
+  /**
+   * Ref for the input element inside the Dropzone.
+   */
   inputRef?: React.Ref<HTMLInputElement>;
 }
 
+/**
+ * A complete image uploader component with dropzone and image grid preview.
+ *
+ * @component
+ * @example
+ * ```tsx
+ * <ImageUploader
+ *   maxFiles={10}
+ *   maxSize={1024 * 1024 * 5} // 5MB
+ * />
+ * ```
+ */
 const ImageUploader = React.forwardRef<HTMLDivElement, ImageUploaderProps>(
   (
     {

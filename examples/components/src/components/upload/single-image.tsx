@@ -22,17 +22,55 @@ const DROPZONE_VARIANTS = {
   reject: 'border-destructive bg-destructive/10',
 };
 
+/**
+ * Props for the SingleImageDropzone component.
+ *
+ * @interface SingleImageDropzoneProps
+ * @extends {React.HTMLAttributes<HTMLInputElement>}
+ */
 export interface SingleImageDropzoneProps
   extends React.HTMLAttributes<HTMLInputElement> {
+  /**
+   * The width of the dropzone area in pixels.
+   */
   width: number;
+
+  /**
+   * The height of the dropzone area in pixels.
+   */
   height: number;
+
+  /**
+   * Whether the dropzone is disabled.
+   */
   disabled?: boolean;
+
+  /**
+   * Options passed to the underlying react-dropzone component.
+   * Cannot include 'disabled', 'onDrop', 'maxFiles', or 'multiple' as they are handled internally.
+   */
   dropzoneOptions?: Omit<
     DropzoneOptions,
     'disabled' | 'onDrop' | 'maxFiles' | 'multiple'
   >;
 }
 
+/**
+ * A single image upload component with preview and upload status.
+ *
+ * This component allows users to upload a single image, shows a preview,
+ * displays upload progress, and provides controls to remove or cancel the upload.
+ *
+ * @component
+ * @example
+ * ```tsx
+ * <SingleImageDropzone
+ *   width={320}
+ *   height={320}
+ *   dropzoneOptions={{ maxSize: 1024 * 1024 * 2 }} // 2MB
+ * />
+ * ```
+ */
 const SingleImageDropzone = React.forwardRef<
   HTMLInputElement,
   SingleImageDropzoneProps
