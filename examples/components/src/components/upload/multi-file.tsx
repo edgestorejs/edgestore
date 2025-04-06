@@ -34,14 +34,14 @@ const FileList = React.forwardRef<HTMLDivElement, FileListProps>(
           return (
             <div
               key={key}
-              className="flex flex-col justify-center rounded border border-gray-300 px-4 py-3 shadow-sm dark:border-gray-700"
+              className="flex flex-col justify-center rounded border border-gray-300 px-4 py-3 shadow-xs dark:border-gray-700"
             >
               <div className="flex items-center gap-3 text-gray-700 dark:text-gray-200">
                 <FileIcon className="h-8 w-8 shrink-0 text-gray-500 dark:text-gray-400" />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between text-xs">
                     <div className="truncate text-sm">
-                      <div className="overflow-hidden overflow-ellipsis whitespace-nowrap font-medium">
+                      <div className="overflow-hidden text-ellipsis whitespace-nowrap font-medium">
                         {file.name}
                       </div>
                       <div className="text-xs text-gray-500 dark:text-gray-400">
