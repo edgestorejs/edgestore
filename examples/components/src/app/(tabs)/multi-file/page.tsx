@@ -58,7 +58,6 @@ function MultiFileExample() {
               maxSize={1024 * 1024 * 1} // 1 MB
             />
             <Button
-              variant="outline"
               onClick={() => uploadFiles()}
               className="flex items-center gap-2 pl-3"
               disabled={
