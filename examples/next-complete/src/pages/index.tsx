@@ -1,12 +1,9 @@
-import {
-  type GetServerSideProps,
-  type InferGetServerSidePropsType,
-} from 'next';
+import ImageInput from '@/components/ImageInput';
+import { useEdgeStore } from '@/lib/edgestore';
+import { cn } from '@/lib/utils';
+import { GetServerSideProps, InferGetServerSidePropsType } from 'next';
 import Image from 'next/image';
 import { useState } from 'react';
-import { twMerge } from 'tailwind-merge';
-import ImageInput from '../components/ImageInput';
-import { useEdgeStore, type ClientResponse } from '../utils/edgestore';
 import { edgeStoreClient } from './api/edgestore/[...edgestore]';
 
 const MAX_SIZE = 1024 * 1024 * 5; // 5MB
@@ -130,7 +127,7 @@ function ImageFileBlock(params: {
         alt="Example"
       />
       <div
-        className={twMerge(
+        className={cn(
           'absolute left-0 top-0 flex h-full w-full flex-col items-center justify-center gap-2 bg-black bg-opacity-50 opacity-0 transition-all duration-300 group-hover:opacity-100',
           loading && 'opacity-100',
         )}
@@ -199,7 +196,7 @@ const Button: React.FC<{
 }> = ({ children, onClick, disabled, className }) => {
   return (
     <button
-      className={twMerge(
+      className={cn(
         'rounded bg-violet-600 px-2 py-1 font-bold uppercase text-white transition-colors duration-300 hover:bg-violet-500',
         disabled &&
           'pointer-events-none cursor-default bg-gray-800 text-opacity-50',
@@ -213,7 +210,9 @@ const Button: React.FC<{
   );
 };
 
-type FileRes = ClientResponse['myPublicImages']['listFiles']['data'][number] & {
+type FileRes = {
+  url: string;
+  thumbnailUrl?: string | null;
   base64Url?: string;
 };
 
@@ -227,5 +226,12 @@ export const getServerSideProps: GetServerSideProps<{
       },
     },
   });
-  return { props: { files: res.data } };
+  return {
+    props: {
+      files: res.data.map((file) => ({
+        url: file.url,
+        thumbnailUrl: file.thumbnailUrl,
+      })),
+    },
+  };
 };

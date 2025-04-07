@@ -1,7 +1,7 @@
+import { UploadCloudIcon, XIcon } from 'lucide-react';
 import Image from 'next/image';
 import { useMemo } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { IoCloseSharp, IoCloudUploadOutline } from 'react-icons/io5';
 import { twMerge } from 'tailwind-merge';
 
 const className = {
@@ -114,7 +114,7 @@ const ImageInput: React.FC<{
           </div>
         ) : (
           <div className="text-blue-gray-500 flex flex-col items-center justify-center text-xs">
-            <IoCloudUploadOutline className="mb-2 h-7 w-7" />
+            <UploadCloudIcon className="mb-2 h-7 w-7" />
             <div>drag & drop to upload</div>
             <div className="mt-3">
               <Button disabled={disabled}>select</Button>
@@ -130,7 +130,7 @@ const ImageInput: React.FC<{
             }}
           >
             <div className="bg-blue-gray-600 flex h-5 w-5 items-center justify-center rounded-md bg-gray-500 transition-all duration-300 hover:h-6 hover:w-6 hover:bg-gray-700">
-              <IoCloseSharp color="white" width={16} height={16} />
+              <XIcon className="h-4 w-4 text-white" />
             </div>
           </div>
         )}
