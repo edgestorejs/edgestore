@@ -48,7 +48,7 @@ export type CompletedFileState = Omit<FileState, 'status' | 'url'> & {
 /**
  * Function type for handling file uploads.
  */
-export type UploadFn = (options: {
+export type UploadFn<TOptions = unknown> = (props: {
   /** The file to be uploaded */
   file: File;
 
@@ -57,12 +57,15 @@ export type UploadFn = (options: {
 
   /** Callback to update progress */
   onProgressChange: (progress: number) => void | Promise<void>;
+
+  /** Additional options */
+  options?: TOptions;
 }) => Promise<{ url: string }>;
 
 /**
  * Context type for the UploaderProvider.
  */
-type UploaderContextType = {
+type UploaderContextType<TOptions = unknown> = {
   /** List of all files in the uploader */
   fileStates: FileState[];
 
@@ -79,7 +82,7 @@ type UploaderContextType = {
   cancelUpload: (key: string) => void;
 
   /** Start uploading files */
-  uploadFiles: (keysToUpload?: string[]) => Promise<void>;
+  uploadFiles: (keysToUpload?: string[], options?: TOptions) => Promise<void>;
 
   /** Reset all files */
   resetFiles: () => void;
@@ -94,11 +97,11 @@ type UploaderContextType = {
 /**
  * Props for the UploaderProvider component.
  */
-type ProviderProps = {
+type ProviderProps<TOptions = unknown> = {
   /** React children or render function */
   children:
     | React.ReactNode
-    | ((context: UploaderContextType) => React.ReactNode);
+    | ((context: UploaderContextType<TOptions>) => React.ReactNode);
 
   /** Callback when files change */
   onChange?: (args: {
@@ -116,7 +119,7 @@ type ProviderProps = {
   onUploadCompleted?: (file: CompletedFileState) => void | Promise<void>;
 
   /** Function to handle the actual upload */
-  uploadFn: UploadFn;
+  uploadFn: UploadFn<TOptions>;
 
   /** External value to control the file states */
   value?: FileState[];
@@ -126,7 +129,8 @@ type ProviderProps = {
 };
 
 // Context
-const UploaderContext = React.createContext<UploaderContextType | null>(null);
+const UploaderContext =
+  React.createContext<UploaderContextType<unknown> | null>(null);
 
 /**
  * Hook to access the uploader context.
@@ -139,13 +143,13 @@ const UploaderContext = React.createContext<UploaderContextType | null>(null);
  * const { fileStates, addFiles, uploadFiles } = useUploader();
  * ```
  */
-export const useUploader = () => {
+export function useUploader<TOptions = unknown>() {
   const context = React.useContext(UploaderContext);
   if (!context) {
     throw new Error('useUploader must be used within a UploaderProvider');
   }
-  return context;
-};
+  return context as UploaderContextType<TOptions>;
+}
 
 /**
  * Provider component for file upload functionality.
@@ -164,7 +168,7 @@ export const useUploader = () => {
  * </UploaderProvider>
  * ```
  */
-export const UploaderProvider: React.FC<ProviderProps> = ({
+export function UploaderProvider<TOptions = unknown>({
   children,
   onChange,
   onFileAdded,
@@ -173,7 +177,7 @@ export const UploaderProvider: React.FC<ProviderProps> = ({
   uploadFn,
   value: externalValue,
   autoUpload = false,
-}) => {
+}: ProviderProps<TOptions>) {
   const [fileStates, setFileStates] = React.useState<FileState[]>(
     externalValue ?? [],
   );
@@ -203,7 +207,7 @@ export const UploaderProvider: React.FC<ProviderProps> = ({
   );
 
   const uploadFiles = React.useCallback(
-    async (keysToUpload?: string[]) => {
+    async (keysToUpload?: string[], options?: TOptions) => {
       const filesToUpload = fileStates.filter(
         (fileState) =>
           fileState.status === 'PENDING' &&
@@ -228,6 +232,7 @@ export const UploaderProvider: React.FC<ProviderProps> = ({
               onProgressChange: async (progress) => {
                 updateFileState(fileState.key, { progress });
               },
+              options,
             });
 
             // Wait a bit to show the bar at 100%
@@ -390,11 +395,11 @@ export const UploaderProvider: React.FC<ProviderProps> = ({
   );
 
   return (
-    <UploaderContext.Provider value={value}>
+    <UploaderContext.Provider value={value as UploaderContextType<unknown>}>
       {typeof children === 'function' ? children(value) : children}
     </UploaderContext.Provider>
   );
-};
+}
 
 /**
  * Formats a file size in bytes to a human-readable string.
