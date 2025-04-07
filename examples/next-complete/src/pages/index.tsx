@@ -1,39 +1,39 @@
-import ImageInput from '@/components/ImageInput';
+import { Button } from '@/components/ui/button';
+import { SingleImageDropzone } from '@/components/upload/single-image';
+import {
+  UploaderProvider,
+  UploadFn,
+  useUploader,
+} from '@/components/upload/uploader-provider';
 import { useEdgeStore } from '@/lib/edgestore';
 import { cn } from '@/lib/utils';
+import { UploadCloudIcon } from 'lucide-react';
 import { GetServerSideProps, InferGetServerSidePropsType } from 'next';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { edgeStoreClient } from './api/edgestore/[...edgestore]';
 
 const MAX_SIZE = 1024 * 1024 * 5; // 5MB
 
+type UploadOptions = {
+  replaceTargetUrl?: string;
+};
+
 export default function Home({
   files: initFiles,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
-  const [file, setFile] = useState<File>();
   const [files, setFiles] = useState(initFiles);
-  const [progress, setProgress] = useState<number | null>(null);
   const { edgestore } = useEdgeStore();
 
-  const uploadFile = async (options?: { replaceTargetUrl?: string }) => {
-    try {
-      if (!file) {
-        return;
-      }
+  const uploadFn: UploadFn<UploadOptions> = useCallback(
+    async ({ file, signal, onProgressChange, options }) => {
       const newFileData = await edgestore.myPublicImages.upload({
         file,
+        signal,
+        onProgressChange,
         input: {
           type: 'post',
           extension: 'jpg',
-        },
-        onProgressChange: (progress) => {
-          setProgress(progress);
-          if (progress === 100) {
-            setTimeout(() => {
-              setProgress(null);
-            }, 1000);
-          }
         },
         options: {
           replaceTargetUrl: options?.replaceTargetUrl,
@@ -53,70 +53,78 @@ export default function Home({
       } else {
         setFiles((files) => [parsedNewFile, ...files]);
       }
-      setFile(undefined);
-    } catch (e) {
-      console.error(e);
-    }
-  };
+
+      return newFileData;
+    },
+    [edgestore],
+  );
 
   return (
-    <div className="flex flex-col items-center">
-      <div className="mb-3 text-lg font-bold">NextJS example</div>
-      <div>
-        <ImageInput
-          height={200}
-          width={200}
-          value={file}
-          maxSize={MAX_SIZE}
-          onChange={(file) => {
-            setFile(file);
-          }}
-        />
+    <UploaderProvider uploadFn={uploadFn}>
+      <div className="flex flex-col items-center">
+        <div className="mb-3 text-lg font-bold">NextJS example</div>
+        <ImageInput />
+        <div className="mt-5 grid w-full grid-cols-2 gap-3 px-10 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6">
+          {files.map((fileData) => (
+            <div className="mt-5 aspect-square" key={fileData.url}>
+              <ImageFileBlock
+                fileData={fileData}
+                onDelete={async (fileData) => {
+                  await edgestore.myPublicImages.delete({ url: fileData.url });
+                  setFiles((files) =>
+                    files.filter((f) => f.url !== fileData.url),
+                  );
+                }}
+              />
+            </div>
+          ))}
+        </div>
       </div>
-      <div className="mt-3" />
-      <div>
-        <Button
-          onClick={() => uploadFile()}
-          disabled={!file || progress !== null}
-        >
-          Upload
-        </Button>
-      </div>
-      <ProgressBar progress={progress} />
-      <div className="mt-5 grid w-full grid-cols-2 gap-3 px-10 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6">
-        {files.map((fileData) => (
-          <div className="mt-5 aspect-square" key={fileData.url}>
-            <ImageFileBlock
-              fileData={fileData}
-              // when the newFile is set, the replace button will be shown
-              newFile={progress !== null ? undefined : file}
-              onDelete={async (fileData) => {
-                await edgestore.myPublicImages.delete({ url: fileData.url });
-                setFiles((files) =>
-                  files.filter((f) => f.url !== fileData.url),
-                );
-              }}
-              onReplace={async (originalFile) => {
-                await uploadFile({
-                  replaceTargetUrl: originalFile.url,
-                });
-              }}
-            />
-          </div>
-        ))}
-      </div>
+    </UploaderProvider>
+  );
+}
+
+function ImageInput() {
+  const { fileStates, uploadFiles, resetFiles, isUploading } =
+    useUploader<UploadOptions>();
+
+  useEffect(() => {
+    // Once the upload is complete, clear the input
+    if (fileStates[0]?.status === 'COMPLETE') {
+      resetFiles();
+    }
+  }, [fileStates, resetFiles]);
+
+  return (
+    <div className="flex flex-col items-center gap-2">
+      <SingleImageDropzone
+        width={200}
+        height={200}
+        dropzoneOptions={{ maxSize: MAX_SIZE }}
+      />
+      <Button
+        onClick={() => uploadFiles()}
+        className="flex items-center gap-2 pl-3"
+        disabled={
+          isUploading || !fileStates.some((file) => file.status === 'PENDING')
+        }
+      >
+        <UploadCloudIcon className="h-4 w-4" />
+        <span>{isUploading ? 'Uploading...' : 'Upload Files'}</span>
+      </Button>
     </div>
   );
 }
 
 function ImageFileBlock(params: {
   fileData: FileRes;
-  newFile?: File;
   onDelete?: (fileData: FileRes) => void | Promise<void>;
-  onReplace?: (originalFile: FileRes, newFile: File) => void | Promise<void>;
 }) {
-  const { fileData, newFile, onDelete, onReplace } = params;
+  const { fileStates, uploadFiles } = useUploader<UploadOptions>();
+  const { fileData, onDelete } = params;
   const [loading, setLoading] = useState(false);
+  const newFileState = fileStates.find((file) => file.status === 'PENDING');
+
   return (
     <div className="group relative h-full w-full">
       <Image
@@ -148,12 +156,14 @@ function ImageFileBlock(params: {
             >
               Delete
             </Button>
-            {newFile && (
+            {newFileState && (
               <Button
                 onClick={async () => {
                   try {
                     setLoading(true);
-                    await onReplace?.(fileData, newFile);
+                    await uploadFiles([newFileState.key], {
+                      replaceTargetUrl: fileData.url,
+                    });
                   } finally {
                     setLoading(false);
                   }
@@ -168,47 +178,6 @@ function ImageFileBlock(params: {
     </div>
   );
 }
-
-function ProgressBar({ progress }: { progress: number | null }) {
-  return (
-    <>
-      {progress !== null && (
-        <>
-          <div className="my-2 h-2 w-[200px] border border-violet-300">
-            <div
-              className="h-full bg-violet-500 transition-all duration-300"
-              style={{
-                width: `${progress ?? 0}%`,
-              }}
-            />
-          </div>
-        </>
-      )}
-    </>
-  );
-}
-
-const Button: React.FC<{
-  children?: string;
-  onClick?: () => void;
-  disabled?: boolean;
-  className?: string;
-}> = ({ children, onClick, disabled, className }) => {
-  return (
-    <button
-      className={cn(
-        'rounded bg-violet-600 px-2 py-1 font-bold uppercase text-white transition-colors duration-300 hover:bg-violet-500',
-        disabled &&
-          'pointer-events-none cursor-default bg-gray-800 text-opacity-50',
-        className,
-      )}
-      onClick={onClick}
-      disabled={disabled}
-    >
-      {children}
-    </button>
-  );
-};
 
 type FileRes = {
   url: string;
