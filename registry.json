@@ -1,0 +1,109 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry.json",
+  "name": "EdgeStore",
+  "homepage": "https://edgestore.dev",
+  "items": [
+    {
+      "name": "dropzone",
+      "type": "registry:block",
+      "title": "Dropzone",
+      "description": "A file dropzone component.",
+      "dependencies": ["react-dropzone", "lucide-react"],
+      "files": [
+        {
+          "path": "examples/components/src/components/upload/dropzone.tsx",
+          "type": "registry:component"
+        }
+      ]
+    },
+    {
+      "name": "file-uploader",
+      "type": "registry:block",
+      "title": "File Uploader",
+      "description": "A component for uploading multiple files with preview and progress indicators.",
+      "dependencies": ["react-dropzone", "lucide-react"],
+      "registryDependencies": [
+        "https://edgestore.dev/r/dropzone.json",
+        "https://edgestore.dev/r/progress-bar.json",
+        "https://edgestore.dev/r/uploader-provider.json"
+      ],
+      "files": [
+        {
+          "path": "examples/components/src/components/upload/multi-file.tsx",
+          "type": "registry:component"
+        }
+      ]
+    },
+    {
+      "name": "image-uploader",
+      "type": "registry:block",
+      "title": "Image Uploader",
+      "description": "A component for uploading multiple images with preview grid and progress indicators.",
+      "dependencies": ["react-dropzone", "lucide-react"],
+      "registryDependencies": [
+        "https://edgestore.dev/r/dropzone.json",
+        "https://edgestore.dev/r/progress-circle.json",
+        "https://edgestore.dev/r/uploader-provider.json"
+      ],
+      "files": [
+        {
+          "path": "examples/components/src/components/upload/multi-image.tsx",
+          "type": "registry:component"
+        }
+      ]
+    },
+    {
+      "name": "single-image-dropzone",
+      "type": "registry:component",
+      "title": "Single Image Dropzone",
+      "description": "A dropzone component for uploading a single image with preview and progress indicator.",
+      "dependencies": ["react-dropzone", "lucide-react"],
+      "registryDependencies": [
+        "https://edgestore.dev/r/progress-circle.json",
+        "https://edgestore.dev/r/uploader-provider.json"
+      ],
+      "files": [
+        {
+          "path": "examples/components/src/components/upload/single-image.tsx",
+          "type": "registry:component"
+        }
+      ]
+    },
+    {
+      "name": "progress-bar",
+      "type": "registry:component",
+      "title": "Progress Bar",
+      "description": "A horizontal progress bar component for visualizing completion percentage.",
+      "files": [
+        {
+          "path": "examples/components/src/components/upload/progress-bar.tsx",
+          "type": "registry:component"
+        }
+      ]
+    },
+    {
+      "name": "progress-circle",
+      "type": "registry:component",
+      "title": "Progress Circle",
+      "description": "A circular progress indicator component for visualizing completion percentage.",
+      "files": [
+        {
+          "path": "examples/components/src/components/upload/progress-circle.tsx",
+          "type": "registry:component"
+        }
+      ]
+    },
+    {
+      "name": "uploader-provider",
+      "type": "registry:component",
+      "title": "Uploader Provider",
+      "description": "A provider component and hook for managing file uploads with progress tracking and state management.",
+      "files": [
+        {
+          "path": "examples/components/src/components/upload/uploader-provider.tsx",
+          "type": "registry:component"
+        }
+      ]
+    }
+  ]
+}
