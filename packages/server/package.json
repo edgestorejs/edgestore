@@ -125,7 +125,7 @@
     "next": "^15.2.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "typescript": "^5",
+    "typescript": "5.1.6",
     "zod": "3.21.4"
   },
   "gitHead": "a223c4cb8df50e6b64f9db5dc2daf93848748da9"
