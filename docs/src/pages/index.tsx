@@ -3,7 +3,7 @@ import React from 'react';
 import Homepage from '../components/Homepage';
 import { PageFrame } from '../components/PageFrame';
 
-export default function Home(): JSX.Element {
+export default function Home(): React.ReactNode {
   return (
     <div className="homepage">
       <Layout

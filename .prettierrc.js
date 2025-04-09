@@ -9,7 +9,7 @@ const config = {
   endOfLine: 'auto',
   singleQuote: true,
   importOrder: ['___', '__', '<THIRD_PARTY_MODULES>', '^[./]'],
-  tailwindConfig: './docs/tailwind.config.js',
+  tailwindStylesheet: './docs/src/css/custom.css',
   plugins: [
     require.resolve('@ianvs/prettier-plugin-sort-imports'),
     /**
