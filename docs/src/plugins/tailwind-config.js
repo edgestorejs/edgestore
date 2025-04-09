@@ -2,9 +2,11 @@
 
 module.exports = function tailwindPlugin() {
   return {
-    name: "tailwind-plugin",
+    name: 'docusaurus-tailwindcss',
     configurePostCss(postcssOptions) {
-      postcssOptions.plugins = [require("@tailwindcss/postcss")];
+      // Appends TailwindCSS and AutoPrefixer.
+      postcssOptions.plugins.push(require('tailwindcss'));
+      postcssOptions.plugins.push(require('autoprefixer'));
       return postcssOptions;
     },
   };
