@@ -10,7 +10,7 @@ import Tabs from '@theme/Tabs';
 import { ExternalLink } from 'lucide-react';
 import { CollapsibleCode } from '../../src/components/CollapsibleCode';
 import { Button } from '../../src/components/ui/Button';
-import { MultiFileDropzoneUsage } from '../../src/components/upload/MultiFileDropzoneUsage';
+import { MultiFileDropzoneUsage } from '../../src/components/upload/blocks/MultiFileDropzoneUsage';
 
 # Multi-file
 
@@ -22,11 +22,13 @@ import { MultiFileDropzoneUsage } from '../../src/components/upload/MultiFileDro
       rel="noreferrer"
       className="flex items-center gap-2"
     >
-      See it in action
+      <span>See it in action</span>
       <ExternalLink size={16} />
     </a>
   </Button>
-  <MultiFileDropzoneUsage />
+  <div className="reset-docusaurus w-full max-w-md">
+    <MultiFileDropzoneUsage />
+  </div>
 </div>
 
 ## Usage

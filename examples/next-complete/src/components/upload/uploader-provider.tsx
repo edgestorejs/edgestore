@@ -229,7 +229,7 @@ export function UploaderProvider<TOptions = unknown>({
             const uploadResult = await uploadFn({
               file: fileState.file,
               signal: abortController.signal,
-              onProgressChange: async (progress) => {
+              onProgressChange: (progress) => {
                 updateFileState(fileState.key, { progress });
               },
               options,

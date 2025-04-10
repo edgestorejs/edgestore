@@ -10,7 +10,7 @@ import Tabs from '@theme/Tabs';
 import { ExternalLink } from 'lucide-react';
 import { CollapsibleCode } from '../../src/components/CollapsibleCode';
 import { Button } from '../../src/components/ui/Button';
-import { SingleImageDropzoneUsage } from '../../src/components/upload/SingleImageDropzoneUsage';
+import { SingleImageDropzoneUsage } from '../../src/components/upload/blocks/SingleImageDropzoneUsage';
 
 # Single-image
 
@@ -22,11 +22,13 @@ import { SingleImageDropzoneUsage } from '../../src/components/upload/SingleImag
       rel="noreferrer"
       className="flex items-center gap-2"
     >
-      See it in action
+      <span>See it in action</span>
       <ExternalLink size={16} />
     </a>
   </Button>
-  <SingleImageDropzoneUsage />
+  <div className="reset-docusaurus w-full max-w-md">
+    <SingleImageDropzoneUsage />
+  </div>
 </div>
 
 ## Usage

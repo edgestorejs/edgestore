@@ -1,6 +1,5 @@
 'use client';
 
-import { cn } from '@/lib/utils';
 import {
   AlertCircleIcon,
   CheckCircleIcon,
@@ -10,6 +9,7 @@ import {
 } from 'lucide-react';
 import * as React from 'react';
 import { type DropzoneOptions } from 'react-dropzone';
+import { cn } from '../../lib/utils';
 import { Dropzone } from './dropzone';
 import { ProgressBar } from './progress-bar';
 import { formatFileSize, useUploader } from './uploader-provider';
@@ -41,7 +41,7 @@ const FileList = React.forwardRef<
         return (
           <div
             key={key}
-            className="border-border shadow-xs flex flex-col justify-center rounded border px-4 py-3"
+            className="border-border shadow-xs flex flex-col justify-center rounded border border-solid px-4 py-3"
           >
             <div className="text-foreground flex items-center gap-3">
               <FileIcon className="text-muted-foreground h-8 w-8 shrink-0" />
@@ -90,7 +90,7 @@ const FileList = React.forwardRef<
                         }}
                         title="Remove"
                       >
-                        <Trash2Icon className="block h-4 w-4 shrink-0" />
+                        <Trash2Icon className="h-4 w-4 shrink-0" />
                       </button>
                     )}
 
