@@ -52,6 +52,11 @@ const sidebars = {
         'components/image',
         'components/multi-image',
         'components/multi-file',
+        'components/uploader-provider',
+        'components/dropzone',
+        'components/progress-circle',
+        'components/progress-bar',
+        'components/manual-install',
       ],
     },
     {

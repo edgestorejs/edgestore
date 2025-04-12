@@ -8,7 +8,9 @@ export function SingleImageDropzoneUsage() {
   return (
     <>
       <UploaderProvider
-        uploadFn={() => Promise.resolve({ url: 'https://example.com' })}
+        uploadFn={() =>
+          Promise.resolve({ url: 'https://edgestore.dev/img/logo.png' })
+        }
       >
         <SingleImageDropzone width={200} height={200} />
       </UploaderProvider>

@@ -8,7 +8,9 @@ export function MultiImageDropzoneUsage() {
   return (
     <>
       <UploaderProvider
-        uploadFn={() => Promise.resolve({ url: 'https://example.com' })}
+        uploadFn={() =>
+          Promise.resolve({ url: 'https://edgestore.dev/img/logo.png' })
+        }
       >
         <ImageUploader maxFiles={6} maxSize={1024 * 1024 * 1} />
       </UploaderProvider>

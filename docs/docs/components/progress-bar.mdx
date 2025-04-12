@@ -1,0 +1,151 @@
+---
+id: progress-bar
+title: Progress Bar
+sidebar_label: Progress Bar
+slug: /components/progress-bar
+---
+
+import TabItem from '@theme/TabItem';
+import Tabs from '@theme/Tabs';
+import { CollapsibleCode } from '../../src/components/CollapsibleCode';
+import { ProgressBarUsage } from '../../src/components/upload/blocks/ProgressBar';
+
+# Progress Bar
+
+<div className="flex w-full flex-col items-center justify-center">
+  <ProgressBarUsage />
+</div>
+
+The `ProgressBar` component displays a horizontal progress indicator, commonly used to show file upload progress. It visually represents a percentage value (0-100) with a filled bar.
+
+:::tip
+If you are installing the other dropzone components via the CLI, this component will be installed automatically. You can skip the following steps.
+:::
+
+## Installation
+
+<Tabs>
+<TabItem value="cli" label="CLI">
+
+<Tabs>
+<TabItem value="pnpm" label="pnpm">
+
+```bash
+pnpm dlx shadcn@latest add https://edgestore.dev/r/progress-bar
+```
+
+</TabItem>
+<TabItem value="npm" label="npm">
+
+```bash
+npx shadcn@latest add https://edgestore.dev/r/progress-bar
+```
+
+</TabItem>
+<TabItem value="yarn" label="yarn">
+
+```bash
+npx shadcn@latest add https://edgestore.dev/r/progress-bar
+```
+
+</TabItem>
+<TabItem value="bun" label="bun">
+
+```shell
+bunx --bun shadcn@latest add https://edgestore.dev/r/progress-bar
+```
+
+</TabItem>
+</Tabs>
+
+</TabItem>
+<TabItem value="manual" label="Manual">
+
+### Setup for manual installation
+
+First you will need to add the cn helper following the [manual install setup](/docs/components/manual-install) guide.
+
+### Copy this component
+
+<CollapsibleCode>
+
+````tsx
+import * as React from 'react';
+import { cn } from '@/lib/utils';
+
+/**
+ * Props for the ProgressBar component.
+ *
+ * @interface ProgressBarProps
+ * @extends {React.HTMLAttributes<HTMLDivElement>}
+ */
+export interface ProgressBarProps extends React.HTMLAttributes<HTMLDivElement> {
+  /**
+   * The progress value as a percentage (0-100).
+   */
+  progress: number;
+}
+
+/**
+ * A horizontal progress bar component that visualizes completion percentage.
+ *
+ * @component
+ * @example
+ * ```tsx
+ * <ProgressBar progress={75} />
+ * ```
+ */
+const ProgressBar = React.forwardRef<HTMLDivElement, ProgressBarProps>(
+  ({ progress, className, ...props }, ref) => {
+    return (
+      <div ref={ref} className={cn('relative h-0', className)} {...props}>
+        <div className="bg-muted absolute top-1 h-1 w-full overflow-clip rounded-full">
+          <div
+            className="h-full bg-primary transition-all duration-300 ease-in-out"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      </div>
+    );
+  },
+);
+ProgressBar.displayName = 'ProgressBar';
+
+export { ProgressBar };
+````
+
+</CollapsibleCode>
+
+</TabItem>
+</Tabs>
+
+## Usage
+
+Import the component and provide the `progress` prop.
+
+```tsx
+import { ProgressBar } from '@/components/ui/progress-bar';
+
+function ProgressDemo() {
+  const progress = 75;
+
+  return (
+    <div className="flex flex-col space-y-4 p-4 rounded-lg">
+      {/* Default usage */}
+      <ProgressBar progress={progress} />
+
+      {/* With custom styling */}
+      <div className="w-64">
+        <ProgressBar progress={progress} className="py-2" />
+      </div>
+
+      {/* Different progress values */}
+      <div className="space-y-2">
+        <ProgressBar progress={25} />
+        <ProgressBar progress={50} />
+        <ProgressBar progress={100} />
+      </div>
+    </div>
+  );
+}
+```

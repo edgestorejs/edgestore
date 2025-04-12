@@ -111,7 +111,7 @@ html[data-theme='dark'] {
   --ifm-color-primary-lighter: theme(colors.primary.200);
   --ifm-color-primary-lightest: theme(colors.primary.100);
   --ifm-background-color: #000000;
-  --ifm-code-background: #313032;
+  --ifm-code-background: #1e1e1e;
   --ifm-footer-background-color: #000000;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
 }
@@ -214,6 +214,6 @@ html[data-theme='dark'] {
   display: none;
 } */
 
-p code {
-  color: #fead88;
+:not(.code-container) code {
+  color: #ce9178;
 }
