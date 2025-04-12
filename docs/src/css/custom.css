@@ -59,10 +59,6 @@
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
   }
-
-  .reset-docusaurus button {
-    @apply border-border border-none bg-transparent;
-  }
 }
 
 @theme inline {
@@ -216,4 +212,8 @@ html[data-theme='dark'] {
 
 :not(.code-container) code {
   color: #ce9178;
+}
+
+.reset-docusaurus button {
+  @apply border-border border-none bg-transparent;
 }
