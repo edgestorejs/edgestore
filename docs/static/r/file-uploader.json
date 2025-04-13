@@ -4,14 +4,11 @@
   "type": "registry:block",
   "title": "File Uploader",
   "description": "A component for uploading multiple files with preview and progress indicators.",
-  "dependencies": [
-    "react-dropzone",
-    "lucide-react"
-  ],
+  "dependencies": ["react-dropzone", "lucide-react"],
   "registryDependencies": [
-    "https://edgestore.dev/r/dropzone.json",
-    "https://edgestore.dev/r/progress-bar.json",
-    "https://edgestore.dev/r/uploader-provider.json"
+    "https://edgestore-docs-git-new-components-edgestore.vercel.app/r/dropzone.json",
+    "https://edgestore-docs-git-new-components-edgestore.vercel.app/r/progress-bar.json",
+    "https://edgestore-docs-git-new-components-edgestore.vercel.app/r/uploader-provider.json"
   ],
   "files": [
     {

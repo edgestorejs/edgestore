@@ -5,7 +5,7 @@
   "title": "Progress Circle Block",
   "description": "A demo block showing a circular progress indicator with animated progress.",
   "registryDependencies": [
-    "https://edgestore.dev/r/progress-circle.json"
+    "https://edgestore-docs-git-new-components-edgestore.vercel.app/r/progress-circle.json"
   ],
   "files": [
     {

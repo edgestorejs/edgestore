@@ -24,9 +24,9 @@
       "description": "A component for uploading multiple files with preview and progress indicators.",
       "dependencies": ["react-dropzone", "lucide-react"],
       "registryDependencies": [
-        "https://edgestore.dev/r/dropzone.json",
-        "https://edgestore.dev/r/progress-bar.json",
-        "https://edgestore.dev/r/uploader-provider.json"
+        "https://edgestore-docs-git-new-components-edgestore.vercel.app/r/dropzone.json",
+        "https://edgestore-docs-git-new-components-edgestore.vercel.app/r/progress-bar.json",
+        "https://edgestore-docs-git-new-components-edgestore.vercel.app/r/uploader-provider.json"
       ],
       "files": [
         {
@@ -43,9 +43,9 @@
       "description": "A component for uploading multiple images with preview grid and progress indicators.",
       "dependencies": ["react-dropzone", "lucide-react"],
       "registryDependencies": [
-        "https://edgestore.dev/r/dropzone.json",
-        "https://edgestore.dev/r/progress-circle.json",
-        "https://edgestore.dev/r/uploader-provider.json"
+        "https://edgestore-docs-git-new-components-edgestore.vercel.app/r/dropzone.json",
+        "https://edgestore-docs-git-new-components-edgestore.vercel.app/r/progress-circle.json",
+        "https://edgestore-docs-git-new-components-edgestore.vercel.app/r/uploader-provider.json"
       ],
       "files": [
         {
@@ -62,8 +62,8 @@
       "description": "A dropzone component for uploading a single image with preview and progress indicator.",
       "dependencies": ["react-dropzone", "lucide-react"],
       "registryDependencies": [
-        "https://edgestore.dev/r/progress-circle.json",
-        "https://edgestore.dev/r/uploader-provider.json"
+        "https://edgestore-docs-git-new-components-edgestore.vercel.app/r/progress-circle.json",
+        "https://edgestore-docs-git-new-components-edgestore.vercel.app/r/uploader-provider.json"
       ],
       "files": [
         {
@@ -117,7 +117,9 @@
       "type": "registry:block",
       "title": "File Uploader Block",
       "description": "A block for uploading multiple files with preview and progress indicators.",
-      "registryDependencies": ["https://edgestore.dev/r/file-uploader.json"],
+      "registryDependencies": [
+        "https://edgestore-docs-git-new-components-edgestore.vercel.app/r/file-uploader.json"
+      ],
       "files": [
         {
           "path": "examples/components/src/components/upload/blocks/multi-file-block.tsx",
@@ -132,8 +134,8 @@
       "title": "Single Image Dropzone Block",
       "description": "A block for uploading a single image with preview and progress indicator.",
       "registryDependencies": [
-        "https://edgestore.dev/r/single-image-dropzone.json",
-        "https://edgestore.dev/r/uploader-provider.json"
+        "https://edgestore-docs-git-new-components-edgestore.vercel.app/r/single-image-dropzone.json",
+        "https://edgestore-docs-git-new-components-edgestore.vercel.app/r/uploader-provider.json"
       ],
       "files": [
         {
@@ -149,8 +151,8 @@
       "title": "Multi Image Uploader Block",
       "description": "A block for uploading multiple images with preview grid and progress indicators.",
       "registryDependencies": [
-        "https://edgestore.dev/r/image-uploader.json",
-        "https://edgestore.dev/r/uploader-provider.json"
+        "https://edgestore-docs-git-new-components-edgestore.vercel.app/r/image-uploader.json",
+        "https://edgestore-docs-git-new-components-edgestore.vercel.app/r/uploader-provider.json"
       ],
       "files": [
         {
@@ -165,7 +167,9 @@
       "type": "registry:block",
       "title": "Progress Bar Block",
       "description": "A demo block showing a horizontal progress bar with animated progress.",
-      "registryDependencies": ["https://edgestore.dev/r/progress-bar.json"],
+      "registryDependencies": [
+        "https://edgestore-docs-git-new-components-edgestore.vercel.app/r/progress-bar.json"
+      ],
       "files": [
         {
           "path": "examples/components/src/components/upload/blocks/progress-bar-block.tsx",
@@ -179,7 +183,9 @@
       "type": "registry:block",
       "title": "Progress Circle Block",
       "description": "A demo block showing a circular progress indicator with animated progress.",
-      "registryDependencies": ["https://edgestore.dev/r/progress-circle.json"],
+      "registryDependencies": [
+        "https://edgestore-docs-git-new-components-edgestore.vercel.app/r/progress-circle.json"
+      ],
       "files": [
         {
           "path": "examples/components/src/components/upload/blocks/progress-circle-block.tsx",

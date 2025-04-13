@@ -5,8 +5,8 @@
   "title": "Single Image Dropzone Block",
   "description": "A block for uploading a single image with preview and progress indicator.",
   "registryDependencies": [
-    "https://edgestore.dev/r/single-image-dropzone.json",
-    "https://edgestore.dev/r/uploader-provider.json"
+    "https://edgestore-docs-git-new-components-edgestore.vercel.app/r/single-image-dropzone.json",
+    "https://edgestore-docs-git-new-components-edgestore.vercel.app/r/uploader-provider.json"
   ],
   "files": [
     {

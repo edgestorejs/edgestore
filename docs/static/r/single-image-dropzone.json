@@ -4,13 +4,10 @@
   "type": "registry:component",
   "title": "Single Image Dropzone",
   "description": "A dropzone component for uploading a single image with preview and progress indicator.",
-  "dependencies": [
-    "react-dropzone",
-    "lucide-react"
-  ],
+  "dependencies": ["react-dropzone", "lucide-react"],
   "registryDependencies": [
-    "https://edgestore.dev/r/progress-circle.json",
-    "https://edgestore.dev/r/uploader-provider.json"
+    "https://edgestore-docs-git-new-components-edgestore.vercel.app/r/progress-circle.json",
+    "https://edgestore-docs-git-new-components-edgestore.vercel.app/r/uploader-provider.json"
   ],
   "files": [
     {
