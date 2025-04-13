@@ -50,26 +50,17 @@ function CompletedImages() {
 
   return (
     <div className="mt-8 w-full">
-      <h3 className="mb-2 text-lg font-semibold">Uploaded Images</h3>
-      <div className="grid grid-cols-3 gap-2 rounded-md bg-gray-50 p-4 dark:bg-gray-900">
-        {completedFiles.map((file) => (
+      <h3 className="mb-2 text-lg font-semibold">Uploaded Files</h3>
+      <div className="rounded-md bg-gray-50 p-4 dark:bg-gray-900">
+        {completedFiles.map((res) => (
           <a
-            key={file.url}
-            href={file.url}
+            key={res.url}
+            className="mb-1 block underline"
+            href={res.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="group relative aspect-square overflow-hidden rounded-md"
           >
-            <img
-              src={file.url}
-              alt={file.file.name}
-              className="h-full w-full object-cover transition-transform group-hover:scale-110"
-            />
-            <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/50 to-transparent p-2 opacity-0 transition-opacity group-hover:opacity-100">
-              <span className="truncate text-xs text-white">
-                {file.file.name}
-              </span>
-            </div>
+            {res.file.name}
           </a>
         ))}
       </div>
