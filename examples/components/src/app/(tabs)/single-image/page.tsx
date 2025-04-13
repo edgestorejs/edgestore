@@ -1,7 +1,6 @@
 'use client';
 
 import { ExampleFrame } from '@/components/ui/example-frame';
-import FileUploaderBlock from '@/components/upload/blocks/multi-file-block';
 import { SingleImageDropzone } from '@/components/upload/single-image';
 import {
   UploaderProvider,
