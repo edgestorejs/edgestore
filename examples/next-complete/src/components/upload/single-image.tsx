@@ -222,9 +222,9 @@ const SingleImageDropzone = React.forwardRef<
               }}
             >
               {fileState.status === 'UPLOADING' ? (
-                <XIcon className="text-muted-foreground h-4 w-4" />
+                <XIcon className="text-muted-foreground block h-4 w-4" />
               ) : (
-                <Trash2Icon className="text-muted-foreground h-4 w-4" />
+                <Trash2Icon className="text-muted-foreground block h-4 w-4" />
               )}
             </button>
           )}

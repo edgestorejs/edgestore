@@ -74,7 +74,7 @@ const FileList = React.forwardRef<
                               cancelUpload(key);
                             }}
                           >
-                            <XIcon className="text-muted-foreground h-4 w-4 shrink-0" />
+                            <XIcon className="text-muted-foreground block h-4 w-4 shrink-0" />
                           </button>
                         )}
                         <div>{Math.round(progress)}%</div>
@@ -90,7 +90,7 @@ const FileList = React.forwardRef<
                         }}
                         title="Remove"
                       >
-                        <Trash2Icon className="h-4 w-4 shrink-0" />
+                        <Trash2Icon className="block h-4 w-4 shrink-0" />
                       </button>
                     )}
 

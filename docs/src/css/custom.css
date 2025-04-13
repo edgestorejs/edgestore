@@ -8,6 +8,80 @@
  * work well for content-centric websites.
  */
 
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 224 71.4% 4.1%;
+    --card: 0 0% 100%;
+    --card-foreground: 224 71.4% 4.1%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 71.4% 4.1%;
+    --secondary: 220 14.3% 95.9%;
+    --secondary-foreground: 220.9 39.3% 11%;
+    --muted: 220 14.3% 95.9%;
+    --muted-foreground: 220 8.9% 46.1%;
+    --accent: 220 14.3% 95.9%;
+    --accent-foreground: 220.9 39.3% 11%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 20% 98%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 262.1 83.3% 57.8%;
+    --radius: 0.5rem;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+  }
+
+  html[data-theme='dark'] {
+    --background: 224 71.4% 4.1%;
+    --foreground: 210 20% 98%;
+    --card: 224 71.4% 4.1%;
+    --card-foreground: 210 20% 98%;
+    --popover: 224 71.4% 4.1%;
+    --popover-foreground: 210 20% 98%;
+    --secondary: 215 27.9% 16.9%;
+    --secondary-foreground: 210 20% 98%;
+    --muted: 215 27.9% 16.9%;
+    --muted-foreground: 217.9 10.6% 64.9%;
+    --accent: 215 27.9% 16.9%;
+    --accent-foreground: 210 20% 98%;
+    --destructive: 359 100% 69.6%;
+    --destructive-foreground: 210 20% 98%;
+    --border: 215 27.9% 16.9%;
+    --input: 215 27.9% 16.9%;
+    --ring: 263.4 70% 50.4%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+  }
+}
+
+@theme inline {
+  /* Shadcn UI */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+}
+
 /* You can override the default Infima variables here. */
 :root {
   --ifm-color-primary: #5f2e85;
@@ -23,10 +97,6 @@
   --ifm-tabs-padding-vertical: 0.5rem;
 }
 
-.footer--dark {
-  @apply bg-primary-500/30;
-}
-
 /* For readability concerns, you should choose a lighter palette in dark mode. */
 html[data-theme='dark'] {
   --ifm-color-primary: theme(colors.primary.400);
@@ -37,13 +107,17 @@ html[data-theme='dark'] {
   --ifm-color-primary-lighter: theme(colors.primary.200);
   --ifm-color-primary-lightest: theme(colors.primary.100);
   --ifm-background-color: #000000;
-  --ifm-code-background: #313032;
+  --ifm-code-background: #1e1e1e;
   --ifm-footer-background-color: #000000;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
 }
 
+.footer--dark {
+  @apply bg-primary-500/30;
+}
+
 .navbar {
-  @apply border-x-0 border-t-0 border-b border-solid border-white/20 bg-black/40 backdrop-blur-lg;
+  @apply border-x-0 border-b border-t-0 border-solid border-white/20 bg-black/40 backdrop-blur-lg;
 }
 
 .navbar.navbar-sidebar--show {
@@ -136,6 +210,10 @@ html[data-theme='dark'] {
   display: none;
 } */
 
-p code {
-  color: #fead88;
+:not(.code-container) code {
+  color: #ce9178;
+}
+
+.reset-docusaurus button {
+  @apply border-border border-none bg-transparent;
 }

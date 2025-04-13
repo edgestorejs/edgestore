@@ -11,8 +11,8 @@ type Context = {
   signedIn: 'true' | 'false';
 };
 
-function createContext(_opts: CreateContextOptions): Context {
-  const signedIn = cookies().get('signedIn')?.value ?? 'false';
+async function createContext(_opts: CreateContextOptions): Promise<Context> {
+  const signedIn = (await cookies()).get('signedIn')?.value ?? 'false';
   return {
     signedIn: signedIn === 'true' ? 'true' : 'false',
   };

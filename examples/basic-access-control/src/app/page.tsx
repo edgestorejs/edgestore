@@ -5,8 +5,8 @@ import { unstable_noStore } from 'next/cache';
 import { cookies } from 'next/headers';
 import { backendClient } from './api/edgestore/[...edgestore]/route';
 
-export default function Home() {
-  const isSignedIn = cookies().get('signedIn')?.value === 'true';
+export default async function Home() {
+  const isSignedIn = (await cookies()).get('signedIn')?.value === 'true';
 
   return (
     <div>

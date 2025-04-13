@@ -1,93 +1,5 @@
----
-id: multi-file
-title: Multi-file Upload Component
-sidebar_label: Multi-file
-slug: /components/multi-file
----
-
-import TabItem from '@theme/TabItem';
-import Tabs from '@theme/Tabs';
-import { ExternalLink } from 'lucide-react';
-import { CollapsibleCode } from '../../src/components/CollapsibleCode';
-import { Button } from '../../src/components/ui/Button';
-import { MultiFileDropzoneUsage } from '../../src/components/upload/blocks/MultiFileDropzoneUsage';
-
-# Multi-file
-
-<div className="flex flex-col items-center gap-4">
-  <Button asChild variant="outline">
-    <a
-      href="https://examples.edgestore.dev/components/multi-file-instant"
-      target="_blank"
-      rel="noreferrer"
-      className="flex items-center gap-2"
-    >
-      <span>See it in action</span>
-      <ExternalLink size={16} />
-    </a>
-  </Button>
-  <div className="reset-docusaurus w-full max-w-md">
-    <MultiFileDropzoneUsage />
-  </div>
-</div>
-
-## Installation
-
-<Tabs>
-<TabItem value="cli" label="CLI">
-
-<Tabs>
-<TabItem value="pnpm" label="pnpm">
-
-```bash
-pnpm dlx shadcn@latest add https://edgestore.dev/r/multi-file
-```
-
-</TabItem>
-<TabItem value="npm" label="npm">
-
-```bash
-npx shadcn@latest add https://edgestore.dev/r/multi-file
-```
-
-</TabItem>
-<TabItem value="yarn" label="yarn">
-
-```bash
-npx shadcn@latest add https://edgestore.dev/r/multi-file
-```
-
-</TabItem>
-<TabItem value="bun" label="bun">
-
-```shell
-bunx --bun shadcn@latest add https://edgestore.dev/r/multi-file
-```
-
-</TabItem>
-</Tabs>
-
-</TabItem>
-<TabItem value="manual" label="Manual">
-
-### Setup for manual installation
-
-First you will need to follow the [manual install setup](/docs/components/manual-install) guide.
-
-### Install required components
-
-- [uploader-provider](/docs/components/uploader-provider)
-- [progress-bar](/docs/components/progress-bar)
-- [dropzone](/docs/components/dropzone)
-
-### Copy this component
-
-<CollapsibleCode>
-
-````tsx
 'use client';
 
-import { cn } from '@/lib/utils';
 import {
   AlertCircleIcon,
   CheckCircleIcon,
@@ -97,6 +9,7 @@ import {
 } from 'lucide-react';
 import * as React from 'react';
 import { type DropzoneOptions } from 'react-dropzone';
+import { cn } from '../../lib/utils';
 import { Dropzone } from './dropzone';
 import { ProgressBar } from './progress-bar';
 import { formatFileSize, useUploader } from './uploader-provider';
@@ -128,24 +41,24 @@ const FileList = React.forwardRef<
         return (
           <div
             key={key}
-            className="shadow-xs flex flex-col justify-center rounded border border-gray-200 px-4 py-3 dark:border-gray-700"
+            className="border-border shadow-xs flex flex-col justify-center rounded border border-solid px-4 py-3"
           >
-            <div className="flex items-center gap-3 text-gray-900 dark:text-gray-100">
-              <FileIcon className="h-8 w-8 shrink-0 text-gray-500 dark:text-gray-400" />
+            <div className="text-foreground flex items-center gap-3">
+              <FileIcon className="text-muted-foreground h-8 w-8 shrink-0" />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between text-xs">
                   <div className="truncate text-sm">
                     <div className="overflow-hidden text-ellipsis whitespace-nowrap font-medium">
                       {file.name}
                     </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                    <div className="text-muted-foreground text-xs">
                       {formatFileSize(file.size)}
                     </div>
                   </div>
 
                   <div className="ml-2 flex items-center gap-2">
                     {status === 'ERROR' && (
-                      <div className="flex items-center text-xs text-red-500 dark:text-red-400">
+                      <div className="text-destructive flex items-center text-xs">
                         <AlertCircleIcon className="mr-1 h-4 w-4" />
                       </div>
                     )}
@@ -155,13 +68,13 @@ const FileList = React.forwardRef<
                         {abortController && (
                           <button
                             type="button"
-                            className="rounded-md p-0.5 transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                            className="hover:bg-secondary rounded-md p-0.5 transition-colors duration-200"
                             disabled={progress === 100}
                             onClick={() => {
                               cancelUpload(key);
                             }}
                           >
-                            <XIcon className="h-4 w-4 shrink-0 text-gray-500 dark:text-gray-400" />
+                            <XIcon className="text-muted-foreground block h-4 w-4 shrink-0" />
                           </button>
                         )}
                         <div>{Math.round(progress)}%</div>
@@ -171,7 +84,7 @@ const FileList = React.forwardRef<
                     {status !== 'UPLOADING' && status !== 'COMPLETE' && (
                       <button
                         type="button"
-                        className="rounded-md p-1 text-gray-500 transition-colors duration-200 hover:bg-gray-100 hover:text-red-500 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-red-400"
+                        className="text-muted-foreground hover:bg-secondary hover:text-destructive rounded-md p-1 transition-colors duration-200"
                         onClick={() => {
                           removeFile(key);
                         }}
@@ -182,7 +95,7 @@ const FileList = React.forwardRef<
                     )}
 
                     {status === 'COMPLETE' && (
-                      <CheckCircleIcon className="h-5 w-5 shrink-0 text-blue-500 dark:text-blue-400" />
+                      <CheckCircleIcon className="h-5 w-5 shrink-0 text-primary" />
                     )}
                   </div>
                 </div>
@@ -297,55 +210,3 @@ const FileUploader = React.forwardRef<HTMLDivElement, FileUploaderProps>(
 FileUploader.displayName = 'FileUploader';
 
 export { FileList, FileUploader };
-````
-
-</CollapsibleCode>
-
-</TabItem>
-</Tabs>
-
-## Usage
-
-```tsx
-'use client';
-
-import { FileUploader } from '@/components/upload/multi-file';
-import {
-  UploaderProvider,
-  type UploadFn,
-} from '@/components/upload/uploader-provider';
-import { useEdgeStore } from '@/lib/edgestore';
-import * as React from 'react';
-
-export function MultiFileDropzoneUsage() {
-  const { edgestore } = useEdgeStore();
-
-  const uploadFn: UploadFn = React.useCallback(
-    async ({ file, onProgressChange, signal }) => {
-      const res = await edgestore.publicFiles.upload({
-        file,
-        signal,
-        onProgressChange,
-      });
-      // you can run some server action or api here
-      // to add the necessary data to your database
-      console.log(res);
-      return res;
-    },
-    [edgestore],
-  );
-
-  return (
-    <UploaderProvider uploadFn={uploadFn} autoUpload>
-      <FileUploader
-        maxFiles={5}
-        maxSize={1024 * 1024 * 1} // 1 MB
-        accept={{
-          'application/pdf': [],
-          'text/plain': ['.txt'],
-        }}
-      />
-    </UploaderProvider>
-  );
-}
-```

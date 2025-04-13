@@ -1,9 +1,9 @@
 'use client';
 
-import { cn } from '@/lib/utils';
 import { Trash2Icon, XIcon } from 'lucide-react';
 import * as React from 'react';
 import { type DropzoneOptions } from 'react-dropzone';
+import { cn } from '../../lib/utils';
 import { Dropzone } from './dropzone';
 import { ProgressCircle } from './progress-circle';
 import { useUploader } from './uploader-provider';
@@ -99,7 +99,7 @@ const ImageList = React.forwardRef<HTMLDivElement, ImageListProps>(
               {displayUrl && !initialDisabled && (
                 <button
                   type="button"
-                  className="border-muted-foreground bg-background group pointer-events-auto absolute right-1 top-1 z-10 -translate-y-1/4 translate-x-1/4 transform rounded-full border p-1 shadow-md transition-all hover:scale-110"
+                  className="!border-muted-foreground !bg-background group pointer-events-auto absolute right-1 top-1 z-10 -translate-y-1/4 translate-x-1/4 transform rounded-full !border !border-solid p-1 shadow-md transition-all hover:scale-110"
                   onClick={(e) => {
                     e.stopPropagation();
                     if (fileState.status === 'UPLOADING') {
