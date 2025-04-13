@@ -12,7 +12,8 @@
       "files": [
         {
           "path": "examples/components/src/components/upload/dropzone.tsx",
-          "type": "registry:component"
+          "type": "registry:component",
+          "target": "components/upload/dropzone.tsx"
         }
       ]
     },
@@ -30,7 +31,8 @@
       "files": [
         {
           "path": "examples/components/src/components/upload/multi-file.tsx",
-          "type": "registry:component"
+          "type": "registry:component",
+          "target": "components/upload/multi-file.tsx"
         }
       ]
     },
@@ -48,7 +50,8 @@
       "files": [
         {
           "path": "examples/components/src/components/upload/multi-image.tsx",
-          "type": "registry:component"
+          "type": "registry:component",
+          "target": "components/upload/multi-image.tsx"
         }
       ]
     },
@@ -65,7 +68,8 @@
       "files": [
         {
           "path": "examples/components/src/components/upload/single-image.tsx",
-          "type": "registry:component"
+          "type": "registry:component",
+          "target": "components/upload/single-image.tsx"
         }
       ]
     },
@@ -77,7 +81,8 @@
       "files": [
         {
           "path": "examples/components/src/components/upload/progress-bar.tsx",
-          "type": "registry:component"
+          "type": "registry:component",
+          "target": "components/upload/progress-bar.tsx"
         }
       ]
     },
@@ -89,7 +94,8 @@
       "files": [
         {
           "path": "examples/components/src/components/upload/progress-circle.tsx",
-          "type": "registry:component"
+          "type": "registry:component",
+          "target": "components/upload/progress-circle.tsx"
         }
       ]
     },
@@ -101,7 +107,8 @@
       "files": [
         {
           "path": "examples/components/src/components/upload/uploader-provider.tsx",
-          "type": "registry:component"
+          "type": "registry:component",
+          "target": "components/upload/uploader-provider.tsx"
         }
       ]
     },
@@ -116,7 +123,8 @@
       "files": [
         {
           "path": "examples/components/src/components/upload/blocks/multi-file-block.tsx",
-          "type": "registry:component"
+          "type": "registry:block",
+          "target": "components/upload/blocks/multi-file-block.tsx"
         }
       ]
     }
