@@ -127,6 +127,72 @@
           "target": "components/upload/blocks/multi-file-block.tsx"
         }
       ]
+    },
+    {
+      "name": "single-image-uploader-block",
+      "type": "registry:block",
+      "title": "Single Image Uploader Block",
+      "description": "A block for uploading a single image with preview and progress indicator.",
+      "registryDependencies": [
+        "https://edgestore-docs-git-new-components-edgestore.vercel.app/r/single-image-dropzone.json",
+        "https://edgestore-docs-git-new-components-edgestore.vercel.app/r/uploader-provider.json"
+      ],
+      "files": [
+        {
+          "path": "examples/components/src/components/upload/blocks/single-image-block.tsx",
+          "type": "registry:block",
+          "target": "components/upload/blocks/single-image-block.tsx"
+        }
+      ]
+    },
+    {
+      "name": "multi-image-uploader-block",
+      "type": "registry:block",
+      "title": "Multi Image Uploader Block",
+      "description": "A block for uploading multiple images with preview grid and progress indicators.",
+      "registryDependencies": [
+        "https://edgestore-docs-git-new-components-edgestore.vercel.app/r/image-uploader.json",
+        "https://edgestore-docs-git-new-components-edgestore.vercel.app/r/uploader-provider.json"
+      ],
+      "files": [
+        {
+          "path": "examples/components/src/components/upload/blocks/multi-image-block.tsx",
+          "type": "registry:block",
+          "target": "components/upload/blocks/multi-image-block.tsx"
+        }
+      ]
+    },
+    {
+      "name": "progress-bar-block",
+      "type": "registry:block",
+      "title": "Progress Bar Block",
+      "description": "A demo block showing a horizontal progress bar with animated progress.",
+      "registryDependencies": [
+        "https://edgestore-docs-git-new-components-edgestore.vercel.app/r/progress-bar.json"
+      ],
+      "files": [
+        {
+          "path": "examples/components/src/components/upload/blocks/progress-bar-block.tsx",
+          "type": "registry:block",
+          "target": "components/upload/blocks/progress-bar-block.tsx"
+        }
+      ]
+    },
+    {
+      "name": "progress-circle-block",
+      "type": "registry:block",
+      "title": "Progress Circle Block",
+      "description": "A demo block showing a circular progress indicator with animated progress.",
+      "registryDependencies": [
+        "https://edgestore-docs-git-new-components-edgestore.vercel.app/r/progress-circle.json"
+      ],
+      "files": [
+        {
+          "path": "examples/components/src/components/upload/blocks/progress-circle-block.tsx",
+          "type": "registry:block",
+          "target": "components/upload/blocks/progress-circle-block.tsx"
+        }
+      ]
     }
   ]
 }
