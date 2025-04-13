@@ -5,6 +5,8 @@ import { ExampleFrame } from '@/components/ui/example-frame';
 import { FileUploader } from '@/components/upload/multi-file';
 import {
   UploaderProvider,
+  useUploader,
+  type CompletedFileState,
   type UploadFn,
 } from '@/components/upload/uploader-provider';
 import { useEdgeStore } from '@/lib/edgestore';
@@ -69,38 +71,41 @@ function MultiFileExample() {
               <span>{isUploading ? 'Uploading...' : 'Upload Files'}</span>
             </Button>
 
-            {/* Uploaded Files */}
-            {uploadRes.length > 0 && (
-              <div className="mt-8 w-full">
-                <h3 className="mb-2 text-lg font-semibold">Uploaded Files</h3>
-                <div className="rounded-md bg-gray-50 p-4 dark:bg-gray-900">
-                  {uploadRes.map((res) => (
-                    <a
-                      key={res.url}
-                      className="mb-1 block underline"
-                      href={res.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {res.filename}
-                    </a>
-                  ))}
-                </div>
-                <Button
-                  className="mt-3"
-                  variant="outline"
-                  onClick={() => {
-                    setUploadRes([]);
-                    resetFiles();
-                  }}
-                >
-                  Clear
-                </Button>
-              </div>
-            )}
+            <CompletedFiles />
           </div>
         )}
       </UploaderProvider>
+    </div>
+  );
+}
+
+function CompletedFiles() {
+  const { fileStates } = useUploader();
+
+  const completedFiles = fileStates.filter(
+    (fs): fs is CompletedFileState => fs.status === 'COMPLETE',
+  );
+
+  if (completedFiles.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="mt-8 w-full">
+      <h3 className="mb-2 text-lg font-semibold">Uploaded Files</h3>
+      <div className="rounded-md bg-gray-50 p-4 dark:bg-gray-900">
+        {completedFiles.map((res) => (
+          <a
+            key={res.url}
+            className="mb-1 block underline"
+            href={res.url}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {res.file.name}
+          </a>
+        ))}
+      </div>
     </div>
   );
 }
@@ -109,7 +114,7 @@ function MultiFileDetails() {
   return (
     <div className="flex flex-col">
       <h3 className="mt-4 text-base font-bold">See in GitHub</h3>
-      <ul className="text-foreground/80 text-sm">
+      <ul className="text-sm text-foreground/80">
         <li>
           <a
             href="https://github.com/edgestorejs/edgestore/blob/main/examples/components/src/app/(tabs)/multi-file/page.tsx"
@@ -132,7 +137,7 @@ function MultiFileDetails() {
         </li>
       </ul>
       <h3 className="mt-4 text-base font-bold">About</h3>
-      <div className="text-foreground/80 flex flex-col gap-2 text-sm">
+      <div className="flex flex-col gap-2 text-sm text-foreground/80">
         <p>
           This component is a dropzone to upload multiple files. It is
           configured with a max file size of 1 MB and a max number of files of

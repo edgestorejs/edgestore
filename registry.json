@@ -104,6 +104,19 @@
           "type": "registry:component"
         }
       ]
+    },
+    {
+      "name": "file-uploader-block",
+      "type": "registry:block",
+      "title": "File Uploader Block",
+      "description": "A block for uploading multiple files with preview and progress indicators.",
+      "registryDependencies": ["https://edgestore.dev/r/file-uploader.json"],
+      "files": [
+        {
+          "path": "examples/components/src/components/upload/blocks/multi-file-block.tsx",
+          "type": "registry:component"
+        }
+      ]
     }
   ]
 }
