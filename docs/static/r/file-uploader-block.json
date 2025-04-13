@@ -5,7 +5,7 @@
   "title": "File Uploader Block",
   "description": "A block for uploading multiple files with preview and progress indicators.",
   "registryDependencies": [
-    "https://edgestore.dev/r/file-uploader.json"
+    "https://edgestore-docs-git-new-components-edgestore.vercel.app/r/file-uploader.json"
   ],
   "files": [
     {
