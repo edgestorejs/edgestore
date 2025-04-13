@@ -23,14 +23,16 @@ export default function FileUploaderBlock() {
   );
 
   return (
-    <div className="flex flex-col items-center gap-4">
-      <UploaderProvider uploadFn={uploadFn} autoUpload>
-        <FileUploader
-          maxFiles={10}
-          maxSize={1024 * 1024 * 1} // 1 MB
-        />
-        <CompletedFiles />
-      </UploaderProvider>
+    <div className="flex flex-col items-center gap-4 p-4">
+      <div className="w-full max-w-md">
+        <UploaderProvider uploadFn={uploadFn} autoUpload>
+          <FileUploader
+            maxFiles={10}
+            maxSize={1024 * 1024 * 1} // 1 MB
+          />
+          <CompletedFiles />
+        </UploaderProvider>
+      </div>
     </div>
   );
 }
