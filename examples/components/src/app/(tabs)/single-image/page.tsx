@@ -14,7 +14,6 @@ export default function Page() {
   return (
     <ExampleFrame details={<SingleImageDetails />} centered>
       <SingleImageExample />
-      <FileUploaderBlock />
     </ExampleFrame>
   );
 }
