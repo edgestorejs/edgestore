@@ -27,9 +27,9 @@ const ProgressBar = React.forwardRef<HTMLDivElement, ProgressBarProps>(
   ({ progress, className, ...props }, ref) => {
     return (
       <div ref={ref} className={cn('relative h-0', className)} {...props}>
-        <div className="bg-muted absolute top-1 h-1 w-full overflow-clip rounded-full">
+        <div className="absolute top-1 h-1 w-full overflow-clip rounded-full bg-muted">
           <div
-            className="h-full bg-white transition-all duration-300 ease-in-out"
+            className="h-full bg-foreground transition-all duration-300 ease-in-out"
             style={{ width: `${progress}%` }}
           />
         </div>

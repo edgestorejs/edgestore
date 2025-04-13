@@ -23,7 +23,7 @@ export function DemoBlock({
   return (
     <div className="flex items-center justify-center pb-4">
       <div
-        className="flex w-full max-w-lg flex-col items-center gap-4 rounded border border-solid border-border bg-background px-4 pb-4 pt-2"
+        className="flex w-full max-w-lg flex-col items-center gap-4 rounded border border-solid border-border bg-background px-4 pb-12 pt-2"
         data-theme={theme}
       >
         <div className="flex w-full items-center gap-2">

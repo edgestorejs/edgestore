@@ -10,6 +10,7 @@ const config = {
   singleQuote: true,
   importOrder: ['___', '__', '<THIRD_PARTY_MODULES>', '^[./]'],
   tailwindConfig: './docs/tailwind.config.js',
+  tailwindFunctions: ['tw', 'cn'],
   plugins: [
     require.resolve('@ianvs/prettier-plugin-sort-imports'),
     /**
