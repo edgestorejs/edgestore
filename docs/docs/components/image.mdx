@@ -184,7 +184,7 @@ const SingleImageDropzone = React.forwardRef<
     };
   }, [tempUrl]);
 
-  const displayUrl = fileState?.url ?? tempUrl;
+  const displayUrl = tempUrl ?? fileState?.url;
   const isDisabled =
     !!disabled ||
     fileState?.status === 'UPLOADING' ||

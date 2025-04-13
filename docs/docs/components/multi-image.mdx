@@ -22,7 +22,7 @@ import { MultiImageDropzoneUsage } from '../../src/components/upload/blocks/Mult
     description:
       'A component for uploading multiple images with preview grid and progress indicators.',
     registryUrl:
-      'https://edgestore-docs-git-new-components-edgestore.vercel.app/r/image-uploader.json',
+      'https://edgestore-docs-git-new-components-edgestore.vercel.app/r/multi-image-uploader-block.json',
   }}
 >
   <MultiImageDropzoneUsage />
@@ -150,7 +150,7 @@ const ImageList = React.forwardRef<HTMLDivElement, ImageListProps>(
         {...props}
       >
         {fileStates.map((fileState) => {
-          const displayUrl = fileState.url ?? tempUrls[fileState.key];
+          const displayUrl = tempUrls[fileState.key] ?? fileState.url;
           return (
             <div
               key={fileState.key}

@@ -66,12 +66,12 @@ const ImageList = React.forwardRef<HTMLDivElement, ImageListProps>(
         {...props}
       >
         {fileStates.map((fileState) => {
-          const displayUrl = fileState.url ?? tempUrls[fileState.key];
+          const displayUrl = tempUrls[fileState.key] ?? fileState.url;
           return (
             <div
               key={fileState.key}
               className={
-                'bg-muted relative aspect-square h-full w-full rounded-md border-0 p-0 shadow-md'
+                'relative aspect-square h-full w-full rounded-md border-0 bg-muted p-0 shadow-md'
               }
             >
               {displayUrl ? (
@@ -81,8 +81,8 @@ const ImageList = React.forwardRef<HTMLDivElement, ImageListProps>(
                   alt={fileState.file.name}
                 />
               ) : (
-                <div className="bg-secondary flex h-full w-full items-center justify-center">
-                  <span className="text-muted-foreground text-xs">
+                <div className="flex h-full w-full items-center justify-center bg-secondary">
+                  <span className="text-xs text-muted-foreground">
                     No Preview
                   </span>
                 </div>
@@ -99,7 +99,7 @@ const ImageList = React.forwardRef<HTMLDivElement, ImageListProps>(
               {displayUrl && !initialDisabled && (
                 <button
                   type="button"
-                  className="border-muted-foreground bg-background group pointer-events-auto absolute right-1 top-1 z-10 -translate-y-1/4 translate-x-1/4 transform rounded-full border p-1 shadow-md transition-all hover:scale-110"
+                  className="group pointer-events-auto absolute right-1 top-1 z-10 -translate-y-1/4 translate-x-1/4 transform rounded-full border border-muted-foreground bg-background p-1 shadow-md transition-all hover:scale-110"
                   onClick={(e) => {
                     e.stopPropagation();
                     if (fileState.status === 'UPLOADING') {
@@ -110,9 +110,9 @@ const ImageList = React.forwardRef<HTMLDivElement, ImageListProps>(
                   }}
                 >
                   {fileState.status === 'UPLOADING' ? (
-                    <XIcon className="text-muted-foreground block h-4 w-4" />
+                    <XIcon className="block h-4 w-4 text-muted-foreground" />
                   ) : (
-                    <Trash2Icon className="text-muted-foreground block h-4 w-4" />
+                    <Trash2Icon className="block h-4 w-4 text-muted-foreground" />
                   )}
                 </button>
               )}
