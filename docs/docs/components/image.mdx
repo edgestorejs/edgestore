@@ -166,10 +166,7 @@ const SingleImageDropzone = React.forwardRef<
 
   // Create temporary URL for image preview before upload is complete
   const tempUrl = React.useMemo(() => {
-    if (
-      fileState?.file &&
-      !(fileState.status === 'COMPLETE' && fileState.url)
-    ) {
+    if (fileState?.file) {
       return URL.createObjectURL(fileState.file);
     }
     return null;

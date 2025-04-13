@@ -38,10 +38,7 @@ const ImageList = React.forwardRef<HTMLDivElement, ImageListProps>(
     const tempUrls = React.useMemo(() => {
       const urls: Record<string, string> = {};
       fileStates.forEach((fileState) => {
-        if (
-          fileState.file &&
-          !(fileState.status === 'COMPLETE' && fileState.url)
-        ) {
+        if (fileState.file) {
           urls[fileState.key] = URL.createObjectURL(fileState.file);
         }
       });
