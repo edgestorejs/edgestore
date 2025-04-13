@@ -36,8 +36,10 @@ export function ProgressCircleUsage() {
   }, []);
 
   return (
-    <div className="flex h-20 w-20 items-center justify-center">
-      <ProgressCircle progress={progress} />
+    <div className="flex w-full items-center justify-center">
+      <div className="flex h-20 w-20 items-center justify-center">
+        <ProgressCircle progress={progress} />
+      </div>
     </div>
   );
 }

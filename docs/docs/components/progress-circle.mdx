@@ -8,13 +8,21 @@ slug: /components/progress-circle
 import TabItem from '@theme/TabItem';
 import Tabs from '@theme/Tabs';
 import { CollapsibleCode } from '../../src/components/CollapsibleCode';
+import { DemoBlock } from '../../src/components/DemoBlock';
 import { ProgressCircleUsage } from '../../src/components/upload/blocks/ProgressCircle';
 
 # Progress Circle
 
-<div className="flex flex-col items-center">
+<DemoBlock
+  v0Config={{
+    title: 'Progress Circle',
+    description:
+      'A circular progress indicator component for visualizing completion percentage.',
+    url: 'https://edgestore.dev/r/progress-circle.json',
+  }}
+>
   <ProgressCircleUsage />
-</div>
+</DemoBlock>
 
 The `ProgressCircle` component displays a circular progress indicator, commonly used to show file upload progress. It visually represents a percentage value (0-100) with a ring and a centered text label.
 
@@ -122,6 +130,10 @@ const ProgressCircle = React.forwardRef<HTMLDivElement, ProgressCircleProps>(
           'relative flex flex-col items-center justify-center text-white dark:text-gray-100',
           className,
         )}
+        style={{
+          width: size,
+          height: size,
+        }}
         {...props}
       >
         <svg

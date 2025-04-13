@@ -50,6 +50,10 @@ const ProgressCircle = React.forwardRef<HTMLDivElement, ProgressCircleProps>(
           'relative flex flex-col items-center justify-center text-white',
           className,
         )}
+        style={{
+          width: size,
+          height: size,
+        }}
         {...props}
       >
         <svg

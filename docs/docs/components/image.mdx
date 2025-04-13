@@ -7,29 +7,23 @@ slug: /components/image
 
 import TabItem from '@theme/TabItem';
 import Tabs from '@theme/Tabs';
-import { ExternalLink } from 'lucide-react';
 import { CollapsibleCode } from '../../src/components/CollapsibleCode';
-import { Button } from '../../src/components/ui/Button';
+import { DemoBlock } from '../../src/components/DemoBlock';
 import { SingleImageDropzoneUsage } from '../../src/components/upload/blocks/SingleImageDropzoneUsage';
 
 # Single-image
 
-<div className="flex flex-col items-center gap-4">
-  <Button asChild variant="outline">
-    <a
-      href="https://examples.edgestore.dev/components/single-image"
-      target="_blank"
-      rel="noreferrer"
-      className="flex items-center gap-2"
-    >
-      <span>See it in action</span>
-      <ExternalLink size={16} />
-    </a>
-  </Button>
-  <div className="reset-docusaurus w-full max-w-md">
-    <SingleImageDropzoneUsage />
-  </div>
-</div>
+<DemoBlock
+  externalLink="https://examples.edgestore.dev/components/single-image"
+  v0Config={{
+    title: 'Single Image Dropzone',
+    description:
+      'A single image upload component with preview and upload status.',
+    url: 'https://edgestore.dev/r/single-image-dropzone-block.json',
+  }}
+>
+  <SingleImageDropzoneUsage />
+</DemoBlock>
 
 ## Installation
 

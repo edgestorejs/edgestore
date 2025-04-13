@@ -9,7 +9,8 @@
  */
 
 @layer base {
-  :root {
+  :root,
+  [data-theme='light'] {
     --background: 0 0% 100%;
     --foreground: 224 71.4% 4.1%;
     --card: 0 0% 100%;
@@ -35,7 +36,7 @@
     --chart-5: 27 87% 67%;
   }
 
-  html[data-theme='dark'] {
+  [data-theme='dark'] {
     --background: 224 71.4% 4.1%;
     --foreground: 210 20% 98%;
     --card: 224 71.4% 4.1%;
@@ -83,14 +84,15 @@
 }
 
 /* You can override the default Infima variables here. */
-:root {
-  --ifm-color-primary: #5f2e85;
-  --ifm-color-primary-dark: #522978;
-  --ifm-color-primary-darker: #582771;
-  --ifm-color-primary-darkest: #4e205d;
-  --ifm-color-primary-light: #6c3392;
-  --ifm-color-primary-lighter: #733599;
-  --ifm-color-primary-lightest: #8b3cad;
+:root,
+[data-theme='light'] {
+  --ifm-color-primary: theme(colors.primary.600);
+  --ifm-color-primary-dark: theme(colors.primary.700);
+  --ifm-color-primary-darker: theme(colors.primary.800);
+  --ifm-color-primary-darkest: theme(colors.primary.999);
+  --ifm-color-primary-light: theme(colors.primary.500);
+  --ifm-color-primary-lighter: theme(colors.primary.400);
+  --ifm-color-primary-lightest: theme(colors.primary.300);
   --ifm-code-font-size: 95%;
   --ifm-background-color: #000000;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
@@ -210,10 +212,14 @@ html[data-theme='dark'] {
   display: none;
 } */
 
-:not(.code-container) code {
+code {
   color: #ce9178;
 }
 
+.code-container code {
+  color: inherit;
+}
+
 .reset-docusaurus button {
-  @apply border-border border-none bg-transparent;
+  @apply border-none border-border bg-transparent;
 }

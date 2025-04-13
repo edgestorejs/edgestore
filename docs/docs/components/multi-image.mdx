@@ -9,27 +9,23 @@ import TabItem from '@theme/TabItem';
 import Tabs from '@theme/Tabs';
 import { ExternalLink } from 'lucide-react';
 import { CollapsibleCode } from '../../src/components/CollapsibleCode';
+import { DemoBlock } from '../../src/components/DemoBlock';
 import { Button } from '../../src/components/ui/Button';
 import { MultiImageDropzoneUsage } from '../../src/components/upload/blocks/MultiImageDropzoneUsage';
 
 # Multi-image
 
-<div className="flex flex-col items-center gap-4">
-  <Button asChild variant="outline">
-    <a
-      href="https://examples.edgestore.dev/components/multi-image"
-      target="_blank"
-      rel="noreferrer"
-      className="flex items-center gap-2"
-    >
-      <span>See it in action</span>
-      <ExternalLink size={16} />
-    </a>
-  </Button>
-  <div className="reset-docusaurus w-full max-w-md">
-    <MultiImageDropzoneUsage />
-  </div>
-</div>
+<DemoBlock
+  externalLink="https://examples.edgestore.dev/components/multi-image"
+  v0Config={{
+    title: 'Image Uploader',
+    description:
+      'A component for uploading multiple images with preview grid and progress indicators.',
+    url: 'https://edgestore.dev/r/image-uploader.json',
+  }}
+>
+  <MultiImageDropzoneUsage />
+</DemoBlock>
 
 ## Installation
 
