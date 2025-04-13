@@ -129,9 +129,9 @@
       ]
     },
     {
-      "name": "single-image-uploader-block",
+      "name": "single-image-dropzone-block",
       "type": "registry:block",
-      "title": "Single Image Uploader Block",
+      "title": "Single Image Dropzone Block",
       "description": "A block for uploading a single image with preview and progress indicator.",
       "registryDependencies": [
         "https://edgestore-docs-git-new-components-edgestore.vercel.app/r/single-image-dropzone.json",
