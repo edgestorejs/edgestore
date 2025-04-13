@@ -5,11 +5,10 @@ import {
   type CompletedFileState,
   type UploadFn,
 } from '@/components/upload/uploader-provider';
-import { useEdgeStore } from '@/lib/edgestore';
 import * as React from 'react';
 
-export default function MultiImageExample() {
-  const { edgestore } = useEdgeStore();
+export default function FileUploaderBlock() {
+  const { edgestore } = useMockEdgeStore(); // Mock edgestore for easy v0 integration
 
   const uploadFn: UploadFn = React.useCallback(
     async ({ file, signal, onProgressChange }) => {
@@ -30,8 +29,8 @@ export default function MultiImageExample() {
           maxFiles={10}
           maxSize={1024 * 1024 * 1} // 1 MB
         />
+        <CompletedFiles />
       </UploaderProvider>
-      <CompletedFiles />
     </div>
   );
 }
@@ -65,4 +64,49 @@ function CompletedFiles() {
       </div>
     </div>
   );
+}
+
+// Mock implementation of EdgeStore
+function useMockEdgeStore() {
+  return {
+    edgestore: {
+      myPublicFiles: {
+        upload: async ({
+          file,
+          onProgressChange,
+        }: {
+          file: File;
+          signal?: AbortSignal;
+          onProgressChange?: (progress: number) => void;
+        }) => {
+          // Simulate upload progress with a Promise that completes only after reaching 100%
+          await new Promise<void>((resolve) => {
+            if (onProgressChange) {
+              let progress = 0;
+              const interval = setInterval(() => {
+                const increment = Math.floor(Math.random() * 41) + 10;
+                progress = Math.min(progress + increment, 100);
+                onProgressChange(progress);
+
+                if (progress >= 100) {
+                  clearInterval(interval);
+                  setTimeout(() => {
+                    onProgressChange(100);
+                    setTimeout(resolve, 200);
+                  }, 300);
+                }
+              }, 300);
+            } else {
+              // If no progress handler, just wait a bit
+              setTimeout(resolve, 1500);
+            }
+          });
+
+          return {
+            url: `https://mock-edgestore.example.com/${file.name}`,
+          };
+        },
+      },
+    },
+  };
 }
