@@ -77,7 +77,7 @@ function useMockEdgeStore() {
         }: {
           file: File;
           signal?: AbortSignal;
-          onProgressChange?: (progress: number) => void;
+          onProgressChange?: (progress: number) => void | Promise<void>;
         }) => {
           // Simulate upload progress with a Promise that completes only after reaching 100%
           await new Promise<void>((resolve) => {
@@ -86,12 +86,12 @@ function useMockEdgeStore() {
               const interval = setInterval(() => {
                 const increment = Math.floor(Math.random() * 41) + 10;
                 progress = Math.min(progress + increment, 100);
-                onProgressChange(progress);
+                void onProgressChange(progress);
 
                 if (progress >= 100) {
                   clearInterval(interval);
                   setTimeout(() => {
-                    onProgressChange(100);
+                    void onProgressChange(100);
                     setTimeout(resolve, 200);
                   }, 300);
                 }
