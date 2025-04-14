@@ -4,7 +4,10 @@
   "type": "registry:block",
   "title": "Image Uploader",
   "description": "A component for uploading multiple images with preview grid and progress indicators.",
-  "dependencies": ["react-dropzone", "lucide-react"],
+  "dependencies": [
+    "react-dropzone",
+    "lucide-react"
+  ],
   "registryDependencies": [
     "https://edgestore-docs-git-new-components-edgestore.vercel.app/r/dropzone.json",
     "https://edgestore-docs-git-new-components-edgestore.vercel.app/r/progress-circle.json",

@@ -109,31 +109,37 @@ const SingleImageDropzone = React.forwardRef<
       accept: { 'image/*': [] }, // Accept only image files
       multiple: false,
       disabled: isDisabled,
-      onDropAccepted: (acceptedFiles) => {
+      onDrop: (acceptedFiles, rejectedFiles) => {
         setError(undefined);
-        // Remove existing file before adding a new one
-        if (fileStates[0]) {
-          removeFile(fileStates[0].key);
+
+        // Handle rejections first
+        if (rejectedFiles.length > 0) {
+          if (rejectedFiles[0]?.errors[0]) {
+            const error = rejectedFiles[0].errors[0];
+            const code = error.code;
+
+            // User-friendly error messages
+            const messages: Record<string, string> = {
+              'file-too-large': `The file is too large. Max size is ${formatFileSize(
+                maxSize ?? 0,
+              )}.`,
+              'file-invalid-type': 'Invalid file type.',
+              'too-many-files': 'You can only upload one file.',
+              default: 'The file is not supported.',
+            };
+
+            setError(messages[code] ?? messages.default);
+          }
+          return; // Exit early if there are any rejections
         }
-        addFiles(acceptedFiles);
-      },
-      onDropRejected: (rejections) => {
-        setError(undefined);
-        if (rejections[0]?.errors[0]) {
-          const error = rejections[0].errors[0];
-          const code = error.code;
 
-          // User-friendly error messages
-          const messages: Record<string, string> = {
-            'file-too-large': `The file is too large. Max size is ${formatFileSize(
-              maxSize ?? 0,
-            )}.`,
-            'file-invalid-type': 'Invalid file type.',
-            'too-many-files': 'You can only upload one file.',
-            default: 'The file is not supported.',
-          };
-
-          setError(messages[code] ?? messages.default);
+        // Handle accepted files only if there are no rejections
+        if (acceptedFiles.length > 0) {
+          // Remove existing file before adding a new one
+          if (fileStates[0]) {
+            removeFile(fileStates[0].key);
+          }
+          addFiles(acceptedFiles);
         }
       },
       ...dropzoneOptions,

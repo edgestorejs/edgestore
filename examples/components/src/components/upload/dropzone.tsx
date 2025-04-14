@@ -87,9 +87,31 @@ const Dropzone = React.forwardRef<HTMLInputElement, DropzoneProps>(
       isDragReject,
     } = useDropzone({
       disabled: isDisabled,
-      onDropAccepted: (acceptedFiles) => {
-        if (acceptedFiles.length === 0) return;
+      onDrop: (acceptedFiles, rejectedFiles) => {
         setError(undefined);
+
+        // Handle rejections first
+        if (rejectedFiles.length > 0) {
+          if (rejectedFiles[0]?.errors[0]) {
+            const error = rejectedFiles[0].errors[0];
+            const code = error.code;
+            const messages: Record<string, string> = {
+              'file-too-large': `The file is too large. Max size is ${formatFileSize(
+                maxSize ?? 0,
+              )}.`,
+              'file-invalid-type': 'Invalid file type.',
+              'too-many-files': `You can only add ${
+                maxFiles ?? 'multiple'
+              } file(s).`,
+              default: 'The file is not supported.',
+            };
+            setError(messages[code] ?? messages.default);
+          }
+          return; // Exit early if there are any rejections
+        }
+
+        // Handle accepted files
+        if (acceptedFiles.length === 0) return;
 
         // Check if adding these files would exceed maxFiles limit
         if (maxFiles) {
@@ -102,24 +124,6 @@ const Dropzone = React.forwardRef<HTMLInputElement, DropzoneProps>(
         }
 
         addFiles(acceptedFiles);
-      },
-      onDropRejected: (rejections) => {
-        setError(undefined);
-        if (rejections[0]?.errors[0]) {
-          const error = rejections[0].errors[0];
-          const code = error.code;
-          const messages: Record<string, string> = {
-            'file-too-large': `The file is too large. Max size is ${formatFileSize(
-              maxSize ?? 0,
-            )}.`,
-            'file-invalid-type': 'Invalid file type.',
-            'too-many-files': `You can only add ${
-              maxFiles ?? 'multiple'
-            } file(s).`,
-            default: 'The file is not supported.',
-          };
-          setError(messages[code] ?? messages.default);
-        }
       },
       ...dropzoneOptions,
     });
