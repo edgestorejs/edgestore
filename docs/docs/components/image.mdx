@@ -199,35 +199,30 @@ const SingleImageDropzone = React.forwardRef<
           if (rejectedFiles[0]?.errors[0]) {
             const error = rejectedFiles[0].errors[0];
             const code = error.code;
+
+            // User-friendly error messages
             const messages: Record<string, string> = {
               'file-too-large': `The file is too large. Max size is ${formatFileSize(
                 maxSize ?? 0,
               )}.`,
               'file-invalid-type': 'Invalid file type.',
-              'too-many-files': `You can only add ${
-                maxFiles ?? 'multiple'
-              } file(s).`,
+              'too-many-files': 'You can only upload one file.',
               default: 'The file is not supported.',
             };
+
             setError(messages[code] ?? messages.default);
           }
           return; // Exit early if there are any rejections
         }
 
-        // Handle accepted files
-        if (acceptedFiles.length === 0) return;
-
-        // Check if adding these files would exceed maxFiles limit
-        if (maxFiles) {
-          const remainingSlots = maxFiles - fileStates.length;
-          // If adding all files would exceed the limit, reject them all
-          if (acceptedFiles.length > remainingSlots) {
-            setError(`You can only add ${maxFiles} file(s).`);
-            return;
+        // Handle accepted files only if there are no rejections
+        if (acceptedFiles.length > 0) {
+          // Remove existing file before adding a new one
+          if (fileStates[0]) {
+            removeFile(fileStates[0].key);
           }
+          addFiles(acceptedFiles);
         }
-
-        addFiles(acceptedFiles);
       },
       ...dropzoneOptions,
     });
