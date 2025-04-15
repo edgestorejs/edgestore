@@ -1,10 +1,13 @@
 'use client';
 
 import { ExampleFrame } from '@/components/ui/example-frame';
+import { FileUploader } from '@/components/upload/multi-file';
 import {
-  MultiFileDropzone,
-  type FileState,
-} from '@/components/upload/multi-file';
+  UploaderProvider,
+  useUploader,
+  type CompletedFileState,
+  type UploadFn,
+} from '@/components/upload/uploader-provider';
 import { useEdgeStore } from '@/lib/edgestore';
 import * as React from 'react';
 
@@ -17,7 +20,6 @@ export default function Page() {
 }
 
 function MultiImageExample() {
-  const [fileStates, setFileStates] = React.useState<FileState[]>([]);
   const [uploadRes, setUploadRes] = React.useState<
     {
       url: string;
@@ -26,73 +28,66 @@ function MultiImageExample() {
   >([]);
   const { edgestore } = useEdgeStore();
 
-  function updateFileProgress(key: string, progress: FileState['progress']) {
-    setFileStates((fileStates) => {
-      const newFileStates = structuredClone(fileStates);
-      const fileState = newFileStates.find(
-        (fileState) => fileState.key === key,
-      );
-      if (fileState) {
-        fileState.progress = progress;
-      }
-      return newFileStates;
-    });
+  const uploadFn: UploadFn = React.useCallback(
+    async ({ file, signal, onProgressChange }) => {
+      const res = await edgestore.myPublicFiles.upload({
+        file,
+        signal,
+        onProgressChange,
+      });
+
+      setUploadRes((prev) => [
+        ...prev,
+        {
+          url: res.url,
+          filename: file.name,
+        },
+      ]);
+      return { url: res.url };
+    },
+    [edgestore],
+  );
+
+  return (
+    <div className="flex flex-col items-center gap-4">
+      <UploaderProvider uploadFn={uploadFn} autoUpload>
+        <FileUploader
+          maxFiles={10}
+          maxSize={1024 * 1024 * 1} // 1 MB
+        />
+        <CompletedFiles />
+      </UploaderProvider>
+    </div>
+  );
+}
+
+function CompletedFiles() {
+  const { fileStates } = useUploader();
+
+  const completedFiles = fileStates.filter(
+    (fs): fs is CompletedFileState => fs.status === 'COMPLETE',
+  );
+
+  if (completedFiles.length === 0) {
+    return null;
   }
 
   return (
-    <div className="flex flex-col items-center">
-      <MultiFileDropzone
-        value={fileStates}
-        dropzoneOptions={{
-          maxFiles: 10,
-          maxSize: 1024 * 1024 * 1, // 1 MB
-        }}
-        onFilesAdded={async (addedFiles) => {
-          setFileStates([...fileStates, ...addedFiles]);
-          await Promise.all(
-            addedFiles.map(async (addedFileState) => {
-              try {
-                const res = await edgestore.myPublicFiles.upload({
-                  file: addedFileState.file,
-                  onProgressChange: async (progress) => {
-                    updateFileProgress(addedFileState.key, progress);
-                    if (progress === 100) {
-                      // wait 1 second to set it to complete
-                      // so that the user can see the progress bar
-                      await new Promise((resolve) => setTimeout(resolve, 1000));
-                      updateFileProgress(addedFileState.key, 'COMPLETE');
-                    }
-                  },
-                });
-                setUploadRes((uploadRes) => [
-                  ...uploadRes,
-                  {
-                    url: res.url,
-                    filename: addedFileState.file.name,
-                  },
-                ]);
-              } catch (err) {
-                updateFileProgress(addedFileState.key, 'ERROR');
-              }
-            }),
-          );
-        }}
-      />
-      {uploadRes.length > 0 && (
-        <div className="mt-2">
-          {uploadRes.map((res) => (
-            <a
-              key={res.url}
-              className="mt-2 block underline"
-              href={res.url}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {res.filename}
-            </a>
-          ))}
-        </div>
-      )}
+    <div className="mt-8 w-full">
+      <h3 className="mb-2 text-lg font-semibold">Uploaded Files</h3>
+      <div className="rounded-md bg-gray-50 p-4 dark:bg-gray-900">
+        {completedFiles.map((res) => (
+          <a
+            key={res.url}
+            className="mb-1 block underline"
+            href={res.url}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {res.file.name}
+          </a>
+        ))}
+      </div>
     </div>
   );
 }
@@ -101,7 +96,7 @@ function MultiFileInstantDetails() {
   return (
     <div className="flex flex-col">
       <h3 className="mt-4 text-base font-bold">See in GitHub</h3>
-      <ul className="text-foreground/80 text-sm">
+      <ul className="text-sm text-foreground/80">
         <li>
           <a
             href="https://github.com/edgestorejs/edgestore/blob/main/examples/components/src/app/(tabs)/multi-file-instant/page.tsx"
@@ -124,7 +119,7 @@ function MultiFileInstantDetails() {
         </li>
       </ul>
       <h3 className="mt-4 text-base font-bold">About</h3>
-      <div className="text-foreground/80 flex flex-col gap-2 text-sm">
+      <div className="flex flex-col gap-2 text-sm text-foreground/80">
         <p>
           This component is a dropzone to upload multiple files. It is
           configured with a max file size of 1 MB and a max number of files of

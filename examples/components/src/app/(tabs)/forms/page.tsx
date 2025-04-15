@@ -5,10 +5,12 @@ import { CodeBlock } from '@/components/ui/code';
 import { ExampleFrame } from '@/components/ui/example-frame';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { FileUploader } from '@/components/upload/multi-file';
 import {
-  MultiFileDropzone,
-  type FileState,
-} from '@/components/upload/multi-file';
+  UploaderProvider,
+  type CompletedFileState,
+  type UploadFn,
+} from '@/components/upload/uploader-provider';
 import { useEdgeStore } from '@/lib/edgestore';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as React from 'react';
@@ -98,96 +100,41 @@ function UploadInput<T extends FieldValues>(props: UseControllerProps<T>) {
   const {
     field: { onChange },
   } = useController(props);
-
-  return (
-    <MultiImageExample
-      onChange={(values) => {
-        onChange(values);
-      }}
-    />
-  );
-}
-
-function MultiImageExample(params: {
-  onChange?: (
-    value: { url: string; filename: string }[],
-  ) => void | Promise<void>;
-}) {
-  const [fileStates, setFileStates] = React.useState<FileState[]>([]);
-  const [values, setValues] = React.useState<
-    { key: string; url: string; filename: string }[]
-  >([]);
-
-  React.useEffect(() => {
-    void params.onChange?.(
-      values.map(({ url, filename }) => ({ url, filename })),
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [values]);
-
   const { edgestore } = useEdgeStore();
 
-  function updateFileProgress(key: string, progress: FileState['progress']) {
-    setFileStates((fileStates) => {
-      const newFileStates = structuredClone(fileStates);
-      const fileState = newFileStates.find(
-        (fileState) => fileState.key === key,
-      );
-      if (fileState) {
-        fileState.progress = progress;
-      }
-      return newFileStates;
-    });
-  }
+  const uploadFn: UploadFn = React.useCallback(
+    async ({ file, signal, onProgressChange }) => {
+      const res = await edgestore.myPublicFiles.upload({
+        file,
+        signal,
+        onProgressChange,
+      });
+      return {
+        url: res.url,
+      };
+    },
+    [edgestore],
+  );
+
+  const handleUploaderChange = React.useCallback(
+    ({ completedFiles }: { completedFiles: CompletedFileState[] }) => {
+      const formValue = completedFiles.map((fs) => ({
+        filename: fs.file.name,
+        url: fs.url,
+      }));
+      onChange(formValue);
+    },
+    [onChange],
+  );
 
   return (
-    <div className="flex flex-col items-center">
-      <MultiFileDropzone
-        value={fileStates}
-        dropzoneOptions={{
-          maxFiles: 10,
-          maxSize: 1024 * 1024 * 1, // 1 MB
-        }}
-        onFilesAdded={async (addedFiles) => {
-          setFileStates([...fileStates, ...addedFiles]);
-          setValues([
-            ...values,
-            ...addedFiles.map((file) => ({
-              key: file.key,
-              filename: file.file.name,
-              url: '',
-            })),
-          ]);
-          await Promise.all(
-            addedFiles.map(async (addedFileState) => {
-              try {
-                const res = await edgestore.myPublicFiles.upload({
-                  file: addedFileState.file,
-                  onProgressChange: async (progress) => {
-                    updateFileProgress(addedFileState.key, progress);
-                    if (progress === 100) {
-                      // wait 1 second to set it to complete
-                      // so that the user can see the progress bar
-                      await new Promise((resolve) => setTimeout(resolve, 1000));
-                      updateFileProgress(addedFileState.key, 'COMPLETE');
-                    }
-                  },
-                });
-                setValues((values) =>
-                  values.map((value) =>
-                    value.key === addedFileState.key
-                      ? { ...value, url: res.url }
-                      : value,
-                  ),
-                );
-              } catch (err) {
-                updateFileProgress(addedFileState.key, 'ERROR');
-              }
-            }),
-          );
-        }}
-      />
-    </div>
+    <UploaderProvider
+      uploadFn={uploadFn}
+      onChange={handleUploaderChange}
+      autoUpload
+    >
+      <FileUploader maxFiles={10} maxSize={1024 * 1024 * 1} />
+    </UploaderProvider>
   );
 }
 

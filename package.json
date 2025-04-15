@@ -9,7 +9,6 @@
     "advanced:dev": "turbo run dev --parallel --filter=next-advanced --filter=@edgestore/*",
     "express:dev": "turbo run dev --parallel --filter=express-basic --filter=@edgestore/*",
     "vite-express:dev": "turbo run dev --parallel --filter=vite-basic --filter=express-basic --filter=@edgestore/*",
-    "cra-express:dev": "turbo run dev --parallel --filter=cra-basic --filter=express-basic --filter=@edgestore/*",
     "aws:dev": "turbo run dev --parallel --filter=next-basic-aws --filter=@edgestore/*",
     "packages:dev": "turbo run dev --parallel --filter=@edgestore/*",
     "components:dev": "turbo run dev --parallel --filter=components --filter=@edgestore/*",
@@ -22,6 +21,7 @@
     "format": "prettier \"**/*\" --ignore-unknown",
     "format:write": "pnpm format --write --list-different",
     "clean": "find . -name node_modules -o -name .turbo -o -name .next -o -name dist -type d -prune | xargs rm -rf",
+    "registry:build": "shadcn build --output=docs/static/r",
     "prepublish": "pnpm build",
     "prepack": "tsx scripts/version.ts",
     "version": "tsx scripts/version.ts",
@@ -42,7 +42,7 @@
   "dependencies": {
     "@changesets/changelog-github": "^0.4.8",
     "@changesets/cli": "^2.26.1",
-    "@ianvs/prettier-plugin-sort-imports": "^4.0.2",
+    "@ianvs/prettier-plugin-sort-imports": "^4.4.1",
     "@manypkg/cli": "^0.21.0",
     "@rollup/plugin-node-resolve": "^15.0.2",
     "@types/prettier": "^2.7.3",
@@ -58,7 +58,7 @@
     "lerna": "^7.1.1",
     "npm-run-all": "^4.1.5",
     "prettier": "^2.8.1",
-    "prettier-plugin-tailwindcss": "^0.3.0",
+    "prettier-plugin-tailwindcss": "^0.6.11",
     "rollup": "^2.79.1",
     "rollup-plugin-analyzer": "^4.0.0",
     "rollup-plugin-delete": "^2.0.0",
@@ -66,9 +66,10 @@
     "rollup-plugin-node-externals": "^5.1.3",
     "rollup-plugin-swc3": "^0.9.0",
     "rollup-plugin-typescript2": "^0.35.0",
+    "shadcn": "2.4.0-canary.20",
     "tsx": "^3.12.7",
     "turbo": "1.10.16",
-    "typescript": "^5.1.6"
+    "typescript": "^5"
   },
   "pnpm": {
     "overrides": {

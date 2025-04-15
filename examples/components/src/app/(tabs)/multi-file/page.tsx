@@ -2,118 +2,110 @@
 
 import { Button } from '@/components/ui/button';
 import { ExampleFrame } from '@/components/ui/example-frame';
+import { FileUploader } from '@/components/upload/multi-file';
 import {
-  MultiFileDropzone,
-  type FileState,
-} from '@/components/upload/multi-file';
+  UploaderProvider,
+  useUploader,
+  type CompletedFileState,
+  type UploadFn,
+} from '@/components/upload/uploader-provider';
 import { useEdgeStore } from '@/lib/edgestore';
-import { UploadAbortedError } from '@edgestore/react/errors';
+import { UploadCloudIcon } from 'lucide-react';
 import * as React from 'react';
 
 export default function Page() {
   return (
     <ExampleFrame details={<MultiFileDetails />} centered>
-      <MultiImageExample />
+      <MultiFileExample />
     </ExampleFrame>
   );
 }
 
-function MultiImageExample() {
-  const [fileStates, setFileStates] = React.useState<FileState[]>([]);
-  const [uploadRes, setUploadRes] = React.useState<
-    {
-      url: string;
-      filename: string;
-    }[]
-  >([]);
+type UploadResult = {
+  url: string;
+  filename: string;
+};
+
+function MultiFileExample() {
+  const [uploadRes, setUploadRes] = React.useState<UploadResult[]>([]);
   const { edgestore } = useEdgeStore();
 
-  function updateFileState(key: string, changes: Partial<FileState>) {
-    setFileStates((prevStates) => {
-      return prevStates.map((fileState) => {
-        if (fileState.key === key) {
-          return { ...fileState, ...changes };
-        }
-        return fileState;
+  const uploadFn: UploadFn = React.useCallback(
+    async ({ file, signal, onProgressChange }) => {
+      const res = await edgestore.myPublicFiles.upload({
+        file,
+        signal,
+        onProgressChange,
       });
-    });
-  }
+
+      setUploadRes((prev) => [
+        ...prev,
+        {
+          url: res.url,
+          filename: file.name,
+        },
+      ]);
+      return { url: res.url };
+    },
+    [edgestore],
+  );
 
   return (
     <div className="flex flex-col items-center">
-      <MultiFileDropzone
-        value={fileStates}
-        dropzoneOptions={{
-          maxFiles: 5,
-          maxSize: 1024 * 1024 * 1, // 1 MB
-        }}
-        onChange={setFileStates}
-        onFilesAdded={async (addedFiles) => {
-          setFileStates([...fileStates, ...addedFiles]);
-        }}
-      />
-      <Button
-        className="mt-2"
-        onClick={async () => {
-          await Promise.all(
-            fileStates.map(async (fileState) => {
-              try {
-                if (fileState.progress !== 'PENDING') return;
-                const abortController = new AbortController();
-                updateFileState(fileState.key, { abortController });
-                const res = await edgestore.myPublicFiles.upload({
-                  file: fileState.file,
-                  signal: abortController.signal,
-                  onProgressChange: async (progress) => {
-                    updateFileState(fileState.key, { progress });
-                    if (progress === 100) {
-                      // wait 1 second to set it to complete
-                      // so that the user can see the progress bar
-                      await new Promise((resolve) => setTimeout(resolve, 1000));
-                      updateFileState(fileState.key, { progress: 'COMPLETE' });
-                    }
-                  },
-                });
-                setUploadRes((uploadRes) => [
-                  ...uploadRes,
-                  {
-                    url: res.url,
-                    filename: fileState.file.name,
-                  },
-                ]);
-              } catch (err) {
-                console.error(err);
-                if (err instanceof UploadAbortedError) {
-                  updateFileState(fileState.key, { progress: 'PENDING' });
-                } else {
-                  updateFileState(fileState.key, { progress: 'ERROR' });
-                }
+      <UploaderProvider uploadFn={uploadFn}>
+        {({ isUploading, uploadFiles, fileStates, resetFiles }) => (
+          <div className="w-full space-y-4">
+            <FileUploader
+              maxFiles={5}
+              maxSize={1024 * 1024 * 1} // 1 MB
+            />
+            <Button
+              onClick={() => uploadFiles()}
+              className="flex items-center gap-2 pl-3"
+              disabled={
+                isUploading ||
+                !fileStates.some((file) => file.status === 'PENDING')
               }
-            }),
-          );
-        }}
-        disabled={
-          !fileStates.filter((fileState) => fileState.progress === 'PENDING')
-            .length
-        }
-      >
-        Upload
-      </Button>
-      {uploadRes.length > 0 && (
-        <div className="mt-2">
-          {uploadRes.map((res) => (
-            <a
-              key={res.url}
-              className="mt-2 block underline"
-              href={res.url}
-              target="_blank"
-              rel="noopener noreferrer"
             >
-              {res.filename}
-            </a>
-          ))}
-        </div>
-      )}
+              <UploadCloudIcon className="h-4 w-4" />
+              <span>{isUploading ? 'Uploading...' : 'Upload Files'}</span>
+            </Button>
+
+            <CompletedFiles />
+          </div>
+        )}
+      </UploaderProvider>
+    </div>
+  );
+}
+
+function CompletedFiles() {
+  const { fileStates } = useUploader();
+
+  const completedFiles = fileStates.filter(
+    (fs): fs is CompletedFileState => fs.status === 'COMPLETE',
+  );
+
+  if (completedFiles.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="mt-8 w-full">
+      <h3 className="mb-2 text-lg font-semibold">Uploaded Files</h3>
+      <div className="rounded-md bg-gray-50 p-4 dark:bg-gray-900">
+        {completedFiles.map((res) => (
+          <a
+            key={res.url}
+            className="mb-1 block underline"
+            href={res.url}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {res.file.name}
+          </a>
+        ))}
+      </div>
     </div>
   );
 }
@@ -122,7 +114,7 @@ function MultiFileDetails() {
   return (
     <div className="flex flex-col">
       <h3 className="mt-4 text-base font-bold">See in GitHub</h3>
-      <ul className="text-foreground/80 text-sm">
+      <ul className="text-sm text-foreground/80">
         <li>
           <a
             href="https://github.com/edgestorejs/edgestore/blob/main/examples/components/src/app/(tabs)/multi-file/page.tsx"
@@ -145,7 +137,7 @@ function MultiFileDetails() {
         </li>
       </ul>
       <h3 className="mt-4 text-base font-bold">About</h3>
-      <div className="text-foreground/80 flex flex-col gap-2 text-sm">
+      <div className="flex flex-col gap-2 text-sm text-foreground/80">
         <p>
           This component is a dropzone to upload multiple files. It is
           configured with a max file size of 1 MB and a max number of files of
@@ -156,6 +148,12 @@ function MultiFileDetails() {
           uploads. This means that if you upload 5 files, only 2 will be
           uploaded at a time. The other 3 will be queued and uploaded in order
           as soon as one of the first 2 uploads finishes.
+        </p>
+        <p>
+          Additionally, a custom trigger for the upload process and a custom
+          clear button are implemented using the provider methods. This allows
+          for more control over the upload and reset actions directly from the
+          UI.
         </p>
         <p>
           p.s. The default value for maxParallelUploads is 5. Here we are

@@ -14,22 +14,6 @@
     "write-heading-ids": "docusaurus write-heading-ids",
     "typecheck": "tsc"
   },
-  "eslintConfig": {
-    "overrides": [
-      {
-        "files": [
-          "docusaurus.config.js"
-        ],
-        "rules": {
-          "@typescript-eslint/no-unsafe-return": "off",
-          "@typescript-eslint/no-unsafe-call": "off",
-          "@typescript-eslint/no-unsafe-member-access": "off",
-          "@typescript-eslint/no-unsafe-assignment": "off",
-          "@typescript-eslint/no-var-requires": "off"
-        }
-      }
-    ]
-  },
   "dependencies": {
     "@docusaurus/core": "2.4.1",
     "@docusaurus/preset-classic": "2.4.1",
@@ -39,10 +23,10 @@
     "@radix-ui/react-dialog": "1.0.5",
     "@radix-ui/react-slot": "^1.0.2",
     "class-variance-authority": "^0.7.0",
-    "clsx": "^1.2.1",
+    "clsx": "^2.0.0",
     "docusaurus-preset-shiki-twoslash": "^1.1.41",
     "framer-motion": "^10.16.4",
-    "lucide-react": "^0.263.1",
+    "lucide-react": "^0.487.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-dropzone": "^14.2.3",
@@ -57,7 +41,8 @@
     "autoprefixer": "10.4.13",
     "postcss": "8.4.21",
     "tailwindcss": "3.2.7",
-    "typescript": "^5.1.6"
+    "tailwindcss-animate": "1.0.7",
+    "typescript": "^5"
   },
   "browserslist": {
     "production": [
@@ -66,9 +51,9 @@
       "not op_mini all"
     ],
     "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
+      "last 3 chrome version",
+      "last 3 firefox version",
+      "last 5 safari version"
     ]
   }
 }

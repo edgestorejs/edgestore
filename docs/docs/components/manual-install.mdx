@@ -1,0 +1,67 @@
+---
+id: manual-install
+title: Components Manual Installation
+sidebar_label: Manual Install
+slug: /components/manual-install
+---
+
+import TabItem from '@theme/TabItem';
+import Tabs from '@theme/Tabs';
+
+# Manual Install Setup
+
+If you're not using shadcn/ui, you can install the components manually. Follow the steps below to prepare for the components manual installation.
+
+:::info
+
+Components installed manually do not use shadcn/ui specific colors.
+
+:::
+
+## Install dependencies
+
+<Tabs>
+<TabItem value="npm" label="npm">
+
+```bash
+npm install tailwind-merge clsx react-dropzone lucide-react
+```
+
+</TabItem>
+<TabItem value="pnpm" label="pnpm">
+
+```bash
+pnpm add tailwind-merge clsx react-dropzone lucide-react
+```
+
+</TabItem>
+<TabItem value="bun" label="bun">
+
+```shell
+bun add tailwind-merge clsx react-dropzone lucide-react
+```
+
+</TabItem>
+<TabItem value="yarn" label="yarn">
+
+```bash
+yarn add tailwind-merge clsx react-dropzone lucide-react
+```
+
+</TabItem>
+</Tabs>
+
+## Add the cn helper
+
+```ts title="src/lib/utils.ts"
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+```
+
+## Start adding the components
+
+Now you can follow the manual installation guide for the components you need.

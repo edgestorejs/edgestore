@@ -15,8 +15,8 @@
     "@tanstack/react-router": "^1.106.0",
     "@tanstack/router-devtools": "^1.106.0",
     "@tanstack/start": "^1.106.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
     "redaxios": "^0.5.1",
     "tailwind-merge": "^2.6.0",
     "vinxi": "0.5.3",
@@ -24,12 +24,12 @@
   },
   "devDependencies": {
     "@types/node": "^22.5.4",
-    "@types/react": "18.2.38",
-    "@types/react-dom": "18.2.17",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.5.1",
     "tailwindcss": "^3.4.17",
-    "typescript": "^5.7.2",
+    "typescript": "^5",
     "vite-tsconfig-paths": "^5.1.4"
   }
 }
