@@ -5,22 +5,22 @@
     {
       "frameworks": "tanstack-react-start",
       "name": "edgestore-setup.md",
-      "url": "https://edgestore-docs-git-new-components-edgestore.vercel.app/r/vibestack/start-setup.md"
+      "url": "https://edgestore.dev/r/vibestack/start-setup.md"
     },
     {
       "frameworks": "nextjs",
       "name": "edgestore-setup.md",
-      "url": "https://edgestore-docs-git-new-components-edgestore.vercel.app/r/vibestack/nextjs-setup.md"
+      "url": "https://edgestore.dev/r/vibestack/nextjs-setup.md"
     },
     {
       "frameworks": "_all",
       "name": "edgestore-components.md",
-      "url": "https://edgestore-docs-git-new-components-edgestore.vercel.app/r/vibestack/components.md"
+      "url": "https://edgestore.dev/r/vibestack/components.md"
     },
     {
       "frameworks": "_all",
       "name": "edgestore-cheat-sheet.md",
-      "url": "https://edgestore-docs-git-new-components-edgestore.vercel.app/r/vibestack/cheat-sheet.md"
+      "url": "https://edgestore.dev/r/vibestack/cheat-sheet.md"
     }
   ]
 }

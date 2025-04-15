@@ -5,8 +5,8 @@
   "title": "Multi Image Uploader Block",
   "description": "A block for uploading multiple images with preview grid and progress indicators.",
   "registryDependencies": [
-    "https://edgestore-docs-git-new-components-edgestore.vercel.app/r/image-uploader.json",
-    "https://edgestore-docs-git-new-components-edgestore.vercel.app/r/uploader-provider.json"
+    "https://edgestore.dev/r/image-uploader.json",
+    "https://edgestore.dev/r/uploader-provider.json"
   ],
   "files": [
     {
