@@ -27,6 +27,7 @@
     "docusaurus-preset-shiki-twoslash": "^1.1.41",
     "framer-motion": "^10.16.4",
     "lucide-react": "^0.487.0",
+    "posthog-docusaurus": "^2.0.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-dropzone": "^14.2.3",
