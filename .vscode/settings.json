@@ -16,8 +16,12 @@
   // "files.exclude": {
   //   "packages/server/{adapters,core,providers}": true
   // },
+
   "typescript.tsdk": "node_modules/typescript/lib",
-  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "typescript.preferences.importModuleSpecifier": "non-relative",
+  "typescript.tsserver.projectReferences": true,
+  "typescript.tsserver.useSyntaxServer": "auto",
+  "typescript.tsconfig": "tsconfig.dev.json",
   "workbench.colorCustomizations": {
     "titleBar.activeBackground": "#c87208",
     "titleBar.activeForeground": "#ffffff",

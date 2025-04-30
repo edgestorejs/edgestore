@@ -8,6 +8,7 @@
     "dev": "turbo run dev --parallel --filter=next-basic --filter=@edgestore/*",
     "advanced:dev": "turbo run dev --parallel --filter=next-advanced --filter=@edgestore/*",
     "express:dev": "turbo run dev --parallel --filter=express-basic --filter=@edgestore/*",
+    "fastify:dev": "turbo run dev --parallel --filter=fastify-basic --filter=@edgestore/*",
     "vite-express:dev": "turbo run dev --parallel --filter=vite-basic --filter=express-basic --filter=@edgestore/*",
     "aws:dev": "turbo run dev --parallel --filter=next-basic-aws --filter=@edgestore/*",
     "packages:dev": "turbo run dev --parallel --filter=@edgestore/*",
