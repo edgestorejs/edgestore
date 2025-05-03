@@ -5,6 +5,7 @@ export const input = [
   'src/index.ts',
   'src/core/index.ts',
   'src/adapters/express/index.ts',
+  'src/adapters/fastify/index.ts',
   'src/adapters/next/pages/index.ts',
   'src/adapters/next/app/index.ts',
   'src/adapters/start/index.ts',
