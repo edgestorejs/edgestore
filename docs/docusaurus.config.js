@@ -183,6 +183,15 @@ const config = {
         },
       };
     },
+    [
+      'posthog-docusaurus',
+      {
+        apiKey: 'phc_54D1wZ850epCSU1kvSIqQOlnWtD8BGVqq1npvyAm4nS',
+        appUrl: 'https://ph.edgestore.dev',
+        ui_host: 'https://us.posthog.com',
+        enableInDevelopment: false,
+      },
+    ],
   ],
 };
 
