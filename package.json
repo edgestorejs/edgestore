@@ -14,6 +14,7 @@
     "hono:dev": "turbo run dev --parallel --filter=hono-basic --filter=@edgestore/*",
     "vite-hono:dev": "turbo run dev --parallel --filter=vite-basic --filter=hono-basic --filter=@edgestore/*",
     "remix:dev": "turbo run dev --parallel --filter=remix-basic --filter=@edgestore/*",
+    "astro:dev": "turbo run dev --parallel --filter=astro-basic --filter=@edgestore/*",
     "aws:dev": "turbo run dev --parallel --filter=next-basic-aws --filter=@edgestore/*",
     "packages:dev": "turbo run dev --parallel --filter=@edgestore/*",
     "components:dev": "turbo run dev --parallel --filter=components --filter=@edgestore/*",
