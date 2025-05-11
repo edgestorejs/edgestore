@@ -221,7 +221,7 @@ index 0000000..49f9938
 +1. Install dependencies
 +
 +```bash
-+pnpm install
++npm install
 +```
 +
 +2. Add your environment variables to `.env.local`
@@ -231,10 +231,12 @@ index 0000000..49f9938
 +3. Run the development server
 +
 +```bash
-+pnpm run dev
++npm run dev
 +```
 +
-+4. Open [http://localhost:3001](http://localhost:3001) and try to upload something!
++4. Check [http://localhost:3001/edgestore/health](http://localhost:3001/edgestore/health)
++
+5. Open your frontend and try to upload something!
 \ No newline at end of file
 diff --git a/examples/fastify-basic/package.json b/examples/fastify-basic/package.json
 new file mode 100644
