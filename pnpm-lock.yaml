@@ -21,7 +21,7 @@ importers:
         version: 2.26.1
       '@ianvs/prettier-plugin-sort-imports':
         specifier: ^4.4.1
-        version: 4.4.1(prettier@2.8.1)
+        version: 4.4.1(prettier@3.5.3)
       '@manypkg/cli':
         specifier: ^0.21.0
         version: 0.21.0
@@ -65,11 +65,11 @@ importers:
         specifier: ^4.1.5
         version: 4.1.5
       prettier:
-        specifier: ^2.8.1
-        version: 2.8.1
+        specifier: ^3.5.3
+        version: 3.5.3
       prettier-plugin-tailwindcss:
         specifier: ^0.6.11
-        version: 0.6.11(@ianvs/prettier-plugin-sort-imports@4.4.1(prettier@2.8.1))(prettier@2.8.1)
+        version: 0.6.11(@ianvs/prettier-plugin-sort-imports@4.4.1(prettier@3.5.3))(prettier@3.5.3)
       rollup:
         specifier: ^2.79.1
         version: 2.79.1
@@ -12289,13 +12289,13 @@ snapshots:
 
   '@hutson/parse-repository-url@3.0.2': {}
 
-  '@ianvs/prettier-plugin-sort-imports@4.4.1(prettier@2.8.1)':
+  '@ianvs/prettier-plugin-sort-imports@4.4.1(prettier@3.5.3)':
     dependencies:
       '@babel/generator': 7.27.0
       '@babel/parser': 7.27.0
       '@babel/traverse': 7.27.0
       '@babel/types': 7.27.0
-      prettier: 2.8.1
+      prettier: 3.5.3
       semver: 7.7.1
     transitivePeerDependencies:
       - supports-color
@@ -19295,11 +19295,11 @@ snapshots:
 
   prepend-http@2.0.0: {}
 
-  prettier-plugin-tailwindcss@0.6.11(@ianvs/prettier-plugin-sort-imports@4.4.1(prettier@2.8.1))(prettier@2.8.1):
+  prettier-plugin-tailwindcss@0.6.11(@ianvs/prettier-plugin-sort-imports@4.4.1(prettier@3.5.3))(prettier@3.5.3):
     dependencies:
-      prettier: 2.8.1
+      prettier: 3.5.3
     optionalDependencies:
-      '@ianvs/prettier-plugin-sort-imports': 4.4.1(prettier@2.8.1)
+      '@ianvs/prettier-plugin-sort-imports': 4.4.1(prettier@3.5.3)
 
   prettier@2.8.1: {}
 
