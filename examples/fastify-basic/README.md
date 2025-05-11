@@ -21,4 +21,6 @@ npm install
 npm run dev
 ```
 
-4. Open [http://localhost:3001](http://localhost:3001) and try to upload something!
+4. Check edgestore is running: [http://localhost:3001/edgestore/health](http://localhost:3001/edgestore/health)
+
+5. Open your frontend and try to upload something!

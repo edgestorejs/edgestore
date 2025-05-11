@@ -74,6 +74,7 @@ const sidebars = {
         'adapters/tanstack-start-adapter',
         'adapters/remix-adapter',
         'adapters/fastify-adapter',
+        'adapters/hono-adapter',
       ],
     },
     {
