@@ -3,6 +3,7 @@ import {
   type Provider,
   type RequestUploadRes,
 } from '@edgestore/shared';
+import { getEnv } from '../../adapters/shared';
 import { initEdgeStoreSdk } from '../../core/sdk';
 import EdgeStoreCredentialsError from '../../libs/errors/EdgeStoreCredentialsError';
 
@@ -29,11 +30,15 @@ export function EdgeStoreProvider(
   options?: EdgeStoreProviderOptions,
 ): Provider {
   const {
-    accessKey = process.env.EDGE_STORE_ACCESS_KEY,
-    secretKey = process.env.EDGE_STORE_SECRET_KEY,
+    accessKey = getEnv('EDGE_STORE_ACCESS_KEY') ??
+      // @ts-expect-error - In Vite/Astro, the env variables are available on `import.meta`.
+      import.meta.env?.EDGE_STORE_ACCESS_KEY,
+    secretKey = getEnv('EDGE_STORE_SECRET_KEY') ??
+      // @ts-expect-error - In Vite/Astro, the env variables are available on `import.meta`.
+      import.meta.env?.EDGE_STORE_SECRET_KEY,
   } = options ?? {};
 
-  const baseUrl = process.env.EDGE_STORE_BASE_URL ?? DEFAULT_BASE_URL;
+  const baseUrl = getEnv('EDGE_STORE_BASE_URL') ?? DEFAULT_BASE_URL;
 
   if (!accessKey || !secretKey) {
     throw new EdgeStoreCredentialsError();

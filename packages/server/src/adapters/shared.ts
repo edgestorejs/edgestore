@@ -434,7 +434,7 @@ export async function deleteFile<TCtx>(params: {
 
 async function encryptJWT(ctx: any) {
   const secret =
-    process.env.EDGE_STORE_JWT_SECRET ?? process.env.EDGE_STORE_SECRET_KEY;
+    getEnv('EDGE_STORE_JWT_SECRET') ?? getEnv('EDGE_STORE_SECRET_KEY');
   if (!secret) {
     throw new EdgeStoreError({
       message: 'EDGE_STORE_JWT_SECRET or EDGE_STORE_SECRET_KEY is not defined',
@@ -452,7 +452,7 @@ async function encryptJWT(ctx: any) {
 
 async function decryptJWT(token: string) {
   const secret =
-    process.env.EDGE_STORE_JWT_SECRET ?? process.env.EDGE_STORE_SECRET_KEY;
+    getEnv('EDGE_STORE_JWT_SECRET') ?? getEnv('EDGE_STORE_SECRET_KEY');
   if (!secret) {
     throw new EdgeStoreError({
       message: 'EDGE_STORE_JWT_SECRET or EDGE_STORE_SECRET_KEY is not defined',
@@ -539,7 +539,7 @@ async function getContext(token: string) {
  * so that we can delete or confirm the upload.
  */
 function unproxyUrl(url: string) {
-  if (process.env.NODE_ENV === 'development' && url.startsWith('http://')) {
+  if (isDev() && url.startsWith('http://')) {
     // get the url param from the query string
     const urlParam = new URL(url).searchParams.get('url');
     if (urlParam) {
@@ -547,4 +547,21 @@ function unproxyUrl(url: string) {
     }
   }
   return url;
+}
+
+export function getEnv(key: string): string | undefined {
+  if (typeof process !== 'undefined' && process.env) {
+    // @ts-expect-error - In Vite/Astro, the env variables are available on `import.meta`.
+    return process.env[key] ?? import.meta.env?.[key];
+  }
+  // @ts-expect-error - In Vite/Astro, the env variables are available on `import.meta`.
+  return import.meta.env?.[key];
+}
+
+export function isDev(): boolean {
+  return (
+    process?.env?.NODE_ENV === 'development' ||
+    // @ts-expect-error - In Vite/Astro, the env variables are available on `import.meta`.
+    import.meta.env?.DEV
+  );
 }

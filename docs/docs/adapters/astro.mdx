@@ -1,0 +1,176 @@
+---
+id: astro-adapter
+title: Astro Adapter
+sidebar_label: Astro
+slug: /astro-adapter
+---
+
+import TabItem from '@theme/TabItem';
+import Tabs from '@theme/Tabs';
+
+# Astro Adapter
+
+EdgeStore supports Astro applications through our dedicated Astro adapter, allowing you to use EdgeStore's file upload and management capabilities with your Astro project.
+
+## Setup
+
+### Install
+
+Let's start by installing the required packages.
+
+<Tabs>
+<TabItem value="npm" label="npm">
+
+```shell
+npm install @edgestore/server @edgestore/react zod
+```
+
+</TabItem>
+<TabItem value="pnpm" label="pnpm">
+
+```shell
+pnpm add @edgestore/server @edgestore/react zod
+```
+
+</TabItem>
+<TabItem value="bun" label="bun">
+
+```shell
+bun add @edgestore/server @edgestore/react zod
+```
+
+</TabItem>
+<TabItem value="yarn" label="yarn">
+
+```shell
+yarn add @edgestore/server @edgestore/react zod
+```
+
+</TabItem>
+</Tabs>
+
+### Environment Variables
+
+Then go to your [Dashboard](https://dashboard.edgestore.dev), create a new project and copy the keys to your environment variables.
+
+```shell title=".env"
+EDGE_STORE_ACCESS_KEY=your-access-key
+EDGE_STORE_SECRET_KEY=your-secret-key
+```
+
+:::caution
+Make sure you add `.env` to your `.gitignore` file. <br />
+You don't want to commit your secret keys to your repository.
+:::
+
+### Backend
+
+Now we can create the API endpoint in our Astro app. Create a file at `src/pages/api/edgestore/[...edgestore].ts`:
+
+```ts
+import { initEdgeStore } from '@edgestore/server';
+import { createEdgeStoreAstroHandler } from '@edgestore/server/adapters/astro';
+
+export const prerender = false;
+
+const es = initEdgeStore.create();
+
+const edgeStoreRouter = es.router({
+  publicFiles: es.fileBucket(),
+});
+
+const handler = createEdgeStoreAstroHandler({
+  router: edgeStoreRouter,
+});
+
+export { handler as GET, handler as POST };
+
+export type EdgeStoreRouter = typeof edgeStoreRouter;
+```
+
+The example above is the simplest bucket you can create with EdgeStore. Just a simple file bucket with no validation that will be accessible by anyone with the link.
+
+You can have multiple buckets in your app, each with its own configuration.
+
+### Frontend
+
+Now let's create our context provider:
+
+```tsx title="src/lib/edgestore.ts"
+import { createEdgeStoreProvider } from '@edgestore/react';
+import type { EdgeStoreRouter } from '../pages/api/edgestore/[...edgestore].ts';
+
+const { EdgeStoreProvider, useEdgeStore } =
+  createEdgeStoreProvider<EdgeStoreRouter>();
+
+export { EdgeStoreProvider, useEdgeStore };
+```
+
+And then let's create out upload component:
+
+```tsx title="src/components/FileUploader.tsx"
+import { useState } from 'react';
+import { EdgeStoreProvider, useEdgeStore } from '../lib/edgestore';
+
+export function FileUploader() {
+  return (
+    <EdgeStoreProvider>
+      <FileUploaderInner />
+    </EdgeStoreProvider>
+  );
+}
+
+function FileUploaderInner() {
+  const [file, setFile] = useState<File | null>(null);
+  const { edgestore } = useEdgeStore();
+
+  return (
+    <div>
+      <input
+        type="file"
+        onChange={(e) => {
+          setFile(e.target.files?.[0] ?? null);
+        }}
+      />
+      <button
+        onClick={async () => {
+          if (file) {
+            const res = await edgestore.publicFiles.upload({
+              file,
+              onProgressChange: (progress) => {
+                // you can use this to show a progress bar
+                console.log(progress);
+              },
+            });
+            // you can run some server action or api here
+            // to add the necessary data to your database
+            console.log(res);
+          }
+        }}
+      >
+        Upload
+      </button>
+    </div>
+  );
+}
+```
+
+Finally, let's use the `FileUploader` component in our app.
+
+```astro title="src/pages/index.astro" {1, 8}
+---
+import { FileUploader } from '../components/FileUploader';
+---
+
+<html lang="en">
+  {/* ... */}
+  <body>
+    <h1>EdgeStore with Astro</h1>
+    <FileUploader client:load />
+  </body>
+</html>
+```
+
+## Usage
+
+To upload or use the other functionalities of EdgeStore, you can look at the main [Quick Start](../main/quick-start.mdx) guide. The usage should be the same.

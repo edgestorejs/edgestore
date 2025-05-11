@@ -1,0 +1,17 @@
+# dependencies
+node_modules/
+
+# environment variables
+.env*
+!.env.example
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# misc
+.DS_Store
+.turbo
+dist/

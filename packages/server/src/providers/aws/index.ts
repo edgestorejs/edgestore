@@ -7,6 +7,7 @@ import {
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { type Provider } from '@edgestore/shared';
 import { v4 as uuidv4 } from 'uuid';
+import { getEnv } from '../../adapters/shared';
 
 export type AWSProviderOptions = {
   /**
@@ -62,17 +63,17 @@ export type AWSProviderOptions = {
 
 export function AWSProvider(options?: AWSProviderOptions): Provider {
   const {
-    accessKeyId = process.env.ES_AWS_ACCESS_KEY_ID,
-    secretAccessKey = process.env.ES_AWS_SECRET_ACCESS_KEY,
-    region = process.env.ES_AWS_REGION,
-    bucketName = process.env.ES_AWS_BUCKET_NAME,
-    endpoint = process.env.ES_AWS_ENDPOINT,
-    forcePathStyle = process.env.ES_AWS_FORCE_PATH_STYLE === 'true',
+    accessKeyId = getEnv('ES_AWS_ACCESS_KEY_ID'),
+    secretAccessKey = getEnv('ES_AWS_SECRET_ACCESS_KEY'),
+    region = getEnv('ES_AWS_REGION'),
+    bucketName = getEnv('ES_AWS_BUCKET_NAME'),
+    endpoint = getEnv('ES_AWS_ENDPOINT'),
+    forcePathStyle = getEnv('ES_AWS_FORCE_PATH_STYLE') === 'true',
   } = options ?? {};
 
   const baseUrl =
     options?.baseUrl ??
-    process.env.EDGE_STORE_BASE_URL ??
+    getEnv('EDGE_STORE_BASE_URL') ??
     (endpoint
       ? `${endpoint}/${bucketName}`
       : `https://${bucketName}.s3.${region}.amazonaws.com`);
