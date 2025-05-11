@@ -1,6 +1,7 @@
 import { BlobServiceClient } from '@azure/storage-blob';
 import { type Provider } from '@edgestore/shared';
 import { v4 as uuidv4 } from 'uuid';
+import { getEnv } from '../../adapters/shared';
 
 /**
  * Options for the Azure provider. Compatible with Azure Blob Storage and Azurite.
@@ -41,10 +42,10 @@ export type AzureProviderOptions = {
 
 export function AzureProvider(options?: AzureProviderOptions): Provider {
   const {
-    storageAccountName = process.env.ES_AZURE_ACCOUNT_NAME,
-    sasToken = process.env.ES_AZURE_SAS_TOKEN,
-    containerName = process.env.ES_AZURE_CONTAINER_NAME,
-    customBaseUrl = process.env.ES_AZURE_BASE_URL,
+    storageAccountName = getEnv('ES_AZURE_ACCOUNT_NAME'),
+    sasToken = getEnv('ES_AZURE_SAS_TOKEN'),
+    containerName = getEnv('ES_AZURE_CONTAINER_NAME'),
+    customBaseUrl = getEnv('ES_AZURE_BASE_URL'),
   } = options ?? {};
 
   const baseUrl =
