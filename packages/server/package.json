@@ -37,6 +37,11 @@
       "require": "./dist/core/index.js",
       "default": "./dist/core/index.js"
     },
+    "./adapters/astro": {
+      "import": "./dist/adapters/astro/index.mjs",
+      "require": "./dist/adapters/astro/index.js",
+      "default": "./dist/adapters/astro/index.js"
+    },
     "./adapters/express": {
       "import": "./dist/adapters/express/index.mjs",
       "require": "./dist/adapters/express/index.js",
@@ -137,6 +142,7 @@
     "@types/cookie": "^0.5.1",
     "@types/node": "^20",
     "@types/uuid": "^9.0.1",
+    "astro": "^5.7.12",
     "fastify": "^5.3.2",
     "hono": "^4.7.9",
     "next": "^15.2.4",

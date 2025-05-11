@@ -1,7 +1,8 @@
 {
   "name": "astro-basic",
+  "version": "0.4.0",
+  "private": true,
   "type": "module",
-  "version": "0.0.1",
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
@@ -9,6 +10,15 @@
     "astro": "astro"
   },
   "dependencies": {
-    "astro": "^5.7.12"
+    "@astrojs/react": "^4.2.7",
+    "@edgestore/react": "^0.4.0",
+    "@edgestore/server": "^0.4.0",
+    "astro": "^5.7.12",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19",
+    "@types/react-dom": "^19"
   }
 }
