@@ -1,6 +1,6 @@
 {
   "name": "basic-access-control",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -9,8 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@edgestore/react": "^0.4.0",
-    "@edgestore/server": "^0.4.0",
+    "@edgestore/react": "^0.5.0",
+    "@edgestore/server": "^0.5.0",
     "next": "^15.2.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

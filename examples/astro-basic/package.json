@@ -1,6 +1,6 @@
 {
   "name": "astro-basic",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -11,8 +11,8 @@
   },
   "dependencies": {
     "@astrojs/react": "^4.2.7",
-    "@edgestore/react": "^0.4.0",
-    "@edgestore/server": "^0.4.0",
+    "@edgestore/react": "^0.5.0",
+    "@edgestore/server": "^0.5.0",
     "astro": "^5.7.12",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
