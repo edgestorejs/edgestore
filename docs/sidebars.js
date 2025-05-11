@@ -72,6 +72,7 @@ const sidebars = {
         'adapters/next-adapter',
         'adapters/express-adapter',
         'adapters/tanstack-start-adapter',
+        'adapters/remix-adapter',
         'adapters/fastify-adapter',
       ],
     },

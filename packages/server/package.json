@@ -57,6 +57,11 @@
       "require": "./dist/adapters/next/app/index.js",
       "default": "./dist/adapters/next/app/index.js"
     },
+    "./adapters/remix": {
+      "import": "./dist/adapters/remix/index.mjs",
+      "require": "./dist/adapters/remix/index.js",
+      "default": "./dist/adapters/remix/index.js"
+    },
     "./adapters/start": {
       "import": "./dist/adapters/start/index.mjs",
       "require": "./dist/adapters/start/index.js",

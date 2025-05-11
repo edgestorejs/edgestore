@@ -8,7 +8,7 @@ You will want to run it together with the frontend examples (e.g. Vite or CRA).
 1. Install dependencies
 
 ```bash
-pnpm install
+npm install
 ```
 
 2. Add your environment variables to `.env.local`
@@ -18,7 +18,7 @@ pnpm install
 3. Run the development server
 
 ```bash
-pnpm run dev
+npm run dev
 ```
 
 4. Open [http://localhost:3001](http://localhost:3001) and try to upload something!
