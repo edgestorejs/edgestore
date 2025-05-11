@@ -1,7 +1,4 @@
-# Fastify Basic Example
-
-This app is just a backend for EdgeStore using Fastify.
-You will want to run it together with the frontend examples (e.g. Vite or CRA).
+# React Router (Remix) Basic Example
 
 ## How to run
 
@@ -21,4 +18,4 @@ npm install
 npm run dev
 ```
 
-4. Open [http://localhost:3001](http://localhost:3001) and try to upload something!
+4. Open [http://localhost:5173](http://localhost:5173) and try to upload something!

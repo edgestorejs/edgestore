@@ -8,6 +8,7 @@ export const input = [
   'src/adapters/fastify/index.ts',
   'src/adapters/next/pages/index.ts',
   'src/adapters/next/app/index.ts',
+  'src/adapters/remix/index.ts',
   'src/adapters/start/index.ts',
   'src/providers/aws/index.ts',
   'src/providers/azure/index.ts',
