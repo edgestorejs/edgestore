@@ -11,6 +11,8 @@
     "vite-express:dev": "turbo run dev --parallel --filter=vite-basic --filter=express-basic --filter=@edgestore/*",
     "fastify:dev": "turbo run dev --parallel --filter=fastify-basic --filter=@edgestore/*",
     "vite-fastify:dev": "turbo run dev --parallel --filter=vite-basic --filter=fastify-basic --filter=@edgestore/*",
+    "hono:dev": "turbo run dev --parallel --filter=hono-basic --filter=@edgestore/*",
+    "vite-hono:dev": "turbo run dev --parallel --filter=vite-basic --filter=hono-basic --filter=@edgestore/*",
     "remix:dev": "turbo run dev --parallel --filter=remix-basic --filter=@edgestore/*",
     "aws:dev": "turbo run dev --parallel --filter=next-basic-aws --filter=@edgestore/*",
     "packages:dev": "turbo run dev --parallel --filter=@edgestore/*",
