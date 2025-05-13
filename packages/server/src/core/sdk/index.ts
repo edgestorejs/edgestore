@@ -4,10 +4,11 @@ import {
   type AnyMetadata,
   type AnyRouter,
 } from '@edgestore/shared';
+import { getEnv } from '../../adapters/shared';
 import EdgeStoreCredentialsError from '../../libs/errors/EdgeStoreCredentialsError';
 
 const API_ENDPOINT =
-  process.env.EDGE_STORE_API_ENDPOINT ?? 'https://api.edgestore.dev';
+  getEnv('EDGE_STORE_API_ENDPOINT') ?? 'https://api.edgestore.dev';
 
 type FileInfoForUpload = {
   size: number;
@@ -359,8 +360,8 @@ export function initEdgeStoreSdk(params: {
   secretKey?: string;
 }) {
   const {
-    accessKey = process.env.EDGE_STORE_ACCESS_KEY,
-    secretKey = process.env.EDGE_STORE_SECRET_KEY,
+    accessKey = getEnv('EDGE_STORE_ACCESS_KEY'),
+    secretKey = getEnv('EDGE_STORE_SECRET_KEY'),
   } = params ?? {};
 
   if (!accessKey || !secretKey) {

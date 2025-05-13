@@ -93,8 +93,9 @@ const app = express();
  */
 app.use(
   cors({
-    credentials: true,
+    // Change this to your frontend origin for better security
     origin: true,
+    credentials: true,
   }),
 );
 /**

@@ -1,6 +1,6 @@
 {
   "name": "@edgestore/server",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Upload files with ease from React/Next.js",
   "homepage": "https://edgestore.dev",
   "repository": "https://github.com/edgestorejs/edgestore.git",
@@ -37,6 +37,11 @@
       "require": "./dist/core/index.js",
       "default": "./dist/core/index.js"
     },
+    "./adapters/astro": {
+      "import": "./dist/adapters/astro/index.mjs",
+      "require": "./dist/adapters/astro/index.js",
+      "default": "./dist/adapters/astro/index.js"
+    },
     "./adapters/express": {
       "import": "./dist/adapters/express/index.mjs",
       "require": "./dist/adapters/express/index.js",
@@ -47,6 +52,11 @@
       "require": "./dist/adapters/fastify/index.js",
       "default": "./dist/adapters/fastify/index.js"
     },
+    "./adapters/hono": {
+      "import": "./dist/adapters/hono/index.mjs",
+      "require": "./dist/adapters/hono/index.js",
+      "default": "./dist/adapters/hono/index.js"
+    },
     "./adapters/next/pages": {
       "import": "./dist/adapters/next/pages/index.mjs",
       "require": "./dist/adapters/next/pages/index.js",
@@ -56,6 +66,11 @@
       "import": "./dist/adapters/next/app/index.mjs",
       "require": "./dist/adapters/next/app/index.js",
       "default": "./dist/adapters/next/app/index.js"
+    },
+    "./adapters/remix": {
+      "import": "./dist/adapters/remix/index.mjs",
+      "require": "./dist/adapters/remix/index.js",
+      "default": "./dist/adapters/remix/index.js"
     },
     "./adapters/start": {
       "import": "./dist/adapters/start/index.mjs",
@@ -94,7 +109,7 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@edgestore/shared": "0.4.0",
+    "@edgestore/shared": "0.5.0",
     "@panva/hkdf": "^1.0.4",
     "cookie": "^0.5.0",
     "jose": "^4.13.1",
@@ -127,7 +142,9 @@
     "@types/cookie": "^0.5.1",
     "@types/node": "^20",
     "@types/uuid": "^9.0.1",
+    "astro": "^5.7.12",
     "fastify": "^5.3.2",
+    "hono": "^4.7.9",
     "next": "^15.2.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

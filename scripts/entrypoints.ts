@@ -26,7 +26,7 @@ function writeFileSyncRecursive(filePath: string, content: string) {
   fs.writeFileSync(filePath, content, 'utf8');
 }
 
-export function generateEntrypoints(inputs: string[]) {
+export async function generateEntrypoints(inputs: string[]) {
   // set some defaults for the package.json
   const pkgJson: PackageJson = JSON.parse(
     fs.readFileSync(path.resolve('package.json'), 'utf8'),
@@ -107,7 +107,7 @@ export function generateEntrypoints(inputs: string[]) {
   // pkgJson.funding = ['https://edgestore.dev/sponsor'];
 
   // write package.json
-  const formattedPkgJson = prettier.format(JSON.stringify(pkgJson), {
+  const formattedPkgJson = await prettier.format(JSON.stringify(pkgJson), {
     parser: 'json-stringify',
     printWidth: 80,
     endOfLine: 'auto',

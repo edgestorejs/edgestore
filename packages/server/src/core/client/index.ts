@@ -10,7 +10,7 @@ import {
 } from '@edgestore/shared';
 import { type z, type ZodNever } from 'zod';
 import { type Comparison } from '..';
-import { buildPath, parsePath } from '../../adapters/shared';
+import { buildPath, isDev, parsePath } from '../../adapters/shared';
 import { initEdgeStoreSdk } from '../sdk';
 
 export type GetFileRes<TBucket extends AnyBuilder> = {
@@ -408,7 +408,7 @@ export function initEdgeStoreClient<TRouter extends AnyRouter>(config: {
  * we need to proxy the file through the server.
  */
 function getUrl(url: string, baseUrl?: string) {
-  if (process.env.NODE_ENV === 'development' && !url.includes('/_public/')) {
+  if (isDev() && !url.includes('/_public/')) {
     if (!baseUrl) {
       throw new Error(
         'Missing baseUrl. You need to pass the baseUrl to `initEdgeStoreClient` to get protected files in development.',

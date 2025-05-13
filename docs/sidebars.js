@@ -69,10 +69,13 @@ const sidebars = {
         slug: '/adapters',
       },
       items: [
+        'adapters/astro-adapter',
         'adapters/next-adapter',
-        'adapters/express-adapter',
+        'adapters/remix-adapter',
         'adapters/tanstack-start-adapter',
+        'adapters/express-adapter',
         'adapters/fastify-adapter',
+        'adapters/hono-adapter',
       ],
     },
     {

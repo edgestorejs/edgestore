@@ -1,0 +1,629 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+Use the following diff as base to create a new adapter.
+
+Here is the express adapter example:
+[index.ts](mdc:packages/server/src/adapters/express/index.ts)
+
+```
+diff --git a/docs/docs/adapters/fastify.mdx b/docs/docs/adapters/fastify.mdx
+new file mode 100644
+index 0000000..b5d34a2
+--- /dev/null
++++ b/docs/docs/adapters/fastify.mdx
+@@ -0,0 +1,177 @@
++---
++id: fastify-adapter
++title: Fastify Adapter
++sidebar_label: Fastify
++slug: /fastify-adapter
++---
++
++import TabItem from '@theme/TabItem';
++import Tabs from '@theme/Tabs';
++
++# Fastify Adapter
++
++Some applications are built with React on the frontend (e.g. using `create-react-app` or `vite`) and have a `fastify` backend.
++
++You can use EdgeStore in these cases, even without using Next.js.
++
++## Setup
++
++### Install
++
++Let's start by installing the required packages.
++
++<Tabs>
++<TabItem value="npm" label="npm">
++
++```shell
++npm install @edgestore/server @edgestore/react zod
++```
++
++</TabItem>
++<TabItem value="pnpm" label="pnpm">
++
++```shell
++pnpm add @edgestore/server @edgestore/react zod
++```
++
++</TabItem>
++<TabItem value="bun" label="bun">
++
++```shell
++bun add @edgestore/server @edgestore/react zod
++```
++
++</TabItem>
++<TabItem value="yarn" label="yarn">
++
++```shell
++yarn add @edgestore/server @edgestore/react zod
++```
++
++</TabItem>
++</Tabs>
++
++### Environment Variables
++
++Then go to your [Dashboard](https://dashboard.edgestore.dev), create a new project and copy the keys to your environment variables.
++
++```shell title=".env"
++EDGE_STORE_ACCESS_KEY=your-access-key
++EDGE_STORE_SECRET_KEY=your-secret-key
++```
++
++:::caution
++Make sure you add `.env` to your `.gitignore` file. <br />
++You don't want to commit your secret keys to your repository.
++:::
++
++### Backend
++
++Now we can create the backend code in our Fastify app.
++
++The example below is the simplest bucket you can create with EdgeStore. Just a simple file bucket with no validation that will be accessible by anyone with the link.
++
++You can have multiple buckets in your app, each with its own configuration.
++
++```ts
++import { initEdgeStore } from '@edgestore/server';
++import { createEdgeStoreFastifyHandler } from '@edgestore/server/adapters/fastify';
++import cors from '@fastify/cors';
++import cookie from '@fastify/cookie';
++import fastify from 'fastify';
++
++// --- FASTIFY CONFIG ---
++
++const PORT = process.env.PORT ?? 3001;
++
++const app = fastify();
++
++/**
++ * Your fastify app is probably running in a different port than your frontend app.
++ * To avoid CORS issues, we should use the cors plugin.
++ */
++await app.register(cors, {
++  credentials: true,
++  origin: true,
++});
++
++/**
++ * EdgeStore uses cookies to store the context token.
++ * We need to use the cookie plugin to parse the cookies.
++ */
++await app.register(cookie);
++
++// --- EDGESTORE ROUTER CONFIG ---
++
++const es = initEdgeStore.create();
++
++const edgeStoreRouter = es.router({
++  publicFiles: es.fileBucket(),
++});
++
++export type EdgeStoreRouter = typeof edgeStoreRouter;
++
++const handler = createEdgeStoreFastifyHandler({
++  router: edgeStoreRouter,
++});
++
++// --- FASTIFY ROUTES ---
++
++app.get('/', (request, reply) => {
++  console.log('Request received');
++  reply.send('Hello from server!');
++});
++
++// set the get and post routes for the edgestore router
++app.get('/edgestore/*', handler);
++app.post('/edgestore/*', handler);
++
++app.listen({ port: PORT }, (err) => {
++  if (err) {
++    console.error(err);
++    process.exit(1);
++  }
++  console.log(`⚡Server is running here 👉 http://localhost:${PORT}`);
++});
++```
++
++### Frontend
++
++Now let's initiate our context provider in the frontend app.
++
++```tsx title="src/lib/edgestore.ts"
++// You can import it from the other project if it's just the type
++import { type EdgeStoreRouter } from '../../../path/to/fastify-backend/src';
++import { createEdgeStoreProvider } from '@edgestore/react';
++
++const { EdgeStoreProvider, useEdgeStore } =
++  createEdgeStoreProvider<EdgeStoreRouter>();
++
++export { EdgeStoreProvider, useEdgeStore };
++```
++
++And then wrap our app with the provider.
++
++```tsx {0, 4, 6} title="src/App.tsx"
++import { EdgeStoreProvider } from '../lib/edgestore';
++
++function App() {
++  return (
++    <EdgeStoreProvider basePath="http://localhost:3001/edgestore">
++      {/* Rest of your app */}
++    </EdgeStoreProvider>
++  );
++}
++```
++
++## Usage
++
++To upload or use the other functionalities of EdgeStore, you can look at the main [Quick Start](../main/quick-start.mdx) guide. The usage should be the same.
++
++## Limitations
++
++:::caution
++For EdgeStore to work properly in your deployed production app, your frontend and backend should be in the same domain.
++
++If you are deploying to Vercel, you can take a look at the [Rewrites settings](https://vercel.com/docs/edge-network/rewrites). In case you are using Apache or Nginx, you can set up a reverse proxy to make sure your frontend and backend are in the same domain.
++:::
+\ No newline at end of file
+diff --git a/docs/sidebars.js b/docs/sidebars.js
+index 70fb92e..965186b 100644
+--- a/docs/sidebars.js
++++ b/docs/sidebars.js
+@@ -72,6 +72,7 @@ const sidebars = {
+         'adapters/next-adapter',
+         'adapters/express-adapter',
+         'adapters/tanstack-start-adapter',
++        'adapters/fastify-adapter',
+       ],
+     },
+     {
+diff --git a/examples/fastify-basic/README.md b/examples/fastify-basic/README.md
+new file mode 100644
+index 0000000..49f9938
+--- /dev/null
++++ b/examples/fastify-basic/README.md
+@@ -0,0 +1,24 @@
++# Fastify Basic Example
++
++This app is just a backend for EdgeStore using Fastify.
++You will want to run it together with the frontend examples (e.g. Vite or CRA).
++
++## How to run
++
++1. Install dependencies
++
++```bash
++npm install
++```
++
++2. Add your environment variables to `.env.local`
++
++> See [https://edgestore.dev/docs/quick-start](https://edgestore.dev/docs/quick-start)
++
++3. Run the development server
++
++```bash
++npm run dev
++```
++
++4. Check [http://localhost:3001/edgestore/health](http://localhost:3001/edgestore/health)
++
+5. Open your frontend and try to upload something!
+\ No newline at end of file
+diff --git a/examples/fastify-basic/package.json b/examples/fastify-basic/package.json
+new file mode 100644
+index 0000000..aa2839d
+--- /dev/null
++++ b/examples/fastify-basic/package.json
+@@ -0,0 +1,21 @@
++{
++    "name": "fastify-basic",
++    "version": "0.3.3",
++    "private": true,
++    "scripts": {
++      "dev": "dotenv -e .env.local -- tsx src/index.ts"
++    },
++   "dependencies": {
++      "@edgestore/server": "^0.3.3",
++      "@fastify/cookie": "^11.0.2",
++      "@fastify/cors": "^11.0.0",
++      "fastify": "^5.3.2"
++    },
++    "devDependencies": {
++      "@types/node": "^20.6.3",
++      "dotenv": "^16.3.1",
++      "dotenv-cli": "^7.4.2",
++      "tsx": "^4.1.4",
++      "typescript": "^5"
++    }
++  }
+\ No newline at end of file
+diff --git a/examples/fastify-basic/src/index.ts b/examples/fastify-basic/src/index.ts
+new file mode 100644
+index 0000000..bcdff8d
+--- /dev/null
++++ b/examples/fastify-basic/src/index.ts
+@@ -0,0 +1,73 @@
++import { initEdgeStore } from '@edgestore/server';
++import { createEdgeStoreFastifyHandler } from '@edgestore/server/adapters/fastify';
++import fastify from 'fastify';
++import fastifyCookie from '@fastify/cookie';
++import fastifyCors from '@fastify/cors';
++
++// --- FASTIFY CONFIG ---
++
++const PORT = process.env.PORT ?? 3001;
++
++const app = fastify();
++
++async function configureApp() {
++  /**
++   * Your fastify app is probably running in a different port than your frontend app.
++   * To avoid CORS issues, we should use the cors plugin.
++   */
++  await app.register(fastifyCors, {
++    credentials: true,
++    origin: true,
++  });
++
++  /**
++   * EdgeStore uses cookies to store the context token.
++   * We need to use the cookie plugin to parse the cookies.
++   */
++  await app.register(fastifyCookie);
++}
++
++// --- EDGESTORE ROUTER CONFIG ---
++
++const es = initEdgeStore.create();
++
++const edgeStoreRouter = es.router({
++  publicFiles: es.fileBucket(),
++});
++
++export type EdgeStoreRouter = typeof edgeStoreRouter;
++
++const handler = createEdgeStoreFastifyHandler({
++  router: edgeStoreRouter,
++});
++
++// --- FASTIFY ROUTES ---
++
++app.get('/', async (req, reply) => {
++  console.log(req);
++  await reply.send('Hello from server!');
++});
++
++// set the route for the edgestore handler
++app.route({
++  method: ['GET', 'POST'],
++  url: '/edgestore/*',
++  handler,
++});
++
++const start = async () => {
++  try {
++    await configureApp(); // Configure plugins before starting the server
++    await app.listen({ port: Number(PORT), host: '0.0.0.0' });
++    console.log(`⚡Server is running here 👉 http://localhost:${PORT}`);
++  } catch (err) {
++    app.log.error(err);
++    process.exit(1);
++  }
++};
++
++// Handle the promise properly
++start().catch(err => {
++  console.error('Failed to start server:', err);
++  process.exit(1);
++});
+\ No newline at end of file
+diff --git a/examples/fastify-basic/tsconfig.json b/examples/fastify-basic/tsconfig.json
+new file mode 100644
+index 0000000..c6fb7eb
+--- /dev/null
++++ b/examples/fastify-basic/tsconfig.json
+@@ -0,0 +1,12 @@
++{
++    "compilerOptions": {
++      "target": "es2020",
++      "module": "commonjs",
++      "esModuleInterop": true,
++      "forceConsistentCasingInFileNames": true,
++      "strict": true,
++      "skipLibCheck": true,
++      "outDir": "dist"
++    },
++    "include": ["src/**/*"]
++  }
+\ No newline at end of file
+diff --git a/package.json b/package.json
+index 18744d0..e3381a7 100644
+--- a/package.json
++++ b/package.json
+@@ -9,6 +9,8 @@
+     "advanced:dev": "turbo run dev --parallel --filter=next-advanced --filter=@edgestore/*",
+     "express:dev": "turbo run dev --parallel --filter=express-basic --filter=@edgestore/*",
+     "vite-express:dev": "turbo run dev --parallel --filter=vite-basic --filter=express-basic --filter=@edgestore/*",
++    "fastify:dev": "turbo run dev --parallel --filter=fastify-basic --filter=@edgestore/*",
++    "vite-fastify:dev": "turbo run dev --parallel --filter=vite-basic --filter=fastify-basic --filter=@edgestore/*",
+     "aws:dev": "turbo run dev --parallel --filter=next-basic-aws --filter=@edgestore/*",
+     "packages:dev": "turbo run dev --parallel --filter=@edgestore/*",
+     "components:dev": "turbo run dev --parallel --filter=components --filter=@edgestore/*",
+diff --git a/packages/server/package.json b/packages/server/package.json
+index 66a2917..e70f772 100644
+--- a/packages/server/package.json
++++ b/packages/server/package.json
+@@ -42,6 +42,11 @@
+       "require": "./dist/adapters/express/index.js",
+       "default": "./dist/adapters/express/index.js"
+     },
++    "./adapters/fastify": {
++      "import": "./dist/adapters/fastify/index.mjs",
++      "require": "./dist/adapters/fastify/index.js",
++      "default": "./dist/adapters/fastify/index.js"
++    },
+     "./adapters/next/pages": {
+       "import": "./dist/adapters/next/pages/index.mjs",
+       "require": "./dist/adapters/next/pages/index.js",
+@@ -122,6 +127,7 @@
+     "@types/cookie": "^0.5.1",
+     "@types/node": "^20",
+     "@types/uuid": "^9.0.1",
++    "fastify": "^5.3.2",
+     "next": "^15.2.4",
+     "react": "^19.0.0",
+     "react-dom": "^19.0.0",
+diff --git a/packages/server/rollup.config.ts b/packages/server/rollup.config.ts
+index 8c12f2f..4414c66 100644
+--- a/packages/server/rollup.config.ts
++++ b/packages/server/rollup.config.ts
+@@ -5,6 +5,7 @@ export const input = [
+   'src/index.ts',
+   'src/core/index.ts',
+   'src/adapters/express/index.ts',
++  'src/adapters/fastify/index.ts',
+   'src/adapters/next/pages/index.ts',
+   'src/adapters/next/app/index.ts',
+   'src/adapters/start/index.ts',
+diff --git a/packages/server/src/adapters/fastify/index.ts b/packages/server/src/adapters/fastify/index.ts
+new file mode 100644
+index 0000000..93c79ec
+--- /dev/null
++++ b/packages/server/src/adapters/fastify/index.ts
+@@ -0,0 +1,205 @@
++import {
++  EDGE_STORE_ERROR_CODES,
++  EdgeStoreError,
++  type EdgeStoreErrorCodeKey,
++  type EdgeStoreRouter,
++  type MaybePromise,
++  type Provider,
++} from '@edgestore/shared';
++import { type FastifyRequest, type FastifyReply } from 'fastify';
++import Logger, { type LogLevel } from '../../libs/logger';
++import { matchPath } from '../../libs/utils';
++import { EdgeStoreProvider } from '../../providers/edgestore';
++import {
++  completeMultipartUpload,
++  confirmUpload,
++  deleteFile,
++  init,
++  requestUpload,
++  requestUploadParts,
++  type CompleteMultipartUploadBody,
++  type ConfirmUploadBody,
++  type DeleteFileBody,
++  type RequestUploadBody,
++  type RequestUploadPartsParams,
++} from '../shared';
++
++export type CreateContextOptions = {
++  req: FastifyRequest;
++  reply: FastifyReply;
++};
++
++export type Config<TCtx> = {
++  provider?: Provider;
++  router: EdgeStoreRouter<TCtx>;
++  logLevel?: LogLevel;
++} & (TCtx extends Record<string, never>
++  ? object
++  : {
++      provider?: Provider;
++      router: EdgeStoreRouter<TCtx>;
++      createContext: (opts: CreateContextOptions) => MaybePromise<TCtx>;
++    });
++
++declare const globalThis: {
++  _EDGE_STORE_LOGGER: Logger;
++};
++
++// Helper to safely get cookies from Fastify request
++function getCookie(req: FastifyRequest, name: string): string | undefined {
++  // Check if cookies plugin is available
++  if ('cookies' in req) {
++    // Type assertion for TypeScript
++    return (req as any).cookies[name];
++  }
++  
++  // Fallback to parsing cookie header
++  const cookieHeader = req.headers.cookie;
++  if (!cookieHeader) return undefined;
++  
++  const cookies = cookieHeader.split(';').reduce<Record<string, string>>((acc, cookie) => {
++    const [key, value] = cookie.trim().split('=');
++    if (key && value) acc[key] = value;
++    return acc;
++  }, {});
++  
++  return cookies[name];
++}
++
++export function createEdgeStoreFastifyHandler<TCtx>(config: Config<TCtx>) {
++  const { provider = EdgeStoreProvider() } = config;
++  const log = new Logger(config.logLevel);
++  globalThis._EDGE_STORE_LOGGER = log;
++  log.debug('Creating EdgeStore Fastify handler');
++
++  return async (req: FastifyRequest, reply: FastifyReply) => {
++    try {
++      // Get the URL from the request - simplified approach
++      const pathname = req.url;
++      
++      if (matchPath(pathname, '/health')) {
++        return reply.send('OK');
++      } else if (matchPath(pathname, '/init')) {
++        let ctx = {} as TCtx;
++        try {
++          ctx =
++            'createContext' in config
++              ? await config.createContext({ req, reply })
++              : ({} as TCtx);
++        } catch (err) {
++          throw new EdgeStoreError({
++            message: 'Error creating context',
++            code: 'CREATE_CONTEXT_ERROR',
++            cause: err instanceof Error ? err : undefined,
++          });
++        }
++        const { newCookies, token, baseUrl } = await init({
++          ctx,
++          provider,
++          router: config.router,
++        });
++        
++        // Set cookies more efficiently - handling them using void operator
++        // to explicitly mark these synchronous calls as intentionally not awaited
++        if (Array.isArray(newCookies)) {
++          // If it's an array of cookies, set them all
++          for (const cookie of newCookies) {
++            void reply.header('Set-Cookie', cookie);
++          }
++        } else if (newCookies) {
++          // If it's a single cookie string
++          void reply.header('Set-Cookie', newCookies);
++        }
++        
++        return reply.send({
++          token,
++          baseUrl,
++        });
++      } else if (matchPath(pathname, '/request-upload')) {
++        return reply.send(
++          await requestUpload({
++            provider,
++            router: config.router,
++            body: req.body as RequestUploadBody,
++            ctxToken: getCookie(req, 'edgestore-ctx'),
++          }),
++        );
++      } else if (matchPath(pathname, '/request-upload-parts')) {
++        return reply.send(
++          await requestUploadParts({
++            provider,
++            router: config.router,
++            body: req.body as RequestUploadPartsParams,
++            ctxToken: getCookie(req, 'edgestore-ctx'),
++          }),
++        );
++      } else if (matchPath(pathname, '/complete-multipart-upload')) {
++        await completeMultipartUpload({
++          provider,
++          router: config.router,
++          body: req.body as CompleteMultipartUploadBody,
++          ctxToken: getCookie(req, 'edgestore-ctx'),
++        });
++        return reply.status(200).send();
++      } else if (matchPath(pathname, '/confirm-upload')) {
++        return reply.send(
++          await confirmUpload({
++            provider,
++            router: config.router,
++            body: req.body as ConfirmUploadBody,
++            ctxToken: getCookie(req, 'edgestore-ctx'),
++          }),
++        );
++      } else if (matchPath(pathname, '/delete-file')) {
++        return reply.send(
++          await deleteFile({
++            provider,
++            router: config.router,
++            body: req.body as DeleteFileBody,
++            ctxToken: getCookie(req, 'edgestore-ctx'),
++          }),
++        );
++      } else if (matchPath(pathname, '/proxy-file')) {
++        const url = req.query ? (req.query as Record<string, any>).url : undefined;
++        
++        if (typeof url === 'string') {
++          const cookieHeader = req.headers.cookie ?? '';
++          
++          const proxyRes = await fetch(url, {
++            headers: {
++              cookie: cookieHeader,
++            },
++          });
++
++          const data = await proxyRes.arrayBuffer();
++          void reply.header(
++            'Content-Type',
++            proxyRes.headers.get('Content-Type') ?? 'application/octet-stream',
++          );
++
++          return reply.send(Buffer.from(data));
++        } else {
++          return reply.status(400).send();
++        }
++      } else {
++        return reply.status(404).send();
++      }
++    } catch (err) {
++      if (err instanceof EdgeStoreError) {
++        log[err.level](err.formattedMessage());
++        if (err.cause) log[err.level](err.cause);
++        return reply
++          .status(EDGE_STORE_ERROR_CODES[err.code as EdgeStoreErrorCodeKey])
++          .send(err.formattedJson());
++      } else {
++        log.error(err);
++        return reply.status(500).send(
++          new EdgeStoreError({
++            message: 'Internal Server Error',
++            code: 'SERVER_ERROR',
++          }).formattedJson(),
++        );
++      }
++    }
++  };
++}
+\ No newline at end of file
+```

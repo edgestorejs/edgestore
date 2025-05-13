@@ -91,8 +91,9 @@ const app = fastify();
  * To avoid CORS issues, we should use the cors plugin.
  */
 await app.register(cors, {
-  credentials: true,
+  // Change this to your frontend origin for better security
   origin: true,
+  credentials: true,
 });
 
 /**
