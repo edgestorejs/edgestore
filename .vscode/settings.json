@@ -23,5 +23,6 @@
     "titleBar.activeForeground": "#ffffff",
     "titleBar.inactiveBackground": "#703e01",
     "titleBar.inactiveForeground": "#ab640e"
-  }
+  },
+  "tailwindCSS.classFunctions": ["cn", "cva"]
 }
