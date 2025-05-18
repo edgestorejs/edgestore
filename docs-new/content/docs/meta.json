@@ -1,0 +1,15 @@
+{
+  "title": "EdgeStore",
+  "root": true,
+  "pages": [
+    "---Getting Started---",
+    "(getting-started)/quick-start",
+    "(getting-started)/configuration",
+    "---Components---",
+    "components/image",
+    "---Adapters---",
+    "adapters/next",
+    "---Providers---",
+    "providers/edgestore"
+  ]
+}

@@ -16,11 +16,15 @@ export default function Hero() {
           traditional services like S3.
         </p>
         <div className="flex flex-col justify-center gap-4 sm:flex-row md:justify-start">
-          <Button asChild size="lg" className="font-medium">
+          <Button
+            asChild
+            size="lg"
+            className="bg-gradient-to-b from-primary to-primary/60"
+          >
             <Link href="/docs/getting-started">Start for Free</Link>
           </Button>
-          <Button asChild variant="outline" size="lg" className="font-medium">
-            <Link href="/docs">Learn More</Link>
+          <Button asChild variant="outline" size="lg">
+            <Link href="/docs/quick-start">Learn More</Link>
           </Button>
         </div>
       </div>
