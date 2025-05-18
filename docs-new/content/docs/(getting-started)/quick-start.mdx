@@ -1,0 +1,303 @@
+---
+title: Quick Start
+description: This guide will help you setup EdgeStore and get started with file uploads.
+---
+
+## Next.js Setup
+
+### Install
+
+Let's start by installing the required packages.
+
+```package-install
+@edgestore/server @edgestore/react zod
+```
+
+### Environment Variables
+
+Then go to your [Dashboard](https://dashboard.edgestore.dev), create a new project and copy the keys to your environment variables.
+
+```sh title=".env"
+EDGE_STORE_ACCESS_KEY=your-access-key
+EDGE_STORE_SECRET_KEY=your-secret-key
+```
+
+<Callout type="warning">
+  Make sure you add `.env` to your `.gitignore` file. <br />
+  You don't want to commit your secret keys to your repository.
+</Callout>
+
+### Backend
+
+Now we can create the backend code for our Next.js app.<br/>
+EdgeStore is compatible with both types of Next.js apps (`pages router` and `app router`).
+
+The example below is the simplest bucket you can create with EdgeStore. Just a simple file bucket with no validation that will be accessible by anyone with the link.
+
+You can have multiple buckets in your app, each with its own configuration.
+
+<Tabs items={['app', 'pages']} groupId="next-router">
+
+```ts tab="app" title="src/app/api/edgestore/[...edgestore]/route.ts"
+import { initEdgeStore } from '@edgestore/server';
+import { createEdgeStoreNextHandler } from '@edgestore/server/adapters/next/app';
+
+const es = initEdgeStore.create();
+
+/**
+ * This is the main router for the EdgeStore buckets.
+ */
+const edgeStoreRouter = es.router({
+  publicFiles: es.fileBucket(),
+});
+
+const handler = createEdgeStoreNextHandler({
+  router: edgeStoreRouter,
+});
+
+export { handler as GET, handler as POST };
+
+/**
+ * This type is used to create the type-safe client for the frontend.
+ */
+export type EdgeStoreRouter = typeof edgeStoreRouter;
+```
+
+```ts tab="pages" title="src/pages/api/edgestore/[...edgestore].ts"
+import { initEdgeStore } from '@edgestore/server';
+import { createEdgeStoreNextHandler } from '@edgestore/server/adapters/next/pages';
+
+const es = initEdgeStore.create();
+
+/**
+ * This is the main router for the edgestore buckets.
+ */
+const edgeStoreRouter = es.router({
+  publicFiles: es.fileBucket(),
+});
+
+export default createEdgeStoreNextHandler({
+  router: edgeStoreRouter,
+});
+
+/**
+ * This type is used to create the type-safe client for the frontend.
+ */
+export type EdgeStoreRouter = typeof edgeStoreRouter;
+```
+
+</Tabs>
+
+### Frontend
+
+Now let's initiate our context provider.
+
+<Tabs items={['app', 'pages']} groupId="next-router">
+
+```ts tab="app" title="src/lib/edgestore.ts"
+'use client';
+
+import { type EdgeStoreRouter } from '../app/api/edgestore/[...edgestore]/route';
+import { createEdgeStoreProvider } from '@edgestore/react';
+
+const { EdgeStoreProvider, useEdgeStore } =
+  createEdgeStoreProvider<EdgeStoreRouter>();
+
+export { EdgeStoreProvider, useEdgeStore };
+```
+
+```ts tab="pages" title="src/lib/edgestore.ts"
+'use client';
+
+import { type EdgeStoreRouter } from '../pages/api/edgestore/[...edgestore]';
+import { createEdgeStoreProvider } from '@edgestore/react';
+
+const { EdgeStoreProvider, useEdgeStore } =
+  createEdgeStoreProvider<EdgeStoreRouter>();
+
+export { EdgeStoreProvider, useEdgeStore };
+```
+
+</Tabs>
+
+And then wrap our app with the provider.
+
+<Tabs items={['app', 'pages']} groupId="next-router">
+
+```tsx tab="app" title="src/app/layout.tsx"
+// [!code ++]
+import { EdgeStoreProvider } from '../lib/edgestore';
+import './globals.css';
+
+// ...
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="en">
+      <body>
+        {/* [!code ++] */}
+        <EdgeStoreProvider>{children}</EdgeStoreProvider>
+      </body>
+    </html>
+  );
+}
+```
+
+```tsx tab="pages" title="src/pages/_app.tsx"
+import '../styles/globals.css';
+import type { AppProps } from 'next/app';
+// [!code ++]
+import { EdgeStoreProvider } from '../lib/edgestore';
+
+export default function App({ Component, pageProps }: AppProps) {
+  return (
+    {/* [!code ++] */}
+    <EdgeStoreProvider>
+      <Component {...pageProps} />
+    {/* [!code ++] */}
+    </EdgeStoreProvider>
+  );
+}
+```
+
+</Tabs>
+
+### Upload file
+
+You can use the `useEdgeStore` hook to access type-safe frontend client and use it to upload files.
+
+```tsx
+'use client';
+
+import * as React from 'react';
+import { useEdgeStore } from '../lib/edgestore';
+
+export default function Page() {
+  const [file, setFile] = React.useState<File>();
+  const { edgestore } = useEdgeStore();
+
+  return (
+    <div>
+      <input
+        type="file"
+        onChange={(e) => {
+          setFile(e.target.files?.[0]);
+        }}
+      />
+      <button
+        onClick={async () => {
+          if (file) {
+            const res = await edgestore.publicFiles.upload({
+              file,
+              onProgressChange: (progress) => {
+                // you can use this to show a progress bar
+                console.log(progress);
+              },
+            });
+            // you can run some server action or api here
+            // to add the necessary data to your database
+            console.log(res);
+          }
+        }}
+      >
+        Upload
+      </button>
+    </div>
+  );
+}
+```
+
+### Replace file
+
+By passing the `replaceTargetUrl` option, you can replace an existing file with a new one.
+It will automatically delete the old file after the upload is complete.
+
+You can also just upload the file using the same file name, but in that case, you might still see the old file for a while because of the CDN cache.
+
+```tsx
+const res = await edgestore.publicFiles.upload({
+  file,
+  // [!code ++:3]
+  options: {
+    replaceTargetUrl: oldFileUrl,
+  },
+});
+```
+
+### Delete file
+
+You can delete a file by passing its url to the `delete` method.
+
+To be able to delete a file from a client component like this, you will need to set the `beforeDelete` [lifecycle hook](/docs/configuration#lifecycle-hooks) on the bucket.
+
+```tsx
+await edgestore.publicFiles.delete({
+  url: urlToDelete,
+});
+```
+
+### Cancel upload
+
+To cancel an ongoing file upload, you can use an AbortController the same way you would use it to cancel a fetch request.
+
+```tsx
+// prepare a state for the AbortController
+const [abortController, setAbortController] = useState<AbortController>();
+
+// ...
+
+// instantiate the AbortController and add the signal to the upload method
+const abortController = new AbortController();
+setAbortController(abortController);
+const res = await edgestore.publicFiles.upload({
+  file,
+  signal: abortController.signal,
+});
+
+// ...
+
+// to cancel the upload, call the controller's abort method
+abortController?.abort();
+```
+
+<Callout>
+  When you cancel an upload, an `UploadAbortedError` will be thrown. <br />
+  You can catch this error and handle it as needed. <br />
+  For more information, check the [Error Handling](/docs/error-handling) page.
+</Callout>
+
+### Temporary files
+
+You can upload temporary files by passing the `temporary` option to the `upload` method.
+Temporary files will be automatically deleted after 24 hours if they are not confirmed.
+
+```tsx
+await edgestore.publicFiles.upload({
+  file: fileToUpload,
+  // [!code ++:3]
+  options: {
+    temporary: true,
+  },
+});
+```
+
+To confirm a temporary file, you can use the `confirmUpload` method.
+
+```tsx
+await edgestore.publicFiles.confirmUpload({
+  url: urlToConfirm,
+});
+```
+
+<Callout>
+  You can check if a file is temporary in the dashboard. <br />
+  Temporary files are marked with a clock icon.
+</Callout>
+
+## Troubleshooting
+
+If you have any problems using EdgeStore, please check the [Troubleshooting](./troubleshooting) page.
