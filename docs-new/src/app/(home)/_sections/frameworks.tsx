@@ -3,9 +3,9 @@ import { ExpressIcon } from '@/components/icons/frameworks/express-icon';
 import { FastifyIcon } from '@/components/icons/frameworks/fastify-icon';
 import { HonoIcon } from '@/components/icons/frameworks/hono-icon';
 import { NextIcon } from '@/components/icons/frameworks/next-icon';
+import { ReactIcon } from '@/components/icons/frameworks/react-icon';
 import { ReactRouterIcon } from '@/components/icons/frameworks/react-router-icon';
 import { TanStackIcon } from '@/components/icons/frameworks/tanstack-icon';
-import { ViteIcon } from '@/components/icons/frameworks/vite-icon';
 import { cn } from '@/lib/utils';
 
 const iconClassName = cn('size-10 sm:size-12');
@@ -21,7 +21,7 @@ export default function Frameworks() {
         <AstroIcon className={iconClassName} />
         <TanStackIcon className={iconClassName} />
         <ReactRouterIcon className={iconClassName} />
-        <ViteIcon className={iconClassName} />
+        <ReactIcon className={iconClassName} />
         <ExpressIcon className={iconClassName} />
         <HonoIcon className={iconClassName} />
         <FastifyIcon className={iconClassName} />
