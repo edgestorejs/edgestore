@@ -37,6 +37,13 @@ export function createEdgeStoreProvider<TRouter extends AnyRouter>(opts?: {
    * @default 5
    */
   maxConcurrentUploads?: number;
+  /**
+   * Accessing EdgeStore protected files in development mode requires a proxy.
+   * You might want to disable this for other providers if you are overwriting the path.
+   *
+   * @default false
+   */
+  disableDevProxy?: boolean;
 }) {
   const EdgeStoreContext = React.createContext<
     EdgeStoreContextValue<TRouter> | undefined
@@ -61,6 +68,7 @@ export function createEdgeStoreProvider<TRouter extends AnyRouter>(opts?: {
       context: EdgeStoreContext,
       basePath,
       maxConcurrentUploads: opts?.maxConcurrentUploads,
+      disableDevProxy: opts?.disableDevProxy,
     });
   };
 
@@ -109,11 +117,13 @@ function EdgeStoreProviderInner<TRouter extends AnyRouter>({
   context,
   basePath,
   maxConcurrentUploads,
+  disableDevProxy,
 }: {
   children: React.ReactNode;
   context: React.Context<EdgeStoreContextValue<TRouter> | undefined>;
   basePath?: string;
   maxConcurrentUploads?: number;
+  disableDevProxy?: boolean;
 }) {
   const apiPath = basePath ? `${basePath}` : '/api/edgestore';
   const [state, setState] = React.useState<ProviderState>({
@@ -199,6 +209,7 @@ function EdgeStoreProviderInner<TRouter extends AnyRouter>({
             apiPath,
             uploadingCountRef,
             maxConcurrentUploads,
+            disableDevProxy,
           }),
           reset,
           state,

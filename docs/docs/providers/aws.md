@@ -95,7 +95,46 @@ export type AWSProviderOptions = {
    * Can also be set via the `EDGE_STORE_JWT_SECRET` environment variable.
    */
   jwtSecret?: string;
+  /**
+   * Optional function to overwrite the S3 key (object path) for uploads.
+   * This function receives the EdgeStore bucket name, fileInfo and the default S3 key
+   * and should return the desired S3 key string.
+   */
+  overwritePath?: (args: {
+    esBucketName: string;
+    fileInfo: FileInfo;
+    defaultAccessPath: string;
+  }) => Promise<string> | string;
 };
+```
+
+## Overwriting S3 Object Keys
+
+By default, the same logic used for generating the path for the EdgeStore Provider is used for the AWS Provider. However, sometimes you might want a cleaner path for the S3 objects that matches your use case.
+
+For that, you can use the `overwritePath` option.
+
+```ts {4-7}
+// ...
+const handler = createEdgeStoreNextHandler({
+  createContext,
+  provider: AWSProvider({
+    overwritePath: ({ defaultAccessPath }) => {
+      // `publicFiles/_public/123/test.png` -> `123/test.png`
+      return defaultAccessPath.split('/_public/')[1];
+    },
+  }),
+  router: edgeStoreRouter,
+});
+```
+
+If you are removing the `_public` folder from the path like in the example above, you might also want to disable the dev proxy in the `createEdgeStoreProvider` function.
+
+```ts
+const { EdgeStoreProvider, useEdgeStore } =
+  createEdgeStoreProvider<EdgeStoreRouter>({
+    disableDevProxy: true,
+  });
 ```
 
 ## Using with Minio

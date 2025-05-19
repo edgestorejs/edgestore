@@ -1,7 +1,7 @@
 {
   "name": "vite-basic",
   "private": true,
-  "version": "0.5.0",
+  "version": "0.5.2",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,7 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@edgestore/react": "^0.5.0",
+    "@edgestore/react": "^0.5.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },

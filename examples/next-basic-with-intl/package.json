@@ -1,6 +1,6 @@
 {
   "name": "next-basic-with-intl",
-  "version": "0.5.0",
+  "version": "0.5.2",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -9,8 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@edgestore/react": "^0.5.0",
-    "@edgestore/server": "^0.5.0",
+    "@edgestore/react": "^0.5.2",
+    "@edgestore/server": "^0.5.2",
     "next": "^15.2.4",
     "next-intl": "^4.0.2",
     "react": "^19.0.0",
