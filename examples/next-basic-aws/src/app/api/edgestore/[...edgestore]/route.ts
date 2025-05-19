@@ -1,18 +1,37 @@
 import { initEdgeStore } from '@edgestore/server';
-import { createEdgeStoreNextHandler } from '@edgestore/server/adapters/next/app';
+import {
+  createEdgeStoreNextHandler,
+  type CreateContextOptions,
+} from '@edgestore/server/adapters/next/app';
 import { AWSProvider } from '@edgestore/server/providers/aws';
 
-const es = initEdgeStore.create();
+type MyContext = {
+  userId: string;
+};
+
+const es = initEdgeStore.context<MyContext>().create();
+
+function createContext(opts: CreateContextOptions) {
+  return {
+    userId: '123',
+  };
+}
 
 /**
  * This is the main router for the EdgeStore buckets.
  */
 const edgeStoreRouter = es.router({
-  publicFiles: es.fileBucket(),
+  publicFiles: es.fileBucket().path(({ ctx }) => [{ author: ctx.userId }]),
 });
 
 const handler = createEdgeStoreNextHandler({
-  provider: AWSProvider(),
+  createContext,
+  provider: AWSProvider({
+    overwritePath: ({ defaultAccessPath }) => {
+      // `publicFiles/_public/123/test.png` -> `123/test.png`
+      return defaultAccessPath.split('/_public/')[1];
+    },
+  }),
   router: edgeStoreRouter,
 });
 
