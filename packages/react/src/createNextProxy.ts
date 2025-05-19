@@ -87,10 +87,12 @@ export function createNextProxy<TRouter extends AnyRouter>({
   apiPath,
   uploadingCountRef,
   maxConcurrentUploads = 5,
+  disableDevProxy,
 }: {
   apiPath: string;
   uploadingCountRef: React.MutableRefObject<number>;
   maxConcurrentUploads?: number;
+  disableDevProxy?: boolean;
 }) {
   return new Proxy<BucketFunctions<TRouter>>({} as BucketFunctions<TRouter>, {
     get(_, prop) {
@@ -125,10 +127,14 @@ export function createNextProxy<TRouter extends AnyRouter>({
             }
 
             uploadingCountRef.current++;
-            const fileInfo = await uploadFile(params, {
-              bucketName: bucketName as string,
-              apiPath,
-            });
+            const fileInfo = await uploadFile(
+              params,
+              {
+                bucketName: bucketName as string,
+                apiPath,
+              },
+              disableDevProxy,
+            );
             return fileInfo;
           } finally {
             uploadingCountRef.current--;
@@ -179,6 +185,7 @@ async function uploadFile(
     apiPath: string;
     bucketName: string;
   },
+  disableDevProxy?: boolean,
 ) {
   try {
     onProgressChange?.(0);
@@ -228,9 +235,9 @@ async function uploadFile(
       throw new EdgeStoreClientError('An error occurred');
     }
     return {
-      url: getUrl(json.accessUrl, apiPath),
+      url: getUrl(json.accessUrl, apiPath, disableDevProxy),
       thumbnailUrl: json.thumbnailUrl
-        ? getUrl(json.thumbnailUrl, apiPath)
+        ? getUrl(json.thumbnailUrl, apiPath, disableDevProxy)
         : null,
       size: json.size,
       uploadedAt: new Date(json.uploadedAt),
@@ -252,15 +259,19 @@ async function uploadFile(
  * Since third party cookies don't work on localhost,
  * we need to proxy the file through the server.
  */
-function getUrl(url: string, apiPath: string) {
+function getUrl(url: string, apiPath: string, disableDevProxy?: boolean) {
   const mode =
     typeof process !== 'undefined'
       ? process.env.NODE_ENV
       : // @ts-expect-error - DEV is injected by Vite
-      import.meta.env?.DEV
-      ? 'development'
-      : 'production';
-  if (mode === 'development' && !url.includes('/_public/')) {
+        import.meta.env?.DEV
+        ? 'development'
+        : 'production';
+  if (
+    mode === 'development' &&
+    !url.includes('/_public/') &&
+    !disableDevProxy
+  ) {
     const proxyUrl = new URL(window.location.origin);
     proxyUrl.pathname = `${apiPath}/proxy-file`;
     proxyUrl.search = new URLSearchParams({
@@ -339,7 +350,7 @@ async function multipartUpload(params: {
     progress: number;
   }[] = [];
   const uploadPart = async (params: {
-    part: typeof parts[number];
+    part: (typeof parts)[number];
     chunk: Blob;
   }) => {
     const { part, chunk } = params;
