@@ -128,6 +128,15 @@ const handler = createEdgeStoreNextHandler({
 });
 ```
 
+If you are removing the `_public` folder from the path like in the example above, you might also want to disable the dev proxy in the `createEdgeStoreProvider` function.
+
+```ts
+const { EdgeStoreProvider, useEdgeStore } =
+  createEdgeStoreProvider<EdgeStoreRouter>({
+    disableDevProxy: true,
+  });
+```
+
 ## Using with Minio
 
 You can use the AWS Provider with Minio or other S3-compatible storage providers by setting the `endpoint` and `forcePathStyle` options.
