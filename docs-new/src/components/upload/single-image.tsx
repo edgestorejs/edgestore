@@ -1,77 +1,3 @@
----
-title: Image
-description: A dropzone component for uploading images
----
-
-import { DemoBlock } from '@/components/demo-block';
-import { LimitedCode } from '@/components/ui/limited-code';
-import {
-  OpenTabs,
-  OpenTabsContent,
-  OpenTabsList,
-  OpenTabsTrigger,
-} from '@/components/ui/open-tabs';
-import SingleImageUploaderBlock from '@/components/upload/blocks/single-image-block.tsx';
-import { Step, Steps } from 'fumadocs-ui/components/steps';
-
-<DemoBlock
-  v0Config={{
-    title: 'Single Image Dropzone',
-    description:
-      'A single image upload component with preview and upload status.',
-    registryUrl: 'https://edgestore.dev/r/single-image-dropzone-block.json',
-  }}
->
-  <SingleImageUploaderBlock />
-</DemoBlock>
-
-## Installation
-
-<OpenTabs defaultValue="cli">
-
-<OpenTabsList>
-  <OpenTabsTrigger value="cli">CLI</OpenTabsTrigger>
-  <OpenTabsTrigger value="manual">Manual</OpenTabsTrigger>
-</OpenTabsList>
-
-<OpenTabsContent value="cli">
-
-Use the shadcn CLI to add the component to your project.
-
-```package-install
-npx shadcn@latest add https://edgestore.dev/r/single-image-dropzone.json
-```
-
-</OpenTabsContent>
-
-<OpenTabsContent value="manual">
-
-<Steps>
-
-<Step>
-
-### Setup for manual installation
-
-First you will need to follow the [manual install setup](./manual-install) guide.
-
-</Step>
-
-<Step>
-
-### Install required components
-
-- [uploader-provider](./uploader-provider)
-- [progress-circle](./progress-circle)
-
-</Step>
-
-<Step>
-
-### Copy this component
-
-<LimitedCode>
-
-````tsx
 'use client';
 
 import { cn } from '@/lib/utils';
@@ -87,15 +13,13 @@ import { ProgressCircle } from './progress-circle';
 import { formatFileSize, useUploader } from './uploader-provider';
 
 const DROPZONE_VARIANTS = {
-  base: 'relative rounded-md p-4 flex justify-center items-center flex-col cursor-pointer min-h-[150px] min-w-[200px] border-2 border-dashed border-gray-400 dark:border-gray-600 transition-colors duration-200 ease-in-out',
-  image:
-    'border-0 p-0 min-h-0 min-w-0 relative bg-gray-100 dark:bg-gray-800 shadow-md',
-  active: 'border-blue-500 dark:border-blue-400',
+  base: 'relative rounded-md p-4 flex justify-center items-center flex-col cursor-pointer min-h-[150px] min-w-[200px] border-2 border-dashed border-muted-foreground transition-colors duration-200 ease-in-out',
+  image: 'border-0 p-0 min-h-0 min-w-0 relative bg-muted shadow-md',
+  active: 'border-primary',
   disabled:
-    'bg-gray-100/50 dark:bg-gray-800/50 border-gray-400/50 dark:border-gray-600/50 cursor-default pointer-events-none',
-  accept:
-    'border-blue-500 dark:border-blue-400 bg-blue-100 dark:bg-blue-900/30',
-  reject: 'border-red-500 dark:border-red-400 bg-red-100 dark:bg-red-900/30',
+    'bg-muted/50 border-muted-foreground/50 cursor-default pointer-events-none',
+  accept: 'border-primary bg-primary/10',
+  reject: 'border-destructive bg-destructive/10',
 };
 
 /**
@@ -261,7 +185,7 @@ const SingleImageDropzone = React.forwardRef<
           // Placeholder content shown when no image is selected
           <div
             className={cn(
-              'flex flex-col items-center justify-center gap-2 text-center text-xs text-gray-500 dark:text-gray-400',
+              'flex flex-col items-center justify-center gap-2 text-center text-xs text-muted-foreground',
               isDisabled && 'opacity-50',
             )}
           >
@@ -289,7 +213,7 @@ const SingleImageDropzone = React.forwardRef<
           fileState.status !== 'COMPLETE' && (
             <button
               type="button"
-              className="group pointer-events-auto absolute right-1 top-1 z-10 transform rounded-full border border-gray-400 bg-white p-1 shadow-md transition-all hover:scale-110 dark:border-gray-600 dark:bg-gray-800"
+              className="group pointer-events-auto absolute right-1 top-1 z-10 transform rounded-full border border-muted-foreground bg-background p-1 shadow-md transition-all hover:scale-110"
               onClick={(e) => {
                 e.stopPropagation(); // Prevent triggering dropzone click
                 if (fileState.status === 'UPLOADING') {
@@ -301,9 +225,9 @@ const SingleImageDropzone = React.forwardRef<
               }}
             >
               {fileState.status === 'UPLOADING' ? (
-                <XIcon className="block h-4 w-4 text-gray-500 dark:text-gray-400" />
+                <XIcon className="block h-4 w-4 text-muted-foreground" />
               ) : (
-                <Trash2Icon className="block h-4 w-4 text-gray-500 dark:text-gray-400" />
+                <Trash2Icon className="block h-4 w-4 text-muted-foreground" />
               )}
             </button>
           )}
@@ -311,7 +235,7 @@ const SingleImageDropzone = React.forwardRef<
 
       {/* Error message display */}
       {errorMessage && (
-        <div className="mt-2 flex items-center text-xs text-red-500 dark:text-red-400">
+        <div className="mt-2 flex items-center text-xs text-destructive">
           <AlertCircleIcon className="mr-1 h-4 w-4" />
           <span>{errorMessage}</span>
         </div>
@@ -322,59 +246,3 @@ const SingleImageDropzone = React.forwardRef<
 SingleImageDropzone.displayName = 'SingleImageDropzone';
 
 export { SingleImageDropzone };
-````
-
-</LimitedCode>
-
-</Step>
-
-</Steps>
-
-</OpenTabsContent>
-
-</OpenTabs>
-
-## Usage
-
-```tsx
-'use client';
-
-import { SingleImageDropzone } from '@/components/upload/single-image';
-import {
-  UploaderProvider,
-  type UploadFn,
-} from '@/components/upload/uploader-provider';
-import { useEdgeStore } from '@/lib/edgestore';
-import * as React from 'react';
-
-export function SingleImageDropzoneUsage() {
-  const { edgestore } = useEdgeStore();
-
-  const uploadFn: UploadFn = React.useCallback(
-    async ({ file, onProgressChange, signal }) => {
-      const res = await edgestore.publicImages.upload({
-        file,
-        signal,
-        onProgressChange,
-      });
-      // you can run some server action or api here
-      // to add the necessary data to your database
-      console.log(res);
-      return res;
-    },
-    [edgestore],
-  );
-
-  return (
-    <UploaderProvider uploadFn={uploadFn} autoUpload>
-      <SingleImageDropzone
-        height={200}
-        width={200}
-        dropzoneOptions={{
-          maxSize: 1024 * 1024 * 1, // 1 MB
-        }}
-      />
-    </UploaderProvider>
-  );
-}
-```
