@@ -1,78 +1,3 @@
----
-title: Multi-file
-description: A component for uploading multiple files with preview and progress indicators.
----
-
-import { DemoBlock } from '@/components/demo-block';
-import { LimitedCode } from '@/components/ui/limited-code';
-import {
-  OpenTabs,
-  OpenTabsContent,
-  OpenTabsList,
-  OpenTabsTrigger,
-} from '@/components/ui/open-tabs';
-import MultiFileUploaderBlock from '@/components/upload/blocks/multi-file-block'; // Assumed path
-import { Step, Steps } from 'fumadocs-ui/components/steps';
-
-<DemoBlock
-  v0Config={{
-    title: 'File Uploader',
-    description:
-      'A component for uploading multiple files with preview and progress indicators.',
-    registryUrl: 'https://edgestore.dev/r/file-uploader-block.json',
-  }}
->
-  <MultiFileUploaderBlock />
-</DemoBlock>
-
-## Installation
-
-<OpenTabs defaultValue="cli">
-
-<OpenTabsList>
-  <OpenTabsTrigger value="cli">CLI</OpenTabsTrigger>
-  <OpenTabsTrigger value="manual">Manual</OpenTabsTrigger>
-</OpenTabsList>
-
-<OpenTabsContent value="cli">
-
-Use the shadcn CLI to add the component to your project.
-
-```package-install
-npx shadcn@latest add https://edgestore.dev/r/file-uploader.json
-```
-
-</OpenTabsContent>
-
-<OpenTabsContent value="manual">
-
-<Steps>
-
-<Step>
-
-### Setup for manual installation
-
-First you will need to follow the [manual install setup](./manual-install) guide.
-
-</Step>
-
-<Step>
-
-### Install required components
-
-- [uploader-provider](./uploader-provider)
-- [progress-bar](./progress-bar)
-- [dropzone](./dropzone)
-
-</Step>
-
-<Step>
-
-### Copy this component
-
-<LimitedCode>
-
-````tsx
 'use client';
 
 import { cn } from '@/lib/utils';
@@ -116,24 +41,24 @@ const FileList = React.forwardRef<
         return (
           <div
             key={key}
-            className="shadow-xs flex flex-col justify-center rounded border border-gray-200 px-4 py-3 dark:border-gray-700"
+            className="shadow-xs flex flex-col justify-center rounded border border-border px-4 py-3"
           >
-            <div className="flex items-center gap-3 text-gray-900 dark:text-gray-100">
-              <FileIcon className="h-8 w-8 shrink-0 text-gray-500 dark:text-gray-400" />
+            <div className="flex items-center gap-3 text-foreground">
+              <FileIcon className="h-8 w-8 shrink-0 text-muted-foreground" />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between text-xs">
                   <div className="truncate text-sm">
                     <div className="overflow-hidden text-ellipsis whitespace-nowrap font-medium">
                       {file.name}
                     </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                    <div className="text-xs text-muted-foreground">
                       {formatFileSize(file.size)}
                     </div>
                   </div>
 
                   <div className="ml-2 flex items-center gap-2">
                     {status === 'ERROR' && (
-                      <div className="flex items-center text-xs text-red-500 dark:text-red-400">
+                      <div className="flex items-center text-xs text-destructive">
                         <AlertCircleIcon className="mr-1 h-4 w-4" />
                       </div>
                     )}
@@ -143,13 +68,13 @@ const FileList = React.forwardRef<
                         {abortController && (
                           <button
                             type="button"
-                            className="rounded-md p-0.5 transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                            className="rounded-md p-0.5 transition-colors duration-200 hover:bg-secondary"
                             disabled={progress === 100}
                             onClick={() => {
                               cancelUpload(key);
                             }}
                           >
-                            <XIcon className="h-4 w-4 shrink-0 text-gray-500 dark:text-gray-400" />
+                            <XIcon className="block h-4 w-4 shrink-0 text-muted-foreground" />
                           </button>
                         )}
                         <div>{Math.round(progress)}%</div>
@@ -159,7 +84,7 @@ const FileList = React.forwardRef<
                     {status !== 'UPLOADING' && status !== 'COMPLETE' && (
                       <button
                         type="button"
-                        className="rounded-md p-1 text-gray-500 transition-colors duration-200 hover:bg-gray-100 hover:text-red-500 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-red-400"
+                        className="rounded-md p-1 text-muted-foreground transition-colors duration-200 hover:bg-secondary hover:text-destructive"
                         onClick={() => {
                           removeFile(key);
                         }}
@@ -170,7 +95,7 @@ const FileList = React.forwardRef<
                     )}
 
                     {status === 'COMPLETE' && (
-                      <CheckCircleIcon className="h-5 w-5 shrink-0 text-blue-500 dark:text-blue-400" />
+                      <CheckCircleIcon className="h-5 w-5 shrink-0 text-primary" />
                     )}
                   </div>
                 </div>
@@ -285,61 +210,3 @@ const FileUploader = React.forwardRef<HTMLDivElement, FileUploaderProps>(
 FileUploader.displayName = 'FileUploader';
 
 export { FileList, FileUploader };
-
-````
-
-</LimitedCode>
-
-</Step>
-
-</Steps>
-
-</OpenTabsContent>
-
-</OpenTabs>
-
-## Usage
-
-```tsx
-'use client';
-
-import { FileUploader } from '@/components/upload/multi-file';
-import {
-  UploaderProvider,
-  type UploadFn,
-} from '@/components/upload/uploader-provider';
-import { useEdgeStore } from '@/lib/edgestore';
-import * as React from 'react';
-
-export function MultiFileDropzoneUsage() {
-  const { edgestore } = useEdgeStore();
-
-  const uploadFn: UploadFn = React.useCallback(
-    async ({ file, onProgressChange, signal }) => {
-      const res = await edgestore.publicFiles.upload({
-        file,
-        signal,
-        onProgressChange,
-      });
-      // you can run some server action or api here
-      // to add the necessary data to your database
-      console.log(res);
-      return res;
-    },
-    [edgestore],
-  );
-
-  return (
-    <UploaderProvider uploadFn={uploadFn} autoUpload>
-      <FileUploader
-        maxFiles={5}
-        maxSize={1024 * 1024 * 1} // 1 MB
-        accept={{
-          'application/pdf': [],
-          'text/plain': ['.txt'],
-        }}
-      />
-    </UploaderProvider>
-  );
-}
-```

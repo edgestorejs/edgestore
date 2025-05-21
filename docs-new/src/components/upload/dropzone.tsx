@@ -1,45 +1,3 @@
----
-title: Dropzone
-description: The Dropzone component provides a user-friendly drag-and-drop interface for file uploads that integrates seamlessly with the UploaderProvider.
----
-
-import { LimitedCode } from '@/components/ui/limited-code';
-import {
-  OpenTabs,
-  OpenTabsContent,
-  OpenTabsList,
-  OpenTabsTrigger,
-} from '@/components/ui/open-tabs';
-import { Callout } from 'fumadocs-ui/components/callout';
-
-<Callout>
-  If you are installing the other dropzone components via the CLI, this
-  component will be installed automatically. You can skip the following steps.
-</Callout>
-
-## Installation
-
-<OpenTabs defaultValue="cli">
-<OpenTabsList>
-  <OpenTabsTrigger value="cli">CLI</OpenTabsTrigger>
-  <OpenTabsTrigger value="manual">Manual</OpenTabsTrigger>
-</OpenTabsList>
-
-<OpenTabsContent value="cli">
-
-```package-install
-npx shadcn@latest add https://edgestore.dev/r/dropzone.json
-```
-
-</OpenTabsContent>
-
-<OpenTabsContent value="manual">
-
-### Copy this component
-
-<LimitedCode>
-
-````tsx
 'use client';
 
 import { cn } from '@/lib/utils';
@@ -49,13 +7,12 @@ import { useDropzone, type DropzoneOptions } from 'react-dropzone';
 import { formatFileSize, useUploader } from './uploader-provider';
 
 const DROPZONE_VARIANTS = {
-  base: 'relative rounded-md p-4 w-full flex justify-center items-center flex-col cursor-pointer border-2 border-dashed border-gray-400 dark:border-gray-600 transition-colors duration-200 ease-in-out',
-  active: 'border-blue-500 dark:border-blue-400',
+  base: 'relative rounded-md p-4 w-full flex justify-center items-center flex-col cursor-pointer border-2 border-dashed border-muted-foreground transition-colors duration-200 ease-in-out',
+  active: 'border-primary',
   disabled:
-    'bg-gray-100 dark:bg-gray-800 border-gray-400/50 dark:border-gray-600/50 cursor-default pointer-events-none opacity-50',
-  accept:
-    'border-blue-500 dark:border-blue-400 bg-blue-100 dark:bg-blue-900/30',
-  reject: 'border-red-500 dark:border-red-400 bg-red-100 dark:bg-red-900/30',
+    'bg-muted border-muted-foreground cursor-default pointer-events-none opacity-50',
+  accept: 'border-primary bg-primary/10',
+  reject: 'border-destructive bg-destructive/10',
 };
 
 /**
@@ -192,7 +149,7 @@ const Dropzone = React.forwardRef<HTMLInputElement, DropzoneProps>(
           })}
         >
           <input ref={ref} {...getInputProps()} {...props} />
-          <div className="flex flex-col items-center justify-center gap-2 text-center text-gray-500 dark:text-gray-400">
+          <div className="flex flex-col items-center justify-center gap-2 text-center text-muted-foreground">
             <UploadCloudIcon className="h-10 w-10" />
             <div className="text-sm font-medium">
               {isDragActive ? dropMessageActive : dropMessageDefault}
@@ -209,7 +166,7 @@ const Dropzone = React.forwardRef<HTMLInputElement, DropzoneProps>(
 
         {/* Error Text */}
         {error && (
-          <div className="mt-1 flex items-center text-xs text-red-500 dark:text-red-400">
+          <div className="mt-1 flex items-center text-xs text-destructive">
             <AlertCircleIcon className="mr-1 h-4 w-4" />
             <span>{error}</span>
           </div>
@@ -221,58 +178,3 @@ const Dropzone = React.forwardRef<HTMLInputElement, DropzoneProps>(
 Dropzone.displayName = 'Dropzone';
 
 export { Dropzone };
-````
-
-</LimitedCode>
-
-</OpenTabsContent>
-</OpenTabs>
-
-## Usage
-
-This section provides a guide on how to use the `Dropzone` component with the `UploaderProvider`.
-
-### Basic Usage
-
-The Dropzone component must be used within an `UploaderProvider`.
-
-```tsx
-import { Dropzone } from '@/components/ui/dropzone';
-import { UploaderProvider } from '@/components/ui/uploader-provider';
-import * as React from 'react';
-
-export default function DropzoneExample() {
-  const { edgestore } = useEdgeStore();
-
-  const uploadFn: UploadFn = React.useCallback(
-    async ({ file, onProgressChange, signal }) => {
-      const res = await edgestore.publicFiles.upload({
-        file,
-        signal,
-        onProgressChange,
-      });
-      // you can run some server action or api here
-      // to add the necessary data to your database
-      console.log(res);
-      return res;
-    },
-    [edgestore],
-  );
-
-  return (
-    <UploaderProvider uploadFn={uploadFn} autoUpload>
-      <Dropzone
-        dropzoneOptions={{
-          maxFiles: 5,
-          maxSize: 1024 * 1024 * 2, // 2MB
-          accept: {
-            'image/*': ['.jpeg', '.jpg', '.png'],
-          },
-        }}
-      />
-      {/* You can create a component that uses the provider context */}
-      {/* (from the `useUploader` hook) to show a custom file list here */}
-    </UploaderProvider>
-  );
-}
-```

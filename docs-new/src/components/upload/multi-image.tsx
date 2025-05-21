@@ -1,78 +1,3 @@
----
-title: Multi-image
-description: A component for uploading multiple images with preview grid and progress indicators.
----
-
-import { DemoBlock } from '@/components/demo-block';
-import { LimitedCode } from '@/components/ui/limited-code';
-import {
-  OpenTabs,
-  OpenTabsContent,
-  OpenTabsList,
-  OpenTabsTrigger,
-} from '@/components/ui/open-tabs';
-import MultiImageUploaderBlock from '@/components/upload/blocks/multi-image-block';
-import { Step, Steps } from 'fumadocs-ui/components/steps';
-
-<DemoBlock
-  v0Config={{
-    title: 'Image Uploader',
-    description:
-      'A component for uploading multiple images with preview grid and progress indicators.',
-    registryUrl: 'https://edgestore.dev/r/multi-image-uploader-block.json',
-  }}
->
-  <MultiImageUploaderBlock />
-</DemoBlock>
-
-## Installation
-
-<OpenTabs defaultValue="cli">
-
-<OpenTabsList>
-  <OpenTabsTrigger value="cli">CLI</OpenTabsTrigger>
-  <OpenTabsTrigger value="manual">Manual</OpenTabsTrigger>
-</OpenTabsList>
-
-<OpenTabsContent value="cli">
-
-Use the shadcn CLI to add the component to your project.
-
-```package-install
-npx shadcn@latest add https://edgestore.dev/r/image-uploader.json
-```
-
-</OpenTabsContent>
-
-<OpenTabsContent value="manual">
-
-<Steps>
-
-<Step>
-
-### Setup for manual installation
-
-First you will need to follow the [manual install setup](./manual-install) guide.
-
-</Step>
-
-<Step>
-
-### Install required components
-
-- [uploader-provider](./uploader-provider)
-- [progress-circle](./progress-circle)
-- [dropzone](./dropzone)
-
-</Step>
-
-<Step>
-
-### Copy this component
-
-<LimitedCode>
-
-````tsx
 'use client';
 
 import { cn } from '@/lib/utils';
@@ -143,7 +68,7 @@ const ImageList = React.forwardRef<HTMLDivElement, ImageListProps>(
             <div
               key={fileState.key}
               className={
-                'relative aspect-square h-full w-full rounded-md border-0 bg-gray-100 p-0 shadow-md dark:bg-gray-800'
+                'relative aspect-square h-full w-full rounded-md border-0 bg-muted p-0 shadow-md'
               }
             >
               {displayUrl ? (
@@ -153,8 +78,8 @@ const ImageList = React.forwardRef<HTMLDivElement, ImageListProps>(
                   alt={fileState.file.name}
                 />
               ) : (
-                <div className="flex h-full w-full items-center justify-center bg-gray-200 dark:bg-gray-700">
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                <div className="flex h-full w-full items-center justify-center bg-secondary">
+                  <span className="text-xs text-muted-foreground">
                     No Preview
                   </span>
                 </div>
@@ -171,7 +96,7 @@ const ImageList = React.forwardRef<HTMLDivElement, ImageListProps>(
               {displayUrl && !initialDisabled && (
                 <button
                   type="button"
-                  className="group pointer-events-auto absolute right-1 top-1 z-10 -translate-y-1/4 translate-x-1/4 transform rounded-full border border-gray-400 bg-white p-1 shadow-md transition-all hover:scale-110 dark:border-gray-600 dark:bg-gray-800"
+                  className="group pointer-events-auto absolute right-1 top-1 z-10 -translate-y-1/4 translate-x-1/4 transform rounded-full border border-muted-foreground bg-background p-1 shadow-md transition-all hover:scale-110"
                   onClick={(e) => {
                     e.stopPropagation();
                     if (fileState.status === 'UPLOADING') {
@@ -182,9 +107,9 @@ const ImageList = React.forwardRef<HTMLDivElement, ImageListProps>(
                   }}
                 >
                   {fileState.status === 'UPLOADING' ? (
-                    <XIcon className="block h-4 w-4 text-gray-500 dark:text-gray-400" />
+                    <XIcon className="block h-4 w-4 text-muted-foreground" />
                   ) : (
-                    <Trash2Icon className="block h-4 w-4 text-gray-500 dark:text-gray-400" />
+                    <Trash2Icon className="block h-4 w-4 text-muted-foreground" />
                   )}
                 </button>
               )}
@@ -341,57 +266,3 @@ const ImageUploader = React.forwardRef<HTMLDivElement, ImageUploaderProps>(
 ImageUploader.displayName = 'ImageUploader';
 
 export { ImageList, ImageDropzone, ImageUploader };
-
-````
-
-</LimitedCode>
-
-</Step>
-
-</Steps>
-
-</OpenTabsContent>
-
-</OpenTabs>
-
-## Usage
-
-```tsx
-'use client';
-
-import { ImageUploader } from '@/components/upload/multi-image';
-import {
-  UploaderProvider,
-  type UploadFn,
-} from '@/components/upload/uploader-provider';
-import { useEdgeStore } from '@/lib/edgestore';
-import * as React from 'react';
-
-export function MultiImageDropzoneUsage() {
-  const { edgestore } = useEdgeStore();
-
-  const uploadFn: UploadFn = React.useCallback(
-    async ({ file, onProgressChange, signal }) => {
-      const res = await edgestore.publicImages.upload({
-        file,
-        signal,
-        onProgressChange,
-      });
-      // you can run some server action or api here
-      // to add the necessary data to your database
-      console.log(res);
-      return res;
-    },
-    [edgestore],
-  );
-
-  return (
-    <UploaderProvider uploadFn={uploadFn} autoUpload>
-      <ImageUploader
-        maxFiles={10}
-        maxSize={1024 * 1024 * 1} // 1 MB
-      />
-    </UploaderProvider>
-  );
-}
-```
