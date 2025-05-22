@@ -21,7 +21,16 @@
     "components/manual-install",
     "---Adapters---",
     "adapters/next",
+    "adapters/astro",
+    "adapters/express",
+    "adapters/fastify",
+    "adapters/hono",
+    "adapters/remix",
+    "adapters/tanstack-start",
     "---Providers---",
-    "providers/edgestore"
+    "providers/edgestore",
+    "providers/aws",
+    "providers/azure",
+    "providers/custom"
   ]
 }
