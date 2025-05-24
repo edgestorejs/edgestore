@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 import { ChevronDownIcon } from 'lucide-react';
 import Link from 'next/link';
 
-export default function Hero() {
+export function Hero() {
   return (
     <div className="container flex flex-col items-center gap-8 py-20 md:flex-row">
       <div className="lg:flex-3 flex-2 xl:flex-2 space-y-6">

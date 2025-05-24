@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
 
 const iconClassName = cn('size-10 sm:size-12');
 
-export default function Frameworks() {
+export function Frameworks() {
   return (
     <div className="container space-y-6">
       <h2 className="text-center text-muted-foreground">

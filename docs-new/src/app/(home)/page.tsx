@@ -1,5 +1,5 @@
-import Frameworks from './_sections/frameworks';
-import Hero from './_sections/hero';
+import { Frameworks } from './_sections/frameworks';
+import { Hero } from './_sections/hero';
 
 export default function HomePage() {
   return (
