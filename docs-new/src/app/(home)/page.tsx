@@ -2,6 +2,7 @@ import { CodeExamples } from './_sections/code-examples';
 import { Footer } from './_sections/footer';
 import { Frameworks } from './_sections/frameworks';
 import { Hero } from './_sections/hero';
+import { Testimonials } from './_sections/testimonials';
 
 export default function HomePage() {
   return (
@@ -9,6 +10,7 @@ export default function HomePage() {
       <Hero />
       <Frameworks />
       <CodeExamples />
+      <Testimonials />
       <Footer />
     </main>
   );

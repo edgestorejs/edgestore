@@ -126,6 +126,41 @@
   }
 }
 
+@layer utilities {
+  .animation-delay-\[var\(--animation-delay\)\] {
+    animation-delay: var(--animation-delay);
+  }
+  @keyframes scroll-fast {
+    to {
+      transform: translateX(-50%);
+    }
+  }
+  @keyframes scroll-normal {
+    to {
+      transform: translateX(-50%);
+    }
+  }
+  @keyframes scroll-slow {
+    to {
+      transform: translateX(-50%);
+    }
+  }
+  .animate-scroll-fast {
+    animation: scroll-fast 40s linear infinite;
+  }
+  .animate-scroll-normal {
+    animation: scroll-normal 80s linear infinite;
+  }
+  .animate-scroll-slow {
+    animation: scroll-slow 150s linear infinite;
+  }
+  .scroller:hover .animate-scroll-fast,
+  .scroller:hover .animate-scroll-normal,
+  .scroller:hover .animate-scroll-slow {
+    animation-play-state: paused;
+  }
+}
+
 /* -- FUMADOCS OVERRIDES -- */
 
 .landing-page .fd-scroll-container::-webkit-scrollbar {
