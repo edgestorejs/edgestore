@@ -128,6 +128,11 @@
 
 /* -- FUMADOCS OVERRIDES -- */
 
+.landing-page .fd-scroll-container::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
 /* Remove scrollbar from fumadocs code blocks */
 figure > div:has(> pre) {
   @apply max-h-none;

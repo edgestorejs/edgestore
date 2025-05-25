@@ -4,11 +4,12 @@ import Link from 'next/link';
 
 export function Hero() {
   return (
-    <div className="container flex flex-col items-center gap-8 py-20 md:flex-row">
+    <div className="container flex flex-col items-center gap-8 py-20 md:flex-row lg:py-40">
       <div className="lg:flex-3 flex-2 xl:flex-2 space-y-6">
-        <h1 className="text-center text-3xl font-bold tracking-tight text-foreground sm:text-4xl md:text-left md:text-5xl">
-          Effortless File Uploads
-          <br /> for Your Apps
+        <h1 className="text-center text-3xl font-bold text-foreground sm:text-4xl md:text-left md:text-5xl">
+          The best way to
+          <br /> add <span className="text-primary">file uploads</span>
+          <br /> to your apps
         </h1>
         <p className="max-w-[600px] text-balance text-center text-lg text-muted-foreground md:text-left">
           EdgeStore provides type-safe, fast, scalable storage solutions

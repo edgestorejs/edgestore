@@ -12,8 +12,8 @@ const iconClassName = cn('size-10 sm:size-12');
 
 export function Frameworks() {
   return (
-    <div className="container space-y-6">
-      <h2 className="text-center text-muted-foreground">
+    <div className="container space-y-8">
+      <h2 className="text-center text-xl font-bold">
         Ready for your framework
       </h2>
       <div className="grid grid-cols-4 items-center justify-items-center gap-8 md:grid-cols-8">
