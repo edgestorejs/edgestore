@@ -1,27 +1,36 @@
+import { OWNER, REPO } from '@/lib/github';
 import { source } from '@/lib/source';
+import { getMDXComponents } from '@/mdx-components';
+import { createRelativeLink } from 'fumadocs-ui/mdx';
 import {
-  DocsPage,
   DocsBody,
   DocsDescription,
+  DocsPage,
   DocsTitle,
 } from 'fumadocs-ui/page';
 import { notFound } from 'next/navigation';
-import { createRelativeLink } from 'fumadocs-ui/mdx';
-import { getMDXComponents } from '@/mdx-components';
+import { EditOnGitHub, LLMCopyButton } from './page.client';
 
 export default async function Page(props: {
-  params: Promise<{ slug?: string[] }>;
+  params: Promise<{ slug: string[] }>;
 }) {
   const params = await props.params;
   const page = source.getPage(params.slug);
   if (!page) notFound();
 
   const MDXContent = page.data.body;
+  const path = `docs/content/docs/${page.file.path}`;
 
   return (
     <DocsPage toc={page.data.toc} full={page.data.full}>
       <DocsTitle>{page.data.title}</DocsTitle>
       <DocsDescription>{page.data.description}</DocsDescription>
+      <div className="mb-4 flex flex-row items-center gap-2">
+        <LLMCopyButton slug={params.slug} />
+        <EditOnGitHub
+          url={`https://github.com/${OWNER}/${REPO}/blob/dev/${path}`}
+        />
+      </div>
       <DocsBody>
         <MDXContent
           components={getMDXComponents({
