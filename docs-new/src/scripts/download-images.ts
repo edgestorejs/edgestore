@@ -116,7 +116,7 @@ const testimonials = [
   },
 ];
 
-const OUTPUT_DIR = path.join(__dirname, '../../public/images/testimonials');
+const OUTPUT_DIR = path.join(__dirname, '../../public/img/testimonials');
 
 async function downloadImages() {
   try {
