@@ -4,11 +4,9 @@ import React from 'react';
 export const AnimatedGrid = ({
   children,
   className,
-  speed = 'normal',
 }: {
   children: React.ReactNode;
   className?: string;
-  speed?: 'fast' | 'normal' | 'slow';
 }) => {
   const containerRef = React.useRef<HTMLDivElement>(null);
   const scrollerRef = React.useRef<HTMLDivElement>(null);
@@ -28,18 +26,13 @@ export const AnimatedGrid = ({
     <div
       ref={containerRef}
       className={cn(
-        'scroller relative z-20 max-w-7xl overflow-hidden [mask-image:linear-gradient(to_right,transparent,white_20%,white_80%,transparent)]',
+        'scroller relative z-20 w-full overflow-hidden [mask-image:linear-gradient(to_right,transparent,white_20%,white_80%,transparent)]',
         className,
       )}
     >
       <div
         ref={scrollerRef}
-        className={cn(
-          'flex w-max min-w-full shrink-0 flex-nowrap gap-4 py-4',
-          speed === 'fast' && 'animate-scroll-fast',
-          speed === 'normal' && 'animate-scroll-normal',
-          speed === 'slow' && 'animate-scroll-slow',
-        )}
+        className="animate-scroll flex w-max min-w-full shrink-0 flex-nowrap gap-4 py-4"
       >
         {children}
       </div>

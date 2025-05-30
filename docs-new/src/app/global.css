@@ -145,18 +145,10 @@
       transform: translateX(-50%);
     }
   }
-  .animate-scroll-fast {
-    animation: scroll-fast 40s linear infinite;
+  .animate-scroll {
+    animation: scroll-slow 200s linear infinite;
   }
-  .animate-scroll-normal {
-    animation: scroll-normal 80s linear infinite;
-  }
-  .animate-scroll-slow {
-    animation: scroll-slow 150s linear infinite;
-  }
-  .scroller:hover .animate-scroll-fast,
-  .scroller:hover .animate-scroll-normal,
-  .scroller:hover .animate-scroll-slow {
+  .scroller:hover .animate-scroll {
     animation-play-state: paused;
   }
 }
