@@ -1,0 +1,19 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "single-image-dropzone-block",
+  "type": "registry:block",
+  "title": "Single Image Dropzone Block",
+  "description": "A block for uploading a single image with preview and progress indicator.",
+  "registryDependencies": [
+    "https://edgestore.dev/r/single-image-dropzone.json",
+    "https://edgestore.dev/r/uploader-provider.json"
+  ],
+  "files": [
+    {
+      "path": "examples/components/src/components/upload/blocks/single-image-block.tsx",
+      "content": "import { SingleImageDropzone } from '@/components/upload/single-image';\nimport {\n  UploaderProvider,\n  useUploader,\n  type CompletedFileState,\n  type UploadFn,\n} from '@/components/upload/uploader-provider';\nimport * as React from 'react';\n\nexport default function SingleImageUploaderBlock() {\n  const { edgestore } = useMockEdgeStore();\n\n  const uploadFn: UploadFn = React.useCallback(\n    async ({ file, signal, onProgressChange }) => {\n      const res = await edgestore.myPublicImages.upload({\n        file,\n        signal,\n        onProgressChange,\n      });\n      return { url: res.url };\n    },\n    [edgestore],\n  );\n\n  return (\n    <div className=\"flex flex-col items-center gap-4 p-4\">\n      <div className=\"w-full max-w-md\">\n        <UploaderProvider uploadFn={uploadFn} autoUpload>\n          <SingleImageDropzone\n            width={320}\n            height={320}\n            dropzoneOptions={{ maxSize: 1024 * 1024 * 2 }} // 2MB\n          />\n          <CompletedImage />\n        </UploaderProvider>\n      </div>\n    </div>\n  );\n}\n\nfunction CompletedImage() {\n  const { fileStates } = useUploader();\n\n  const completedFile = fileStates.find(\n    (fs): fs is CompletedFileState => fs.status === 'COMPLETE',\n  );\n\n  if (!completedFile) {\n    return null;\n  }\n\n  return (\n    <div className=\"mt-8 w-full\">\n      <h3 className=\"mb-2 text-lg font-semibold\">Uploaded Image</h3>\n      <div className=\"rounded-md bg-gray-50 p-4 dark:bg-gray-900\">\n        <div className=\"flex flex-col items-center\">\n          <a\n            href={completedFile.url}\n            target=\"_blank\"\n            rel=\"noopener noreferrer\"\n            className=\"underline\"\n          >\n            {completedFile.file.name}\n          </a>\n        </div>\n      </div>\n    </div>\n  );\n}\n\n// Mock implementation of EdgeStore\nfunction useMockEdgeStore() {\n  return {\n    edgestore: {\n      myPublicImages: {\n        upload: async ({\n          file,\n          onProgressChange,\n        }: {\n          file: File;\n          signal?: AbortSignal;\n          onProgressChange?: (progress: number) => void | Promise<void>;\n        }) => {\n          // Simulate upload progress with a Promise that completes only after reaching 100%\n          await new Promise<void>((resolve) => {\n            if (onProgressChange) {\n              let progress = 0;\n              const interval = setInterval(() => {\n                const increment = Math.floor(Math.random() * 41) + 10;\n                progress = Math.min(progress + increment, 100);\n                void onProgressChange(progress);\n\n                if (progress >= 100) {\n                  clearInterval(interval);\n                  setTimeout(() => {\n                    void onProgressChange(100);\n                    setTimeout(resolve, 200);\n                  }, 300);\n                }\n              }, 300);\n            } else {\n              // If no progress handler, just wait a bit\n              setTimeout(resolve, 1500);\n            }\n          });\n\n          return {\n            url: `https://mock-edgestore.example.com/${file.name}`,\n          };\n        },\n      },\n    },\n  };\n}\n",
+      "type": "registry:block",
+      "target": "components/upload/blocks/single-image-block.tsx"
+    }
+  ]
+}

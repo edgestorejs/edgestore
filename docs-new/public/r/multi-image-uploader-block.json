@@ -1,0 +1,19 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "multi-image-uploader-block",
+  "type": "registry:block",
+  "title": "Multi Image Uploader Block",
+  "description": "A block for uploading multiple images with preview grid and progress indicators.",
+  "registryDependencies": [
+    "https://edgestore.dev/r/image-uploader.json",
+    "https://edgestore.dev/r/uploader-provider.json"
+  ],
+  "files": [
+    {
+      "path": "examples/components/src/components/upload/blocks/multi-image-block.tsx",
+      "content": "import { ImageUploader } from '@/components/upload/multi-image';\nimport {\n  UploaderProvider,\n  useUploader,\n  type CompletedFileState,\n  type UploadFn,\n} from '@/components/upload/uploader-provider';\nimport * as React from 'react';\n\nexport default function MultiImageUploaderBlock() {\n  const { edgestore } = useMockEdgeStore();\n\n  const uploadFn: UploadFn = React.useCallback(\n    async ({ file, signal, onProgressChange }) => {\n      const res = await edgestore.myPublicImages.upload({\n        file,\n        signal,\n        onProgressChange,\n      });\n      return { url: res.url };\n    },\n    [edgestore],\n  );\n\n  return (\n    <div className=\"flex flex-col items-center gap-4 p-4\">\n      <div className=\"w-full max-w-md\">\n        <UploaderProvider uploadFn={uploadFn} autoUpload>\n          <ImageUploader\n            maxFiles={6}\n            maxSize={1024 * 1024 * 2} // 2MB\n          />\n          <CompletedImages />\n        </UploaderProvider>\n      </div>\n    </div>\n  );\n}\n\nfunction CompletedImages() {\n  const { fileStates } = useUploader();\n\n  const completedFiles = fileStates.filter(\n    (fs): fs is CompletedFileState => fs.status === 'COMPLETE',\n  );\n\n  if (completedFiles.length === 0) {\n    return null;\n  }\n\n  return (\n    <div className=\"mt-8 w-full\">\n      <h3 className=\"mb-2 text-lg font-semibold\">Uploaded Files</h3>\n      <div className=\"rounded-md bg-gray-50 p-4 dark:bg-gray-900\">\n        {completedFiles.map((res) => (\n          <a\n            key={res.url}\n            className=\"mb-1 block underline\"\n            href={res.url}\n            target=\"_blank\"\n            rel=\"noopener noreferrer\"\n          >\n            {res.file.name}\n          </a>\n        ))}\n      </div>\n    </div>\n  );\n}\n\n// Mock implementation of EdgeStore\nfunction useMockEdgeStore() {\n  return {\n    edgestore: {\n      myPublicImages: {\n        upload: async ({\n          file,\n          onProgressChange,\n        }: {\n          file: File;\n          signal?: AbortSignal;\n          onProgressChange?: (progress: number) => void | Promise<void>;\n        }) => {\n          // Simulate upload progress with a Promise that completes only after reaching 100%\n          await new Promise<void>((resolve) => {\n            if (onProgressChange) {\n              let progress = 0;\n              const interval = setInterval(() => {\n                const increment = Math.floor(Math.random() * 41) + 10;\n                progress = Math.min(progress + increment, 100);\n                void onProgressChange(progress);\n\n                if (progress >= 100) {\n                  clearInterval(interval);\n                  setTimeout(() => {\n                    void onProgressChange(100);\n                    setTimeout(resolve, 200);\n                  }, 300);\n                }\n              }, 300);\n            } else {\n              // If no progress handler, just wait a bit\n              setTimeout(resolve, 1500);\n            }\n          });\n\n          return {\n            url: `https://mock-edgestore.example.com/${file.name}`,\n          };\n        },\n      },\n    },\n  };\n}\n",
+      "type": "registry:block",
+      "target": "components/upload/blocks/multi-image-block.tsx"
+    }
+  ]
+}
