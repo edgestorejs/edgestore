@@ -11,6 +11,7 @@ export const metadata: Metadata = {
     template: '%s | EdgeStore',
     default: 'EdgeStore',
   },
+  description: 'The best way to add file uploads to React apps.',
 };
 
 export const revalidate = 86400; // 24 hours in seconds
@@ -39,6 +40,11 @@ async function fetchGithubStars() {
       `https://api.github.com/repos/${OWNER}/${REPO}`,
       { next: { revalidate: 86400 } },
     );
+
+    if (!response.ok) {
+      throw await response.json();
+    }
+
     const data = (await response.json()) as { stargazers_count: number };
     if (data.stargazers_count !== undefined) {
       return data.stargazers_count;

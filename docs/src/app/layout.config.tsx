@@ -1,4 +1,5 @@
 import GitHubStarButton from '@/components/github-star';
+import { DiscordIcon } from '@/components/icons/platforms/discord';
 import type { BaseLayoutProps, LinkItemType } from 'fumadocs-ui/layouts/shared';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -11,6 +12,7 @@ export const linkItems: LinkItemType[] = [
         <Link
           className="text-fd-muted-foreground hover:text-fd-accent-foreground data-[active=true]:text-fd-primary inline-flex items-center gap-1 p-2 text-sm transition-colors [&_svg]:size-4"
           href="/docs/quick-start"
+          aria-label="Go to documentation"
         >
           Docs
         </Link>
@@ -18,6 +20,7 @@ export const linkItems: LinkItemType[] = [
         <Link
           className="text-fd-muted-foreground hover:text-fd-accent-foreground data-[active=true]:text-fd-primary inline-flex items-center gap-1 p-2 text-sm transition-colors [&_svg]:size-4"
           href="/pricing"
+          aria-label="Go to pricing"
         >
           Pricing
         </Link>
@@ -25,8 +28,17 @@ export const linkItems: LinkItemType[] = [
           className="text-fd-muted-foreground hover:text-fd-accent-foreground data-[active=true]:text-fd-primary inline-flex items-center gap-1 p-2 text-sm transition-colors [&_svg]:size-4"
           href="https://dashboard.edgestore.dev"
           target="_blank"
+          aria-label="Go to dashboard"
         >
           Dashboard
+        </Link>
+        <Link
+          className="text-fd-muted-foreground hover:text-fd-accent-foreground data-[active=true]:text-fd-primary inline-flex items-center gap-1 p-2 text-sm transition-colors duration-200 [&_svg]:size-4"
+          href="https://discord.gg/HvrnhRTfgQ"
+          target="_blank"
+          aria-label="Go to Discord"
+        >
+          <DiscordIcon />
         </Link>
         <GitHubStarButton />
       </div>
