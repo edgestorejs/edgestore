@@ -1,11 +1,24 @@
+import { baseOptions } from '@/app/layout.config';
+import { GithubIcon } from '@/components/icons/platforms/github';
+import { OWNER, REPO } from '@/lib/github';
+import { source } from '@/lib/source';
 import { DocsLayout } from 'fumadocs-ui/layouts/docs';
 import type { ReactNode } from 'react';
-import { baseOptions } from '@/app/layout.config';
-import { source } from '@/lib/source';
 
 export default function Layout({ children }: { children: ReactNode }) {
   return (
-    <DocsLayout tree={source.pageTree} {...baseOptions}>
+    <DocsLayout
+      tree={source.pageTree}
+      {...baseOptions}
+      links={[
+        {
+          type: 'icon',
+          text: 'GitHub',
+          url: `https://github.com/${OWNER}/${REPO}`,
+          icon: <GithubIcon />,
+        },
+      ]}
+    >
       {children}
     </DocsLayout>
   );

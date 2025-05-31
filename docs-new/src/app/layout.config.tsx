@@ -1,4 +1,48 @@
-import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
+import GitHubStarButton from '@/components/github-star';
+import type { BaseLayoutProps, LinkItemType } from 'fumadocs-ui/layouts/shared';
+import Image from 'next/image';
+import Link from 'next/link';
+
+export const linkItems: LinkItemType[] = [
+  {
+    type: 'custom',
+    children: (
+      <div className="flex w-full flex-col items-end sm:flex-row sm:items-center sm:gap-2">
+        <Link
+          className="text-fd-muted-foreground hover:text-fd-accent-foreground data-[active=true]:text-fd-primary inline-flex items-center gap-1 p-2 text-sm transition-colors [&_svg]:size-4"
+          href="/docs/quick-start"
+        >
+          Docs
+        </Link>
+        <div className="grow max-sm:hidden" />
+        <Link
+          className="text-fd-muted-foreground hover:text-fd-accent-foreground data-[active=true]:text-fd-primary inline-flex items-center gap-1 p-2 text-sm transition-colors [&_svg]:size-4"
+          href="/pricing"
+        >
+          Pricing
+        </Link>
+        <Link
+          className="text-fd-muted-foreground hover:text-fd-accent-foreground data-[active=true]:text-fd-primary inline-flex items-center gap-1 p-2 text-sm transition-colors [&_svg]:size-4"
+          href="https://dashboard.edgestore.dev"
+          target="_blank"
+        >
+          Dashboard
+        </Link>
+        <GitHubStarButton />
+      </div>
+    ),
+  },
+];
+
+export const logo = (
+  <Image
+    src="/img/logo-sm.png"
+    alt="EdgeStore"
+    aria-label="EdgeStore"
+    width={28}
+    height={28}
+  />
+);
 
 /**
  * Shared layout configurations
@@ -11,15 +55,8 @@ export const baseOptions: BaseLayoutProps = {
   nav: {
     title: (
       <>
-        <svg
-          width="24"
-          height="24"
-          xmlns="http://www.w3.org/2000/svg"
-          aria-label="Logo"
-        >
-          <circle cx={12} cy={12} r={12} fill="currentColor" />
-        </svg>
-        My App
+        {logo}
+        <div className="h-7 w-[120px] shrink-0 bg-[url('/img/edgestore-light.svg')] bg-contain bg-center bg-no-repeat dark:bg-[url('/img/edgestore.svg')]" />
       </>
     ),
   },

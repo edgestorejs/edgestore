@@ -2,6 +2,7 @@
   "name": "docs-new",
   "version": "0.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "build": "next build",
     "dev": "next dev --turbo",
@@ -10,6 +11,7 @@
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.2",
+    "@t3-oss/env-nextjs": "0.13.6",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "fumadocs-core": "15.3.3",
@@ -23,7 +25,8 @@
     "react-dom": "19.1.0",
     "react-dropzone": "^14.3.8",
     "tailwind-merge": "^3.3.0",
-    "twoslash": "0.3.1"
+    "twoslash": "0.3.1",
+    "zod": "3.25.42"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.5",

@@ -49,7 +49,7 @@
   --popover: oklch(0.208 0.042 265.755);
   --popover-foreground: oklch(0.984 0.003 247.858);
   --primary: oklch(0.739 0.145 290);
-  --primary-foreground: oklch(0.208 0.042 265.755);
+  --primary-foreground: oklch(1 0 0);
   --secondary: oklch(0.279 0.041 260.031);
   --secondary-foreground: oklch(0.984 0.003 247.858);
   --muted: oklch(0.279 0.041 260.031);
@@ -158,6 +158,24 @@
 .landing-page .fd-scroll-container::-webkit-scrollbar {
   width: 0;
   height: 0;
+}
+
+/* Override fumadocs nav logo */
+nav > a:first-child {
+  @apply max-sm:grow;
+}
+
+/* Override fumadocs nav links container */
+nav > ul:first-of-type {
+  @apply grow;
+  & > div {
+    @apply w-full;
+  }
+}
+
+/* Override fumadocs nav search */
+nav > div:first-of-type {
+  @apply flex-none [&_[data-search-full]]:w-[240px];
 }
 
 /* Remove scrollbar from fumadocs code blocks */
