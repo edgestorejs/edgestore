@@ -168,7 +168,7 @@ async function downloadImages() {
 
         // Node-fetch specific: Get ArrayBuffer and convert to Buffer
         const imageBuffer = await response.arrayBuffer();
-        await fs.writeFile(filePath, Buffer.from(imageBuffer));
+        await fs.writeFile(filePath, new Uint8Array(imageBuffer));
         console.log(`Successfully downloaded and saved: ${filePath}`);
       } catch (error) {
         console.error(
