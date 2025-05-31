@@ -14,8 +14,6 @@ export async function GET() {
     map.set(dir, list);
   }
 
-  console.log(map);
-
   for (const [key, value] of map) {
     scanned.push(`## ${key}`);
     scanned.push(value.join('\n'));
