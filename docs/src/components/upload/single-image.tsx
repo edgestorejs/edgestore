@@ -1,5 +1,6 @@
 'use client';
 
+import { cn } from '@/lib/utils';
 import {
   AlertCircleIcon,
   Trash2Icon,
@@ -8,7 +9,6 @@ import {
 } from 'lucide-react';
 import * as React from 'react';
 import { useDropzone, type DropzoneOptions } from 'react-dropzone';
-import { cn } from '../../lib/utils';
 import { ProgressCircle } from './progress-circle';
 import { formatFileSize, useUploader } from './uploader-provider';
 
@@ -213,7 +213,7 @@ const SingleImageDropzone = React.forwardRef<
           fileState.status !== 'COMPLETE' && (
             <button
               type="button"
-              className="group pointer-events-auto absolute right-1 top-1 z-10 transform rounded-full !border !border-solid !border-muted-foreground !bg-background p-1 shadow-md transition-all hover:scale-110"
+              className="group pointer-events-auto absolute right-1 top-1 z-10 transform rounded-full border border-muted-foreground bg-background p-1 shadow-md transition-all hover:scale-110"
               onClick={(e) => {
                 e.stopPropagation(); // Prevent triggering dropzone click
                 if (fileState.status === 'UPLOADING') {

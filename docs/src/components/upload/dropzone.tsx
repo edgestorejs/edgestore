@@ -1,9 +1,9 @@
 'use client';
 
+import { cn } from '@/lib/utils';
 import { AlertCircleIcon, UploadCloudIcon } from 'lucide-react';
 import * as React from 'react';
 import { useDropzone, type DropzoneOptions } from 'react-dropzone';
-import { cn } from '../../lib/utils';
 import { formatFileSize, useUploader } from './uploader-provider';
 
 const DROPZONE_VARIANTS = {

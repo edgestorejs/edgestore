@@ -1,5 +1,6 @@
 'use client';
 
+import { cn } from '@/lib/utils';
 import {
   AlertCircleIcon,
   CheckCircleIcon,
@@ -9,7 +10,6 @@ import {
 } from 'lucide-react';
 import * as React from 'react';
 import { type DropzoneOptions } from 'react-dropzone';
-import { cn } from '../../lib/utils';
 import { Dropzone } from './dropzone';
 import { ProgressBar } from './progress-bar';
 import { formatFileSize, useUploader } from './uploader-provider';
@@ -41,24 +41,24 @@ const FileList = React.forwardRef<
         return (
           <div
             key={key}
-            className="border-border shadow-xs flex flex-col justify-center rounded border border-solid px-4 py-3"
+            className="shadow-xs flex flex-col justify-center rounded border border-border px-4 py-3"
           >
-            <div className="text-foreground flex items-center gap-3">
-              <FileIcon className="text-muted-foreground h-8 w-8 shrink-0" />
+            <div className="flex items-center gap-3 text-foreground">
+              <FileIcon className="h-8 w-8 shrink-0 text-muted-foreground" />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between text-xs">
                   <div className="truncate text-sm">
                     <div className="overflow-hidden text-ellipsis whitespace-nowrap font-medium">
                       {file.name}
                     </div>
-                    <div className="text-muted-foreground text-xs">
+                    <div className="text-xs text-muted-foreground">
                       {formatFileSize(file.size)}
                     </div>
                   </div>
 
                   <div className="ml-2 flex items-center gap-2">
                     {status === 'ERROR' && (
-                      <div className="text-destructive flex items-center text-xs">
+                      <div className="flex items-center text-xs text-destructive">
                         <AlertCircleIcon className="mr-1 h-4 w-4" />
                       </div>
                     )}
@@ -68,13 +68,13 @@ const FileList = React.forwardRef<
                         {abortController && (
                           <button
                             type="button"
-                            className="hover:bg-secondary rounded-md p-0.5 transition-colors duration-200"
+                            className="rounded-md p-0.5 transition-colors duration-200 hover:bg-secondary"
                             disabled={progress === 100}
                             onClick={() => {
                               cancelUpload(key);
                             }}
                           >
-                            <XIcon className="text-muted-foreground block h-4 w-4 shrink-0" />
+                            <XIcon className="block h-4 w-4 shrink-0 text-muted-foreground" />
                           </button>
                         )}
                         <div>{Math.round(progress)}%</div>
@@ -84,7 +84,7 @@ const FileList = React.forwardRef<
                     {status !== 'UPLOADING' && status !== 'COMPLETE' && (
                       <button
                         type="button"
-                        className="text-muted-foreground hover:bg-secondary hover:text-destructive rounded-md p-1 transition-colors duration-200"
+                        className="rounded-md p-1 text-muted-foreground transition-colors duration-200 hover:bg-secondary hover:text-destructive"
                         onClick={() => {
                           removeFile(key);
                         }}
