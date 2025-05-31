@@ -58,7 +58,7 @@ function PricingBlock(props: {
         className,
       )}
     >
-      <div className="text-xl font-bold text-foreground">{title}</div>
+      <div className="text-xl font-bold text-primary">{title}</div>
       <div>{description}</div>
       <div className="mb-4 mt-4 flex items-baseline gap-1">
         {price === undefined ? (
@@ -75,7 +75,7 @@ function PricingBlock(props: {
           </>
         ) : price > 0 ? (
           <>
-            <div className="text-3xl font-bold">${price}</div>
+            <div className="text-3xl font-bold text-primary">${price}</div>
             <div className="text-muted-foreground">/month</div>
           </>
         ) : (
