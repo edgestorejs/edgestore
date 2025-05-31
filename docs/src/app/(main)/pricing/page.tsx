@@ -1,4 +1,4 @@
-import { Metadata } from 'next';
+import { type Metadata } from 'next';
 import { Pricing } from './_components/pricing';
 
 export const metadata: Metadata = {

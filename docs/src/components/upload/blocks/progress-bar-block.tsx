@@ -1,6 +1,6 @@
 'use client';
 
-import { useMockProgress } from '@/hooks/useMockProgress';
+import { useMockProgress } from '@/hooks/use-mock-progress';
 import { ProgressBar } from '../progress-bar';
 
 export function ProgressBarUsage() {

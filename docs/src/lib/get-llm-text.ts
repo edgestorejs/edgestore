@@ -22,5 +22,5 @@ export async function getLLMText(page: Page) {
 URL: ${page.url}
 Source: https://raw.githubusercontent.com/${OWNER}/${REPO}/refs/heads/main/docs/content/docs/${page.file.path}
 
-${processed.value}`;
+${processed.value.toString()}`;
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { PricingInfo } from './pricing';
+import { type PricingInfo } from './pricing';
 
 export function CampaignCountdown(props: {
   campaign: NonNullable<PricingInfo['campaign']>;
@@ -16,7 +16,7 @@ export function CampaignCountdown(props: {
       setTimeLeft(getTimeDifference(new Date(), campaign.endDate));
     }, 1000);
 
-    return () => clearInterval(intervalId);
+    return () => { clearInterval(intervalId); };
   }, [campaign.endDate]);
 
   if (timeLeft.diff < 0) {

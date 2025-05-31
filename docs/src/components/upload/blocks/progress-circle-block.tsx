@@ -1,6 +1,6 @@
 'use client';
 
-import { useMockProgress } from '@/hooks/useMockProgress';
+import { useMockProgress } from '@/hooks/use-mock-progress';
 import { ProgressCircle } from '../progress-circle';
 
 export function ProgressCircleUsage() {

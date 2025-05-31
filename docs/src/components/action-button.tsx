@@ -15,6 +15,7 @@ export function ActionButton({
   ...props
 }: ActionButtonProps) {
   const LinkComp = href ? (href.startsWith('/') ? Link : 'a') : 'div';
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const linkProps = href
     ? { href, target: '_blank', rel: 'noreferrer' }
     : ({} as any);

@@ -10,7 +10,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 interface AppContextProviderProps {
   children: ReactNode;
-  githubStars: number;
+  githubStars?: number;
 }
 
 export function AppContextProvider({

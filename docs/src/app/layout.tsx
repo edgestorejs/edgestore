@@ -39,7 +39,7 @@ async function fetchGithubStars() {
       `https://api.github.com/repos/${OWNER}/${REPO}`,
       { next: { revalidate: 86400 } },
     );
-    const data = await response.json();
+    const data = (await response.json()) as { stargazers_count: number };
     if (data.stargazers_count !== undefined) {
       return data.stargazers_count;
     }

@@ -2,7 +2,7 @@ import { source } from '@/lib/source';
 
 export const revalidate = false;
 
-export async function GET() {
+export function GET() {
   const scanned: string[] = [];
   scanned.push('# Docs');
   const map = new Map<string, string[]>();

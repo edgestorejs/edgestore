@@ -13,7 +13,7 @@ export function useMockProgress() {
       }, 1000);
       // Cleanup function for this effect run: clear the timeout if the component
       // unmounts or if 'progress' changes before the timeout fires.
-      return () => clearTimeout(timerId);
+      return () => { clearTimeout(timerId); };
     } else {
       // If progress is less than 100, set an interval to increment it.
       const intervalId = setInterval(() => {
@@ -27,7 +27,7 @@ export function useMockProgress() {
       }, 300);
       // Cleanup function for this effect run: clear the interval if the component
       // unmounts or if 'progress' changes (e.g., hits 100).
-      return () => clearInterval(intervalId);
+      return () => { clearInterval(intervalId); };
     }
   }, [progress]); // Re-run this effect whenever 'progress' changes.
 

@@ -183,4 +183,4 @@ async function downloadImages() {
   }
 }
 
-downloadImages();
+void downloadImages();

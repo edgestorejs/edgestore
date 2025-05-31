@@ -383,8 +383,8 @@ async function fetchPricingInfo() {
       Authorization: `${env.DASHBOARD_API_KEY}`,
     },
   });
-  const data = await response.json();
-  return data as PricingInfo;
+  const data = (await response.json()) as PricingInfo;
+  return data;
 }
 
 export type PlanType = 'FREE' | 'STARTER' | 'PRO';
