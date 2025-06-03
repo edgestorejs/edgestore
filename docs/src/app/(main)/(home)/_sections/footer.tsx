@@ -63,8 +63,8 @@ export function Footer() {
           </a>
         </div>
 
-        {/* Sponsor Button */}
-        <div className="flex items-center">
+        <div className="flex items-center gap-4">
+          {/* Sponsor Button */}
           <Button
             asChild
             variant="outline"
@@ -81,37 +81,43 @@ export function Footer() {
               Sponsor
             </a>
           </Button>
-        </div>
-
-        {/* Legal Dropdown */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="text-muted-foreground">
-              Legal
-              <ChevronDownIcon className="ml-1 h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem asChild>
-              <Link href="/legal/terms" className="w-full cursor-pointer">
-                Terms of Service
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link
-                href="/legal/privacy-policy"
-                className="w-full cursor-pointer"
+          {/* Legal Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-muted-foreground"
               >
-                Privacy Policy
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href="/legal/disclosure" className="w-full cursor-pointer">
-                Disclosure
-              </Link>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+                Legal
+                <ChevronDownIcon className="ml-1 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" side="top">
+              <DropdownMenuItem asChild>
+                <Link href="/legal/terms" className="w-full cursor-pointer">
+                  Terms of Service
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link
+                  href="/legal/privacy-policy"
+                  className="w-full cursor-pointer"
+                >
+                  Privacy Policy
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link
+                  href="/legal/disclosure"
+                  className="w-full cursor-pointer"
+                >
+                  Disclosure
+                </Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
     </footer>
   );

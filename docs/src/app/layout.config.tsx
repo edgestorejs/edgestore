@@ -1,5 +1,6 @@
 import GitHubStarButton from '@/components/github-star';
 import { DiscordIcon } from '@/components/icons/platforms/discord';
+import { env } from '@/env';
 import type { BaseLayoutProps, LinkItemType } from 'fumadocs-ui/layouts/shared';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -26,7 +27,7 @@ export const linkItems: LinkItemType[] = [
         </Link>
         <Link
           className="text-fd-muted-foreground hover:text-fd-accent-foreground data-[active=true]:text-fd-primary inline-flex items-center gap-1 p-2 text-sm transition-colors [&_svg]:size-4"
-          href="https://dashboard.edgestore.dev"
+          href={env.NEXT_PUBLIC_DASHBOARD_URL}
           target="_blank"
           aria-label="Go to dashboard"
         >

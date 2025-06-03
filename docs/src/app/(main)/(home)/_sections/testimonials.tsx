@@ -4,7 +4,6 @@ import { AnimatedGrid, AnimatedGridItem } from '@/components/animated-grid';
 import { DevtoIcon } from '@/components/icons/platforms/devto';
 import { TwitterIcon } from '@/components/icons/platforms/twitter';
 import { YoutubeIcon } from '@/components/icons/platforms/youtube';
-import Image from 'next/image';
 import Link from 'next/link';
 
 const testimonials = [
@@ -33,12 +32,28 @@ const testimonials = [
     url: 'https://www.youtube.com/watch?v=Acq9UEA2akU',
   },
   {
+    user: '@raus_raay',
+    image: '/img/testimonials/raus_raay.webp',
+    comment:
+      '🚀 Loving EdgeStore - super convenient cloud storage for web apps! ☁️ Easy integration & no complex setup. Perfect for hassle-free data management.',
+    platform: 'twitter',
+    url: 'https://x.com/raus_raay/status/1848031922154607006',
+  },
+  {
     user: '@PhilippeKhin',
     image: '/img/testimonials/PhilippeKhin.jpg',
     comment:
       "Feeling that Edge Store will take off 🚀 Great stuff you're building here Ravi 👍",
     platform: 'youtube',
     url: 'https://www.youtube.com/watch?v=Acq9UEA2akU',
+  },
+  {
+    user: '@harshalranjhani',
+    image: '/img/testimonials/harshalranjhani.webp',
+    comment:
+      'Edgestore is a terrific solution. Many configuration choices covering a wide range of use-cases have been offered  which make it super easy to use.',
+    platform: 'devto',
+    url: 'https://dev.to/codeparrot/nextjs-uploads-the-edge-store-boost-1o2j',
   },
   {
     user: '@IyanSR',
@@ -54,6 +69,14 @@ const testimonials = [
       'i like that i have more control over my images. def migrating to this project.',
     platform: 'youtube',
     url: 'https://www.youtube.com/watch?v=Acq9UEA2akU',
+  },
+  {
+    user: '@MarcelGatete',
+    image: '/img/testimonials/MarcelGatete.jpg',
+    comment:
+      'I have implemented a starter boilerplate with NextAuth, Resend and EdgeStore already set-up. Makes starting a new project a whole lot painless.',
+    platform: 'twitter',
+    url: 'https://x.com/MarcelGatete/status/1842811671628120444',
   },
   {
     user: '@santiagomanuelgonzalez9894',
@@ -137,49 +160,29 @@ const testimonials = [
     platform: 'youtube',
     url: 'https://www.youtube.com/watch?v=Acq9UEA2akU',
   },
-  {
-    user: '@raus_raay',
-    image: '/img/testimonials/raus_raay.webp',
-    comment:
-      '🚀 Loving EdgeStore - super convenient cloud storage for web apps! ☁️ Easy integration & no complex setup. Perfect for hassle-free data management.',
-    platform: 'twitter',
-    url: 'https://x.com/raus_raay/status/1848031922154607006',
-  },
-  {
-    user: '@MarcelGatete',
-    image: '/img/testimonials/MarcelGatete.jpg',
-    comment:
-      'I have implemented a starter boilerplate with NextAuth, Resend and EdgeStore already set-up. Makes starting a new project a whole lot painless.',
-    platform: 'twitter',
-    url: 'https://x.com/MarcelGatete/status/1842811671628120444',
-  },
-  {
-    user: '@harshalranjhani',
-    image: '/img/testimonials/harshalranjhani.webp',
-    comment:
-      'Edgestore is a terrific solution. Many configuration choices covering a wide range of use-cases have been offered  which make it super easy to use.',
-    platform: 'devto',
-    url: 'https://dev.to/codeparrot/nextjs-uploads-the-edge-store-boost-1o2j',
-  },
 ];
 
 const platformIcons = {
-  youtube: <YoutubeIcon className="h-6 w-6" />,
-  twitter: <TwitterIcon className="h-6 w-6" />,
-  devto: <DevtoIcon className="h-6 w-6" />,
+  youtube: (
+    <YoutubeIcon className="text-muted-foreground h-5 w-5 sm:h-6 sm:w-6" />
+  ),
+  twitter: (
+    <TwitterIcon className="text-muted-foreground h-5 w-5 sm:h-6 sm:w-6" />
+  ),
+  devto: <DevtoIcon className="text-muted-foreground h-5 w-5 sm:h-6 sm:w-6" />,
 };
 
 export function Testimonials() {
   return (
-    <div className="container relative flex flex-col items-center justify-center gap-10 overflow-hidden py-10 md:py-20">
+    <div className="container relative flex flex-col items-center justify-center gap-6 overflow-hidden px-4 py-10 md:gap-10 md:px-8 md:py-20">
       <div className="space-y-2 text-center">
-        <h2 className="text-3xl font-bold md:text-4xl">
+        <h2 className="text-2xl font-bold sm:text-3xl md:text-4xl">
           Loved by{' '}
-          <span className="bg-gradient-to-b from-primary to-primary/60 bg-clip-text text-transparent">
+          <span className="from-primary to-primary/60 bg-gradient-to-b bg-clip-text text-transparent">
             Developers
           </span>
         </h2>
-        <p className="text-lg text-muted-foreground">
+        <p className="text-muted-foreground text-base sm:text-lg">
           Here is what our users are saying about Edge Store.
         </p>
       </div>
@@ -189,18 +192,20 @@ export function Testimonials() {
             <Link
               href={testimonial.url}
               target="_blank"
-              className="flex flex-col gap-4 transition-transform duration-200 ease-in-out"
+              className="flex flex-col gap-3 transition-transform duration-200 ease-in-out md:gap-4"
             >
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Image
+                <div className="flex items-center gap-2 md:gap-3">
+                  <img
                     src={testimonial.image}
                     alt={testimonial.user}
-                    width={32}
-                    height={32}
+                    width={40}
+                    height={40}
                     className="rounded-full"
                   />
-                  <span className="font-semibold">{testimonial.user}</span>
+                  <span className="text-sm font-semibold sm:text-base">
+                    {testimonial.user}
+                  </span>
                 </div>
                 {
                   platformIcons[
@@ -208,7 +213,7 @@ export function Testimonials() {
                   ]
                 }
               </div>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground text-sm leading-relaxed sm:text-sm md:text-sm">
                 {testimonial.comment}
               </p>
             </Link>
