@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { OWNER, REPO } from '@/lib/github';
+import { GITHUB_URL } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import { StarIcon } from 'lucide-react';
 import Link from 'next/link';
@@ -25,11 +25,7 @@ export default function GitHubStarButton({ className }: GitHubStarButtonProps) {
         className,
       )}
     >
-      <Link
-        href={`https://github.com/${OWNER}/${REPO}`}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
+      <Link href={GITHUB_URL} target="_blank" rel="noopener noreferrer">
         <div className="flex items-center gap-2">
           <StarIcon className="text-muted-foreground h-4 w-4 transition-all duration-200 group-hover:fill-yellow-500 group-hover:text-yellow-500" />
           <span className="text-muted-foreground text-sm font-medium">

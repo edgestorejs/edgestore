@@ -1,4 +1,4 @@
-import { OWNER, REPO } from '@/lib/github';
+import { GITHUB_URL } from '@/lib/constants';
 import { source } from '@/lib/source';
 import { getMDXComponents } from '@/mdx-components';
 import { createRelativeLink } from 'fumadocs-ui/mdx';
@@ -27,9 +27,7 @@ export default async function Page(props: {
       <DocsDescription>{page.data.description}</DocsDescription>
       <div className="mb-4 flex flex-row items-center gap-2">
         <LLMCopyButton slug={params.slug} />
-        <EditOnGitHub
-          url={`https://github.com/${OWNER}/${REPO}/blob/dev/${path}`}
-        />
+        <EditOnGitHub url={`${GITHUB_URL}/blob/dev/${path}`} />
       </div>
       <DocsBody>
         <MDXContent

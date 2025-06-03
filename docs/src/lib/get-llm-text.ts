@@ -4,7 +4,7 @@ import { remarkInclude } from 'fumadocs-mdx/config';
 import { remark } from 'remark';
 import remarkGfm from 'remark-gfm';
 import remarkMdx from 'remark-mdx';
-import { OWNER, REPO } from './github';
+import { GITHUB_OWNER, GITHUB_REPO } from './constants';
 
 const processor = remark()
   .use(remarkMdx)
@@ -20,7 +20,7 @@ export async function getLLMText(page: Page) {
 
   return `# EdgeStore Docs: ${page.data.title}
 URL: ${page.url}
-Source: https://raw.githubusercontent.com/${OWNER}/${REPO}/refs/heads/main/docs/content/docs/${page.file.path}
+Source: https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/refs/heads/main/docs/content/docs/${page.file.path}
 
 ${processed.value.toString()}`;
 }
