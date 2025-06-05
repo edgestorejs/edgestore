@@ -7,11 +7,14 @@ export function Hero() {
   return (
     <div className="container flex flex-col items-center gap-8 py-20 md:flex-row lg:py-40">
       <div className="lg:flex-3 flex-2 xl:flex-2 space-y-6">
-        <h1 className="text-foreground text-center text-3xl font-bold sm:text-4xl md:text-left lg:text-5xl">
+        <h1 className="text-foreground text-center text-3xl font-bold min-[380px]:text-4xl md:text-left lg:text-5xl">
           The best way to
           <br /> add <span className="text-primary">file uploads</span>
           <br /> to your apps
         </h1>
+        <div className="block md:hidden">
+          <HeroDropzone />
+        </div>
         <p className="text-md text-muted-foreground max-w-[600px] text-balance text-center md:text-left lg:text-lg">
           EdgeStore provides type-safe, fast, scalable storage solutions
           tailored for modern web development. It eliminates the complexities of
@@ -33,28 +36,35 @@ export function Hero() {
           </Button>
         </div>
       </div>
+      <div className="flex-2 hidden md:block">
+        <HeroDropzone />
+      </div>
+    </div>
+  );
+}
 
-      <div className="flex-2 hidden justify-center md:flex">
-        <div className="border-border bg-card w-full max-w-md overflow-hidden rounded-lg border shadow-sm">
-          <div className="border-border bg-muted/50 border-b p-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-medium">File Upload</h3>
-              <div className="bg-primary h-4 w-4 rounded-full"></div>
+function HeroDropzone() {
+  return (
+    <div className="flex justify-center">
+      <div className="border-border bg-card w-full max-w-md overflow-hidden rounded-lg border shadow-sm">
+        <div className="border-border bg-muted/50 border-b p-4">
+          <div className="flex items-center justify-between">
+            <h3 className="font-medium">File Upload</h3>
+            <div className="bg-primary h-4 w-4 rounded-full"></div>
+          </div>
+        </div>
+        <div className="space-y-3 p-4">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Select file type:</span>
+            <div className="text-foreground flex items-center gap-2 font-medium">
+              <span>Image</span>
+              <ChevronDownIcon className="text-primary h-4 w-4" />
             </div>
           </div>
-          <div className="space-y-3 p-4">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Select file type:</span>
-              <div className="text-foreground flex items-center gap-2 font-medium">
-                <span>Image</span>
-                <ChevronDownIcon className="text-primary h-4 w-4" />
-              </div>
-            </div>
-            <div className="border-border flex h-20 items-center justify-center rounded-md border-2 border-dashed">
-              <p className="text-muted-foreground text-sm">
-                Drag and drop files here
-              </p>
-            </div>
+          <div className="border-border flex h-20 items-center justify-center rounded-md border-2 border-dashed">
+            <p className="text-muted-foreground text-sm">
+              Drag and drop files here
+            </p>
           </div>
         </div>
       </div>

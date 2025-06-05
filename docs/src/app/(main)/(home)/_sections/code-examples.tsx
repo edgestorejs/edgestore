@@ -3,7 +3,12 @@ import { rehypeCodeDefaultOptions } from 'fumadocs-core/mdx-plugins';
 import { transformerTwoslash } from 'fumadocs-twoslash';
 import * as Base from 'fumadocs-ui/components/codeblock';
 import { type HTMLAttributes } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../_components/tabs';
+import {
+  ResponsiveTabs,
+  ResponsiveTabsContent,
+  ResponsiveTabsList,
+  ResponsiveTabsTrigger,
+} from '../_components/responsive-tabs';
 
 const SERVER_BASIC_CODE = `
 const es = initEdgeStore.create();
@@ -83,66 +88,70 @@ export function FileUpload() {
 export function CodeExamples() {
   return (
     <>
-      <div className="container mt-32 space-y-10">
-        <div className="space-y-2">
-          <h2 className="text-center text-4xl font-bold">
-            As simple as it gets
+      <div className="container space-y-10 py-20">
+        <div className="space-y-2 text-center">
+          <h2 className="text-2xl font-bold sm:text-3xl md:text-4xl">
+            As{' '}
+            <span className="from-primary to-primary/60 bg-gradient-to-b bg-clip-text text-transparent">
+              Simple
+            </span>{' '}
+            as it Gets
           </h2>
-          <p className="text-center text-muted-foreground">
+          <p className="text-muted-foreground text-base sm:text-lg">
             Just define your storage structure and start uploading.
           </p>
         </div>
-        <div className="rounded-lg border border-border/50 bg-muted/20 p-4">
-          <div className="grid gap-4 lg:grid-cols-2 [&>figure]:m-0">
+        <div className="border-border/50 bg-muted/20 rounded-lg border p-4">
+          <div className="flex flex-col gap-4 overflow-hidden lg:grid lg:grid-cols-2 [&>figure]:m-0">
             <div>
               <h3 className="mb-2 text-lg font-semibold">Server</h3>
-              <Tabs defaultValue="basic">
-                <TabsList className="flex w-full">
-                  <TabsTrigger className="flex-1" value="basic">
+              <ResponsiveTabs defaultValue="basic">
+                <ResponsiveTabsList className="flex w-full">
+                  <ResponsiveTabsTrigger className="flex-1" value="basic">
                     Basic
-                  </TabsTrigger>
-                  <TabsTrigger className="flex-1" value="validation">
+                  </ResponsiveTabsTrigger>
+                  <ResponsiveTabsTrigger className="flex-1" value="validation">
                     Validation & Metadata
-                  </TabsTrigger>
-                  <TabsTrigger className="flex-1" value="auth">
+                  </ResponsiveTabsTrigger>
+                  <ResponsiveTabsTrigger className="flex-1" value="auth">
                     With Auth
-                  </TabsTrigger>
-                </TabsList>
-                <TabsContent value="basic">
+                  </ResponsiveTabsTrigger>
+                </ResponsiveTabsList>
+                <ResponsiveTabsContent value="basic">
                   <CodeBlock code={SERVER_BASIC_CODE} lang="ts" />
-                </TabsContent>
-                <TabsContent value="validation">
+                </ResponsiveTabsContent>
+                <ResponsiveTabsContent value="validation">
                   <CodeBlock code={SERVER_CONFIG_CODE} lang="ts" />
-                </TabsContent>
-                <TabsContent value="auth">
+                </ResponsiveTabsContent>
+                <ResponsiveTabsContent value="auth">
                   <CodeBlock code={SERVER_AUTH_CODE} lang="ts" />
-                </TabsContent>
-              </Tabs>
+                </ResponsiveTabsContent>
+              </ResponsiveTabs>
             </div>
             <div>
               <h3 className="mb-2 text-lg font-semibold">Client</h3>
-              <Tabs defaultValue="basic">
-                <TabsList className="flex w-full">
-                  <TabsTrigger className="flex-1" value="basic">
+              <ResponsiveTabs defaultValue="basic">
+                <ResponsiveTabsList className="flex w-full">
+                  <ResponsiveTabsTrigger className="flex-1" value="basic">
                     Basic
-                  </TabsTrigger>
-                  <TabsTrigger className="flex-1" value="progress">
+                  </ResponsiveTabsTrigger>
+                  <ResponsiveTabsTrigger className="flex-1" value="progress">
                     Progress
-                  </TabsTrigger>
-                  <TabsTrigger className="flex-1" value="cancelation">
+                  </ResponsiveTabsTrigger>
+                  <ResponsiveTabsTrigger className="flex-1" value="cancelation">
                     Cancelation
-                  </TabsTrigger>
-                </TabsList>
-                <TabsContent value="basic">
+                  </ResponsiveTabsTrigger>
+                </ResponsiveTabsList>
+                <ResponsiveTabsContent value="basic">
                   <CodeBlock code={CLIENT_BASIC_CODE} lang="ts" />
-                </TabsContent>
-                <TabsContent value="progress">
+                </ResponsiveTabsContent>
+                <ResponsiveTabsContent value="progress">
                   <CodeBlock code={CLIENT_PROGRESS_CODE} lang="ts" />
-                </TabsContent>
-                <TabsContent value="cancelation">
+                </ResponsiveTabsContent>
+                <ResponsiveTabsContent value="cancelation">
                   <CodeBlock code={CLIENT_PROGRESS_CODE} lang="ts" />
-                </TabsContent>
-              </Tabs>
+                </ResponsiveTabsContent>
+              </ResponsiveTabs>
             </div>
           </div>
         </div>
