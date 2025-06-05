@@ -1,17 +1,9 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { PlayIcon } from 'lucide-react';
-import { useState } from 'react';
+import { YouTubeVideo } from '../_components/youtube-video';
 
 export function DemoVideo() {
-  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
-
   const videoId = 'Acq9UEA2akU';
-
-  const handlePlayVideo = () => {
-    setIsVideoPlaying(true);
-  };
 
   return (
     <div className="container py-20">
@@ -31,58 +23,20 @@ export function DemoVideo() {
         </div>
 
         {/* Video container */}
-        <div className="border-muted group relative mx-auto aspect-video w-full overflow-hidden rounded-2xl border bg-gradient-to-br from-slate-900 to-slate-800 shadow-2xl">
-          {!isVideoPlaying ? (
-            <>
-              {/* Background pattern/placeholder */}
-              <div className="absolute inset-0 opacity-30">
-                <div className="h-full w-full bg-[radial-gradient(circle_at_25%_25%,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[length:20px_20px]" />
+        <div className="mx-auto w-full">
+          <YouTubeVideo
+            videoId={videoId}
+            title="EdgeStore Demo Video"
+            overlayContent={<FeatureHighlights />}
+            badgeContent={
+              <div className="flex items-center gap-2 rounded-full bg-black/50 px-4 py-2 backdrop-blur-md">
+                <div className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
+                <span className="text-sm font-medium text-white">
+                  10min demo
+                </span>
               </div>
-
-              {/* Video overlay */}
-              <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] transition-all duration-300 group-hover:bg-black/20" />
-
-              {/* Gradient overlay for better text visibility */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
-
-              {/* Play button */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <Button
-                  onClick={handlePlayVideo}
-                  size="lg"
-                  className="group/btn relative h-20 w-20 rounded-full bg-white/10 p-0 backdrop-blur-md transition-all duration-300 hover:scale-110 hover:bg-white/20 hover:shadow-[0_0_40px_rgba(255,255,255,0.3)] sm:h-24 sm:w-24"
-                >
-                  {/* Animated ring */}
-                  <div className="absolute inset-0 animate-ping rounded-full border-2 border-white/30" />
-                  <div className="absolute inset-2 rounded-full border border-white/20" />
-
-                  {/* Play icon */}
-                  <PlayIcon className="relative ml-1 h-8 w-8 fill-white text-white transition-transform duration-300 group-hover/btn:scale-110 sm:h-10 sm:w-10" />
-                </Button>
-              </div>
-
-              {/* Demo duration badge */}
-              <div className="absolute bottom-6 left-6">
-                <div className="flex items-center gap-2 rounded-full bg-black/50 px-4 py-2 backdrop-blur-md">
-                  <div className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
-                  <span className="text-sm font-medium text-white">
-                    10min demo
-                  </span>
-                </div>
-              </div>
-
-              <FeatureHighlights />
-            </>
-          ) : (
-            /* YouTube video iframe */
-            <iframe
-              src={`https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`}
-              title="EdgeStore Demo Video"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowFullScreen
-              className="h-full w-full"
-            />
-          )}
+            }
+          />
         </div>
 
         {/* Additional CTA below video */}
