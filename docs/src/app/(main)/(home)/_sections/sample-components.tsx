@@ -74,7 +74,7 @@ export function SampleComponents() {
             <YouTubeVideo
               videoId={videoId}
               title="EdgeStore Components Showcase"
-              badgeContent="Component Showcase"
+              badgeContent="Component Showcase (1min)"
             />
             {/* Call to action */}
             <div className="mt-12 text-center">
