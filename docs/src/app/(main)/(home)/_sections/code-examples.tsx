@@ -18,15 +18,45 @@ const SERVER_CONFIG_CODE = `
 const es = initEdgeStore.create();
 
 const edgeStoreRouter = es.router({
-  myFiles: es.fileBucket(),
+  myFiles: es
+    .fileBucket({
+      accept: ['application/pdf'],
+      maxSize: 1024 * 1024 * 10, // 10MB
+    })
+    .input(z.object({ type: z.enum(['post', 'article']) }))
+    .path(({ input }) => [{ type: input.type }])
+    .metadata(({ input }) => ({
+      custom: 'some-custom-metadata',
+    })),
 });
 `.trim();
 
 const SERVER_AUTH_CODE = `
-const es = initEdgeStore.create();
+type Context = {
+  personalFolder: string;
+};
+
+async function createContext({ req }: CreateContextOptions): Promise<Context> {
+  const session = await auth();
+  return {
+    personalFolder: session?.user?.id ?? '_shared',
+  };
+}
+
+const es = initEdgeStore.context<Context>().create();
 
 const edgeStoreRouter = es.router({
-  myFiles: es.fileBucket(),
+  myFiles: es
+    .fileBucket()
+    .path(({ ctx }) => [{ author: ctx.personalFolder }])
+    .accessControl({
+      OR: [
+        // ctx.personalFolder is the same as the author in the path
+        { personalFolder: { path: 'author' } },
+        // if the personal folder is _shared, it's accessible to everyone
+        { personalFolder: '_shared' },
+      ],
+    }),
 });
 `.trim();
 
@@ -49,14 +79,11 @@ export function FileUpload() {
 `.trim();
 
 const CLIENT_PROGRESS_CODE = `
-import { useEdgeStore } from '@/lib/edgestore';
-import { useState } from 'react';
-
 export function FileUpload() {
   const { edgestore } = useEdgeStore();
   const [progress, setProgress] = useState(0);
   
-  const uploadFile = async (file: File) => {
+  async function handleUpload(file: File) {
     const res = await edgestore.myFiles.upload({
       file,
       onProgressChange: (progress) => {
@@ -68,15 +95,39 @@ export function FileUpload() {
   };
   
   return (
-    <div>
-      <input type="file" onChange={(e) => uploadFile(e.target.files?.[0])} />
-      <div className="w-full bg-gray-200 rounded-full h-2.5">
-        <div 
-          className="bg-purple-600 h-2.5 rounded-full transition-all" 
-          style={{ width: \`\${progress}%\` }}
-        />
-      </div>
-    </div>
+    // your component here
+  );
+}
+`.trim();
+
+const CLIENT_CANCELATION_CODE = `
+export function FileUpload() {
+  const { edgestore } = useEdgeStore();
+  const [progress, setProgress] = useState(0);
+  const [abortController, setAbortController] = useState<AbortController>();
+  
+  async function handleUpload(file: File) {
+    const abortController = new AbortController();
+    setAbortController(abortController);
+
+    const res = await edgestore.myFiles.upload({
+      file,
+      signal: abortController.signal,
+      onProgressChange: (progress) => {
+        setProgress(progress);
+      },
+    });
+    
+    return res.url;
+  };
+
+  // You can call this function to cancel the upload
+  function handleCancel() {
+    abortController?.abort();
+  }
+  
+  return (
+    // your component here
   );
 }
 `.trim();
@@ -145,7 +196,7 @@ export function CodeExamples() {
                   <CodeBlock code={CLIENT_PROGRESS_CODE} lang="ts" />
                 </ResponsiveTabsContent>
                 <ResponsiveTabsContent value="cancelation">
-                  <CodeBlock code={CLIENT_PROGRESS_CODE} lang="ts" />
+                  <CodeBlock code={CLIENT_CANCELATION_CODE} lang="ts" />
                 </ResponsiveTabsContent>
               </ResponsiveTabs>
             </div>
