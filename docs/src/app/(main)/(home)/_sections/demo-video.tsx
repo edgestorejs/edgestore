@@ -6,7 +6,7 @@ export function DemoVideo() {
   const videoId = 'Acq9UEA2akU';
 
   return (
-    <div className="container py-20">
+    <div className="container py-10 md:py-20">
       <div className="mx-auto max-w-4xl">
         {/* Section header */}
         <div className="mb-12 space-y-4 text-center">
@@ -28,14 +28,7 @@ export function DemoVideo() {
             videoId={videoId}
             title="EdgeStore Demo Video"
             overlayContent={<FeatureHighlights />}
-            badgeContent={
-              <div className="flex items-center gap-2 rounded-full bg-black/50 px-4 py-2 backdrop-blur-md">
-                <div className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
-                <span className="text-sm font-medium text-white">
-                  10min demo
-                </span>
-              </div>
-            }
+            badgeContent="10min demo"
           />
         </div>
 

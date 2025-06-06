@@ -1,6 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { PlayIcon } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 
@@ -8,8 +9,7 @@ interface YouTubeVideoProps {
   videoId: string;
   title?: string;
   overlayContent?: ReactNode;
-  badgeContent?: ReactNode;
-  buttonSize?: 'sm' | 'md' | 'lg';
+  badgeContent?: string;
   className?: string;
 }
 
@@ -18,25 +18,12 @@ export function YouTubeVideo({
   title = 'YouTube Video',
   overlayContent,
   badgeContent,
-  buttonSize = 'lg',
   className = '',
 }: YouTubeVideoProps) {
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
 
   const handlePlayVideo = () => {
     setIsVideoPlaying(true);
-  };
-
-  const buttonSizes = {
-    sm: 'h-12 w-12',
-    md: 'h-16 w-16',
-    lg: 'h-20 w-20 sm:h-24 sm:w-24',
-  };
-
-  const iconSizes = {
-    sm: 'h-5 w-5',
-    md: 'h-6 w-6',
-    lg: 'h-8 w-8 sm:h-10 sm:w-10',
   };
 
   return (
@@ -61,7 +48,10 @@ export function YouTubeVideo({
             <Button
               onClick={handlePlayVideo}
               size="lg"
-              className={`group/btn relative rounded-full bg-white/10 p-0 backdrop-blur-md transition-all duration-300 hover:scale-110 hover:bg-white/20 hover:shadow-[0_0_40px_rgba(255,255,255,0.3)] ${buttonSizes[buttonSize]}`}
+              className={cn(
+                'group/btn relative rounded-full bg-white/10 p-0 backdrop-blur-md transition-all duration-300 hover:scale-110 hover:bg-white/20 hover:shadow-[0_0_40px_rgba(255,255,255,0.3)]',
+                'h-20 w-20 sm:h-24 sm:w-24',
+              )}
             >
               {/* Animated ring */}
               <div className="absolute inset-0 animate-ping rounded-full border-2 border-white/30" />
@@ -69,14 +59,24 @@ export function YouTubeVideo({
 
               {/* Play icon */}
               <PlayIcon
-                className={`relative ml-1 fill-white text-white transition-transform duration-300 group-hover/btn:scale-110 ${iconSizes[buttonSize]}`}
+                className={cn(
+                  'relative ml-1 fill-white text-white transition-transform duration-300 group-hover/btn:scale-110',
+                  'h-8 w-8 sm:h-10 sm:w-10',
+                )}
               />
             </Button>
           </div>
 
           {/* Badge content */}
           {badgeContent && (
-            <div className="absolute bottom-6 left-6">{badgeContent}</div>
+            <div className="absolute bottom-2 left-2">
+              <div className="flex items-center gap-2 rounded-full bg-black/50 px-4 py-2 backdrop-blur-md">
+                <div className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
+                <span className="text-sm font-medium text-white">
+                  {badgeContent}
+                </span>
+              </div>
+            </div>
           )}
 
           {/* Overlay content (e.g., feature highlights) */}

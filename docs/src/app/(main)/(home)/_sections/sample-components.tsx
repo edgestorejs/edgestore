@@ -51,8 +51,8 @@ export function SampleComponents() {
   ];
 
   return (
-    <div className="container py-20">
-      <div className="mx-auto max-w-6xl">
+    <div className="container py-10 md:py-20">
+      <div className="mx-auto max-w-4xl xl:max-w-6xl">
         {/* Section header */}
         <div className="mb-12 space-y-4 text-center">
           <h2 className="text-2xl font-bold sm:text-3xl md:text-4xl">
@@ -74,15 +74,7 @@ export function SampleComponents() {
             <YouTubeVideo
               videoId={videoId}
               title="EdgeStore Components Showcase"
-              buttonSize="md"
-              badgeContent={
-                <div className="flex items-center gap-2 rounded-full bg-black/50 px-3 py-2 backdrop-blur-md">
-                  <div className="h-2 w-2 rounded-full bg-green-500" />
-                  <span className="text-xs font-medium text-white sm:text-sm">
-                    Component Showcase
-                  </span>
-                </div>
-              }
+              badgeContent="Component Showcase"
             />
             {/* Call to action */}
             <div className="mt-12 text-center">

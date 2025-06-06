@@ -12,7 +12,7 @@ const iconClassName = cn('size-10 sm:size-12');
 
 export function Frameworks() {
   return (
-    <div className="container space-y-8">
+    <div className="container space-y-8 pb-10 md:pb-20">
       <h2 className="text-center text-xl font-bold">
         Ready for your framework
       </h2>

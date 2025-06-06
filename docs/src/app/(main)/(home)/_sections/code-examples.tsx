@@ -135,7 +135,7 @@ export function FileUpload() {
 export function CodeExamples() {
   return (
     <>
-      <div className="container space-y-10 py-20">
+      <div className="container space-y-10 py-10 md:py-20">
         <div className="space-y-2 text-center">
           <h2 className="text-2xl font-bold sm:text-3xl md:text-4xl">
             As{' '}
