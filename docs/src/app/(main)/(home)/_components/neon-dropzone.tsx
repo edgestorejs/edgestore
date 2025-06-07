@@ -54,35 +54,35 @@ export function NeonDropzone() {
   const hasError = !!error || isDragReject;
 
   return (
-    <div className="relative w-full">
+    <div className="relative flex w-full justify-center">
       <div
         {...getRootProps()}
         data-error={hasError}
         className={cn(
-          '@container group relative h-full w-full max-w-[600px] select-none place-self-center transition-all duration-300',
+          '@container group relative h-full w-full max-w-[600px] select-none transition-all duration-300',
           isDragActive && 'scale-105',
         )}
       >
         {/* Window dots container - completely separate from the main container */}
         <div className="absolute z-10 m-[3px] flex gap-3 p-4">
-          <div className="h-4 w-4 rounded-full bg-gradient-to-r from-red-200 to-red-400 sm:drop-shadow-[0_0_12px_rgba(248,113,113,0.9)]" />
-          <div className="h-4 w-4 rounded-full bg-gradient-to-r from-orange-200 to-orange-400 sm:drop-shadow-[0_0_12px_rgba(251,146,60,0.9)]" />
-          <div className="h-4 w-4 rounded-full bg-gradient-to-r from-cyan-200 to-cyan-400 sm:drop-shadow-[0_0_12px_rgba(45,212,191,0.9)]" />
+          <div className="h-4 w-4 rounded-full bg-gradient-to-r from-red-200 to-red-400 shadow-[0_0_12px_rgba(248,113,113,0.9)]" />
+          <div className="h-4 w-4 rounded-full bg-gradient-to-r from-orange-200 to-orange-400 shadow-[0_0_12px_rgba(251,146,60,0.9)]" />
+          <div className="h-4 w-4 rounded-full bg-gradient-to-r from-cyan-200 to-cyan-400 shadow-[0_0_12px_rgba(45,212,191,0.9)]" />
         </div>
 
         {/* Main container with drop shadow */}
         <div
           className={cn(
-            'border-3 border-primary text-primary-500 flex h-full w-full flex-col rounded-2xl sm:drop-shadow-[0_0_5px_rgba(75,44,231,.6),0_0_15px_rgba(75,44,231,.2)]',
-            'dark:border-primary-200 dark:text-primary-200 dark:sm:drop-shadow-[0_0_5px_rgba(170,153,255,1),0_0_15px_rgba(170,153,255,.5)]',
-            'group-data-[error=true]:border-red-500 group-data-[error=true]:text-red-500 group-data-[error=true]:sm:drop-shadow-[0_0_5px_rgba(248,113,113,1),0_0_15px_rgba(248,113,113,.5)]',
-            'dark:group-data-[error=true]:border-red-300 dark:group-data-[error=true]:text-red-300 dark:group-data-[error=true]:sm:drop-shadow-[0_0_5px_rgba(248,113,113,1),0_0_15px_rgba(248,113,113,.5)]',
+            'border-3 border-primary text-primary-500 flex h-full w-full flex-col rounded-2xl shadow-[0_0_5px_rgba(75,44,231,.6),0_0_15px_rgba(75,44,231,.2)]',
+            'dark:border-primary-200 dark:text-primary-200 dark:shadow-[0_0_5px_rgba(170,153,255,1),0_0_15px_rgba(170,153,255,.5)]',
+            'group-data-[error=true]:border-red-500 group-data-[error=true]:text-red-500 group-data-[error=true]:shadow-[0_0_5px_rgba(248,113,113,1),0_0_15px_rgba(248,113,113,.5)]',
+            'dark:group-data-[error=true]:border-red-300 dark:group-data-[error=true]:text-red-300 dark:group-data-[error=true]:shadow-[0_0_5px_rgba(248,113,113,1),0_0_15px_rgba(248,113,113,.5)]',
           )}
         >
           <div className="h-12" /> {/* Spacer for dots */}
           <div
             className={cn(
-              'dark:bg-primary-200 bg-primary ml-[-1px] h-[3px] w-[calc(100%+2px)]',
+              'dark:bg-primary-200 bg-primary ml-[-1px] h-[3px] w-[calc(100%+2px)] dark:shadow-[0_0_5px_rgba(170,153,255,1),0_0_15px_rgba(170,153,255,.5)]',
               'group-data-[error=true]:bg-red-500 dark:group-data-[error=true]:bg-red-300',
             )}
           />
@@ -91,7 +91,7 @@ export function NeonDropzone() {
             className={cn(
               'border-3 @min-[500px]:h-[190px] dark:border-primary-200/80 border-primary m-6 flex h-[160px] grow flex-col items-center justify-center rounded-xl border-dashed transition-all duration-300',
               isDragActive &&
-                'sm:drop-shadow-[0_0_15px_rgba(225,42,251,.3)] group-data-[error=true]:sm:drop-shadow-[0_0_5px_rgba(248,113,113,1),0_0_15px_rgba(248,113,113,.5)]',
+                'shadow-[0_0_15px_rgba(225,42,251,.3)] group-data-[error=true]:shadow-[0_0_5px_rgba(248,113,113,1),0_0_15px_rgba(248,113,113,.5)]',
               'group-data-[error=true]:border-red-500 group-data-[error=true]:text-red-500',
               'dark:group-data-[error=true]:border-red-300 dark:group-data-[error=true]:text-red-300',
             )}
@@ -130,7 +130,7 @@ export function NeonDropzone() {
                       <a
                         href={selectedFile.url}
                         target="_blank"
-                        className="@min-[500px]:mt-4 mt-2 block w-full truncate text-sm underline"
+                        className="block w-full truncate text-sm underline"
                         rel="noreferrer"
                       >
                         {selectedFile.url}
@@ -159,7 +159,7 @@ export function NeonDropzone() {
 
       {/* Error Text */}
       {error && (
-        <div className="absolute left-0 right-0 top-[calc(100%+5px)] flex items-center justify-center text-sm text-red-500 sm:drop-shadow-[0_0_5px_rgba(248,113,113,1),0_0_15px_rgba(248,113,113,.5)] dark:text-red-300">
+        <div className="absolute left-0 right-0 top-[calc(100%+5px)] flex items-center justify-center text-sm text-red-500 shadow-[0_0_5px_rgba(248,113,113,1),0_0_15px_rgba(248,113,113,.5)] dark:text-red-300">
           <AlertCircleIcon className="mr-2 h-4 w-4" />
           <span>{error}</span>
         </div>
