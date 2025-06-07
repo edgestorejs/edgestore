@@ -48,6 +48,7 @@ export function YouTubeVideo({
             <Button
               onClick={handlePlayVideo}
               size="lg"
+              aria-label="Play video"
               className={cn(
                 'group/btn relative rounded-full bg-white/10 p-0 backdrop-blur-md transition-all duration-300 hover:scale-110 hover:bg-white/20 hover:shadow-[0_0_40px_rgba(255,255,255,0.3)]',
                 'h-20 w-20 sm:h-24 sm:w-24',

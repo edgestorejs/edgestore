@@ -46,7 +46,7 @@ export function NeonDropzone() {
 
       {/* Main container with drop shadow */}
       <div className="border-3 flex h-full w-full flex-col rounded-2xl border-violet-200 text-violet-200 drop-shadow-[0_0_5px_rgba(225,42,251,1),0_0_15px_rgba(225,42,251,.5)]">
-        <div className="h-12"></div> {/* Spacer for dots */}
+        <div className="h-12" /> {/* Spacer for dots */}
         <div className="ml-[-1px] h-[3px] w-[calc(100%+2px)] bg-violet-200" />
         {/* Dropzone */}
         <div
@@ -55,7 +55,7 @@ export function NeonDropzone() {
             isDragActive && 'drop-shadow-[0_0_15px_rgba(225,42,251,.3)]',
           )}
         >
-          <input {...getInputProps()} />
+          <input {...getInputProps()} aria-label="Upload file" />
 
           {selectedFile ? (
             <div className="flex w-full max-w-[450px] flex-col items-center px-8">
@@ -65,18 +65,6 @@ export function NeonDropzone() {
                 animate={selectedFile.status === 'UPLOADING'}
                 complete={selectedFile.status === 'COMPLETE'}
               />
-              <div className="relative">
-                {/* <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeFile(fileStates[0]?.key ?? '');
-                    }}
-                    className="absolute -right-2 -top-2 rounded-full bg-fuchsia-800 p-1 hover:bg-fuchsia-700"
-                  >
-                    <XIcon className="h-4 w-4" />
-                  </button> */}
-              </div>
-
               <div className="w-full text-center">
                 <div className="truncate font-medium">
                   {selectedFile.file.name}
