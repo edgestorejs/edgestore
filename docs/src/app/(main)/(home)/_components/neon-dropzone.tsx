@@ -45,13 +45,13 @@ export function NeonDropzone() {
       </div>
 
       {/* Main container with drop shadow */}
-      <div className="border-3 flex h-full w-full flex-col rounded-2xl border-violet-200 text-violet-200 drop-shadow-[0_0_5px_rgba(225,42,251,1),0_0_15px_rgba(225,42,251,.5)]">
+      <div className="border-3 dark:border-primary-200 border-primary dark:text-primary-200 text-primary-500 flex h-full w-full flex-col rounded-2xl drop-shadow-[0_0_5px_rgba(75,44,231,.6),0_0_15px_rgba(75,44,231,.2)] dark:drop-shadow-[0_0_5px_rgba(170,153,255,1),0_0_15px_rgba(170,153,255,.5)]">
         <div className="h-12" /> {/* Spacer for dots */}
-        <div className="ml-[-1px] h-[3px] w-[calc(100%+2px)] bg-violet-200" />
+        <div className="dark:bg-primary-200 bg-primary ml-[-1px] h-[3px] w-[calc(100%+2px)]" />
         {/* Dropzone */}
         <div
           className={cn(
-            'border-3 @min-[500px]:h-[190px] m-6 flex h-[150px] grow flex-col items-center justify-center rounded-xl border-dashed border-fuchsia-200/80 transition-all duration-300',
+            'border-3 @min-[500px]:h-[190px] dark:border-primary-200/80 border-primary m-6 flex h-[150px] grow flex-col items-center justify-center rounded-xl border-dashed transition-all duration-300',
             isDragActive && 'drop-shadow-[0_0_15px_rgba(225,42,251,.3)]',
           )}
         >
@@ -72,13 +72,13 @@ export function NeonDropzone() {
 
                 {selectedFile.status === 'UPLOADING' && (
                   <div className="@min-[500px]:mt-4 mt-2 w-full">
-                    <div className="rounded-xs h-4 w-full overflow-hidden border border-violet-800/50">
+                    <div className="rounded-xs border-primary-800/50 h-4 w-full overflow-hidden border">
                       <div
-                        className="rounded-xs h-full border border-violet-300/80 bg-violet-400 transition-all duration-300"
+                        className="rounded-xs dark:border-primary-300/80 border-primary-400/80 dark:bg-primary-400 bg-primary h-full border transition-all duration-300"
                         style={{ width: `${selectedFile.progress}%` }}
                       />
                     </div>
-                    <div className="@min-[500px]:mt-4 mt-1 text-center font-mono text-sm font-bold text-violet-300">
+                    <div className="@min-[500px]:mt-4 dark:text-primary-300 text-primary-400 mt-1 text-center font-mono text-sm font-bold">
                       {Math.round(selectedFile.progress)}%
                     </div>
                   </div>
@@ -107,7 +107,7 @@ export function NeonDropzone() {
               <div className="@min-[500px]:mt-4 @min-[500px]:text-2xl text-center text-xl font-bold">
                 Drag & drop a file here
               </div>
-              <div className="@min-[500px]:mt-2 text-center text-sm text-violet-300">
+              <div className="@min-[500px]:mt-2 dark:text-primary-300 text-primary-400 text-center text-sm">
                 or click to select
               </div>
             </>

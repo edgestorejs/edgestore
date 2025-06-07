@@ -14,7 +14,7 @@
   --card-foreground: oklch(0.129 0.042 264.695);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.478 0.257 278);
+  --primary: #4b2ce7;
   --primary-foreground: oklch(0.984 0.003 247.858);
   --secondary: oklch(0.968 0.007 247.896);
   --secondary-foreground: oklch(0.208 0.042 265.755);
@@ -39,6 +39,18 @@
   --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
   --sidebar-border: oklch(0.929 0.013 255.508);
   --sidebar-ring: oklch(0.704 0.04 256.788);
+
+  --primary-50: #ebeeff;
+  --primary-100: #dae1ff;
+  --primary-200: #bdc6ff;
+  --primary-300: #959fff;
+  --primary-400: #6b6dff;
+  --primary-500: #5448ff;
+  --primary-600: #4828ff;
+  --primary-700: #4b2ce7;
+  --primary-800: #321bb8;
+  --primary-900: #2d1f90;
+  --primary-950: #1c1254;
 }
 
 .dark {
@@ -48,7 +60,7 @@
   --card-foreground: oklch(0.984 0.003 247.858);
   --popover: oklch(0.208 0.042 265.755);
   --popover-foreground: oklch(0.984 0.003 247.858);
-  --primary: oklch(0.739 0.145 290);
+  --primary: #aa99ff;
   --primary-foreground: oklch(1 0 0);
   --secondary: oklch(0.279 0.041 260.031);
   --secondary-foreground: oklch(0.984 0.003 247.858);
@@ -73,6 +85,18 @@
   --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.551 0.027 264.364);
+
+  --primary-50: #f4f2ff;
+  --primary-100: #eae8ff;
+  --primary-200: #d8d4ff;
+  --primary-300: #bbb2ff;
+  --primary-400: #aa99ff;
+  --primary-500: #7a55fd;
+  --primary-600: #6932f5;
+  --primary-700: #5a20e1;
+  --primary-800: #4c1abd;
+  --primary-900: #40189a;
+  --primary-950: #250c69;
 }
 
 @theme inline {
@@ -111,6 +135,18 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  --color-primary-50: var(--primary-50);
+  --color-primary-100: var(--primary-100);
+  --color-primary-200: var(--primary-200);
+  --color-primary-300: var(--primary-300);
+  --color-primary-400: var(--primary-400);
+  --color-primary-500: var(--primary-500);
+  --color-primary-600: var(--primary-600);
+  --color-primary-700: var(--primary-700);
+  --color-primary-800: var(--primary-800);
+  --color-primary-900: var(--primary-900);
+  --color-primary-950: var(--primary-950);
 }
 
 @layer base {
