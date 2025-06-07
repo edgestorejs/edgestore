@@ -33,7 +33,7 @@ export function NeonDropzone() {
     <div
       {...getRootProps()}
       className={cn(
-        'relative h-full w-full max-w-[600px] select-none place-self-center transition-all duration-300',
+        '@container relative h-full w-full max-w-[600px] select-none place-self-center transition-all duration-300',
         isDragActive && 'scale-105',
       )}
     >
@@ -51,7 +51,7 @@ export function NeonDropzone() {
         {/* Dropzone */}
         <div
           className={cn(
-            'border-3 m-6 flex grow flex-col items-center justify-center rounded-xl border-dashed border-fuchsia-200/80 py-4 transition-all duration-300',
+            'border-3 @min-[500px]:h-[190px] m-6 flex h-[150px] grow flex-col items-center justify-center rounded-xl border-dashed border-fuchsia-200/80 transition-all duration-300',
             isDragActive && 'drop-shadow-[0_0_15px_rgba(225,42,251,.3)]',
           )}
         >
@@ -61,7 +61,7 @@ export function NeonDropzone() {
             <div className="flex w-full max-w-[450px] flex-col items-center px-8">
               {/* Show the file info */}
               <UploadIcon
-                className="h-14 w-14 xl:h-20 xl:w-20"
+                className="@min-[500px]:h-20 @min-[500px]:w-20 h-14 w-14"
                 animate={selectedFile.status === 'UPLOADING'}
                 complete={selectedFile.status === 'COMPLETE'}
               />
@@ -71,14 +71,14 @@ export function NeonDropzone() {
                 </div>
 
                 {selectedFile.status === 'UPLOADING' && (
-                  <div className="mt-2 w-full xl:mt-4">
+                  <div className="@min-[500px]:mt-4 mt-2 w-full">
                     <div className="rounded-xs h-4 w-full overflow-hidden border border-violet-800/50">
                       <div
                         className="rounded-xs h-full border border-violet-300/80 bg-violet-400 transition-all duration-300"
                         style={{ width: `${selectedFile.progress}%` }}
                       />
                     </div>
-                    <div className="mt-1 text-center font-mono text-sm font-bold text-violet-300 xl:mt-4">
+                    <div className="@min-[500px]:mt-4 mt-1 text-center font-mono text-sm font-bold text-violet-300">
                       {Math.round(selectedFile.progress)}%
                     </div>
                   </div>
@@ -89,7 +89,7 @@ export function NeonDropzone() {
                     <a
                       href={selectedFile.url}
                       target="_blank"
-                      className="mt-2 block w-full truncate text-sm underline xl:mt-4"
+                      className="@min-[500px]:mt-4 mt-2 block w-full truncate text-sm underline"
                       rel="noreferrer"
                     >
                       {selectedFile.url}
@@ -103,11 +103,11 @@ export function NeonDropzone() {
             </div>
           ) : (
             <>
-              <UploadIcon className="h-14 w-14 xl:h-20 xl:w-20" />
-              <div className="text-center text-xl font-bold xl:mt-4 xl:text-2xl">
+              <UploadIcon className="@min-[500px]:h-20 @min-[500px]:w-20 h-14 w-14" />
+              <div className="@min-[500px]:mt-4 @min-[500px]:text-2xl text-center text-xl font-bold">
                 Drag & drop a file here
               </div>
-              <div className="text-center text-sm text-violet-300 xl:mt-2">
+              <div className="@min-[500px]:mt-2 text-center text-sm text-violet-300">
                 or click to select
               </div>
             </>
