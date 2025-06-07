@@ -17,7 +17,7 @@ export function Hero() {
   const uploadFn: UploadFn = useCallback(
     async ({ file, onProgressChange, signal }) => {
       // Example using Edge Store client
-      const { url } = await edgestore.publicFiles.upload({
+      const { url } = await edgestore.myPublicFiles.upload({
         file,
         signal,
         onProgressChange: (progress) => {
