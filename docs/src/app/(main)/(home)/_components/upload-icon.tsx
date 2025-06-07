@@ -3,7 +3,7 @@
 import { cn } from '@/lib/utils';
 import { CheckCircle2 } from 'lucide-react';
 import { motion, useAnimation } from 'motion/react';
-import { useEffect, useRef } from 'react';
+import { useEffect, useId, useRef } from 'react';
 
 interface UploadIconProps {
   className?: string;
@@ -17,6 +17,7 @@ export default function UploadIcon({
   animate = false,
   complete = false,
 }: UploadIconProps) {
+  const maskId = useId();
   const cloudControls = useAnimation();
   const arrow1Controls = useAnimation();
   const arrow2Controls = useAnimation();
@@ -252,7 +253,7 @@ export default function UploadIcon({
           <>
             {/* Mask for Arrow */}
             <mask
-              id="mask0_1601_130"
+              id={maskId}
               style={{ maskType: 'alpha' }}
               maskUnits="userSpaceOnUse"
               x="1"
@@ -268,7 +269,7 @@ export default function UploadIcon({
             </mask>
 
             {/* Arrow Path with Mask */}
-            <g mask="url(#mask0_1601_130)">
+            <g mask={`url(#${maskId})`}>
               {/* Arrow 1 (animates upward) */}
               <motion.path
                 d="M8 17L12 13M12 13V21M12 13L16 17"
