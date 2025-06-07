@@ -1,5 +1,6 @@
 import { AppContextProvider } from '@/components/app-context-provider';
 import { GITHUB_OWNER, GITHUB_REPO } from '@/lib/constants';
+import { EdgeStoreProvider } from '@/lib/edgestore';
 import './global.css';
 import { RootProvider } from 'fumadocs-ui/provider';
 import { type Metadata } from 'next';
@@ -26,9 +27,11 @@ export default async function Layout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={inter.className} suppressHydrationWarning>
       <body className="flex min-h-screen flex-col">
-        <AppContextProvider githubStars={githubStars}>
-          <RootProvider>{children}</RootProvider>
-        </AppContextProvider>
+        <EdgeStoreProvider>
+          <AppContextProvider githubStars={githubStars}>
+            <RootProvider>{children}</RootProvider>
+          </AppContextProvider>
+        </EdgeStoreProvider>
       </body>
     </html>
   );
