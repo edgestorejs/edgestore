@@ -21,7 +21,6 @@ export default function UploadIcon({
   const cloudControls = useAnimation();
   const arrow1Controls = useAnimation();
   const arrow2Controls = useAnimation();
-  const checkControls = useAnimation();
   const checkIconControls = useAnimation();
   const isAnimatingRef = useRef(false);
 
@@ -29,8 +28,6 @@ export default function UploadIcon({
     'M3.99762 14.8969C3.25458 14.1378 2.69405 13.2196 2.35848 12.2117C2.02291 11.2039 1.92111 10.1329 2.06078 9.07994C2.20045 8.02694 2.57793 7.01954 3.16462 6.13403C3.75132 5.24852 4.53186 4.50813 5.4471 3.96893C6.36234 3.42974 7.3883 3.10589 8.44725 3.02191C9.5062 2.93793 10.5704 3.09603 11.5592 3.48422C12.548 3.87241 13.4355 4.48052 14.1544 5.26249C14.8734 6.04445 15.4049 6.97977 15.7088 7.99759H17.499C18.4646 7.99748 19.4047 8.30792 20.1803 8.88307C20.9559 9.45822 21.526 10.2676 21.8062 11.1916C22.0865 12.1155 22.0622 13.1052 21.7368 14.0143C21.4114 14.9234 20.8022 15.7037 19.9993 16.24';
   const cloudPathState2 =
     'M4.79785 14.5798C4.12912 13.7771 3.62464 12.8062 3.32263 11.7405C3.02062 10.6748 2.929 9.54238 3.0547 8.42894C3.1804 7.3155 3.52013 6.25027 4.04816 5.31393C4.57619 4.37759 5.27867 3.59469 6.10239 3.02455C6.92611 2.45441 7.84947 2.11197 8.80252 2.02317C9.75558 1.93437 10.7133 2.10154 11.6033 2.51201C12.4932 2.92249 13.2919 3.5655 13.939 4.39236C14.586 5.21921 15.0644 6.20821 15.338 7.28446H16.9491C17.8182 7.28434 18.6642 7.61261 19.3623 8.22077C20.0603 8.82893 20.5734 9.68473 20.8256 10.6618C21.0779 11.6388 21.056 12.6852 20.7631 13.6465C20.4703 14.6078 19.922 15.4329 19.1994 16';
-
-  const checkPath = 'M8 12L11 15L16 9';
 
   const animateElements = async () => {
     // Set the animation state
@@ -156,13 +153,6 @@ export default function UploadIcon({
         transition: { duration: 0.3, ease: 'easeInOut' },
       });
 
-      // Hide the old check mark
-      void checkControls.start({
-        pathLength: 0,
-        opacity: 0,
-        transition: { duration: 0.2 },
-      });
-
       // Animate in the CheckCircle2Icon with bounce
       void checkIconControls.start({
         opacity: 1,
@@ -178,13 +168,6 @@ export default function UploadIcon({
         },
       });
     } else {
-      // Reset check icon
-      void checkIconControls.start({
-        opacity: 0,
-        scale: 0.5,
-        transition: { duration: 0.2 },
-      });
-
       // Reset cloud and arrows
       void cloudControls.start({
         opacity: 1,
@@ -192,10 +175,10 @@ export default function UploadIcon({
         transition: { duration: 0.3 },
       });
 
-      // Reset check mark
-      void checkControls.start({
-        pathLength: 0,
+      // Reset check icon
+      void checkIconControls.start({
         opacity: 0,
+        scale: 0.5,
         transition: { duration: 0.2 },
       });
 
@@ -215,7 +198,6 @@ export default function UploadIcon({
       cloudControls.stop();
       arrow1Controls.stop();
       arrow2Controls.stop();
-      checkControls.stop();
       checkIconControls.stop();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -236,17 +218,6 @@ export default function UploadIcon({
       >
         {/* Cloud Path */}
         <motion.path d={cloudPathInitial} animate={cloudControls} />
-
-        {/* Check Mark */}
-        <motion.path
-          d={checkPath}
-          initial={{ pathLength: 0, opacity: 0 }}
-          animate={checkControls}
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
 
         {/* Only show arrows when not complete */}
         {!complete && (
