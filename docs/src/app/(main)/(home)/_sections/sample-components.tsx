@@ -15,7 +15,7 @@ import { YouTubeVideo } from '../_components/youtube-video';
 
 export function SampleComponents() {
   // You'll need to replace this with your actual YouTube video ID
-  const videoId = 'YOUR_COMPONENTS_VIDEO_ID';
+  const videoId = '0gZrDWzlkn0';
 
   const features = [
     {
@@ -75,6 +75,7 @@ export function SampleComponents() {
               videoId={videoId}
               title="EdgeStore Components Showcase"
               badgeContent="Component Showcase (1min)"
+              thumbnailSrc="/img/components-thumbnail.webp"
             />
             {/* Call to action */}
             <div className="mt-12 text-center">

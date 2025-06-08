@@ -29,6 +29,7 @@ export function DemoVideo() {
             title="EdgeStore Demo Video"
             overlayContent={<FeatureHighlights />}
             badgeContent="10min demo"
+            thumbnailSrc="/img/demo-thumbnail.webp"
           />
         </div>
 

@@ -11,6 +11,7 @@ interface YouTubeVideoProps {
   overlayContent?: ReactNode;
   badgeContent?: string;
   className?: string;
+  thumbnailSrc?: string;
 }
 
 export function YouTubeVideo({
@@ -19,6 +20,7 @@ export function YouTubeVideo({
   overlayContent,
   badgeContent,
   className = '',
+  thumbnailSrc,
 }: YouTubeVideoProps) {
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
 
@@ -32,16 +34,20 @@ export function YouTubeVideo({
     >
       {!isVideoPlaying ? (
         <>
-          {/* Background pattern/placeholder */}
-          <div className="absolute inset-0 opacity-30">
-            <div className="h-full w-full bg-[radial-gradient(circle_at_25%_25%,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[length:20px_20px]" />
-          </div>
+          {/* Thumbnail image or background pattern */}
+          {thumbnailSrc ? (
+            <div
+              className="absolute inset-0 h-full w-full bg-cover bg-center bg-no-repeat transition-all duration-500 before:absolute before:inset-0 before:bg-[radial-gradient(ellipse_at_center,transparent_40%,rgba(0,0,0,0.6)_100%)] before:content-[''] after:absolute after:inset-0 after:bg-[radial-gradient(ellipse_at_center,transparent_20%,rgba(0,0,0,0.2)_100%)] after:opacity-100 after:transition-opacity after:duration-500 after:content-[''] group-hover:after:opacity-0"
+              style={{ backgroundImage: `url(${thumbnailSrc})` }}
+            />
+          ) : (
+            <div className="absolute inset-0 opacity-30">
+              <div className="h-full w-full bg-[radial-gradient(circle_at_25%_25%,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[length:20px_20px]" />
+            </div>
+          )}
 
-          {/* Video overlay */}
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] transition-all duration-300 group-hover:bg-black/20" />
-
-          {/* Gradient overlay for better text visibility */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
+          {/* Additional overlay for better contrast */}
+          <div className="absolute inset-0 bg-black/20 transition-all duration-300 group-hover:bg-black/10" />
 
           {/* Play button */}
           <div className="absolute inset-0 flex items-center justify-center">
@@ -50,18 +56,19 @@ export function YouTubeVideo({
               size="lg"
               aria-label="Play video"
               className={cn(
-                'group/btn relative rounded-full bg-white/10 p-0 backdrop-blur-md transition-all duration-300 hover:scale-110 hover:bg-white/20 hover:shadow-[0_0_40px_rgba(255,255,255,0.3)]',
+                'group/btn relative rounded-full bg-black/40 backdrop-blur-md transition-all duration-300 hover:scale-110 hover:bg-black/60 hover:shadow-[0_0_40px_rgba(0,0,0,0.6)]',
                 'h-20 w-20 sm:h-24 sm:w-24',
+                'border border-white/50 shadow-2xl',
               )}
             >
               {/* Animated ring */}
-              <div className="absolute inset-0 animate-ping rounded-full border-2 border-white/30" />
-              <div className="absolute inset-2 rounded-full border border-white/20" />
+              <div className="absolute inset-0 animate-ping rounded-full border-2 border-white/40 opacity-75" />
+              <div className="absolute inset-2 rounded-full border border-white/30" />
 
-              {/* Play icon */}
+              {/* Play icon with drop shadow for better visibility */}
               <PlayIcon
                 className={cn(
-                  'relative ml-1 fill-white text-white transition-transform duration-300 group-hover/btn:scale-110',
+                  'relative ml-1 fill-white text-white drop-shadow-lg transition-transform duration-300 group-hover/btn:scale-110',
                   'h-8 w-8 sm:h-10 sm:w-10',
                 )}
               />

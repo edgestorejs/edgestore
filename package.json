@@ -20,7 +20,7 @@
     "components:dev": "turbo run dev --parallel --filter=components --filter=@edgestore/*",
     "basic-access-control:dev": "turbo run dev --parallel --filter=basic-access-control --filter=@edgestore/*",
     "start-basic:dev": "turbo run dev --parallel --filter=start-basic --filter=@edgestore/*",
-    "docs:dev": "pnpm --filter docs run start",
+    "docs:dev": "pnpm --filter docs dev",
     "docs:build": "pnpm build && pnpm --filter docs run build",
     "lint": "turbo lint",
     "lint-fix": "turbo lint -- --fix && manypkg fix && pnpm format:write",
