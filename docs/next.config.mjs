@@ -11,6 +11,14 @@ const withMDX = createMDX();
 const config = {
   reactStrictMode: true,
   serverExternalPackages: ['typescript', 'twoslash'],
+  async rewrites() {
+    return [
+      {
+        source: '/docs/:path*.md',
+        destination: '/llms.mdx/:path*',
+      },
+    ];
+  },
 };
 
 export default withMDX(config);

@@ -14,9 +14,18 @@ export function GET() {
     map.set(dir, list);
   }
 
+  // Ensure getting-started is first
+  if (map.has('getting-started')) {
+    scanned.push(`## getting-started`);
+    scanned.push(map.get('getting-started')!.join('\n'));
+  }
+
+  // Add all other sections
   for (const [key, value] of map) {
-    scanned.push(`## ${key}`);
-    scanned.push(value.join('\n'));
+    if (key !== 'getting-started') {
+      scanned.push(`## ${key}`);
+      scanned.push(value.join('\n'));
+    }
   }
 
   return new Response(scanned.join('\n\n'));
