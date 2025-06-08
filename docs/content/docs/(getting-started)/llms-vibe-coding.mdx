@@ -1,0 +1,34 @@
+---
+title: LLMs & Vibe Coding
+description: Learn how to leverage EdgeStore with Large Language Models (LLMs) and AI-powered IDEs, including VibeStack CLI support.
+---
+
+EdgeStore has first-class support for Large Language Models (LLMs) and AI-powered IDEs.
+
+## 1. llms.txt & llms-full.txt
+
+EdgeStore provides an [llms.txt](/llms.txt) file that contains the links to each page in the documentation.
+
+EdgeStore also provides an [llms-full.txt](/llms-full.txt) file that contains the whole documentation in a single markdown.
+
+## 2. Copy Markdown
+
+Every page in the documentation contains a "Copy Markdown" button that allows you to copy the markdown formatted content of the page, so you can directly use it in your LLM.
+
+## 3. `.md` suffix
+
+You can also just add a `.md` suffix to the end of the URL to get the markdown content of the page.
+
+For example: [https://edgestore.dev/docs/quick-start.md](/docs/quick-start.md)
+
+## 4. VibeStack CLI Support
+
+EdgeStore supports [VibeStack](https://vibestack.app), which automatically adds framework-specific markdown instruction files to your project.
+
+Just run this command in your project directory:
+
+```package-install
+npx vibestack@latest add https://edgestore.dev/vibe.json
+```
+
+This will add multiple markdown instruction files specific to your framework, making it easier for AI coding assistants to understand how to implement EdgeStore in your codebase.

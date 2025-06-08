@@ -10,7 +10,9 @@ export function GET() {
   for (const page of source.getPages()) {
     const dir = page.slugs.length <= 1 ? 'getting-started' : page.slugs[0]!;
     const list = map.get(dir) ?? [];
-    list.push(`- [${page.data.title}](${page.url}): ${page.data.description}`);
+    list.push(
+      `- [${page.data.title}](https://edgestore.dev${page.url}.md): ${page.data.description}`,
+    );
     map.set(dir, list);
   }
 
