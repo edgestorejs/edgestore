@@ -39,6 +39,8 @@ npx shadcn@latest add https://edgestore.dev/r/uploader-provider.json
 <LimitedCode>
 
 ````tsx
+'use client';
+
 import * as React from 'react';
 
 /**
@@ -527,21 +529,17 @@ import * as React from 'react';
 
 function MyUploaderComponent() {
   const {
-    fileStates,    // Array of current file states
-    addFiles,      // Function to add files
-    removeFile,    // Function to remove a file by key
-    cancelUpload,  // Function to cancel an upload by key
-    uploadFiles,   // Function to trigger uploads (all pending or specific keys)
-    isUploading,   // Boolean indicating if any upload is in progress
+    fileStates, // Array of current file states
+    addFiles, // Function to add files
+    removeFile, // Function to remove a file by key
+    cancelUpload, // Function to cancel an upload by key
+    uploadFiles, // Function to trigger uploads (all pending or specific keys)
+    isUploading, // Boolean indicating if any upload is in progress
   } = useUploader();
 
   // ... component logic using these values and functions ...
 
-  return (
-    <div>
-      {/* UI elements */}
-    </div>
-  );
+  return <div>{/* UI elements */}</div>;
 }
 ```
 
@@ -626,17 +624,25 @@ function MyUploaderComponent() {
               )}
               {/* Show remove button otherwise */}
               {fileState.status !== 'UPLOADING' && (
-                 <button onClick={() => removeFile(fileState.key)}>
-                   Remove
-                 </button>
+                <button onClick={() => removeFile(fileState.key)}>
+                  Remove
+                </button>
               )}
               {/* Show error message */}
               {fileState.status === 'ERROR' && (
-                <span style={{ color: 'red', marginLeft: '0.5rem' }}> Error: {fileState.error}</span>
+                <span style={{ color: 'red', marginLeft: '0.5rem' }}>
+                  {' '}
+                  Error: {fileState.error}
+                </span>
               )}
               {/* Show link on completion */}
               {fileState.status === 'COMPLETE' && fileState.url && (
-                <a href={fileState.url} target="_blank" rel="noopener noreferrer" style={{ color: 'green', marginLeft: '0.5rem' }}>
+                <a
+                  href={fileState.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: 'green', marginLeft: '0.5rem' }}
+                >
                   View File
                 </a>
               )}
@@ -658,7 +664,7 @@ function MyUploaderComponent() {
   const { uploadFiles, isUploading, fileStates } = useUploader();
 
   // Check if there are any files pending upload
-  const hasPendingFiles = fileStates.some(fs => fs.status === 'PENDING');
+  const hasPendingFiles = fileStates.some((fs) => fs.status === 'PENDING');
 
   return (
     <div>
@@ -682,11 +688,11 @@ Call `cancelUpload(key)` with the file's unique key to abort an ongoing upload. 
 
 ```tsx
 // Example within the file list rendering (see step 4)
-{fileState.status === 'UPLOADING' && (
-  <button onClick={() => cancelUpload(fileState.key)}>
-    Cancel
-  </button>
-)}
+{
+  fileState.status === 'UPLOADING' && (
+    <button onClick={() => cancelUpload(fileState.key)}>Cancel</button>
+  );
+}
 ```
 
 ### 7. Removing Files (`removeFile`)
@@ -695,11 +701,11 @@ Call `removeFile(key)` with the file's key to remove it from the list, regardles
 
 ```tsx
 // Example within the file list rendering (see step 4)
-{fileState.status !== 'UPLOADING' && (
-   <button onClick={() => removeFile(fileState.key)}>
-     Remove
-   </button>
-)}
+{
+  fileState.status !== 'UPLOADING' && (
+    <button onClick={() => removeFile(fileState.key)}>Remove</button>
+  );
+}
 ```
 
 ### 8. Callbacks
@@ -714,7 +720,9 @@ You can pass callback props (`onChange`, `onFileAdded`, `onFileRemoved`, `onUplo
     console.log('Completed files:', completedFiles);
   }}
   onFileAdded={(fileState) => console.log('File added:', fileState.file.name)}
-  onUploadCompleted={(completedFile) => console.log('Upload complete:', completedFile.url)}
+  onUploadCompleted={(completedFile) =>
+    console.log('Upload complete:', completedFile.url)
+  }
 >
   {/* ... */}
 </UploaderProvider>
@@ -752,7 +760,7 @@ function MyUploaderComponent() {
     inputRef.current?.click();
   };
 
-  const hasPendingFiles = fileStates.some(fs => fs.status === 'PENDING');
+  const hasPendingFiles = fileStates.some((fs) => fs.status === 'PENDING');
 
   return (
     <div>
@@ -766,7 +774,9 @@ function MyUploaderComponent() {
       />
 
       {/* Buttons */}
-      <button onClick={handleAddClick} disabled={isUploading}>Add Files</button>
+      <button onClick={handleAddClick} disabled={isUploading}>
+        Add Files
+      </button>
       <button
         onClick={() => uploadFiles()}
         disabled={isUploading || !hasPendingFiles}
@@ -778,32 +788,66 @@ function MyUploaderComponent() {
       {fileStates.length > 0 && (
         <ul style={{ listStyle: 'none', padding: 0, marginTop: '1rem' }}>
           {fileStates.map((fileState) => (
-            <li key={fileState.key} style={{ marginBottom: '0.5rem', borderBottom: '1px solid #eee', paddingBottom: '0.5rem' }}>
+            <li
+              key={fileState.key}
+              style={{
+                marginBottom: '0.5rem',
+                borderBottom: '1px solid #eee',
+                paddingBottom: '0.5rem',
+              }}
+            >
               <span>{fileState.file.name}</span>
-              <span style={{ marginLeft: '0.5rem', fontSize: '0.8em', color: '#666' }}> ({fileState.status})</span>
+              <span
+                style={{
+                  marginLeft: '0.5rem',
+                  fontSize: '0.8em',
+                  color: '#666',
+                }}
+              >
+                {' '}
+                ({fileState.status})
+              </span>
               {/* Progress and Controls */}
               <div style={{ marginTop: '0.25rem' }}>
                 {fileState.status === 'UPLOADING' && (
                   <>
-                    <progress value={fileState.progress} max="100" style={{ width: '100px', marginRight: '0.5rem' }} />
+                    <progress
+                      value={fileState.progress}
+                      max="100"
+                      style={{ width: '100px', marginRight: '0.5rem' }}
+                    />
                     <span> {fileState.progress}%</span>
-                    <button onClick={() => cancelUpload(fileState.key)} style={{ marginLeft: '0.5rem' }}>
+                    <button
+                      onClick={() => cancelUpload(fileState.key)}
+                      style={{ marginLeft: '0.5rem' }}
+                    >
                       Cancel
                     </button>
                   </>
                 )}
                 {fileState.status !== 'UPLOADING' && (
-                   <button onClick={() => removeFile(fileState.key)} style={{ marginLeft: '0.5rem' }}>
-                     Remove
-                   </button>
+                  <button
+                    onClick={() => removeFile(fileState.key)}
+                    style={{ marginLeft: '0.5rem' }}
+                  >
+                    Remove
+                  </button>
                 )}
                 {fileState.status === 'ERROR' && (
-                  <span style={{ color: 'red', marginLeft: '0.5rem' }}> Error: {fileState.error}</span>
+                  <span style={{ color: 'red', marginLeft: '0.5rem' }}>
+                    {' '}
+                    Error: {fileState.error}
+                  </span>
                 )}
                 {fileState.status === 'COMPLETE' && fileState.url && (
-                   <a href={fileState.url} target="_blank" rel="noopener noreferrer" style={{ color: 'green', marginLeft: '0.5rem' }}>
-                     View File
-                   </a>
+                  <a
+                    href={fileState.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ color: 'green', marginLeft: '0.5rem' }}
+                  >
+                    View File
+                  </a>
                 )}
               </div>
             </li>
@@ -850,7 +894,9 @@ function MyUploaderPage() {
       <UploaderProvider
         uploadFn={uploadFn}
         onUploadCompleted={(completedFile) => {
-          console.log(`File ${completedFile.file.name} uploaded successfully to ${completedFile.url}`);
+          console.log(
+            `File ${completedFile.file.name} uploaded successfully to ${completedFile.url}`,
+          );
           // Maybe trigger a database update here
         }}
       >

@@ -27,7 +27,7 @@
     "format": "prettier \"**/*\" --ignore-unknown",
     "format:write": "pnpm format --write --list-different",
     "clean": "find . -name node_modules -o -name .turbo -o -name .next -o -name dist -type d -prune | xargs rm -rf",
-    "registry:build": "shadcn build --output=docs/static/r",
+    "registry:build": "shadcn build --output=docs/public/r",
     "prepublish": "pnpm build",
     "prepack": "tsx scripts/version.ts",
     "version": "tsx scripts/version.ts",
