@@ -184,8 +184,10 @@
   .animate-scroll {
     animation: scroll-slow 200s linear infinite;
   }
-  .scroller:hover .animate-scroll {
-    animation-play-state: paused;
+  @media (hover: hover) and (pointer: fine) {
+    .scroller:hover .animate-scroll {
+      animation-play-state: paused;
+    }
   }
 }
 
