@@ -45,9 +45,9 @@ export function Hero() {
             <NeonDropzone />
           </div>
           <p className="text-md text-muted-foreground max-w-[600px] text-balance text-center lg:text-left lg:text-lg">
-            EdgeStore provides type-safe, fast, scalable storage solutions
-            tailored for modern web development. It eliminates the complexities
-            of traditional services like S3.
+            EdgeStore provides type-safe, fast, scalable and secure storage
+            solutions tailored for modern web development with React. It
+            eliminates the complexities of traditional services like S3.
           </p>
           <div className="flex w-full flex-col justify-center gap-4 sm:flex-row lg:justify-start">
             <ActionButton
