@@ -22,6 +22,9 @@ export const env = createEnv({
    */
   client: {
     NEXT_PUBLIC_DASHBOARD_URL: z.string(),
+    NEXT_PUBLIC_POSTHOG_KEY: z.string(),
+    NEXT_PUBLIC_POSTHOG_API_HOST: z.string(),
+    NEXT_PUBLIC_POSTHOG_UI_HOST: z.string(),
   },
 
   /**
@@ -34,6 +37,9 @@ export const env = createEnv({
     DASHBOARD_API_KEY: process.env.DASHBOARD_API_KEY,
     EDGE_STORE_ACCESS_KEY: process.env.EDGE_STORE_ACCESS_KEY,
     EDGE_STORE_SECRET_KEY: process.env.EDGE_STORE_SECRET_KEY,
+    NEXT_PUBLIC_POSTHOG_KEY: process.env.NEXT_PUBLIC_POSTHOG_KEY,
+    NEXT_PUBLIC_POSTHOG_API_HOST: process.env.NEXT_PUBLIC_POSTHOG_API_HOST,
+    NEXT_PUBLIC_POSTHOG_UI_HOST: process.env.NEXT_PUBLIC_POSTHOG_UI_HOST,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially
