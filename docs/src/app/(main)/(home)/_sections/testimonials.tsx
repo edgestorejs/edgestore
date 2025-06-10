@@ -13,7 +13,7 @@ const testimonials = [
     comment:
       'Awesome! I hope this will become the most used and standard app for every app. You deserve it!',
     platform: 'youtube',
-    url: 'https://www.youtube.com/watch?v=Acq9UEA2akU',
+    url: 'https://www.youtube.com/watch?v=Acq9UEA2akU&lc=UgzfjRCDsZLHxP4VuJN4AaABAg',
   },
   {
     user: '@whiterabbit6768',
@@ -21,7 +21,7 @@ const testimonials = [
     comment:
       'Just used this for file uploads in my new service. Really great documentation and examples. Took very little effort to integrate and test.',
     platform: 'youtube',
-    url: 'https://www.youtube.com/watch?v=Acq9UEA2akU',
+    url: 'https://www.youtube.com/watch?v=Acq9UEA2akU&lc=UgyJnQai0M6X0LrhAzN4AaABAg',
   },
   {
     user: '@sathishkannan6600',
@@ -29,7 +29,7 @@ const testimonials = [
     comment:
       'Unbelievable and exhaustive features.Edge store thought about all the use cases. Also, not using a database for protected files is a nice idea. Very clear explanation in the video.',
     platform: 'youtube',
-    url: 'https://www.youtube.com/watch?v=Acq9UEA2akU',
+    url: 'https://www.youtube.com/watch?v=Acq9UEA2akU&lc=Ugw4ne4z1Pj3NS_MGbB4AaABAg',
   },
   {
     user: '@raus_raay',
@@ -45,7 +45,7 @@ const testimonials = [
     comment:
       "Feeling that Edge Store will take off 🚀 Great stuff you're building here Ravi 👍",
     platform: 'youtube',
-    url: 'https://www.youtube.com/watch?v=Acq9UEA2akU',
+    url: 'https://www.youtube.com/watch?v=Acq9UEA2akU&lc=UgyEH4ERhW0fXigeWN14AaABAg',
   },
   {
     user: '@harshalranjhani',
@@ -60,7 +60,7 @@ const testimonials = [
     image: '/img/testimonials/IyanSR.jpg',
     comment: 'My mind is blown, thanks for creating this, solve my problems',
     platform: 'youtube',
-    url: 'https://www.youtube.com/watch?v=Acq9UEA2akU',
+    url: 'https://www.youtube.com/watch?v=Acq9UEA2akU&lc=UgwFvjx2WAyNKZAxfnl4AaABAg',
   },
   {
     user: '@psyferinc.3573',
@@ -68,7 +68,7 @@ const testimonials = [
     comment:
       'i like that i have more control over my images. def migrating to this project.',
     platform: 'youtube',
-    url: 'https://www.youtube.com/watch?v=Acq9UEA2akU',
+    url: 'https://www.youtube.com/watch?v=Acq9UEA2akU&lc=UgxHBwzlikTWPUfF1vV4AaABAg',
   },
   {
     user: '@MarcelGatete',
@@ -84,7 +84,7 @@ const testimonials = [
     comment:
       "It looks great. I'm building a SaaS and I think I'm going to choose your product to handle user file uploads! I'm going to do some testing with the free version to see how it works. Thank you very much!",
     platform: 'youtube',
-    url: 'https://www.youtube.com/watch?v=Acq9UEA2akU',
+    url: 'https://www.youtube.com/watch?v=Acq9UEA2akU&lc=UgzwFaYeGpuXUDsmeRZ4AaABAg',
   },
   {
     user: '@developerpranav',
@@ -92,21 +92,21 @@ const testimonials = [
     comment:
       '🤯 Blown away by the simplicity of defining the types of asset uploaded, which then determines the file path. Awesome video, and amazing job on Edge Store btw! Highly considering it for my current project! Just one question, can I use my own S3 Bucket? Specifically, I use Cloudflare R2 which has compatibility with the S3 API.',
     platform: 'youtube',
-    url: 'https://www.youtube.com/watch?v=Acq9UEA2akU',
+    url: 'https://www.youtube.com/watch?v=Acq9UEA2akU&lc=UgxL7xpOk8ygYV7iYgx4AaABAg',
   },
   {
     user: '@ryanpp27',
     image: '/img/testimonials/ryanpp27.jpg',
     comment: 'Wow, just wow! thank you bro! edgestore save my day',
     platform: 'youtube',
-    url: 'https://www.youtube.com/watch?v=Acq9UEA2akU',
+    url: 'https://www.youtube.com/watch?v=Acq9UEA2akU&lc=UgxDWR-0XRGICzoRU-R4AaABAg',
   },
   {
     user: '@yelchat',
     image: '/img/testimonials/yelchat.jpg',
     comment: 'Wonderful... 🎉, starting to use this asap',
     platform: 'youtube',
-    url: 'https://www.youtube.com/watch?v=Acq9UEA2akU',
+    url: 'https://www.youtube.com/watch?v=Acq9UEA2akU&lc=UgxJySnrg7HJD-MoQ-94AaABAg',
   },
   {
     user: '@nayanxchandrakar',
@@ -114,14 +114,14 @@ const testimonials = [
     comment:
       'Yes I used it on my airbnb clone project thanks ravi love from india',
     platform: 'youtube',
-    url: 'https://www.youtube.com/watch?v=Acq9UEA2akU',
+    url: 'https://www.youtube.com/watch?v=Acq9UEA2akU&lc=UgwgbArtHWaL9_qbG2F4AaABAg',
   },
   {
     user: '@emmanuelesekhaigbe7040',
     image: '/img/testimonials/emmanuelesekhaigbe7040.jpg',
     comment: "I'm definitely using this, thanks bro",
     platform: 'youtube',
-    url: 'https://www.youtube.com/watch?v=Acq9UEA2akU',
+    url: 'https://www.youtube.com/watch?v=Acq9UEA2akU&lc=UgwbemZmxa5mNJeH07h4AaABAg',
   },
   {
     user: '@MyBusiness-d8k',
@@ -129,21 +129,21 @@ const testimonials = [
     comment:
       'i use cloudinary built-in components and its work perfect but its just expose my API key. this video is so helpful for me and now i can use it safely in my apps ✔✔✔✔',
     platform: 'youtube',
-    url: 'https://www.youtube.com/watch?v=Acq9UEA2akU',
+    url: 'https://www.youtube.com/watch?v=Acq9UEA2akU&lc=UgxmYgk1ZjNcPT8dAbh4AaABAg',
   },
   {
     user: '@kienantran2048',
     image: '/img/testimonials/kienantran2048.jpg',
     comment: 'Awesome product! Probably use it in my coming project',
     platform: 'youtube',
-    url: 'https://www.youtube.com/watch?v=Acq9UEA2akU',
+    url: 'https://www.youtube.com/watch?v=Acq9UEA2akU&lc=UgyVaJx8_6w84JW4BWx4AaABAg',
   },
   {
     user: '@namacharyadas',
     image: '/img/testimonials/namacharyadas.jpg',
     comment: 'Love it! Good luck to you! Rooting for edgestore!',
     platform: 'youtube',
-    url: 'https://www.youtube.com/watch?v=Acq9UEA2akU',
+    url: 'https://www.youtube.com/watch?v=Acq9UEA2akU&lc=UgzneOGuoR5jafuMAn54AaABAg',
   },
   {
     user: '@alijansoomro4277',
@@ -151,14 +151,7 @@ const testimonials = [
     comment:
       'This service looks easier to use than UploadThing — I was looking for a better way to upload files in Next-JS, and I like Edge Store.',
     platform: 'youtube',
-    url: 'https://www.youtube.com/watch?v=Acq9UEA2akU',
-  },
-  {
-    user: '@hikmatullah2131',
-    image: '/img/testimonials/hikmatullah2131.jpg',
-    comment: 'You covered a lot in a short time, and I love Edge Store too.',
-    platform: 'youtube',
-    url: 'https://www.youtube.com/watch?v=Acq9UEA2akU',
+    url: 'https://www.youtube.com/watch?v=Acq9UEA2akU&lc=Ugw9Jvy13TVCEXCvftR4AaABAg',
   },
 ];
 
