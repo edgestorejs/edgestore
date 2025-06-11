@@ -57,10 +57,10 @@
   },
   "devDependencies": {
     "@types/node": "^20",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
     "typescript": "^5",
-    "zod": "3.21.4"
+    "zod": "3.25.42"
   },
   "gitHead": "a223c4cb8df50e6b64f9db5dc2daf93848748da9"
 }

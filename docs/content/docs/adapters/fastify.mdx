@@ -1,0 +1,149 @@
+---
+title: Fastify
+description: Learn how to integrate EdgeStore with your Fastify backend and React frontend.
+---
+
+Some applications are built with React on the frontend (e.g. using `create-react-app` or `vite`) and have a `fastify` backend.
+
+You can use EdgeStore in these cases, even without using Next.js.
+
+## Setup
+
+### Install
+
+Let's start by installing the required packages.
+
+```package-install
+@edgestore/server @edgestore/react zod
+```
+
+### Environment Variables
+
+Then go to your [Dashboard](https://dashboard.edgestore.dev), create a new project and copy the keys to your environment variables.
+
+```sh title=".env"
+EDGE_STORE_ACCESS_KEY=your-access-key
+EDGE_STORE_SECRET_KEY=your-secret-key
+```
+
+<Callout type="warning">
+  Make sure you add `.env` to your `.gitignore` file. <br />
+  You don't want to commit your secret keys to your repository.
+</Callout>
+
+### Backend
+
+Now we can create the backend code in our Fastify app.
+
+The example below is the simplest bucket you can create with EdgeStore. Just a simple file bucket with no validation that will be accessible by anyone with the link.
+
+You can have multiple buckets in your app, each with its own configuration.
+
+```ts
+import { initEdgeStore } from '@edgestore/server';
+import { createEdgeStoreFastifyHandler } from '@edgestore/server/adapters/fastify';
+import cors from '@fastify/cors';
+import cookie from '@fastify/cookie';
+import fastify from 'fastify';
+
+// --- FASTIFY CONFIG ---
+
+const PORT = process.env.PORT ?? 3001;
+
+const app = fastify();
+
+/**
+ * Your fastify app is probably running in a different port than your frontend app.
+ * To avoid CORS issues, we should use the cors plugin.
+ */
+await app.register(cors, {
+  // Change this to your frontend origin for better security
+  origin: true,
+  credentials: true,
+});
+
+/**
+ * EdgeStore uses cookies to store the context token.
+ * We need to use the cookie plugin to parse the cookies.
+ */
+await app.register(cookie);
+
+// --- EDGESTORE ROUTER CONFIG ---
+
+const es = initEdgeStore.create();
+
+const edgeStoreRouter = es.router({
+  publicFiles: es.fileBucket(),
+});
+
+export type EdgeStoreRouter = typeof edgeStoreRouter;
+
+const handler = createEdgeStoreFastifyHandler({
+  router: edgeStoreRouter,
+});
+
+// --- FASTIFY ROUTES ---
+
+app.get('/', (request, reply) => {
+  console.log('Request received');
+  reply.send('Hello from server!');
+});
+
+// set the get and post routes for the edgestore router
+app.get('/edgestore/*', handler);
+app.post('/edgestore/*', handler);
+
+app.listen({ port: PORT }, (err) => {
+  if (err) {
+    console.error(err);
+    process.exit(1);
+  }
+  console.log(`⚡Server is running here 👉 http://localhost:${PORT}`);
+});
+```
+
+### Frontend
+
+Now let's initiate our context provider in the frontend app.
+
+```tsx title="src/lib/edgestore.ts"
+// You can import it from the other project if it's just the type
+import { type EdgeStoreRouter } from '../../../path/to/fastify-backend/src';
+import { createEdgeStoreProvider } from '@edgestore/react';
+
+const { EdgeStoreProvider, useEdgeStore } =
+  createEdgeStoreProvider<EdgeStoreRouter>();
+
+export { EdgeStoreProvider, useEdgeStore };
+```
+
+And then wrap our app with the provider.
+
+```tsx title="src/App.tsx"
+// [!code ++]
+import { EdgeStoreProvider } from '../lib/edgestore';
+
+function App() {
+  return (
+    {/* [!code ++] */}
+    <EdgeStoreProvider basePath="http://localhost:3001/edgestore">
+      {/* Rest of your app */}
+    {/* [!code ++] */}
+    </EdgeStoreProvider>
+  );
+}
+```
+
+## Usage
+
+To upload or use the other functionalities of EdgeStore, you can look at the main [Quick Start](/docs/quick-start) guide. The usage should be the same.
+
+## Limitations
+
+<Callout type="warning">
+
+For EdgeStore to work properly in your deployed production app, Your frontend and backend should be in the same domain.
+
+If you are deploying to Vercel, you can take a look at the [Rewrites settings](https://vercel.com/docs/edge-network/rewrites). In case you are using Apache or Nginx, you can set up a reverse proxy to make sure your frontend and backend are in the same domain.
+
+</Callout>

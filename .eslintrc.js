@@ -25,7 +25,6 @@ const config = {
   // Place to specify ESLint rules. Can be used to overwrite rules specified from the extended configs
   rules: {
     // These rules aren't enabled in typescript-eslint's basic recommended config, but we like them
-    '@typescript-eslint/no-non-null-assertion': 'error',
     '@typescript-eslint/consistent-type-imports': [
       'warn',
       {
@@ -86,6 +85,7 @@ const config = {
       files: ['docs/**/*'],
       rules: {
         '@typescript-eslint/prefer-nullish-coalescing': 'off',
+        'unicorn/filename-case': 'off',
       },
     },
     {

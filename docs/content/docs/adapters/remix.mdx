@@ -1,0 +1,102 @@
+---
+title: Remix
+description: Learn how to integrate EdgeStore with your Remix applications, enabling robust file management capabilities.
+---
+
+React Router integrates seamlessly with EdgeStore, enabling you to build type-safe, full-stack React applications with robust file management capabilities.
+
+## Setup
+
+### Install
+
+Let's start by installing the required packages.
+
+```package-install
+@edgestore/server @edgestore/react zod
+```
+
+### Environment Variables
+
+Then go to your [Dashboard](https://dashboard.edgestore.dev), create a new project and copy the keys to your environment variables.
+
+```sh title=".env"
+EDGE_STORE_ACCESS_KEY=your-access-key
+EDGE_STORE_SECRET_KEY=your-secret-key
+```
+
+<Callout type="warning">
+  Make sure you add `.env` to your `.gitignore` file. <br />
+  You don't want to commit your secret keys to your repository.
+</Callout>
+
+### Backend
+
+In your Remix application, create an API route for EdgeStore with the following content:
+
+```ts title="app/routes/api/edgestore.ts"
+import { initEdgeStore } from '@edgestore/server';
+import { createEdgeStoreRemixHandler } from '@edgestore/server/adapters/remix';
+
+const es = initEdgeStore.create();
+
+const edgeStoreRouter = es.router({
+  publicFiles: es.fileBucket(),
+});
+
+export type EdgeStoreRouter = typeof edgeStoreRouter;
+
+const handler = createEdgeStoreRemixHandler({
+  router: edgeStoreRouter,
+});
+
+export { handler as loader, handler as action };
+```
+
+Add the EdgeStore API route to your routes file.
+
+```ts title="app/routes.ts"
+import { index, route, type RouteConfig } from '@react-router/dev/routes';
+
+export default [
+  index('routes/home.tsx'),
+  // [!code ++]
+  route('api/edgestore/*', 'routes/api/edgestore.ts'),
+] satisfies RouteConfig;
+```
+
+### Frontend
+
+Now let's initiate our context provider in the frontend app.
+
+```tsx title="app/lib/edgestore.ts"
+import { createEdgeStoreProvider } from '@edgestore/react';
+import { type EdgeStoreRouter } from '~/routes/api/edgestore';
+
+const { EdgeStoreProvider, useEdgeStore } =
+  createEdgeStoreProvider<EdgeStoreRouter>();
+
+export { EdgeStoreProvider, useEdgeStore };
+```
+
+And then wrap your app with the provider in your root component.
+
+```tsx title="app/root.tsx"
+// [!code ++]
+import { EdgeStoreProvider } from '~/lib/edgestore';
+
+// ...
+
+export default function App() {
+  return (
+    {/* [!code ++] */}
+    <EdgeStoreProvider>
+      <Outlet />
+    {/* [!code ++] */}
+    </EdgeStoreProvider>
+  );
+}
+```
+
+## Usage
+
+To upload or use the other functionalities of EdgeStore, you can look the main [Quick Start](/docs/quick-start) guide. The usage should be the same.
