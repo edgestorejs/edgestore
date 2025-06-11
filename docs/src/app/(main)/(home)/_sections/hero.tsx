@@ -51,7 +51,7 @@ export function Hero() {
           </p>
           <div className="flex w-full flex-col justify-center gap-4 sm:flex-row lg:justify-start">
             <ActionButton
-              href="/docs/getting-started"
+              href="https://dashboard.edgestore.dev/sign-up"
               size="lg"
               aria-label="Sign up for free"
             >
