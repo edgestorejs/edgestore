@@ -104,8 +104,10 @@ function useMockEdgeStore() {
             }
           });
 
+          console.log('Simulated upload of', file.name);
+
           return {
-            url: `https://mock-edgestore.example.com/${file.name}`,
+            url: 'https://edgestore.dev/img/upload-demo.webp',
           };
         },
       },
