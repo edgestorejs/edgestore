@@ -5,6 +5,7 @@ import './global.css';
 import { env } from '@/env';
 import { RootProvider } from 'fumadocs-ui/provider';
 import { type Metadata } from 'next';
+import { unstable_cache } from 'next/cache';
 import { Inter } from 'next/font/google';
 import type { ReactNode } from 'react';
 
@@ -38,13 +39,21 @@ export default async function Layout({ children }: { children: ReactNode }) {
   );
 }
 
-async function fetchGithubStars() {
+async function fetchGithubStars(): Promise<number | undefined> {
   try {
+    return await cachedGithubStarsFetch();
+  } catch (error) {
+    console.error('Failed to fetch star count:', error);
+    return undefined;
+  }
+}
+
+const cachedGithubStarsFetch = unstable_cache(
+  async () => {
     console.log('Fetching github stars');
     const response = await fetch(
       `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}`,
       {
-        next: { revalidate: 86400 },
         headers: {
           Authorization: `Bearer ${env.GITHUB_TOKEN}`,
         },
@@ -64,7 +73,10 @@ async function fetchGithubStars() {
     if (data.stargazers_count !== undefined) {
       return data.stargazers_count;
     }
-  } catch (error) {
-    console.error('Failed to fetch star count:', error);
-  }
-}
+    throw new Error('Star count not found in response');
+  },
+  ['github-stars'],
+  {
+    revalidate: 86400,
+  },
+);
