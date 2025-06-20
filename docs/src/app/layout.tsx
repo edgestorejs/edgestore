@@ -41,6 +41,7 @@ export default async function Layout({ children }: { children: ReactNode }) {
 
 async function fetchGithubStars(): Promise<number | undefined> {
   try {
+    console.log('Fetching github stars');
     return await cachedGithubStarsFetch();
   } catch (error) {
     console.error('Failed to fetch star count:', error);
@@ -50,7 +51,7 @@ async function fetchGithubStars(): Promise<number | undefined> {
 
 const cachedGithubStarsFetch = unstable_cache(
   async () => {
-    console.log('Fetching github stars');
+    console.log('Fetching github stars (Cache Miss)');
     const response = await fetch(
       `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}`,
       {
