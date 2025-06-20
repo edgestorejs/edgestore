@@ -2,6 +2,7 @@ import { AppContextProvider } from '@/components/app-context-provider';
 import { GITHUB_OWNER, GITHUB_REPO } from '@/lib/constants';
 import { EdgeStoreProvider } from '@/lib/edgestore';
 import './global.css';
+import { env } from '@/env';
 import { RootProvider } from 'fumadocs-ui/provider';
 import { type Metadata } from 'next';
 import { Inter } from 'next/font/google';
@@ -39,14 +40,25 @@ export default async function Layout({ children }: { children: ReactNode }) {
 
 async function fetchGithubStars() {
   try {
+    console.log('Fetching github stars');
     const response = await fetch(
       `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}`,
-      { next: { revalidate: 86400 } },
+      {
+        next: { revalidate: 86400 },
+        headers: {
+          Authorization: `Bearer ${env.GITHUB_TOKEN}`,
+        },
+      },
     );
 
     if (!response.ok) {
       throw await response.json();
     }
+
+    console.log(
+      'Rate limit remaining:',
+      response.headers.get('x-ratelimit-remaining') || 'unknown',
+    );
 
     const data = (await response.json()) as { stargazers_count: number };
     if (data.stargazers_count !== undefined) {

@@ -13,6 +13,7 @@ export const env = createEnv({
     DASHBOARD_API_KEY: z.string(),
     EDGE_STORE_ACCESS_KEY: z.string(),
     EDGE_STORE_SECRET_KEY: z.string(),
+    GITHUB_TOKEN: z.string(),
   },
 
   /**
@@ -37,6 +38,7 @@ export const env = createEnv({
     DASHBOARD_API_KEY: process.env.DASHBOARD_API_KEY,
     EDGE_STORE_ACCESS_KEY: process.env.EDGE_STORE_ACCESS_KEY,
     EDGE_STORE_SECRET_KEY: process.env.EDGE_STORE_SECRET_KEY,
+    GITHUB_TOKEN: process.env.GITHUB_TOKEN,
     NEXT_PUBLIC_POSTHOG_KEY: process.env.NEXT_PUBLIC_POSTHOG_KEY,
     NEXT_PUBLIC_POSTHOG_API_HOST: process.env.NEXT_PUBLIC_POSTHOG_API_HOST,
     NEXT_PUBLIC_POSTHOG_UI_HOST: process.env.NEXT_PUBLIC_POSTHOG_UI_HOST,
