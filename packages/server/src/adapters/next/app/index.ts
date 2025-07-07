@@ -14,11 +14,13 @@ import {
   completeMultipartUpload,
   confirmUpload,
   deleteFile,
+  getCookieConfig,
   init,
   requestUpload,
   requestUploadParts,
   type CompleteMultipartUploadBody,
   type ConfirmUploadBody,
+  type CookieConfig,
   type DeleteFileBody,
   type RequestUploadBody,
   type RequestUploadPartsParams,
@@ -32,12 +34,14 @@ export type Config<TCtx> = {
   provider?: Provider;
   router: EdgeStoreRouter<TCtx>;
   logLevel?: LogLevel;
+  cookieConfig?: CookieConfig;
 } & (TCtx extends Record<string, never>
   ? object
   : {
       provider?: Provider;
       router: EdgeStoreRouter<TCtx>;
       createContext: (opts: CreateContextOptions) => MaybePromise<TCtx>;
+      cookieConfig?: CookieConfig;
     });
 
 declare const globalThis: {
@@ -45,10 +49,12 @@ declare const globalThis: {
 };
 
 export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
-  const { provider = EdgeStoreProvider() } = config;
+  const { provider = EdgeStoreProvider(), cookieConfig } = config;
   const log = new Logger(config.logLevel);
   globalThis._EDGE_STORE_LOGGER = log;
   log.debug('Creating EdgeStore Next handler (app adapter)');
+
+  const resolvedCookieConfig = getCookieConfig(cookieConfig);
 
   return async (req: NextRequest) => {
     try {
@@ -83,6 +89,7 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
           ctx,
           provider,
           router: config.router,
+          cookieConfig,
         });
         const res = new Response(
           JSON.stringify({
@@ -105,7 +112,7 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
           provider,
           router: config.router,
           body: (await req.json()) as RequestUploadBody,
-          ctxToken: req.cookies.get('edgestore-ctx')?.value,
+          ctxToken: req.cookies.get(resolvedCookieConfig.ctx.name)?.value,
         });
         return new Response(JSON.stringify(res), {
           status: 200,
@@ -118,7 +125,7 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
           provider,
           router: config.router,
           body: (await req.json()) as RequestUploadPartsParams,
-          ctxToken: req.cookies.get('edgestore-ctx')?.value,
+          ctxToken: req.cookies.get(resolvedCookieConfig.ctx.name)?.value,
         });
         return new Response(JSON.stringify(res), {
           status: 200,
@@ -131,7 +138,7 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
           provider,
           router: config.router,
           body: (await req.json()) as CompleteMultipartUploadBody,
-          ctxToken: req.cookies.get('edgestore-ctx')?.value,
+          ctxToken: req.cookies.get(resolvedCookieConfig.ctx.name)?.value,
         });
         return new Response(null, {
           status: 200,
@@ -141,7 +148,7 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
           provider,
           router: config.router,
           body: (await req.json()) as ConfirmUploadBody,
-          ctxToken: req.cookies.get('edgestore-ctx')?.value,
+          ctxToken: req.cookies.get(resolvedCookieConfig.ctx.name)?.value,
         });
         return new Response(JSON.stringify(res), {
           status: 200,
@@ -154,7 +161,7 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
           provider,
           router: config.router,
           body: (await req.json()) as DeleteFileBody,
-          ctxToken: req.cookies.get('edgestore-ctx')?.value,
+          ctxToken: req.cookies.get(resolvedCookieConfig.ctx.name)?.value,
         });
         return new Response(JSON.stringify(res), {
           status: 200,

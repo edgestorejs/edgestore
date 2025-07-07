@@ -6,7 +6,7 @@ import {
   type MaybePromise,
   type Provider,
 } from '@edgestore/shared';
-import { type FastifyRequest, type FastifyReply } from 'fastify';
+import { type FastifyReply, type FastifyRequest } from 'fastify';
 import Logger, { type LogLevel } from '../../libs/logger';
 import { matchPath } from '../../libs/utils';
 import { EdgeStoreProvider } from '../../providers/edgestore';
@@ -14,11 +14,13 @@ import {
   completeMultipartUpload,
   confirmUpload,
   deleteFile,
+  getCookieConfig,
   init,
   requestUpload,
   requestUploadParts,
   type CompleteMultipartUploadBody,
   type ConfirmUploadBody,
+  type CookieConfig,
   type DeleteFileBody,
   type RequestUploadBody,
   type RequestUploadPartsParams,
@@ -33,12 +35,14 @@ export type Config<TCtx> = {
   provider?: Provider;
   router: EdgeStoreRouter<TCtx>;
   logLevel?: LogLevel;
+  cookieConfig?: CookieConfig;
 } & (TCtx extends Record<string, never>
   ? object
   : {
       provider?: Provider;
       router: EdgeStoreRouter<TCtx>;
       createContext: (opts: CreateContextOptions) => MaybePromise<TCtx>;
+      cookieConfig?: CookieConfig;
     });
 
 declare const globalThis: {
@@ -52,31 +56,35 @@ function getCookie(req: FastifyRequest, name: string): string | undefined {
     // Type assertion for TypeScript
     return (req as any).cookies[name];
   }
-  
+
   // Fallback to parsing cookie header
   const cookieHeader = req.headers.cookie;
   if (!cookieHeader) return undefined;
-  
-  const cookies = cookieHeader.split(';').reduce<Record<string, string>>((acc, cookie) => {
-    const [key, value] = cookie.trim().split('=');
-    if (key && value) acc[key] = value;
-    return acc;
-  }, {});
-  
+
+  const cookies = cookieHeader
+    .split(';')
+    .reduce<Record<string, string>>((acc, cookie) => {
+      const [key, value] = cookie.trim().split('=');
+      if (key && value) acc[key] = value;
+      return acc;
+    }, {});
+
   return cookies[name];
 }
 
 export function createEdgeStoreFastifyHandler<TCtx>(config: Config<TCtx>) {
-  const { provider = EdgeStoreProvider() } = config;
+  const { provider = EdgeStoreProvider(), cookieConfig } = config;
   const log = new Logger(config.logLevel);
   globalThis._EDGE_STORE_LOGGER = log;
   log.debug('Creating EdgeStore Fastify handler');
+
+  const resolvedCookieConfig = getCookieConfig(cookieConfig);
 
   return async (req: FastifyRequest, reply: FastifyReply) => {
     try {
       // Get the URL from the request - simplified approach
       const pathname = req.url;
-      
+
       if (matchPath(pathname, '/health')) {
         return reply.send('OK');
       } else if (matchPath(pathname, '/init')) {
@@ -97,8 +105,9 @@ export function createEdgeStoreFastifyHandler<TCtx>(config: Config<TCtx>) {
           ctx,
           provider,
           router: config.router,
+          cookieConfig,
         });
-        
+
         // Set cookies more efficiently - handling them using void operator
         // to explicitly mark these synchronous calls as intentionally not awaited
         if (Array.isArray(newCookies)) {
@@ -110,7 +119,7 @@ export function createEdgeStoreFastifyHandler<TCtx>(config: Config<TCtx>) {
           // If it's a single cookie string
           void reply.header('Set-Cookie', newCookies);
         }
-        
+
         return reply.send({
           token,
           baseUrl,
@@ -121,7 +130,7 @@ export function createEdgeStoreFastifyHandler<TCtx>(config: Config<TCtx>) {
             provider,
             router: config.router,
             body: req.body as RequestUploadBody,
-            ctxToken: getCookie(req, 'edgestore-ctx'),
+            ctxToken: getCookie(req, resolvedCookieConfig.ctx.name),
           }),
         );
       } else if (matchPath(pathname, '/request-upload-parts')) {
@@ -130,7 +139,7 @@ export function createEdgeStoreFastifyHandler<TCtx>(config: Config<TCtx>) {
             provider,
             router: config.router,
             body: req.body as RequestUploadPartsParams,
-            ctxToken: getCookie(req, 'edgestore-ctx'),
+            ctxToken: getCookie(req, resolvedCookieConfig.ctx.name),
           }),
         );
       } else if (matchPath(pathname, '/complete-multipart-upload')) {
@@ -138,7 +147,7 @@ export function createEdgeStoreFastifyHandler<TCtx>(config: Config<TCtx>) {
           provider,
           router: config.router,
           body: req.body as CompleteMultipartUploadBody,
-          ctxToken: getCookie(req, 'edgestore-ctx'),
+          ctxToken: getCookie(req, resolvedCookieConfig.ctx.name),
         });
         return reply.status(200).send();
       } else if (matchPath(pathname, '/confirm-upload')) {
@@ -147,7 +156,7 @@ export function createEdgeStoreFastifyHandler<TCtx>(config: Config<TCtx>) {
             provider,
             router: config.router,
             body: req.body as ConfirmUploadBody,
-            ctxToken: getCookie(req, 'edgestore-ctx'),
+            ctxToken: getCookie(req, resolvedCookieConfig.ctx.name),
           }),
         );
       } else if (matchPath(pathname, '/delete-file')) {
@@ -156,15 +165,17 @@ export function createEdgeStoreFastifyHandler<TCtx>(config: Config<TCtx>) {
             provider,
             router: config.router,
             body: req.body as DeleteFileBody,
-            ctxToken: getCookie(req, 'edgestore-ctx'),
+            ctxToken: getCookie(req, resolvedCookieConfig.ctx.name),
           }),
         );
       } else if (matchPath(pathname, '/proxy-file')) {
-        const url = req.query ? (req.query as Record<string, any>).url : undefined;
-        
+        const url = req.query
+          ? (req.query as Record<string, any>).url
+          : undefined;
+
         if (typeof url === 'string') {
           const cookieHeader = req.headers.cookie ?? '';
-          
+
           const proxyRes = await fetch(url, {
             headers: {
               cookie: cookieHeader,

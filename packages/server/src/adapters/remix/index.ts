@@ -13,11 +13,13 @@ import {
   completeMultipartUpload,
   confirmUpload,
   deleteFile,
+  getCookieConfig,
   init,
   requestUpload,
   requestUploadParts,
   type CompleteMultipartUploadBody,
   type ConfirmUploadBody,
+  type CookieConfig,
   type DeleteFileBody,
   type RequestUploadBody,
   type RequestUploadPartsParams,
@@ -31,12 +33,14 @@ export type Config<TCtx> = {
   provider?: Provider;
   router: EdgeStoreRouter<TCtx>;
   logLevel?: LogLevel;
+  cookieConfig?: CookieConfig;
 } & (TCtx extends Record<string, never>
   ? object
   : {
       provider?: Provider;
       router: EdgeStoreRouter<TCtx>;
       createContext: (opts: CreateContextOptions) => MaybePromise<TCtx>;
+      cookieConfig?: CookieConfig;
     });
 
 declare const globalThis: {
@@ -60,10 +64,12 @@ function getCookie(req: Request, name: string): string | undefined {
 }
 
 export function createEdgeStoreRemixHandler<TCtx>(config: Config<TCtx>) {
-  const { provider = EdgeStoreProvider() } = config;
+  const { provider = EdgeStoreProvider(), cookieConfig } = config;
   const log = new Logger(config.logLevel);
   globalThis._EDGE_STORE_LOGGER = log;
   log.debug('Creating EdgeStore Remix handler');
+
+  const resolvedCookieConfig = getCookieConfig(cookieConfig);
 
   return async ({ request: req }: { request: Request }) => {
     try {
@@ -90,6 +96,7 @@ export function createEdgeStoreRemixHandler<TCtx>(config: Config<TCtx>) {
           ctx,
           provider,
           router: config.router,
+          cookieConfig,
         });
 
         // Create response with cookies and token
@@ -114,7 +121,7 @@ export function createEdgeStoreRemixHandler<TCtx>(config: Config<TCtx>) {
             provider,
             router: config.router,
             body,
-            ctxToken: getCookie(req, 'edgestore-ctx'),
+            ctxToken: getCookie(req, resolvedCookieConfig.ctx.name),
           }),
         );
       } else if (matchPath(pathname, '/request-upload-parts')) {
@@ -124,7 +131,7 @@ export function createEdgeStoreRemixHandler<TCtx>(config: Config<TCtx>) {
             provider,
             router: config.router,
             body,
-            ctxToken: getCookie(req, 'edgestore-ctx'),
+            ctxToken: getCookie(req, resolvedCookieConfig.ctx.name),
           }),
         );
       } else if (matchPath(pathname, '/complete-multipart-upload')) {
@@ -133,7 +140,7 @@ export function createEdgeStoreRemixHandler<TCtx>(config: Config<TCtx>) {
           provider,
           router: config.router,
           body,
-          ctxToken: getCookie(req, 'edgestore-ctx'),
+          ctxToken: getCookie(req, resolvedCookieConfig.ctx.name),
         });
         return new Response(null, { status: 200 });
       } else if (matchPath(pathname, '/confirm-upload')) {
@@ -143,7 +150,7 @@ export function createEdgeStoreRemixHandler<TCtx>(config: Config<TCtx>) {
             provider,
             router: config.router,
             body,
-            ctxToken: getCookie(req, 'edgestore-ctx'),
+            ctxToken: getCookie(req, resolvedCookieConfig.ctx.name),
           }),
         );
       } else if (matchPath(pathname, '/delete-file')) {
@@ -153,7 +160,7 @@ export function createEdgeStoreRemixHandler<TCtx>(config: Config<TCtx>) {
             provider,
             router: config.router,
             body,
-            ctxToken: getCookie(req, 'edgestore-ctx'),
+            ctxToken: getCookie(req, resolvedCookieConfig.ctx.name),
           }),
         );
       } else if (matchPath(pathname, '/proxy-file')) {

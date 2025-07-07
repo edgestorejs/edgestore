@@ -14,11 +14,13 @@ import {
   completeMultipartUpload,
   confirmUpload,
   deleteFile,
+  getCookieConfig,
   init,
   requestUpload,
   requestUploadParts,
   type CompleteMultipartUploadBody,
   type ConfirmUploadBody,
+  type CookieConfig,
   type DeleteFileBody,
   type RequestUploadBody,
   type RequestUploadPartsParams,
@@ -32,12 +34,14 @@ export type Config<TCtx> = {
   provider?: Provider;
   router: EdgeStoreRouter<TCtx>;
   logLevel?: LogLevel;
+  cookieConfig?: CookieConfig;
 } & (TCtx extends Record<string, never>
   ? object
   : {
       provider?: Provider;
       router: EdgeStoreRouter<TCtx>;
       createContext: (opts: CreateContextOptions) => MaybePromise<TCtx>;
+      cookieConfig?: CookieConfig;
     });
 
 declare const globalThis: {
@@ -54,10 +58,12 @@ function getCookie(c: Context, name: string): string | undefined {
 }
 
 export function createEdgeStoreHonoHandler<TCtx>(config: Config<TCtx>) {
-  const { provider = EdgeStoreProvider() } = config;
+  const { provider = EdgeStoreProvider(), cookieConfig } = config;
   const log = new Logger(config.logLevel);
   globalThis._EDGE_STORE_LOGGER = log;
   log.debug('Creating EdgeStore Hono handler');
+
+  const resolvedCookieConfig = getCookieConfig(cookieConfig);
 
   return async (c: Context) => {
     try {
@@ -83,6 +89,7 @@ export function createEdgeStoreHonoHandler<TCtx>(config: Config<TCtx>) {
           ctx,
           provider,
           router: config.router,
+          cookieConfig,
         });
 
         // Set cookies
@@ -105,7 +112,7 @@ export function createEdgeStoreHonoHandler<TCtx>(config: Config<TCtx>) {
             provider,
             router: config.router,
             body,
-            ctxToken: getCookie(c, 'edgestore-ctx'),
+            ctxToken: getCookie(c, resolvedCookieConfig.ctx.name),
           }),
         );
       } else if (matchPath(pathname, '/request-upload-parts')) {
@@ -115,7 +122,7 @@ export function createEdgeStoreHonoHandler<TCtx>(config: Config<TCtx>) {
             provider,
             router: config.router,
             body,
-            ctxToken: getCookie(c, 'edgestore-ctx'),
+            ctxToken: getCookie(c, resolvedCookieConfig.ctx.name),
           }),
         );
       } else if (matchPath(pathname, '/complete-multipart-upload')) {
@@ -124,7 +131,7 @@ export function createEdgeStoreHonoHandler<TCtx>(config: Config<TCtx>) {
           provider,
           router: config.router,
           body,
-          ctxToken: getCookie(c, 'edgestore-ctx'),
+          ctxToken: getCookie(c, resolvedCookieConfig.ctx.name),
         });
         return c.body(null, 200);
       } else if (matchPath(pathname, '/confirm-upload')) {
@@ -134,7 +141,7 @@ export function createEdgeStoreHonoHandler<TCtx>(config: Config<TCtx>) {
             provider,
             router: config.router,
             body,
-            ctxToken: getCookie(c, 'edgestore-ctx'),
+            ctxToken: getCookie(c, resolvedCookieConfig.ctx.name),
           }),
         );
       } else if (matchPath(pathname, '/delete-file')) {
@@ -144,7 +151,7 @@ export function createEdgeStoreHonoHandler<TCtx>(config: Config<TCtx>) {
             provider,
             router: config.router,
             body,
-            ctxToken: getCookie(c, 'edgestore-ctx'),
+            ctxToken: getCookie(c, resolvedCookieConfig.ctx.name),
           }),
         );
       } else if (matchPath(pathname, '/proxy-file')) {
