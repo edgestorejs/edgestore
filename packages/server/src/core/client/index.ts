@@ -329,10 +329,16 @@ export function initEdgeStoreClient<TRouter extends AnyRouter>(config: {
             // TODO
             throw new Error('Multipart upload not implemented');
           } else if (signedUrl) {
-            await fetch(signedUrl, {
+            const uploadResponse = await fetch(signedUrl, {
               method: 'PUT',
               body: blob,
             });
+
+            if (!uploadResponse.ok) {
+              throw new Error(
+                `Upload failed with status ${uploadResponse.status}: ${uploadResponse.statusText}`,
+              );
+            }
           } else {
             throw new Error('Missing signedUrl');
           }
