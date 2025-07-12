@@ -22,31 +22,147 @@ declare const globalThis: {
   _EDGE_STORE_LOGGER: Logger;
 };
 
+export type CookieOptions = {
+  /**
+   * Cookie path
+   * @default "/"
+   */
+  path?: string;
+  /**
+   * Cookie max age in seconds
+   * @default 2592000 (30 days)
+   */
+  maxAge?: number;
+  /**
+   * Cookie domain
+   */
+  domain?: string;
+  /**
+   * Cookie same site policy
+   */
+  sameSite?: 'strict' | 'lax' | 'none';
+  /**
+   * Cookie secure flag
+   */
+  secure?: boolean;
+  /**
+   * Cookie http only flag
+   */
+  httpOnly?: boolean;
+};
+
+export type CookieConfig = {
+  /**
+   * Context cookie configuration
+   */
+  ctx?: {
+    /**
+     * Name of the context cookie
+     * @default "edgestore-ctx"
+     */
+    name?: string;
+    /**
+     * Cookie options for context cookie
+     */
+    options?: CookieOptions;
+  };
+  /**
+   * Token cookie configuration
+   */
+  token?: {
+    /**
+     * Name of the token cookie
+     * @default "edgestore-token"
+     */
+    name?: string;
+    /**
+     * Cookie options for token cookie
+     */
+    options?: CookieOptions;
+  };
+};
+
+type ResolvedCookieConfig = {
+  ctx: {
+    name: string;
+    options: CookieOptions;
+  };
+  token: {
+    name: string;
+    options: CookieOptions;
+  };
+};
+
+/**
+ * Merges the provided cookie configuration with default values
+ */
+export function getCookieConfig(
+  cookieConfig?: CookieConfig,
+): ResolvedCookieConfig {
+  const defaultOptions: CookieOptions = {
+    path: '/',
+    maxAge: DEFAULT_MAX_AGE,
+  };
+
+  // Helper function to merge options, filtering out undefined values
+  const mergeOptions = (configOptions?: CookieOptions): CookieOptions => {
+    const merged = { ...defaultOptions };
+
+    if (configOptions) {
+      Object.keys(configOptions).forEach((key) => {
+        const value = configOptions[key as keyof CookieOptions];
+        if (value !== undefined) {
+          (merged as any)[key] = value;
+        }
+      });
+    }
+
+    return merged;
+  };
+
+  return {
+    ctx: {
+      name: cookieConfig?.ctx?.name ?? 'edgestore-ctx',
+      options: mergeOptions(cookieConfig?.ctx?.options),
+    },
+    token: {
+      name: cookieConfig?.token?.name ?? 'edgestore-token',
+      options: mergeOptions(cookieConfig?.token?.options),
+    },
+  };
+}
+
 export async function init<TCtx>(params: {
   provider: Provider;
   router: EdgeStoreRouter<TCtx>;
   ctx: TCtx;
+  cookieConfig?: CookieConfig;
 }): Promise<SharedInitRes> {
   const log = globalThis._EDGE_STORE_LOGGER;
-  const { ctx, provider, router } = params;
+  const { ctx, provider, router, cookieConfig } = params;
   log.debug('Running [init]', { ctx });
+
+  const resolvedCookieConfig = getCookieConfig(cookieConfig);
+
   const ctxToken = await encryptJWT(ctx);
   const { token } = await provider.init({
     ctx,
     router: router,
   });
   const newCookies = [
-    serialize('edgestore-ctx', ctxToken, {
-      path: '/',
-      maxAge: DEFAULT_MAX_AGE,
-    }),
+    serialize(
+      resolvedCookieConfig.ctx.name,
+      ctxToken,
+      resolvedCookieConfig.ctx.options,
+    ),
   ];
   if (token) {
     newCookies.push(
-      serialize('edgestore-token', token, {
-        path: '/',
-        maxAge: DEFAULT_MAX_AGE,
-      }),
+      serialize(
+        resolvedCookieConfig.token.name,
+        token,
+        resolvedCookieConfig.token.options,
+      ),
     );
   }
   const baseUrl = await provider.getBaseUrl();

@@ -13,11 +13,13 @@ import {
   completeMultipartUpload,
   confirmUpload,
   deleteFile,
+  getCookieConfig,
   init,
   requestUpload,
   requestUploadParts,
   type CompleteMultipartUploadBody,
   type ConfirmUploadBody,
+  type CookieConfig,
   type DeleteFileBody,
   type RequestUploadBody,
   type RequestUploadPartsParams,
@@ -31,12 +33,14 @@ export type Config<TCtx> = {
   provider?: Provider;
   router: EdgeStoreRouter<TCtx>;
   logLevel?: LogLevel;
+  cookieConfig?: CookieConfig;
 } & (TCtx extends Record<string, never>
   ? object
   : {
       provider?: Provider;
       router: EdgeStoreRouter<TCtx>;
       createContext: (opts: CreateContextOptions) => MaybePromise<TCtx>;
+      cookieConfig?: CookieConfig;
     });
 
 declare const globalThis: {
@@ -60,10 +64,12 @@ function getCookie(req: Request, cookieName: string): string | undefined {
 }
 
 export function createEdgeStoreStartHandler<TCtx>(config: Config<TCtx>) {
-  const { provider = EdgeStoreProvider() } = config;
+  const { provider = EdgeStoreProvider(), cookieConfig } = config;
   const log = new Logger(config.logLevel);
   globalThis._EDGE_STORE_LOGGER = log;
   log.debug('Creating EdgeStore TanStack Start handler');
+
+  const resolvedCookieConfig = getCookieConfig(cookieConfig);
 
   return async ({ request }: { request: Request }) => {
     try {
@@ -88,9 +94,12 @@ export function createEdgeStoreStartHandler<TCtx>(config: Config<TCtx>) {
           ctx,
           provider,
           router: config.router,
+          cookieConfig,
         });
         const headers = new Headers();
-        newCookies.forEach((cookie) => headers.append('Set-Cookie', cookie));
+        newCookies.forEach((cookie) => {
+          headers.append('Set-Cookie', cookie);
+        });
         headers.set('Content-Type', 'application/json');
         return new Response(JSON.stringify({ token, baseUrl }), {
           status: 200,
@@ -98,7 +107,7 @@ export function createEdgeStoreStartHandler<TCtx>(config: Config<TCtx>) {
         });
       } else if (matchPath(pathname, '/request-upload')) {
         const body = await request.json();
-        const ctxToken = getCookie(request, 'edgestore-ctx');
+        const ctxToken = getCookie(request, resolvedCookieConfig.ctx.name);
         const result = await requestUpload({
           provider,
           router: config.router,
@@ -111,7 +120,7 @@ export function createEdgeStoreStartHandler<TCtx>(config: Config<TCtx>) {
         });
       } else if (matchPath(pathname, '/request-upload-parts')) {
         const body = await request.json();
-        const ctxToken = getCookie(request, 'edgestore-ctx');
+        const ctxToken = getCookie(request, resolvedCookieConfig.ctx.name);
         const result = await requestUploadParts({
           provider,
           router: config.router,
@@ -124,7 +133,7 @@ export function createEdgeStoreStartHandler<TCtx>(config: Config<TCtx>) {
         });
       } else if (matchPath(pathname, '/complete-multipart-upload')) {
         const body = await request.json();
-        const ctxToken = getCookie(request, 'edgestore-ctx');
+        const ctxToken = getCookie(request, resolvedCookieConfig.ctx.name);
         await completeMultipartUpload({
           provider,
           router: config.router,
@@ -134,7 +143,7 @@ export function createEdgeStoreStartHandler<TCtx>(config: Config<TCtx>) {
         return new Response(null, { status: 200 });
       } else if (matchPath(pathname, '/confirm-upload')) {
         const body = await request.json();
-        const ctxToken = getCookie(request, 'edgestore-ctx');
+        const ctxToken = getCookie(request, resolvedCookieConfig.ctx.name);
         const result = await confirmUpload({
           provider,
           router: config.router,
@@ -147,7 +156,7 @@ export function createEdgeStoreStartHandler<TCtx>(config: Config<TCtx>) {
         });
       } else if (matchPath(pathname, '/delete-file')) {
         const body = await request.json();
-        const ctxToken = getCookie(request, 'edgestore-ctx');
+        const ctxToken = getCookie(request, resolvedCookieConfig.ctx.name);
         const result = await deleteFile({
           provider,
           router: config.router,

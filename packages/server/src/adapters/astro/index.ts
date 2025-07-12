@@ -14,11 +14,13 @@ import {
   completeMultipartUpload,
   confirmUpload,
   deleteFile,
+  getCookieConfig,
   init,
   requestUpload,
   requestUploadParts,
   type CompleteMultipartUploadBody,
   type ConfirmUploadBody,
+  type CookieConfig,
   type DeleteFileBody,
   type RequestUploadBody,
   type RequestUploadPartsParams,
@@ -28,12 +30,14 @@ export type Config<TCtx> = {
   provider?: Provider;
   router: EdgeStoreRouter<TCtx>;
   logLevel?: LogLevel;
+  cookieConfig?: CookieConfig;
 } & (TCtx extends Record<string, never>
   ? object
   : {
       provider?: Provider;
       router: EdgeStoreRouter<TCtx>;
       createContext: (opts: APIContext) => MaybePromise<TCtx>;
+      cookieConfig?: CookieConfig;
     });
 
 declare const globalThis: {
@@ -57,10 +61,12 @@ function getCookie(request: Request, name: string): string | undefined {
 }
 
 export function createEdgeStoreAstroHandler<TCtx>(config: Config<TCtx>) {
-  const { provider = EdgeStoreProvider() } = config;
+  const { provider = EdgeStoreProvider(), cookieConfig } = config;
   const log = new Logger(config.logLevel);
   globalThis._EDGE_STORE_LOGGER = log;
   log.debug('Creating EdgeStore Astro handler');
+
+  const resolvedCookieConfig = getCookieConfig(cookieConfig);
 
   return async (context: APIContext) => {
     try {
@@ -87,6 +93,7 @@ export function createEdgeStoreAstroHandler<TCtx>(config: Config<TCtx>) {
           ctx,
           provider,
           router: config.router,
+          cookieConfig,
         });
 
         const headers = new Headers();
@@ -114,7 +121,7 @@ export function createEdgeStoreAstroHandler<TCtx>(config: Config<TCtx>) {
           provider,
           router: config.router,
           body,
-          ctxToken: getCookie(request, 'edgestore-ctx'),
+          ctxToken: getCookie(request, resolvedCookieConfig.ctx.name),
         });
 
         return new Response(JSON.stringify(result), {
@@ -126,7 +133,7 @@ export function createEdgeStoreAstroHandler<TCtx>(config: Config<TCtx>) {
           provider,
           router: config.router,
           body,
-          ctxToken: getCookie(request, 'edgestore-ctx'),
+          ctxToken: getCookie(request, resolvedCookieConfig.ctx.name),
         });
 
         return new Response(JSON.stringify(result), {
@@ -138,7 +145,7 @@ export function createEdgeStoreAstroHandler<TCtx>(config: Config<TCtx>) {
           provider,
           router: config.router,
           body,
-          ctxToken: getCookie(request, 'edgestore-ctx'),
+          ctxToken: getCookie(request, resolvedCookieConfig.ctx.name),
         });
 
         return new Response(null, { status: 200 });
@@ -148,7 +155,7 @@ export function createEdgeStoreAstroHandler<TCtx>(config: Config<TCtx>) {
           provider,
           router: config.router,
           body,
-          ctxToken: getCookie(request, 'edgestore-ctx'),
+          ctxToken: getCookie(request, resolvedCookieConfig.ctx.name),
         });
 
         return new Response(JSON.stringify(result), {
@@ -160,7 +167,7 @@ export function createEdgeStoreAstroHandler<TCtx>(config: Config<TCtx>) {
           provider,
           router: config.router,
           body,
-          ctxToken: getCookie(request, 'edgestore-ctx'),
+          ctxToken: getCookie(request, resolvedCookieConfig.ctx.name),
         });
 
         return new Response(JSON.stringify(result), {
@@ -199,11 +206,12 @@ export function createEdgeStoreAstroHandler<TCtx>(config: Config<TCtx>) {
 
         return new Response(JSON.stringify(err.formattedJson()), {
           status: EDGE_STORE_ERROR_CODES[err.code as EdgeStoreErrorCodeKey],
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+          },
         });
       } else {
         log.error(err);
-
         return new Response(
           JSON.stringify(
             new EdgeStoreError({
@@ -213,7 +221,9 @@ export function createEdgeStoreAstroHandler<TCtx>(config: Config<TCtx>) {
           ),
           {
             status: 500,
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+            },
           },
         );
       }
