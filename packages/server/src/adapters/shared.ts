@@ -167,12 +167,19 @@ export async function init<TCtx>(params: {
   }
   const baseUrl = await provider.getBaseUrl();
 
-  log.debug('Finished [init]', { ctx, newCookies, token, baseUrl });
+  log.debug('Finished [init]', {
+    ctx,
+    newCookies,
+    token,
+    baseUrl,
+    providerName: provider.name,
+  });
 
   return {
     newCookies,
     token,
     baseUrl,
+    providerName: provider.name,
   };
 }
 

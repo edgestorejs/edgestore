@@ -85,7 +85,7 @@ export function createEdgeStoreHonoHandler<TCtx>(config: Config<TCtx>) {
             cause: err instanceof Error ? err : undefined,
           });
         }
-        const { newCookies, token, baseUrl } = await init({
+        const { newCookies, token, baseUrl, providerName } = await init({
           ctx,
           provider,
           router: config.router,
@@ -104,6 +104,7 @@ export function createEdgeStoreHonoHandler<TCtx>(config: Config<TCtx>) {
         return c.json({
           token,
           baseUrl,
+          providerName,
         });
       } else if (matchPath(pathname, '/request-upload')) {
         const body = await c.req.json<RequestUploadBody>();

@@ -56,6 +56,7 @@ export function AzureProvider(options?: AzureProviderOptions): Provider {
   );
 
   return {
+    name: 'azure',
     async init() {
       return {};
     },

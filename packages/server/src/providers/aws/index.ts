@@ -120,6 +120,7 @@ export function AWSProvider(options?: AWSProviderOptions): Provider {
   });
 
   return {
+    name: 'aws',
     async init() {
       return {};
     },

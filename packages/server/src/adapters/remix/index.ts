@@ -92,7 +92,7 @@ export function createEdgeStoreRemixHandler<TCtx>(config: Config<TCtx>) {
             cause: err instanceof Error ? err : undefined,
           });
         }
-        const { newCookies, token, baseUrl } = await init({
+        const { newCookies, token, baseUrl, providerName } = await init({
           ctx,
           provider,
           router: config.router,
@@ -110,7 +110,7 @@ export function createEdgeStoreRemixHandler<TCtx>(config: Config<TCtx>) {
           responseHeaders.append('Set-Cookie', newCookies);
         }
 
-        return new Response(JSON.stringify({ token, baseUrl }), {
+        return new Response(JSON.stringify({ token, baseUrl, providerName }), {
           headers: responseHeaders,
           status: 200,
         });
