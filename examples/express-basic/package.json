@@ -1,12 +1,12 @@
 {
   "name": "express-basic",
-  "version": "0.5.3",
+  "version": "0.5.4",
   "private": true,
   "scripts": {
     "dev": "dotenv -e .env.local -- tsx src/index.ts"
   },
   "dependencies": {
-    "@edgestore/server": "^0.5.3",
+    "@edgestore/server": "^0.5.4",
     "body-parser": "^1.20.2",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
