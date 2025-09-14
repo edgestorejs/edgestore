@@ -49,6 +49,7 @@ export function EdgeStoreProvider(
     secretKey,
   });
   return {
+    name: 'edgestore',
     init: async ({ ctx, router }) => {
       const token = await edgeStoreSdk.getToken({
         ctx,

@@ -101,7 +101,7 @@ export function createEdgeStoreFastifyHandler<TCtx>(config: Config<TCtx>) {
             cause: err instanceof Error ? err : undefined,
           });
         }
-        const { newCookies, token, baseUrl } = await init({
+        const { newCookies, token, baseUrl, providerName } = await init({
           ctx,
           provider,
           router: config.router,
@@ -123,6 +123,7 @@ export function createEdgeStoreFastifyHandler<TCtx>(config: Config<TCtx>) {
         return reply.send({
           token,
           baseUrl,
+          providerName,
         });
       } else if (matchPath(pathname, '/request-upload')) {
         return reply.send(

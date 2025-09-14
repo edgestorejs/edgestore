@@ -123,6 +123,7 @@ export type DeleteFileRes = {
 };
 
 export type Provider = {
+  name: string;
   init: (params: InitParams) => MaybePromise<InitRes>;
   getBaseUrl: () => MaybePromise<string>;
   getFile: (params: GetFileParams) => MaybePromise<GetFileRes>;

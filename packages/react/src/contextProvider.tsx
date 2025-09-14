@@ -157,27 +157,38 @@ function EdgeStoreProviderInner<TRouter extends AnyRouter>({
       });
       if (res.ok) {
         const json = await res.json();
-        const innerRes = await fetch(`${DEFAULT_BASE_URL}/_init`, {
-          method: 'GET',
-          credentials: 'include',
-          headers: {
-            'x-edgestore-token': json.token,
-          },
-        });
-        if (innerRes.ok) {
-          // update state
+
+        // Only call _init API if provider is edgestore
+        if (json.providerName === 'edgestore') {
+          const innerRes = await fetch(`${DEFAULT_BASE_URL}/_init`, {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+              'x-edgestore-token': json.token,
+            },
+          });
+          if (innerRes.ok) {
+            // update state
+            setState({
+              loading: false,
+              initialized: true,
+              error: false,
+            });
+          } else {
+            setState({
+              loading: false,
+              initialized: false,
+              error: true,
+            });
+            throw new EdgeStoreClientError("Couldn't initialize EdgeStore.");
+          }
+        } else {
+          // For non-edgestore providers, just update state without calling _init
           setState({
             loading: false,
             initialized: true,
             error: false,
           });
-        } else {
-          setState({
-            loading: false,
-            initialized: false,
-            error: true,
-          });
-          throw new EdgeStoreClientError("Couldn't initialize EdgeStore.");
         }
       } else {
         setState({

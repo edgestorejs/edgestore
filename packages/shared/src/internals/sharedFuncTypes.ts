@@ -10,6 +10,7 @@ export type SharedInitRes = {
   newCookies: string[];
   token: string | undefined;
   baseUrl: string;
+  providerName: string;
 };
 export type SharedRequestUploadRes = Simplify<
   RequestUploadRes & {
