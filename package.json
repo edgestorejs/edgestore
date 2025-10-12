@@ -2,6 +2,7 @@
   "name": "root",
   "version": "0.0.0",
   "private": true,
+  "license": "MIT",
   "scripts": {
     "build": "turbo run build --filter=@edgestore/*",
     "watch": "turbo run watch --parallel",
