@@ -14,9 +14,9 @@
     "@aws-sdk/s3-request-presigner": "^3.420.0",
     "@edgestore/react": "^0.5.4",
     "@edgestore/server": "^0.5.4",
-    "next": "15.3.1",
-    "react": "19.1.0",
-    "react-dom": "19.1.0",
+    "next": "15.3.6",
+    "react": "19.1.2",
+    "react-dom": "19.1.2",
     "zod": "3.25.42"
   },
   "devDependencies": {
