@@ -14,8 +14,8 @@
     "@edgestore/react": "^0.5.4",
     "@edgestore/server": "^0.5.4",
     "astro": "^5.7.12",
-    "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "react": "19.1.4",
+    "react-dom": "19.1.4"
   },
   "devDependencies": {
     "@types/react": "^19",
