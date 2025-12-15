@@ -52,6 +52,7 @@
     "dist",
     "src",
     "README.md",
+    "LICENSE",
     "package.json",
     "utils",
     "shared",
