@@ -1,6 +1,6 @@
 {
   "name": "hono-basic",
-  "version": "0.5.4",
+  "version": "0.5.5",
   "private": true,
   "type": "module",
   "scripts": {
@@ -9,7 +9,7 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
-    "@edgestore/server": "^0.5.4",
+    "@edgestore/server": "^0.5.5",
     "@hono/node-server": "^1.14.1",
     "hono": "^4.7.9"
   },
