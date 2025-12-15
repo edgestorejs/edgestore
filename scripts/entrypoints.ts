@@ -32,7 +32,7 @@ export async function generateEntrypoints(inputs: string[]) {
     fs.readFileSync(path.resolve('package.json'), 'utf8'),
   );
 
-  pkgJson.files = ['dist', 'src', 'README.md'];
+  pkgJson.files = ['dist', 'src', 'README.md', 'LICENSE'];
   pkgJson.exports = {
     './package.json': './package.json',
     '.': {

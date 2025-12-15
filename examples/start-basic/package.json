@@ -1,6 +1,6 @@
 {
   "name": "start-basic",
-  "version": "0.5.4",
+  "version": "0.5.6",
   "private": true,
   "sideEffects": false,
   "type": "module",
@@ -10,8 +10,8 @@
     "start": "vinxi start"
   },
   "dependencies": {
-    "@edgestore/react": "^0.5.4",
-    "@edgestore/server": "^0.5.4",
+    "@edgestore/react": "^0.5.6",
+    "@edgestore/server": "^0.5.6",
     "@tanstack/react-router": "^1.106.0",
     "@tanstack/router-devtools": "^1.106.0",
     "@tanstack/start": "^1.106.0",

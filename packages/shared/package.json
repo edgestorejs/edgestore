@@ -1,6 +1,6 @@
 {
   "name": "@edgestore/shared",
-  "version": "0.5.4",
+  "version": "0.5.6",
   "description": "Upload files with ease from React/Next.js",
   "homepage": "https://edgestore.dev",
   "repository": "https://github.com/edgestorejs/edgestore.git",
@@ -37,6 +37,7 @@
     "dist",
     "src",
     "README.md",
+    "LICENSE",
     "package.json",
     "!**/*.test.*"
   ],
