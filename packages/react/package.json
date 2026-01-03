@@ -82,6 +82,8 @@
     "@swc/helpers": "0.5.3",
     "@types/cookie": "^0.5.1",
     "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
     "@types/uuid": "^9.0.1",
     "next": "15.3.8",
     "react": "19.1.4",
