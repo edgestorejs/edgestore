@@ -842,8 +842,8 @@ importers:
         specifier: ^1.0.4
         version: 1.0.4
       cookie:
-        specifier: ^0.5.0
-        version: 0.5.0
+        specifier: ^0.7.0
+        version: 0.7.2
       jose:
         specifier: ^4.13.1
         version: 4.13.1
@@ -888,8 +888,8 @@ importers:
         specifier: ^1.0.4
         version: 1.0.4
       cookie:
-        specifier: ^0.5.0
-        version: 0.5.0
+        specifier: ^0.7.0
+        version: 0.7.2
       jose:
         specifier: ^4.13.1
         version: 4.13.1
