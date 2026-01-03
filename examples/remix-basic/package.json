@@ -1,6 +1,6 @@
 {
   "name": "remix-basic",
-  "version": "0.5.6",
+  "version": "0.5.7",
   "private": true,
   "type": "module",
   "scripts": {
@@ -10,8 +10,8 @@
     "typecheck": "react-router typegen && tsc"
   },
   "dependencies": {
-    "@edgestore/react": "^0.5.6",
-    "@edgestore/server": "^0.5.6",
+    "@edgestore/react": "^0.5.7",
+    "@edgestore/server": "^0.5.7",
     "@react-router/node": "^7.5.3",
     "@react-router/serve": "^7.5.3",
     "isbot": "^5.1.27",
