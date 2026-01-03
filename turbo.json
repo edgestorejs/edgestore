@@ -1,7 +1,23 @@
 {
   "$schema": "https://turborepo.com/schema.json",
   "ui": "tui",
-  "globalEnv": ["NODE_ENV", "ROLLUP_WATCH"],
+  "globalEnv": [
+    "NODE_ENV",
+    "ROLLUP_WATCH",
+    "DASHBOARD_API_KEY",
+    "DEV",
+    "EDGE_STORE_ACCESS_KEY",
+    "EDGE_STORE_SECRET_KEY",
+    "GITHUB_TOKEN",
+    "NEXT_PUBLIC_BASE_PATH",
+    "NEXT_PUBLIC_DASHBOARD_URL",
+    "NEXT_PUBLIC_EDGE_STORE_BASE_URL",
+    "NEXT_PUBLIC_POSTHOG_API_HOST",
+    "NEXT_PUBLIC_POSTHOG_KEY",
+    "NEXT_PUBLIC_POSTHOG_UI_HOST",
+    "PORT",
+    "SKIP_ENV_VALIDATION"
+  ],
   "tasks": {
     "codegen:entrypoints": {
       "outputs": [

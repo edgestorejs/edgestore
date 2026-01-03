@@ -79,6 +79,7 @@ const config = {
       },
     ],
     'max-params': ['error', 3],
+    'turbo/no-undeclared-env-vars': 'warn',
   },
   overrides: [
     {
