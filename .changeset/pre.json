@@ -21,5 +21,7 @@
     "@edgestore/server": "0.5.7",
     "@edgestore/shared": "0.5.7"
   },
-  "changesets": []
+  "changesets": [
+    "healthy-ghosts-cross"
+  ]
 }
