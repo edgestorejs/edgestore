@@ -112,7 +112,7 @@
   "dependencies": {
     "@edgestore/shared": "0.5.6",
     "@panva/hkdf": "^1.0.4",
-    "cookie": "^0.5.0",
+    "cookie": "^0.7.0",
     "jose": "^4.13.1",
     "uuid": "^9.0.0"
   },
