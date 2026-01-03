@@ -1,6 +1,6 @@
 {
   "name": "start-basic",
-  "version": "0.5.7",
+  "version": "0.1.0",
   "private": true,
   "sideEffects": false,
   "type": "module",

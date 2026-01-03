@@ -1,6 +1,6 @@
 {
   "name": "express-basic",
-  "version": "0.5.7",
+  "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "dotenv -e .env.local -- tsx src/index.ts"
