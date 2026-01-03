@@ -5,9 +5,9 @@
   "homepage": "https://edgestore.dev",
   "repository": "https://github.com/edgestorejs/edgestore.git",
   "author": "Ravi <me@ravi.com>",
-  "main": "dist/index.js",
-  "module": "dist/index.mjs",
-  "typings": "dist/index.d.ts",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.cts",
   "keywords": [
     "react",
     "nodejs",
@@ -20,32 +20,51 @@
     "edge-store"
   ],
   "scripts": {
-    "build": "rollup --config rollup.config.ts --configPlugin rollup-plugin-swc3",
-    "dev": "pnpm build --watch",
-    "codegen:entrypoints": "tsx entrypoints.script.ts",
+    "build": "tsdown",
+    "dev": "tsdown --watch",
     "lint": "eslint --cache --ext \".js,.ts,.tsx\" --ignore-path ../../.gitignore --report-unused-disable-directives src"
   },
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js",
-      "default": "./dist/index.js"
-    },
-    "./utils": {
-      "import": "./dist/utils/index.mjs",
-      "require": "./dist/utils/index.js",
-      "default": "./dist/utils/index.js"
-    },
-    "./shared": {
-      "import": "./dist/shared/index.mjs",
-      "require": "./dist/shared/index.js",
-      "default": "./dist/shared/index.js"
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
     },
     "./errors": {
-      "import": "./dist/errors/index.mjs",
-      "require": "./dist/errors/index.js",
-      "default": "./dist/errors/index.js"
+      "import": {
+        "types": "./dist/errors/index.d.mts",
+        "default": "./dist/errors/index.mjs"
+      },
+      "require": {
+        "types": "./dist/errors/index.d.cts",
+        "default": "./dist/errors/index.cjs"
+      }
+    },
+    "./shared": {
+      "import": {
+        "types": "./dist/shared/index.d.mts",
+        "default": "./dist/shared/index.mjs"
+      },
+      "require": {
+        "types": "./dist/shared/index.d.cts",
+        "default": "./dist/shared/index.cjs"
+      }
+    },
+    "./utils": {
+      "import": {
+        "types": "./dist/utils/index.d.mts",
+        "default": "./dist/utils/index.mjs"
+      },
+      "require": {
+        "types": "./dist/utils/index.d.cts",
+        "default": "./dist/utils/index.cjs"
+      }
     }
   },
   "files": [
@@ -54,9 +73,9 @@
     "README.md",
     "LICENSE",
     "package.json",
-    "utils",
-    "shared",
     "errors",
+    "shared",
+    "utils",
     "!**/*.test.*"
   ],
   "private": false,

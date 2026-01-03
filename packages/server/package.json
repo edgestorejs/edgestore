@@ -5,9 +5,9 @@
   "homepage": "https://edgestore.dev",
   "repository": "https://github.com/edgestorejs/edgestore.git",
   "author": "Ravi <me@ravi.com>",
-  "main": "dist/index.js",
-  "module": "dist/index.mjs",
-  "typings": "dist/index.d.ts",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.cts",
   "keywords": [
     "react",
     "nodejs",
@@ -20,77 +20,141 @@
     "edge-store"
   ],
   "scripts": {
-    "build": "rollup --config rollup.config.ts --configPlugin rollup-plugin-swc3",
-    "dev": "pnpm build --watch",
-    "codegen:entrypoints": "tsx entrypoints.script.ts",
+    "build": "tsdown",
+    "dev": "tsdown --watch",
     "lint": "eslint --cache --ext \".js,.ts,.tsx\" --ignore-path ../../.gitignore --report-unused-disable-directives src"
   },
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js",
-      "default": "./dist/index.js"
-    },
-    "./core": {
-      "import": "./dist/core/index.mjs",
-      "require": "./dist/core/index.js",
-      "default": "./dist/core/index.js"
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
     },
     "./adapters/astro": {
-      "import": "./dist/adapters/astro/index.mjs",
-      "require": "./dist/adapters/astro/index.js",
-      "default": "./dist/adapters/astro/index.js"
+      "import": {
+        "types": "./dist/adapters/astro/index.d.mts",
+        "default": "./dist/adapters/astro/index.mjs"
+      },
+      "require": {
+        "types": "./dist/adapters/astro/index.d.cts",
+        "default": "./dist/adapters/astro/index.cjs"
+      }
     },
     "./adapters/express": {
-      "import": "./dist/adapters/express/index.mjs",
-      "require": "./dist/adapters/express/index.js",
-      "default": "./dist/adapters/express/index.js"
+      "import": {
+        "types": "./dist/adapters/express/index.d.mts",
+        "default": "./dist/adapters/express/index.mjs"
+      },
+      "require": {
+        "types": "./dist/adapters/express/index.d.cts",
+        "default": "./dist/adapters/express/index.cjs"
+      }
     },
     "./adapters/fastify": {
-      "import": "./dist/adapters/fastify/index.mjs",
-      "require": "./dist/adapters/fastify/index.js",
-      "default": "./dist/adapters/fastify/index.js"
+      "import": {
+        "types": "./dist/adapters/fastify/index.d.mts",
+        "default": "./dist/adapters/fastify/index.mjs"
+      },
+      "require": {
+        "types": "./dist/adapters/fastify/index.d.cts",
+        "default": "./dist/adapters/fastify/index.cjs"
+      }
     },
     "./adapters/hono": {
-      "import": "./dist/adapters/hono/index.mjs",
-      "require": "./dist/adapters/hono/index.js",
-      "default": "./dist/adapters/hono/index.js"
-    },
-    "./adapters/next/pages": {
-      "import": "./dist/adapters/next/pages/index.mjs",
-      "require": "./dist/adapters/next/pages/index.js",
-      "default": "./dist/adapters/next/pages/index.js"
+      "import": {
+        "types": "./dist/adapters/hono/index.d.mts",
+        "default": "./dist/adapters/hono/index.mjs"
+      },
+      "require": {
+        "types": "./dist/adapters/hono/index.d.cts",
+        "default": "./dist/adapters/hono/index.cjs"
+      }
     },
     "./adapters/next/app": {
-      "import": "./dist/adapters/next/app/index.mjs",
-      "require": "./dist/adapters/next/app/index.js",
-      "default": "./dist/adapters/next/app/index.js"
+      "import": {
+        "types": "./dist/adapters/next/app/index.d.mts",
+        "default": "./dist/adapters/next/app/index.mjs"
+      },
+      "require": {
+        "types": "./dist/adapters/next/app/index.d.cts",
+        "default": "./dist/adapters/next/app/index.cjs"
+      }
+    },
+    "./adapters/next/pages": {
+      "import": {
+        "types": "./dist/adapters/next/pages/index.d.mts",
+        "default": "./dist/adapters/next/pages/index.mjs"
+      },
+      "require": {
+        "types": "./dist/adapters/next/pages/index.d.cts",
+        "default": "./dist/adapters/next/pages/index.cjs"
+      }
     },
     "./adapters/remix": {
-      "import": "./dist/adapters/remix/index.mjs",
-      "require": "./dist/adapters/remix/index.js",
-      "default": "./dist/adapters/remix/index.js"
+      "import": {
+        "types": "./dist/adapters/remix/index.d.mts",
+        "default": "./dist/adapters/remix/index.mjs"
+      },
+      "require": {
+        "types": "./dist/adapters/remix/index.d.cts",
+        "default": "./dist/adapters/remix/index.cjs"
+      }
     },
     "./adapters/start": {
-      "import": "./dist/adapters/start/index.mjs",
-      "require": "./dist/adapters/start/index.js",
-      "default": "./dist/adapters/start/index.js"
+      "import": {
+        "types": "./dist/adapters/start/index.d.mts",
+        "default": "./dist/adapters/start/index.mjs"
+      },
+      "require": {
+        "types": "./dist/adapters/start/index.d.cts",
+        "default": "./dist/adapters/start/index.cjs"
+      }
+    },
+    "./core": {
+      "import": {
+        "types": "./dist/core/index.d.mts",
+        "default": "./dist/core/index.mjs"
+      },
+      "require": {
+        "types": "./dist/core/index.d.cts",
+        "default": "./dist/core/index.cjs"
+      }
     },
     "./providers/aws": {
-      "import": "./dist/providers/aws/index.mjs",
-      "require": "./dist/providers/aws/index.js",
-      "default": "./dist/providers/aws/index.js"
+      "import": {
+        "types": "./dist/providers/aws/index.d.mts",
+        "default": "./dist/providers/aws/index.mjs"
+      },
+      "require": {
+        "types": "./dist/providers/aws/index.d.cts",
+        "default": "./dist/providers/aws/index.cjs"
+      }
     },
     "./providers/azure": {
-      "import": "./dist/providers/azure/index.mjs",
-      "require": "./dist/providers/azure/index.js",
-      "default": "./dist/providers/azure/index.js"
+      "import": {
+        "types": "./dist/providers/azure/index.d.mts",
+        "default": "./dist/providers/azure/index.mjs"
+      },
+      "require": {
+        "types": "./dist/providers/azure/index.d.cts",
+        "default": "./dist/providers/azure/index.cjs"
+      }
     },
     "./providers/edgestore": {
-      "import": "./dist/providers/edgestore/index.mjs",
-      "require": "./dist/providers/edgestore/index.js",
-      "default": "./dist/providers/edgestore/index.js"
+      "import": {
+        "types": "./dist/providers/edgestore/index.d.mts",
+        "default": "./dist/providers/edgestore/index.mjs"
+      },
+      "require": {
+        "types": "./dist/providers/edgestore/index.d.cts",
+        "default": "./dist/providers/edgestore/index.cjs"
+      }
     }
   },
   "files": [
@@ -99,8 +163,8 @@
     "README.md",
     "LICENSE",
     "package.json",
-    "core",
     "adapters",
+    "core",
     "providers",
     "!**/*.test.*"
   ],

@@ -3,7 +3,6 @@
   "ui": "tui",
   "globalEnv": [
     "NODE_ENV",
-    "ROLLUP_WATCH",
     "DASHBOARD_API_KEY",
     "DEV",
     "EDGE_STORE_ACCESS_KEY",
@@ -19,17 +18,8 @@
     "SKIP_ENV_VALIDATION"
   ],
   "tasks": {
-    "codegen:entrypoints": {
-      "outputs": [
-        "server/**",
-        "core/**",
-        "adapters/**",
-        "providers/**",
-        "package.json"
-      ]
-    },
     "build": {
-      "dependsOn": ["^build", "codegen:entrypoints"],
+      "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": [".next/**", "!.next/cache/**", "dist/**", "build/**"]
     },
