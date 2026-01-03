@@ -3,7 +3,6 @@
   "version": "0.5.7",
   "private": true,
   "type": "module",
-  "packageManager": "pnpm@9.15.0",
   "scripts": {
     "build": "next build",
     "dev": "next dev --turbo",

@@ -1,7 +1,8 @@
 {
-  "$schema": "https://turbo.build/schema.json",
-  "globalDependencies": ["**/.env.*local"],
-  "pipeline": {
+  "$schema": "https://turborepo.com/schema.json",
+  "ui": "tui",
+  "globalEnv": ["NODE_ENV", "ROLLUP_WATCH"],
+  "tasks": {
     "codegen:entrypoints": {
       "outputs": [
         "server/**",
@@ -13,12 +14,11 @@
     },
     "build": {
       "dependsOn": ["^build", "codegen:entrypoints"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": [".next/**", "!.next/cache/**", "dist/**", "build/**"]
     },
     "lint": {
-      "dependsOn": ["^build"],
-      "outputs": [],
-      "cache": true
+      "dependsOn": ["^build"]
     },
     "watch": {},
     "dev": {
