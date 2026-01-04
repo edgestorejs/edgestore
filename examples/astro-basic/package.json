@@ -11,8 +11,8 @@
   },
   "dependencies": {
     "@astrojs/react": "^4.2.7",
-    "@edgestore/react": "^0.6.0-canary.3",
-    "@edgestore/server": "^0.6.0-canary.3",
+    "@edgestore/react": "^0.6.0",
+    "@edgestore/server": "^0.6.0",
     "astro": "^5.7.12",
     "react": "19.1.4",
     "react-dom": "19.1.4"

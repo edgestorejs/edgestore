@@ -1,6 +1,6 @@
 {
   "name": "@edgestore/shared",
-  "version": "0.6.0-canary.3",
+  "version": "0.6.0",
   "description": "Upload files with ease from React/Next.js",
   "homepage": "https://edgestore.dev",
   "license": "MIT",
