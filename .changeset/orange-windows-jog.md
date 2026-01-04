@@ -1,7 +1,7 @@
 ---
-'@edgestore/server': patch
-'@edgestore/shared': patch
-'@edgestore/react': patch
+'@edgestore/server': minor
+'@edgestore/shared': minor
+'@edgestore/react': minor
 ---
 
-Upgrade rollup
+Upgrade rollup and release flow

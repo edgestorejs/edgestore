@@ -1,5 +1,5 @@
 {
-  "mode": "pre",
+  "mode": "exit",
   "tag": "canary",
   "initialVersions": {
     "docs": "0.5.7",
@@ -22,8 +22,6 @@
     "@edgestore/shared": "0.5.7"
   },
   "changesets": [
-    "blue-chairs-lay",
-    "healthy-ghosts-cross",
     "orange-windows-jog"
   ]
 }
