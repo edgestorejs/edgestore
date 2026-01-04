@@ -6,7 +6,7 @@
     "dev": "dotenv -e .env.local -- tsx src/index.ts"
   },
   "dependencies": {
-    "@edgestore/server": "^0.6.0-canary.1",
+    "@edgestore/server": "^0.6.0-canary.3",
     "body-parser": "^1.20.2",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",

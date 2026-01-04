@@ -1,5 +1,5 @@
 {
   "$schema": "https://turborepo.com/schema.json",
   "extends": ["//"],
-  "tasks": { "build": { "outputs": ["package.json", "dist/**"] } }
+  "tasks": { "codegen:entrypoints": { "outputs": ["package.json", "dist/**"] } }
 }

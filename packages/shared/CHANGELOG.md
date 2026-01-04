@@ -1,10 +1,10 @@
 # @edgestore/shared
 
-## 0.6.0-canary.1
+## 0.6.0-canary.3
 
 ### Minor Changes
 
-- [`81a911b`](https://github.com/edgestorejs/edgestore/commit/81a911bff050d9368b420b214d9ad24b80f8b7d8) Thanks [@perfectbase](https://github.com/perfectbase)! - Migrate bundler to tsdown
+- Upgrade rollup and release flow
 
 ## 0.5.8-canary.0
 

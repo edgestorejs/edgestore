@@ -2,7 +2,7 @@
   "$schema": "https://turborepo.com/schema.json",
   "extends": ["//"],
   "tasks": {
-    "build": {
+    "codegen:entrypoints": {
       "outputs": [
         "package.json",
         "dist/**",

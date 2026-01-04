@@ -10,7 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@edgestore/react": "^0.6.0-canary.1",
+    "@edgestore/react": "^0.6.0-canary.3",
     "react": "19.1.4",
     "react-dom": "19.1.4"
   },

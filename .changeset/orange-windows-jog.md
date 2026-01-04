@@ -4,4 +4,4 @@
 '@edgestore/react': minor
 ---
 
-Migrate bundler to tsdown
+Upgrade rollup and release flow
