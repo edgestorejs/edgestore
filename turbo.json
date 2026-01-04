@@ -1,6 +1,7 @@
 {
   "$schema": "https://turborepo.com/schema.json",
   "ui": "tui",
+  "globalDependencies": ["tsconfig.json", "tsconfig.build.json", "scripts/**"],
   "globalEnv": [
     "NODE_ENV",
     "DASHBOARD_API_KEY",
