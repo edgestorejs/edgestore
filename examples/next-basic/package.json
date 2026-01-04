@@ -9,8 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@edgestore/react": "^0.5.8-canary.0",
-    "@edgestore/server": "^0.5.8-canary.0",
+    "@edgestore/react": "^0.6.0-canary.1",
+    "@edgestore/server": "^0.6.0-canary.1",
     "next": "15.3.8",
     "react": "19.1.4",
     "react-dom": "19.1.4",
