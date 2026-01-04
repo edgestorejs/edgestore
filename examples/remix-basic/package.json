@@ -10,8 +10,8 @@
     "typecheck": "react-router typegen && tsc"
   },
   "dependencies": {
-    "@edgestore/react": "^0.6.0-canary.1",
-    "@edgestore/server": "^0.6.0-canary.1",
+    "@edgestore/react": "^0.6.0-canary.2",
+    "@edgestore/server": "^0.6.0-canary.2",
     "@react-router/node": "^7.5.3",
     "@react-router/serve": "^7.5.3",
     "isbot": "^5.1.27",

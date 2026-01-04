@@ -1,5 +1,11 @@
 # @edgestore/shared
 
+## 0.6.0-canary.2
+
+### Patch Changes
+
+- 440d749: Migrate from tsdown back to rollup
+
 ## 0.5.8-canary.0
 
 ### Patch Changes

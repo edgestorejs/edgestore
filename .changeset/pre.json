@@ -22,6 +22,7 @@
     "@edgestore/shared": "0.5.7"
   },
   "changesets": [
+    "blue-chairs-lay",
     "healthy-ghosts-cross"
   ]
 }
