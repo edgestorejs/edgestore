@@ -1,5 +1,16 @@
 # @edgestore/react
 
+## 0.6.0
+
+### Minor Changes
+
+- [#98](https://github.com/edgestorejs/edgestore/pull/98) [`c5db53e`](https://github.com/edgestorejs/edgestore/commit/c5db53e1ed5b6359a8f32062969e870026054a1c) Thanks [@perfectbase](https://github.com/perfectbase)! - Upgrade rollup and release flow
+
+### Patch Changes
+
+- Updated dependencies [[`c5db53e`](https://github.com/edgestorejs/edgestore/commit/c5db53e1ed5b6359a8f32062969e870026054a1c)]:
+  - @edgestore/shared@0.6.0
+
 ## 0.6.0-canary.3
 
 ### Minor Changes
