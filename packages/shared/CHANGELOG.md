@@ -2,15 +2,9 @@
 
 ## 0.6.0-canary.3
 
-### Patch Changes
+### Minor Changes
 
-- Upgrade rollup
-
-## 0.6.0-canary.2
-
-### Patch Changes
-
-- 440d749: Migrate from tsdown back to rollup
+- Upgrade rollup and release flow
 
 ## 0.5.8-canary.0
 

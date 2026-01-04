@@ -21,7 +21,5 @@
     "@edgestore/server": "0.5.7",
     "@edgestore/shared": "0.5.7"
   },
-  "changesets": [
-    "orange-windows-jog"
-  ]
+  "changesets": ["orange-windows-jog"]
 }
