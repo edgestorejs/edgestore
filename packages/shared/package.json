@@ -1,13 +1,13 @@
 {
   "name": "@edgestore/shared",
-  "version": "0.5.8-canary.0",
+  "version": "0.5.7",
   "description": "Upload files with ease from React/Next.js",
   "homepage": "https://edgestore.dev",
   "repository": "https://github.com/edgestorejs/edgestore.git",
   "author": "Ravi <me@ravi.com>",
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.mjs",
-  "types": "./dist/index.d.cts",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "typings": "dist/index.d.ts",
   "keywords": [
     "react",
     "nodejs",
@@ -20,21 +20,17 @@
     "edge-store"
   ],
   "scripts": {
-    "build": "tsdown",
-    "dev": "tsdown --watch",
+    "build": "rollup --config rollup.config.ts --configPlugin rollup-plugin-swc3",
+    "dev": "pnpm build --watch",
+    "codegen:entrypoints": "tsx entrypoints.script.ts",
     "lint": "eslint --cache --ext \".js,.ts,.tsx\" --ignore-path ../../.gitignore --report-unused-disable-directives src"
   },
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "import": {
-        "types": "./dist/index.d.mts",
-        "default": "./dist/index.mjs"
-      },
-      "require": {
-        "types": "./dist/index.d.cts",
-        "default": "./dist/index.cjs"
-      }
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
     }
   },
   "files": [

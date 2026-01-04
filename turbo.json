@@ -4,6 +4,7 @@
   "globalDependencies": ["tsconfig.json", "tsconfig.build.json", "scripts/**"],
   "globalEnv": [
     "NODE_ENV",
+    "ROLLUP_WATCH",
     "DASHBOARD_API_KEY",
     "DEV",
     "EDGE_STORE_ACCESS_KEY",
@@ -19,8 +20,17 @@
     "SKIP_ENV_VALIDATION"
   ],
   "tasks": {
+    "codegen:entrypoints": {
+      "outputs": [
+        "server/**",
+        "core/**",
+        "adapters/**",
+        "providers/**",
+        "package.json"
+      ]
+    },
     "build": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["^build", "codegen:entrypoints"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": [".next/**", "!.next/cache/**", "dist/**", "build/**"]
     },

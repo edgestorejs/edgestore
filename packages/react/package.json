@@ -1,13 +1,13 @@
 {
   "name": "@edgestore/react",
-  "version": "0.5.8-canary.0",
+  "version": "0.5.7",
   "description": "Upload files with ease from React/Next.js",
   "homepage": "https://edgestore.dev",
   "repository": "https://github.com/edgestorejs/edgestore.git",
   "author": "Ravi <me@ravi.com>",
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.mjs",
-  "types": "./dist/index.d.cts",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "typings": "dist/index.d.ts",
   "keywords": [
     "react",
     "nodejs",
@@ -20,51 +20,32 @@
     "edge-store"
   ],
   "scripts": {
-    "build": "tsdown",
-    "dev": "tsdown --watch",
+    "build": "rollup --config rollup.config.ts --configPlugin rollup-plugin-swc3",
+    "dev": "pnpm build --watch",
+    "codegen:entrypoints": "tsx entrypoints.script.ts",
     "lint": "eslint --cache --ext \".js,.ts,.tsx\" --ignore-path ../../.gitignore --report-unused-disable-directives src"
   },
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "import": {
-        "types": "./dist/index.d.mts",
-        "default": "./dist/index.mjs"
-      },
-      "require": {
-        "types": "./dist/index.d.cts",
-        "default": "./dist/index.cjs"
-      }
-    },
-    "./errors": {
-      "import": {
-        "types": "./dist/errors/index.d.mts",
-        "default": "./dist/errors/index.mjs"
-      },
-      "require": {
-        "types": "./dist/errors/index.d.cts",
-        "default": "./dist/errors/index.cjs"
-      }
-    },
-    "./shared": {
-      "import": {
-        "types": "./dist/shared/index.d.mts",
-        "default": "./dist/shared/index.mjs"
-      },
-      "require": {
-        "types": "./dist/shared/index.d.cts",
-        "default": "./dist/shared/index.cjs"
-      }
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
     },
     "./utils": {
-      "import": {
-        "types": "./dist/utils/index.d.mts",
-        "default": "./dist/utils/index.mjs"
-      },
-      "require": {
-        "types": "./dist/utils/index.d.cts",
-        "default": "./dist/utils/index.cjs"
-      }
+      "import": "./dist/utils/index.mjs",
+      "require": "./dist/utils/index.js",
+      "default": "./dist/utils/index.js"
+    },
+    "./shared": {
+      "import": "./dist/shared/index.mjs",
+      "require": "./dist/shared/index.js",
+      "default": "./dist/shared/index.js"
+    },
+    "./errors": {
+      "import": "./dist/errors/index.mjs",
+      "require": "./dist/errors/index.js",
+      "default": "./dist/errors/index.js"
     }
   },
   "files": [
@@ -73,9 +54,9 @@
     "README.md",
     "LICENSE",
     "package.json",
-    "errors",
-    "shared",
     "utils",
+    "shared",
+    "errors",
     "!**/*.test.*"
   ],
   "private": false,
@@ -86,7 +67,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.294.0",
     "@aws-sdk/s3-request-presigner": "^3.294.0",
-    "@edgestore/shared": "0.5.8-canary.0",
+    "@edgestore/shared": "0.5.7",
     "@panva/hkdf": "^1.0.4",
     "cookie": "^0.7.0",
     "jose": "^4.13.1",
