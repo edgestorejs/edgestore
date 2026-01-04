@@ -17,6 +17,11 @@ export type PackageJson = {
   funding: string[];
 };
 
+type TurboJson = {
+  $schema?: string;
+  tasks?: Record<string, { outputs?: string[] } & Record<string, unknown>>;
+} & Record<string, unknown>;
+
 // create directories on the way if they don't exist
 function writeFileSyncRecursive(filePath: string, content: string) {
   const dir = path.dirname(filePath);
@@ -26,11 +31,11 @@ function writeFileSyncRecursive(filePath: string, content: string) {
   fs.writeFileSync(filePath, content, 'utf8');
 }
 
-export async function generateEntrypoints(inputs: string[]) {
+export async function generateEntrypoints(rawInputs: string[]) {
+  const inputs = [...rawInputs];
   // set some defaults for the package.json
-  const pkgJson: PackageJson = JSON.parse(
-    fs.readFileSync(path.resolve('package.json'), 'utf8'),
-  );
+  const pkgJsonPath = path.resolve('package.json');
+  const pkgJson: PackageJson = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf8'));
 
   pkgJson.files = ['dist', 'src', 'README.md', 'LICENSE'];
   pkgJson.exports = {
@@ -42,6 +47,11 @@ export async function generateEntrypoints(inputs: string[]) {
     },
   };
 
+  // Keep Turbo cache correct: this script writes package.json and creates barrel directories.
+  const scriptOutputs = new Set<string>();
+  scriptOutputs.add('package.json');
+  scriptOutputs.add('dist/**');
+
   /** Parse the inputs to get the user-import-paths, e.g.
    *  src/adapters/aws-lambda/index.ts -> adapters/aws-lambda
    *  src/adapters/express.ts -> adapters/express
@@ -52,6 +62,7 @@ export async function generateEntrypoints(inputs: string[]) {
    */
   inputs
     .filter((i) => i !== 'src/index.ts') // index included by the default above
+    .sort()
     .forEach((i) => {
       // first, exclude 'src' part of the path
       const parts = i.split('/').slice(1);
@@ -62,11 +73,11 @@ export async function generateEntrypoints(inputs: string[]) {
       const importPath =
         parts.at(-1) === 'index.ts'
           ? parts.slice(0, -1).join('/')
-          : pathWithoutSrc.replace(/\.ts$/, '');
+          : pathWithoutSrc.replace(/\.(ts|tsx)$/, '');
 
       // write this entrypoint to the package.json exports field
-      const esm = './dist/' + pathWithoutSrc.replace(/\.ts$/, '.mjs');
-      const cjs = './dist/' + pathWithoutSrc.replace(/\.ts$/, '.js');
+      const esm = './dist/' + pathWithoutSrc.replace(/\.(ts|tsx)$/, '.mjs');
+      const cjs = './dist/' + pathWithoutSrc.replace(/\.(ts|tsx)$/, '.js');
       pkgJson.exports[`./${importPath}`] = {
         import: esm,
         require: cjs,
@@ -75,11 +86,12 @@ export async function generateEntrypoints(inputs: string[]) {
 
       // create the barrel file, linking the declared exports to the compiled files in dist
       const importDepth = importPath.split('/').length || 1;
-      const resolvedImport = path.join(
+      // in windows, "path.join" uses backslashes, it leads escape characters
+      const resolvedImport = [
         ...Array(importDepth).fill('..'),
         'dist',
         importPath,
-      );
+      ].join('/');
       // index.js
       const indexFile = path.resolve(importPath, 'index.js');
       const indexFileContent = `module.exports = require('${resolvedImport}');\n`;
@@ -99,18 +111,39 @@ export async function generateEntrypoints(inputs: string[]) {
     if (!topLevel) return;
     if (pkgJson.files.includes(topLevel)) return;
     pkgJson.files.push(topLevel);
+
+    if (topLevel !== 'package.json') scriptOutputs.add(`${topLevel}/**`);
   });
 
   // Exclude test files in builds
   pkgJson.files.push('!**/*.test.*');
+  pkgJson.files.push('!**/__tests__');
   // Add `funding` in all packages
   // pkgJson.funding = ['https://edgestore.dev/sponsor'];
 
   // write package.json
   const formattedPkgJson = await prettier.format(JSON.stringify(pkgJson), {
     parser: 'json-stringify',
-    printWidth: 80,
-    endOfLine: 'auto',
+    ...(await prettier.resolveConfig(pkgJsonPath)),
   });
-  fs.writeFileSync(path.resolve('package.json'), formattedPkgJson, 'utf8');
+  fs.writeFileSync(pkgJsonPath, formattedPkgJson, 'utf8');
+
+  // Update per-package turbo.json so `codegen:entrypoints` is properly cached.
+  const turboPath = path.resolve('turbo.json');
+  const existingTurboJson: TurboJson = fs.existsSync(turboPath)
+    ? JSON.parse(fs.readFileSync(turboPath, 'utf8'))
+    : { $schema: 'https://turborepo.com/schema.json', tasks: {} };
+
+  existingTurboJson.tasks ??= {};
+  existingTurboJson.tasks['codegen:entrypoints'] ??= {};
+  existingTurboJson.tasks['codegen:entrypoints'].outputs = [...scriptOutputs];
+
+  const formattedTurboJson = await prettier.format(
+    JSON.stringify(existingTurboJson),
+    {
+      parser: 'json',
+      ...(await prettier.resolveConfig(turboPath)),
+    },
+  );
+  fs.writeFileSync(turboPath, formattedTurboJson, 'utf8');
 }

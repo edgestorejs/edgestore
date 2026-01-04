@@ -20,22 +20,16 @@
     "SKIP_ENV_VALIDATION"
   ],
   "tasks": {
-    "codegen:entrypoints": {
-      "outputs": [
-        "server/**",
-        "core/**",
-        "adapters/**",
-        "providers/**",
-        "package.json"
-      ]
-    },
+    "codegen:entrypoints": {},
     "build": {
       "dependsOn": ["^build", "codegen:entrypoints"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": [".next/**", "!.next/cache/**", "dist/**", "build/**"]
     },
     "lint": {
-      "dependsOn": ["^build"]
+      "dependsOn": ["^build"],
+      "outputs": [],
+      "cache": true
     },
     "watch": {},
     "dev": {

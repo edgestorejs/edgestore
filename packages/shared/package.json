@@ -3,11 +3,20 @@
   "version": "0.6.0-canary.2",
   "description": "Upload files with ease from React/Next.js",
   "homepage": "https://edgestore.dev",
-  "repository": "https://github.com/edgestorejs/edgestore.git",
+  "license": "MIT",
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/edgestorejs/edgestore.git",
+    "directory": "packages/shared"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "author": "Ravi <me@ravi.com>",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
-  "typings": "dist/index.d.ts",
+  "types": "dist/index.d.ts",
   "keywords": [
     "react",
     "nodejs",
@@ -39,13 +48,9 @@
     "README.md",
     "LICENSE",
     "package.json",
-    "!**/*.test.*"
+    "!**/*.test.*",
+    "!**/__tests__"
   ],
-  "private": false,
-  "publishConfig": {
-    "access": "public"
-  },
-  "license": "MIT",
   "peerDependencies": {
     "react": ">=16.8.0",
     "react-dom": ">=16.8.0",
