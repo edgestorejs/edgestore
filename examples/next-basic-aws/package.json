@@ -12,8 +12,8 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.420.0",
     "@aws-sdk/s3-request-presigner": "^3.420.0",
-    "@edgestore/react": "^0.6.0-canary.2",
-    "@edgestore/server": "^0.6.0-canary.2",
+    "@edgestore/react": "^0.6.0-canary.3",
+    "@edgestore/server": "^0.6.0-canary.3",
     "next": "15.3.8",
     "react": "19.1.4",
     "react-dom": "19.1.4",

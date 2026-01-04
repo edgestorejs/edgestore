@@ -10,8 +10,8 @@
     "start": "vinxi start"
   },
   "dependencies": {
-    "@edgestore/react": "^0.6.0-canary.2",
-    "@edgestore/server": "^0.6.0-canary.2",
+    "@edgestore/react": "^0.6.0-canary.3",
+    "@edgestore/server": "^0.6.0-canary.3",
     "@tanstack/react-router": "^1.106.0",
     "@tanstack/router-devtools": "^1.106.0",
     "@tanstack/start": "^1.106.0",

@@ -1,6 +1,6 @@
 {
   "name": "@edgestore/react",
-  "version": "0.6.0-canary.2",
+  "version": "0.6.0-canary.3",
   "description": "Upload files with ease from React/Next.js",
   "homepage": "https://edgestore.dev",
   "license": "MIT",
@@ -72,7 +72,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.294.0",
     "@aws-sdk/s3-request-presigner": "^3.294.0",
-    "@edgestore/shared": "0.6.0-canary.2",
+    "@edgestore/shared": "0.6.0-canary.3",
     "@panva/hkdf": "^1.0.4",
     "cookie": "^0.7.0",
     "jose": "^4.13.1",

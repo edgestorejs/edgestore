@@ -1,5 +1,13 @@
 # @edgestore/server
 
+## 0.6.0-canary.3
+
+### Patch Changes
+
+- Upgrade rollup
+- Updated dependencies
+  - @edgestore/shared@0.6.0-canary.3
+
 ## 0.6.0-canary.2
 
 ### Patch Changes
