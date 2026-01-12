@@ -1,0 +1,25 @@
+{
+  "mode": "pre",
+  "tag": "canary",
+  "initialVersions": {
+    "docs": "0.1.0",
+    "astro-basic": "0.1.0",
+    "basic-access-control": "0.1.0",
+    "components": "0.1.0",
+    "express-basic": "0.1.0",
+    "fastify-basic": "0.1.0",
+    "hono-basic": "0.1.0",
+    "next-advanced": "0.1.0",
+    "next-basic": "0.1.0",
+    "next-basic-aws": "0.1.0",
+    "next-basic-with-intl": "0.1.0",
+    "next-complete": "0.1.0",
+    "remix-basic": "0.1.0",
+    "start-basic": "0.1.0",
+    "vite-basic": "0.1.0",
+    "@edgestore/react": "0.6.0",
+    "@edgestore/server": "0.6.0",
+    "@edgestore/shared": "0.6.0"
+  },
+  "changesets": []
+}
