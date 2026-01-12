@@ -68,7 +68,7 @@
     "shadcn": "2.4.0-canary.20",
     "tsx": "4.21.0",
     "turbo": "2.7.2",
-    "typescript": "^5"
+    "typescript": "5.9.3"
   },
   "pnpm": {
     "overrides": {
