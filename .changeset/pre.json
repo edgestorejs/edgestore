@@ -21,5 +21,7 @@
     "@edgestore/server": "0.6.0",
     "@edgestore/shared": "0.6.0"
   },
-  "changesets": []
+  "changesets": [
+    "grumpy-nails-type"
+  ]
 }
