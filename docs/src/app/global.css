@@ -51,6 +51,9 @@
   --primary-800: #321bb8;
   --primary-900: #2d1f90;
   --primary-950: #1c1254;
+
+  /* https://github.com/fuma-nama/fumadocs/issues/2682 */
+  --fd-layout-width: 100vw;
 }
 
 .dark {
