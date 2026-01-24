@@ -1,5 +1,6 @@
 import { LangfuseSpanProcessor, type ShouldExportSpan } from '@langfuse/otel';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
+import { env } from './env';
 
 // Next.js will auto-run this file on startup:
 // https://nextjs.org/docs/app/building-your-application/optimizing/instrumentation
@@ -11,6 +12,7 @@ const shouldExportSpan: ShouldExportSpan = (span) => {
 
 export const langfuseSpanProcessor = new LangfuseSpanProcessor({
   shouldExportSpan,
+  environment: env.VERCEL_ENV ?? 'local',
 });
 
 const tracerProvider = new NodeTracerProvider({
@@ -18,4 +20,3 @@ const tracerProvider = new NodeTracerProvider({
 });
 
 tracerProvider.register();
-
