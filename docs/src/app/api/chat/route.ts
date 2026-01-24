@@ -1,11 +1,20 @@
+import { env } from '@/env';
+import { langfuseSpanProcessor } from '@/instrumentation';
 import { getLLMText } from '@/lib/get-llm-text';
 import { source } from '@/lib/source';
+import {
+  observe,
+  updateActiveObservation,
+  updateActiveTrace,
+} from '@langfuse/tracing';
+import { trace } from '@opentelemetry/api';
 import {
   convertToModelMessages,
   stepCountIs,
   streamText,
   type UIMessage,
 } from 'ai';
+import { after } from 'next/server';
 import {
   GetDocsToolSchema,
   ProvideLinksToolSchema,
@@ -29,12 +38,34 @@ async function getDocsForSlugs(slugs: string[]) {
   return texts.join('\n\n');
 }
 
-export async function POST(req: Request) {
-  const reqJson = (await req.json()) as { messages: UIMessage[] };
+const handler = async (req: Request) => {
+  const reqJson = (await req.json()) as { messages: UIMessage[]; id?: string };
   const availablePages = getAvailablePages();
 
   // Pre-fetch quick-start docs to include in system prompt by default
   const quickStartDocs = await getDocsForSlugs(['quick-start']);
+
+  const lastUserText =
+    reqJson.messages?.[reqJson.messages.length - 1]?.parts?.find(
+      (p) => p.type === 'text',
+    )?.text ?? '';
+
+  const envName = env.VERCEL_ENV ?? 'local';
+  const envTag = `env:${envName}`;
+
+  updateActiveObservation({
+    input: lastUserText,
+  });
+
+  updateActiveTrace({
+    name: 'docs-chat',
+    sessionId: reqJson.id,
+    input: lastUserText,
+    tags: [envTag, 'app:docs'],
+    metadata: {
+      env: envName,
+    },
+  });
 
   const systemPrompt = `You are a helpful assistant for EdgeStore documentation.
 
@@ -81,10 +112,44 @@ After providing your answer, use the "provideLinks" tool to share relevant docum
     }),
     toolChoice: 'auto',
     stopWhen: stepCountIs(5),
+    experimental_telemetry: {
+      isEnabled: true,
+    },
+    onFinish: (finish) => {
+      updateActiveObservation({
+        output: finish.content,
+      });
+      updateActiveTrace({
+        output: finish.content,
+      });
+
+      // We're streaming, so we end the active span manually.
+      trace.getActiveSpan()?.end();
+    },
     onError: (error) => {
       console.error('Error in chat API:', JSON.stringify(error, null, 2));
+
+      updateActiveObservation({
+        output: error,
+        level: 'ERROR',
+      });
+      updateActiveTrace({
+        output: error,
+      });
+
+      // We're streaming, so we end the active span manually.
+      trace.getActiveSpan()?.end();
     },
   });
 
+  // Critical for serverless/edge runtimes: flush traces before the function exits.
+  after(() => langfuseSpanProcessor.forceFlush());
+
   return result.toUIMessageStreamResponse();
-}
+};
+
+// Wrap handler with observe() to create a Langfuse trace.
+export const POST = observe(handler, {
+  name: 'ask-ai',
+  endOnExit: false,
+});
