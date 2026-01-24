@@ -97,8 +97,8 @@ Now let's initiate our context provider.
 ```ts tab="app" title="src/lib/edgestore.ts"
 'use client';
 
-import { type EdgeStoreRouter } from '../app/api/edgestore/[...edgestore]/route';
 import { createEdgeStoreProvider } from '@edgestore/react';
+import { type EdgeStoreRouter } from '../app/api/edgestore/[...edgestore]/route';
 
 const { EdgeStoreProvider, useEdgeStore } =
   createEdgeStoreProvider<EdgeStoreRouter>();
@@ -109,8 +109,8 @@ export { EdgeStoreProvider, useEdgeStore };
 ```ts tab="pages" title="src/lib/edgestore.ts"
 'use client';
 
-import { type EdgeStoreRouter } from '../pages/api/edgestore/[...edgestore]';
 import { createEdgeStoreProvider } from '@edgestore/react';
+import { type EdgeStoreRouter } from '../pages/api/edgestore/[...edgestore]';
 
 const { EdgeStoreProvider, useEdgeStore } =
   createEdgeStoreProvider<EdgeStoreRouter>();
@@ -301,3 +301,63 @@ await edgestore.publicFiles.confirmUpload({
 ## Troubleshooting
 
 If you have any problems using EdgeStore, please check the [Troubleshooting](./troubleshooting) page.
+
+## FAQ
+
+import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
+
+<Accordions type="single">
+
+<Accordion title="What is EdgeStore?" id="what-is-edgestore">
+  EdgeStore is a type-safe file upload solution for React applications. It
+  provides an easy-to-use API for uploading, managing, and serving files with
+  features like progress tracking, file validation, and automatic cleanup of
+  temporary files.
+</Accordion>
+
+<Accordion title="Can I use EdgeStore for free?" id="is-edgestore-free">
+  Yes! The EdgeStore Provider has a free plan with generous limits, so you can
+  get started without any cost. You can also use EdgeStore with your own
+  infrastructure (like AWS S3 or Azure Blob Storage) if you prefer to manage
+  your own storage.
+</Accordion>
+
+<Accordion title="Is EdgeStore open source?" id="is-open-source">
+  The EdgeStore packages (`@edgestore/server`, `@edgestore/react`, etc.) are
+  open source and released under the MIT license. However, the EdgeStore
+  Provider (cloud service) is not open source.
+</Accordion>
+
+<Accordion title="Which frameworks are supported?" id="supported-frameworks">
+  EdgeStore supports multiple frameworks including Next.js (App Router and Pages
+  Router), Astro, Express, Fastify, Hono, Remix, and TanStack Start. Check the
+  [Adapters](/docs/adapters/next) section for setup guides.
+</Accordion>
+
+<Accordion
+  title="What file types and sizes are supported?"
+  id="file-validation"
+>
+  By default, EdgeStore accepts most common file types. You can customize
+  allowed file types and maximum file sizes per bucket using the `accept` and
+  `maxSize` options. See the [Configuration](/docs/configuration) page for
+  details.
+</Accordion>
+
+<Accordion title="Can I use my own storage provider?" id="custom-provider">
+  Yes! EdgeStore supports AWS S3, Azure Blob Storage, and custom providers in
+  addition to EdgeStore Cloud. Check the [Providers](/docs/providers/edgestore)
+  section for setup instructions.
+</Accordion>
+
+<Accordion
+  title="Can I use EdgeStore for streaming videos or audio?"
+  id="streaming-large-files"
+>
+  EdgeStore is not recommended for real-time streaming of large files like
+  videos and audio. It's optimized for file uploads and serving static files,
+  not for streaming use cases. For video/audio streaming, consider using a
+  dedicated streaming service or CDN.
+</Accordion>
+
+</Accordions>
