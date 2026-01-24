@@ -1,5 +1,13 @@
 import { z } from 'zod';
 
+export const GetDocsToolSchema = z.object({
+  slugs: z
+    .array(z.string())
+    .describe(
+      'Array of documentation page slugs to retrieve (e.g. ["quick-start", "configuration", "adapters/next"])',
+    ),
+});
+
 const LinkType = z.enum([
   'documentation',
   'site',
