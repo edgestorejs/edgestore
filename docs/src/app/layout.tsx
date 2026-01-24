@@ -3,7 +3,7 @@ import { GITHUB_OWNER, GITHUB_REPO } from '@/lib/constants';
 import { EdgeStoreProvider } from '@/lib/edgestore';
 import './global.css';
 import { env } from '@/env';
-import { RootProvider } from 'fumadocs-ui/provider';
+import { RootProvider } from 'fumadocs-ui/provider/next';
 import { type Metadata } from 'next';
 import { unstable_cache } from 'next/cache';
 import { Inter } from 'next/font/google';

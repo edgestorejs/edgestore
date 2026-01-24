@@ -1,5 +1,12 @@
 # @edgestore/react
 
+## 0.7.0-canary.0
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @edgestore/shared@0.7.0-canary.0
+
 ## 0.6.0
 
 ### Minor Changes

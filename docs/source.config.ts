@@ -1,11 +1,24 @@
 import { rehypeCodeDefaultOptions } from 'fumadocs-core/mdx-plugins';
-import { remarkInstall } from 'fumadocs-docgen';
-import { defineConfig, defineDocs } from 'fumadocs-mdx/config';
+import {
+  defineConfig,
+  defineDocs,
+  frontmatterSchema,
+  metaSchema,
+} from 'fumadocs-mdx/config';
 import { transformerTwoslash } from 'fumadocs-twoslash';
 
 // Options: https://fumadocs.vercel.app/docs/mdx/collections#define-docs
 export const docs = defineDocs({
   dir: 'content/docs',
+  docs: {
+    schema: frontmatterSchema,
+    postprocess: {
+      includeProcessedMarkdown: true,
+    },
+  },
+  meta: {
+    schema: metaSchema,
+  },
 });
 
 export default defineConfig({
@@ -13,7 +26,11 @@ export default defineConfig({
     remarkCodeTabOptions: {
       parseMdx: true,
     },
-    remarkPlugins: [[remarkInstall, { persist: { id: 'package-manager' } }]],
+    remarkNpmOptions: {
+      persist: {
+        id: 'package-manager',
+      },
+    },
     rehypeCodeOptions: {
       langs: ['js', 'ts', 'jsx', 'tsx'],
       themes: {

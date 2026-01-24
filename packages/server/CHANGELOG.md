@@ -1,5 +1,16 @@
 # @edgestore/server
 
+## 0.7.0-canary.0
+
+### Minor Changes
+
+- [#100](https://github.com/edgestorejs/edgestore/pull/100) [`25f22ae`](https://github.com/edgestorejs/edgestore/commit/25f22aeb14e3949b478ba757acbd5a2a2c97644e) Thanks [@perfectbase](https://github.com/perfectbase)! - Upgraded types to next 16
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @edgestore/shared@0.7.0-canary.0
+
 ## 0.6.0
 
 ### Minor Changes

@@ -9,15 +9,14 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
-    "@edgestore/server": "^0.6.0",
+    "@edgestore/server": "^0.7.0-canary.0",
     "@hono/node-server": "^1.14.1",
     "hono": "^4.7.9"
   },
   "devDependencies": {
-    "@types/node": "^20.6.3",
-    "dotenv": "^16.3.1",
+    "@types/node": "25.0.3",
     "dotenv-cli": "^7.4.2",
-    "tsx": "^4.1.4",
-    "typescript": "^5"
+    "tsx": "4.21.0",
+    "typescript": "5.9.3"
   }
 }

@@ -14,10 +14,10 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "incremental": true,
     "paths": {
-      "@/.source": ["./.source/index.ts"],
+      "fumadocs-mdx:collections/*": [".source/*"],
       "@/*": ["./src/*"]
     },
     "plugins": [
@@ -31,7 +31,8 @@
     "**/*.js",
     "**/*.ts",
     "**/*.tsx",
-    ".next/types/**/*.ts"
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts"
   ],
   "exclude": ["node_modules"]
 }
