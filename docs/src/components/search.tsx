@@ -303,7 +303,6 @@ function Message({
 export function AISearch({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const chat = useChat({
-    id: 'search',
     transport: new DefaultChatTransport({
       api: '/api/chat',
     }),
