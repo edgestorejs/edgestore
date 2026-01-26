@@ -1,5 +1,12 @@
 # @edgestore/server
 
+## 0.7.0-canary.2
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @edgestore/shared@0.7.0-canary.2
+
 ## 0.7.0-canary.1
 
 ### Patch Changes
