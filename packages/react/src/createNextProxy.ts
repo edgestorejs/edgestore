@@ -309,15 +309,25 @@ async function uploadFileInner(props: {
         onProgressChange?.(progress);
       }
     });
+    request.addEventListener('load', () => {
+      // `error` event is not fired for HTTP errors (e.g. 403).
+      // So we must check the status code here.
+      if (request.status >= 200 && request.status < 300) {
+        // Return the ETag header (needed to complete multipart upload)
+        resolve(request.getResponseHeader('ETag'));
+        return;
+      }
+      reject(
+        new EdgeStoreClientError(
+          `Error uploading file (HTTP ${request.status})`,
+        ),
+      );
+    });
     request.addEventListener('error', () => {
       reject(new Error('Error uploading file'));
     });
     request.addEventListener('abort', () => {
       reject(new UploadAbortedError('File upload aborted'));
-    });
-    request.addEventListener('loadend', () => {
-      // Return the ETag header (needed to complete multipart upload)
-      resolve(request.getResponseHeader('ETag'));
     });
 
     if (signal) {
