@@ -1,5 +1,14 @@
 # @edgestore/react
 
+## 0.7.0
+
+### Patch Changes
+
+- [`2708b80`](https://github.com/edgestorejs/edgestore/commit/2708b804e1adc70bf894c7ff528b4325e0f720e0) Thanks [@perfectbase](https://github.com/perfectbase)! - Improved upload error handling
+
+- Updated dependencies []:
+  - @edgestore/shared@0.7.0
+
 ## 0.7.0-canary.2
 
 ### Patch Changes
