@@ -3,11 +3,12 @@ import {
   HeadObjectCommand,
   PutObjectCommand,
   S3Client,
+  type S3ClientConfig,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import {
   type MaybePromise,
-  type Provider,
+  type Provider as EdgeStoreProvider,
   type RequestUploadParams,
 } from '@edgestore/shared';
 import { v4 as uuidv4 } from 'uuid';
@@ -31,10 +32,19 @@ export type AWSOverwritePathFn = (
 
 export type AWSProviderOptions = {
   /**
+   * AWS SDK credentials (or credentials provider) to use for S3 requests.
+   *
+   * If unset, the AWS SDK will use its default credential provider chain
+   * (environment variables, shared config files, instance/task roles, etc).
+   */
+  credentials?: S3ClientConfig['credentials'];
+  /**
    * Access key for AWS credentials.
    * Can also be set via the `ES_AWS_ACCESS_KEY_ID` environment variable.
    *
    * If unset, the SDK will attempt to use the default credentials provider chain.
+   *
+   * @deprecated Pass `credentials` instead.
    */
   accessKeyId?: string;
   /**
@@ -42,6 +52,8 @@ export type AWSProviderOptions = {
    * Can also be set via the `ES_AWS_SECRET_ACCESS_KEY` environment variable.
    *
    * If unset, the SDK will attempt to use the default credentials provider chain.
+   *
+   * @deprecated Pass `credentials` instead.
    */
   secretAccessKey?: string;
   /**
@@ -87,8 +99,9 @@ export type AWSProviderOptions = {
   overwritePath?: AWSOverwritePathFn;
 };
 
-export function AWSProvider(options?: AWSProviderOptions): Provider {
+export function AWSProvider(options?: AWSProviderOptions): EdgeStoreProvider {
   const {
+    credentials: credentialsFromOptions,
     accessKeyId = getEnv('ES_AWS_ACCESS_KEY_ID'),
     secretAccessKey = getEnv('ES_AWS_SECRET_ACCESS_KEY'),
     region = getEnv('ES_AWS_REGION'),
@@ -106,12 +119,13 @@ export function AWSProvider(options?: AWSProviderOptions): Provider {
       : `https://${bucketName}.s3.${region}.amazonaws.com`);
 
   const credentials =
-    accessKeyId && secretAccessKey
+    credentialsFromOptions ??
+    (accessKeyId && secretAccessKey
       ? {
           accessKeyId,
           secretAccessKey,
         }
-      : undefined;
+      : undefined);
   const s3Client = new S3Client({
     region,
     credentials,

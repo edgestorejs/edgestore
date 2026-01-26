@@ -44,19 +44,12 @@ export default createEdgeStoreNextHandler<Context>({
 ```ts
 export type AWSProviderOptions = {
   /**
-   * Access key for AWS credentials.
-   * Can also be set via the `ES_AWS_ACCESS_KEY_ID` environment variable.
+   * AWS SDK credentials (or credentials provider) to use for S3 requests.
    *
-   * If unset, the SDK will attempt to use the default credentials provider chain.
+   * If unset, the AWS SDK will use its default credential provider chain
+   * (environment variables, shared config files, instance/task roles, etc).
    */
-  accessKeyId?: string;
-  /**
-   * Secret access key for AWS credentials.
-   * Can also be set via the `ES_AWS_SECRET_ACCESS_KEY` environment variable.
-   *
-   * If unset, the SDK will attempt to use the default credentials provider chain.
-   */
-  secretAccessKey?: string;
+  credentials?: S3ClientConfig['credentials'];
   /**
    * AWS region to use.
    * Can also be set via the `ES_AWS_REGION` environment variable.
