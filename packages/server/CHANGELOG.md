@@ -1,5 +1,18 @@
 # @edgestore/server
 
+## 0.7.0
+
+### Minor Changes
+
+- [#100](https://github.com/edgestorejs/edgestore/pull/100) [`25f22ae`](https://github.com/edgestorejs/edgestore/commit/25f22aeb14e3949b478ba757acbd5a2a2c97644e) Thanks [@perfectbase](https://github.com/perfectbase)! - Upgraded types to next 16
+
+### Patch Changes
+
+- [#103](https://github.com/edgestorejs/edgestore/pull/103) [`9ceaa18`](https://github.com/edgestorejs/edgestore/commit/9ceaa18715eccad40648dd55ada566a571355d52) Thanks [@perfectbase](https://github.com/perfectbase)! - Add `credentials` option to AWS provider and deprecate `accessKeyId`/`secretAccessKey`.
+
+- Updated dependencies []:
+  - @edgestore/shared@0.7.0
+
 ## 0.7.0-canary.2
 
 ### Patch Changes
