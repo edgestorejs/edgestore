@@ -1,5 +1,7 @@
 # @edgestore/shared
 
+## 0.7.0-canary.2
+
 ## 0.7.0-canary.1
 
 ## 0.7.0-canary.0

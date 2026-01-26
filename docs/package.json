@@ -13,8 +13,8 @@
   "dependencies": {
     "@ai-sdk/openai-compatible": "2.0.18",
     "@ai-sdk/react": "3.0.51",
-    "@edgestore/react": "^0.7.0-canary.1",
-    "@edgestore/server": "^0.7.0-canary.1",
+    "@edgestore/react": "^0.7.0-canary.2",
+    "@edgestore/server": "^0.7.0-canary.2",
     "@fumadocs/mdx-remote": "1.4.4",
     "@langfuse/otel": "4.5.1",
     "@langfuse/tracing": "4.5.1",
