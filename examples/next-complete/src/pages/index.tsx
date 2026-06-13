@@ -2,13 +2,13 @@ import { Button } from '@/components/ui/button';
 import { SingleImageDropzone } from '@/components/upload/single-image';
 import {
   UploaderProvider,
-  UploadFn,
   useUploader,
 } from '@/components/upload/uploader-provider';
+import type { UploadFn } from '@/components/upload/uploader-provider';
 import { useEdgeStore } from '@/lib/edgestore';
 import { cn } from '@/lib/utils';
 import { UploadCloudIcon } from 'lucide-react';
-import { GetServerSideProps, InferGetServerSidePropsType } from 'next';
+import type { GetServerSideProps, InferGetServerSidePropsType } from 'next';
 import Image from 'next/image';
 import { useCallback, useEffect, useState } from 'react';
 import { edgeStoreClient } from './api/edgestore/[...edgestore]';

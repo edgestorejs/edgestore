@@ -7,7 +7,7 @@
     "build": "next build",
     "dev": "next dev --turbo",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint --cache --ext \".js,.ts,.tsx\" --ignore-path ../.gitignore --report-unused-disable-directives src",
     "postinstall": "fumadocs-mdx"
   },
   "dependencies": {

@@ -1,6 +1,5 @@
 import { type Simplify } from '../types';
 
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 export const EDGE_STORE_ERROR_CODES = {
   BAD_REQUEST: 400,
   FILE_TOO_LARGE: 400,

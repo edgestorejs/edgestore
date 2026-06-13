@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "eslint --cache --ext \".js,.ts,.tsx\" --ignore-path ../../.gitignore --report-unused-disable-directives src"
   },
   "dependencies": {
     "@edgestore/react": "^0.7.0",

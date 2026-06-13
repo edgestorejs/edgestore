@@ -7,7 +7,7 @@
     "dev:minio": "docker-compose up -d && next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "eslint --cache --ext \".js,.ts,.tsx\" --ignore-path ../../.gitignore --report-unused-disable-directives src"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.420.0",
