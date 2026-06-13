@@ -18,6 +18,15 @@ const config = {
      */
     require.resolve('prettier-plugin-tailwindcss'),
   ],
+  overrides: [
+    {
+      files: ['**/*.md', '**/*.mdx'],
+      options: {
+        embeddedLanguageFormatting: 'off',
+        importOrder: [],
+      },
+    },
+  ],
 };
 
 module.exports = config;
