@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  CI: true
+  NEXT_TELEMETRY_DISABLED: 1
+  SKIP_ENV_VALIDATION: true
+  TURBO_TELEMETRY_DISABLED: 1
+
+jobs:
+  checks:
+    name: Checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check formatting
+        run: pnpm format --check
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck shared package
+        run: pnpm exec tsc --noEmit -p packages/shared/tsconfig.json
+
+      - name: Typecheck react package
+        run: pnpm exec tsc --noEmit -p packages/react/tsconfig.json
+
+      - name: Typecheck server package
+        run: pnpm exec tsc --noEmit -p packages/server/tsconfig.json
+
+      - name: Build packages
+        run: pnpm build

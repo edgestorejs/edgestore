@@ -1,7 +1,7 @@
 /** @type {import("eslint").Linter.Config} */
 const config = {
   root: true,
-  ignorePatterns: ['**/*.gen.ts', '**/*.gen.tsx'],
+  ignorePatterns: ['docs/.source/**', '**/*.gen.ts', '**/*.gen.tsx'],
   parser: '@typescript-eslint/parser',
   plugins: ['no-only-tests', 'unicorn', 'turbo'],
   extends: [
