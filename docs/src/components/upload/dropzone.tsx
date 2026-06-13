@@ -149,7 +149,7 @@ const Dropzone = React.forwardRef<HTMLInputElement, DropzoneProps>(
           })}
         >
           <input ref={ref} {...getInputProps()} {...props} />
-          <div className="flex flex-col items-center justify-center gap-2 text-center text-muted-foreground">
+          <div className="text-muted-foreground flex flex-col items-center justify-center gap-2 text-center">
             <UploadCloudIcon className="h-10 w-10" />
             <div className="text-sm font-medium">
               {isDragActive ? dropMessageActive : dropMessageDefault}
@@ -166,7 +166,7 @@ const Dropzone = React.forwardRef<HTMLInputElement, DropzoneProps>(
 
         {/* Error Text */}
         {error && (
-          <div className="mt-1 flex items-center text-xs text-destructive">
+          <div className="text-destructive mt-1 flex items-center text-xs">
             <AlertCircleIcon className="mr-1 h-4 w-4" />
             <span>{error}</span>
           </div>

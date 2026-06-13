@@ -14,8 +14,8 @@ export async function Pricing() {
   return (
     <div className="px-4">
       <div className="mt-10 text-center">
-        <div className="mb-4 text-5xl font-medium text-foreground">Pricing</div>
-        <div className="mb-6 text-muted-foreground">
+        <div className="text-foreground mb-4 text-5xl font-medium">Pricing</div>
+        <div className="text-muted-foreground mb-6">
           {"Choose the plan that's right for you."}
         </div>
       </div>
@@ -58,7 +58,7 @@ function PricingBlock(props: {
         className,
       )}
     >
-      <div className="text-xl font-bold text-primary">{title}</div>
+      <div className="text-primary text-xl font-bold">{title}</div>
       <div>{description}</div>
       <div className="mb-4 mt-4 flex items-baseline gap-1">
         {price === undefined ? (
@@ -75,7 +75,7 @@ function PricingBlock(props: {
           </>
         ) : price > 0 ? (
           <>
-            <div className="text-3xl font-bold text-primary">${price}</div>
+            <div className="text-primary text-3xl font-bold">${price}</div>
             <div className="text-muted-foreground">/month</div>
           </>
         ) : (
@@ -87,7 +87,7 @@ function PricingBlock(props: {
       <div className="flex flex-col gap-2">
         {features.map((feature, i) => (
           <div key={i} className="flex items-center gap-2">
-            <CheckCircleIcon size={22} className="shrink-0 text-primary" />
+            <CheckCircleIcon size={22} className="text-primary shrink-0" />
             <div>{feature}</div>
           </div>
         ))}
@@ -128,11 +128,11 @@ function Strikethrough(props: {
 }) {
   const { children, size = 'sm' } = props;
   return (
-    <div className="relative inline-block text-nowrap text-muted-foreground">
+    <div className="text-muted-foreground relative inline-block text-nowrap">
       <div className="h-full w-full">
         <div
           className={cn(
-            'absolute bottom-[40%] left-0 right-0 -rotate-[10deg] border-primary/80',
+            'border-primary/80 absolute bottom-[40%] left-0 right-0 -rotate-[10deg]',
             size === 'sm' && 'border-t-2',
             size === 'lg' && 'border-t-4',
           )}
@@ -369,7 +369,7 @@ function PlanLimitItem(props: {
         <Strikethrough size="sm">
           <>{formatter?.(defaultValue) ?? defaultValue}</>
         </Strikethrough>{' '}
-        <span className="text-nowrap font-bold text-primary">
+        <span className="text-primary text-nowrap font-bold">
           {formatter?.(campaignValue) ?? campaignValue}
         </span>
       </>

@@ -21,8 +21,8 @@ export type FlatOverwrite<TType, TWith> = InferOptional<
     [TKey in keyof TType | keyof TWith]: TKey extends keyof TWith
       ? TWith[TKey]
       : TKey extends keyof TType
-      ? TType[TKey]
-      : never;
+        ? TType[TKey]
+        : never;
   },
   UndefinedKeys<TType> | UndefinedKeys<TWith>
 >;
@@ -49,9 +49,8 @@ export type Maybe<TType> = TType | null | undefined;
 /**
  * @internal
  */
-export type ThenArg<TType> = TType extends PromiseLike<infer U>
-  ? ThenArg<U>
-  : TType;
+export type ThenArg<TType> =
+  TType extends PromiseLike<infer U> ? ThenArg<U> : TType;
 
 /**
  * @internal

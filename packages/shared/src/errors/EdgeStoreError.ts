@@ -20,11 +20,11 @@ export type EdgeStoreErrorDetails<TCode extends EdgeStoreErrorCodeKey> =
         fileSize: number;
       }
     : TCode extends 'MIME_TYPE_NOT_ALLOWED'
-    ? {
-        allowedMimeTypes: string[];
-        mimeType: string;
-      }
-    : never;
+      ? {
+          allowedMimeTypes: string[];
+          mimeType: string;
+        }
+      : never;
 
 export type EdgeStoreJsonResponse = Simplify<
   | {
