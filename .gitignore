@@ -26,6 +26,7 @@ yarn-error.log*
 
 # turbo
 .turbo
+**/.turbo/
 
 # generated docs
 docs/.source/
@@ -36,6 +37,8 @@ dist
 # Ignore all folders except `src/` in every published package
 packages/*/*/
 !packages/*/src/
+!packages/*/test-d/
+!packages/*/test-d/**
 # and all folders inside `tests` package, which is handled separately
 !packages/tests/*/
 packages/tests/node_modules

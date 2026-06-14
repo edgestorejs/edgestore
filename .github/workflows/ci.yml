@@ -60,3 +60,9 @@ jobs:
 
       - name: Build packages
         run: pnpm build
+
+      - name: Runtime tests
+        run: pnpm test
+
+      - name: Type tests
+        run: pnpm test:types

@@ -28,6 +28,8 @@
     "start-basic:dev": "turbo run dev --parallel --filter=start-basic --filter=@edgestore/*",
     "docs:dev": "pnpm --filter docs dev",
     "docs:build": "pnpm build && pnpm --filter docs run build",
+    "test": "turbo run test --filter=@edgestore/shared --filter=@edgestore/server",
+    "test:types": "turbo run test:types --filter=@edgestore/tests",
     "lint": "turbo lint",
     "lint-fix": "turbo lint -- --fix && manypkg fix && pnpm format:write",
     "format": "prettier \"**/*.{js,jsx,ts,tsx,css,mjs,cjs}\"",
@@ -76,5 +78,9 @@
       "@edgestore/shared": "workspace:*",
       "@edgestore/react": "workspace:*"
     }
+  },
+  "devDependencies": {
+    "tsd": "^0.33.0",
+    "vitest": "^4.1.8"
   }
 }

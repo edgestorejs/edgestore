@@ -36,6 +36,14 @@
       "outputs": [],
       "cache": true
     },
+    "test": {
+      "dependsOn": ["^build"],
+      "outputs": []
+    },
+    "test:types": {
+      "dependsOn": ["^build"],
+      "outputs": []
+    },
     "watch": {},
     "dev": {
       "cache": false,
