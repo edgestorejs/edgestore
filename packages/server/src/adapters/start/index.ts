@@ -90,7 +90,13 @@ export function createEdgeStoreStartHandler<TCtx>(config: Config<TCtx>) {
             cause: err instanceof Error ? err : undefined,
           });
         }
-        const { newCookies, token, baseUrl, providerName } = await init({
+        const {
+          newCookies,
+          token,
+          baseUrl,
+          providerName,
+          requiresFileAccessCookie,
+        } = await init({
           ctx,
           provider,
           router: config.router,
@@ -101,10 +107,18 @@ export function createEdgeStoreStartHandler<TCtx>(config: Config<TCtx>) {
           headers.append('Set-Cookie', cookie);
         });
         headers.set('Content-Type', 'application/json');
-        return new Response(JSON.stringify({ token, baseUrl, providerName }), {
-          status: 200,
-          headers,
-        });
+        return new Response(
+          JSON.stringify({
+            token,
+            baseUrl,
+            providerName,
+            requiresFileAccessCookie,
+          }),
+          {
+            status: 200,
+            headers,
+          },
+        );
       } else if (matchPath(pathname, '/request-upload')) {
         const body = await request.json();
         const ctxToken = getCookie(request, resolvedCookieConfig.ctx.name);

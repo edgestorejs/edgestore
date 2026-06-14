@@ -89,7 +89,13 @@ export function createEdgeStoreAstroHandler<TCtx>(config: Config<TCtx>) {
             cause: err instanceof Error ? err : undefined,
           });
         }
-        const { newCookies, token, baseUrl, providerName } = await init({
+        const {
+          newCookies,
+          token,
+          baseUrl,
+          providerName,
+          requiresFileAccessCookie,
+        } = await init({
           ctx,
           provider,
           router: config.router,
@@ -113,6 +119,7 @@ export function createEdgeStoreAstroHandler<TCtx>(config: Config<TCtx>) {
             token,
             baseUrl,
             providerName,
+            requiresFileAccessCookie,
           }),
           { headers },
         );

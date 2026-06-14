@@ -11,6 +11,7 @@ export type SharedInitRes = {
   token: string | undefined;
   baseUrl: string;
   providerName: string;
+  requiresFileAccessCookie: boolean;
 };
 export type SharedRequestUploadRes = Simplify<
   RequestUploadRes & {
