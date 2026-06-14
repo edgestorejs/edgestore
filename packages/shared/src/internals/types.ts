@@ -1,3 +1,10 @@
+import { type MaybePromise } from '../types';
+
+export type ClientUploadTransform = (params: {
+  file: File;
+  signal?: AbortSignal;
+}) => MaybePromise<File | Blob>;
+
 export type UploadOptions = {
   /**
    * e.g. 'my-file-name.jpg'
@@ -26,4 +33,12 @@ export type UploadOptions = {
    * This avoids unnecessary zombie files in the bucket.
    */
   temporary?: boolean;
+  /**
+   * Transform the file before it is validated and uploaded.
+   *
+   * This can be used to compress images, convert formats, encrypt files, etc.
+   * The transformed file's size, MIME type, and extension will be used for the
+   * upload request.
+   */
+  transform?: ClientUploadTransform;
 };

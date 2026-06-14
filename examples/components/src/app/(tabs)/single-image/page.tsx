@@ -7,6 +7,7 @@ import {
   type UploadFn,
 } from '@/components/upload/uploader-provider';
 import { useEdgeStore } from '@/lib/edgestore';
+import imageCompression from 'browser-image-compression';
 import * as React from 'react';
 
 export default function Page() {
@@ -30,6 +31,20 @@ function SingleImageExample() {
         file,
         signal,
         onProgressChange,
+        options: {
+          transform: ({ file, signal }) => {
+            if (!['image/jpeg', 'image/png'].includes(file.type)) {
+              return file;
+            }
+
+            return imageCompression(file, {
+              fileType: 'image/webp',
+              initialQuality: 0.8,
+              useWebWorker: true,
+              signal,
+            });
+          },
+        },
       });
       setUploadRes({
         name: file.name,
