@@ -295,7 +295,7 @@ expectType<{
       size: number;
       metadata: Record<string, never>;
       path: Record<string, never>;
-      pathOrder: string[];
+      pathOrder: [];
     };
     getFile: {
       url: string;

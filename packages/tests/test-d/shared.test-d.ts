@@ -1,6 +1,7 @@
 import {
   initEdgeStore,
   type AccessControlSchema,
+  type EdgeStoreRouter,
   type InferBucketPathObject,
   type InferMetadataObject,
 } from '@edgestore/shared';
@@ -77,3 +78,28 @@ const router = es.router({
 
 expectType<typeof imageBucket>(router.buckets.imageBucket);
 expectType<typeof fileBucket>(router.buckets.fileBucket);
+
+type ExactRouter = EdgeStoreRouter<Context, typeof router.buckets>;
+expectType<typeof imageBucket>({} as ExactRouter['buckets']['imageBucket']);
+expectType<typeof fileBucket>({} as ExactRouter['buckets']['fileBucket']);
+
+type NestedContext = {
+  user: {
+    id: string;
+    profile: {
+      role: 'admin' | 'visitor';
+    };
+  };
+};
+
+const nestedEs = initEdgeStore.context<NestedContext>().create();
+const nestedBucket = nestedEs
+  .fileBucket()
+  .path(({ ctx }) => [
+    { author: ctx.user.id },
+    { role: ctx.user.profile.role },
+  ]);
+
+expectType<{ author: string; role: string }>(
+  {} as InferBucketPathObject<typeof nestedBucket>,
+);

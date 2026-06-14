@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { EdgeStoreError } from '../errors';
 import { type KeysOfUnion, type MaybePromise, type Simplify } from '../types';
 import { createPathParamProxy } from './createPathParamProxy';
 
@@ -53,7 +54,20 @@ type InferMetadataObjectFromDef<TDef extends AnyDef> =
     ? Awaited<ReturnType<TDef['metadata']>>
     : Record<string, never>;
 
-export type AnyContext = Record<string, string | undefined | null>;
+export type AnyContextValue =
+  | string
+  | number
+  | boolean
+  | undefined
+  | null
+  | AnyContext
+  | AnyContextValueArray;
+
+interface AnyContextValueArray extends Array<AnyContextValue> {}
+
+export interface AnyContext {
+  [key: string]: AnyContextValue;
+}
 
 export type AnyInput = z.AnyZodObject | z.ZodNever;
 
@@ -355,11 +369,30 @@ function createBuilder<
       }) as any;
     },
     path(pathResolver) {
-      // TODO: Should throw a runtime error in the following cases:
-      // 1. in case of multiple keys in one object
-      // 2. in case of duplicate keys
       const pathParamProxy = createPathParamProxy();
       const params = pathResolver(pathParamProxy);
+      const pathKeys = new Set<string>();
+      for (const param of params) {
+        const entries = Object.entries(param);
+        if (entries.length !== 1) {
+          throw new EdgeStoreError({
+            message: `Path params must have exactly one key. Found: ${JSON.stringify(
+              param,
+            )}`,
+            code: 'SERVER_ERROR',
+          });
+        }
+        const key = entries[0]?.[0];
+        if (key !== undefined && pathKeys.has(key)) {
+          throw new EdgeStoreError({
+            message: `Duplicate path param found: ${key}`,
+            code: 'SERVER_ERROR',
+          });
+        }
+        if (key !== undefined) {
+          pathKeys.add(key);
+        }
+      }
       return createNewBuilder(_def, {
         path: params,
       }) as any;
@@ -397,7 +430,13 @@ class EdgeStoreBuilder<TCtx = Record<string, never>> {
   }
 }
 
-export type EdgeStoreRouter<TCtx> = {
+export type EdgeStoreRouter<
+  TCtx,
+  TBuckets extends Record<string, Builder<TCtx, AnyDef>> = Record<
+    string,
+    Builder<TCtx, AnyDef>
+  >,
+> = {
   /**
    * Only used for types
    * @internal
@@ -405,10 +444,10 @@ export type EdgeStoreRouter<TCtx> = {
   $config: {
     ctx: TCtx;
   };
-  buckets: Record<string, Builder<TCtx, AnyDef>>;
+  buckets: TBuckets;
 };
 
-export type AnyRouter = EdgeStoreRouter<any>;
+export type AnyRouter = EdgeStoreRouter<any, Record<string, AnyBuilder>>;
 
 function createRouterFactory<TCtx>() {
   return function createRouterInner<
@@ -419,7 +458,7 @@ function createRouterFactory<TCtx>() {
         ctx: undefined as TCtx,
       },
       buckets,
-    } satisfies EdgeStoreRouter<TCtx>;
+    } satisfies EdgeStoreRouter<TCtx, TBuckets>;
   };
 }
 

@@ -137,14 +137,18 @@ export type UploadFileRes<TBucket extends AnyBuilder> =
         size: number;
         metadata: InferMetadataObject<TBucket>;
         path: InferBucketPathObject<TBucket>;
-        pathOrder: (keyof InferBucketPathObject<TBucket>)[];
+        pathOrder: InferBucketPathKeys<TBucket> extends never
+          ? []
+          : InferBucketPathKeys<TBucket>[];
       }
     : {
         url: string;
         size: number;
         metadata: InferMetadataObject<TBucket>;
         path: InferBucketPathObject<TBucket>;
-        pathOrder: (keyof InferBucketPathObject<TBucket>)[];
+        pathOrder: InferBucketPathKeys<TBucket> extends never
+          ? []
+          : InferBucketPathKeys<TBucket>[];
       };
 
 type Filter<TBucket extends AnyBuilder> = {
