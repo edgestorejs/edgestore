@@ -30,6 +30,7 @@
     "docs:build": "pnpm build && pnpm --filter docs run build",
     "test": "turbo run test --filter=@edgestore/shared --filter=@edgestore/server",
     "test:types": "turbo run test:types --filter=@edgestore/tests",
+    "test:smoke": "turbo run test:smoke --filter=@edgestore/server",
     "lint": "turbo lint",
     "lint-fix": "turbo lint -- --fix && manypkg fix && pnpm format:write",
     "format": "prettier \"**/*.{js,jsx,ts,tsx,css,mjs,cjs}\"",
