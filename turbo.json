@@ -10,8 +10,6 @@
     "EDGE_STORE_BASE_URL",
     "EDGE_STORE_ACCESS_KEY",
     "EDGE_STORE_SECRET_KEY",
-    "EDGESTORE_SMOKE_BASE_URL",
-    "EDGESTORE_SMOKE_BUCKET_NAME",
     "GITHUB_TOKEN",
     "LANGFUSE_SECRET_KEY",
     "LANGFUSE_PUBLIC_KEY",
@@ -48,6 +46,7 @@
     },
     "test:smoke": {
       "dependsOn": ["^build"],
+      "env": ["EDGESTORE_SMOKE_BASE_URL", "EDGESTORE_SMOKE_BUCKET_NAME"],
       "outputs": [],
       "cache": false
     },
