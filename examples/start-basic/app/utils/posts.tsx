@@ -30,7 +30,7 @@ export const fetchPosts = createServerFn({ method: 'GET' }).handler(
   async () => {
     console.info('Fetching posts...')
     return axios
-      .get<Array<PostType>>('https://jsonplaceholder.typicode.com/posts')
+      .get<PostType[]>('https://jsonplaceholder.typicode.com/posts')
       .then((r) => r.data.slice(0, 10))
   },
 )
