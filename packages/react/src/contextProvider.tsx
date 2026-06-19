@@ -8,7 +8,6 @@ const DEFAULT_BASE_URL =
   (typeof process !== 'undefined'
     ? process.env.NEXT_PUBLIC_EDGE_STORE_BASE_URL
     : // @ts-expect-error - In Vite, the env variables are available on `import.meta`.
-      // eslint-disable-next-line turbo/no-undeclared-env-vars
       import.meta.env?.EDGE_STORE_BASE_URL) ?? 'https://files.edgestore.dev';
 
 type EdgeStoreContextValue<TRouter extends AnyRouter> = {
