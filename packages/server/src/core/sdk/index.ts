@@ -6,6 +6,10 @@ import {
 } from '@edgestore/shared';
 import { getEnv } from '../../adapters/shared';
 import EdgeStoreCredentialsError from '../../libs/errors/EdgeStoreCredentialsError';
+import {
+  EDGE_STORE_PACKAGE_NAME,
+  EDGE_STORE_PACKAGE_VERSION,
+} from '../../version';
 
 const API_ENDPOINT =
   getEnv('EDGE_STORE_API_ENDPOINT') ?? 'https://api.edgestore.dev';
@@ -77,6 +81,8 @@ async function makeRequest<TOutput>(params: {
       Authorization: `Basic ${Buffer.from(`${accessKey}:${secretKey}`).toString(
         'base64',
       )}`,
+      'x-edgestore-package-name': EDGE_STORE_PACKAGE_NAME,
+      'x-edgestore-package-version': EDGE_STORE_PACKAGE_VERSION,
     },
   });
   if (!res.ok) {

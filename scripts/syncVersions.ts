@@ -66,6 +66,38 @@ async function getStandaloneTargetManifests(): Promise<string[]> {
   return targets;
 }
 
+async function syncPackageVersionConstants(
+  localVersions: Record<string, string>,
+): Promise<string[]> {
+  const changedFiles: string[] = [];
+  const serverVersion = localVersions['@edgestore/server'];
+
+  if (serverVersion) {
+    const versionFilePath = path.join(
+      repoRoot,
+      'packages',
+      'server',
+      'src',
+      'version.ts',
+    );
+    const nextText = [
+      "export const EDGE_STORE_PACKAGE_NAME = '@edgestore/server';",
+      `export const EDGE_STORE_PACKAGE_VERSION = '${serverVersion}';`,
+      '',
+    ].join('\n');
+    const prevText = await readFile(versionFilePath, 'utf8');
+
+    if (prevText !== nextText) {
+      if (!CHECK_MODE) {
+        await writeFile(versionFilePath, nextText, 'utf8');
+      }
+      changedFiles.push(path.relative(repoRoot, versionFilePath));
+    }
+  }
+
+  return changedFiles;
+}
+
 function updateDepsObject({
   deps,
   localVersions,
@@ -99,7 +131,10 @@ async function main() {
   const targets = await getStandaloneTargetManifests();
 
   let anyChanges = false;
-  const changedFiles: string[] = [];
+  const changedFiles = await syncPackageVersionConstants(localVersions);
+  if (changedFiles.length > 0) {
+    anyChanges = true;
+  }
 
   for (const manifestPath of targets) {
     let pkg: PackageJson;
