@@ -1,8 +1,16 @@
+import { initEdgeStore } from '@edgestore/shared';
+import express from 'express';
 import { describe, expect, it } from 'vitest';
+import {
+  createSmokeFileName,
+  getSmokeBucketName,
+  requireSmokeCredentials,
+  retryUntilSuccess,
+  SMOKE_CONTENT,
+} from '../test-utils/edgestoreSmoke';
+import { createEdgeStoreExpressHandler } from './express';
 
-const smokeBaseUrl = process.env.EDGESTORE_SMOKE_BASE_URL;
-const smokeBucketName =
-  process.env.EDGESTORE_SMOKE_BUCKET_NAME ?? 'publicFiles';
+const smokeBucketName = getSmokeBucketName();
 
 type HeadersWithSetCookie = Headers & {
   getSetCookie?: () => string[];
@@ -24,12 +32,17 @@ async function expectOk(res: Response) {
   }
 }
 
-function getSmokeBaseUrl() {
-  if (!smokeBaseUrl) {
-    throw new Error('EDGESTORE_SMOKE_BASE_URL is required');
+function parseCookies(cookieHeader: string | undefined) {
+  if (!cookieHeader) {
+    return {};
   }
 
-  return smokeBaseUrl.replace(/\/$/, '');
+  return Object.fromEntries(
+    cookieHeader.split(';').map((cookie) => {
+      const [name, ...valueParts] = cookie.trim().split('=');
+      return [name, valueParts.join('=')];
+    }),
+  );
 }
 
 async function deleteUploadedFile(params: {
@@ -37,27 +50,77 @@ async function deleteUploadedFile(params: {
   cookie: string;
   url: string;
 }) {
-  const deleteRes = await fetch(`${params.baseUrl}/delete-file`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Cookie: params.cookie,
-    },
-    body: JSON.stringify({
-      bucketName: smokeBucketName,
-      url: params.url,
-    }),
-  });
-  await expectOk(deleteRes);
+  await retryUntilSuccess({
+    description: 'delete-file',
+    action: async () => {
+      const deleteRes = await fetch(`${params.baseUrl}/delete-file`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Cookie: params.cookie,
+        },
+        body: JSON.stringify({
+          bucketName: smokeBucketName,
+          url: params.url,
+        }),
+      });
+      await expectOk(deleteRes);
 
-  expect(await deleteRes.json()).toMatchObject({
-    success: true,
+      return (await deleteRes.json()) as { success: boolean };
+    },
   });
 }
 
-describe('EdgeStore live smoke test', () => {
+async function createSmokeServer() {
+  const es = initEdgeStore.create();
+  const router = es.router({
+    [smokeBucketName]: es.fileBucket().beforeDelete(() => true),
+  });
+  const handler = createEdgeStoreExpressHandler({
+    router,
+  });
+  const app = express();
+  app.use(express.json());
+  app.use((req, _res, next) => {
+    req.cookies = parseCookies(req.headers.cookie);
+    next();
+  });
+  app.get('/edgestore/*', handler);
+  app.post('/edgestore/*', handler);
+
+  const server = app.listen(0, '127.0.0.1');
+
+  await new Promise<void>((resolve) => {
+    server.once('listening', resolve);
+  });
+
+  const address = server.address();
+  if (!address || typeof address === 'string') {
+    server.close();
+    throw new Error('Could not determine smoke server address');
+  }
+
+  return {
+    baseUrl: `http://127.0.0.1:${address.port}/edgestore`,
+    close: () =>
+      new Promise<void>((resolve, reject) => {
+        server.close((err) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve();
+          }
+        });
+      }),
+  };
+}
+
+describe('EdgeStore adapter live smoke test', () => {
   it('initializes, requests an upload URL, uploads, confirms, and deletes the file', async () => {
-    const baseUrl = getSmokeBaseUrl();
+    requireSmokeCredentials();
+
+    const smokeServer = await createSmokeServer();
+    const baseUrl = smokeServer.baseUrl;
     let cookie: string | undefined;
     let accessUrl: string | undefined;
 
@@ -81,7 +144,7 @@ describe('EdgeStore live smoke test', () => {
       });
       expect(cookie).toContain('edgestore-ctx=');
 
-      const fileBody = new Blob(['edgestore smoke test'], {
+      const fileBody = new Blob([SMOKE_CONTENT], {
         type: 'text/plain',
       });
 
@@ -96,7 +159,7 @@ describe('EdgeStore live smoke test', () => {
           input: {},
           fileInfo: {
             extension: 'txt',
-            fileName: `smoke-${Date.now()}.txt`,
+            fileName: createSmokeFileName('adapter'),
             size: fileBody.size,
             temporary: true,
             type: fileBody.type,
@@ -150,12 +213,16 @@ describe('EdgeStore live smoke test', () => {
         success: true,
       });
     } finally {
-      if (cookie && accessUrl) {
-        await deleteUploadedFile({
-          baseUrl,
-          cookie,
-          url: accessUrl,
-        });
+      try {
+        if (cookie && accessUrl) {
+          await deleteUploadedFile({
+            baseUrl,
+            cookie,
+            url: accessUrl,
+          });
+        }
+      } finally {
+        await smokeServer.close();
       }
     }
   });

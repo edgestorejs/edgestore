@@ -46,7 +46,13 @@
     },
     "test:smoke": {
       "dependsOn": ["^build"],
-      "env": ["EDGESTORE_SMOKE_BASE_URL", "EDGESTORE_SMOKE_BUCKET_NAME"],
+      "env": [
+        "TEST_ENV",
+        "EDGESTORE_SMOKE_BUCKET_NAME",
+        "EDGE_STORE_API_ENDPOINT",
+        "EDGE_STORE_ACCESS_KEY",
+        "EDGE_STORE_SECRET_KEY"
+      ],
       "outputs": [],
       "cache": false
     },
