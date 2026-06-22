@@ -75,6 +75,7 @@ export function EdgeStoreProvider(
       bucketName,
       bucketType,
       fileInfo,
+      autoSignedUrls,
     }): Promise<RequestUploadRes> {
       // multipart upload if file is bigger than a certain size
       const MULTIPART_THRESHOLD = 10 * 1024 * 1024; // 10MB
@@ -90,6 +91,7 @@ export function EdgeStoreProvider(
           bucketName,
           bucketType,
           fileInfo,
+          autoSignedUrls,
           multipart: {
             parts: Array.from({ length: totalParts }).map(
               (_, index) => index + 1,
@@ -112,6 +114,12 @@ export function EdgeStoreProvider(
           return {
             accessUrl: res.accessUrl,
             thumbnailUrl: res.thumbnailUrl,
+            accessSignedUrl: res.accessSignedUrl,
+            accessSignedThumbnailUrl: res.accessSignedThumbnailUrl,
+            accessSignedUrlExpiresAt: res.accessSignedUrlExpiresAt
+              ? new Date(res.accessSignedUrlExpiresAt)
+              : undefined,
+            accessSignedUrlExpiresIn: res.accessSignedUrlExpiresIn,
             multipart,
           };
         } else if (res.signedUrl) {
@@ -119,6 +127,12 @@ export function EdgeStoreProvider(
             accessUrl: res.accessUrl,
             uploadUrl: res.signedUrl,
             thumbnailUrl: res.thumbnailUrl,
+            accessSignedUrl: res.accessSignedUrl,
+            accessSignedThumbnailUrl: res.accessSignedThumbnailUrl,
+            accessSignedUrlExpiresAt: res.accessSignedUrlExpiresAt
+              ? new Date(res.accessSignedUrlExpiresAt)
+              : undefined,
+            accessSignedUrlExpiresIn: res.accessSignedUrlExpiresIn,
           };
         } else {
           throw new EdgeStoreError({
@@ -131,12 +145,19 @@ export function EdgeStoreProvider(
         bucketName,
         bucketType,
         fileInfo,
+        autoSignedUrls,
       });
       if (res.signedUrl) {
         return {
           accessUrl: res.accessUrl,
           uploadUrl: res.signedUrl,
           thumbnailUrl: res.thumbnailUrl,
+          accessSignedUrl: res.accessSignedUrl,
+          accessSignedThumbnailUrl: res.accessSignedThumbnailUrl,
+          accessSignedUrlExpiresAt: res.accessSignedUrlExpiresAt
+            ? new Date(res.accessSignedUrlExpiresAt)
+            : undefined,
+          accessSignedUrlExpiresIn: res.accessSignedUrlExpiresIn,
         };
       }
       throw new EdgeStoreError({
@@ -158,6 +179,13 @@ export function EdgeStoreProvider(
           })),
         },
       };
+    },
+    getSignedUrls: async (params) => {
+      const res = await edgeStoreSdk.getSignedUrls(params);
+      return res.map((item) => ({
+        ...item,
+        expiresAt: new Date(item.expiresAt),
+      }));
     },
     completeMultipartUpload: async ({ uploadId, key, parts }) => {
       return await edgeStoreSdk.completeMultipartUpload({

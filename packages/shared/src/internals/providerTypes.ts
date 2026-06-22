@@ -50,6 +50,10 @@ export type RequestUploadParams = {
     replaceTargetUrl?: string;
     temporary: boolean;
   };
+  autoSignedUrls?: {
+    expiresIn?: number;
+    includeThumbnails?: boolean;
+  };
 };
 
 export type RequestUploadPartsParams = {
@@ -88,6 +92,10 @@ export type RequestUploadRes =
       uploadUrl: string;
       accessUrl: string;
       thumbnailUrl?: string | null;
+      accessSignedUrl?: string;
+      accessSignedThumbnailUrl?: string | null;
+      accessSignedUrlExpiresAt?: Date | string;
+      accessSignedUrlExpiresIn?: number;
     }
   | {
       multipart: {
@@ -102,7 +110,27 @@ export type RequestUploadRes =
       };
       accessUrl: string;
       thumbnailUrl?: string | null;
+      accessSignedUrl?: string;
+      accessSignedThumbnailUrl?: string | null;
+      accessSignedUrlExpiresAt?: Date | string;
+      accessSignedUrlExpiresIn?: number;
     };
+
+export type GetSignedUrlsParams = {
+  bucketName: string;
+  urls: string[];
+  expiresIn?: number;
+  includeThumbnails?: boolean;
+};
+
+export type GetSignedUrlRes = {
+  url: string;
+  signedUrl: string;
+  expiresAt: Date;
+  expiresIn: number;
+  thumbnailUrl?: string | null;
+  signedThumbnailUrl?: string | null;
+};
 
 export type ConfirmUpload = {
   bucket: AnyBuilder;
@@ -133,6 +161,9 @@ export type Provider = {
   requestUploadParts: (
     params: RequestUploadPartsParams,
   ) => MaybePromise<RequestUploadPartsRes>;
+  getSignedUrls?: (
+    params: GetSignedUrlsParams,
+  ) => MaybePromise<GetSignedUrlRes[]>;
   completeMultipartUpload: (
     params: CompleteMultipartUploadParams,
   ) => MaybePromise<CompleteMultipartUploadRes>;

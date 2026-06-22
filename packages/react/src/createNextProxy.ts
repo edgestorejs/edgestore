@@ -53,7 +53,7 @@ export type BucketFunctions<TRouter extends AnyRouter> = {
             options?: UploadOptions;
           },
     ) => Promise<
-      TRouter['buckets'][K]['_def']['type'] extends 'IMAGE'
+      (TRouter['buckets'][K]['_def']['type'] extends 'IMAGE'
         ? {
             url: string;
             thumbnailUrl: string | null;
@@ -74,7 +74,15 @@ export type BucketFunctions<TRouter extends AnyRouter> = {
             pathOrder: Prettify<
               keyof InferBucketPathObject<TRouter['buckets'][K]>
             >[];
-          }
+          }) &
+        (undefined extends TRouter['buckets'][K]['_def']['autoSignedUrls']
+          ? {}
+          : {
+              signedUrl: string;
+              expiresAt: Date;
+              expiresIn: number;
+              signedThumbnailUrl?: string | null;
+            })
     >;
     confirmUpload: (params: { url: string }) => Promise<void>;
     delete: (params: { url: string }) => Promise<void>;
@@ -97,7 +105,7 @@ export function createNextProxy<TRouter extends AnyRouter>({
   return new Proxy<BucketFunctions<TRouter>>({} as BucketFunctions<TRouter>, {
     get(_, prop) {
       const bucketName = prop as keyof TRouter['buckets'];
-      const bucketFunctions: BucketFunctions<TRouter>[string] = {
+      const bucketFunctions = {
         upload: async (params) => {
           try {
             params.onProgressChange?.(0);
@@ -158,7 +166,7 @@ export function createNextProxy<TRouter extends AnyRouter>({
             throw new EdgeStoreClientError('Failed to delete file');
           }
         },
-      };
+      } as BucketFunctions<TRouter>[string];
       return bucketFunctions;
     },
   });
@@ -250,6 +258,16 @@ async function uploadFile(
       thumbnailUrl: json.thumbnailUrl
         ? getUrl(json.thumbnailUrl, apiPath, disableDevProxy)
         : null,
+      ...(json.accessSignedUrl
+        ? {
+            signedUrl: json.accessSignedUrl,
+            expiresAt: json.accessSignedUrlExpiresAt
+              ? new Date(json.accessSignedUrlExpiresAt)
+              : new Date(),
+            expiresIn: json.accessSignedUrlExpiresIn ?? 0,
+            signedThumbnailUrl: json.accessSignedThumbnailUrl ?? null,
+          }
+        : {}),
       size: json.size,
       uploadedAt: new Date(json.uploadedAt),
       path: json.path as any,

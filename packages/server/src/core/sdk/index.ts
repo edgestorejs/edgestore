@@ -25,6 +25,11 @@ type FileInfoForUpload = {
   temporary: boolean;
 };
 
+type AutoSignedUrlsForUpload = {
+  expiresIn?: number;
+  includeThumbnails?: boolean;
+};
+
 export type SimpleOperator =
   | 'eq'
   | 'neq'
@@ -161,12 +166,14 @@ export const edgeStoreRawSdk = {
     bucketType,
     fileInfo,
     multipart,
+    autoSignedUrls,
   }: {
     accessKey: string;
     secretKey: string;
     bucketName: string;
     bucketType: string;
     fileInfo: FileInfoForUpload;
+    autoSignedUrls?: AutoSignedUrlsForUpload;
     multipart?: {
       parts: number[];
     };
@@ -184,6 +191,10 @@ export const edgeStoreRawSdk = {
       url: string;
       path: string;
       thumbnailUrl: string | null;
+      accessSignedUrl?: string;
+      accessSignedThumbnailUrl?: string | null;
+      accessSignedUrlExpiresAt?: string;
+      accessSignedUrlExpiresIn?: number;
     }>({
       path: '/request-upload',
       accessKey,
@@ -201,6 +212,7 @@ export const edgeStoreRawSdk = {
         fileName: fileInfo.fileName,
         replaceTargetUrl: fileInfo.replaceTargetUrl,
         isTemporary: fileInfo.temporary,
+        autoSignedUrls,
       },
     });
     return {
@@ -209,7 +221,49 @@ export const edgeStoreRawSdk = {
       accessUrl: res.url,
       path: res.path,
       thumbnailUrl: res.thumbnailUrl,
+      accessSignedUrl: res.accessSignedUrl,
+      accessSignedThumbnailUrl: res.accessSignedThumbnailUrl,
+      accessSignedUrlExpiresAt: res.accessSignedUrlExpiresAt,
+      accessSignedUrlExpiresIn: res.accessSignedUrlExpiresIn,
     };
+  },
+
+  async getSignedUrls({
+    accessKey,
+    secretKey,
+    bucketName,
+    urls,
+    expiresIn,
+    includeThumbnails,
+  }: {
+    accessKey: string;
+    secretKey: string;
+    bucketName: string;
+    urls: string[];
+    expiresIn?: number;
+    includeThumbnails?: boolean;
+  }) {
+    const res = await makeRequest<{
+      signedUrls: {
+        url: string;
+        signedUrl: string;
+        expiresAt: string;
+        expiresIn: number;
+        thumbnailUrl?: string | null;
+        signedThumbnailUrl?: string | null;
+      }[];
+    }>({
+      path: '/get-signed-urls',
+      accessKey,
+      secretKey,
+      body: {
+        bucketName,
+        urls,
+        expiresIn,
+        includeThumbnails,
+      },
+    });
+    return res.signedUrls;
   },
 
   async requestUploadParts({
@@ -389,10 +443,12 @@ export function initEdgeStoreSdk(params: {
       bucketType,
       fileInfo,
       multipart,
+      autoSignedUrls,
     }: {
       bucketName: string;
       bucketType: string;
       fileInfo: FileInfoForUpload;
+      autoSignedUrls?: AutoSignedUrlsForUpload;
       multipart?: {
         parts: number[];
       };
@@ -404,6 +460,19 @@ export function initEdgeStoreSdk(params: {
         bucketType,
         fileInfo,
         multipart,
+        autoSignedUrls,
+      });
+    },
+    async getSignedUrls(params: {
+      bucketName: string;
+      urls: string[];
+      expiresIn?: number;
+      includeThumbnails?: boolean;
+    }) {
+      return await edgeStoreRawSdk.getSignedUrls({
+        accessKey,
+        secretKey,
+        ...params,
       });
     },
     async requestUploadParts({
