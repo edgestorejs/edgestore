@@ -76,7 +76,7 @@ export type BucketFunctions<TRouter extends AnyRouter> = {
             >[];
           }) &
         (undefined extends TRouter['buckets'][K]['_def']['autoSignedUrls']
-          ? {}
+          ? unknown
           : {
               signedUrl: string;
               expiresAt: Date;

@@ -151,7 +151,7 @@ export type UploadFileRes<TBucket extends AnyBuilder> =
           : InferBucketPathKeys<TBucket>[];
       }) &
     (undefined extends TBucket['_def']['autoSignedUrls']
-      ? {}
+      ? unknown
       : {
           signedUrl: string;
           expiresAt: Date;
@@ -278,7 +278,7 @@ type BucketClient<TBucket extends AnyBuilder> = {
     params?: ListFilesRequest<TBucket>,
   ) => Promise<Prettify<ListFilesResponse<TBucket>>>;
 } & (undefined extends TBucket['_def']['accessControl']
-  ? {}
+  ? unknown
   : {
       getSignedUrl: (params: {
         url: string;
@@ -470,7 +470,7 @@ export function initEdgeStoreClient<TRouter extends AnyRouter>(config: {
           };
         },
 
-        async getSignedUrl(params) {
+        async getSignedUrl(params: { url: string; expiresIn?: number }) {
           const [signedUrl] = await sdk.getSignedUrls({
             bucketName,
             urls: [params.url],
@@ -485,7 +485,11 @@ export function initEdgeStoreClient<TRouter extends AnyRouter>(config: {
           };
         },
 
-        async getSignedUrls(params) {
+        async getSignedUrls(params: {
+          urls: string[];
+          expiresIn?: number;
+          includeThumbnails?: boolean;
+        }) {
           const signedUrls = await sdk.getSignedUrls({
             bucketName,
             urls: params.urls,
