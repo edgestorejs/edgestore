@@ -130,7 +130,7 @@ export type UploadFileRequest<TBucket extends AnyBuilder> = {
       });
 
 export type UploadFileRes<TBucket extends AnyBuilder> =
-  TBucket['_def']['type'] extends 'IMAGE'
+  (TBucket['_def']['type'] extends 'IMAGE'
     ? {
         url: string;
         thumbnailUrl: string | null;
@@ -149,7 +149,15 @@ export type UploadFileRes<TBucket extends AnyBuilder> =
         pathOrder: InferBucketPathKeys<TBucket> extends never
           ? []
           : InferBucketPathKeys<TBucket>[];
-      };
+      }) &
+    (undefined extends TBucket['_def']['autoSignedUrls']
+      ? unknown
+      : {
+          signedUrl: string;
+          expiresAt: Date;
+          expiresIn: number;
+          signedThumbnailUrl?: string | null;
+        });
 
 type Filter<TBucket extends AnyBuilder> = {
   AND?: Filter<TBucket>[];
@@ -195,69 +203,96 @@ export type ListFilesResponse<TBucket extends AnyBuilder> = {
   };
 };
 
-type EdgeStoreClient<TRouter extends AnyRouter> = {
-  [K in keyof TRouter['buckets']]: {
-    getFile: (params: {
-      url: string;
-    }) => Promise<GetFileRes<TRouter['buckets'][K]>>;
+type GetSignedUrlRes = {
+  url: string;
+  signedUrl: string;
+  expiresAt: Date;
+  expiresIn: number;
+};
 
-    /**
-     * Use this function to upload a file to the bucket directly from your backend.
-     *
-     * @example
-     * ```ts
-     * // simple example
-     * await backendClient.myBucket.upload({
-     *   content: "some text",
-     * });
-     * ```
-     *
-     * @example
-     * ```ts
-     * // complete example
-     * await backendClient.myBucket.upload({
-     *   content: {
-     *     blob: new Blob([text], { type: "text/csv" }),
-     *     extension: "csv",
-     *   },
-     *   options: {
-     *     temporary: true,
-     *     replaceTargetUrl: replaceUrl,
-     *     manualFileName: "test.csv",
-     *   },
-     *   ctx: {
-     *     userId: "123",
-     *     userRole: "admin",
-     *   },
-     *   input: {
-     *     type: "post",
-     *   },
-     * });
-     * ```
-     */
-    upload: (
-      params: UploadFileRequest<TRouter['buckets'][K]>,
-    ) => Promise<Prettify<UploadFileRes<TRouter['buckets'][K]>>>;
-    /**
-     * Confirm a temporary file upload directly from your backend.
-     */
-    confirmUpload: (params: { url: string }) => Promise<{ success: boolean }>;
-    /**
-     * Programmatically delete a file directly from your backend.
-     */
-    deleteFile: (params: { url: string }) => Promise<{
-      success: boolean;
-    }>;
-    /**
-     * List files in a bucket.
-     *
-     * You can also filter the results by passing a filter object.
-     * The results are paginated.
-     */
-    listFiles: (
-      params?: ListFilesRequest<TRouter['buckets'][K]>,
-    ) => Promise<Prettify<ListFilesResponse<TRouter['buckets'][K]>>>;
-  };
+type GetSignedUrlsRes<TBucket extends AnyBuilder> =
+  TBucket['_def']['type'] extends 'IMAGE'
+    ? (GetSignedUrlRes & {
+        thumbnailUrl?: string | null;
+        signedThumbnailUrl?: string | null;
+      })[]
+    : GetSignedUrlRes[];
+
+type BucketClient<TBucket extends AnyBuilder> = {
+  getFile: (params: { url: string }) => Promise<GetFileRes<TBucket>>;
+
+  /**
+   * Use this function to upload a file to the bucket directly from your backend.
+   *
+   * @example
+   * ```ts
+   * // simple example
+   * await backendClient.myBucket.upload({
+   *   content: "some text",
+   * });
+   * ```
+   *
+   * @example
+   * ```ts
+   * // complete example
+   * await backendClient.myBucket.upload({
+   *   content: {
+   *     blob: new Blob([text], { type: "text/csv" }),
+   *     extension: "csv",
+   *   },
+   *   options: {
+   *     temporary: true,
+   *     replaceTargetUrl: replaceUrl,
+   *     manualFileName: "test.csv",
+   *   },
+   *   ctx: {
+   *     userId: "123",
+   *     userRole: "admin",
+   *   },
+   *   input: {
+   *     type: "post",
+   *   },
+   * });
+   * ```
+   */
+  upload: (
+    params: UploadFileRequest<TBucket>,
+  ) => Promise<Prettify<UploadFileRes<TBucket>>>;
+  /**
+   * Confirm a temporary file upload directly from your backend.
+   */
+  confirmUpload: (params: { url: string }) => Promise<{ success: boolean }>;
+  /**
+   * Programmatically delete a file directly from your backend.
+   */
+  deleteFile: (params: { url: string }) => Promise<{
+    success: boolean;
+  }>;
+  /**
+   * List files in a bucket.
+   *
+   * You can also filter the results by passing a filter object.
+   * The results are paginated.
+   */
+  listFiles: (
+    params?: ListFilesRequest<TBucket>,
+  ) => Promise<Prettify<ListFilesResponse<TBucket>>>;
+} & (undefined extends TBucket['_def']['accessControl']
+  ? unknown
+  : {
+      getSignedUrl: (params: {
+        url: string;
+        expiresIn?: number;
+      }) => Promise<GetSignedUrlRes>;
+      getSignedUrls: (params: {
+        urls: string[];
+        expiresIn?: number;
+        includeThumbnails?: boolean;
+      }) => Promise<GetSignedUrlsRes<TBucket>>;
+    });
+
+type EdgeStoreClient<TRouter extends AnyRouter> = {
+  [K in keyof TRouter['buckets']]: BucketClient<TRouter['buckets'][K]>;
 };
 
 export function initEdgeStoreClient<TRouter extends AnyRouter>(config: {
@@ -342,6 +377,7 @@ export function initEdgeStoreClient<TRouter extends AnyRouter>(config: {
           const requestUploadRes = await sdk.requestUpload({
             bucketName,
             bucketType: bucket._def.type,
+            autoSignedUrls: bucket._def.autoSignedUrls,
             fileInfo: {
               fileName: params.options?.manualFileName,
               replaceTargetUrl: params.options?.replaceTargetUrl,
@@ -380,13 +416,12 @@ export function initEdgeStoreClient<TRouter extends AnyRouter>(config: {
             ...{
               thumbnailUrl: requestUploadRes.thumbnailUrl,
             },
+            ...mapSignedUploadAccess(requestUploadRes),
             size: blob.size,
             metadata,
             path: parsedPath,
             pathOrder,
-          } satisfies UploadFileRes<typeof bucket> as UploadFileRes<
-            TRouter['buckets'][string]
-          >;
+          } as unknown as UploadFileRes<TRouter['buckets'][string]>;
         },
 
         async getFile(params) {
@@ -434,6 +469,38 @@ export function initEdgeStoreClient<TRouter extends AnyRouter>(config: {
             pagination: res.pagination,
           };
         },
+
+        async getSignedUrl(params: { url: string; expiresIn?: number }) {
+          const [signedUrl] = await sdk.getSignedUrls({
+            bucketName,
+            urls: [params.url],
+            expiresIn: params.expiresIn,
+          });
+          if (!signedUrl) {
+            throw new Error('Missing signed URL response');
+          }
+          return {
+            ...signedUrl,
+            expiresAt: new Date(signedUrl.expiresAt),
+          };
+        },
+
+        async getSignedUrls(params: {
+          urls: string[];
+          expiresIn?: number;
+          includeThumbnails?: boolean;
+        }) {
+          const signedUrls = await sdk.getSignedUrls({
+            bucketName,
+            urls: params.urls,
+            expiresIn: params.expiresIn,
+            includeThumbnails: params.includeThumbnails,
+          });
+          return signedUrls.map((signedUrl) => ({
+            ...signedUrl,
+            expiresAt: new Date(signedUrl.expiresAt),
+          })) as any;
+        },
       };
       return client;
     },
@@ -465,6 +532,25 @@ function getUrl(url: string, baseUrl?: string) {
 async function getBlobFromUrl(url: string) {
   const res = await fetch(url);
   return await res.blob();
+}
+
+function mapSignedUploadAccess(res: {
+  accessSignedUrl?: string;
+  accessSignedThumbnailUrl?: string | null;
+  accessSignedUrlExpiresAt?: Date | string;
+  accessSignedUrlExpiresIn?: number;
+}) {
+  if (!res.accessSignedUrl) {
+    return {};
+  }
+  return {
+    signedUrl: res.accessSignedUrl,
+    expiresAt: res.accessSignedUrlExpiresAt
+      ? new Date(res.accessSignedUrlExpiresAt)
+      : new Date(),
+    expiresIn: res.accessSignedUrlExpiresIn ?? 0,
+    signedThumbnailUrl: res.accessSignedThumbnailUrl ?? null,
+  };
 }
 
 export type InferClientResponse<TRouter extends AnyRouter> = {
