@@ -258,16 +258,7 @@ async function uploadFile(
       thumbnailUrl: json.thumbnailUrl
         ? getUrl(json.thumbnailUrl, apiPath, disableDevProxy)
         : null,
-      ...(json.accessSignedUrl
-        ? {
-            signedUrl: json.accessSignedUrl,
-            expiresAt: json.accessSignedUrlExpiresAt
-              ? new Date(json.accessSignedUrlExpiresAt)
-              : new Date(),
-            expiresIn: json.accessSignedUrlExpiresIn ?? 0,
-            signedThumbnailUrl: json.accessSignedThumbnailUrl ?? null,
-          }
-        : {}),
+      ...mapSignedUploadAccess(json),
       size: json.size,
       uploadedAt: new Date(json.uploadedAt),
       path: json.path as any,
@@ -332,6 +323,20 @@ function getExtensionFromMimeType(mimeType?: string) {
     'application/zip': 'zip',
   };
   return mimeType ? MIME_TYPE_TO_EXTENSION[mimeType] : undefined;
+}
+
+function mapSignedUploadAccess(res: SharedRequestUploadRes) {
+  if (!res.accessSignedUrl) {
+    return {};
+  }
+  return {
+    signedUrl: res.accessSignedUrl,
+    expiresAt: res.accessSignedUrlExpiresAt
+      ? new Date(res.accessSignedUrlExpiresAt)
+      : new Date(),
+    expiresIn: res.accessSignedUrlExpiresIn ?? 0,
+    signedThumbnailUrl: res.accessSignedThumbnailUrl ?? null,
+  };
 }
 
 /**

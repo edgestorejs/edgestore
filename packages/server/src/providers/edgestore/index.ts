@@ -114,12 +114,7 @@ export function EdgeStoreProvider(
           return {
             accessUrl: res.accessUrl,
             thumbnailUrl: res.thumbnailUrl,
-            accessSignedUrl: res.accessSignedUrl,
-            accessSignedThumbnailUrl: res.accessSignedThumbnailUrl,
-            accessSignedUrlExpiresAt: res.accessSignedUrlExpiresAt
-              ? new Date(res.accessSignedUrlExpiresAt)
-              : undefined,
-            accessSignedUrlExpiresIn: res.accessSignedUrlExpiresIn,
+            ...mapSignedUploadAccess(res),
             multipart,
           };
         } else if (res.signedUrl) {
@@ -127,12 +122,7 @@ export function EdgeStoreProvider(
             accessUrl: res.accessUrl,
             uploadUrl: res.signedUrl,
             thumbnailUrl: res.thumbnailUrl,
-            accessSignedUrl: res.accessSignedUrl,
-            accessSignedThumbnailUrl: res.accessSignedThumbnailUrl,
-            accessSignedUrlExpiresAt: res.accessSignedUrlExpiresAt
-              ? new Date(res.accessSignedUrlExpiresAt)
-              : undefined,
-            accessSignedUrlExpiresIn: res.accessSignedUrlExpiresIn,
+            ...mapSignedUploadAccess(res),
           };
         } else {
           throw new EdgeStoreError({
@@ -152,12 +142,7 @@ export function EdgeStoreProvider(
           accessUrl: res.accessUrl,
           uploadUrl: res.signedUrl,
           thumbnailUrl: res.thumbnailUrl,
-          accessSignedUrl: res.accessSignedUrl,
-          accessSignedThumbnailUrl: res.accessSignedThumbnailUrl,
-          accessSignedUrlExpiresAt: res.accessSignedUrlExpiresAt
-            ? new Date(res.accessSignedUrlExpiresAt)
-            : undefined,
-          accessSignedUrlExpiresIn: res.accessSignedUrlExpiresIn,
+          ...mapSignedUploadAccess(res),
         };
       }
       throw new EdgeStoreError({
@@ -204,5 +189,21 @@ export function EdgeStoreProvider(
         url,
       });
     },
+  };
+}
+
+function mapSignedUploadAccess(res: {
+  accessSignedUrl?: string;
+  accessSignedThumbnailUrl?: string | null;
+  accessSignedUrlExpiresAt?: string;
+  accessSignedUrlExpiresIn?: number;
+}) {
+  return {
+    accessSignedUrl: res.accessSignedUrl,
+    accessSignedThumbnailUrl: res.accessSignedThumbnailUrl,
+    accessSignedUrlExpiresAt: res.accessSignedUrlExpiresAt
+      ? new Date(res.accessSignedUrlExpiresAt)
+      : undefined,
+    accessSignedUrlExpiresIn: res.accessSignedUrlExpiresIn,
   };
 }

@@ -418,17 +418,7 @@ export function initEdgeStoreClient<TRouter extends AnyRouter>(config: {
             ...{
               thumbnailUrl: requestUploadRes.thumbnailUrl,
             },
-            ...(requestUploadRes.accessSignedUrl
-              ? {
-                  signedUrl: requestUploadRes.accessSignedUrl,
-                  expiresAt: requestUploadRes.accessSignedUrlExpiresAt
-                    ? new Date(requestUploadRes.accessSignedUrlExpiresAt)
-                    : new Date(),
-                  expiresIn: requestUploadRes.accessSignedUrlExpiresIn ?? 0,
-                  signedThumbnailUrl:
-                    requestUploadRes.accessSignedThumbnailUrl ?? null,
-                }
-              : {}),
+            ...mapSignedUploadAccess(requestUploadRes),
             size: blob.size,
             metadata,
             path: parsedPath,
@@ -542,6 +532,25 @@ function getUrl(url: string, baseUrl?: string) {
 async function getBlobFromUrl(url: string) {
   const res = await fetch(url);
   return await res.blob();
+}
+
+function mapSignedUploadAccess(res: {
+  accessSignedUrl?: string;
+  accessSignedThumbnailUrl?: string | null;
+  accessSignedUrlExpiresAt?: Date | string;
+  accessSignedUrlExpiresIn?: number;
+}) {
+  if (!res.accessSignedUrl) {
+    return {};
+  }
+  return {
+    signedUrl: res.accessSignedUrl,
+    expiresAt: res.accessSignedUrlExpiresAt
+      ? new Date(res.accessSignedUrlExpiresAt)
+      : new Date(),
+    expiresIn: res.accessSignedUrlExpiresIn ?? 0,
+    signedThumbnailUrl: res.accessSignedThumbnailUrl ?? null,
+  };
 }
 
 export type InferClientResponse<TRouter extends AnyRouter> = {
