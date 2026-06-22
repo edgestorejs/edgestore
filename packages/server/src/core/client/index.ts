@@ -219,79 +219,77 @@ type GetSignedUrlsRes<TBucket extends AnyBuilder> =
     : GetSignedUrlRes[];
 
 type BucketClient<TBucket extends AnyBuilder> = {
-    getFile: (params: {
-      url: string;
-    }) => Promise<GetFileRes<TBucket>>;
+  getFile: (params: { url: string }) => Promise<GetFileRes<TBucket>>;
 
-    /**
-     * Use this function to upload a file to the bucket directly from your backend.
-     *
-     * @example
-     * ```ts
-     * // simple example
-     * await backendClient.myBucket.upload({
-     *   content: "some text",
-     * });
-     * ```
-     *
-     * @example
-     * ```ts
-     * // complete example
-     * await backendClient.myBucket.upload({
-     *   content: {
-     *     blob: new Blob([text], { type: "text/csv" }),
-     *     extension: "csv",
-     *   },
-     *   options: {
-     *     temporary: true,
-     *     replaceTargetUrl: replaceUrl,
-     *     manualFileName: "test.csv",
-     *   },
-     *   ctx: {
-     *     userId: "123",
-     *     userRole: "admin",
-     *   },
-     *   input: {
-     *     type: "post",
-     *   },
-     * });
-     * ```
-     */
-    upload: (
-      params: UploadFileRequest<TBucket>,
-    ) => Promise<Prettify<UploadFileRes<TBucket>>>;
-    /**
-     * Confirm a temporary file upload directly from your backend.
-     */
-    confirmUpload: (params: { url: string }) => Promise<{ success: boolean }>;
-    /**
-     * Programmatically delete a file directly from your backend.
-     */
-    deleteFile: (params: { url: string }) => Promise<{
-      success: boolean;
-    }>;
-    /**
-     * List files in a bucket.
-     *
-     * You can also filter the results by passing a filter object.
-     * The results are paginated.
-     */
-    listFiles: (
-      params?: ListFilesRequest<TBucket>,
-    ) => Promise<Prettify<ListFilesResponse<TBucket>>>;
-  } & (undefined extends TBucket['_def']['accessControl']
-    ? {}
-    : {
-        getSignedUrl: (params: {
-          url: string;
-          expiresIn?: number;
-        }) => Promise<GetSignedUrlRes>;
-        getSignedUrls: (params: {
-          urls: string[];
-          expiresIn?: number;
-          includeThumbnails?: boolean;
-        }) => Promise<GetSignedUrlsRes<TBucket>>;
-      });
+  /**
+   * Use this function to upload a file to the bucket directly from your backend.
+   *
+   * @example
+   * ```ts
+   * // simple example
+   * await backendClient.myBucket.upload({
+   *   content: "some text",
+   * });
+   * ```
+   *
+   * @example
+   * ```ts
+   * // complete example
+   * await backendClient.myBucket.upload({
+   *   content: {
+   *     blob: new Blob([text], { type: "text/csv" }),
+   *     extension: "csv",
+   *   },
+   *   options: {
+   *     temporary: true,
+   *     replaceTargetUrl: replaceUrl,
+   *     manualFileName: "test.csv",
+   *   },
+   *   ctx: {
+   *     userId: "123",
+   *     userRole: "admin",
+   *   },
+   *   input: {
+   *     type: "post",
+   *   },
+   * });
+   * ```
+   */
+  upload: (
+    params: UploadFileRequest<TBucket>,
+  ) => Promise<Prettify<UploadFileRes<TBucket>>>;
+  /**
+   * Confirm a temporary file upload directly from your backend.
+   */
+  confirmUpload: (params: { url: string }) => Promise<{ success: boolean }>;
+  /**
+   * Programmatically delete a file directly from your backend.
+   */
+  deleteFile: (params: { url: string }) => Promise<{
+    success: boolean;
+  }>;
+  /**
+   * List files in a bucket.
+   *
+   * You can also filter the results by passing a filter object.
+   * The results are paginated.
+   */
+  listFiles: (
+    params?: ListFilesRequest<TBucket>,
+  ) => Promise<Prettify<ListFilesResponse<TBucket>>>;
+} & (undefined extends TBucket['_def']['accessControl']
+  ? {}
+  : {
+      getSignedUrl: (params: {
+        url: string;
+        expiresIn?: number;
+      }) => Promise<GetSignedUrlRes>;
+      getSignedUrls: (params: {
+        urls: string[];
+        expiresIn?: number;
+        includeThumbnails?: boolean;
+      }) => Promise<GetSignedUrlsRes<TBucket>>;
+    });
 
 type EdgeStoreClient<TRouter extends AnyRouter> = {
   [K in keyof TRouter['buckets']]: BucketClient<TRouter['buckets'][K]>;
@@ -423,9 +421,7 @@ export function initEdgeStoreClient<TRouter extends AnyRouter>(config: {
             metadata,
             path: parsedPath,
             pathOrder,
-          } as unknown as UploadFileRes<
-            TRouter['buckets'][string]
-          >;
+          } as unknown as UploadFileRes<TRouter['buckets'][string]>;
         },
 
         async getFile(params) {
