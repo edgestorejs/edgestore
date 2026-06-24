@@ -16,7 +16,9 @@ export function CampaignCountdown(props: {
       setTimeLeft(getTimeDifference(new Date(), campaign.endDate));
     }, 1000);
 
-    return () => { clearInterval(intervalId); };
+    return () => {
+      clearInterval(intervalId);
+    };
   }, [campaign.endDate]);
 
   if (timeLeft.diff < 0) {
@@ -24,37 +26,37 @@ export function CampaignCountdown(props: {
   }
 
   return (
-    <div className="mx-auto w-full rounded-lg border bg-background p-8 sm:w-min sm:min-w-96">
+    <div className="bg-background mx-auto w-full rounded-lg border p-8 sm:w-min sm:min-w-96">
       <div className="space-y-4">
         <div className="text-center">
           <h2 className="text-xl font-bold sm:text-nowrap sm:text-3xl">
             {campaign.name} Ends Soon
           </h2>
-          <p className="text-sm text-muted-foreground sm:text-base">
+          <p className="text-muted-foreground text-sm sm:text-base">
             {campaign.description}
           </p>
         </div>
         <div className="mx-auto grid max-w-md grid-cols-4 gap-2 text-center sm:gap-4">
           <div className="space-y-1">
             <div
-              className="text-4xl font-bold text-primary sm:text-5xl"
+              className="text-primary text-4xl font-bold sm:text-5xl"
               suppressHydrationWarning
             >
               {timeLeft.days}
             </div>
-            <div className="text-sm text-muted-foreground sm:text-base">
+            <div className="text-muted-foreground text-sm sm:text-base">
               Days
             </div>
           </div>
           <div className="space-y-1">
             <div
-              className="text-4xl font-bold text-primary sm:text-5xl"
+              className="text-primary text-4xl font-bold sm:text-5xl"
               suppressHydrationWarning
             >
               {timeLeft.hours}
             </div>
             <div
-              className="text-sm text-muted-foreground sm:text-base"
+              className="text-muted-foreground text-sm sm:text-base"
               suppressHydrationWarning
             >
               Hours
@@ -62,23 +64,23 @@ export function CampaignCountdown(props: {
           </div>
           <div className="space-y-1">
             <div
-              className="text-4xl font-bold text-primary sm:text-5xl"
+              className="text-primary text-4xl font-bold sm:text-5xl"
               suppressHydrationWarning
             >
               {timeLeft.minutes}
             </div>
-            <div className="text-sm text-muted-foreground sm:text-base">
+            <div className="text-muted-foreground text-sm sm:text-base">
               Minutes
             </div>
           </div>
           <div className="space-y-1">
             <div
-              className="text-4xl font-bold text-primary sm:text-5xl"
+              className="text-primary text-4xl font-bold sm:text-5xl"
               suppressHydrationWarning
             >
               {timeLeft.seconds}
             </div>
-            <div className="text-sm text-muted-foreground sm:text-base">
+            <div className="text-muted-foreground text-sm sm:text-base">
               Seconds
             </div>
           </div>

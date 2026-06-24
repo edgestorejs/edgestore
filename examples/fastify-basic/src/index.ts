@@ -1,8 +1,8 @@
 import { initEdgeStore } from '@edgestore/server';
 import { createEdgeStoreFastifyHandler } from '@edgestore/server/adapters/fastify';
-import fastify from 'fastify';
 import fastifyCookie from '@fastify/cookie';
 import fastifyCors from '@fastify/cors';
+import fastify from 'fastify';
 
 // --- FASTIFY CONFIG ---
 
@@ -67,7 +67,7 @@ const start = async () => {
 };
 
 // Handle the promise properly
-start().catch(err => {
+start().catch((err) => {
   console.error('Failed to start server:', err);
   process.exit(1);
 });

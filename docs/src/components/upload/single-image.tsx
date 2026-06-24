@@ -185,7 +185,7 @@ const SingleImageDropzone = React.forwardRef<
           // Placeholder content shown when no image is selected
           <div
             className={cn(
-              'flex flex-col items-center justify-center gap-2 text-center text-xs text-muted-foreground',
+              'text-muted-foreground flex flex-col items-center justify-center gap-2 text-center text-xs',
               isDisabled && 'opacity-50',
             )}
           >
@@ -213,7 +213,7 @@ const SingleImageDropzone = React.forwardRef<
           fileState.status !== 'COMPLETE' && (
             <button
               type="button"
-              className="group pointer-events-auto absolute right-1 top-1 z-10 transform rounded-full border border-muted-foreground bg-background p-1 shadow-md transition-all hover:scale-110"
+              className="border-muted-foreground bg-background group pointer-events-auto absolute right-1 top-1 z-10 transform rounded-full border p-1 shadow-md transition-all hover:scale-110"
               onClick={(e) => {
                 e.stopPropagation(); // Prevent triggering dropzone click
                 if (fileState.status === 'UPLOADING') {
@@ -225,9 +225,9 @@ const SingleImageDropzone = React.forwardRef<
               }}
             >
               {fileState.status === 'UPLOADING' ? (
-                <XIcon className="block h-4 w-4 text-muted-foreground" />
+                <XIcon className="text-muted-foreground block h-4 w-4" />
               ) : (
-                <Trash2Icon className="block h-4 w-4 text-muted-foreground" />
+                <Trash2Icon className="text-muted-foreground block h-4 w-4" />
               )}
             </button>
           )}
@@ -235,7 +235,7 @@ const SingleImageDropzone = React.forwardRef<
 
       {/* Error message display */}
       {errorMessage && (
-        <div className="mt-2 flex items-center text-xs text-destructive">
+        <div className="text-destructive mt-2 flex items-center text-xs">
           <AlertCircleIcon className="mr-1 h-4 w-4" />
           <span>{errorMessage}</span>
         </div>
