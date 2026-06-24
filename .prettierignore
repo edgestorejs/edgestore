@@ -1,4 +1,5 @@
 __generated__/
+docs/.source/
 **/*.gen.ts
 **/*.gen.tsx
 .docusaurus/

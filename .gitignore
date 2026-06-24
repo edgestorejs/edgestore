@@ -27,6 +27,9 @@ yarn-error.log*
 # turbo
 .turbo
 
+# generated docs
+docs/.source/
+
 # build
 dist
 
