@@ -29,6 +29,7 @@
     "docs:dev": "pnpm --filter docs dev",
     "docs:build": "pnpm build && pnpm --filter docs run build",
     "lint": "turbo lint",
+    "typecheck": "turbo run typecheck --filter=@edgestore/*",
     "lint-fix": "turbo lint -- --fix && manypkg fix && pnpm format:write",
     "format": "prettier \"**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts,css}\"",
     "format:write": "pnpm format --write --list-different",
