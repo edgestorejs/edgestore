@@ -30,7 +30,7 @@
     "docs:build": "pnpm build && pnpm --filter docs run build",
     "lint": "turbo lint",
     "lint-fix": "turbo lint -- --fix && manypkg fix && pnpm format:write",
-    "format": "prettier \"**/*\" --ignore-unknown",
+    "format": "prettier \"**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts,css}\"",
     "format:write": "pnpm format --write --list-different",
     "clean": "find . -name node_modules -o -name .turbo -o -name .next -o -name dist -type d -prune | xargs rm -rf",
     "registry:build": "shadcn build --output=docs/public/r",

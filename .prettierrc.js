@@ -18,6 +18,16 @@ const config = {
      */
     require.resolve('prettier-plugin-tailwindcss'),
   ],
+  overrides: [
+    {
+      // Keep markdown format-on-save focused on markdown itself.
+      files: ['**/*.md', '**/*.mdx'],
+      options: {
+        embeddedLanguageFormatting: 'off',
+        importOrder: [],
+      },
+    },
+  ],
 };
 
 module.exports = config;

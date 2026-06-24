@@ -1,4 +1,6 @@
 __generated__/
+**/*.gen.ts
+**/*.gen.tsx
 .docusaurus/
 .test/
 **/.next/
