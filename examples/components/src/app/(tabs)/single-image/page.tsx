@@ -32,17 +32,22 @@ function SingleImageExample() {
         signal,
         onProgressChange,
         options: {
-          transform: ({ file, signal }) => {
+          transform: async ({ file, extension, signal }) => {
             if (!['image/jpeg', 'image/png'].includes(file.type)) {
-              return file;
+              return { file, extension };
             }
 
-            return imageCompression(file, {
+            const compressedFile = await imageCompression(file, {
               fileType: 'image/webp',
               initialQuality: 0.8,
               useWebWorker: true,
               signal,
             });
+
+            return {
+              file: compressedFile,
+              extension: 'webp',
+            };
           },
         },
       });

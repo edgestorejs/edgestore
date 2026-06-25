@@ -2,8 +2,16 @@ import { type MaybePromise } from '../types';
 
 export type ClientUploadTransform = (params: {
   file: File;
+  extension: string;
   signal?: AbortSignal;
-}) => MaybePromise<File | Blob>;
+}) => MaybePromise<
+  | File
+  | Blob
+  | {
+      file: File | Blob;
+      extension: string;
+    }
+>;
 
 export type UploadOptions = {
   /**
