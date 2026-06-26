@@ -15,7 +15,7 @@ describe('bucketBuilder path validation', () => {
           type: ctx.type,
         },
       ]),
-    ).toThrow(EdgeStoreError);
+    ).toThrow(/Found keys: author, type/);
   });
 
   it('rejects duplicate path param keys', () => {

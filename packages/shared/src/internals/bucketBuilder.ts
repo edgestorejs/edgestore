@@ -371,10 +371,11 @@ function createBuilder<
       for (const param of params) {
         const entries = Object.entries(param);
         if (entries.length !== 1) {
+          const foundKeys = entries.map(([key]) => key);
           throw new EdgeStoreError({
-            message: `Path params must have exactly one key. Found: ${JSON.stringify(
-              param,
-            )}`,
+            message: `Path params must have exactly one key. Found keys: ${
+              foundKeys.length > 0 ? foundKeys.join(', ') : '(none)'
+            }`,
             code: 'SERVER_ERROR',
           });
         }
