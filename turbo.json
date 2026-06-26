@@ -44,6 +44,11 @@
       "dependsOn": ["^build"],
       "outputs": []
     },
+    "typecheck": {
+      "dependsOn": ["^build"],
+      "outputs": [],
+      "cache": true
+    },
     "watch": {},
     "dev": {
       "cache": false,
