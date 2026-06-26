@@ -29,7 +29,7 @@
     "docs:dev": "pnpm --filter docs dev",
     "docs:build": "pnpm build && pnpm --filter docs run build",
     "test": "turbo run test --filter=@edgestore/*",
-    "test:types": "turbo run test:types --filter=@edgestore/tests",
+    "test:types": "turbo run test:types --filter=edgestore-tests",
     "lint": "turbo lint",
     "typecheck": "turbo run typecheck --filter=@edgestore/*",
     "lint-fix": "turbo lint -- --fix && manypkg fix && pnpm format:write",
