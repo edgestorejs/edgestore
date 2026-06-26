@@ -5,6 +5,7 @@ import {
   type InferBucketPathKeys,
   type InferBucketPathObject,
   type InferMetadataObject,
+  type MaybePromise,
   type Prettify,
   type Simplify,
 } from '@edgestore/shared';
@@ -49,6 +50,14 @@ export type UploadOptions = {
    * This avoids unnecessary zombie files in the bucket.
    */
   temporary?: boolean;
+  /**
+   * Transform the file before it is validated and uploaded.
+   *
+   * This can be used to compress images, convert formats, encrypt files, etc.
+   * The transformed blob's size, MIME type, and extension will be used for the
+   * upload request.
+   */
+  transform?: ServerUploadTransform;
 };
 
 type TextContent = string;
@@ -60,6 +69,15 @@ type UrlContent = {
   url: string;
   extension: string;
 };
+
+export type ServerUploadTransform = (params: {
+  blob: Blob;
+  extension: string;
+  type: string;
+}) => MaybePromise<{
+  blob: Blob;
+  extension: string;
+}>;
 
 // type guard for `content`
 function isTextContent(
@@ -268,7 +286,7 @@ export function initEdgeStoreClient<TRouter extends AnyRouter>(config: {
           const ctx = 'ctx' in params ? params.ctx : {};
           const input = 'input' in params ? params.input : {};
 
-          const { blob, extension } = await (async () => {
+          let { blob, extension } = await (async () => {
             if (isTextContent(content)) {
               return {
                 blob: new Blob([content], { type: 'text/plain' }),
@@ -286,6 +304,16 @@ export function initEdgeStoreClient<TRouter extends AnyRouter>(config: {
               };
             }
           })();
+
+          if (params.options?.transform) {
+            const transformed = await params.options.transform({
+              blob,
+              extension,
+              type: blob.type,
+            });
+            blob = transformed.blob;
+            extension = transformed.extension;
+          }
 
           const path = buildPath({
             bucket,

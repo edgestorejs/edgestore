@@ -189,6 +189,18 @@ async function uploadFile(
 ) {
   try {
     onProgressChange?.(0);
+    const initialExtension = getFileNameExtension(file.name) ?? '';
+    const uploadFileInfo = await getUploadFileInfo({
+      file,
+      extension: initialExtension,
+      signal,
+      transform: options?.transform,
+    });
+    if (signal?.aborted) {
+      throw new UploadAbortedError('File upload aborted');
+    }
+    const extension =
+      getFileNameExtension(options?.manualFileName) ?? uploadFileInfo.extension;
     const res = await fetch(`${apiPath}/request-upload`, {
       method: 'POST',
       credentials: 'include',
@@ -197,9 +209,9 @@ async function uploadFile(
         bucketName,
         input,
         fileInfo: {
-          extension: file.name.split('.').pop(),
-          type: file.type,
-          size: file.size,
+          extension,
+          type: uploadFileInfo.file.type,
+          size: uploadFileInfo.file.size,
           fileName: options?.manualFileName,
           replaceTargetUrl: options?.replaceTargetUrl,
           temporary: options?.temporary,
@@ -219,14 +231,14 @@ async function uploadFile(
         multipartInfo: json.multipart,
         onProgressChange,
         signal,
-        file,
+        file: uploadFileInfo.file,
         apiPath,
       });
     } else if ('uploadUrl' in json) {
       // Single part upload
       // Upload the file to the signed URL and get the progress
       await uploadFileInner({
-        file,
+        file: uploadFileInfo.file,
         uploadUrl: json.uploadUrl,
         onProgressChange,
         signal,
@@ -252,6 +264,62 @@ async function uploadFile(
     onProgressChange?.(0);
     throw e;
   }
+}
+
+async function getUploadFileInfo({
+  file,
+  extension,
+  signal,
+  transform,
+}: {
+  file: File;
+  extension: string;
+  signal?: AbortSignal;
+  transform?: UploadOptions['transform'];
+}): Promise<{ file: File | Blob; extension: string }> {
+  if (!transform) {
+    return { file, extension };
+  }
+
+  const transformed = await transform({ file, extension, signal });
+  if (isFileInfo(transformed)) {
+    return transformed;
+  }
+
+  return {
+    file: transformed,
+    extension:
+      transformed instanceof File
+        ? (getFileNameExtension(transformed.name) ?? extension)
+        : extension,
+  };
+}
+
+function isFileInfo(
+  value:
+    | File
+    | Blob
+    | {
+        file: File | Blob;
+        extension: string;
+      },
+): value is {
+  file: File | Blob;
+  extension: string;
+} {
+  return 'file' in value && 'extension' in value;
+}
+
+function getFileNameExtension(fileName?: string) {
+  const extensionIndex = fileName?.lastIndexOf('.') ?? -1;
+  if (
+    !fileName ||
+    extensionIndex < 0 ||
+    extensionIndex === fileName.length - 1
+  ) {
+    return undefined;
+  }
+  return fileName.slice(extensionIndex + 1);
 }
 
 /**
@@ -348,7 +416,7 @@ async function multipartUpload(params: {
     { multipart: any }
   >['multipart'];
   onProgressChange: OnProgressChangeHandler | undefined;
-  file: File;
+  file: File | Blob;
   signal: AbortSignal | undefined;
   apiPath: string;
 }) {
