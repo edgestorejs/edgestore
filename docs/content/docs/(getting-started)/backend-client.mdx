@@ -92,6 +92,40 @@ const res = await backendClient.publicFiles.upload({
 });
 ```
 
+### Transform a file before upload
+
+You can transform backend uploads before EdgeStore validates and uploads them.
+The transform receives the resolved `Blob` and extension, and returns the new
+`Blob` and extension.
+
+For example, you can use `sharp` to convert an image to WebP before upload:
+
+```package-install
+npm install sharp
+```
+
+```ts
+import sharp from 'sharp';
+
+const res = await backendClient.publicImages.upload({
+  content: {
+    url: 'https://some-url.com/image.jpg',
+    extension: 'jpg',
+  },
+  options: {
+    transform: async ({ blob }) => {
+      const input = Buffer.from(await blob.arrayBuffer());
+      const output = await sharp(input).webp({ quality: 80 }).toBuffer();
+
+      return {
+        blob: new Blob([output], { type: 'image/webp' }),
+        extension: 'webp',
+      };
+    },
+  },
+});
+```
+
 ### Confirm a temporary file upload
 
 If you upload a temporary file, you can confirm it by using the `confirmUpload` function.
