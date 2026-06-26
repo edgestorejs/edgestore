@@ -1,6 +1,8 @@
 import {
+  type AnyBuilder,
   type AnyRouter,
   type InferBucketPathObject,
+  type InferBucketPathOrder,
   type InferMetadataObject,
   type SharedRequestUploadRes,
   type UploadOptions,
@@ -10,14 +12,25 @@ import EdgeStoreClientError from './libs/errors/EdgeStoreClientError';
 import { handleError } from './libs/errors/handleError';
 import { UploadAbortedError } from './libs/errors/uploadAbortedError';
 
-/**
- * @internal
- * @see https://www.totaltypescript.com/concepts/the-prettify-helper
- */
-export type Prettify<TType> = {
-  [K in keyof TType]: TType[K];
-  // eslint-disable-next-line @typescript-eslint/ban-types
-} & {};
+type UploadResponse<TBucket extends AnyBuilder> =
+  TBucket['_def']['type'] extends 'IMAGE'
+    ? {
+        url: string;
+        thumbnailUrl: string | null;
+        size: number;
+        uploadedAt: Date;
+        metadata: InferMetadataObject<TBucket>;
+        path: InferBucketPathObject<TBucket>;
+        pathOrder: InferBucketPathOrder<TBucket>;
+      }
+    : {
+        url: string;
+        size: number;
+        uploadedAt: Date;
+        metadata: InferMetadataObject<TBucket>;
+        path: InferBucketPathObject<TBucket>;
+        pathOrder: InferBucketPathOrder<TBucket>;
+      };
 
 export type BucketFunctions<TRouter extends AnyRouter> = {
   [K in keyof TRouter['buckets']]: {
@@ -52,30 +65,7 @@ export type BucketFunctions<TRouter extends AnyRouter> = {
             onProgressChange?: OnProgressChangeHandler;
             options?: UploadOptions;
           },
-    ) => Promise<
-      TRouter['buckets'][K]['_def']['type'] extends 'IMAGE'
-        ? {
-            url: string;
-            thumbnailUrl: string | null;
-            size: number;
-            uploadedAt: Date;
-            metadata: InferMetadataObject<TRouter['buckets'][K]>;
-            path: InferBucketPathObject<TRouter['buckets'][K]>;
-            pathOrder: Prettify<
-              keyof InferBucketPathObject<TRouter['buckets'][K]>
-            >[];
-          }
-        : {
-            url: string;
-            size: number;
-            uploadedAt: Date;
-            metadata: InferMetadataObject<TRouter['buckets'][K]>;
-            path: InferBucketPathObject<TRouter['buckets'][K]>;
-            pathOrder: Prettify<
-              keyof InferBucketPathObject<TRouter['buckets'][K]>
-            >[];
-          }
-    >;
+    ) => Promise<UploadResponse<TRouter['buckets'][K]>>;
     confirmUpload: (params: { url: string }) => Promise<void>;
     delete: (params: { url: string }) => Promise<void>;
   };

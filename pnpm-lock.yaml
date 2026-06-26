@@ -1000,6 +1000,9 @@ importers:
 
   packages/tests:
     dependencies:
+      '@edgestore/react':
+        specifier: workspace:*
+        version: link:../react
       '@edgestore/server':
         specifier: workspace:*
         version: link:../server

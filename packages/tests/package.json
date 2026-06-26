@@ -6,6 +6,7 @@
   },
   "types": "index.d.ts",
   "dependencies": {
+    "@edgestore/react": "workspace:*",
     "@edgestore/server": "workspace:*",
     "@edgestore/shared": "workspace:*",
     "zod": "3.25.42"

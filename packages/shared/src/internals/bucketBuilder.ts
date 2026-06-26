@@ -37,6 +37,11 @@ export type InferBucketPathObject<TBucket extends Builder<any, AnyDef>> =
         [TKey in InferBucketPathKeys<TBucket>]: string;
       };
 
+export type InferBucketPathOrder<TBucket extends Builder<any, AnyDef>> =
+  InferBucketPathKeys<TBucket> extends never
+    ? []
+    : InferBucketPathKeys<TBucket>[];
+
 export type InferBucketPathObjectFromDef<TDef extends AnyDef> =
   InferBucketPathKeysFromDef<TDef> extends never
     ? Record<string, never>
@@ -54,16 +59,7 @@ type InferMetadataObjectFromDef<TDef extends AnyDef> =
     ? Awaited<ReturnType<TDef['metadata']>>
     : Record<string, never>;
 
-export type AnyContextValue =
-  | string
-  | number
-  | boolean
-  | undefined
-  | null
-  | AnyContext
-  | AnyContextValueArray;
-
-interface AnyContextValueArray extends Array<AnyContextValue> {}
+export type AnyContextValue = string | undefined | null | AnyContext;
 
 export interface AnyContext {
   [key: string]: AnyContextValue;
