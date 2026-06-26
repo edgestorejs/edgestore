@@ -1,5 +1,5 @@
 {
-  "name": "@edgestore/tests",
+  "name": "edgestore-tests",
   "private": true,
   "scripts": {
     "test:types": "tsd --files \"test-d/**/*.test-d.ts\""
