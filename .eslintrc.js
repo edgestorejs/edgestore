@@ -54,6 +54,7 @@ const config = {
           'EdgeStore',
           '\\.config\\.js',
           '\\.d\\.ts$',
+          '\\.test-d\\.ts$',
           'issue-\\d+-.*\\.test\\.tsx?$',
           '\\.(t|j)sx$',
         ],
@@ -119,6 +120,7 @@ const config = {
     {
       files: [
         '**/test/**/*',
+        '**/test-d/**/*',
         'packages/tests/**/*',
         '**/*.test.tsx',
         '**/*.test.ts',
@@ -128,6 +130,7 @@ const config = {
         '@typescript-eslint/no-non-null-assertion': 'off',
         '@typescript-eslint/no-unused-vars': 'off',
         '@typescript-eslint/naming-convention': 'off',
+        'unicorn/filename-case': 'off',
       },
     },
     {

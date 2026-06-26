@@ -1,0 +1,13 @@
+{
+  "name": "@edgestore/tests",
+  "private": true,
+  "scripts": {
+    "test:types": "tsd --files \"test-d/**/*.test-d.ts\""
+  },
+  "types": "index.d.ts",
+  "dependencies": {
+    "@edgestore/server": "workspace:*",
+    "@edgestore/shared": "workspace:*",
+    "zod": "3.25.42"
+  }
+}
