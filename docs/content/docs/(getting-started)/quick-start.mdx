@@ -270,49 +270,6 @@ abortController?.abort();
   For more information, check the [Error Handling](/docs/error-handling) page.
 </Callout>
 
-### Transform files before upload
-
-You can transform a file before EdgeStore validates and uploads it by passing
-the `transform` option. If the transform keeps the same extension, you can
-return the transformed `File` or `Blob` directly. If the transform changes the
-file type, return the transformed file with its new extension.
-
-For example, you can convert JPEG and PNG images to WebP before upload:
-
-```package-install
-npm install browser-image-compression
-```
-
-```tsx
-import imageCompression from 'browser-image-compression';
-
-const res = await edgestore.publicImages.upload({
-  file,
-  options: {
-    transform: async ({ file, extension, signal }) => {
-      if (!['image/jpeg', 'image/png'].includes(file.type)) {
-        return { file, extension };
-      }
-
-      const compressedFile = await imageCompression(file, {
-        fileType: 'image/webp',
-        initialQuality: 0.8,
-        useWebWorker: true,
-        signal,
-      });
-
-      return {
-        file: compressedFile,
-        extension: 'webp',
-      };
-    },
-  },
-});
-```
-
-If you provide `manualFileName`, EdgeStore will use that exact file name. Make
-sure the file name extension matches the transformed file type.
-
 ### Temporary files
 
 You can upload temporary files by passing the `temporary` option to the `upload` method.
