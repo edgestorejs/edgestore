@@ -32,6 +32,7 @@
     "build": "rollup --config rollup.config.ts --configPlugin rollup-plugin-swc3",
     "dev": "pnpm build --watch",
     "codegen:entrypoints": "tsx entrypoints.script.ts",
+    "test": "vitest run --config vitest.config.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint --cache --ext \".js,.ts,.tsx\" --ignore-path ../../.gitignore --report-unused-disable-directives src"
   },
@@ -91,6 +92,7 @@
     "@types/react": "19.2.7",
     "@types/react-dom": "19.2.3",
     "@types/uuid": "^9.0.1",
+    "jsdom": "^29.1.1",
     "next": "16.1.1",
     "react": "19.2.3",
     "react-dom": "19.2.3",
