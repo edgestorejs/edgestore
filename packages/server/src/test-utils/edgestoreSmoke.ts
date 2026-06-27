@@ -31,23 +31,39 @@ export async function retryUntilSuccess(params: {
 }) {
   const delays = [250, 500, 1000, 2000, 4000];
   let lastResult: { success: boolean } | undefined;
+  let lastError: unknown;
 
   for (const delay of delays) {
-    lastResult = await params.action();
-    if (lastResult.success) {
-      return lastResult;
+    try {
+      lastResult = await params.action();
+      lastError = undefined;
+      if (lastResult.success) {
+        return lastResult;
+      }
+    } catch (err) {
+      lastResult = undefined;
+      lastError = err;
     }
     await wait(delay);
   }
 
-  lastResult = await params.action();
-  if (lastResult.success) {
-    return lastResult;
+  try {
+    lastResult = await params.action();
+    lastError = undefined;
+    if (lastResult.success) {
+      return lastResult;
+    }
+  } catch (err) {
+    lastResult = undefined;
+    lastError = err;
   }
 
-  throw new Error(
-    `${params.description} did not succeed: ${JSON.stringify(lastResult)}`,
-  );
+  const lastFailure =
+    lastError instanceof Error
+      ? `${lastError.name}: ${lastError.message}`
+      : JSON.stringify(lastError ?? lastResult);
+
+  throw new Error(`${params.description} did not succeed: ${lastFailure}`);
 }
 
 type SmokeFileResult = {
