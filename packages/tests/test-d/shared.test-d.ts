@@ -1,8 +1,10 @@
 import {
   initEdgeStore,
   type AccessControlSchema,
+  type AnyContext,
   type EdgeStoreRouter,
   type InferBucketPathObject,
+  type InferBucketPathOrder,
   type InferMetadataObject,
 } from '@edgestore/shared';
 import { expectAssignable, expectNotAssignable, expectType } from 'tsd';
@@ -48,14 +50,19 @@ const imageBucket = es
   });
 
 const fileBucket = es.fileBucket().path(({ ctx }) => [{ author: ctx.userId }]);
+const emptyBucket = es.fileBucket();
 
 expectType<{ author: string; type: string }>(
   {} as InferBucketPathObject<typeof imageBucket>,
+);
+expectType<('author' | 'type')[]>(
+  {} as InferBucketPathOrder<typeof imageBucket>,
 );
 expectType<{ role: 'admin' | 'visitor'; extension: string | undefined }>(
   {} as InferMetadataObject<typeof imageBucket>,
 );
 expectType<{ author: string }>({} as InferBucketPathObject<typeof fileBucket>);
+expectType<[]>({} as InferBucketPathOrder<typeof emptyBucket>);
 
 expectAssignable<AccessControlSchema<Context, typeof imageBucket._def>>({
   userId: { path: 'author' },
@@ -103,3 +110,11 @@ const nestedBucket = nestedEs
 expectType<{ author: string; role: string }>(
   {} as InferBucketPathObject<typeof nestedBucket>,
 );
+
+expectNotAssignable<AnyContext>({
+  user: {
+    id: 123,
+  },
+});
+// @ts-expect-error context path leaves must be string-compatible.
+initEdgeStore.context<{ user: { id: number } }>().create();

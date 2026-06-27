@@ -1,6 +1,8 @@
 import {
+  type AnyBuilder,
   type AnyRouter,
   type InferBucketPathObject,
+  type InferBucketPathOrder,
   type InferMetadataObject,
   type SharedRequestUploadRes,
   type UploadOptions,
@@ -10,14 +12,25 @@ import EdgeStoreClientError from './libs/errors/EdgeStoreClientError';
 import { handleError } from './libs/errors/handleError';
 import { UploadAbortedError } from './libs/errors/uploadAbortedError';
 
-/**
- * @internal
- * @see https://www.totaltypescript.com/concepts/the-prettify-helper
- */
-export type Prettify<TType> = {
-  [K in keyof TType]: TType[K];
-  // eslint-disable-next-line @typescript-eslint/ban-types
-} & {};
+type UploadResponse<TBucket extends AnyBuilder> =
+  TBucket['_def']['type'] extends 'IMAGE'
+    ? {
+        url: string;
+        thumbnailUrl: string | null;
+        size: number;
+        uploadedAt: Date;
+        metadata: InferMetadataObject<TBucket>;
+        path: InferBucketPathObject<TBucket>;
+        pathOrder: InferBucketPathOrder<TBucket>;
+      }
+    : {
+        url: string;
+        size: number;
+        uploadedAt: Date;
+        metadata: InferMetadataObject<TBucket>;
+        path: InferBucketPathObject<TBucket>;
+        pathOrder: InferBucketPathOrder<TBucket>;
+      };
 
 export type BucketFunctions<TRouter extends AnyRouter> = {
   [K in keyof TRouter['buckets']]: {
@@ -52,30 +65,7 @@ export type BucketFunctions<TRouter extends AnyRouter> = {
             onProgressChange?: OnProgressChangeHandler;
             options?: UploadOptions;
           },
-    ) => Promise<
-      TRouter['buckets'][K]['_def']['type'] extends 'IMAGE'
-        ? {
-            url: string;
-            thumbnailUrl: string | null;
-            size: number;
-            uploadedAt: Date;
-            metadata: InferMetadataObject<TRouter['buckets'][K]>;
-            path: InferBucketPathObject<TRouter['buckets'][K]>;
-            pathOrder: Prettify<
-              keyof InferBucketPathObject<TRouter['buckets'][K]>
-            >[];
-          }
-        : {
-            url: string;
-            size: number;
-            uploadedAt: Date;
-            metadata: InferMetadataObject<TRouter['buckets'][K]>;
-            path: InferBucketPathObject<TRouter['buckets'][K]>;
-            pathOrder: Prettify<
-              keyof InferBucketPathObject<TRouter['buckets'][K]>
-            >[];
-          }
-    >;
+    ) => Promise<UploadResponse<TRouter['buckets'][K]>>;
     confirmUpload: (params: { url: string }) => Promise<void>;
     delete: (params: { url: string }) => Promise<void>;
   };
@@ -189,17 +179,18 @@ async function uploadFile(
 ) {
   try {
     onProgressChange?.(0);
-    const transformedFile = options?.transform
-      ? await options.transform({ file, signal })
-      : file;
+    const initialExtension = getFileNameExtension(file.name) ?? '';
+    const uploadFileInfo = await getUploadFileInfo({
+      file,
+      extension: initialExtension,
+      signal,
+      transform: options?.transform,
+    });
     if (signal?.aborted) {
       throw new UploadAbortedError('File upload aborted');
     }
-    const extension = getUploadExtension({
-      file,
-      transformedFile,
-      manualFileName: options?.manualFileName,
-    });
+    const extension =
+      getFileNameExtension(options?.manualFileName) ?? uploadFileInfo.extension;
     const res = await fetch(`${apiPath}/request-upload`, {
       method: 'POST',
       credentials: 'include',
@@ -209,8 +200,8 @@ async function uploadFile(
         input,
         fileInfo: {
           extension,
-          type: transformedFile.type,
-          size: transformedFile.size,
+          type: uploadFileInfo.file.type,
+          size: uploadFileInfo.file.size,
           fileName: options?.manualFileName,
           replaceTargetUrl: options?.replaceTargetUrl,
           temporary: options?.temporary,
@@ -230,14 +221,14 @@ async function uploadFile(
         multipartInfo: json.multipart,
         onProgressChange,
         signal,
-        file: transformedFile,
+        file: uploadFileInfo.file,
         apiPath,
       });
     } else if ('uploadUrl' in json) {
       // Single part upload
       // Upload the file to the signed URL and get the progress
       await uploadFileInner({
-        file: transformedFile,
+        file: uploadFileInfo.file,
         uploadUrl: json.uploadUrl,
         onProgressChange,
         signal,
@@ -265,24 +256,48 @@ async function uploadFile(
   }
 }
 
-function getUploadExtension({
+async function getUploadFileInfo({
   file,
-  transformedFile,
-  manualFileName,
+  extension,
+  signal,
+  transform,
 }: {
   file: File;
-  transformedFile: File | Blob;
-  manualFileName?: string;
-}): string {
-  return (
-    getFileNameExtension(manualFileName) ??
-    getExtensionFromMimeType(transformedFile.type) ??
-    (transformedFile instanceof File
-      ? getFileNameExtension(transformedFile.name)
-      : undefined) ??
-    getFileNameExtension(file.name) ??
-    ''
-  );
+  extension: string;
+  signal?: AbortSignal;
+  transform?: UploadOptions['transform'];
+}): Promise<{ file: File | Blob; extension: string }> {
+  if (!transform) {
+    return { file, extension };
+  }
+
+  const transformed = await transform({ file, extension, signal });
+  if (isFileInfo(transformed)) {
+    return transformed;
+  }
+
+  return {
+    file: transformed,
+    extension:
+      transformed instanceof File
+        ? (getFileNameExtension(transformed.name) ?? extension)
+        : extension,
+  };
+}
+
+function isFileInfo(
+  value:
+    | File
+    | Blob
+    | {
+        file: File | Blob;
+        extension: string;
+      },
+): value is {
+  file: File | Blob;
+  extension: string;
+} {
+  return 'file' in value && 'extension' in value;
 }
 
 function getFileNameExtension(fileName?: string) {
@@ -295,25 +310,6 @@ function getFileNameExtension(fileName?: string) {
     return undefined;
   }
   return fileName.slice(extensionIndex + 1);
-}
-
-function getExtensionFromMimeType(mimeType?: string) {
-  const MIME_TYPE_TO_EXTENSION: Record<string, string> = {
-    'image/jpeg': 'jpg',
-    'image/png': 'png',
-    'image/gif': 'gif',
-    'image/webp': 'webp',
-    'image/svg+xml': 'svg',
-    'image/tiff': 'tiff',
-    'image/bmp': 'bmp',
-    'image/x-icon': 'ico',
-    'text/plain': 'txt',
-    'text/csv': 'csv',
-    'application/json': 'json',
-    'application/pdf': 'pdf',
-    'application/zip': 'zip',
-  };
-  return mimeType ? MIME_TYPE_TO_EXTENSION[mimeType] : undefined;
 }
 
 /**
