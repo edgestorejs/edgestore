@@ -150,12 +150,8 @@ export async function init<TCtx>(params: {
     Object.values(router.buckets).some(
       (bucket) => bucket._def.accessControl !== undefined,
     );
-  const isBuiltInProviderWithoutFileAccessCookie =
-    provider.name === 'aws' || provider.name === 'azure';
   const shouldRunProviderInit =
-    requiresFileAccessCookie ||
-    (!isBuiltInProviderWithoutFileAccessCookie &&
-      provider.name !== 'edgestore');
+    provider.name !== 'edgestore' || requiresFileAccessCookie;
 
   let token: string | undefined;
   if (shouldRunProviderInit) {

@@ -89,13 +89,7 @@ export function createEdgeStoreAstroHandler<TCtx>(config: Config<TCtx>) {
             cause: err instanceof Error ? err : undefined,
           });
         }
-        const {
-          newCookies,
-          token,
-          baseUrl,
-          providerName,
-          requiresFileAccessCookie,
-        } = await init({
+        const { newCookies, ...body } = await init({
           ctx,
           provider,
           router: config.router,
@@ -114,15 +108,7 @@ export function createEdgeStoreAstroHandler<TCtx>(config: Config<TCtx>) {
           headers.append('Set-Cookie', newCookies);
         }
 
-        return new Response(
-          JSON.stringify({
-            token,
-            baseUrl,
-            providerName,
-            requiresFileAccessCookie,
-          }),
-          { headers },
-        );
+        return new Response(JSON.stringify(body), { headers });
       } else if (matchPath(url.pathname, 'request-upload')) {
         const body = (await request.json()) as RequestUploadBody;
         const result = await requestUpload({

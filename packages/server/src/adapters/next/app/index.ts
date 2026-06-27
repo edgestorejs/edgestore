@@ -85,32 +85,18 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
             cause: err instanceof Error ? err : undefined,
           });
         }
-        const {
-          newCookies,
-          token,
-          baseUrl,
-          providerName,
-          requiresFileAccessCookie,
-        } = await init({
+        const { newCookies, ...body } = await init({
           ctx,
           provider,
           router: config.router,
           cookieConfig,
         });
-        const res = new Response(
-          JSON.stringify({
-            token,
-            baseUrl,
-            providerName,
-            requiresFileAccessCookie,
-          }),
-          {
-            status: 200,
-            headers: {
-              'Content-Type': 'application/json',
-            },
+        const res = new Response(JSON.stringify(body), {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
           },
-        );
+        });
         for (const cookie of newCookies) {
           res.headers.append('Set-Cookie', cookie);
         }

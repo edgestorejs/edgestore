@@ -268,8 +268,11 @@ describe('init', () => {
     vi.unstubAllEnvs();
   });
 
-  it('does not run init for the built-in AWS provider', async () => {
-    const provider = createProvider({ name: 'aws' });
+  it('runs init for the built-in AWS provider without setting a token cookie', async () => {
+    const provider = createProvider({
+      name: 'aws',
+      init: vi.fn(() => ({})),
+    });
     const es = initEdgeStore.create();
     const router = es.router({
       documents: es.fileBucket(),
@@ -281,7 +284,10 @@ describe('init', () => {
       ctx: {},
     });
 
-    expect(provider.init).not.toHaveBeenCalled();
+    expect(provider.init).toHaveBeenCalledWith({
+      ctx: {},
+      router,
+    });
     expect(res).toMatchObject({
       token: undefined,
       providerName: 'aws',
@@ -295,8 +301,11 @@ describe('init', () => {
     ).toBe(false);
   });
 
-  it('does not run init for the built-in Azure provider', async () => {
-    const provider = createProvider({ name: 'azure' });
+  it('runs init for the built-in Azure provider without setting a token cookie', async () => {
+    const provider = createProvider({
+      name: 'azure',
+      init: vi.fn(() => ({})),
+    });
     const es = initEdgeStore.create();
     const router = es.router({
       documents: es.fileBucket(),
@@ -308,7 +317,10 @@ describe('init', () => {
       ctx: {},
     });
 
-    expect(provider.init).not.toHaveBeenCalled();
+    expect(provider.init).toHaveBeenCalledWith({
+      ctx: {},
+      router,
+    });
     expect(res).toMatchObject({
       token: undefined,
       providerName: 'azure',
