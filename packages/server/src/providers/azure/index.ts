@@ -55,6 +55,43 @@ export function AzureProvider(options?: AzureProviderOptions): Provider {
     containerName ?? '',
   );
 
+  function getBlobNameFromUrl(url: string) {
+    try {
+      const blobUrl = new URL(url);
+      const containerUrl = new URL(containerClient.url);
+      const containerPath = containerUrl.pathname.replace(/\/$/, '');
+
+      if (blobUrl.origin !== containerUrl.origin) {
+        return url;
+      }
+
+      if (!blobUrl.pathname.startsWith(`${containerPath}/`)) {
+        return url;
+      }
+
+      return decodeURIComponent(
+        blobUrl.pathname.slice(containerPath.length + 1),
+      );
+    } catch {
+      return url;
+    }
+  }
+
+  function getBlobName(params: Parameters<Provider['requestUpload']>[0]) {
+    const { bucketName: esBucketName, fileInfo } = params;
+    const extension = fileInfo.extension
+      ? `.${fileInfo.extension.replace('.', '')}`
+      : '';
+    const fileName = fileInfo.fileName ?? `${uuidv4()}${extension}`;
+
+    return [
+      esBucketName,
+      ...(fileInfo.isPublic ? ['_public'] : []),
+      ...fileInfo.path.map((item) => item.value),
+      fileName,
+    ].join('/');
+  }
+
   return {
     name: 'azure',
     async init() {
@@ -64,7 +101,7 @@ export function AzureProvider(options?: AzureProviderOptions): Provider {
       return baseUrl;
     },
     async getFile({ url }) {
-      const blobClient = containerClient.getBlobClient(url);
+      const blobClient = containerClient.getBlobClient(getBlobNameFromUrl(url));
 
       const { contentLength, lastModified } = await blobClient.getProperties();
 
@@ -76,14 +113,8 @@ export function AzureProvider(options?: AzureProviderOptions): Provider {
         uploadedAt: lastModified ?? new Date(),
       };
     },
-    async requestUpload({ fileInfo }) {
-      const nameId = uuidv4();
-      const extension = fileInfo.extension
-        ? `.${fileInfo.extension.replace('.', '')}`
-        : '';
-      const fileName = fileInfo.fileName ?? `${nameId}${extension}`;
-
-      const blobClient = containerClient.getBlobClient(fileName);
+    async requestUpload(params) {
+      const blobClient = containerClient.getBlobClient(getBlobName(params));
 
       const url = blobClient.url;
 
@@ -102,7 +133,7 @@ export function AzureProvider(options?: AzureProviderOptions): Provider {
       throw new Error('Not implemented');
     },
     async deleteFile({ url }) {
-      const blobClient = containerClient.getBlobClient(url);
+      const blobClient = containerClient.getBlobClient(getBlobNameFromUrl(url));
       await blobClient.delete();
       return {
         success: true,
