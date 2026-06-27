@@ -54,6 +54,21 @@ export function AzureProvider(options?: AzureProviderOptions): Provider {
   const containerClient = blobServiceClient.getContainerClient(
     containerName ?? '',
   );
+  const getBlobNameFromUrl = (url: string) => {
+    try {
+      const parsedUrl = new URL(url);
+      const pathSegments = parsedUrl.pathname.split('/').filter(Boolean);
+      const containerIndex = containerName
+        ? pathSegments.indexOf(containerName)
+        : -1;
+
+      return containerIndex >= 0
+        ? pathSegments.slice(containerIndex + 1).join('/')
+        : pathSegments.join('/');
+    } catch {
+      return url.replace(/^\/+/, '');
+    }
+  };
 
   return {
     name: 'azure',
@@ -64,7 +79,7 @@ export function AzureProvider(options?: AzureProviderOptions): Provider {
       return baseUrl;
     },
     async getFile({ url }) {
-      const blobClient = containerClient.getBlobClient(url);
+      const blobClient = containerClient.getBlobClient(getBlobNameFromUrl(url));
 
       const { contentLength, lastModified } = await blobClient.getProperties();
 
@@ -77,11 +92,10 @@ export function AzureProvider(options?: AzureProviderOptions): Provider {
       };
     },
     async requestUpload({ fileInfo }) {
-      const nameId = uuidv4();
       const extension = fileInfo.extension
         ? `.${fileInfo.extension.replace('.', '')}`
         : '';
-      const fileName = fileInfo.fileName ?? `${nameId}${extension}`;
+      const fileName = fileInfo.fileName ?? `${uuidv4()}${extension}`;
 
       const blobClient = containerClient.getBlobClient(fileName);
 
@@ -102,7 +116,7 @@ export function AzureProvider(options?: AzureProviderOptions): Provider {
       throw new Error('Not implemented');
     },
     async deleteFile({ url }) {
-      const blobClient = containerClient.getBlobClient(url);
+      const blobClient = containerClient.getBlobClient(getBlobNameFromUrl(url));
       await blobClient.delete();
       return {
         success: true,

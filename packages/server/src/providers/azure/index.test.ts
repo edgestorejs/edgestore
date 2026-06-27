@@ -105,6 +105,7 @@ describe('AzureProvider', () => {
     );
 
     expect(azureMocks.getBlobClient).toHaveBeenCalledWith('manual.pdf');
+    expect(azureMocks.uuidv4).not.toHaveBeenCalled();
     expect(result).toEqual({
       uploadUrl: 'https://files.example.com/container/manual.pdf',
       accessUrl: 'https://files.example.com/container/manual.pdf',
@@ -143,18 +144,16 @@ describe('AzureProvider', () => {
 
     await expect(
       provider.getFile({
-        url: 'https://files.example.com/container/file.txt',
+        url: 'https://files.example.com/documents/file.txt',
       }),
     ).resolves.toEqual({
-      url: 'https://files.example.com/container/file.txt',
+      url: 'https://files.example.com/documents/file.txt',
       metadata: {},
       path: {},
       size: 123,
       uploadedAt,
     });
-    expect(azureMocks.getBlobClient).toHaveBeenCalledWith(
-      'https://files.example.com/container/file.txt',
-    );
+    expect(azureMocks.getBlobClient).toHaveBeenCalledWith('file.txt');
   });
 
   it('deletes a blob and returns success', async () => {
@@ -167,13 +166,11 @@ describe('AzureProvider', () => {
     await expect(
       provider.deleteFile({
         bucket: {} as Parameters<typeof provider.deleteFile>[0]['bucket'],
-        url: 'https://files.example.com/container/file.txt',
+        url: 'https://files.example.com/documents/file.txt',
       }),
     ).resolves.toEqual({ success: true });
 
-    expect(azureMocks.getBlobClient).toHaveBeenCalledWith(
-      'https://files.example.com/container/file.txt',
-    );
+    expect(azureMocks.getBlobClient).toHaveBeenCalledWith('file.txt');
     expect(azureMocks.deleteBlob).toHaveBeenCalledOnce();
   });
 });

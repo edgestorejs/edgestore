@@ -182,7 +182,7 @@ describe('AWSProvider', () => {
     expect(result.accessUrl).toBe(
       'https://storage-bucket.s3.us-east-1.amazonaws.com/documents/manual-name.pdf',
     );
-    expect(awsMocks.uuidv4).toHaveBeenCalled();
+    expect(awsMocks.uuidv4).not.toHaveBeenCalled();
     expect(awsMocks.getSignedUrl).toHaveBeenCalledWith(
       expect.any(awsMocks.S3Client),
       expect.objectContaining({
@@ -245,7 +245,7 @@ describe('AWSProvider', () => {
       expect.objectContaining({
         input: {
           Bucket: 'storage-bucket',
-          Key: '/custom/key.bin',
+          Key: 'custom/key.bin',
         },
       }),
       { expiresIn: 60 * 60 },
