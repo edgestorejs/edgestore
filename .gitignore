@@ -20,6 +20,8 @@ yarn-error.log*
 
 # local env files
 .env.local
+.env.smoke.*
+!.env.smoke.example
 .env.development.local
 .env.test.local
 .env.production.local
@@ -42,6 +44,7 @@ packages/*/*/
 # and all folders inside `tests` package, which is handled separately
 !packages/tests/*/
 packages/tests/node_modules
+packages/tests/.turbo
 
 # local
 .local
