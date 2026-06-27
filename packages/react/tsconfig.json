@@ -1,12 +1,4 @@
 {
   "extends": "../../tsconfig.json",
-  "compilerOptions": {
-    "baseUrl": "../..",
-    "paths": {
-      "@edgestore/react": ["packages/react/src"],
-      "@edgestore/react/*": ["packages/react/src/*"],
-      "@edgestore/shared": ["packages/shared/src"]
-    }
-  },
   "include": ["src"]
 }
