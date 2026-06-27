@@ -5,7 +5,7 @@ import {
   createSmokeFileName,
   getSmokeBucketName,
   requireSmokeCredentials,
-  retryUntilSuccess,
+  runSmokeUploadLifecycle,
   SMOKE_CONTENT,
 } from '../../test-utils/edgestoreSmoke';
 
@@ -32,50 +32,34 @@ describe('EdgeStore backend client live smoke test', () => {
     requireSmokeCredentials();
 
     const bucketClient = createSmokeBucketClient();
-    let accessUrl: string | undefined;
-
-    try {
-      const uploadRes = await bucketClient.upload({
-        content: SMOKE_CONTENT,
-        options: {
-          manualFileName: createSmokeFileName('client'),
-          temporary: true,
-        },
-      });
-      accessUrl = uploadRes.url;
-
-      expect(uploadRes).toMatchObject({
-        size: SMOKE_CONTENT.length,
-        url: expect.any(String),
-      });
-
-      await expect(
+    const uploadRes = await runSmokeUploadLifecycle({
+      expectedSize: SMOKE_CONTENT.length,
+      deleteDescription: 'deleteFile',
+      upload: () =>
+        bucketClient.upload({
+          content: SMOKE_CONTENT,
+          options: {
+            manualFileName: createSmokeFileName('client'),
+            temporary: true,
+          },
+        }),
+      confirmUpload: (url) =>
         bucketClient.confirmUpload({
-          url: accessUrl,
+          url,
         }),
-      ).resolves.toMatchObject({
-        success: true,
-      });
-
-      await expect(
+      getFile: (url) =>
         bucketClient.getFile({
-          url: accessUrl,
+          url,
         }),
-      ).resolves.toMatchObject({
-        size: SMOKE_CONTENT.length,
-        url: expect.any(String),
-      });
-    } finally {
-      if (accessUrl) {
-        const url = accessUrl;
-        await retryUntilSuccess({
-          description: 'deleteFile',
-          action: () =>
-            bucketClient.deleteFile({
-              url,
-            }),
-        });
-      }
-    }
+      deleteFile: (url) =>
+        bucketClient.deleteFile({
+          url,
+        }),
+    });
+
+    expect(uploadRes).toMatchObject({
+      size: SMOKE_CONTENT.length,
+      url: expect.any(String),
+    });
   });
 });

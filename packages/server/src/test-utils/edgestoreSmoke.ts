@@ -49,3 +49,66 @@ export async function retryUntilSuccess(params: {
     `${params.description} did not succeed: ${JSON.stringify(lastResult)}`,
   );
 }
+
+type SmokeFileResult = {
+  size: number;
+  url: string;
+};
+
+function assertSmokeFileResult(
+  description: string,
+  result: SmokeFileResult,
+  expectedSize: number,
+) {
+  if (!result.url) {
+    throw new Error(`${description} did not return a file URL`);
+  }
+  if (result.size !== expectedSize) {
+    throw new Error(
+      `${description} returned size ${result.size}, expected ${expectedSize}`,
+    );
+  }
+}
+
+function assertSuccess(description: string, result: { success: boolean }) {
+  if (!result.success) {
+    throw new Error(`${description} did not succeed`);
+  }
+}
+
+export async function runSmokeUploadLifecycle(params: {
+  confirmUpload: (url: string) => Promise<{ success: boolean }>;
+  deleteFile: (url: string) => Promise<{ success: boolean }>;
+  deleteDescription: string;
+  expectedSize: number;
+  getFile?: (url: string) => Promise<SmokeFileResult>;
+  upload: () => Promise<SmokeFileResult>;
+}) {
+  let accessUrl: string | undefined;
+
+  try {
+    const uploadRes = await params.upload();
+    assertSmokeFileResult('upload', uploadRes, params.expectedSize);
+    accessUrl = uploadRes.url;
+
+    assertSuccess('confirmUpload', await params.confirmUpload(uploadRes.url));
+
+    if (params.getFile) {
+      assertSmokeFileResult(
+        'getFile',
+        await params.getFile(uploadRes.url),
+        params.expectedSize,
+      );
+    }
+
+    return uploadRes;
+  } finally {
+    if (accessUrl) {
+      const url = accessUrl;
+      await retryUntilSuccess({
+        description: params.deleteDescription,
+        action: () => params.deleteFile(url),
+      });
+    }
+  }
+}

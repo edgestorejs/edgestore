@@ -1,11 +1,12 @@
 import { initEdgeStore } from '@edgestore/shared';
+import { parse } from 'cookie';
 import express from 'express';
 import { describe, expect, it } from 'vitest';
 import {
   createSmokeFileName,
   getSmokeBucketName,
   requireSmokeCredentials,
-  retryUntilSuccess,
+  runSmokeUploadLifecycle,
   SMOKE_CONTENT,
 } from '../test-utils/edgestoreSmoke';
 import { createEdgeStoreExpressHandler } from './express';
@@ -23,52 +24,22 @@ function getCookieHeader(res: Response) {
       Boolean(cookie),
     );
 
-  return setCookies.map((cookie) => cookie.split(';')[0]).join('; ');
+  return setCookies
+    .map((cookie) => {
+      const [name, value] = Object.entries(parse(cookie))[0] ?? [];
+      if (!name || !value) {
+        throw new Error(`Could not parse Set-Cookie header: ${cookie}`);
+      }
+
+      return `${name}=${value}`;
+    })
+    .join('; ');
 }
 
 async function expectOk(res: Response) {
   if (!res.ok) {
     throw new Error(`${res.status} ${res.statusText}: ${await res.text()}`);
   }
-}
-
-function parseCookies(cookieHeader: string | undefined) {
-  if (!cookieHeader) {
-    return {};
-  }
-
-  return Object.fromEntries(
-    cookieHeader.split(';').map((cookie) => {
-      const [name, ...valueParts] = cookie.trim().split('=');
-      return [name, valueParts.join('=')];
-    }),
-  );
-}
-
-async function deleteUploadedFile(params: {
-  baseUrl: string;
-  cookie: string;
-  url: string;
-}) {
-  await retryUntilSuccess({
-    description: 'delete-file',
-    action: async () => {
-      const deleteRes = await fetch(`${params.baseUrl}/delete-file`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Cookie: params.cookie,
-        },
-        body: JSON.stringify({
-          bucketName: smokeBucketName,
-          url: params.url,
-        }),
-      });
-      await expectOk(deleteRes);
-
-      return (await deleteRes.json()) as { success: boolean };
-    },
-  });
 }
 
 async function createSmokeServer() {
@@ -82,7 +53,7 @@ async function createSmokeServer() {
   const app = express();
   app.use(express.json());
   app.use((req, _res, next) => {
-    req.cookies = parseCookies(req.headers.cookie);
+    req.cookies = parse(req.headers.cookie ?? '');
     next();
   });
   app.get('/edgestore/*', handler);
@@ -121,8 +92,6 @@ describe('EdgeStore adapter live smoke test', () => {
 
     const smokeServer = await createSmokeServer();
     const baseUrl = smokeServer.baseUrl;
-    let cookie: string | undefined;
-    let accessUrl: string | undefined;
 
     try {
       const healthRes = await fetch(`${baseUrl}/health`);
@@ -132,7 +101,7 @@ describe('EdgeStore adapter live smoke test', () => {
       const initRes = await fetch(`${baseUrl}/init`);
       await expectOk(initRes);
 
-      cookie = getCookieHeader(initRes);
+      const cookie = getCookieHeader(initRes);
       const initJson = (await initRes.json()) as {
         baseUrl?: string;
         providerName?: string;
@@ -148,82 +117,96 @@ describe('EdgeStore adapter live smoke test', () => {
         type: 'text/plain',
       });
 
-      const requestUploadRes = await fetch(`${baseUrl}/request-upload`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Cookie: cookie,
+      const uploadRes = await runSmokeUploadLifecycle({
+        expectedSize: fileBody.size,
+        deleteDescription: 'delete-file',
+        upload: async () => {
+          const requestUploadRes = await fetch(`${baseUrl}/request-upload`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Cookie: cookie,
+            },
+            body: JSON.stringify({
+              bucketName: smokeBucketName,
+              input: {},
+              fileInfo: {
+                extension: 'txt',
+                fileName: createSmokeFileName('adapter'),
+                size: fileBody.size,
+                temporary: true,
+                type: fileBody.type,
+              },
+            }),
+          });
+          await expectOk(requestUploadRes);
+
+          const uploadInfo = (await requestUploadRes.json()) as {
+            accessUrl?: string;
+            size?: number;
+            uploadUrl?: string;
+          };
+
+          if (!uploadInfo.uploadUrl || !uploadInfo.accessUrl) {
+            throw new Error(
+              'Upload URL or access URL missing from upload response',
+            );
+          }
+
+          const uploadRes = await fetch(uploadInfo.uploadUrl, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': fileBody.type,
+            },
+            body: fileBody,
+          });
+          await expectOk(uploadRes);
+
+          return {
+            size: uploadInfo.size ?? 0,
+            url: uploadInfo.accessUrl,
+          };
         },
-        body: JSON.stringify({
-          bucketName: smokeBucketName,
-          input: {},
-          fileInfo: {
-            extension: 'txt',
-            fileName: createSmokeFileName('adapter'),
-            size: fileBody.size,
-            temporary: true,
-            type: fileBody.type,
-          },
-        }),
+        confirmUpload: async (url) => {
+          const confirmRes = await fetch(`${baseUrl}/confirm-upload`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Cookie: cookie,
+            },
+            body: JSON.stringify({
+              bucketName: smokeBucketName,
+              url,
+            }),
+          });
+          await expectOk(confirmRes);
+
+          return (await confirmRes.json()) as { success: boolean };
+        },
+        deleteFile: async (url) => {
+          const deleteRes = await fetch(`${baseUrl}/delete-file`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Cookie: cookie,
+            },
+            body: JSON.stringify({
+              bucketName: smokeBucketName,
+              url,
+            }),
+          });
+          await expectOk(deleteRes);
+
+          return (await deleteRes.json()) as { success: boolean };
+        },
       });
-      await expectOk(requestUploadRes);
 
-      const uploadInfo = (await requestUploadRes.json()) as {
-        accessUrl?: string;
-        size?: number;
-        uploadUrl?: string;
-      };
-
-      expect(uploadInfo).toMatchObject({
-        accessUrl: expect.any(String),
+      expect(uploadRes).toMatchObject({
         size: fileBody.size,
-        uploadUrl: expect.any(String),
-      });
-
-      if (!uploadInfo.uploadUrl || !uploadInfo.accessUrl) {
-        throw new Error(
-          'Upload URL or access URL missing from upload response',
-        );
-      }
-
-      const uploadRes = await fetch(uploadInfo.uploadUrl, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': fileBody.type,
-        },
-        body: fileBody,
-      });
-      await expectOk(uploadRes);
-      accessUrl = uploadInfo.accessUrl;
-
-      const confirmRes = await fetch(`${baseUrl}/confirm-upload`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Cookie: cookie,
-        },
-        body: JSON.stringify({
-          bucketName: smokeBucketName,
-          url: uploadInfo.accessUrl,
-        }),
-      });
-      await expectOk(confirmRes);
-
-      expect(await confirmRes.json()).toMatchObject({
-        success: true,
+        url: expect.any(String),
       });
     } finally {
-      try {
-        if (cookie && accessUrl) {
-          await deleteUploadedFile({
-            baseUrl,
-            cookie,
-            url: accessUrl,
-          });
-        }
-      } finally {
-        await smokeServer.close();
-      }
+      await smokeServer.close();
     }
   });
 });
