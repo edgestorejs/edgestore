@@ -96,7 +96,7 @@ export function createEdgeStoreHonoHandler<TCtx>(config: Config<TCtx>) {
         // Set cookies
         if (Array.isArray(newCookies)) {
           for (const cookie of newCookies) {
-            c.header('Set-Cookie', cookie);
+            c.header('Set-Cookie', cookie, { append: true });
           }
         } else if (newCookies) {
           c.header('Set-Cookie', newCookies);
