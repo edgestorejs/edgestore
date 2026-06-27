@@ -161,12 +161,15 @@ export function createEdgeStoreHonoHandler<TCtx>(config: Config<TCtx>) {
             url,
           });
 
-          return new Response(Buffer.from(proxyRes.body), {
-            status: proxyRes.status,
-            headers: {
-              'Content-Type': proxyRes.contentType,
+          return new Response(
+            proxyRes.body === null ? null : Buffer.from(proxyRes.body),
+            {
+              status: proxyRes.status,
+              headers: {
+                'Content-Type': proxyRes.contentType,
+              },
             },
-          });
+          );
         } else {
           return c.body(null, 400);
         }

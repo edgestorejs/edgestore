@@ -179,7 +179,11 @@ export function createEdgeStoreFastifyHandler<TCtx>(config: Config<TCtx>) {
 
           void reply.header('Content-Type', proxyRes.contentType);
 
-          return reply.status(proxyRes.status).send(Buffer.from(proxyRes.body));
+          return reply
+            .status(proxyRes.status)
+            .send(
+              proxyRes.body === null ? undefined : Buffer.from(proxyRes.body),
+            );
         } else {
           return reply.status(400).send();
         }

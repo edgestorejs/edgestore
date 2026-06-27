@@ -37,16 +37,16 @@ function mockProxyFetch({
   contentType,
   status,
 }: {
-  body: string;
-  contentType: string;
+  body: string | null;
+  contentType?: string;
   status: number;
 }) {
+  const headers = contentType ? { 'Content-Type': contentType } : undefined;
+
   return vi.spyOn(globalThis, 'fetch').mockResolvedValue(
     new Response(body, {
       status,
-      headers: {
-        'Content-Type': contentType,
-      },
+      headers,
     }),
   );
 }
@@ -200,6 +200,36 @@ describe('Express proxy-file', () => {
       expect(res.body).toBe('upstream denied');
       expect(fetchMock).toHaveBeenCalledWith(
         'https://files.example.com/private.txt',
+        {
+          headers: {
+            cookie: 'session=abc',
+          },
+        },
+      );
+    } finally {
+      await server.close();
+    }
+  });
+
+  it('returns no body for upstream no-body statuses', async () => {
+    const fetchMock = mockProxyFetch({
+      body: null,
+      status: 204,
+    });
+    const server = await createExpressServer();
+
+    try {
+      const res = await request({
+        cookie: 'session=abc',
+        url: `${server.baseUrl}/proxy-file?url=${encodeURIComponent(
+          'https://files.example.com/no-content.txt',
+        )}`,
+      });
+
+      expect(res.status).toBe(204);
+      expect(res.body).toBe('');
+      expect(fetchMock).toHaveBeenCalledWith(
+        'https://files.example.com/no-content.txt',
         {
           headers: {
             cookie: 'session=abc',
@@ -425,6 +455,38 @@ describe('Next App proxy-file', () => {
     expect(await res.text()).toBe('next app denied');
     expect(fetchMock).toHaveBeenCalledWith(
       'https://files.example.com/next-app.txt',
+      {
+        headers: {
+          cookie: 'session=abc',
+        },
+      },
+    );
+  });
+
+  it('returns no body for upstream no-body statuses', async () => {
+    const fetchMock = mockProxyFetch({
+      body: null,
+      status: 204,
+    });
+    const handler = createEdgeStoreNextAppHandler({
+      provider: createProvider(),
+      router: createRouter(),
+    });
+    const nextUrl = new URL(
+      'https://app.example.com/edgestore/proxy-file?url=https%3A%2F%2Ffiles.example.com%2Fnext-app-empty.txt',
+    );
+
+    const res = await handler({
+      cookies: {
+        toString: () => 'session=abc',
+      },
+      nextUrl,
+    } as Parameters<typeof handler>[0]);
+
+    expect(res.status).toBe(204);
+    expect(await res.text()).toBe('');
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://files.example.com/next-app-empty.txt',
       {
         headers: {
           cookie: 'session=abc',

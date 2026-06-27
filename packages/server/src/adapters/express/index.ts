@@ -139,7 +139,9 @@ export function createEdgeStoreExpressHandler<TCtx>(config: Config<TCtx>) {
 
           res.setHeader('Content-Type', proxyRes.contentType);
           res.status(proxyRes.status);
-          res.end(Buffer.from(proxyRes.body));
+          res.end(
+            proxyRes.body === null ? undefined : Buffer.from(proxyRes.body),
+          );
         } else {
           res.status(400).end();
         }
