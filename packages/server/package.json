@@ -36,6 +36,7 @@
     "test:smoke": "vitest run --config vitest.smoke.config.ts",
     "test:smoke:adapter": "vitest run --config vitest.smoke.config.ts src/adapters/edgestore.smoke.test.ts",
     "test:smoke:client": "vitest run --config vitest.smoke.config.ts src/core/client/edgestore.smoke.test.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint --cache --ext \".js,.ts,.tsx\" --ignore-path ../../.gitignore --report-unused-disable-directives src"
   },
   "exports": {
