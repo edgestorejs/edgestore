@@ -22,6 +22,27 @@ declare const globalThis: {
   _EDGE_STORE_LOGGER: Logger;
 };
 
+export async function fetchProxyFile({
+  cookieHeader,
+  url,
+}: {
+  cookieHeader?: string;
+  url: string;
+}) {
+  const proxyRes = await fetch(url, {
+    headers: {
+      cookie: cookieHeader ?? '',
+    },
+  });
+
+  return {
+    body: await proxyRes.arrayBuffer(),
+    contentType:
+      proxyRes.headers.get('Content-Type') ?? 'application/octet-stream',
+    status: proxyRes.status,
+  };
+}
+
 export type CookieOptions = {
   /**
    * Cookie path

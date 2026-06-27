@@ -1,10 +1,18 @@
 import { createServer, request as httpRequest, type Server } from 'node:http';
 import { type EdgeStoreRouter, type Provider } from '@edgestore/shared';
 import express from 'express';
+import fastify from 'fastify';
 import { Hono } from 'hono';
+import { type NextApiRequest, type NextApiResponse } from 'next/types';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { createEdgeStoreAstroHandler } from './astro';
 import { createEdgeStoreExpressHandler } from './express';
+import { createEdgeStoreFastifyHandler } from './fastify';
 import { createEdgeStoreHonoHandler } from './hono';
+import { createEdgeStoreNextHandler as createEdgeStoreNextAppHandler } from './next/app';
+import { createEdgeStoreNextHandler as createEdgeStoreNextPagesHandler } from './next/pages';
+import { createEdgeStoreRemixHandler } from './remix';
+import { createEdgeStoreStartHandler } from './start';
 
 function createProvider(): Provider {
   return {
@@ -67,6 +75,26 @@ async function createExpressServer() {
   };
 }
 
+async function createFastifyServer() {
+  const handler = createEdgeStoreFastifyHandler({
+    provider: createProvider(),
+    router: createRouter(),
+  });
+  const app = fastify();
+  app.all('/edgestore/*', handler);
+  await app.listen({ host: '127.0.0.1', port: 0 });
+
+  const address = app.server.address();
+  if (!address || typeof address === 'string') {
+    throw new Error('Could not determine test server address');
+  }
+
+  return {
+    baseUrl: `http://127.0.0.1:${address.port}/edgestore`,
+    close: () => app.close(),
+  };
+}
+
 function closeServer(server: Server) {
   return new Promise<void>((resolve, reject) => {
     server.close((err) => {
@@ -77,6 +105,38 @@ function closeServer(server: Server) {
       }
     });
   });
+}
+
+function createNextPagesResponse() {
+  const headers = new Map<string, string | number | readonly string[]>();
+  let body: Buffer | undefined;
+  let statusCode: number | undefined;
+
+  const res = {
+    end: vi.fn((data?: Buffer) => {
+      body = data;
+      return res;
+    }),
+    json: vi.fn(),
+    send: vi.fn(),
+    setHeader: vi.fn(
+      (name: string, value: string | number | readonly string[]) => {
+        headers.set(name.toLowerCase(), value);
+        return res;
+      },
+    ),
+    status: vi.fn((status: number) => {
+      statusCode = status;
+      return res;
+    }),
+  } as unknown as NextApiResponse;
+
+  return {
+    getBody: () => body?.toString('utf8'),
+    getHeader: (name: string) => headers.get(name.toLowerCase()),
+    getStatus: () => statusCode,
+    res,
+  };
 }
 
 function request({ cookie, url }: { cookie: string; url: string }) {
@@ -152,6 +212,40 @@ describe('Express proxy-file', () => {
   });
 });
 
+describe('Fastify proxy-file', () => {
+  it('returns the upstream status while preserving body and Content-Type', async () => {
+    const fetchMock = mockProxyFetch({
+      body: 'missing file',
+      contentType: 'text/plain',
+      status: 404,
+    });
+    const server = await createFastifyServer();
+
+    try {
+      const res = await request({
+        cookie: 'session=abc',
+        url: `${server.baseUrl}/proxy-file?url=${encodeURIComponent(
+          'https://files.example.com/missing.txt',
+        )}`,
+      });
+
+      expect(res.status).toBe(404);
+      expect(res.contentType).toBe('text/plain');
+      expect(res.body).toBe('missing file');
+      expect(fetchMock).toHaveBeenCalledWith(
+        'https://files.example.com/missing.txt',
+        {
+          headers: {
+            cookie: 'session=abc',
+          },
+        },
+      );
+    } finally {
+      await server.close();
+    }
+  });
+});
+
 describe('Hono proxy-file', () => {
   it('returns the upstream status while preserving body and Content-Type', async () => {
     const fetchMock = mockProxyFetch({
@@ -180,6 +274,194 @@ describe('Hono proxy-file', () => {
     expect(await res.text()).toBe('rate limited');
     expect(fetchMock).toHaveBeenCalledWith(
       'https://files.example.com/blocked.json',
+      {
+        headers: {
+          cookie: 'session=abc',
+        },
+      },
+    );
+  });
+});
+
+describe('Remix proxy-file', () => {
+  it('returns the upstream status while preserving body and Content-Type', async () => {
+    const fetchMock = mockProxyFetch({
+      body: 'remix denied',
+      contentType: 'application/json',
+      status: 401,
+    });
+    const handler = createEdgeStoreRemixHandler({
+      provider: createProvider(),
+      router: createRouter(),
+    });
+
+    const res = await handler({
+      request: new Request(
+        'https://app.example.com/edgestore/proxy-file?url=https%3A%2F%2Ffiles.example.com%2Fremix.json',
+        {
+          headers: {
+            Cookie: 'session=abc',
+          },
+        },
+      ),
+    });
+
+    expect(res.status).toBe(401);
+    expect(res.headers.get('Content-Type')).toBe('application/json');
+    expect(await res.text()).toBe('remix denied');
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://files.example.com/remix.json',
+      {
+        headers: {
+          cookie: 'session=abc',
+        },
+      },
+    );
+  });
+});
+
+describe('Astro proxy-file', () => {
+  it('returns the upstream status while preserving body and Content-Type', async () => {
+    const fetchMock = mockProxyFetch({
+      body: 'astro throttled',
+      contentType: 'text/html',
+      status: 503,
+    });
+    const handler = createEdgeStoreAstroHandler({
+      provider: createProvider(),
+      router: createRouter(),
+    });
+
+    const res = await handler({
+      request: new Request(
+        'https://app.example.com/edgestore/proxy-file?url=https%3A%2F%2Ffiles.example.com%2Fastro.html',
+        {
+          headers: {
+            Cookie: 'session=abc',
+          },
+        },
+      ),
+    } as Parameters<typeof handler>[0]);
+
+    expect(res.status).toBe(503);
+    expect(res.headers.get('Content-Type')).toBe('text/html');
+    expect(await res.text()).toBe('astro throttled');
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://files.example.com/astro.html',
+      {
+        headers: {
+          cookie: 'session=abc',
+        },
+      },
+    );
+  });
+});
+
+describe('Next Pages proxy-file', () => {
+  it('returns the upstream status while preserving body and Content-Type', async () => {
+    const fetchMock = mockProxyFetch({
+      body: 'next pages denied',
+      contentType: 'application/octet-stream',
+      status: 410,
+    });
+    const handler = createEdgeStoreNextPagesHandler({
+      provider: createProvider(),
+      router: createRouter(),
+    });
+    const response = createNextPagesResponse();
+
+    await handler(
+      {
+        cookies: {},
+        headers: {
+          cookie: 'session=abc',
+        },
+        query: {
+          url: 'https://files.example.com/next-pages.bin',
+        },
+        url: '/edgestore/proxy-file?url=https%3A%2F%2Ffiles.example.com%2Fnext-pages.bin',
+      } as unknown as NextApiRequest,
+      response.res,
+    );
+
+    expect(response.getStatus()).toBe(410);
+    expect(response.getHeader('Content-Type')).toBe('application/octet-stream');
+    expect(response.getBody()).toBe('next pages denied');
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://files.example.com/next-pages.bin',
+      {
+        headers: {
+          cookie: 'session=abc',
+        },
+      },
+    );
+  });
+});
+
+describe('Next App proxy-file', () => {
+  it('returns the upstream status while preserving body and Content-Type', async () => {
+    const fetchMock = mockProxyFetch({
+      body: 'next app denied',
+      contentType: 'text/plain',
+      status: 451,
+    });
+    const handler = createEdgeStoreNextAppHandler({
+      provider: createProvider(),
+      router: createRouter(),
+    });
+    const nextUrl = new URL(
+      'https://app.example.com/edgestore/proxy-file?url=https%3A%2F%2Ffiles.example.com%2Fnext-app.txt',
+    );
+
+    const res = await handler({
+      cookies: {
+        toString: () => 'session=abc',
+      },
+      nextUrl,
+    } as Parameters<typeof handler>[0]);
+
+    expect(res.status).toBe(451);
+    expect(res.headers.get('Content-Type')).toBe('text/plain');
+    expect(await res.text()).toBe('next app denied');
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://files.example.com/next-app.txt',
+      {
+        headers: {
+          cookie: 'session=abc',
+        },
+      },
+    );
+  });
+});
+
+describe('Start proxy-file', () => {
+  it('returns the upstream status while preserving body and Content-Type', async () => {
+    const fetchMock = mockProxyFetch({
+      body: 'start unavailable',
+      contentType: 'application/json',
+      status: 502,
+    });
+    const handler = createEdgeStoreStartHandler({
+      provider: createProvider(),
+      router: createRouter(),
+    });
+
+    const res = await handler({
+      request: new Request(
+        'https://app.example.com/edgestore/proxy-file?url=https%3A%2F%2Ffiles.example.com%2Fstart.json',
+        {
+          headers: {
+            Cookie: 'session=abc',
+          },
+        },
+      ),
+    });
+
+    expect(res.status).toBe(502);
+    expect(res.headers.get('Content-Type')).toBe('application/json');
+    expect(await res.text()).toBe('start unavailable');
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://files.example.com/start.json',
       {
         headers: {
           cookie: 'session=abc',
