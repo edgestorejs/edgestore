@@ -164,12 +164,14 @@ export function createEdgeStoreHonoHandler<TCtx>(config: Config<TCtx>) {
           });
 
           const data = await proxyRes.arrayBuffer();
-          c.header(
-            'Content-Type',
-            proxyRes.headers.get('Content-Type') ?? 'application/octet-stream',
-          );
-
-          return c.body(Buffer.from(data));
+          return new Response(Buffer.from(data), {
+            status: proxyRes.status,
+            headers: {
+              'Content-Type':
+                proxyRes.headers.get('Content-Type') ??
+                'application/octet-stream',
+            },
+          });
         } else {
           return c.body(null, 400);
         }

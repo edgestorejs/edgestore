@@ -143,6 +143,7 @@ export function createEdgeStoreExpressHandler<TCtx>(config: Config<TCtx>) {
             proxyRes.headers.get('Content-Type') ?? 'application/octet-stream',
           );
 
+          res.status(proxyRes.status);
           res.end(Buffer.from(data));
         } else {
           res.status(400).end();
