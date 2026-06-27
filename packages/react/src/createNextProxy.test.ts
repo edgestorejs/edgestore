@@ -152,12 +152,13 @@ async function waitForXhrs(count: number) {
 beforeEach(() => {
   MockXMLHttpRequest.instances = [];
   vi.stubGlobal('XMLHttpRequest', MockXMLHttpRequest);
-  process.env.NODE_ENV = 'test';
+  vi.stubEnv('NODE_ENV', 'test');
 });
 
 afterEach(() => {
   vi.useRealTimers();
   vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
 });
 
 describe('createNextProxy upload', () => {
@@ -413,7 +414,7 @@ describe('createNextProxy upload', () => {
   });
 
   it('rewrites protected URLs in development, but not public URLs or disabled proxies', async () => {
-    process.env.NODE_ENV = 'development';
+    vi.stubEnv('NODE_ENV', 'development');
     const cases = [
       {
         response: uploadResponse({
