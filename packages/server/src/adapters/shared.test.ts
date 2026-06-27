@@ -256,6 +256,157 @@ describe('path helpers', () => {
   });
 });
 
+describe('init', () => {
+  beforeEach(() => {
+    vi.stubEnv('EDGE_STORE_JWT_SECRET', 'test-secret');
+    vi.stubEnv('NODE_ENV', 'test');
+    vi.clearAllMocks();
+    (globalThis as any)._EDGE_STORE_LOGGER = logger;
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it('runs init for the built-in AWS provider without setting a token cookie', async () => {
+    const provider = createProvider({
+      name: 'aws',
+      init: vi.fn(() => ({})),
+    });
+    const es = initEdgeStore.create();
+    const router = es.router({
+      documents: es.fileBucket(),
+    });
+
+    const res = await init({
+      provider,
+      router,
+      ctx: {},
+    });
+
+    expect(provider.init).toHaveBeenCalledWith({
+      ctx: {},
+      router,
+    });
+    expect(res).toMatchObject({
+      token: undefined,
+      providerName: 'aws',
+      requiresFileAccessCookie: false,
+    });
+    expect(
+      res.newCookies.some((value) => value.startsWith('edgestore-ctx=')),
+    ).toBe(true);
+    expect(
+      res.newCookies.some((value) => value.startsWith('edgestore-token=')),
+    ).toBe(false);
+  });
+
+  it('runs init for the built-in Azure provider without setting a token cookie', async () => {
+    const provider = createProvider({
+      name: 'azure',
+      init: vi.fn(() => ({})),
+    });
+    const es = initEdgeStore.create();
+    const router = es.router({
+      documents: es.fileBucket(),
+    });
+
+    const res = await init({
+      provider,
+      router,
+      ctx: {},
+    });
+
+    expect(provider.init).toHaveBeenCalledWith({
+      ctx: {},
+      router,
+    });
+    expect(res).toMatchObject({
+      token: undefined,
+      providerName: 'azure',
+      requiresFileAccessCookie: false,
+    });
+  });
+
+  it('does not mint a token for public-only EdgeStore buckets', async () => {
+    const provider = createProvider({ name: 'edgestore' });
+    const es = initEdgeStore.create();
+    const router = es.router({
+      documents: es.fileBucket(),
+      avatars: es.imageBucket(),
+    });
+
+    const res = await init({
+      provider,
+      router,
+      ctx: {},
+    });
+
+    expect(provider.init).not.toHaveBeenCalled();
+    expect(res).toMatchObject({
+      token: undefined,
+      providerName: 'edgestore',
+      requiresFileAccessCookie: false,
+    });
+    expect(
+      res.newCookies.some((value) => value.startsWith('edgestore-ctx=')),
+    ).toBe(true);
+  });
+
+  it('mints a token for EdgeStore buckets with access control', async () => {
+    const provider = createProvider({ name: 'edgestore' });
+    const es = initEdgeStore.context<{ userId: string }>().create();
+    const router = es.router({
+      documents: es.fileBucket().accessControl({
+        userId: 'user-1',
+      }),
+    });
+
+    const res = await init({
+      provider,
+      router,
+      ctx: { userId: 'user-1' },
+    });
+
+    expect(provider.init).toHaveBeenCalledWith({
+      ctx: { userId: 'user-1' },
+      router,
+    });
+    expect(res).toMatchObject({
+      token: 'provider-token',
+      providerName: 'edgestore',
+      requiresFileAccessCookie: true,
+    });
+    expect(
+      res.newCookies.some((value) => value.startsWith('edgestore-token=')),
+    ).toBe(true);
+  });
+
+  it('keeps running init for custom providers', async () => {
+    const provider = createProvider({ name: 'custom-provider' });
+    const es = initEdgeStore.create();
+    const router = es.router({
+      documents: es.fileBucket(),
+    });
+
+    const res = await init({
+      provider,
+      router,
+      ctx: {},
+    });
+
+    expect(provider.init).toHaveBeenCalledWith({
+      ctx: {},
+      router,
+    });
+    expect(res).toMatchObject({
+      token: 'provider-token',
+      providerName: 'custom-provider',
+      requiresFileAccessCookie: false,
+    });
+  });
+});
+
 describe('requestUpload', () => {
   beforeEach(() => {
     vi.stubEnv('EDGE_STORE_JWT_SECRET', 'test-secret');

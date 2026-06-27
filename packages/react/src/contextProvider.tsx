@@ -158,8 +158,16 @@ function EdgeStoreProviderInner<TRouter extends AnyRouter>({
       if (res.ok) {
         const json = await res.json();
 
-        // Only call _init API if provider is edgestore
-        if (json.providerName === 'edgestore') {
+        // Older servers do not return requiresFileAccessCookie, so only skip
+        // _init when the server explicitly says the files cookie is unnecessary.
+        if (
+          json.providerName === 'edgestore' &&
+          json.requiresFileAccessCookie !== false
+        ) {
+          if (!json.token) {
+            throw new EdgeStoreClientError("Couldn't initialize EdgeStore.");
+          }
+
           const innerRes = await fetch(`${DEFAULT_BASE_URL}/_init`, {
             method: 'GET',
             credentials: 'include',

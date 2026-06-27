@@ -76,18 +76,14 @@ export function createEdgeStoreExpressHandler<TCtx>(config: Config<TCtx>) {
             cause: err instanceof Error ? err : undefined,
           });
         }
-        const { newCookies, token, baseUrl, providerName } = await init({
+        const { newCookies, ...body } = await init({
           ctx,
           provider,
           router: config.router,
           cookieConfig,
         });
         res.setHeader('Set-Cookie', newCookies);
-        res.json({
-          token,
-          baseUrl,
-          providerName,
-        });
+        res.json(body);
       } else if (matchPath(pathname, '/request-upload')) {
         res.json(
           await requestUpload({
