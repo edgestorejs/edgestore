@@ -12,7 +12,7 @@ import {
   stubProxyFetch,
   testCookieConfig,
   testCtx,
-} from '../../../test-utils/adapterConformance';
+} from '../../../test-utils/adapterConformance.test.utils';
 import { createEdgeStoreNextHandler } from './index';
 
 const baseUrl = 'https://app.example.com/api/edgestore';

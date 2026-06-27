@@ -11,7 +11,7 @@ import {
   stubProxyFetch,
   testCookieConfig,
   testCtx,
-} from '../../test-utils/adapterConformance';
+} from '../../test-utils/adapterConformance.test.utils';
 import { createEdgeStoreExpressHandler } from './index';
 
 type MockResponse = Response & {
