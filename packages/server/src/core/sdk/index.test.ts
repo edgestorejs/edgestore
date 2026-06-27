@@ -1,11 +1,17 @@
 import { initEdgeStore } from '@edgestore/shared';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { edgeStoreRawSdk, initEdgeStoreSdk } from '.';
-import EdgeStoreCredentialsError from '../../libs/errors/EdgeStoreCredentialsError';
 import {
   EDGE_STORE_PACKAGE_NAME,
   EDGE_STORE_PACKAGE_VERSION,
 } from '../../version';
+
+const DEFAULT_API_ENDPOINT = 'https://api.edgestore.dev';
+
+async function importSdk(params?: { apiEndpoint?: string }) {
+  vi.resetModules();
+  vi.stubEnv('EDGE_STORE_API_ENDPOINT', params?.apiEndpoint);
+  return await import('.');
+}
 
 function mockFetchJson(body: unknown, init?: Partial<Response>) {
   const fetchMock = vi.fn(async () => ({
@@ -38,9 +44,11 @@ const fileInfo = {
 describe('initEdgeStoreSdk', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
   });
 
   it('sends basic auth, package headers, and a JSON body through public SDK APIs', async () => {
+    const { initEdgeStoreSdk } = await importSdk();
     const fetchMock = mockFetchJson({
       signedUrl: 'https://upload.example.com/file.txt',
       url: 'https://files.example.com/file.txt',
@@ -59,7 +67,7 @@ describe('initEdgeStoreSdk', () => {
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
-      'https://api.edgestore.dev/request-upload',
+      `${DEFAULT_API_ENDPOINT}/request-upload`,
       expect.objectContaining({
         method: 'POST',
         headers: {
@@ -88,6 +96,7 @@ describe('initEdgeStoreSdk', () => {
   });
 
   it('includes response text when a request fails', async () => {
+    const { initEdgeStoreSdk } = await importSdk();
     const fetchMock = mockFetchJson(undefined, {
       ok: false,
       text: async () => 'invalid project credentials',
@@ -107,7 +116,12 @@ describe('initEdgeStoreSdk', () => {
     expect(fetchMock).toHaveBeenCalledOnce();
   });
 
-  it('throws EdgeStoreCredentialsError when credentials are missing', () => {
+  it('throws EdgeStoreCredentialsError when credentials are missing', async () => {
+    const { initEdgeStoreSdk } = await importSdk();
+    const { default: EdgeStoreCredentialsError } = await import(
+      '../../libs/errors/EdgeStoreCredentialsError'
+    );
+
     expect(() =>
       initEdgeStoreSdk({
         accessKey: '',
@@ -115,14 +129,43 @@ describe('initEdgeStoreSdk', () => {
       }),
     ).toThrow(EdgeStoreCredentialsError);
   });
+
+  it('uses EDGE_STORE_API_ENDPOINT when provided', async () => {
+    const { initEdgeStoreSdk } = await importSdk({
+      apiEndpoint: 'https://api.test.invalid',
+    });
+    const fetchMock = mockFetchJson({
+      signedUrl: 'https://upload.example.com/file.txt',
+      url: 'https://files.example.com/file.txt',
+      path: 'bucket/file.txt',
+      thumbnailUrl: null,
+    });
+    const sdk = initEdgeStoreSdk({
+      accessKey: 'access-key',
+      secretKey: 'secret-key',
+    });
+
+    await sdk.requestUpload({
+      bucketName: 'documents',
+      bucketType: 'FILE',
+      fileInfo,
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://api.test.invalid/request-upload',
+      expect.any(Object),
+    );
+  });
 });
 
 describe('edgeStoreRawSdk.getToken', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
   });
 
   it('serializes router bucket path and accessControl in the request body', async () => {
+    const { edgeStoreRawSdk } = await importSdk();
     const fetchMock = mockFetchJson({ token: 'edge-token' });
     const es = initEdgeStore
       .context<{ userId: string; orgId: string }>()
@@ -147,7 +190,7 @@ describe('edgeStoreRawSdk.getToken', () => {
     ).resolves.toBe('edge-token');
 
     expect(fetchMock).toHaveBeenCalledWith(
-      'https://api.edgestore.dev/get-token',
+      `${DEFAULT_API_ENDPOINT}/get-token`,
       expect.any(Object),
     );
     expect(getFetchBody(fetchMock)).toEqual({
