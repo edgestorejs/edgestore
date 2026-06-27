@@ -14,6 +14,7 @@ import {
   completeMultipartUpload,
   confirmUpload,
   deleteFile,
+  fetchProxyFile,
   getCookieConfig,
   init,
   requestUpload,
@@ -155,21 +156,20 @@ export function createEdgeStoreHonoHandler<TCtx>(config: Config<TCtx>) {
         const url = c.req.query('url');
 
         if (typeof url === 'string') {
-          const cookieHeader = c.req.header('cookie') ?? '';
-
-          const proxyRes = await fetch(url, {
-            headers: {
-              cookie: cookieHeader,
-            },
+          const proxyRes = await fetchProxyFile({
+            cookieHeader: c.req.header('cookie'),
+            url,
           });
 
-          const data = await proxyRes.arrayBuffer();
-          c.header(
-            'Content-Type',
-            proxyRes.headers.get('Content-Type') ?? 'application/octet-stream',
+          return new Response(
+            proxyRes.body === null ? null : Buffer.from(proxyRes.body),
+            {
+              status: proxyRes.status,
+              headers: {
+                'Content-Type': proxyRes.contentType,
+              },
+            },
           );
-
-          return c.body(Buffer.from(data));
         } else {
           return c.body(null, 400);
         }

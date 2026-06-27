@@ -22,6 +22,33 @@ declare const globalThis: {
   _EDGE_STORE_LOGGER: Logger;
 };
 
+const NO_BODY_STATUSES = new Set([204, 205, 304]);
+
+export async function fetchProxyFile({
+  cookieHeader,
+  url,
+}: {
+  cookieHeader?: string;
+  url: string;
+}) {
+  const proxyRes = await fetch(url, {
+    headers: {
+      cookie: cookieHeader ?? '',
+    },
+  });
+
+  const body = NO_BODY_STATUSES.has(proxyRes.status)
+    ? null
+    : await proxyRes.arrayBuffer();
+
+  return {
+    body,
+    contentType:
+      proxyRes.headers.get('Content-Type') ?? 'application/octet-stream',
+    status: proxyRes.status,
+  };
+}
+
 export type CookieOptions = {
   /**
    * Cookie path
