@@ -1,0 +1,17 @@
+[[hooks.PostToolUse]]
+matcher = "apply_patch|Edit|MultiEdit|Write"
+
+[[hooks.PostToolUse.hooks]]
+type = "command"
+command = '''
+root="$(git rev-parse --show-toplevel)" || exit 0
+cd "$root" || exit 0
+{
+  git diff -z --name-only --diff-filter=ACMRTUXB HEAD -- "*.js" "*.jsx" "*.mjs" "*.cjs" "*.ts" "*.tsx" "*.mts" "*.cts" "*.css"
+  git ls-files -z --others --exclude-standard -- "*.js" "*.jsx" "*.mjs" "*.cjs" "*.ts" "*.tsx" "*.mts" "*.cts" "*.css"
+} |
+  sort -zu |
+  xargs -0 sh -c '[ "$#" -eq 0 ] || "$0/node_modules/.bin/prettier" --write --ignore-unknown "$@"' "$root"
+'''
+timeout = 120
+statusMessage = "Formatting edited files"
