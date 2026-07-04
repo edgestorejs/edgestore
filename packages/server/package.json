@@ -34,8 +34,11 @@
     "codegen:entrypoints": "tsx entrypoints.script.ts",
     "test": "vitest run --config vitest.config.ts",
     "test:smoke": "vitest run --config vitest.smoke.config.ts",
+    "test:smoke:dev": "TEST_ENV=dev vitest run --config vitest.smoke.config.ts",
+    "test:smoke:prod": "TEST_ENV=prod vitest run --config vitest.smoke.config.ts",
     "test:smoke:adapter": "vitest run --config vitest.smoke.config.ts src/adapters/edgestore.smoke.test.ts",
     "test:smoke:client": "vitest run --config vitest.smoke.config.ts src/core/client/edgestore.smoke.test.ts",
+    "test:smoke:errors": "vitest run --config vitest.smoke.config.ts src/core/sdk/edgestore.errors.smoke.test.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint --cache --ext \".js,.ts,.tsx\" --ignore-path ../../.gitignore --report-unused-disable-directives src"
   },
