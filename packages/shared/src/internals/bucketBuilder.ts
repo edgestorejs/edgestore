@@ -98,6 +98,15 @@ export type AccessControlSchema<TCtx, TDef extends AnyDef> = Merge<
   }
 >;
 
+export type AccessControl<TCtx, TDef extends AnyDef> =
+  | 'private'
+  | AccessControlSchema<TCtx, TDef>;
+
+export type AutoSignedUrlsConfig = {
+  expiresIn?: number;
+  includeThumbnails?: boolean;
+};
+
 type BucketConfig = {
   /**
    * Maximum size for a single file in bytes
@@ -165,7 +174,8 @@ type Def<
   path: TPath;
   metadata: TMetadata;
   bucketConfig?: BucketConfig;
-  accessControl?: AccessControlSchema<any, any>;
+  accessControl?: AccessControl<any, any>;
+  autoSignedUrls?: AutoSignedUrlsConfig;
   beforeUpload?: BeforeUploadFn<any, any>;
   beforeDelete?: BeforeDeleteFn<any, any>;
 };
@@ -197,6 +207,7 @@ type Builder<TCtx, TDef extends AnyDef> = {
       metadata: TDef['metadata'];
       bucketConfig: TDef['bucketConfig'];
       accessControl: TDef['accessControl'];
+      autoSignedUrls: TDef['autoSignedUrls'];
       beforeUpload: TDef['beforeUpload'];
       beforeDelete: TDef['beforeDelete'];
     }
@@ -227,6 +238,7 @@ type Builder<TCtx, TDef extends AnyDef> = {
       metadata: TDef['metadata'];
       bucketConfig: TDef['bucketConfig'];
       accessControl: TDef['accessControl'];
+      autoSignedUrls: TDef['autoSignedUrls'];
       beforeUpload: TDef['beforeUpload'];
       beforeDelete: TDef['beforeDelete'];
     }
@@ -247,6 +259,7 @@ type Builder<TCtx, TDef extends AnyDef> = {
       metadata: MetadataFn<any, any, TMetadata>;
       bucketConfig: TDef['bucketConfig'];
       accessControl: TDef['accessControl'];
+      autoSignedUrls: TDef['autoSignedUrls'];
       beforeUpload: TDef['beforeUpload'];
       beforeDelete: TDef['beforeDelete'];
     }
@@ -257,7 +270,7 @@ type Builder<TCtx, TDef extends AnyDef> = {
    * This means that images will only be accessible from within your app.
    * And only if it passes the check set in this function.
    */
-  accessControl(accessControl: AccessControlSchema<TCtx, TDef>): Builder<
+  accessControl(accessControl: AccessControl<TCtx, TDef>): Builder<
     TCtx,
     {
       type: TDef['type'];
@@ -265,7 +278,27 @@ type Builder<TCtx, TDef extends AnyDef> = {
       path: TDef['path'];
       metadata: TDef['metadata'];
       bucketConfig: TDef['bucketConfig'];
-      accessControl: AccessControlSchema<any, any>;
+      accessControl: AccessControl<any, any>;
+      autoSignedUrls: TDef['autoSignedUrls'];
+      beforeUpload: TDef['beforeUpload'];
+      beforeDelete: TDef['beforeDelete'];
+    }
+  >;
+  /**
+   * Automatically return temporary signed read URLs after uploads.
+   *
+   * This requires explicit non-public access control.
+   */
+  autoSignedUrls(config?: AutoSignedUrlsConfig): Builder<
+    TCtx,
+    {
+      type: TDef['type'];
+      input: TDef['input'];
+      path: TDef['path'];
+      metadata: TDef['metadata'];
+      bucketConfig: TDef['bucketConfig'];
+      accessControl: TDef['accessControl'];
+      autoSignedUrls: AutoSignedUrlsConfig;
       beforeUpload: TDef['beforeUpload'];
       beforeDelete: TDef['beforeDelete'];
     }
@@ -284,6 +317,7 @@ type Builder<TCtx, TDef extends AnyDef> = {
       metadata: TDef['metadata'];
       bucketConfig: TDef['bucketConfig'];
       accessControl: TDef['accessControl'];
+      autoSignedUrls: TDef['autoSignedUrls'];
       beforeUpload: BeforeUploadFn<any, any>;
       beforeDelete: TDef['beforeDelete'];
     }
@@ -302,6 +336,7 @@ type Builder<TCtx, TDef extends AnyDef> = {
       metadata: TDef['metadata'];
       bucketConfig: TDef['bucketConfig'];
       accessControl: TDef['accessControl'];
+      autoSignedUrls: TDef['autoSignedUrls'];
       beforeUpload: TDef['beforeUpload'];
       beforeDelete: BeforeDeleteFn<any, any>;
     }
@@ -340,7 +375,8 @@ function createBuilder<
     path: TPath;
     metadata: TMetadata;
     bucketConfig?: BucketConfig;
-    accessControl?: AccessControlSchema<any, any>;
+    accessControl?: AccessControl<any, any>;
+    autoSignedUrls?: AutoSignedUrlsConfig;
     beforeUpload?: BeforeUploadFn<any, any>;
     beforeDelete?: BeforeDeleteFn<any, any>;
   }
@@ -400,8 +436,34 @@ function createBuilder<
       }) as any;
     },
     accessControl(accessControl) {
+      if (
+        typeof accessControl === 'object' &&
+        Object.keys(accessControl).length === 0
+      ) {
+        throw new EdgeStoreError({
+          message:
+            'Empty accessControl objects are not allowed. Use accessControl("private") for signed-URL-only private files.',
+          code: 'SERVER_ERROR',
+        });
+      }
       return createNewBuilder(_def, {
         accessControl: accessControl,
+      }) as any;
+    },
+    autoSignedUrls(config) {
+      if (_def.accessControl === undefined) {
+        throw new EdgeStoreError({
+          message:
+            'autoSignedUrls requires a non-public bucket. Add accessControl("private") or an access-control schema first.',
+          code: 'SERVER_ERROR',
+        });
+      }
+      return createNewBuilder(_def, {
+        autoSignedUrls: {
+          expiresIn: config?.expiresIn,
+          includeThumbnails:
+            config?.includeThumbnails ?? (_def.type === 'IMAGE' ? true : false),
+        },
       }) as any;
     },
     beforeUpload(beforeUpload) {

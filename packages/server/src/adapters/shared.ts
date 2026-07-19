@@ -175,7 +175,9 @@ export async function init<TCtx>(params: {
   const requiresFileAccessCookie =
     provider.name === 'edgestore' &&
     Object.values(router.buckets).some(
-      (bucket) => bucket._def.accessControl !== undefined,
+      (bucket) =>
+        bucket._def.accessControl !== undefined &&
+        bucket._def.accessControl !== 'private',
     );
   const shouldRunProviderInit =
     provider.name !== 'edgestore' || requiresFileAccessCookie;
@@ -354,6 +356,7 @@ export async function requestUpload<TCtx>(params: {
   });
   const metadata = await bucket._def.metadata?.({ ctx, input });
   const isPublic = bucket._def.accessControl === undefined;
+  const autoSignedUrls = bucket._def.autoSignedUrls;
 
   log.debug('upload info', {
     path,
@@ -371,6 +374,7 @@ export async function requestUpload<TCtx>(params: {
       isPublic,
       metadata,
     },
+    autoSignedUrls,
   });
   const { parsedPath, pathOrder } = parsePath(path);
 

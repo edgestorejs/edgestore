@@ -31,6 +31,7 @@ function createMockSdk(overrides: Partial<MockSdk> = {}) {
     completeMultipartUpload: vi.fn(),
     confirmUpload: vi.fn(),
     deleteFile: vi.fn(),
+    getSignedUrls: vi.fn(),
     listFiles: vi.fn(),
     ...overrides,
   } satisfies MockSdk;
