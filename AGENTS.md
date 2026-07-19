@@ -27,6 +27,14 @@
 For focused work, prefer Turbo or pnpm filters, for example:
 `pnpm turbo run test --filter=@edgestore/server`.
 
+## Changesets
+
+- Any PR that changes published `@edgestore/*` behavior or public APIs must
+  include a changeset.
+- Use `patch` for fixes, `minor` for backward-compatible features, and `major`
+  for breaking changes.
+- Changes limited to tests, docs, examples, or internal tooling do not need one.
+
 ## Review guidelines
 
 - Prioritize structural issues over style nits.
