@@ -25,7 +25,7 @@ type EdgeStoreContextValue<TRouter extends AnyRouter> = {
    * You can use this to wait for the provider to be initialized
    * before trying to show private images on your app.
    */
-  state: ProviderState;
+  state: EdgeStoreProviderState;
 };
 
 export function createEdgeStoreProvider<TRouter extends AnyRouter>(opts?: {
@@ -95,7 +95,7 @@ export function createEdgeStoreProvider<TRouter extends AnyRouter>(opts?: {
   };
 }
 
-type ProviderState =
+export type EdgeStoreProviderState =
   | {
       loading: true;
       initialized: false;
@@ -126,7 +126,7 @@ function EdgeStoreProviderInner<TRouter extends AnyRouter>({
   disableDevProxy?: boolean;
 }) {
   const apiPath = basePath ? `${basePath}` : '/api/edgestore';
-  const [state, setState] = React.useState<ProviderState>({
+  const [state, setState] = React.useState<EdgeStoreProviderState>({
     loading: true,
     initialized: false,
     error: false,
