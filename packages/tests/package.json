@@ -2,7 +2,9 @@
   "name": "edgestore-tests",
   "private": true,
   "scripts": {
-    "test:types": "tsd --files \"test-d/**/*.test-d.ts\""
+    "test:types": "pnpm test:types:structural && pnpm test:types:hover",
+    "test:types:structural": "tsd --files \"test-d/**/*.test-d.ts\"",
+    "test:types:hover": "node --test type-hovers.test.mjs"
   },
   "types": "index.d.ts",
   "dependencies": {
