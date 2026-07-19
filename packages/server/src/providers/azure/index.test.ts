@@ -67,6 +67,33 @@ describe('AzureProvider', () => {
     }));
   });
 
+  it('constructs a base URL from the storage account', () => {
+    const provider = AzureProvider({
+      storageAccountName: 'storageacct',
+      sasToken: 'sig=token',
+      containerName: 'documents',
+    });
+
+    expect(provider.getBaseUrl()).toBe(
+      'https://storageacct.blob.core.windows.net',
+    );
+    expect(mocks.getContainerClient).toHaveBeenCalledWith('documents');
+  });
+
+  it('uses a customBaseUrl when provided', () => {
+    const provider = AzureProvider({
+      storageAccountName: 'storageacct',
+      sasToken: 'sig=token',
+      containerName: 'documents',
+      customBaseUrl: 'http://localhost:10000/devstoreaccount1',
+    });
+
+    expect(provider.getBaseUrl()).toBe(
+      'http://localhost:10000/devstoreaccount1',
+    );
+    expect(mocks.getContainerClient).toHaveBeenCalledWith('documents');
+  });
+
   it.each([
     {
       expectedUuidCalls: 0,
@@ -156,12 +183,12 @@ describe('AzureProvider', () => {
 
     await expect(
       provider.deleteFile({
-        bucket: {} as never,
+        bucket: {} as Parameters<typeof provider.deleteFile>[0]['bucket'],
         url: `${containerUrl}/documents/report.pdf`,
       }),
     ).resolves.toEqual({ success: true });
 
     expect(mocks.getBlobClient).toHaveBeenCalledWith('documents/report.pdf');
-    expect(mocks.deleteBlob).toHaveBeenCalledTimes(1);
+    expect(mocks.deleteBlob).toHaveBeenCalledOnce();
   });
 });

@@ -175,12 +175,11 @@ export function AWSProvider(options?: AWSProviderOptions): EdgeStoreProvider {
       const pathPrefix = `${esBucketName}${
         fileInfo.isPublic ? '/_public' : ''
       }`;
-      const nameId = uuidv4();
       const extension = fileInfo.extension
         ? `.${fileInfo.extension.replace('.', '')}`
         : '';
       const defaultResolvedFileName =
-        fileInfo.fileName ?? `${nameId}${extension}`;
+        fileInfo.fileName ?? `${uuidv4()}${extension}`;
       const defaultFilePathFromMetadata = fileInfo.path.reduce((acc, item) => {
         return `${acc}/${item.value}`;
       }, '');
@@ -194,6 +193,7 @@ export function AWSProvider(options?: AWSProviderOptions): EdgeStoreProvider {
           defaultAccessPath: accessPath,
         });
       }
+      accessPath = accessPath.replace(/^\/+/, '');
 
       const command = new PutObjectCommand({
         Bucket: bucketName,
@@ -204,7 +204,7 @@ export function AWSProvider(options?: AWSProviderOptions): EdgeStoreProvider {
         expiresIn: 60 * 60, // 1 hour
       });
 
-      const finalAccessUrl = `${baseUrl}/${accessPath.startsWith('/') ? accessPath.substring(1) : accessPath}`;
+      const finalAccessUrl = `${baseUrl}/${accessPath}`;
       return {
         uploadUrl: signedUrl,
         accessUrl: finalAccessUrl,

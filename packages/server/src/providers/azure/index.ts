@@ -54,7 +54,6 @@ export function AzureProvider(options?: AzureProviderOptions): Provider {
   const containerClient = blobServiceClient.getContainerClient(
     containerName ?? '',
   );
-
   function getBlobNameFromUrl(url: string) {
     try {
       const blobUrl = new URL(url);
