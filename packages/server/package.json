@@ -1,6 +1,6 @@
 {
   "name": "@edgestore/server",
-  "version": "0.7.0",
+  "version": "0.8.0-canary.0",
   "description": "Upload files with ease from React/Next.js",
   "homepage": "https://edgestore.dev",
   "license": "MIT",
@@ -123,7 +123,7 @@
     "!**/__tests__"
   ],
   "dependencies": {
-    "@edgestore/shared": "0.7.0",
+    "@edgestore/shared": "0.8.0-canary.0",
     "@panva/hkdf": "^1.0.4",
     "cookie": "^0.7.0",
     "jose": "^4.13.1",

@@ -21,5 +21,12 @@
     "@edgestore/server": "0.7.0",
     "@edgestore/shared": "0.7.0"
   },
-  "changesets": []
+  "changesets": [
+    "friendly-public-types",
+    "image-upload-transformers",
+    "normalize-azure-blob-keys",
+    "preserve-proxy-response-status",
+    "reduce-init-token-calls",
+    "signed-url-private-buckets"
+  ]
 }
