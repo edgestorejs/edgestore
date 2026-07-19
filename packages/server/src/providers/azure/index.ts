@@ -54,21 +54,42 @@ export function AzureProvider(options?: AzureProviderOptions): Provider {
   const containerClient = blobServiceClient.getContainerClient(
     containerName ?? '',
   );
-  const getBlobNameFromUrl = (url: string) => {
+  function getBlobNameFromUrl(url: string) {
     try {
-      const parsedUrl = new URL(url);
-      const pathSegments = parsedUrl.pathname.split('/').filter(Boolean);
-      const containerIndex = containerName
-        ? pathSegments.indexOf(containerName)
-        : -1;
+      const blobUrl = new URL(url);
+      const containerUrl = new URL(containerClient.url);
+      const containerPath = containerUrl.pathname.replace(/\/$/, '');
 
-      return containerIndex >= 0
-        ? pathSegments.slice(containerIndex + 1).join('/')
-        : pathSegments.join('/');
+      if (blobUrl.origin !== containerUrl.origin) {
+        return url;
+      }
+
+      if (!blobUrl.pathname.startsWith(`${containerPath}/`)) {
+        return url;
+      }
+
+      return decodeURIComponent(
+        blobUrl.pathname.slice(containerPath.length + 1),
+      );
     } catch {
-      return url.replace(/^\/+/, '');
+      return url;
     }
-  };
+  }
+
+  function getBlobName(params: Parameters<Provider['requestUpload']>[0]) {
+    const { bucketName: esBucketName, fileInfo } = params;
+    const extension = fileInfo.extension
+      ? `.${fileInfo.extension.replace('.', '')}`
+      : '';
+    const fileName = fileInfo.fileName ?? `${uuidv4()}${extension}`;
+
+    return [
+      esBucketName,
+      ...(fileInfo.isPublic ? ['_public'] : []),
+      ...fileInfo.path.map((item) => item.value),
+      fileName,
+    ].join('/');
+  }
 
   return {
     name: 'azure',
@@ -91,13 +112,8 @@ export function AzureProvider(options?: AzureProviderOptions): Provider {
         uploadedAt: lastModified ?? new Date(),
       };
     },
-    async requestUpload({ fileInfo }) {
-      const extension = fileInfo.extension
-        ? `.${fileInfo.extension.replace('.', '')}`
-        : '';
-      const fileName = fileInfo.fileName ?? `${uuidv4()}${extension}`;
-
-      const blobClient = containerClient.getBlobClient(fileName);
+    async requestUpload(params) {
+      const blobClient = containerClient.getBlobClient(getBlobName(params));
 
       const url = blobClient.url;
 
