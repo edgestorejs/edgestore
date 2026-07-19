@@ -14,63 +14,59 @@ import {
   parsePath,
   requestUpload,
 } from './shared';
+import {
+  createContextToken,
+  createProvider,
+  logger,
+} from './shared.test.utils';
 
-const logger = {
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
+type RequestUploadParams = Parameters<typeof requestUpload>[0];
+type RequestUploadBody = RequestUploadParams['body'];
+type UploadBodyOverrides = Omit<Partial<RequestUploadBody>, 'fileInfo'> & {
+  fileInfo?: Partial<RequestUploadBody['fileInfo']>;
 };
 
-function createProvider(overrides: Partial<Provider> = {}): Provider {
+const defaultFileInfo: RequestUploadBody['fileInfo'] = {
+  size: 10,
+  type: 'text/plain',
+  extension: 'txt',
+  temporary: false,
+};
+
+function uploadBody(overrides: UploadBodyOverrides = {}): RequestUploadBody {
   return {
-    name: 'test-provider',
-    init: vi.fn(() => ({ token: 'provider-token' })),
-    getBaseUrl: vi.fn(() => 'https://files.example.com'),
-    getFile: vi.fn(() => ({
-      url: 'https://files.example.com/file.txt',
-      size: 10,
-      uploadedAt: new Date(),
-      path: {},
-      metadata: {},
-    })),
-    requestUpload: vi.fn(() => ({
-      uploadUrl: 'https://upload.example.com/file.txt',
-      accessUrl: 'https://files.example.com/file.txt',
-      thumbnailUrl: null,
-    })),
-    requestUploadParts: vi.fn(() => ({
-      multipart: {
-        uploadId: 'upload-id',
-        parts: [],
-      },
-    })),
-    completeMultipartUpload: vi.fn(() => ({ success: true })),
-    confirmUpload: vi.fn(() => ({ success: true })),
-    deleteFile: vi.fn(() => ({ success: true })),
+    bucketName: 'documents',
+    input: {},
     ...overrides,
+    fileInfo: {
+      ...defaultFileInfo,
+      ...overrides.fileInfo,
+    },
   };
 }
 
-async function createContextToken<TCtx extends AnyContext>({
+async function uploadWithContext<TCtx extends AnyContext>({
   ctx,
   provider = createProvider(),
   router,
+  body,
 }: {
   ctx: TCtx;
   provider?: Provider;
   router: EdgeStoreRouter<TCtx>;
+  body?: UploadBodyOverrides;
 }) {
-  const res = await init({
-    provider,
+  const ctxToken = await createContextToken({
     router,
     ctx,
   });
-  const cookie = res.newCookies.find((value) =>
-    value.startsWith('edgestore-ctx='),
-  );
 
-  return cookie?.split(';')[0]?.replace('edgestore-ctx=', '');
+  return requestUpload({
+    provider,
+    router,
+    ctxToken,
+    body: uploadBody(body),
+  });
 }
 
 describe('getCookieConfig', () => {
@@ -219,8 +215,11 @@ describe('init', () => {
     vi.unstubAllEnvs();
   });
 
-  it('does not run init for the built-in AWS provider', async () => {
-    const provider = createProvider({ name: 'aws' });
+  it('runs init for the built-in AWS provider without setting a token cookie', async () => {
+    const provider = createProvider({
+      name: 'aws',
+      init: vi.fn(() => ({})),
+    });
     const es = initEdgeStore.create();
     const router = es.router({
       documents: es.fileBucket(),
@@ -232,7 +231,10 @@ describe('init', () => {
       ctx: {},
     });
 
-    expect(provider.init).not.toHaveBeenCalled();
+    expect(provider.init).toHaveBeenCalledWith({
+      ctx: {},
+      router,
+    });
     expect(res).toMatchObject({
       token: undefined,
       providerName: 'aws',
@@ -246,8 +248,11 @@ describe('init', () => {
     ).toBe(false);
   });
 
-  it('does not run init for the built-in Azure provider', async () => {
-    const provider = createProvider({ name: 'azure' });
+  it('runs init for the built-in Azure provider without setting a token cookie', async () => {
+    const provider = createProvider({
+      name: 'azure',
+      init: vi.fn(() => ({})),
+    });
     const es = initEdgeStore.create();
     const router = es.router({
       documents: es.fileBucket(),
@@ -259,7 +264,10 @@ describe('init', () => {
       ctx: {},
     });
 
-    expect(provider.init).not.toHaveBeenCalled();
+    expect(provider.init).toHaveBeenCalledWith({
+      ctx: {},
+      router,
+    });
     expect(res).toMatchObject({
       token: undefined,
       providerName: 'azure',
@@ -369,16 +377,7 @@ describe('requestUpload', () => {
         provider: createProvider(),
         router,
         ctxToken: undefined,
-        body: {
-          bucketName: 'documents',
-          input: {},
-          fileInfo: {
-            size: 10,
-            type: 'text/plain',
-            extension: 'txt',
-            temporary: false,
-          },
-        },
+        body: uploadBody(),
       }),
     ).rejects.toMatchObject({
       code: 'UNAUTHORIZED',
@@ -390,25 +389,13 @@ describe('requestUpload', () => {
     const router = es.router({
       documents: es.fileBucket(),
     });
-    const ctxToken = await createContextToken({
-      router,
-      ctx: { userId: 'user-1' },
-    });
 
     await expect(
-      requestUpload({
-        provider: createProvider(),
+      uploadWithContext({
         router,
-        ctxToken,
+        ctx: { userId: 'user-1' },
         body: {
           bucketName: 'avatars',
-          input: {},
-          fileInfo: {
-            size: 10,
-            type: 'text/plain',
-            extension: 'txt',
-            temporary: false,
-          },
         },
       }),
     ).rejects.toMatchObject({
@@ -421,25 +408,13 @@ describe('requestUpload', () => {
     const router = es.router({
       avatars: es.imageBucket(),
     });
-    const ctxToken = await createContextToken({
-      router,
-      ctx: { userId: 'user-1' },
-    });
 
     await expect(
-      requestUpload({
-        provider: createProvider(),
+      uploadWithContext({
         router,
-        ctxToken,
+        ctx: { userId: 'user-1' },
         body: {
           bucketName: 'avatars',
-          input: {},
-          fileInfo: {
-            size: 10,
-            type: 'text/plain',
-            extension: 'txt',
-            temporary: false,
-          },
         },
       }),
     ).rejects.toMatchObject({
@@ -452,26 +427,11 @@ describe('requestUpload', () => {
     const router = es.router({
       documents: es.fileBucket({ maxSize: 5 }),
     });
-    const ctxToken = await createContextToken({
-      router,
-      ctx: { userId: 'user-1' },
-    });
 
     await expect(
-      requestUpload({
-        provider: createProvider(),
+      uploadWithContext({
         router,
-        ctxToken,
-        body: {
-          bucketName: 'documents',
-          input: {},
-          fileInfo: {
-            size: 10,
-            type: 'text/plain',
-            extension: 'txt',
-            temporary: false,
-          },
-        },
+        ctx: { userId: 'user-1' },
       }),
     ).rejects.toMatchObject({
       code: 'FILE_TOO_LARGE',
@@ -483,24 +443,15 @@ describe('requestUpload', () => {
     const router = es.router({
       documents: es.fileBucket({ accept: ['text/*', 'application/json'] }),
     });
-    const ctxToken = await createContextToken({
-      router,
-      ctx: { userId: 'user-1' },
-    });
 
     await expect(
-      requestUpload({
-        provider: createProvider(),
+      uploadWithContext({
         router,
-        ctxToken,
+        ctx: { userId: 'user-1' },
         body: {
-          bucketName: 'documents',
-          input: {},
           fileInfo: {
-            size: 10,
             type: 'image/png',
             extension: 'png',
-            temporary: false,
           },
         },
       }),
@@ -509,18 +460,13 @@ describe('requestUpload', () => {
     });
 
     await expect(
-      requestUpload({
-        provider: createProvider(),
+      uploadWithContext({
         router,
-        ctxToken,
+        ctx: { userId: 'user-1' },
         body: {
-          bucketName: 'documents',
-          input: {},
           fileInfo: {
-            size: 10,
             type: 'text/markdown',
             extension: 'md',
-            temporary: false,
           },
         },
       }),
@@ -530,18 +476,13 @@ describe('requestUpload', () => {
     });
 
     await expect(
-      requestUpload({
-        provider: createProvider(),
+      uploadWithContext({
         router,
-        ctxToken,
+        ctx: { userId: 'user-1' },
         body: {
-          bucketName: 'documents',
-          input: {},
           fileInfo: {
-            size: 10,
             type: 'application/json',
             extension: 'json',
-            temporary: false,
           },
         },
       }),
@@ -556,26 +497,11 @@ describe('requestUpload', () => {
     const router = es.router({
       documents: es.fileBucket().beforeUpload(() => false),
     });
-    const ctxToken = await createContextToken({
-      router,
-      ctx: { userId: 'user-1' },
-    });
 
     await expect(
-      requestUpload({
-        provider: createProvider(),
+      uploadWithContext({
         router,
-        ctxToken,
-        body: {
-          bucketName: 'documents',
-          input: {},
-          fileInfo: {
-            size: 10,
-            type: 'text/plain',
-            extension: 'txt',
-            temporary: false,
-          },
-        },
+        ctx: { userId: 'user-1' },
       }),
     ).rejects.toMatchObject({
       code: 'UPLOAD_NOT_ALLOWED',
@@ -610,19 +536,15 @@ describe('requestUpload', () => {
       provider,
       router,
       ctxToken,
-      body: {
-        bucketName: 'documents',
+      body: uploadBody({
         input: {
           type: 'invoice',
         },
         fileInfo: {
-          size: 10,
-          type: 'text/plain',
-          extension: 'txt',
           temporary: true,
           fileName: 'invoice.txt',
         },
-      },
+      }),
     });
 
     expect(provider.requestUpload).toHaveBeenCalledWith({

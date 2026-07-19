@@ -92,13 +92,7 @@ export function createEdgeStoreRemixHandler<TCtx>(config: Config<TCtx>) {
             cause: err instanceof Error ? err : undefined,
           });
         }
-        const {
-          newCookies,
-          token,
-          baseUrl,
-          providerName,
-          requiresFileAccessCookie,
-        } = await init({
+        const { newCookies, ...body } = await init({
           ctx,
           provider,
           router: config.router,
@@ -116,18 +110,10 @@ export function createEdgeStoreRemixHandler<TCtx>(config: Config<TCtx>) {
           responseHeaders.append('Set-Cookie', newCookies);
         }
 
-        return new Response(
-          JSON.stringify({
-            token,
-            baseUrl,
-            providerName,
-            requiresFileAccessCookie,
-          }),
-          {
-            headers: responseHeaders,
-            status: 200,
-          },
-        );
+        return new Response(JSON.stringify(body), {
+          headers: responseHeaders,
+          status: 200,
+        });
       } else if (matchPath(pathname, '/request-upload')) {
         const body = (await req.json()) as RequestUploadBody;
         return Response.json(

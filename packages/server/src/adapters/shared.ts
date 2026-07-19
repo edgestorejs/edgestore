@@ -152,12 +152,8 @@ export async function init<TCtx>(params: {
         bucket._def.accessControl !== undefined &&
         bucket._def.accessControl !== 'private',
     );
-  const isBuiltInProviderWithoutFileAccessCookie =
-    provider.name === 'aws' || provider.name === 'azure';
   const shouldRunProviderInit =
-    requiresFileAccessCookie ||
-    (!isBuiltInProviderWithoutFileAccessCookie &&
-      provider.name !== 'edgestore');
+    provider.name !== 'edgestore' || requiresFileAccessCookie;
 
   let token: string | undefined;
   if (shouldRunProviderInit) {
