@@ -2,8 +2,19 @@ import { randomUUID } from 'node:crypto';
 
 export const SMOKE_CONTENT = 'edgestore smoke test';
 
+export function getSmokeApiEndpoint() {
+  return process.env.EDGE_STORE_API_ENDPOINT ?? 'https://api.edgestore.dev';
+}
+
 export function getSmokeBucketName() {
   return process.env.EDGESTORE_SMOKE_BUCKET_NAME ?? 'publicFiles';
+}
+
+export function getSmokeBasicAuthHeader() {
+  requireSmokeCredentials();
+  return `Basic ${Buffer.from(
+    `${process.env.EDGE_STORE_ACCESS_KEY}:${process.env.EDGE_STORE_SECRET_KEY}`,
+  ).toString('base64')}`;
 }
 
 export function createSmokeFileName(prefix: string) {

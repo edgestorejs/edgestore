@@ -12,6 +12,8 @@ import {
 import { createEdgeStoreExpressHandler } from './express';
 
 const smokeBucketName = getSmokeBucketName();
+const smokeMaxSizeBucketName = 'smokeMaxSizeFiles';
+const smokeImageBucketName = 'smokeImages';
 
 type HeadersWithSetCookie = Headers & {
   getSetCookie?: () => string[];
@@ -42,10 +44,26 @@ async function expectOk(res: Response) {
   }
 }
 
+async function expectEdgeStoreError(
+  res: Response,
+  params: {
+    code: string;
+    status: number;
+  },
+) {
+  expect(res.status).toBe(params.status);
+  await expect(res.json()).resolves.toMatchObject({
+    code: params.code,
+    message: expect.any(String),
+  });
+}
+
 async function createSmokeServer() {
   const es = initEdgeStore.create();
   const router = es.router({
     [smokeBucketName]: es.fileBucket().beforeDelete(() => true),
+    [smokeMaxSizeBucketName]: es.fileBucket({ maxSize: 5 }),
+    [smokeImageBucketName]: es.imageBucket(),
   });
   const handler = createEdgeStoreExpressHandler({
     router,
@@ -204,6 +222,50 @@ describe('EdgeStore adapter live smoke test', () => {
       expect(uploadRes).toMatchObject({
         size: fileBody.size,
         url: expect.any(String),
+      });
+
+      const tooLargeRes = await fetch(`${baseUrl}/request-upload`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Cookie: cookie,
+        },
+        body: JSON.stringify({
+          bucketName: smokeMaxSizeBucketName,
+          input: {},
+          fileInfo: {
+            extension: 'txt',
+            size: 6,
+            temporary: true,
+            type: 'text/plain',
+          },
+        }),
+      });
+      await expectEdgeStoreError(tooLargeRes, {
+        code: 'FILE_TOO_LARGE',
+        status: 400,
+      });
+
+      const wrongMimeRes = await fetch(`${baseUrl}/request-upload`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Cookie: cookie,
+        },
+        body: JSON.stringify({
+          bucketName: smokeImageBucketName,
+          input: {},
+          fileInfo: {
+            extension: 'txt',
+            size: 4,
+            temporary: true,
+            type: 'text/plain',
+          },
+        }),
+      });
+      await expectEdgeStoreError(wrongMimeRes, {
+        code: 'MIME_TYPE_NOT_ALLOWED',
+        status: 400,
       });
     } finally {
       await smokeServer.close();
