@@ -48,6 +48,8 @@ const router = es.router({
 const backendClient = initEdgeStoreClient({ router });
 const { useEdgeStore } = createEdgeStoreProvider<typeof router>();
 const { edgestore, state: providerState } = useEdgeStore();
+const backendSignedUploadMethod = backendClient.privateFiles.upload;
+const reactSignedUploadMethod = edgestore.privateFiles.upload;
 
 const honoHandler = createEdgeStoreHonoHandler({
   router,

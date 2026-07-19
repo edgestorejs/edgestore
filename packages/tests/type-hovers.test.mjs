@@ -100,6 +100,56 @@ const expectedHovers = {
     };
 }`,
   providerState: 'const providerState: EdgeStoreProviderState',
+  backendSignedUploadMethod: `const backendSignedUploadMethod: (params: {
+    content: UploadContent;
+    options?: UploadOptions;
+    ctx: Context;
+    input: {
+        category: "invoice" | "contract";
+    };
+}) => Promise<{
+    url: string;
+    size: number;
+    metadata: {
+        role: "admin" | "visitor";
+        category: "invoice" | "contract";
+    };
+    path: {
+        category: string;
+        owner: string;
+    };
+    pathOrder: ("category" | "owner")[];
+    signedUrl: string;
+    expiresAt: Date;
+    expiresIn: number;
+    signedThumbnailUrl?: string | null | undefined;
+}>`,
+  reactSignedUploadMethod: `const reactSignedUploadMethod: (params: {
+    file: File;
+    signal?: AbortSignal;
+    input: {
+        category: "invoice" | "contract";
+    };
+    onProgressChange?: ((progress: number) => void) | undefined;
+    options?: UploadOptions;
+}) => Promise<{
+    url: string;
+    size: number;
+    uploadedAt: Date;
+    metadata: {
+        role: "admin" | "visitor";
+        category: "invoice" | "contract";
+    };
+    path: {
+        category: string;
+        owner: string;
+    };
+    pathOrder: ("category" | "owner")[];
+    signedUrl: string;
+    expiresAt: Date;
+    expiresIn: number;
+    signedThumbnailUrl?: string | null | undefined;
+}>`,
   honoHandler: 'const honoHandler: (c: HonoContext) => Promise<Response>',
   fastifyHandler:
     'const fastifyHandler: (req: FastifyRequest, reply: FastifyReply) => Promise<void>',
