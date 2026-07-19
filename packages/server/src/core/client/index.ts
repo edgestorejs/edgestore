@@ -132,6 +132,12 @@ export type UploadFileRequest<TBucket extends AnyBuilder> = {
         input: z.infer<TBucket['_def']['input']>;
       });
 
+type UploadImplementationParams = {
+  content: UploadContent;
+  ctx?: Record<string, unknown>;
+  input?: Record<string, unknown>;
+};
+
 export type UploadFileRes<TBucket extends AnyBuilder> =
   (TBucket['_def']['type'] extends 'IMAGE'
     ? {
@@ -320,9 +326,11 @@ export function initEdgeStoreClient<TRouter extends AnyRouter>(config: {
       }
       const client: EdgeStoreClient<TRouter>[string] = {
         async upload(params) {
-          const content = params.content;
-          const ctx = 'ctx' in params ? params.ctx : {};
-          const input = 'input' in params ? (params.input as any) : {};
+          const {
+            content,
+            ctx = {},
+            input = {},
+          }: UploadImplementationParams = params;
 
           let { blob, extension } = await (async () => {
             if (isTextContent(content)) {
