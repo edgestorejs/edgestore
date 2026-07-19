@@ -31,14 +31,14 @@ type UploadResponse<TBucket extends AnyBuilder> =
         path: InferBucketPathObject<TBucket>;
         pathOrder: InferBucketPathOrder<TBucket>;
       }) &
-  (undefined extends TBucket['_def']['autoSignedUrls']
-    ? unknown
-    : {
-        signedUrl: string;
-        expiresAt: Date;
-        expiresIn: number;
-        signedThumbnailUrl?: string | null;
-      });
+    (undefined extends TBucket['_def']['autoSignedUrls']
+      ? unknown
+      : {
+          signedUrl: string;
+          expiresAt: Date;
+          expiresIn: number;
+          signedThumbnailUrl?: string | null;
+        });
 
 export type BucketFunctions<TRouter extends AnyRouter> = {
   [K in keyof TRouter['buckets']]: {
