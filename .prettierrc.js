@@ -20,6 +20,7 @@ const config = {
   ],
   overrides: [
     {
+      // Keep markdown format-on-save focused on markdown itself.
       files: ['**/*.md', '**/*.mdx'],
       options: {
         embeddedLanguageFormatting: 'off',

@@ -145,10 +145,22 @@ export async function init<TCtx>(params: {
   const resolvedCookieConfig = getCookieConfig(cookieConfig);
 
   const ctxToken = await encryptJWT(ctx);
-  const { token } = await provider.init({
-    ctx,
-    router: router,
-  });
+  const requiresFileAccessCookie =
+    provider.name === 'edgestore' &&
+    Object.values(router.buckets).some(
+      (bucket) => bucket._def.accessControl !== undefined,
+    );
+  const shouldRunProviderInit =
+    provider.name !== 'edgestore' || requiresFileAccessCookie;
+
+  let token: string | undefined;
+  if (shouldRunProviderInit) {
+    const initRes = await provider.init({
+      ctx,
+      router: router,
+    });
+    token = initRes.token;
+  }
   const newCookies = [
     serialize(
       resolvedCookieConfig.ctx.name,
@@ -173,6 +185,7 @@ export async function init<TCtx>(params: {
     token,
     baseUrl,
     providerName: provider.name,
+    requiresFileAccessCookie,
   });
 
   return {
@@ -180,6 +193,7 @@ export async function init<TCtx>(params: {
     token,
     baseUrl,
     providerName: provider.name,
+    requiresFileAccessCookie,
   };
 }
 

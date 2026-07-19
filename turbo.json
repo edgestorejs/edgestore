@@ -36,6 +36,31 @@
       "outputs": [],
       "cache": true
     },
+    "test": {
+      "dependsOn": ["^build"],
+      "outputs": []
+    },
+    "test:types": {
+      "dependsOn": ["^build"],
+      "outputs": []
+    },
+    "test:smoke": {
+      "dependsOn": ["^build"],
+      "env": [
+        "TEST_ENV",
+        "EDGESTORE_SMOKE_BUCKET_NAME",
+        "EDGE_STORE_API_ENDPOINT",
+        "EDGE_STORE_ACCESS_KEY",
+        "EDGE_STORE_SECRET_KEY"
+      ],
+      "outputs": [],
+      "cache": false
+    },
+    "typecheck": {
+      "dependsOn": ["^build"],
+      "outputs": [],
+      "cache": true
+    },
     "watch": {},
     "dev": {
       "cache": false,

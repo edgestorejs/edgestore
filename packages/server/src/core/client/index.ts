@@ -4,6 +4,7 @@ import {
   type AnyRouter,
   type InferBucketPathKeys,
   type InferBucketPathObject,
+  type InferBucketPathOrder,
   type InferMetadataObject,
   type MaybePromise,
   type Prettify,
@@ -137,14 +138,14 @@ export type UploadFileRes<TBucket extends AnyBuilder> =
         size: number;
         metadata: InferMetadataObject<TBucket>;
         path: InferBucketPathObject<TBucket>;
-        pathOrder: (keyof InferBucketPathObject<TBucket>)[];
+        pathOrder: InferBucketPathOrder<TBucket>;
       }
     : {
         url: string;
         size: number;
         metadata: InferMetadataObject<TBucket>;
         path: InferBucketPathObject<TBucket>;
-        pathOrder: (keyof InferBucketPathObject<TBucket>)[];
+        pathOrder: InferBucketPathOrder<TBucket>;
       };
 
 type Filter<TBucket extends AnyBuilder> = {

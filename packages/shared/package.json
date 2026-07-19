@@ -32,6 +32,8 @@
     "build": "rollup --config rollup.config.ts --configPlugin rollup-plugin-swc3",
     "dev": "pnpm build --watch",
     "codegen:entrypoints": "tsx entrypoints.script.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint --cache --ext \".js,.ts,.tsx\" --ignore-path ../../.gitignore --report-unused-disable-directives src"
   },
   "exports": {

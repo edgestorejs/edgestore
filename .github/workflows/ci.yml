@@ -28,7 +28,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
@@ -49,14 +49,14 @@ jobs:
       - name: Lint
         run: pnpm lint
 
-      - name: Typecheck shared package
-        run: pnpm exec tsc --noEmit -p packages/shared/tsconfig.json
-
-      - name: Typecheck react package
-        run: pnpm exec tsc --noEmit -p packages/react/tsconfig.json
-
-      - name: Typecheck server package
-        run: pnpm exec tsc --noEmit -p packages/server/tsconfig.json
+      - name: Typecheck packages
+        run: pnpm typecheck
 
       - name: Build packages
         run: pnpm build
+
+      - name: Runtime tests
+        run: pnpm test
+
+      - name: Type tests
+        run: pnpm test:types
