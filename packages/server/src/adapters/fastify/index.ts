@@ -81,7 +81,7 @@ export function createEdgeStoreFastifyHandler<TCtx>(config: Config<TCtx>) {
 
   const resolvedCookieConfig = getCookieConfig(cookieConfig);
 
-  return async (req: FastifyRequest, reply: FastifyReply) => {
+  return async (req: FastifyRequest, reply: FastifyReply): Promise<void> => {
     try {
       // Get the URL from the request - simplified approach
       const pathname = req.url;

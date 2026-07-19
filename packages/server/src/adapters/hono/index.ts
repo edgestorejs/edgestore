@@ -6,7 +6,7 @@ import {
   type MaybePromise,
   type Provider,
 } from '@edgestore/shared';
-import { type Context } from 'hono';
+import { type Context as HonoContext } from 'hono';
 import Logger, { type LogLevel } from '../../libs/logger';
 import { matchPath } from '../../libs/utils';
 import { EdgeStoreProvider } from '../../providers/edgestore';
@@ -28,7 +28,7 @@ import {
 } from '../shared';
 
 export type CreateContextOptions = {
-  c: Context;
+  c: HonoContext;
 };
 
 export type Config<TCtx> = {
@@ -50,7 +50,7 @@ declare const globalThis: {
 };
 
 // Helper to get a cookie value from Hono Context
-function getCookie(c: Context, name: string): string | undefined {
+function getCookie(c: HonoContext, name: string): string | undefined {
   const cookies = c.req.header('cookie');
   if (!cookies) return undefined;
 
@@ -66,7 +66,7 @@ export function createEdgeStoreHonoHandler<TCtx>(config: Config<TCtx>) {
 
   const resolvedCookieConfig = getCookieConfig(cookieConfig);
 
-  return async (c: Context) => {
+  return async (c: HonoContext): Promise<Response> => {
     try {
       const pathname = new URL(c.req.url).pathname;
 

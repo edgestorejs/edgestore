@@ -71,6 +71,8 @@ type UrlContent = {
   extension: string;
 };
 
+export type UploadContent = TextContent | BlobContent | UrlContent;
+
 export type ServerUploadTransform = (params: {
   blob: Blob;
   extension: string;
@@ -117,7 +119,7 @@ export type UploadFileRequest<TBucket extends AnyBuilder> = {
    *   extension: "csv",
    * }
    */
-  content: TextContent | BlobContent | UrlContent;
+  content: UploadContent;
   options?: UploadOptions;
 } & (TBucket['$config']['ctx'] extends Record<string, never>
   ? {}
@@ -129,6 +131,12 @@ export type UploadFileRequest<TBucket extends AnyBuilder> = {
     : {
         input: z.infer<TBucket['_def']['input']>;
       });
+
+type UploadImplementationParams = {
+  content: UploadContent;
+  ctx?: Record<string, unknown>;
+  input?: Record<string, unknown>;
+};
 
 export type UploadFileRes<TBucket extends AnyBuilder> =
   (TBucket['_def']['type'] extends 'IMAGE'
@@ -216,7 +224,7 @@ type GetSignedUrlsRes<TBucket extends AnyBuilder> =
     : GetSignedUrlRes[];
 
 type BucketClient<TBucket extends AnyBuilder> = {
-  getFile: (params: { url: string }) => Promise<GetFileRes<TBucket>>;
+  getFile: (params: { url: string }) => Promise<Prettify<GetFileRes<TBucket>>>;
 
   /**
    * Use this function to upload a file to the bucket directly from your backend.
@@ -253,7 +261,7 @@ type BucketClient<TBucket extends AnyBuilder> = {
    * ```
    */
   upload: (
-    params: UploadFileRequest<TBucket>,
+    params: Prettify<UploadFileRequest<TBucket>>,
   ) => Promise<Prettify<UploadFileRes<TBucket>>>;
   /**
    * Confirm a temporary file upload directly from your backend.
@@ -280,12 +288,12 @@ type BucketClient<TBucket extends AnyBuilder> = {
       getSignedUrl: (params: {
         url: string;
         expiresIn?: number;
-      }) => Promise<GetSignedUrlRes>;
+      }) => Promise<Prettify<GetSignedUrlRes>>;
       getSignedUrls: (params: {
         urls: string[];
         expiresIn?: number;
         includeThumbnails?: boolean;
-      }) => Promise<GetSignedUrlsRes<TBucket>>;
+      }) => Promise<Prettify<GetSignedUrlsRes<TBucket>[number]>[]>;
     });
 
 type EdgeStoreClient<TRouter extends AnyRouter> = {
@@ -318,9 +326,11 @@ export function initEdgeStoreClient<TRouter extends AnyRouter>(config: {
       }
       const client: EdgeStoreClient<TRouter>[string] = {
         async upload(params) {
-          const content = params.content;
-          const ctx = 'ctx' in params ? params.ctx : {};
-          const input = 'input' in params ? params.input : {};
+          const {
+            content,
+            ctx = {},
+            input = {},
+          }: UploadImplementationParams = params;
 
           let { blob, extension } = await (async () => {
             if (isTextContent(content)) {

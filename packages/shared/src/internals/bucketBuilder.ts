@@ -126,19 +126,17 @@ type BucketConfig = {
   accept?: string[];
 };
 
-type FileInfo = {
-  size: number;
-  type: string;
-  extension: string;
-  fileName?: string;
-  replaceTargetUrl?: string;
-  temporary: boolean;
-};
-
 type BeforeUploadFn<TCtx, TDef extends AnyDef> = (params: {
   ctx: TCtx;
   input: z.infer<TDef['input']>;
-  fileInfo: FileInfo;
+  fileInfo: {
+    size: number;
+    type: string;
+    extension: string;
+    fileName?: string;
+    replaceTargetUrl?: string;
+    temporary: boolean;
+  };
 }) => MaybePromise<boolean>;
 
 type BeforeDeleteFn<TCtx, TDef extends AnyDef> = (params: {

@@ -4,6 +4,7 @@ import {
   type InferBucketPathObject,
   type InferBucketPathOrder,
   type InferMetadataObject,
+  type Prettify,
   type SharedRequestUploadRes,
   type UploadOptions,
 } from '@edgestore/shared';
@@ -63,17 +64,17 @@ export type BucketFunctions<TRouter extends AnyRouter> = {
         ? {
             file: File;
             signal?: AbortSignal;
-            onProgressChange?: OnProgressChangeHandler;
+            onProgressChange?: (progress: number) => void;
             options?: UploadOptions;
           }
         : {
             file: File;
             signal?: AbortSignal;
             input: z.infer<TRouter['buckets'][K]['_def']['input']>;
-            onProgressChange?: OnProgressChangeHandler;
+            onProgressChange?: (progress: number) => void;
             options?: UploadOptions;
           },
-    ) => Promise<UploadResponse<TRouter['buckets'][K]>>;
+    ) => Promise<Prettify<UploadResponse<TRouter['buckets'][K]>>>;
     confirmUpload: (params: { url: string }) => Promise<void>;
     delete: (params: { url: string }) => Promise<void>;
   };
