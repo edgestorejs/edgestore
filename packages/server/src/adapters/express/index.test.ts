@@ -200,7 +200,7 @@ describe('Express adapter conformance', () => {
         cookie: 'session=abc; theme=dark',
       },
     });
-    expect(res.statusCode).toBe(200);
+    expect(res.statusCode).toBe(202);
     expect(res.headers['Content-Type']).toBe('text/custom');
     expect(Buffer.isBuffer(res.body)).toBe(true);
     expect((res.body as Buffer).toString()).toBe('proxied body');
