@@ -1,5 +1,26 @@
 # @edgestore/server
 
+## 0.8.0-canary.0
+
+### Minor Changes
+
+- [#112](https://github.com/edgestorejs/edgestore/pull/112) [`8f66ade`](https://github.com/edgestorejs/edgestore/commit/8f66adeae1963fc23823d1a5ef048cff64a38b57) Thanks [@perfectbase](https://github.com/perfectbase)! - Add upload transformers for client and backend uploads.
+
+- [#118](https://github.com/edgestorejs/edgestore/pull/118) [`9809264`](https://github.com/edgestorejs/edgestore/commit/98092643574ad666c273ed824f19d433843ffdb5) Thanks [@perfectbase](https://github.com/perfectbase)! - Add private bucket access control, backend signed URL helpers, and schema-controlled auto-signed upload responses.
+
+### Patch Changes
+
+- [#136](https://github.com/edgestorejs/edgestore/pull/136) [`c40d5a7`](https://github.com/edgestorejs/edgestore/commit/c40d5a7e104c8c4ecf75bf57aff81cc3f095c978) Thanks [@perfectbase](https://github.com/perfectbase)! - Present concise, user-friendly types for public EdgeStore APIs in editor hovers.
+
+- [#130](https://github.com/edgestorejs/edgestore/pull/130) [`82f3d62`](https://github.com/edgestorejs/edgestore/commit/82f3d62e85892aee2468f7cf6e45a17d214b63ba) Thanks [@perfectbase](https://github.com/perfectbase)! - Normalize Azure blob keys and access URLs while preserving support for existing flat URLs.
+
+- [#129](https://github.com/edgestorejs/edgestore/pull/129) [`f4d471f`](https://github.com/edgestorejs/edgestore/commit/f4d471f76d4a685af0704ce28ac16f6b3deb1335) Thanks [@perfectbase](https://github.com/perfectbase)! - Preserve upstream response status codes when proxying files through server adapters.
+
+- [#115](https://github.com/edgestorejs/edgestore/pull/115) [`7a3d7fc`](https://github.com/edgestorejs/edgestore/commit/7a3d7fc5c18459403ec67ff817b965934a692105) Thanks [@perfectbase](https://github.com/perfectbase)! - Avoid unnecessary EdgeStore file-access token initialization when EdgeStore buckets do not need a private-file access cookie.
+
+- Updated dependencies [[`c40d5a7`](https://github.com/edgestorejs/edgestore/commit/c40d5a7e104c8c4ecf75bf57aff81cc3f095c978), [`8f66ade`](https://github.com/edgestorejs/edgestore/commit/8f66adeae1963fc23823d1a5ef048cff64a38b57), [`7a3d7fc`](https://github.com/edgestorejs/edgestore/commit/7a3d7fc5c18459403ec67ff817b965934a692105), [`9809264`](https://github.com/edgestorejs/edgestore/commit/98092643574ad666c273ed824f19d433843ffdb5)]:
+  - @edgestore/shared@0.8.0-canary.0
+
 ## 0.7.0
 
 ### Minor Changes
