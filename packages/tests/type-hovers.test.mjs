@@ -102,7 +102,7 @@ const expectedHovers = {
   providerState: 'const providerState: EdgeStoreProviderState',
   backendSignedUploadMethod: `const backendSignedUploadMethod: (params: {
     content: UploadContent;
-    options?: UploadOptions;
+    options?: UploadOptions | undefined;
     ctx: Context;
     input: {
         category: "invoice" | "contract";
@@ -130,7 +130,7 @@ const expectedHovers = {
     input: {
         category: "invoice" | "contract";
     };
-    onProgressChange?: ((progress: number) => void) | undefined;
+    onProgressChange?: (progress: number) => void;
     options?: UploadOptions;
 }) => Promise<{
     url: string;
@@ -150,7 +150,7 @@ const expectedHovers = {
     expiresIn: number;
     signedThumbnailUrl?: string | null | undefined;
 }>`,
-  honoHandler: 'const honoHandler: (c: HonoContext) => Promise<Response>',
+  honoHandler: 'const honoHandler: (c: Context) => Promise<Response>',
   fastifyHandler:
     'const fastifyHandler: (req: FastifyRequest, reply: FastifyReply) => Promise<void>',
   backendUnsignedUpload: `const backendUnsignedUpload: {
