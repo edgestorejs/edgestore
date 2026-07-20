@@ -15,7 +15,7 @@ type EmptyJobInput = BucketInput & { jobId: string };
 
 type Result<TOperation extends OperationId> = OperationResult<TOperation>;
 
-export type ManagementClient = {
+export type ManagementResourceClient = {
   projects: {
     list(
       input: AccountInput & CallOptions,
@@ -114,7 +114,9 @@ export type ManagementClient = {
   };
 };
 
-export function createManagementClient(transport: Transport): ManagementClient {
+export function createManagementResourceClient(
+  transport: Transport,
+): ManagementResourceClient {
   return {
     projects: {
       list: ({ account, signal }) =>

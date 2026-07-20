@@ -5,7 +5,10 @@ import type {
 } from './credentials';
 import { classifyCredentials } from './credentials';
 import { createTransport } from './internal/transport';
-import { createManagementClient, type ManagementClient } from './management';
+import {
+  createManagementClient,
+  type ManagementClient,
+} from './managementClient';
 import {
   createExplicitProjectRuntimeClient,
   createProjectRuntimeClient,
