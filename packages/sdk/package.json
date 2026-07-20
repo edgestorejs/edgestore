@@ -58,5 +58,8 @@
     "@types/node": "25.0.3",
     "openapi-typescript": "7.6.1",
     "typescript": "5.9.3"
+  },
+  "dependencies": {
+    "openapi-fetch": "0.17.0"
   }
 }
