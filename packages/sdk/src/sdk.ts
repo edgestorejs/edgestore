@@ -4,7 +4,10 @@ import type {
   ProjectCredentials,
 } from './credentials';
 import { createTransport } from './internal/transport';
-import { createManagementClient, type ManagementClient } from './management';
+import {
+  createManagementClient,
+  type ManagementClient,
+} from './managementClient';
 import {
   createExplicitProjectRuntimeClient,
   createProjectRuntimeClient,
