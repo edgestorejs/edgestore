@@ -14,6 +14,7 @@ import {
   type ExplicitProjectRuntimeClient,
   type ProjectRuntimeClient,
 } from './runtime';
+import { createSystemClient, type SystemClient } from './system';
 
 export type EdgeStoreSdkOptions<
   TCredentials extends EdgeStoreCredentials = EdgeStoreCredentials,
@@ -23,10 +24,14 @@ export type EdgeStoreSdkOptions<
   fetch?: typeof globalThis.fetch;
 };
 
-export type ProjectEdgeStoreSdk = { runtime: ProjectRuntimeClient };
+export type ProjectEdgeStoreSdk = {
+  runtime: ProjectRuntimeClient;
+  system: SystemClient;
+};
 export type ManagementEdgeStoreSdk = {
   runtime: ExplicitProjectRuntimeClient;
   management: ManagementClient;
+  system: SystemClient;
 };
 
 export function createEdgeStoreSdk(
@@ -39,11 +44,13 @@ export function createEdgeStoreSdk(
   options: EdgeStoreSdkOptions,
 ): ProjectEdgeStoreSdk | ManagementEdgeStoreSdk {
   const transport = createTransport(options);
+  const system = createSystemClient(transport);
 
   return 'token' in options.credentials
     ? {
         runtime: createExplicitProjectRuntimeClient(transport),
         management: createManagementClient(transport),
+        system,
       }
-    : { runtime: createProjectRuntimeClient(transport) };
+    : { runtime: createProjectRuntimeClient(transport), system };
 }

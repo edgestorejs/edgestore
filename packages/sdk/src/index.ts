@@ -16,6 +16,7 @@ export {
   type ManagementEdgeStoreSdk,
   type ProjectEdgeStoreSdk,
 } from './sdk';
+export type { SystemClient } from './system';
 export type {
   ExplicitProjectRuntimeClient,
   ProjectRuntimeClient,
