@@ -9,6 +9,7 @@ export {
   EdgeStoreError,
   EdgeStoreNetworkError,
 } from './errors';
+export type { ManagementClient } from './management';
 export {
   createEdgeStoreSdk,
   type EdgeStoreSdkOptions,

@@ -14,6 +14,13 @@ export type OperationBody<TOperation extends OperationId> =
     ? TBody
     : never;
 
+export type OperationQuery<TOperation extends OperationId> =
+  operations[TOperation] extends {
+    parameters: { query?: infer TQuery };
+  }
+    ? NonNullable<TQuery>
+    : never;
+
 export type SuccessBody<TResponses extends Record<string | number, unknown>> =
   SuccessResponse<TResponses, 'application/json'>;
 

@@ -5,6 +5,7 @@ import type {
 } from './credentials';
 import { classifyCredentials } from './credentials';
 import { createTransport } from './internal/transport';
+import { createManagementClient, type ManagementClient } from './management';
 import {
   createExplicitProjectRuntimeClient,
   createProjectRuntimeClient,
@@ -23,6 +24,7 @@ export type EdgeStoreSdkOptions<
 export type ProjectEdgeStoreSdk = { runtime: ProjectRuntimeClient };
 export type ManagementEdgeStoreSdk = {
   runtime: ExplicitProjectRuntimeClient;
+  management: ManagementClient;
 };
 
 export function createEdgeStoreSdk(
@@ -41,6 +43,9 @@ export function createEdgeStoreSdk(
   const transport = createTransport({ ...options, credentials });
 
   return credentials.kind === 'management'
-    ? { runtime: createExplicitProjectRuntimeClient(transport) }
+    ? {
+        runtime: createExplicitProjectRuntimeClient(transport),
+        management: createManagementClient(transport),
+      }
     : { runtime: createProjectRuntimeClient(transport) };
 }
