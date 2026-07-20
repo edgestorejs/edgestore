@@ -4,1213 +4,1213 @@
  */
 
 export type paths = {
-    readonly "/health": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
+    "/health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
         /** Health check */
-        readonly get: operations["v2.health"];
-        readonly put?: never;
-        readonly post?: never;
-        readonly delete?: never;
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
+        get: operations["v2.health"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    readonly "/whoami": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
+    "/whoami": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
         /** Describe the authenticated actor */
-        readonly get: operations["v2.whoami"];
-        readonly put?: never;
-        readonly post?: never;
-        readonly delete?: never;
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
+        get: operations["v2.whoami"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    readonly "/management/accounts": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
+    "/management/accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
         /** List accessible accounts */
-        readonly get: operations["v2.management.accounts.list"];
-        readonly put?: never;
-        readonly post?: never;
-        readonly delete?: never;
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
+        get: operations["v2.management.accounts.list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    readonly "/management/accounts/{accountId}": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
+    "/management/accounts/{accountId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
         /** Get an account */
-        readonly get: operations["v2.management.accounts.get"];
-        readonly put?: never;
-        readonly post?: never;
-        readonly delete?: never;
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
+        get: operations["v2.management.accounts.get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    readonly "/management/accounts/{accountId}/leave": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
+    "/management/accounts/{accountId}/leave": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        readonly get?: never;
-        readonly put?: never;
+        get?: never;
+        put?: never;
         /** Leave an account */
-        readonly post: operations["v2.management.accounts.leave"];
-        readonly delete?: never;
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
+        post: operations["v2.management.accounts.leave"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    readonly "/management/accounts/{accountId}/projects": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
+    "/management/accounts/{accountId}/projects": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
         /** List projects in an account */
-        readonly get: operations["v2.management.projects.list"];
-        readonly put?: never;
+        get: operations["v2.management.projects.list"];
+        put?: never;
         /** Create a project */
-        readonly post: operations["v2.management.projects.create"];
-        readonly delete?: never;
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
+        post: operations["v2.management.projects.create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    readonly "/management/projects/{projectRef}": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
+    "/management/projects/{projectRef}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
         /** Get a project */
-        readonly get: operations["v2.management.projects.get"];
-        readonly put?: never;
-        readonly post?: never;
+        get: operations["v2.management.projects.get"];
+        put?: never;
+        post?: never;
         /** Delete a project */
-        readonly delete: operations["v2.management.projects.delete"];
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
+        delete: operations["v2.management.projects.delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    readonly "/management/projects/{projectRef}/buckets": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
+    "/management/projects/{projectRef}/buckets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
         /** List management buckets */
-        readonly get: operations["v2.management.buckets.list"];
-        readonly put?: never;
+        get: operations["v2.management.buckets.list"];
+        put?: never;
         /** Create a bucket */
-        readonly post: operations["v2.management.buckets.create"];
-        readonly delete?: never;
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
+        post: operations["v2.management.buckets.create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    readonly "/management/projects/{projectRef}/buckets/{bucketName}": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
+    "/management/projects/{projectRef}/buckets/{bucketName}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
         /** Get a management bucket */
-        readonly get: operations["v2.management.buckets.get"];
-        readonly put?: never;
-        readonly post?: never;
+        get: operations["v2.management.buckets.get"];
+        put?: never;
+        post?: never;
         /** Delete a bucket */
-        readonly delete: operations["v2.management.buckets.delete"];
-        readonly options?: never;
-        readonly head?: never;
+        delete: operations["v2.management.buckets.delete"];
+        options?: never;
+        head?: never;
         /** Update a bucket */
-        readonly patch: operations["v2.management.buckets.update"];
-        readonly trace?: never;
+        patch: operations["v2.management.buckets.update"];
+        trace?: never;
     };
-    readonly "/management/projects/{projectRef}/buckets/{bucketName}/empty": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
+    "/management/projects/{projectRef}/buckets/{bucketName}/empty": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        readonly get?: never;
-        readonly put?: never;
+        get?: never;
+        put?: never;
         /** Start emptying a bucket */
-        readonly post: operations["v2.management.buckets.empty"];
-        readonly delete?: never;
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
+        post: operations["v2.management.buckets.empty"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    readonly "/management/projects/{projectRef}/buckets/{bucketName}/empty-job": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
+    "/management/projects/{projectRef}/buckets/{bucketName}/empty-job": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
         /** Get the latest empty-bucket job */
-        readonly get: operations["v2.management.buckets.emptyJobs.latest"];
-        readonly put?: never;
-        readonly post?: never;
-        readonly delete?: never;
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
+        get: operations["v2.management.buckets.emptyJobs.latest"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    readonly "/management/projects/{projectRef}/buckets/{bucketName}/empty-jobs/{jobId}": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
+    "/management/projects/{projectRef}/buckets/{bucketName}/empty-jobs/{jobId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
         /** Get an empty-bucket job */
-        readonly get: operations["v2.management.buckets.emptyJobs.get"];
-        readonly put?: never;
-        readonly post?: never;
-        readonly delete?: never;
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
+        get: operations["v2.management.buckets.emptyJobs.get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    readonly "/management/projects/{projectRef}/buckets/{bucketName}/empty-jobs/{jobId}/retry": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
+    "/management/projects/{projectRef}/buckets/{bucketName}/empty-jobs/{jobId}/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        readonly get?: never;
-        readonly put?: never;
+        get?: never;
+        put?: never;
         /** Retry an empty-bucket job */
-        readonly post: operations["v2.management.buckets.emptyJobs.retry"];
-        readonly delete?: never;
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
+        post: operations["v2.management.buckets.emptyJobs.retry"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    readonly "/management/projects/{projectRef}/buckets/{bucketName}/files": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
+    "/management/projects/{projectRef}/buckets/{bucketName}/files": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
         /** List management files */
-        readonly get: operations["v2.management.files.list"];
-        readonly put?: never;
-        readonly post?: never;
-        readonly delete?: never;
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
+        get: operations["v2.management.files.list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    readonly "/management/projects/{projectRef}/files/lookup": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
+    "/management/projects/{projectRef}/files/lookup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        readonly get?: never;
-        readonly put?: never;
+        get?: never;
+        put?: never;
         /** Look up a management file */
-        readonly post: operations["v2.management.files.lookup"];
-        readonly delete?: never;
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
+        post: operations["v2.management.files.lookup"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    readonly "/management/projects/{projectRef}/files/download-urls": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
+    "/management/projects/{projectRef}/files/download-urls": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        readonly get?: never;
-        readonly put?: never;
+        get?: never;
+        put?: never;
         /** Create management file download URLs */
-        readonly post: operations["v2.management.files.downloadUrls.create"];
-        readonly delete?: never;
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
+        post: operations["v2.management.files.downloadUrls.create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    readonly "/management/projects/{projectRef}/files/delete": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
+    "/management/projects/{projectRef}/files/delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        readonly get?: never;
-        readonly put?: never;
+        get?: never;
+        put?: never;
         /** Delete management files */
-        readonly post: operations["v2.management.files.delete"];
-        readonly delete?: never;
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
+        post: operations["v2.management.files.delete"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    readonly "/management/projects/{projectRef}/buckets/{bucketName}/uploads": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
+    "/management/projects/{projectRef}/buckets/{bucketName}/uploads": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        readonly get?: never;
-        readonly put?: never;
+        get?: never;
+        put?: never;
         /** Request a management upload */
-        readonly post: operations["v2.management.uploads.request"];
-        readonly delete?: never;
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
+        post: operations["v2.management.uploads.request"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    readonly "/management/projects/{projectRef}/uploads/{uploadId}": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
+    "/management/projects/{projectRef}/uploads/{uploadId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
         /** Get management upload status */
-        readonly get: operations["v2.management.uploads.get"];
-        readonly put?: never;
-        readonly post?: never;
+        get: operations["v2.management.uploads.get"];
+        put?: never;
+        post?: never;
         /** Cancel a management upload */
-        readonly delete: operations["v2.management.uploads.cancel"];
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
+        delete: operations["v2.management.uploads.cancel"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    readonly "/management/projects/{projectRef}/uploads/{uploadId}/parts": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
+    "/management/projects/{projectRef}/uploads/{uploadId}/parts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        readonly get?: never;
-        readonly put?: never;
+        get?: never;
+        put?: never;
         /** Create management upload part URLs */
-        readonly post: operations["v2.management.uploads.parts.create"];
-        readonly delete?: never;
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
+        post: operations["v2.management.uploads.parts.create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    readonly "/management/projects/{projectRef}/uploads/{uploadId}/complete": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
+    "/management/projects/{projectRef}/uploads/{uploadId}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        readonly get?: never;
-        readonly put?: never;
+        get?: never;
+        put?: never;
         /** Complete a management multipart upload */
-        readonly post: operations["v2.management.uploads.multipart.complete"];
-        readonly delete?: never;
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
+        post: operations["v2.management.uploads.multipart.complete"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    readonly "/management/projects/{projectRef}/keys": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
+    "/management/projects/{projectRef}/keys": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
         /** List project keys */
-        readonly get: operations["v2.management.projectKeys.list"];
-        readonly put?: never;
+        get: operations["v2.management.projectKeys.list"];
+        put?: never;
         /** Create a project key */
-        readonly post: operations["v2.management.projectKeys.create"];
-        readonly delete?: never;
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
+        post: operations["v2.management.projectKeys.create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    readonly "/management/projects/{projectRef}/keys/{keyId}": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
+    "/management/projects/{projectRef}/keys/{keyId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        readonly get?: never;
-        readonly put?: never;
-        readonly post?: never;
+        get?: never;
+        put?: never;
+        post?: never;
         /** Revoke a project key */
-        readonly delete: operations["v2.management.projectKeys.revoke"];
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
+        delete: operations["v2.management.projectKeys.revoke"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    readonly "/management/accounts/{accountId}/members": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
+    "/management/accounts/{accountId}/members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
         /** List account members */
-        readonly get: operations["v2.management.members.list"];
-        readonly put?: never;
-        readonly post?: never;
-        readonly delete?: never;
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
+        get: operations["v2.management.members.list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    readonly "/management/accounts/{accountId}/members/{userId}": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
+    "/management/accounts/{accountId}/members/{userId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        readonly get?: never;
-        readonly put?: never;
-        readonly post?: never;
+        get?: never;
+        put?: never;
+        post?: never;
         /** Remove an account member */
-        readonly delete: operations["v2.management.members.remove"];
-        readonly options?: never;
-        readonly head?: never;
+        delete: operations["v2.management.members.remove"];
+        options?: never;
+        head?: never;
         /** Update an account member */
-        readonly patch: operations["v2.management.members.update"];
-        readonly trace?: never;
+        patch: operations["v2.management.members.update"];
+        trace?: never;
     };
-    readonly "/management/accounts/{accountId}/invitations": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
+    "/management/accounts/{accountId}/invitations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
         /** List account invitations */
-        readonly get: operations["v2.management.invitations.list"];
-        readonly put?: never;
+        get: operations["v2.management.invitations.list"];
+        put?: never;
         /** Create an account invitation */
-        readonly post: operations["v2.management.invitations.create"];
-        readonly delete?: never;
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
+        post: operations["v2.management.invitations.create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    readonly "/management/accounts/{accountId}/invitations/{invitationId}": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
+    "/management/accounts/{accountId}/invitations/{invitationId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        readonly get?: never;
-        readonly put?: never;
-        readonly post?: never;
+        get?: never;
+        put?: never;
+        post?: never;
         /** Revoke an account invitation */
-        readonly delete: operations["v2.management.invitations.revoke"];
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
+        delete: operations["v2.management.invitations.revoke"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    readonly "/management/accounts/{accountId}/invitations/{invitationId}/resend": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
+    "/management/accounts/{accountId}/invitations/{invitationId}/resend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        readonly get?: never;
-        readonly put?: never;
+        get?: never;
+        put?: never;
         /** Resend an account invitation */
-        readonly post: operations["v2.management.invitations.resend"];
-        readonly delete?: never;
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
+        post: operations["v2.management.invitations.resend"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    readonly "/management/accounts/{accountId}/tokens": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
+    "/management/accounts/{accountId}/tokens": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
         /** List account management tokens */
-        readonly get: operations["v2.management.tokens.listAccount"];
-        readonly put?: never;
+        get: operations["v2.management.tokens.listAccount"];
+        put?: never;
         /** Create an account management token */
-        readonly post: operations["v2.management.tokens.createAccount"];
-        readonly delete?: never;
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
+        post: operations["v2.management.tokens.createAccount"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    readonly "/management/users/me/tokens": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
+    "/management/users/me/tokens": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
         /** List current user management tokens */
-        readonly get: operations["v2.management.tokens.listUser"];
-        readonly put?: never;
+        get: operations["v2.management.tokens.listUser"];
+        put?: never;
         /** Create a current user management token */
-        readonly post: operations["v2.management.tokens.createUser"];
-        readonly delete?: never;
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
+        post: operations["v2.management.tokens.createUser"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    readonly "/management/tokens/{tokenId}": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
+    "/management/tokens/{tokenId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        readonly get?: never;
-        readonly put?: never;
-        readonly post?: never;
+        get?: never;
+        put?: never;
+        post?: never;
         /** Revoke a management token */
-        readonly delete: operations["v2.management.tokens.revoke"];
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
+        delete: operations["v2.management.tokens.revoke"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    readonly "/runtime/projects/{projectRef}/access-token": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
+    "/runtime/projects/{projectRef}/access-token": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        readonly get?: never;
-        readonly put?: never;
+        get?: never;
+        put?: never;
         /** Create a runtime access token */
-        readonly post: operations["v2.runtime.accessToken.create"];
-        readonly delete?: never;
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
+        post: operations["v2.runtime.accessToken.create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    readonly "/runtime/projects/{projectRef}": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
+    "/runtime/projects/{projectRef}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
         /** Get a runtime project */
-        readonly get: operations["v2.runtime.projects.get"];
-        readonly put?: never;
-        readonly post?: never;
-        readonly delete?: never;
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
+        get: operations["v2.runtime.projects.get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    readonly "/runtime/projects/{projectRef}/buckets": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
+    "/runtime/projects/{projectRef}/buckets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
         /** List runtime buckets */
-        readonly get: operations["v2.runtime.buckets.list"];
-        readonly put?: never;
-        readonly post?: never;
-        readonly delete?: never;
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
+        get: operations["v2.runtime.buckets.list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    readonly "/runtime/projects/{projectRef}/buckets/{bucketName}": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
+    "/runtime/projects/{projectRef}/buckets/{bucketName}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
         /** Get a runtime bucket */
-        readonly get: operations["v2.runtime.buckets.get"];
-        readonly put?: never;
-        readonly post?: never;
-        readonly delete?: never;
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
+        get: operations["v2.runtime.buckets.get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    readonly "/runtime/projects/{projectRef}/buckets/{bucketName}/files/search": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
+    "/runtime/projects/{projectRef}/buckets/{bucketName}/files/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        readonly get?: never;
-        readonly put?: never;
+        get?: never;
+        put?: never;
         /** Search runtime files */
-        readonly post: operations["v2.runtime.files.search"];
-        readonly delete?: never;
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
+        post: operations["v2.runtime.files.search"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    readonly "/runtime/projects/{projectRef}/files/lookup": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
+    "/runtime/projects/{projectRef}/files/lookup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        readonly get?: never;
-        readonly put?: never;
+        get?: never;
+        put?: never;
         /** Look up a runtime file */
-        readonly post: operations["v2.runtime.files.lookup"];
-        readonly delete?: never;
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
+        post: operations["v2.runtime.files.lookup"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    readonly "/runtime/projects/{projectRef}/buckets/{bucketName}/files/signed-urls": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
+    "/runtime/projects/{projectRef}/buckets/{bucketName}/files/signed-urls": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        readonly get?: never;
-        readonly put?: never;
+        get?: never;
+        put?: never;
         /** Create runtime signed read URLs */
-        readonly post: operations["v2.runtime.files.signedUrls.create"];
-        readonly delete?: never;
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
+        post: operations["v2.runtime.files.signedUrls.create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    readonly "/runtime/projects/{projectRef}/files/confirm": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
+    "/runtime/projects/{projectRef}/files/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        readonly get?: never;
-        readonly put?: never;
+        get?: never;
+        put?: never;
         /** Confirm runtime files */
-        readonly post: operations["v2.runtime.files.confirm"];
-        readonly delete?: never;
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
+        post: operations["v2.runtime.files.confirm"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    readonly "/runtime/projects/{projectRef}/files/delete": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
+    "/runtime/projects/{projectRef}/files/delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        readonly get?: never;
-        readonly put?: never;
+        get?: never;
+        put?: never;
         /** Delete runtime files */
-        readonly post: operations["v2.runtime.files.delete"];
-        readonly delete?: never;
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
+        post: operations["v2.runtime.files.delete"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    readonly "/runtime/projects/{projectRef}/files/restore": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
+    "/runtime/projects/{projectRef}/files/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        readonly get?: never;
-        readonly put?: never;
+        get?: never;
+        put?: never;
         /** Restore runtime files */
-        readonly post: operations["v2.runtime.files.restore"];
-        readonly delete?: never;
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
+        post: operations["v2.runtime.files.restore"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    readonly "/runtime/projects/{projectRef}/buckets/{bucketName}/uploads": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
+    "/runtime/projects/{projectRef}/buckets/{bucketName}/uploads": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        readonly get?: never;
-        readonly put?: never;
+        get?: never;
+        put?: never;
         /** Request a runtime upload */
-        readonly post: operations["v2.runtime.uploads.request"];
-        readonly delete?: never;
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
+        post: operations["v2.runtime.uploads.request"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    readonly "/runtime/projects/{projectRef}/uploads/{uploadId}": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
+    "/runtime/projects/{projectRef}/uploads/{uploadId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
         /** Get runtime upload status */
-        readonly get: operations["v2.runtime.uploads.get"];
-        readonly put?: never;
-        readonly post?: never;
+        get: operations["v2.runtime.uploads.get"];
+        put?: never;
+        post?: never;
         /** Cancel a runtime upload */
-        readonly delete: operations["v2.runtime.uploads.cancel"];
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
+        delete: operations["v2.runtime.uploads.cancel"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    readonly "/runtime/projects/{projectRef}/uploads/{uploadId}/parts": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
+    "/runtime/projects/{projectRef}/uploads/{uploadId}/parts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        readonly get?: never;
-        readonly put?: never;
+        get?: never;
+        put?: never;
         /** Create runtime upload part URLs */
-        readonly post: operations["v2.runtime.uploads.parts.create"];
-        readonly delete?: never;
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
+        post: operations["v2.runtime.uploads.parts.create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    readonly "/runtime/projects/{projectRef}/uploads/{uploadId}/complete": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
+    "/runtime/projects/{projectRef}/uploads/{uploadId}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        readonly get?: never;
-        readonly put?: never;
+        get?: never;
+        put?: never;
         /** Complete a runtime multipart upload */
-        readonly post: operations["v2.runtime.uploads.multipart.complete"];
-        readonly delete?: never;
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
+        post: operations["v2.runtime.uploads.multipart.complete"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
 };
 export type webhooks = Record<string, never>;
 export type components = {
     schemas: {
-        readonly InvalidRequestError: {
-            readonly error: {
+        InvalidRequestError: {
+            error: {
                 /** @constant */
-                readonly code: "invalid_request";
+                code: "invalid_request";
                 /** @default Invalid request */
-                readonly message: string;
+                message: string;
                 /** @constant */
-                readonly status: 400;
-                readonly details?: {
-                    readonly issues: readonly {
-                        readonly path: readonly (string | number)[];
-                        readonly message: string;
+                status: 400;
+                details?: {
+                    issues: {
+                        path: (string | number)[];
+                        message: string;
                     }[];
                 };
             };
         };
-        readonly PayloadTooLargeError: {
-            readonly error: {
+        PayloadTooLargeError: {
+            error: {
                 /** @constant */
-                readonly code: "payload_too_large";
+                code: "payload_too_large";
                 /** @default Payload too large */
-                readonly message: string;
+                message: string;
                 /** @constant */
-                readonly status: 413;
+                status: 413;
             };
         };
-        readonly AuthenticationRequiredError: {
-            readonly error: {
+        AuthenticationRequiredError: {
+            error: {
                 /** @constant */
-                readonly code: "authentication_required";
+                code: "authentication_required";
                 /** @default Authentication required */
-                readonly message: string;
+                message: string;
                 /** @constant */
-                readonly status: 401;
+                status: 401;
             };
         };
-        readonly InvalidCredentialError: {
-            readonly error: {
+        InvalidCredentialError: {
+            error: {
                 /** @constant */
-                readonly code: "invalid_credential";
+                code: "invalid_credential";
                 /** @default Invalid credential */
-                readonly message: string;
+                message: string;
                 /** @constant */
-                readonly status: 401;
+                status: 401;
             };
         };
-        readonly CredentialNotAllowedError: {
-            readonly error: {
+        CredentialNotAllowedError: {
+            error: {
                 /** @constant */
-                readonly code: "credential_not_allowed";
+                code: "credential_not_allowed";
                 /** @default This credential cannot access this operation */
-                readonly message: string;
+                message: string;
                 /** @constant */
-                readonly status: 403;
+                status: 403;
             };
         };
-        readonly MissingScopeError: {
-            readonly error: {
+        MissingScopeError: {
+            error: {
                 /** @constant */
-                readonly code: "missing_scope";
+                code: "missing_scope";
                 /** @default The credential is missing a required scope */
-                readonly message: string;
+                message: string;
                 /** @constant */
-                readonly status: 403;
-                readonly details: {
-                    readonly requiredScope: string;
+                status: 403;
+                details: {
+                    requiredScope: string;
                 };
             };
         };
-        readonly AccountNotFoundError: {
-            readonly error: {
+        AccountNotFoundError: {
+            error: {
                 /** @constant */
-                readonly code: "account_not_found";
+                code: "account_not_found";
                 /** @default Account not found */
-                readonly message: string;
+                message: string;
                 /** @constant */
-                readonly status: 404;
+                status: 404;
             };
         };
-        readonly ProjectNotFoundError: {
-            readonly error: {
+        ProjectNotFoundError: {
+            error: {
                 /** @constant */
-                readonly code: "project_not_found";
+                code: "project_not_found";
                 /** @default Project not found */
-                readonly message: string;
+                message: string;
                 /** @constant */
-                readonly status: 404;
+                status: 404;
             };
         };
-        readonly BucketNotFoundError: {
-            readonly error: {
+        BucketNotFoundError: {
+            error: {
                 /** @constant */
-                readonly code: "bucket_not_found";
+                code: "bucket_not_found";
                 /** @default Bucket not found */
-                readonly message: string;
+                message: string;
                 /** @constant */
-                readonly status: 404;
+                status: 404;
             };
         };
-        readonly FileNotFoundError: {
-            readonly error: {
+        FileNotFoundError: {
+            error: {
                 /** @constant */
-                readonly code: "file_not_found";
+                code: "file_not_found";
                 /** @default File not found */
-                readonly message: string;
+                message: string;
                 /** @constant */
-                readonly status: 404;
+                status: 404;
             };
         };
-        readonly UploadNotFoundError: {
-            readonly error: {
+        UploadNotFoundError: {
+            error: {
                 /** @constant */
-                readonly code: "upload_not_found";
+                code: "upload_not_found";
                 /** @default Upload not found */
-                readonly message: string;
+                message: string;
                 /** @constant */
-                readonly status: 404;
+                status: 404;
             };
         };
-        readonly UploadAlreadyCompletedError: {
-            readonly error: {
+        UploadAlreadyCompletedError: {
+            error: {
                 /** @constant */
-                readonly code: "upload_already_completed";
+                code: "upload_already_completed";
                 /** @default The upload has already completed */
-                readonly message: string;
+                message: string;
                 /** @constant */
-                readonly status: 409;
+                status: 409;
             };
         };
-        readonly IdempotencyConflictError: {
-            readonly error: {
+        IdempotencyConflictError: {
+            error: {
                 /** @constant */
-                readonly code: "idempotency_conflict";
+                code: "idempotency_conflict";
                 /** @default The idempotency key was already used with a different request */
-                readonly message: string;
+                message: string;
                 /** @constant */
-                readonly status: 409;
+                status: 409;
             };
         };
-        readonly IdempotencyInProgressError: {
-            readonly error: {
+        IdempotencyInProgressError: {
+            error: {
                 /** @constant */
-                readonly code: "idempotency_in_progress";
+                code: "idempotency_in_progress";
                 /** @default A request with this idempotency key is still in progress */
-                readonly message: string;
+                message: string;
                 /** @constant */
-                readonly status: 409;
+                status: 409;
             };
         };
-        readonly MemberNotFoundError: {
-            readonly error: {
+        MemberNotFoundError: {
+            error: {
                 /** @constant */
-                readonly code: "member_not_found";
+                code: "member_not_found";
                 /** @default Member not found */
-                readonly message: string;
+                message: string;
                 /** @constant */
-                readonly status: 404;
+                status: 404;
             };
         };
-        readonly InvitationNotFoundError: {
-            readonly error: {
+        InvitationNotFoundError: {
+            error: {
                 /** @constant */
-                readonly code: "invitation_not_found";
+                code: "invitation_not_found";
                 /** @default Invitation not found */
-                readonly message: string;
+                message: string;
                 /** @constant */
-                readonly status: 404;
+                status: 404;
             };
         };
-        readonly TokenNotFoundError: {
-            readonly error: {
+        TokenNotFoundError: {
+            error: {
                 /** @constant */
-                readonly code: "token_not_found";
+                code: "token_not_found";
                 /** @default Token not found */
-                readonly message: string;
+                message: string;
                 /** @constant */
-                readonly status: 404;
+                status: 404;
             };
         };
-        readonly ProjectKeyNotFoundError: {
-            readonly error: {
+        ProjectKeyNotFoundError: {
+            error: {
                 /** @constant */
-                readonly code: "project_key_not_found";
+                code: "project_key_not_found";
                 /** @default Project key not found */
-                readonly message: string;
+                message: string;
                 /** @constant */
-                readonly status: 404;
+                status: 404;
             };
         };
-        readonly EmptyBucketJobNotFoundError: {
-            readonly error: {
+        EmptyBucketJobNotFoundError: {
+            error: {
                 /** @constant */
-                readonly code: "empty_bucket_job_not_found";
+                code: "empty_bucket_job_not_found";
                 /** @default Empty-bucket job not found */
-                readonly message: string;
+                message: string;
                 /** @constant */
-                readonly status: 404;
+                status: 404;
             };
         };
-        readonly PersonalAccountError: {
-            readonly error: {
+        PersonalAccountError: {
+            error: {
                 /** @constant */
-                readonly code: "personal_account";
+                code: "personal_account";
                 /** @default This operation is not available for personal accounts */
-                readonly message: string;
+                message: string;
                 /** @constant */
-                readonly status: 400;
+                status: 400;
             };
         };
-        readonly AccountPausedError: {
-            readonly error: {
+        AccountPausedError: {
+            error: {
                 /** @constant */
-                readonly code: "account_paused";
+                code: "account_paused";
                 /** @default The account is paused */
-                readonly message: string;
+                message: string;
                 /** @constant */
-                readonly status: 403;
+                status: 403;
             };
         };
-        readonly StorageLimitExceededError: {
-            readonly error: {
+        StorageLimitExceededError: {
+            error: {
                 /** @constant */
-                readonly code: "storage_limit_exceeded";
+                code: "storage_limit_exceeded";
                 /** @default The account storage limit has been exceeded */
-                readonly message: string;
+                message: string;
                 /** @constant */
-                readonly status: 403;
+                status: 403;
             };
         };
-        readonly RestoreNotAllowedError: {
-            readonly error: {
+        RestoreNotAllowedError: {
+            error: {
                 /** @constant */
-                readonly code: "restore_not_allowed";
+                code: "restore_not_allowed";
                 /** @default The account plan does not support file restoration */
-                readonly message: string;
+                message: string;
                 /** @constant */
-                readonly status: 403;
+                status: 403;
             };
         };
-        readonly SignedReadUrlNotAvailableError: {
-            readonly error: {
+        SignedReadUrlNotAvailableError: {
+            error: {
                 /** @constant */
-                readonly code: "signed_read_url_not_available";
+                code: "signed_read_url_not_available";
                 /** @default Signed read URLs are not available for this file */
-                readonly message: string;
+                message: string;
                 /** @constant */
-                readonly status: 409;
+                status: 409;
             };
         };
-        readonly LastOwnerError: {
-            readonly error: {
+        LastOwnerError: {
+            error: {
                 /** @constant */
-                readonly code: "last_owner";
+                code: "last_owner";
                 /** @default An account must retain an owner */
-                readonly message: string;
+                message: string;
                 /** @constant */
-                readonly status: 409;
+                status: 409;
             };
         };
-        readonly ProjectLimitReachedError: {
-            readonly error: {
+        ProjectLimitReachedError: {
+            error: {
                 /** @constant */
-                readonly code: "project_limit_reached";
+                code: "project_limit_reached";
                 /** @default The account project limit has been reached */
-                readonly message: string;
+                message: string;
                 /** @constant */
-                readonly status: 409;
+                status: 409;
             };
         };
-        readonly MemberLimitReachedError: {
-            readonly error: {
+        MemberLimitReachedError: {
+            error: {
                 /** @constant */
-                readonly code: "member_limit_reached";
+                code: "member_limit_reached";
                 /** @default The account member limit has been reached */
-                readonly message: string;
+                message: string;
                 /** @constant */
-                readonly status: 409;
+                status: 409;
             };
         };
-        readonly UserAlreadyMemberError: {
-            readonly error: {
+        UserAlreadyMemberError: {
+            error: {
                 /** @constant */
-                readonly code: "user_already_member";
+                code: "user_already_member";
                 /** @default The user is already an account member */
-                readonly message: string;
+                message: string;
                 /** @constant */
-                readonly status: 409;
+                status: 409;
             };
         };
-        readonly BucketAlreadyExistsError: {
-            readonly error: {
+        BucketAlreadyExistsError: {
+            error: {
                 /** @constant */
-                readonly code: "bucket_already_exists";
+                code: "bucket_already_exists";
                 /** @default A bucket with this name already exists */
-                readonly message: string;
+                message: string;
                 /** @constant */
-                readonly status: 409;
+                status: 409;
             };
         };
-        readonly BucketNotEmptyError: {
-            readonly error: {
+        BucketNotEmptyError: {
+            error: {
                 /** @constant */
-                readonly code: "bucket_not_empty";
+                code: "bucket_not_empty";
                 /** @default The bucket contains files */
-                readonly message: string;
+                message: string;
                 /** @constant */
-                readonly status: 409;
+                status: 409;
             };
         };
-        readonly BucketEmptyInProgressError: {
-            readonly error: {
+        BucketEmptyInProgressError: {
+            error: {
                 /** @constant */
-                readonly code: "bucket_empty_in_progress";
+                code: "bucket_empty_in_progress";
                 /** @default The bucket is currently being emptied */
-                readonly message: string;
+                message: string;
                 /** @constant */
-                readonly status: 409;
+                status: 409;
             };
         };
-        readonly BucketStateConflictError: {
-            readonly error: {
+        BucketStateConflictError: {
+            error: {
                 /** @constant */
-                readonly code: "bucket_state_conflict";
+                code: "bucket_state_conflict";
                 /** @default The bucket state changed during the operation */
-                readonly message: string;
+                message: string;
                 /** @constant */
-                readonly status: 409;
+                status: 409;
             };
         };
-        readonly KeyAlreadyRevokedError: {
-            readonly error: {
+        KeyAlreadyRevokedError: {
+            error: {
                 /** @constant */
-                readonly code: "key_already_revoked";
+                code: "key_already_revoked";
                 /** @default The project key is already revoked */
-                readonly message: string;
+                message: string;
                 /** @constant */
-                readonly status: 409;
+                status: 409;
             };
         };
-        readonly InvitationNotActiveError: {
-            readonly error: {
+        InvitationNotActiveError: {
+            error: {
                 /** @constant */
-                readonly code: "invitation_not_active";
+                code: "invitation_not_active";
                 /** @default The invitation is no longer active */
-                readonly message: string;
+                message: string;
                 /** @constant */
-                readonly status: 409;
+                status: 409;
             };
         };
-        readonly InvalidFileReferenceError: {
-            readonly error: {
+        InvalidFileReferenceError: {
+            error: {
                 /** @constant */
-                readonly code: "invalid_file_reference";
+                code: "invalid_file_reference";
                 /** @default The file reference is invalid */
-                readonly message: string;
+                message: string;
                 /** @constant */
-                readonly status: 400;
+                status: 400;
             };
         };
-        readonly EmptyBucketJobNotRetryableError: {
-            readonly error: {
+        EmptyBucketJobNotRetryableError: {
+            error: {
                 /** @constant */
-                readonly code: "empty_bucket_job_not_retryable";
+                code: "empty_bucket_job_not_retryable";
                 /** @default The empty-bucket job cannot be retried */
-                readonly message: string;
+                message: string;
                 /** @constant */
-                readonly status: 409;
+                status: 409;
             };
         };
-        readonly RouteNotFoundError: {
-            readonly error: {
+        RouteNotFoundError: {
+            error: {
                 /** @constant */
-                readonly code: "route_not_found";
+                code: "route_not_found";
                 /** @default Route not found */
-                readonly message: string;
+                message: string;
                 /** @constant */
-                readonly status: 404;
+                status: 404;
             };
         };
-        readonly InternalError: {
-            readonly error: {
+        InternalError: {
+            error: {
                 /** @constant */
-                readonly code: "internal_error";
+                code: "internal_error";
                 /** @default Internal server error */
-                readonly message: string;
+                message: string;
                 /** @constant */
-                readonly status: 500;
+                status: 500;
             };
         };
-        readonly File: {
-            readonly id: string;
-            readonly url: string;
-            readonly key: string;
-            readonly thumbnailUrl: string | null;
-            readonly thumbnailKey: string | null;
-            readonly bucketId: string;
-            readonly bucketName: string;
-            readonly projectId: string;
-            readonly accountId: string;
-            readonly name: string;
-            readonly path: {
-                readonly [key: string]: string;
+        File: {
+            id: string;
+            url: string;
+            key: string;
+            thumbnailUrl: string | null;
+            thumbnailKey: string | null;
+            bucketId: string;
+            bucketName: string;
+            projectId: string;
+            accountId: string;
+            name: string;
+            path: {
+                [key: string]: string;
             };
-            readonly metadata: {
-                readonly [key: string]: string;
+            metadata: {
+                [key: string]: string;
             };
-            readonly sizeBytes: number;
-            readonly mimeType: string | null;
+            sizeBytes: number;
+            mimeType: string | null;
             /** @enum {string} */
-            readonly state: "requested" | "uploaded" | "deleted" | "replace_requested";
-            readonly temporary: boolean;
-            readonly uploadedAt: string;
-            readonly updatedAt: string;
+            state: "requested" | "uploaded" | "deleted" | "replace_requested";
+            temporary: boolean;
+            uploadedAt: string;
+            updatedAt: string;
         };
-        readonly Bucket: {
-            readonly id: string;
-            readonly name: string;
-            readonly projectId: string;
-            readonly accountId: string;
+        Bucket: {
+            id: string;
+            name: string;
+            projectId: string;
+            accountId: string;
             /** @enum {string} */
-            readonly type: "file" | "image";
+            type: "file" | "image";
             /** @enum {string} */
-            readonly visibility: "public" | "protected";
-            readonly usageBytes: number;
-            readonly createdAt: string;
-            readonly updatedAt: string;
+            visibility: "public" | "protected";
+            usageBytes: number;
+            createdAt: string;
+            updatedAt: string;
         };
     };
     responses: never;
@@ -1218,126 +1218,126 @@ export type components = {
     requestBodies: never;
     headers: {
         /** @description Identifier for correlating the request with EdgeStore logs. */
-        readonly RequestId: string;
+        RequestId: string;
         /** @description Seconds to wait before checking the asynchronous operation again. */
-        readonly RetryAfter: number;
+        RetryAfter: number;
     };
     pathItems: never;
 };
 export type $defs = Record<string, never>;
 export interface operations {
-    readonly "v2.health": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
+    "v2.health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        readonly requestBody?: never;
-        readonly responses: {
+        requestBody?: never;
+        responses: {
             /** @description OK */
-            readonly 200: {
+            200: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: {
+                    "application/json": {
+                        data: {
                             /** @constant */
-                            readonly ok: true;
+                            ok: true;
                             /** @constant */
-                            readonly version: "v2";
+                            version: "v2";
                         };
                     };
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"];
+                    "application/json": components["schemas"]["InvalidRequestError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };
     };
-    readonly "v2.whoami": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
+    "v2.whoami": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        readonly requestBody?: never;
-        readonly responses: {
+        requestBody?: never;
+        responses: {
             /** @description OK */
-            readonly 200: {
+            200: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: {
-                            readonly actor: {
+                    "application/json": {
+                        data: {
+                            actor: {
                                 /** @constant */
-                                readonly kind: "dashboard_session";
+                                kind: "dashboard_session";
                                 /** @constant */
-                                readonly provider: "clerk";
-                                readonly sessionId?: string;
-                                readonly user: {
-                                    readonly id: string;
-                                    readonly clerkUserId: string;
-                                    readonly accountId: string;
-                                    readonly email: string;
-                                    readonly username: string | null;
-                                    readonly firstName: string | null;
-                                    readonly lastName: string | null;
-                                    readonly picture: string;
+                                provider: "clerk";
+                                sessionId?: string;
+                                user: {
+                                    id: string;
+                                    clerkUserId: string;
+                                    accountId: string;
+                                    email: string;
+                                    username: string | null;
+                                    firstName: string | null;
+                                    lastName: string | null;
+                                    picture: string;
                                 };
                             } | {
                                 /** @constant */
-                                readonly kind: "account_token";
-                                readonly tokenId: string;
-                                readonly accountId: string;
-                                readonly scopes: readonly ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "file:read" | "file:write" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
+                                kind: "account_token";
+                                tokenId: string;
+                                accountId: string;
+                                scopes: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "file:read" | "file:write" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
                             } | {
                                 /** @constant */
-                                readonly kind: "user_token";
-                                readonly tokenId: string;
-                                readonly scopes: readonly ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "file:read" | "file:write" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
-                                readonly user: {
-                                    readonly id: string;
-                                    readonly clerkUserId: string;
-                                    readonly accountId: string;
-                                    readonly email: string;
-                                    readonly username: string | null;
-                                    readonly firstName: string | null;
-                                    readonly lastName: string | null;
-                                    readonly picture: string;
+                                kind: "user_token";
+                                tokenId: string;
+                                scopes: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "file:read" | "file:write" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
+                                user: {
+                                    id: string;
+                                    clerkUserId: string;
+                                    accountId: string;
+                                    email: string;
+                                    username: string | null;
+                                    firstName: string | null;
+                                    lastName: string | null;
+                                    picture: string;
                                 };
                             };
                         };
@@ -1345,6391 +1345,6391 @@ export interface operations {
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"];
+                    "application/json": components["schemas"]["InvalidRequestError"];
                 };
             };
             /** @description 401 */
-            readonly 401: {
+            401: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
+                    "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
                 };
             };
             /** @description 403 */
-            readonly 403: {
+            403: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };
     };
-    readonly "v2.management.accounts.list": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
+    "v2.management.accounts.list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        readonly requestBody?: never;
-        readonly responses: {
+        requestBody?: never;
+        responses: {
             /** @description OK */
-            readonly 200: {
+            200: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: {
-                            readonly accounts: readonly {
-                                readonly id: string;
+                    "application/json": {
+                        data: {
+                            accounts: {
+                                id: string;
                                 /** @enum {string} */
-                                readonly type: "PERSONAL" | "TEAM";
-                                readonly displayName: string;
-                                readonly role: ("OWNER" | "MEMBER" | "VIEWER") | null;
-                                readonly planType: string;
-                                readonly projectCount: number;
-                                readonly usageBytes: number;
-                                readonly storageLimitBytes: number;
-                                readonly projectLimit: number;
-                                readonly memberLimit: number;
-                                readonly isPaused: boolean;
-                                readonly createdAt: string;
-                                readonly updatedAt: string;
+                                type: "PERSONAL" | "TEAM";
+                                displayName: string;
+                                role: ("OWNER" | "MEMBER" | "VIEWER") | null;
+                                planType: string;
+                                projectCount: number;
+                                usageBytes: number;
+                                storageLimitBytes: number;
+                                projectLimit: number;
+                                memberLimit: number;
+                                isPaused: boolean;
+                                createdAt: string;
+                                updatedAt: string;
                             }[];
                         };
                     };
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"];
+                    "application/json": components["schemas"]["InvalidRequestError"];
                 };
             };
             /** @description 401 */
-            readonly 401: {
+            401: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
+                    "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
                 };
             };
             /** @description 403 */
-            readonly 403: {
+            403: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };
     };
-    readonly "v2.management.accounts.get": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path: {
-                readonly accountId: string;
+    "v2.management.accounts.get": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                accountId: string;
             };
-            readonly cookie?: never;
+            cookie?: never;
         };
-        readonly requestBody?: never;
-        readonly responses: {
+        requestBody?: never;
+        responses: {
             /** @description OK */
-            readonly 200: {
+            200: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: {
-                            readonly account: {
-                                readonly id: string;
+                    "application/json": {
+                        data: {
+                            account: {
+                                id: string;
                                 /** @enum {string} */
-                                readonly type: "PERSONAL" | "TEAM";
-                                readonly displayName: string;
-                                readonly role: ("OWNER" | "MEMBER" | "VIEWER") | null;
-                                readonly planType: string;
-                                readonly projectCount: number;
-                                readonly usageBytes: number;
-                                readonly storageLimitBytes: number;
-                                readonly projectLimit: number;
-                                readonly memberLimit: number;
-                                readonly isPaused: boolean;
-                                readonly createdAt: string;
-                                readonly updatedAt: string;
+                                type: "PERSONAL" | "TEAM";
+                                displayName: string;
+                                role: ("OWNER" | "MEMBER" | "VIEWER") | null;
+                                planType: string;
+                                projectCount: number;
+                                usageBytes: number;
+                                storageLimitBytes: number;
+                                projectLimit: number;
+                                memberLimit: number;
+                                isPaused: boolean;
+                                createdAt: string;
+                                updatedAt: string;
                             };
                         };
                     };
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"];
+                    "application/json": components["schemas"]["InvalidRequestError"];
                 };
             };
             /** @description 401 */
-            readonly 401: {
+            401: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
+                    "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
                 };
             };
             /** @description 403 */
-            readonly 403: {
+            403: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
                 };
             };
             /** @description 404 */
-            readonly 404: {
+            404: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AccountNotFoundError"];
+                    "application/json": components["schemas"]["AccountNotFoundError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };
     };
-    readonly "v2.management.accounts.leave": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path: {
-                readonly accountId: string;
+    "v2.management.accounts.leave": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                accountId: string;
             };
-            readonly cookie?: never;
+            cookie?: never;
         };
-        readonly requestBody?: never;
-        readonly responses: {
+        requestBody?: never;
+        responses: {
             /** @description OK */
-            readonly 200: {
+            200: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: Record<string, never>;
+                    "application/json": {
+                        data: Record<string, never>;
                     };
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"] | components["schemas"]["PersonalAccountError"];
+                    "application/json": components["schemas"]["InvalidRequestError"] | components["schemas"]["PersonalAccountError"];
                 };
             };
             /** @description 401 */
-            readonly 401: {
+            401: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
+                    "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
                 };
             };
             /** @description 403 */
-            readonly 403: {
+            403: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
                 };
             };
             /** @description 404 */
-            readonly 404: {
+            404: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AccountNotFoundError"] | components["schemas"]["MemberNotFoundError"];
+                    "application/json": components["schemas"]["AccountNotFoundError"] | components["schemas"]["MemberNotFoundError"];
                 };
             };
             /** @description 409 */
-            readonly 409: {
+            409: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["LastOwnerError"];
+                    "application/json": components["schemas"]["LastOwnerError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };
     };
-    readonly "v2.management.projects.list": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path: {
-                readonly accountId: string;
+    "v2.management.projects.list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                accountId: string;
             };
-            readonly cookie?: never;
+            cookie?: never;
         };
-        readonly requestBody?: never;
-        readonly responses: {
+        requestBody?: never;
+        responses: {
             /** @description OK */
-            readonly 200: {
+            200: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: {
-                            readonly projects: readonly {
-                                readonly id: string;
-                                readonly basePath: string;
-                                readonly name: string;
-                                readonly accountId: string;
-                                readonly usageBytes: number;
-                                readonly createdAt: string;
-                                readonly updatedAt: string;
+                    "application/json": {
+                        data: {
+                            projects: {
+                                id: string;
+                                basePath: string;
+                                name: string;
+                                accountId: string;
+                                usageBytes: number;
+                                createdAt: string;
+                                updatedAt: string;
                             }[];
                         };
                     };
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"];
+                    "application/json": components["schemas"]["InvalidRequestError"];
                 };
             };
             /** @description 401 */
-            readonly 401: {
+            401: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
+                    "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
                 };
             };
             /** @description 403 */
-            readonly 403: {
+            403: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
                 };
             };
             /** @description 404 */
-            readonly 404: {
+            404: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AccountNotFoundError"];
+                    "application/json": components["schemas"]["AccountNotFoundError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };
     };
-    readonly "v2.management.projects.create": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: {
-                readonly "idempotency-key"?: string;
+    "v2.management.projects.create": {
+        parameters: {
+            query?: never;
+            header?: {
+                "idempotency-key"?: string;
             };
-            readonly path: {
-                readonly accountId: string;
+            path: {
+                accountId: string;
             };
-            readonly cookie?: never;
+            cookie?: never;
         };
-        readonly requestBody: {
-            readonly content: {
-                readonly "application/json": {
-                    readonly name: string;
+        requestBody: {
+            content: {
+                "application/json": {
+                    name: string;
                     /** @default true */
-                    readonly createKey?: boolean;
-                    readonly keyName?: string;
+                    createKey?: boolean;
+                    keyName?: string;
                     /** @default false */
-                    readonly allowOverage?: boolean;
+                    allowOverage?: boolean;
                 };
             };
         };
-        readonly responses: {
+        responses: {
             /** @description OK */
-            readonly 200: {
+            200: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: {
-                            readonly project: {
-                                readonly id: string;
-                                readonly basePath: string;
-                                readonly name: string;
-                                readonly accountId: string;
-                                readonly usageBytes: number;
-                                readonly createdAt: string;
-                                readonly updatedAt: string;
+                    "application/json": {
+                        data: {
+                            project: {
+                                id: string;
+                                basePath: string;
+                                name: string;
+                                accountId: string;
+                                usageBytes: number;
+                                createdAt: string;
+                                updatedAt: string;
                             };
-                            readonly projectKey?: {
-                                readonly key: {
-                                    readonly id: string;
-                                    readonly name: string;
-                                    readonly accessKey: string;
-                                    readonly projectId: string;
-                                    readonly accountId: string;
-                                    readonly createdAt: string;
-                                    readonly updatedAt: string;
-                                    readonly revokedAt: string | null;
+                            projectKey?: {
+                                key: {
+                                    id: string;
+                                    name: string;
+                                    accessKey: string;
+                                    projectId: string;
+                                    accountId: string;
+                                    createdAt: string;
+                                    updatedAt: string;
+                                    revokedAt: string | null;
                                 };
-                                readonly secretKey: string;
+                                secretKey: string;
                             };
                         };
                     };
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"];
+                    "application/json": components["schemas"]["InvalidRequestError"];
                 };
             };
             /** @description 401 */
-            readonly 401: {
+            401: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
+                    "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
                 };
             };
             /** @description 403 */
-            readonly 403: {
+            403: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
                 };
             };
             /** @description 404 */
-            readonly 404: {
+            404: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AccountNotFoundError"];
+                    "application/json": components["schemas"]["AccountNotFoundError"];
                 };
             };
             /** @description 409 */
-            readonly 409: {
+            409: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["ProjectLimitReachedError"] | components["schemas"]["IdempotencyConflictError"] | components["schemas"]["IdempotencyInProgressError"];
+                    "application/json": components["schemas"]["ProjectLimitReachedError"] | components["schemas"]["IdempotencyConflictError"] | components["schemas"]["IdempotencyInProgressError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };
     };
-    readonly "v2.management.projects.get": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path: {
-                readonly projectRef: string;
+    "v2.management.projects.get": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectRef: string;
             };
-            readonly cookie?: never;
+            cookie?: never;
         };
-        readonly requestBody?: never;
-        readonly responses: {
+        requestBody?: never;
+        responses: {
             /** @description OK */
-            readonly 200: {
+            200: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: {
-                            readonly project: {
-                                readonly id: string;
-                                readonly basePath: string;
-                                readonly name: string;
-                                readonly accountId: string;
-                                readonly usageBytes: number;
-                                readonly createdAt: string;
-                                readonly updatedAt: string;
+                    "application/json": {
+                        data: {
+                            project: {
+                                id: string;
+                                basePath: string;
+                                name: string;
+                                accountId: string;
+                                usageBytes: number;
+                                createdAt: string;
+                                updatedAt: string;
                             };
                         };
                     };
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"];
+                    "application/json": components["schemas"]["InvalidRequestError"];
                 };
             };
             /** @description 401 */
-            readonly 401: {
+            401: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
+                    "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
                 };
             };
             /** @description 403 */
-            readonly 403: {
+            403: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
                 };
             };
             /** @description 404 */
-            readonly 404: {
+            404: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["ProjectNotFoundError"];
+                    "application/json": components["schemas"]["ProjectNotFoundError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };
     };
-    readonly "v2.management.projects.delete": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path: {
-                readonly projectRef: string;
+    "v2.management.projects.delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectRef: string;
             };
-            readonly cookie?: never;
+            cookie?: never;
         };
-        readonly requestBody?: never;
-        readonly responses: {
+        requestBody?: never;
+        responses: {
             /** @description OK */
-            readonly 200: {
+            200: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: Record<string, never>;
+                    "application/json": {
+                        data: Record<string, never>;
                     };
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"];
+                    "application/json": components["schemas"]["InvalidRequestError"];
                 };
             };
             /** @description 401 */
-            readonly 401: {
+            401: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
+                    "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
                 };
             };
             /** @description 403 */
-            readonly 403: {
+            403: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
                 };
             };
             /** @description 404 */
-            readonly 404: {
+            404: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["ProjectNotFoundError"];
+                    "application/json": components["schemas"]["ProjectNotFoundError"];
                 };
             };
             /** @description 409 */
-            readonly 409: {
+            409: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["BucketEmptyInProgressError"];
+                    "application/json": components["schemas"]["BucketEmptyInProgressError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };
     };
-    readonly "v2.management.buckets.list": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path: {
-                readonly projectRef: string;
+    "v2.management.buckets.list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectRef: string;
             };
-            readonly cookie?: never;
+            cookie?: never;
         };
-        readonly requestBody?: never;
-        readonly responses: {
+        requestBody?: never;
+        responses: {
             /** @description OK */
-            readonly 200: {
+            200: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: {
-                            readonly buckets: readonly components["schemas"]["Bucket"][];
+                    "application/json": {
+                        data: {
+                            buckets: components["schemas"]["Bucket"][];
                         };
                     };
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"];
+                    "application/json": components["schemas"]["InvalidRequestError"];
                 };
             };
             /** @description 401 */
-            readonly 401: {
+            401: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
+                    "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
                 };
             };
             /** @description 403 */
-            readonly 403: {
+            403: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
                 };
             };
             /** @description 404 */
-            readonly 404: {
+            404: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["ProjectNotFoundError"];
+                    "application/json": components["schemas"]["ProjectNotFoundError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };
     };
-    readonly "v2.management.buckets.create": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: {
-                readonly "idempotency-key"?: string;
+    "v2.management.buckets.create": {
+        parameters: {
+            query?: never;
+            header?: {
+                "idempotency-key"?: string;
             };
-            readonly path: {
-                readonly projectRef: string;
+            path: {
+                projectRef: string;
             };
-            readonly cookie?: never;
+            cookie?: never;
         };
-        readonly requestBody: {
-            readonly content: {
-                readonly "application/json": {
-                    readonly name: string;
+        requestBody: {
+            content: {
+                "application/json": {
+                    name: string;
                     /** @enum {string} */
-                    readonly type: "file" | "image";
+                    type: "file" | "image";
                     /** @enum {string} */
-                    readonly visibility: "public" | "protected";
-                    readonly metadata?: {
-                        readonly path?: readonly string[];
-                        readonly custom?: readonly string[];
+                    visibility: "public" | "protected";
+                    metadata?: {
+                        path?: string[];
+                        custom?: string[];
                     };
                 };
             };
         };
-        readonly responses: {
+        responses: {
             /** @description OK */
-            readonly 200: {
+            200: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: {
-                            readonly bucket: components["schemas"]["Bucket"];
+                    "application/json": {
+                        data: {
+                            bucket: components["schemas"]["Bucket"];
                         };
                     };
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"];
+                    "application/json": components["schemas"]["InvalidRequestError"];
                 };
             };
             /** @description 401 */
-            readonly 401: {
+            401: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
+                    "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
                 };
             };
             /** @description 403 */
-            readonly 403: {
+            403: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
                 };
             };
             /** @description 404 */
-            readonly 404: {
+            404: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["ProjectNotFoundError"];
+                    "application/json": components["schemas"]["ProjectNotFoundError"];
                 };
             };
             /** @description 409 */
-            readonly 409: {
+            409: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["BucketAlreadyExistsError"] | components["schemas"]["IdempotencyConflictError"] | components["schemas"]["IdempotencyInProgressError"];
+                    "application/json": components["schemas"]["BucketAlreadyExistsError"] | components["schemas"]["IdempotencyConflictError"] | components["schemas"]["IdempotencyInProgressError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };
     };
-    readonly "v2.management.buckets.get": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path: {
-                readonly projectRef: string;
-                readonly bucketName: string;
+    "v2.management.buckets.get": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectRef: string;
+                bucketName: string;
             };
-            readonly cookie?: never;
+            cookie?: never;
         };
-        readonly requestBody?: never;
-        readonly responses: {
+        requestBody?: never;
+        responses: {
             /** @description OK */
-            readonly 200: {
+            200: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: {
-                            readonly bucket: components["schemas"]["Bucket"];
+                    "application/json": {
+                        data: {
+                            bucket: components["schemas"]["Bucket"];
                         };
                     };
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"];
+                    "application/json": components["schemas"]["InvalidRequestError"];
                 };
             };
             /** @description 401 */
-            readonly 401: {
+            401: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
+                    "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
                 };
             };
             /** @description 403 */
-            readonly 403: {
+            403: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
                 };
             };
             /** @description 404 */
-            readonly 404: {
+            404: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["ProjectNotFoundError"] | components["schemas"]["BucketNotFoundError"];
+                    "application/json": components["schemas"]["ProjectNotFoundError"] | components["schemas"]["BucketNotFoundError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };
     };
-    readonly "v2.management.buckets.delete": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path: {
-                readonly projectRef: string;
-                readonly bucketName: string;
+    "v2.management.buckets.delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectRef: string;
+                bucketName: string;
             };
-            readonly cookie?: never;
+            cookie?: never;
         };
-        readonly requestBody?: never;
-        readonly responses: {
+        requestBody?: never;
+        responses: {
             /** @description OK */
-            readonly 200: {
+            200: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: Record<string, never>;
+                    "application/json": {
+                        data: Record<string, never>;
                     };
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"];
+                    "application/json": components["schemas"]["InvalidRequestError"];
                 };
             };
             /** @description 401 */
-            readonly 401: {
+            401: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
+                    "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
                 };
             };
             /** @description 403 */
-            readonly 403: {
+            403: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
                 };
             };
             /** @description 404 */
-            readonly 404: {
+            404: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["ProjectNotFoundError"] | components["schemas"]["BucketNotFoundError"];
+                    "application/json": components["schemas"]["ProjectNotFoundError"] | components["schemas"]["BucketNotFoundError"];
                 };
             };
             /** @description 409 */
-            readonly 409: {
+            409: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["BucketNotEmptyError"] | components["schemas"]["BucketEmptyInProgressError"] | components["schemas"]["BucketStateConflictError"];
+                    "application/json": components["schemas"]["BucketNotEmptyError"] | components["schemas"]["BucketEmptyInProgressError"] | components["schemas"]["BucketStateConflictError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };
     };
-    readonly "v2.management.buckets.update": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path: {
-                readonly projectRef: string;
-                readonly bucketName: string;
+    "v2.management.buckets.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectRef: string;
+                bucketName: string;
             };
-            readonly cookie?: never;
+            cookie?: never;
         };
-        readonly requestBody: {
-            readonly content: {
-                readonly "application/json": {
-                    readonly metadata?: {
-                        readonly path?: readonly string[];
-                        readonly custom?: readonly string[];
+        requestBody: {
+            content: {
+                "application/json": {
+                    metadata?: {
+                        path?: string[];
+                        custom?: string[];
                     };
                 };
             };
         };
-        readonly responses: {
+        responses: {
             /** @description OK */
-            readonly 200: {
+            200: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: {
-                            readonly bucket: components["schemas"]["Bucket"];
+                    "application/json": {
+                        data: {
+                            bucket: components["schemas"]["Bucket"];
                         };
                     };
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"];
+                    "application/json": components["schemas"]["InvalidRequestError"];
                 };
             };
             /** @description 401 */
-            readonly 401: {
+            401: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
+                    "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
                 };
             };
             /** @description 403 */
-            readonly 403: {
+            403: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
                 };
             };
             /** @description 404 */
-            readonly 404: {
+            404: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["ProjectNotFoundError"] | components["schemas"]["BucketNotFoundError"];
+                    "application/json": components["schemas"]["ProjectNotFoundError"] | components["schemas"]["BucketNotFoundError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };
     };
-    readonly "v2.management.buckets.empty": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path: {
-                readonly projectRef: string;
-                readonly bucketName: string;
+    "v2.management.buckets.empty": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectRef: string;
+                bucketName: string;
             };
-            readonly cookie?: never;
+            cookie?: never;
         };
-        readonly requestBody: {
-            readonly content: {
-                readonly "application/json": Record<string, never>;
+        requestBody: {
+            content: {
+                "application/json": Record<string, never>;
             };
         };
-        readonly responses: {
+        responses: {
             /** @description Accepted */
-            readonly 202: {
+            202: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: {
-                            readonly jobId: string;
-                            readonly bucketId: string;
+                    "application/json": {
+                        data: {
+                            jobId: string;
+                            bucketId: string;
                             /** @enum {string} */
-                            readonly status: "QUEUED" | "RUNNING" | "SUCCEEDED" | "FAILED";
+                            status: "QUEUED" | "RUNNING" | "SUCCEEDED" | "FAILED";
                         };
                     };
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"];
+                    "application/json": components["schemas"]["InvalidRequestError"];
                 };
             };
             /** @description 401 */
-            readonly 401: {
+            401: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
+                    "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
                 };
             };
             /** @description 403 */
-            readonly 403: {
+            403: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
                 };
             };
             /** @description 404 */
-            readonly 404: {
+            404: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["ProjectNotFoundError"] | components["schemas"]["BucketNotFoundError"];
+                    "application/json": components["schemas"]["ProjectNotFoundError"] | components["schemas"]["BucketNotFoundError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };
     };
-    readonly "v2.management.buckets.emptyJobs.latest": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path: {
-                readonly projectRef: string;
-                readonly bucketName: string;
+    "v2.management.buckets.emptyJobs.latest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectRef: string;
+                bucketName: string;
             };
-            readonly cookie?: never;
+            cookie?: never;
         };
-        readonly requestBody?: never;
-        readonly responses: {
+        requestBody?: never;
+        responses: {
             /** @description OK */
-            readonly 200: {
+            200: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: {
-                            readonly job: {
-                                readonly id: string;
-                                readonly bucketId: string;
-                                readonly projectId: string;
-                                readonly accountId: string;
+                    "application/json": {
+                        data: {
+                            job: {
+                                id: string;
+                                bucketId: string;
+                                projectId: string;
+                                accountId: string;
                                 /** @enum {string} */
-                                readonly status: "QUEUED" | "RUNNING" | "SUCCEEDED" | "FAILED";
+                                status: "QUEUED" | "RUNNING" | "SUCCEEDED" | "FAILED";
                                 /** @enum {string} */
-                                readonly phase: "DELETING_FILES" | "ABORTING_UPLOADS" | "RECONCILING_STORAGE" | "INVALIDATING_CACHE";
-                                readonly totalCount: number;
-                                readonly totalBytes: number;
-                                readonly processedCount: number;
-                                readonly freedBytes: number;
-                                readonly pendingS3CleanupCount: number;
-                                readonly canceledUploadCount: number;
-                                readonly orphanObjectCount: number;
-                                readonly orphanBytes: number;
-                                readonly cloudFrontInvalidationId: string | null;
-                                readonly error: string | null;
-                                readonly heartbeatAt: string | null;
-                                readonly startedAt: string | null;
-                                readonly completedAt: string | null;
-                                readonly createdAt: string;
-                                readonly updatedAt: string;
+                                phase: "DELETING_FILES" | "ABORTING_UPLOADS" | "RECONCILING_STORAGE" | "INVALIDATING_CACHE";
+                                totalCount: number;
+                                totalBytes: number;
+                                processedCount: number;
+                                freedBytes: number;
+                                pendingS3CleanupCount: number;
+                                canceledUploadCount: number;
+                                orphanObjectCount: number;
+                                orphanBytes: number;
+                                cloudFrontInvalidationId: string | null;
+                                error: string | null;
+                                heartbeatAt: string | null;
+                                startedAt: string | null;
+                                completedAt: string | null;
+                                createdAt: string;
+                                updatedAt: string;
                             };
                         };
                     };
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"];
+                    "application/json": components["schemas"]["InvalidRequestError"];
                 };
             };
             /** @description 401 */
-            readonly 401: {
+            401: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
+                    "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
                 };
             };
             /** @description 403 */
-            readonly 403: {
+            403: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
                 };
             };
             /** @description 404 */
-            readonly 404: {
+            404: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["ProjectNotFoundError"] | components["schemas"]["BucketNotFoundError"] | components["schemas"]["EmptyBucketJobNotFoundError"];
+                    "application/json": components["schemas"]["ProjectNotFoundError"] | components["schemas"]["BucketNotFoundError"] | components["schemas"]["EmptyBucketJobNotFoundError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };
     };
-    readonly "v2.management.buckets.emptyJobs.get": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path: {
-                readonly projectRef: string;
-                readonly bucketName: string;
-                readonly jobId: string;
+    "v2.management.buckets.emptyJobs.get": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectRef: string;
+                bucketName: string;
+                jobId: string;
             };
-            readonly cookie?: never;
+            cookie?: never;
         };
-        readonly requestBody?: never;
-        readonly responses: {
+        requestBody?: never;
+        responses: {
             /** @description OK */
-            readonly 200: {
+            200: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: {
-                            readonly job: {
-                                readonly id: string;
-                                readonly bucketId: string;
-                                readonly projectId: string;
-                                readonly accountId: string;
+                    "application/json": {
+                        data: {
+                            job: {
+                                id: string;
+                                bucketId: string;
+                                projectId: string;
+                                accountId: string;
                                 /** @enum {string} */
-                                readonly status: "QUEUED" | "RUNNING" | "SUCCEEDED" | "FAILED";
+                                status: "QUEUED" | "RUNNING" | "SUCCEEDED" | "FAILED";
                                 /** @enum {string} */
-                                readonly phase: "DELETING_FILES" | "ABORTING_UPLOADS" | "RECONCILING_STORAGE" | "INVALIDATING_CACHE";
-                                readonly totalCount: number;
-                                readonly totalBytes: number;
-                                readonly processedCount: number;
-                                readonly freedBytes: number;
-                                readonly pendingS3CleanupCount: number;
-                                readonly canceledUploadCount: number;
-                                readonly orphanObjectCount: number;
-                                readonly orphanBytes: number;
-                                readonly cloudFrontInvalidationId: string | null;
-                                readonly error: string | null;
-                                readonly heartbeatAt: string | null;
-                                readonly startedAt: string | null;
-                                readonly completedAt: string | null;
-                                readonly createdAt: string;
-                                readonly updatedAt: string;
+                                phase: "DELETING_FILES" | "ABORTING_UPLOADS" | "RECONCILING_STORAGE" | "INVALIDATING_CACHE";
+                                totalCount: number;
+                                totalBytes: number;
+                                processedCount: number;
+                                freedBytes: number;
+                                pendingS3CleanupCount: number;
+                                canceledUploadCount: number;
+                                orphanObjectCount: number;
+                                orphanBytes: number;
+                                cloudFrontInvalidationId: string | null;
+                                error: string | null;
+                                heartbeatAt: string | null;
+                                startedAt: string | null;
+                                completedAt: string | null;
+                                createdAt: string;
+                                updatedAt: string;
                             };
                         };
                     };
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"];
+                    "application/json": components["schemas"]["InvalidRequestError"];
                 };
             };
             /** @description 401 */
-            readonly 401: {
+            401: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
+                    "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
                 };
             };
             /** @description 403 */
-            readonly 403: {
+            403: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
                 };
             };
             /** @description 404 */
-            readonly 404: {
+            404: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["ProjectNotFoundError"] | components["schemas"]["BucketNotFoundError"] | components["schemas"]["EmptyBucketJobNotFoundError"];
+                    "application/json": components["schemas"]["ProjectNotFoundError"] | components["schemas"]["BucketNotFoundError"] | components["schemas"]["EmptyBucketJobNotFoundError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };
     };
-    readonly "v2.management.buckets.emptyJobs.retry": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path: {
-                readonly projectRef: string;
-                readonly bucketName: string;
-                readonly jobId: string;
+    "v2.management.buckets.emptyJobs.retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectRef: string;
+                bucketName: string;
+                jobId: string;
             };
-            readonly cookie?: never;
+            cookie?: never;
         };
-        readonly requestBody: {
-            readonly content: {
-                readonly "application/json": Record<string, never>;
+        requestBody: {
+            content: {
+                "application/json": Record<string, never>;
             };
         };
-        readonly responses: {
+        responses: {
             /** @description Accepted */
-            readonly 202: {
+            202: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: {
-                            readonly jobId: string;
-                            readonly bucketId: string;
+                    "application/json": {
+                        data: {
+                            jobId: string;
+                            bucketId: string;
                             /** @enum {string} */
-                            readonly status: "QUEUED" | "RUNNING" | "SUCCEEDED" | "FAILED";
+                            status: "QUEUED" | "RUNNING" | "SUCCEEDED" | "FAILED";
                         };
                     };
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"];
+                    "application/json": components["schemas"]["InvalidRequestError"];
                 };
             };
             /** @description 401 */
-            readonly 401: {
+            401: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
+                    "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
                 };
             };
             /** @description 403 */
-            readonly 403: {
+            403: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
                 };
             };
             /** @description 404 */
-            readonly 404: {
+            404: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["ProjectNotFoundError"] | components["schemas"]["BucketNotFoundError"] | components["schemas"]["EmptyBucketJobNotFoundError"];
+                    "application/json": components["schemas"]["ProjectNotFoundError"] | components["schemas"]["BucketNotFoundError"] | components["schemas"]["EmptyBucketJobNotFoundError"];
                 };
             };
             /** @description 409 */
-            readonly 409: {
+            409: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["EmptyBucketJobNotRetryableError"];
+                    "application/json": components["schemas"]["EmptyBucketJobNotRetryableError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };
     };
-    readonly "v2.management.files.list": {
-        readonly parameters: {
-            readonly query?: {
-                readonly cursor?: string;
-                readonly limit?: number;
+    "v2.management.files.list": {
+        parameters: {
+            query?: {
+                cursor?: string;
+                limit?: number;
             };
-            readonly header?: never;
-            readonly path: {
-                readonly projectRef: string;
-                readonly bucketName: string;
+            header?: never;
+            path: {
+                projectRef: string;
+                bucketName: string;
             };
-            readonly cookie?: never;
+            cookie?: never;
         };
-        readonly requestBody?: never;
-        readonly responses: {
+        requestBody?: never;
+        responses: {
             /** @description OK */
-            readonly 200: {
+            200: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: {
-                            readonly files: readonly components["schemas"]["File"][];
-                            readonly pagination: {
-                                readonly limit: number;
-                                readonly nextCursor: string | null;
-                                readonly hasMore: boolean;
+                    "application/json": {
+                        data: {
+                            files: components["schemas"]["File"][];
+                            pagination: {
+                                limit: number;
+                                nextCursor: string | null;
+                                hasMore: boolean;
                             };
                         };
                     };
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"];
+                    "application/json": components["schemas"]["InvalidRequestError"];
                 };
             };
             /** @description 401 */
-            readonly 401: {
+            401: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
+                    "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
                 };
             };
             /** @description 403 */
-            readonly 403: {
+            403: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
                 };
             };
             /** @description 404 */
-            readonly 404: {
+            404: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["ProjectNotFoundError"] | components["schemas"]["BucketNotFoundError"];
+                    "application/json": components["schemas"]["ProjectNotFoundError"] | components["schemas"]["BucketNotFoundError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };
     };
-    readonly "v2.management.files.lookup": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path: {
-                readonly projectRef: string;
+    "v2.management.files.lookup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectRef: string;
             };
-            readonly cookie?: never;
+            cookie?: never;
         };
-        readonly requestBody: {
-            readonly content: {
-                readonly "application/json": {
-                    readonly file: ({
-                        readonly id: string;
+        requestBody: {
+            content: {
+                "application/json": {
+                    file: ({
+                        id: string;
                     } | {
-                        readonly key: string;
+                        key: string;
                     } | {
-                        readonly url: string;
+                        url: string;
                     }) | {
-                        readonly bucketName: string;
-                        readonly path: string;
+                        bucketName: string;
+                        path: string;
                     };
                 };
             };
         };
-        readonly responses: {
+        responses: {
             /** @description OK */
-            readonly 200: {
+            200: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: {
-                            readonly file: components["schemas"]["File"];
+                    "application/json": {
+                        data: {
+                            file: components["schemas"]["File"];
                         };
                     };
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"] | components["schemas"]["InvalidFileReferenceError"];
+                    "application/json": components["schemas"]["InvalidRequestError"] | components["schemas"]["InvalidFileReferenceError"];
                 };
             };
             /** @description 401 */
-            readonly 401: {
+            401: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
+                    "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
                 };
             };
             /** @description 403 */
-            readonly 403: {
+            403: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
                 };
             };
             /** @description 404 */
-            readonly 404: {
+            404: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["ProjectNotFoundError"] | components["schemas"]["FileNotFoundError"];
+                    "application/json": components["schemas"]["ProjectNotFoundError"] | components["schemas"]["FileNotFoundError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };
     };
-    readonly "v2.management.files.downloadUrls.create": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path: {
-                readonly projectRef: string;
+    "v2.management.files.downloadUrls.create": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectRef: string;
             };
-            readonly cookie?: never;
+            cookie?: never;
         };
-        readonly requestBody: {
-            readonly content: {
-                readonly "application/json": {
-                    readonly files: readonly (({
-                        readonly id: string;
+        requestBody: {
+            content: {
+                "application/json": {
+                    files: (({
+                        id: string;
                     } | {
-                        readonly key: string;
+                        key: string;
                     } | {
-                        readonly url: string;
+                        url: string;
                     }) | {
-                        readonly bucketName: string;
-                        readonly path: string;
+                        bucketName: string;
+                        path: string;
                     })[];
-                    readonly expiresIn?: number;
+                    expiresIn?: number;
                 };
             };
         };
-        readonly responses: {
+        responses: {
             /** @description OK */
-            readonly 200: {
+            200: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: {
-                            readonly downloadUrls: readonly {
-                                readonly fileRef: ({
-                                    readonly id: string;
+                    "application/json": {
+                        data: {
+                            downloadUrls: {
+                                fileRef: ({
+                                    id: string;
                                 } | {
-                                    readonly key: string;
+                                    key: string;
                                 } | {
-                                    readonly url: string;
+                                    url: string;
                                 }) | {
-                                    readonly bucketName: string;
-                                    readonly path: string;
+                                    bucketName: string;
+                                    path: string;
                                 };
-                                readonly url: string;
-                                readonly expiresAt: string | null;
-                                readonly expiresIn: number | null;
+                                url: string;
+                                expiresAt: string | null;
+                                expiresIn: number | null;
                             }[];
                         };
                     };
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"] | components["schemas"]["InvalidFileReferenceError"];
+                    "application/json": components["schemas"]["InvalidRequestError"] | components["schemas"]["InvalidFileReferenceError"];
                 };
             };
             /** @description 401 */
-            readonly 401: {
+            401: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
+                    "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
                 };
             };
             /** @description 403 */
-            readonly 403: {
+            403: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
                 };
             };
             /** @description 404 */
-            readonly 404: {
+            404: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["ProjectNotFoundError"] | components["schemas"]["FileNotFoundError"];
+                    "application/json": components["schemas"]["ProjectNotFoundError"] | components["schemas"]["FileNotFoundError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };
     };
-    readonly "v2.management.files.delete": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path: {
-                readonly projectRef: string;
+    "v2.management.files.delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectRef: string;
             };
-            readonly cookie?: never;
+            cookie?: never;
         };
-        readonly requestBody: {
-            readonly content: {
-                readonly "application/json": {
-                    readonly files: readonly (({
-                        readonly id: string;
+        requestBody: {
+            content: {
+                "application/json": {
+                    files: (({
+                        id: string;
                     } | {
-                        readonly key: string;
+                        key: string;
                     } | {
-                        readonly url: string;
+                        url: string;
                     }) | {
-                        readonly bucketName: string;
-                        readonly path: string;
+                        bucketName: string;
+                        path: string;
                     })[];
                 };
             };
         };
-        readonly responses: {
+        responses: {
             /** @description OK */
-            readonly 200: {
+            200: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: {
-                            readonly results: readonly ({
-                                readonly fileRef: ({
-                                    readonly id: string;
+                    "application/json": {
+                        data: {
+                            results: ({
+                                fileRef: ({
+                                    id: string;
                                 } | {
-                                    readonly key: string;
+                                    key: string;
                                 } | {
-                                    readonly url: string;
+                                    url: string;
                                 }) | {
-                                    readonly bucketName: string;
-                                    readonly path: string;
+                                    bucketName: string;
+                                    path: string;
                                 };
                                 /** @constant */
-                                readonly success: true;
+                                success: true;
                             } | {
-                                readonly fileRef: ({
-                                    readonly id: string;
+                                fileRef: ({
+                                    id: string;
                                 } | {
-                                    readonly key: string;
+                                    key: string;
                                 } | {
-                                    readonly url: string;
+                                    url: string;
                                 }) | {
-                                    readonly bucketName: string;
-                                    readonly path: string;
+                                    bucketName: string;
+                                    path: string;
                                 };
                                 /** @constant */
-                                readonly success: false;
-                                readonly error: {
+                                success: false;
+                                error: {
                                     /** @enum {string} */
-                                    readonly code: "FILE_NOT_CONFIRMABLE" | "FILE_NOT_DELETABLE" | "FILE_NOT_RESTORABLE" | "INVALID_FILE_REF";
-                                    readonly message: string;
+                                    code: "FILE_NOT_CONFIRMABLE" | "FILE_NOT_DELETABLE" | "FILE_NOT_RESTORABLE" | "INVALID_FILE_REF";
+                                    message: string;
                                 };
                             })[];
-                            readonly successCount: number;
-                            readonly failureCount: number;
+                            successCount: number;
+                            failureCount: number;
                         };
                     };
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"];
+                    "application/json": components["schemas"]["InvalidRequestError"];
                 };
             };
             /** @description 401 */
-            readonly 401: {
+            401: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
+                    "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
                 };
             };
             /** @description 403 */
-            readonly 403: {
+            403: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
                 };
             };
             /** @description 404 */
-            readonly 404: {
+            404: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["ProjectNotFoundError"];
+                    "application/json": components["schemas"]["ProjectNotFoundError"];
                 };
             };
             /** @description 409 */
-            readonly 409: {
+            409: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["BucketEmptyInProgressError"];
+                    "application/json": components["schemas"]["BucketEmptyInProgressError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };
     };
-    readonly "v2.management.uploads.request": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: {
-                readonly "idempotency-key"?: string;
+    "v2.management.uploads.request": {
+        parameters: {
+            query?: never;
+            header?: {
+                "idempotency-key"?: string;
             };
-            readonly path: {
-                readonly projectRef: string;
-                readonly bucketName: string;
+            path: {
+                projectRef: string;
+                bucketName: string;
             };
-            readonly cookie?: never;
+            cookie?: never;
         };
-        readonly requestBody: {
-            readonly content: {
-                readonly "application/json": {
-                    readonly path?: string;
-                    readonly fileName?: string;
-                    readonly extension?: string;
-                    readonly mimeType?: string;
-                    readonly temporary?: boolean;
-                    readonly sizeBytes: number;
-                    readonly metadata?: {
-                        readonly [key: string]: string;
+        requestBody: {
+            content: {
+                "application/json": {
+                    path?: string;
+                    fileName?: string;
+                    extension?: string;
+                    mimeType?: string;
+                    temporary?: boolean;
+                    sizeBytes: number;
+                    metadata?: {
+                        [key: string]: string;
                     };
-                    readonly multipart?: {
-                        readonly partNumbers: readonly number[];
+                    multipart?: {
+                        partNumbers: number[];
                     };
-                    readonly signedReadUrl?: {
-                        readonly expiresIn?: number;
-                        readonly includeThumbnails?: boolean;
+                    signedReadUrl?: {
+                        expiresIn?: number;
+                        includeThumbnails?: boolean;
                     };
                 };
             };
         };
-        readonly responses: {
+        responses: {
             /** @description OK */
-            readonly 200: {
+            200: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: {
-                            readonly file: {
-                                readonly id: string;
-                                readonly url: string;
-                                readonly key: string;
-                                readonly thumbnailUrl: string | null;
-                                readonly thumbnailKey: string | null;
-                                readonly bucketId: string;
-                                readonly bucketName: string;
-                                readonly projectId: string;
-                                readonly accountId: string;
-                                readonly name: string;
-                                readonly sizeBytes: number;
-                                readonly mimeType: string | null;
+                    "application/json": {
+                        data: {
+                            file: {
+                                id: string;
+                                url: string;
+                                key: string;
+                                thumbnailUrl: string | null;
+                                thumbnailKey: string | null;
+                                bucketId: string;
+                                bucketName: string;
+                                projectId: string;
+                                accountId: string;
+                                name: string;
+                                sizeBytes: number;
+                                mimeType: string | null;
                                 /** @constant */
-                                readonly state: "requested";
-                                readonly temporary: boolean;
+                                state: "requested";
+                                temporary: boolean;
                             };
-                            readonly upload: {
+                            upload: {
                                 /** @constant */
-                                readonly kind: "single";
-                                readonly id: string;
-                                readonly signedUrl: string;
+                                kind: "single";
+                                id: string;
+                                signedUrl: string;
                             } | {
                                 /** @constant */
-                                readonly kind: "multipart";
-                                readonly id: string;
-                                readonly parts: readonly {
-                                    readonly partNumber: number;
-                                    readonly signedUrl: string;
+                                kind: "multipart";
+                                id: string;
+                                parts: {
+                                    partNumber: number;
+                                    signedUrl: string;
                                 }[];
                             };
-                            readonly signedReadUrl?: {
-                                readonly url: string;
-                                readonly signedUrl: string;
-                                readonly expiresAt: string;
-                                readonly expiresIn: number;
-                                readonly thumbnailUrl?: string | null;
-                                readonly signedThumbnailUrl?: string | null;
+                            signedReadUrl?: {
+                                url: string;
+                                signedUrl: string;
+                                expiresAt: string;
+                                expiresIn: number;
+                                thumbnailUrl?: string | null;
+                                signedThumbnailUrl?: string | null;
                             };
                         };
                     };
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"];
+                    "application/json": components["schemas"]["InvalidRequestError"];
                 };
             };
             /** @description 401 */
-            readonly 401: {
+            401: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
+                    "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
                 };
             };
             /** @description 403 */
-            readonly 403: {
+            403: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"] | components["schemas"]["AccountPausedError"] | components["schemas"]["StorageLimitExceededError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"] | components["schemas"]["AccountPausedError"] | components["schemas"]["StorageLimitExceededError"];
                 };
             };
             /** @description 404 */
-            readonly 404: {
+            404: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["ProjectNotFoundError"] | components["schemas"]["BucketNotFoundError"];
+                    "application/json": components["schemas"]["ProjectNotFoundError"] | components["schemas"]["BucketNotFoundError"];
                 };
             };
             /** @description 409 */
-            readonly 409: {
+            409: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["BucketEmptyInProgressError"] | components["schemas"]["IdempotencyConflictError"];
+                    "application/json": components["schemas"]["BucketEmptyInProgressError"] | components["schemas"]["IdempotencyConflictError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };
     };
-    readonly "v2.management.uploads.get": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path: {
-                readonly projectRef: string;
-                readonly uploadId: string;
+    "v2.management.uploads.get": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectRef: string;
+                uploadId: string;
             };
-            readonly cookie?: never;
+            cookie?: never;
         };
-        readonly requestBody?: never;
-        readonly responses: {
+        requestBody?: never;
+        responses: {
             /** @description OK */
-            readonly 200: {
+            200: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: {
-                            readonly upload: {
-                                readonly id: string;
+                    "application/json": {
+                        data: {
+                            upload: {
+                                id: string;
                                 /** @constant */
-                                readonly status: "completed";
+                                status: "completed";
                             };
-                            readonly file: components["schemas"]["File"];
+                            file: components["schemas"]["File"];
                         } | {
-                            readonly upload: {
-                                readonly id: string;
+                            upload: {
+                                id: string;
                                 /** @constant */
-                                readonly status: "canceled";
+                                status: "canceled";
                             };
                         };
                     };
                 };
             };
             /** @description Accepted */
-            readonly 202: {
+            202: {
                 headers: {
-                    readonly "retry-after": components["headers"]["RetryAfter"];
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "retry-after": components["headers"]["RetryAfter"];
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: {
-                            readonly upload: {
-                                readonly id: string;
+                    "application/json": {
+                        data: {
+                            upload: {
+                                id: string;
                                 /** @constant */
-                                readonly status: "processing";
+                                status: "processing";
                             };
                         };
                     };
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"];
+                    "application/json": components["schemas"]["InvalidRequestError"];
                 };
             };
             /** @description 401 */
-            readonly 401: {
+            401: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
+                    "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
                 };
             };
             /** @description 403 */
-            readonly 403: {
+            403: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
                 };
             };
             /** @description 404 */
-            readonly 404: {
+            404: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["ProjectNotFoundError"] | components["schemas"]["UploadNotFoundError"];
+                    "application/json": components["schemas"]["ProjectNotFoundError"] | components["schemas"]["UploadNotFoundError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };
     };
-    readonly "v2.management.uploads.cancel": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path: {
-                readonly projectRef: string;
-                readonly uploadId: string;
+    "v2.management.uploads.cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectRef: string;
+                uploadId: string;
             };
-            readonly cookie?: never;
+            cookie?: never;
         };
-        readonly requestBody?: never;
-        readonly responses: {
+        requestBody?: never;
+        responses: {
             /** @description OK */
-            readonly 200: {
+            200: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: {
-                            readonly upload: {
-                                readonly id: string;
+                    "application/json": {
+                        data: {
+                            upload: {
+                                id: string;
                                 /** @constant */
-                                readonly status: "canceled";
+                                status: "canceled";
                             };
                         };
                     };
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"];
+                    "application/json": components["schemas"]["InvalidRequestError"];
                 };
             };
             /** @description 401 */
-            readonly 401: {
+            401: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
+                    "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
                 };
             };
             /** @description 403 */
-            readonly 403: {
+            403: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
                 };
             };
             /** @description 404 */
-            readonly 404: {
+            404: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["ProjectNotFoundError"] | components["schemas"]["UploadNotFoundError"];
+                    "application/json": components["schemas"]["ProjectNotFoundError"] | components["schemas"]["UploadNotFoundError"];
                 };
             };
             /** @description 409 */
-            readonly 409: {
+            409: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["UploadAlreadyCompletedError"] | components["schemas"]["BucketEmptyInProgressError"];
+                    "application/json": components["schemas"]["UploadAlreadyCompletedError"] | components["schemas"]["BucketEmptyInProgressError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };
     };
-    readonly "v2.management.uploads.parts.create": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path: {
-                readonly projectRef: string;
-                readonly uploadId: string;
+    "v2.management.uploads.parts.create": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectRef: string;
+                uploadId: string;
             };
-            readonly cookie?: never;
+            cookie?: never;
         };
-        readonly requestBody: {
-            readonly content: {
-                readonly "application/json": {
-                    readonly partNumbers: readonly number[];
+        requestBody: {
+            content: {
+                "application/json": {
+                    partNumbers: number[];
                 };
             };
         };
-        readonly responses: {
+        responses: {
             /** @description OK */
-            readonly 200: {
+            200: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: {
-                            readonly uploadId: string;
-                            readonly parts: readonly {
-                                readonly partNumber: number;
-                                readonly signedUrl: string;
+                    "application/json": {
+                        data: {
+                            uploadId: string;
+                            parts: {
+                                partNumber: number;
+                                signedUrl: string;
                             }[];
                         };
                     };
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"];
+                    "application/json": components["schemas"]["InvalidRequestError"];
                 };
             };
             /** @description 401 */
-            readonly 401: {
+            401: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
+                    "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
                 };
             };
             /** @description 403 */
-            readonly 403: {
+            403: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
                 };
             };
             /** @description 404 */
-            readonly 404: {
+            404: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["ProjectNotFoundError"] | components["schemas"]["UploadNotFoundError"];
+                    "application/json": components["schemas"]["ProjectNotFoundError"] | components["schemas"]["UploadNotFoundError"];
                 };
             };
             /** @description 409 */
-            readonly 409: {
+            409: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["BucketEmptyInProgressError"];
+                    "application/json": components["schemas"]["BucketEmptyInProgressError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };
     };
-    readonly "v2.management.uploads.multipart.complete": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path: {
-                readonly projectRef: string;
-                readonly uploadId: string;
+    "v2.management.uploads.multipart.complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectRef: string;
+                uploadId: string;
             };
-            readonly cookie?: never;
+            cookie?: never;
         };
-        readonly requestBody: {
-            readonly content: {
-                readonly "application/json": {
-                    readonly parts: readonly {
-                        readonly partNumber: number;
-                        readonly eTag: string;
+        requestBody: {
+            content: {
+                "application/json": {
+                    parts: {
+                        partNumber: number;
+                        eTag: string;
                     }[];
                 };
             };
         };
-        readonly responses: {
+        responses: {
             /** @description Accepted */
-            readonly 202: {
+            202: {
                 headers: {
-                    readonly "retry-after": components["headers"]["RetryAfter"];
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "retry-after": components["headers"]["RetryAfter"];
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: {
-                            readonly upload: {
-                                readonly id: string;
+                    "application/json": {
+                        data: {
+                            upload: {
+                                id: string;
                                 /** @constant */
-                                readonly status: "processing";
+                                status: "processing";
                             };
                         };
                     };
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"];
+                    "application/json": components["schemas"]["InvalidRequestError"];
                 };
             };
             /** @description 401 */
-            readonly 401: {
+            401: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
+                    "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
                 };
             };
             /** @description 403 */
-            readonly 403: {
+            403: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
                 };
             };
             /** @description 404 */
-            readonly 404: {
+            404: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["ProjectNotFoundError"] | components["schemas"]["UploadNotFoundError"];
+                    "application/json": components["schemas"]["ProjectNotFoundError"] | components["schemas"]["UploadNotFoundError"];
                 };
             };
             /** @description 409 */
-            readonly 409: {
+            409: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["BucketEmptyInProgressError"];
+                    "application/json": components["schemas"]["BucketEmptyInProgressError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };
     };
-    readonly "v2.management.projectKeys.list": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path: {
-                readonly projectRef: string;
+    "v2.management.projectKeys.list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectRef: string;
             };
-            readonly cookie?: never;
+            cookie?: never;
         };
-        readonly requestBody?: never;
-        readonly responses: {
+        requestBody?: never;
+        responses: {
             /** @description OK */
-            readonly 200: {
+            200: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: {
-                            readonly keys: readonly {
-                                readonly id: string;
-                                readonly name: string;
-                                readonly accessKey: string;
-                                readonly projectId: string;
-                                readonly accountId: string;
-                                readonly createdAt: string;
-                                readonly updatedAt: string;
-                                readonly revokedAt: string | null;
+                    "application/json": {
+                        data: {
+                            keys: {
+                                id: string;
+                                name: string;
+                                accessKey: string;
+                                projectId: string;
+                                accountId: string;
+                                createdAt: string;
+                                updatedAt: string;
+                                revokedAt: string | null;
                             }[];
                         };
                     };
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"];
+                    "application/json": components["schemas"]["InvalidRequestError"];
                 };
             };
             /** @description 401 */
-            readonly 401: {
+            401: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
+                    "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
                 };
             };
             /** @description 403 */
-            readonly 403: {
+            403: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
                 };
             };
             /** @description 404 */
-            readonly 404: {
+            404: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["ProjectNotFoundError"];
+                    "application/json": components["schemas"]["ProjectNotFoundError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };
     };
-    readonly "v2.management.projectKeys.create": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: {
-                readonly "idempotency-key"?: string;
+    "v2.management.projectKeys.create": {
+        parameters: {
+            query?: never;
+            header?: {
+                "idempotency-key"?: string;
             };
-            readonly path: {
-                readonly projectRef: string;
+            path: {
+                projectRef: string;
             };
-            readonly cookie?: never;
+            cookie?: never;
         };
-        readonly requestBody: {
-            readonly content: {
-                readonly "application/json": {
-                    readonly name: string;
+        requestBody: {
+            content: {
+                "application/json": {
+                    name: string;
                 };
             };
         };
-        readonly responses: {
+        responses: {
             /** @description OK */
-            readonly 200: {
+            200: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: {
-                            readonly key: {
-                                readonly id: string;
-                                readonly name: string;
-                                readonly accessKey: string;
-                                readonly projectId: string;
-                                readonly accountId: string;
-                                readonly createdAt: string;
-                                readonly updatedAt: string;
-                                readonly revokedAt: string | null;
+                    "application/json": {
+                        data: {
+                            key: {
+                                id: string;
+                                name: string;
+                                accessKey: string;
+                                projectId: string;
+                                accountId: string;
+                                createdAt: string;
+                                updatedAt: string;
+                                revokedAt: string | null;
                             };
-                            readonly secretKey: string;
+                            secretKey: string;
                         };
                     };
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"];
+                    "application/json": components["schemas"]["InvalidRequestError"];
                 };
             };
             /** @description 401 */
-            readonly 401: {
+            401: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
+                    "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
                 };
             };
             /** @description 403 */
-            readonly 403: {
+            403: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
                 };
             };
             /** @description 404 */
-            readonly 404: {
+            404: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["ProjectNotFoundError"];
+                    "application/json": components["schemas"]["ProjectNotFoundError"];
                 };
             };
             /** @description 409 */
-            readonly 409: {
+            409: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["IdempotencyConflictError"] | components["schemas"]["IdempotencyInProgressError"];
+                    "application/json": components["schemas"]["IdempotencyConflictError"] | components["schemas"]["IdempotencyInProgressError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };
     };
-    readonly "v2.management.projectKeys.revoke": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path: {
-                readonly projectRef: string;
-                readonly keyId: string;
+    "v2.management.projectKeys.revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectRef: string;
+                keyId: string;
             };
-            readonly cookie?: never;
+            cookie?: never;
         };
-        readonly requestBody?: never;
-        readonly responses: {
+        requestBody?: never;
+        responses: {
             /** @description OK */
-            readonly 200: {
+            200: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: Record<string, never>;
+                    "application/json": {
+                        data: Record<string, never>;
                     };
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"];
+                    "application/json": components["schemas"]["InvalidRequestError"];
                 };
             };
             /** @description 401 */
-            readonly 401: {
+            401: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
+                    "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
                 };
             };
             /** @description 403 */
-            readonly 403: {
+            403: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
                 };
             };
             /** @description 404 */
-            readonly 404: {
+            404: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["ProjectNotFoundError"] | components["schemas"]["ProjectKeyNotFoundError"];
+                    "application/json": components["schemas"]["ProjectNotFoundError"] | components["schemas"]["ProjectKeyNotFoundError"];
                 };
             };
             /** @description 409 */
-            readonly 409: {
+            409: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["KeyAlreadyRevokedError"];
+                    "application/json": components["schemas"]["KeyAlreadyRevokedError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };
     };
-    readonly "v2.management.members.list": {
-        readonly parameters: {
-            readonly query?: {
-                readonly page?: number;
-                readonly pageSize?: number;
+    "v2.management.members.list": {
+        parameters: {
+            query?: {
+                page?: number;
+                pageSize?: number;
             };
-            readonly header?: never;
-            readonly path: {
-                readonly accountId: string;
+            header?: never;
+            path: {
+                accountId: string;
             };
-            readonly cookie?: never;
+            cookie?: never;
         };
-        readonly requestBody?: never;
-        readonly responses: {
+        requestBody?: never;
+        responses: {
             /** @description OK */
-            readonly 200: {
+            200: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: {
-                            readonly members: readonly {
-                                readonly id: string;
-                                readonly userId: string;
-                                readonly accountId: string;
+                    "application/json": {
+                        data: {
+                            members: {
+                                id: string;
+                                userId: string;
+                                accountId: string;
                                 /** Format: email */
-                                readonly email: string;
+                                email: string;
                                 /** @enum {string} */
-                                readonly role: "OWNER" | "MEMBER" | "VIEWER";
-                                readonly createdAt: string;
-                                readonly updatedAt: string;
+                                role: "OWNER" | "MEMBER" | "VIEWER";
+                                createdAt: string;
+                                updatedAt: string;
                             }[];
                         };
                     };
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"] | components["schemas"]["PersonalAccountError"];
+                    "application/json": components["schemas"]["InvalidRequestError"] | components["schemas"]["PersonalAccountError"];
                 };
             };
             /** @description 401 */
-            readonly 401: {
+            401: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
+                    "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
                 };
             };
             /** @description 403 */
-            readonly 403: {
+            403: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
                 };
             };
             /** @description 404 */
-            readonly 404: {
+            404: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AccountNotFoundError"];
+                    "application/json": components["schemas"]["AccountNotFoundError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };
     };
-    readonly "v2.management.members.remove": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path: {
-                readonly accountId: string;
-                readonly userId: string;
+    "v2.management.members.remove": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                accountId: string;
+                userId: string;
             };
-            readonly cookie?: never;
+            cookie?: never;
         };
-        readonly requestBody?: never;
-        readonly responses: {
+        requestBody?: never;
+        responses: {
             /** @description OK */
-            readonly 200: {
+            200: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: Record<string, never>;
+                    "application/json": {
+                        data: Record<string, never>;
                     };
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"] | components["schemas"]["PersonalAccountError"];
+                    "application/json": components["schemas"]["InvalidRequestError"] | components["schemas"]["PersonalAccountError"];
                 };
             };
             /** @description 401 */
-            readonly 401: {
+            401: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
+                    "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
                 };
             };
             /** @description 403 */
-            readonly 403: {
+            403: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
                 };
             };
             /** @description 404 */
-            readonly 404: {
+            404: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AccountNotFoundError"] | components["schemas"]["MemberNotFoundError"];
+                    "application/json": components["schemas"]["AccountNotFoundError"] | components["schemas"]["MemberNotFoundError"];
                 };
             };
             /** @description 409 */
-            readonly 409: {
+            409: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["LastOwnerError"];
+                    "application/json": components["schemas"]["LastOwnerError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };
     };
-    readonly "v2.management.members.update": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path: {
-                readonly accountId: string;
-                readonly userId: string;
+    "v2.management.members.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                accountId: string;
+                userId: string;
             };
-            readonly cookie?: never;
+            cookie?: never;
         };
-        readonly requestBody: {
-            readonly content: {
-                readonly "application/json": {
+        requestBody: {
+            content: {
+                "application/json": {
                     /** @enum {string} */
-                    readonly role: "OWNER" | "MEMBER" | "VIEWER";
+                    role: "OWNER" | "MEMBER" | "VIEWER";
                 };
             };
         };
-        readonly responses: {
+        responses: {
             /** @description OK */
-            readonly 200: {
+            200: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: {
-                            readonly member: {
-                                readonly id: string;
-                                readonly userId: string;
-                                readonly accountId: string;
+                    "application/json": {
+                        data: {
+                            member: {
+                                id: string;
+                                userId: string;
+                                accountId: string;
                                 /** Format: email */
-                                readonly email: string;
+                                email: string;
                                 /** @enum {string} */
-                                readonly role: "OWNER" | "MEMBER" | "VIEWER";
-                                readonly createdAt: string;
-                                readonly updatedAt: string;
+                                role: "OWNER" | "MEMBER" | "VIEWER";
+                                createdAt: string;
+                                updatedAt: string;
                             };
                         };
                     };
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"] | components["schemas"]["PersonalAccountError"];
+                    "application/json": components["schemas"]["InvalidRequestError"] | components["schemas"]["PersonalAccountError"];
                 };
             };
             /** @description 401 */
-            readonly 401: {
+            401: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
+                    "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
                 };
             };
             /** @description 403 */
-            readonly 403: {
+            403: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
                 };
             };
             /** @description 404 */
-            readonly 404: {
+            404: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AccountNotFoundError"] | components["schemas"]["MemberNotFoundError"];
+                    "application/json": components["schemas"]["AccountNotFoundError"] | components["schemas"]["MemberNotFoundError"];
                 };
             };
             /** @description 409 */
-            readonly 409: {
+            409: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["LastOwnerError"];
+                    "application/json": components["schemas"]["LastOwnerError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };
     };
-    readonly "v2.management.invitations.list": {
-        readonly parameters: {
-            readonly query?: {
-                readonly page?: number;
-                readonly pageSize?: number;
+    "v2.management.invitations.list": {
+        parameters: {
+            query?: {
+                page?: number;
+                pageSize?: number;
             };
-            readonly header?: never;
-            readonly path: {
-                readonly accountId: string;
+            header?: never;
+            path: {
+                accountId: string;
             };
-            readonly cookie?: never;
+            cookie?: never;
         };
-        readonly requestBody?: never;
-        readonly responses: {
+        requestBody?: never;
+        responses: {
             /** @description OK */
-            readonly 200: {
+            200: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: {
-                            readonly invitations: readonly {
-                                readonly id: string;
-                                readonly accountId: string;
+                    "application/json": {
+                        data: {
+                            invitations: {
+                                id: string;
+                                accountId: string;
                                 /** Format: email */
-                                readonly email: string;
+                                email: string;
                                 /** @enum {string} */
-                                readonly role: "OWNER" | "MEMBER" | "VIEWER";
+                                role: "OWNER" | "MEMBER" | "VIEWER";
                                 /** @enum {string} */
-                                readonly status: "INITIAL" | "PENDING" | "ACCEPTED" | "CANCELED";
-                                readonly createdAt: string;
-                                readonly updatedAt: string;
+                                status: "INITIAL" | "PENDING" | "ACCEPTED" | "CANCELED";
+                                createdAt: string;
+                                updatedAt: string;
                             }[];
                         };
                     };
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"] | components["schemas"]["PersonalAccountError"];
+                    "application/json": components["schemas"]["InvalidRequestError"] | components["schemas"]["PersonalAccountError"];
                 };
             };
             /** @description 401 */
-            readonly 401: {
+            401: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
+                    "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
                 };
             };
             /** @description 403 */
-            readonly 403: {
+            403: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
                 };
             };
             /** @description 404 */
-            readonly 404: {
+            404: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AccountNotFoundError"];
+                    "application/json": components["schemas"]["AccountNotFoundError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };
     };
-    readonly "v2.management.invitations.create": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: {
-                readonly "idempotency-key"?: string;
+    "v2.management.invitations.create": {
+        parameters: {
+            query?: never;
+            header?: {
+                "idempotency-key"?: string;
             };
-            readonly path: {
-                readonly accountId: string;
+            path: {
+                accountId: string;
             };
-            readonly cookie?: never;
+            cookie?: never;
         };
-        readonly requestBody: {
-            readonly content: {
-                readonly "application/json": {
+        requestBody: {
+            content: {
+                "application/json": {
                     /** Format: email */
-                    readonly email: string;
+                    email: string;
                     /** @enum {string} */
-                    readonly role: "OWNER" | "MEMBER" | "VIEWER";
+                    role: "OWNER" | "MEMBER" | "VIEWER";
                     /** @default false */
-                    readonly allowOverage?: boolean;
+                    allowOverage?: boolean;
                 };
             };
         };
-        readonly responses: {
+        responses: {
             /** @description OK */
-            readonly 200: {
+            200: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: {
-                            readonly invitation: {
-                                readonly id: string;
-                                readonly accountId: string;
+                    "application/json": {
+                        data: {
+                            invitation: {
+                                id: string;
+                                accountId: string;
                                 /** Format: email */
-                                readonly email: string;
+                                email: string;
                                 /** @enum {string} */
-                                readonly role: "OWNER" | "MEMBER" | "VIEWER";
+                                role: "OWNER" | "MEMBER" | "VIEWER";
                                 /** @enum {string} */
-                                readonly status: "INITIAL" | "PENDING" | "ACCEPTED" | "CANCELED";
-                                readonly createdAt: string;
-                                readonly updatedAt: string;
+                                status: "INITIAL" | "PENDING" | "ACCEPTED" | "CANCELED";
+                                createdAt: string;
+                                updatedAt: string;
                             };
                         };
                     };
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"] | components["schemas"]["PersonalAccountError"];
+                    "application/json": components["schemas"]["InvalidRequestError"] | components["schemas"]["PersonalAccountError"];
                 };
             };
             /** @description 401 */
-            readonly 401: {
+            401: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
+                    "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
                 };
             };
             /** @description 403 */
-            readonly 403: {
+            403: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
                 };
             };
             /** @description 404 */
-            readonly 404: {
+            404: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AccountNotFoundError"];
+                    "application/json": components["schemas"]["AccountNotFoundError"];
                 };
             };
             /** @description 409 */
-            readonly 409: {
+            409: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["UserAlreadyMemberError"] | components["schemas"]["MemberLimitReachedError"] | components["schemas"]["IdempotencyConflictError"] | components["schemas"]["IdempotencyInProgressError"];
+                    "application/json": components["schemas"]["UserAlreadyMemberError"] | components["schemas"]["MemberLimitReachedError"] | components["schemas"]["IdempotencyConflictError"] | components["schemas"]["IdempotencyInProgressError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };
     };
-    readonly "v2.management.invitations.revoke": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path: {
-                readonly accountId: string;
-                readonly invitationId: string;
+    "v2.management.invitations.revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                accountId: string;
+                invitationId: string;
             };
-            readonly cookie?: never;
+            cookie?: never;
         };
-        readonly requestBody?: never;
-        readonly responses: {
+        requestBody?: never;
+        responses: {
             /** @description OK */
-            readonly 200: {
+            200: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: Record<string, never>;
+                    "application/json": {
+                        data: Record<string, never>;
                     };
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"] | components["schemas"]["PersonalAccountError"];
+                    "application/json": components["schemas"]["InvalidRequestError"] | components["schemas"]["PersonalAccountError"];
                 };
             };
             /** @description 401 */
-            readonly 401: {
+            401: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
+                    "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
                 };
             };
             /** @description 403 */
-            readonly 403: {
+            403: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
                 };
             };
             /** @description 404 */
-            readonly 404: {
+            404: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AccountNotFoundError"] | components["schemas"]["InvitationNotFoundError"];
+                    "application/json": components["schemas"]["AccountNotFoundError"] | components["schemas"]["InvitationNotFoundError"];
                 };
             };
             /** @description 409 */
-            readonly 409: {
+            409: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvitationNotActiveError"];
+                    "application/json": components["schemas"]["InvitationNotActiveError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };
     };
-    readonly "v2.management.invitations.resend": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path: {
-                readonly accountId: string;
-                readonly invitationId: string;
+    "v2.management.invitations.resend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                accountId: string;
+                invitationId: string;
             };
-            readonly cookie?: never;
+            cookie?: never;
         };
-        readonly requestBody?: never;
-        readonly responses: {
+        requestBody?: never;
+        responses: {
             /** @description OK */
-            readonly 200: {
+            200: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: {
-                            readonly invitation: {
-                                readonly id: string;
-                                readonly accountId: string;
+                    "application/json": {
+                        data: {
+                            invitation: {
+                                id: string;
+                                accountId: string;
                                 /** Format: email */
-                                readonly email: string;
+                                email: string;
                                 /** @enum {string} */
-                                readonly role: "OWNER" | "MEMBER" | "VIEWER";
+                                role: "OWNER" | "MEMBER" | "VIEWER";
                                 /** @enum {string} */
-                                readonly status: "INITIAL" | "PENDING" | "ACCEPTED" | "CANCELED";
-                                readonly createdAt: string;
-                                readonly updatedAt: string;
+                                status: "INITIAL" | "PENDING" | "ACCEPTED" | "CANCELED";
+                                createdAt: string;
+                                updatedAt: string;
                             };
                         };
                     };
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"] | components["schemas"]["PersonalAccountError"];
+                    "application/json": components["schemas"]["InvalidRequestError"] | components["schemas"]["PersonalAccountError"];
                 };
             };
             /** @description 401 */
-            readonly 401: {
+            401: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
+                    "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
                 };
             };
             /** @description 403 */
-            readonly 403: {
+            403: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
                 };
             };
             /** @description 404 */
-            readonly 404: {
+            404: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AccountNotFoundError"] | components["schemas"]["InvitationNotFoundError"];
+                    "application/json": components["schemas"]["AccountNotFoundError"] | components["schemas"]["InvitationNotFoundError"];
                 };
             };
             /** @description 409 */
-            readonly 409: {
+            409: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvitationNotActiveError"];
+                    "application/json": components["schemas"]["InvitationNotActiveError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };
     };
-    readonly "v2.management.tokens.listAccount": {
-        readonly parameters: {
-            readonly query?: {
-                readonly page?: number;
-                readonly pageSize?: number;
+    "v2.management.tokens.listAccount": {
+        parameters: {
+            query?: {
+                page?: number;
+                pageSize?: number;
             };
-            readonly header?: never;
-            readonly path: {
-                readonly accountId: string;
+            header?: never;
+            path: {
+                accountId: string;
             };
-            readonly cookie?: never;
+            cookie?: never;
         };
-        readonly requestBody?: never;
-        readonly responses: {
+        requestBody?: never;
+        responses: {
             /** @description OK */
-            readonly 200: {
+            200: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: {
-                            readonly tokens: readonly {
-                                readonly id: string;
-                                readonly name: string;
+                    "application/json": {
+                        data: {
+                            tokens: {
+                                id: string;
+                                name: string;
                                 /** @enum {string} */
-                                readonly kind: "ACCOUNT" | "USER";
-                                readonly tokenPrefix: string;
-                                readonly scopes: readonly ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "file:read" | "file:write" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
-                                readonly createdAt: string;
-                                readonly updatedAt: string;
-                                readonly lastUsedAt: string | null;
-                                readonly revokedAt: string | null;
-                                readonly expiresAt: string | null;
-                                readonly accountId: string | null;
-                                readonly userId: string | null;
+                                kind: "ACCOUNT" | "USER";
+                                tokenPrefix: string;
+                                scopes: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "file:read" | "file:write" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
+                                createdAt: string;
+                                updatedAt: string;
+                                lastUsedAt: string | null;
+                                revokedAt: string | null;
+                                expiresAt: string | null;
+                                accountId: string | null;
+                                userId: string | null;
                             }[];
                         };
                     };
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"];
+                    "application/json": components["schemas"]["InvalidRequestError"];
                 };
             };
             /** @description 401 */
-            readonly 401: {
+            401: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
+                    "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
                 };
             };
             /** @description 403 */
-            readonly 403: {
+            403: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
                 };
             };
             /** @description 404 */
-            readonly 404: {
+            404: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AccountNotFoundError"];
+                    "application/json": components["schemas"]["AccountNotFoundError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };
     };
-    readonly "v2.management.tokens.createAccount": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: {
-                readonly "idempotency-key"?: string;
+    "v2.management.tokens.createAccount": {
+        parameters: {
+            query?: never;
+            header?: {
+                "idempotency-key"?: string;
             };
-            readonly path: {
-                readonly accountId: string;
+            path: {
+                accountId: string;
             };
-            readonly cookie?: never;
+            cookie?: never;
         };
-        readonly requestBody: {
-            readonly content: {
-                readonly "application/json": {
-                    readonly name: string;
+        requestBody: {
+            content: {
+                "application/json": {
+                    name: string;
                     /** @enum {string} */
-                    readonly preset?: "deploy" | "read-only" | "full-access";
-                    readonly scopes?: readonly ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "file:read" | "file:write" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
-                    readonly expiresAt?: string | null;
+                    preset?: "deploy" | "read-only" | "full-access";
+                    scopes?: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "file:read" | "file:write" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
+                    expiresAt?: string | null;
                 };
             };
         };
-        readonly responses: {
+        responses: {
             /** @description OK */
-            readonly 200: {
+            200: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: {
-                            readonly token: {
-                                readonly id: string;
-                                readonly name: string;
+                    "application/json": {
+                        data: {
+                            token: {
+                                id: string;
+                                name: string;
                                 /** @enum {string} */
-                                readonly kind: "ACCOUNT" | "USER";
-                                readonly tokenPrefix: string;
-                                readonly scopes: readonly ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "file:read" | "file:write" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
-                                readonly createdAt: string;
-                                readonly updatedAt: string;
-                                readonly lastUsedAt: string | null;
-                                readonly revokedAt: string | null;
-                                readonly expiresAt: string | null;
-                                readonly accountId: string | null;
-                                readonly userId: string | null;
+                                kind: "ACCOUNT" | "USER";
+                                tokenPrefix: string;
+                                scopes: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "file:read" | "file:write" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
+                                createdAt: string;
+                                updatedAt: string;
+                                lastUsedAt: string | null;
+                                revokedAt: string | null;
+                                expiresAt: string | null;
+                                accountId: string | null;
+                                userId: string | null;
                             };
-                            readonly secret: string;
+                            secret: string;
                         };
                     };
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"];
+                    "application/json": components["schemas"]["InvalidRequestError"];
                 };
             };
             /** @description 401 */
-            readonly 401: {
+            401: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
+                    "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
                 };
             };
             /** @description 403 */
-            readonly 403: {
+            403: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
                 };
             };
             /** @description 404 */
-            readonly 404: {
+            404: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AccountNotFoundError"];
+                    "application/json": components["schemas"]["AccountNotFoundError"];
                 };
             };
             /** @description 409 */
-            readonly 409: {
+            409: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["IdempotencyConflictError"] | components["schemas"]["IdempotencyInProgressError"];
+                    "application/json": components["schemas"]["IdempotencyConflictError"] | components["schemas"]["IdempotencyInProgressError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };
     };
-    readonly "v2.management.tokens.listUser": {
-        readonly parameters: {
-            readonly query?: {
-                readonly page?: number;
-                readonly pageSize?: number;
+    "v2.management.tokens.listUser": {
+        parameters: {
+            query?: {
+                page?: number;
+                pageSize?: number;
             };
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        readonly requestBody?: never;
-        readonly responses: {
+        requestBody?: never;
+        responses: {
             /** @description OK */
-            readonly 200: {
+            200: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: {
-                            readonly tokens: readonly {
-                                readonly id: string;
-                                readonly name: string;
+                    "application/json": {
+                        data: {
+                            tokens: {
+                                id: string;
+                                name: string;
                                 /** @enum {string} */
-                                readonly kind: "ACCOUNT" | "USER";
-                                readonly tokenPrefix: string;
-                                readonly scopes: readonly ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "file:read" | "file:write" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
-                                readonly createdAt: string;
-                                readonly updatedAt: string;
-                                readonly lastUsedAt: string | null;
-                                readonly revokedAt: string | null;
-                                readonly expiresAt: string | null;
-                                readonly accountId: string | null;
-                                readonly userId: string | null;
+                                kind: "ACCOUNT" | "USER";
+                                tokenPrefix: string;
+                                scopes: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "file:read" | "file:write" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
+                                createdAt: string;
+                                updatedAt: string;
+                                lastUsedAt: string | null;
+                                revokedAt: string | null;
+                                expiresAt: string | null;
+                                accountId: string | null;
+                                userId: string | null;
                             }[];
                         };
                     };
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"];
+                    "application/json": components["schemas"]["InvalidRequestError"];
                 };
             };
             /** @description 401 */
-            readonly 401: {
+            401: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
+                    "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
                 };
             };
             /** @description 403 */
-            readonly 403: {
+            403: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };
     };
-    readonly "v2.management.tokens.createUser": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: {
-                readonly "idempotency-key"?: string;
+    "v2.management.tokens.createUser": {
+        parameters: {
+            query?: never;
+            header?: {
+                "idempotency-key"?: string;
             };
-            readonly path?: never;
-            readonly cookie?: never;
+            path?: never;
+            cookie?: never;
         };
-        readonly requestBody: {
-            readonly content: {
-                readonly "application/json": {
-                    readonly name: string;
+        requestBody: {
+            content: {
+                "application/json": {
+                    name: string;
                     /** @enum {string} */
-                    readonly preset?: "deploy" | "read-only" | "full-access";
-                    readonly scopes?: readonly ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "file:read" | "file:write" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
-                    readonly expiresAt?: string | null;
+                    preset?: "deploy" | "read-only" | "full-access";
+                    scopes?: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "file:read" | "file:write" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
+                    expiresAt?: string | null;
                 };
             };
         };
-        readonly responses: {
+        responses: {
             /** @description OK */
-            readonly 200: {
+            200: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: {
-                            readonly token: {
-                                readonly id: string;
-                                readonly name: string;
+                    "application/json": {
+                        data: {
+                            token: {
+                                id: string;
+                                name: string;
                                 /** @enum {string} */
-                                readonly kind: "ACCOUNT" | "USER";
-                                readonly tokenPrefix: string;
-                                readonly scopes: readonly ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "file:read" | "file:write" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
-                                readonly createdAt: string;
-                                readonly updatedAt: string;
-                                readonly lastUsedAt: string | null;
-                                readonly revokedAt: string | null;
-                                readonly expiresAt: string | null;
-                                readonly accountId: string | null;
-                                readonly userId: string | null;
+                                kind: "ACCOUNT" | "USER";
+                                tokenPrefix: string;
+                                scopes: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "file:read" | "file:write" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
+                                createdAt: string;
+                                updatedAt: string;
+                                lastUsedAt: string | null;
+                                revokedAt: string | null;
+                                expiresAt: string | null;
+                                accountId: string | null;
+                                userId: string | null;
                             };
-                            readonly secret: string;
+                            secret: string;
                         };
                     };
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"];
+                    "application/json": components["schemas"]["InvalidRequestError"];
                 };
             };
             /** @description 401 */
-            readonly 401: {
+            401: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
+                    "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
                 };
             };
             /** @description 403 */
-            readonly 403: {
+            403: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
                 };
             };
             /** @description 409 */
-            readonly 409: {
+            409: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["IdempotencyConflictError"] | components["schemas"]["IdempotencyInProgressError"];
+                    "application/json": components["schemas"]["IdempotencyConflictError"] | components["schemas"]["IdempotencyInProgressError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };
     };
-    readonly "v2.management.tokens.revoke": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path: {
-                readonly tokenId: string;
+    "v2.management.tokens.revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tokenId: string;
             };
-            readonly cookie?: never;
+            cookie?: never;
         };
-        readonly requestBody?: never;
-        readonly responses: {
+        requestBody?: never;
+        responses: {
             /** @description OK */
-            readonly 200: {
+            200: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: Record<string, never>;
+                    "application/json": {
+                        data: Record<string, never>;
                     };
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"];
+                    "application/json": components["schemas"]["InvalidRequestError"];
                 };
             };
             /** @description 401 */
-            readonly 401: {
+            401: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
+                    "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
                 };
             };
             /** @description 403 */
-            readonly 403: {
+            403: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
                 };
             };
             /** @description 404 */
-            readonly 404: {
+            404: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["TokenNotFoundError"];
+                    "application/json": components["schemas"]["TokenNotFoundError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };
     };
-    readonly "v2.runtime.accessToken.create": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path: {
-                readonly projectRef: string;
+    "v2.runtime.accessToken.create": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectRef: string;
             };
-            readonly cookie?: never;
+            cookie?: never;
         };
-        readonly requestBody: {
-            readonly content: {
-                readonly "application/json": {
-                    readonly context: {
-                        readonly [key: string]: string;
+        requestBody: {
+            content: {
+                "application/json": {
+                    context: {
+                        [key: string]: string;
                     };
-                    readonly buckets: {
-                        readonly [key: string]: {
-                            readonly path: readonly {
-                                readonly key: string;
-                                readonly value: string;
+                    buckets: {
+                        [key: string]: {
+                            path: {
+                                key: string;
+                                value: string;
                             }[];
-                            readonly accessControl?: unknown;
+                            accessControl?: unknown;
                         };
                     };
                 };
             };
         };
-        readonly responses: {
+        responses: {
             /** @description OK */
-            readonly 200: {
+            200: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: {
-                            readonly token: string;
-                            readonly basePath: string;
+                    "application/json": {
+                        data: {
+                            token: string;
+                            basePath: string;
                         };
                     };
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"];
+                    "application/json": components["schemas"]["InvalidRequestError"];
                 };
             };
             /** @description 401 */
-            readonly 401: {
+            401: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
+                    "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
                 };
             };
             /** @description 403 */
-            readonly 403: {
+            403: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
                 };
             };
             /** @description 404 */
-            readonly 404: {
+            404: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["ProjectNotFoundError"];
+                    "application/json": components["schemas"]["ProjectNotFoundError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };
     };
-    readonly "v2.runtime.projects.get": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path: {
-                readonly projectRef: string;
+    "v2.runtime.projects.get": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectRef: string;
             };
-            readonly cookie?: never;
+            cookie?: never;
         };
-        readonly requestBody?: never;
-        readonly responses: {
+        requestBody?: never;
+        responses: {
             /** @description OK */
-            readonly 200: {
+            200: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: {
-                            readonly project: {
-                                readonly id: string;
-                                readonly basePath: string;
-                                readonly name: string;
-                                readonly accountId: string;
-                                readonly usageBytes: number;
-                                readonly createdAt: string;
-                                readonly updatedAt: string;
+                    "application/json": {
+                        data: {
+                            project: {
+                                id: string;
+                                basePath: string;
+                                name: string;
+                                accountId: string;
+                                usageBytes: number;
+                                createdAt: string;
+                                updatedAt: string;
                             };
                         };
                     };
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"];
+                    "application/json": components["schemas"]["InvalidRequestError"];
                 };
             };
             /** @description 401 */
-            readonly 401: {
+            401: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
+                    "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
                 };
             };
             /** @description 403 */
-            readonly 403: {
+            403: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
                 };
             };
             /** @description 404 */
-            readonly 404: {
+            404: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["ProjectNotFoundError"];
+                    "application/json": components["schemas"]["ProjectNotFoundError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };
     };
-    readonly "v2.runtime.buckets.list": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path: {
-                readonly projectRef: string;
+    "v2.runtime.buckets.list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectRef: string;
             };
-            readonly cookie?: never;
+            cookie?: never;
         };
-        readonly requestBody?: never;
-        readonly responses: {
+        requestBody?: never;
+        responses: {
             /** @description OK */
-            readonly 200: {
+            200: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: {
-                            readonly buckets: readonly {
-                                readonly id: string;
-                                readonly name: string;
-                                readonly projectId: string;
-                                readonly accountId: string;
+                    "application/json": {
+                        data: {
+                            buckets: {
+                                id: string;
+                                name: string;
+                                projectId: string;
+                                accountId: string;
                                 /** @enum {string} */
-                                readonly type: "file" | "image";
+                                type: "file" | "image";
                                 /** @enum {string} */
-                                readonly visibility: "public" | "protected";
-                                readonly usageBytes: number;
-                                readonly createdAt: string;
-                                readonly updatedAt: string;
+                                visibility: "public" | "protected";
+                                usageBytes: number;
+                                createdAt: string;
+                                updatedAt: string;
                             }[];
                         };
                     };
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"];
+                    "application/json": components["schemas"]["InvalidRequestError"];
                 };
             };
             /** @description 401 */
-            readonly 401: {
+            401: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
+                    "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
                 };
             };
             /** @description 403 */
-            readonly 403: {
+            403: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
                 };
             };
             /** @description 404 */
-            readonly 404: {
+            404: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["ProjectNotFoundError"];
+                    "application/json": components["schemas"]["ProjectNotFoundError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };
     };
-    readonly "v2.runtime.buckets.get": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path: {
-                readonly projectRef: string;
-                readonly bucketName: string;
+    "v2.runtime.buckets.get": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectRef: string;
+                bucketName: string;
             };
-            readonly cookie?: never;
+            cookie?: never;
         };
-        readonly requestBody?: never;
-        readonly responses: {
+        requestBody?: never;
+        responses: {
             /** @description OK */
-            readonly 200: {
+            200: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: {
-                            readonly bucket: {
-                                readonly id: string;
-                                readonly name: string;
-                                readonly projectId: string;
-                                readonly accountId: string;
+                    "application/json": {
+                        data: {
+                            bucket: {
+                                id: string;
+                                name: string;
+                                projectId: string;
+                                accountId: string;
                                 /** @enum {string} */
-                                readonly type: "file" | "image";
+                                type: "file" | "image";
                                 /** @enum {string} */
-                                readonly visibility: "public" | "protected";
-                                readonly usageBytes: number;
-                                readonly createdAt: string;
-                                readonly updatedAt: string;
+                                visibility: "public" | "protected";
+                                usageBytes: number;
+                                createdAt: string;
+                                updatedAt: string;
                             };
                         };
                     };
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"];
+                    "application/json": components["schemas"]["InvalidRequestError"];
                 };
             };
             /** @description 401 */
-            readonly 401: {
+            401: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
+                    "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
                 };
             };
             /** @description 403 */
-            readonly 403: {
+            403: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
                 };
             };
             /** @description 404 */
-            readonly 404: {
+            404: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["ProjectNotFoundError"] | components["schemas"]["BucketNotFoundError"];
+                    "application/json": components["schemas"]["ProjectNotFoundError"] | components["schemas"]["BucketNotFoundError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };
     };
-    readonly "v2.runtime.files.search": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path: {
-                readonly projectRef: string;
-                readonly bucketName: string;
+    "v2.runtime.files.search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectRef: string;
+                bucketName: string;
             };
-            readonly cookie?: never;
+            cookie?: never;
         };
-        readonly requestBody: {
-            readonly content: {
-                readonly "application/json": {
-                    readonly filter?: {
-                        readonly uploadedAt?: string | {
-                            readonly eq?: string;
-                            readonly neq?: string;
-                            readonly gt?: string;
-                            readonly gte?: string;
-                            readonly lt?: string;
-                            readonly lte?: string;
-                            readonly startsWith?: string;
-                            readonly endsWith?: string;
+        requestBody: {
+            content: {
+                "application/json": {
+                    filter?: {
+                        uploadedAt?: string | {
+                            eq?: string;
+                            neq?: string;
+                            gt?: string;
+                            gte?: string;
+                            lt?: string;
+                            lte?: string;
+                            startsWith?: string;
+                            endsWith?: string;
                         } | {
-                            readonly between: readonly [
+                            between: [
                                 string,
                                 string
                             ];
                         };
-                        readonly path?: {
-                            readonly [key: string]: string | {
-                                readonly eq?: string;
-                                readonly neq?: string;
-                                readonly gt?: string;
-                                readonly gte?: string;
-                                readonly lt?: string;
-                                readonly lte?: string;
-                                readonly startsWith?: string;
-                                readonly endsWith?: string;
+                        path?: {
+                            [key: string]: string | {
+                                eq?: string;
+                                neq?: string;
+                                gt?: string;
+                                gte?: string;
+                                lt?: string;
+                                lte?: string;
+                                startsWith?: string;
+                                endsWith?: string;
                             } | {
-                                readonly between: readonly [
+                                between: [
                                     string,
                                     string
                                 ];
                             };
                         };
-                        readonly metadata?: {
-                            readonly [key: string]: string | {
-                                readonly eq?: string;
-                                readonly neq?: string;
-                                readonly gt?: string;
-                                readonly gte?: string;
-                                readonly lt?: string;
-                                readonly lte?: string;
-                                readonly startsWith?: string;
-                                readonly endsWith?: string;
+                        metadata?: {
+                            [key: string]: string | {
+                                eq?: string;
+                                neq?: string;
+                                gt?: string;
+                                gte?: string;
+                                lt?: string;
+                                lte?: string;
+                                startsWith?: string;
+                                endsWith?: string;
                             } | {
-                                readonly between: readonly [
+                                between: [
                                     string,
                                     string
                                 ];
                             };
                         };
-                        readonly AND?: readonly {
-                            readonly uploadedAt?: string | {
-                                readonly eq?: string;
-                                readonly neq?: string;
-                                readonly gt?: string;
-                                readonly gte?: string;
-                                readonly lt?: string;
-                                readonly lte?: string;
-                                readonly startsWith?: string;
-                                readonly endsWith?: string;
+                        AND?: {
+                            uploadedAt?: string | {
+                                eq?: string;
+                                neq?: string;
+                                gt?: string;
+                                gte?: string;
+                                lt?: string;
+                                lte?: string;
+                                startsWith?: string;
+                                endsWith?: string;
                             } | {
-                                readonly between: readonly [
+                                between: [
                                     string,
                                     string
                                 ];
                             };
-                            readonly path?: {
-                                readonly [key: string]: string | {
-                                    readonly eq?: string;
-                                    readonly neq?: string;
-                                    readonly gt?: string;
-                                    readonly gte?: string;
-                                    readonly lt?: string;
-                                    readonly lte?: string;
-                                    readonly startsWith?: string;
-                                    readonly endsWith?: string;
+                            path?: {
+                                [key: string]: string | {
+                                    eq?: string;
+                                    neq?: string;
+                                    gt?: string;
+                                    gte?: string;
+                                    lt?: string;
+                                    lte?: string;
+                                    startsWith?: string;
+                                    endsWith?: string;
                                 } | {
-                                    readonly between: readonly [
+                                    between: [
                                         string,
                                         string
                                     ];
                                 };
                             };
-                            readonly metadata?: {
-                                readonly [key: string]: string | {
-                                    readonly eq?: string;
-                                    readonly neq?: string;
-                                    readonly gt?: string;
-                                    readonly gte?: string;
-                                    readonly lt?: string;
-                                    readonly lte?: string;
-                                    readonly startsWith?: string;
-                                    readonly endsWith?: string;
+                            metadata?: {
+                                [key: string]: string | {
+                                    eq?: string;
+                                    neq?: string;
+                                    gt?: string;
+                                    gte?: string;
+                                    lt?: string;
+                                    lte?: string;
+                                    startsWith?: string;
+                                    endsWith?: string;
                                 } | {
-                                    readonly between: readonly [
+                                    between: [
                                         string,
                                         string
                                     ];
                                 };
                             };
-                            readonly AND?: readonly {
-                                readonly uploadedAt?: string | {
-                                    readonly eq?: string;
-                                    readonly neq?: string;
-                                    readonly gt?: string;
-                                    readonly gte?: string;
-                                    readonly lt?: string;
-                                    readonly lte?: string;
-                                    readonly startsWith?: string;
-                                    readonly endsWith?: string;
+                            AND?: {
+                                uploadedAt?: string | {
+                                    eq?: string;
+                                    neq?: string;
+                                    gt?: string;
+                                    gte?: string;
+                                    lt?: string;
+                                    lte?: string;
+                                    startsWith?: string;
+                                    endsWith?: string;
                                 } | {
-                                    readonly between: readonly [
+                                    between: [
                                         string,
                                         string
                                     ];
                                 };
-                                readonly path?: {
-                                    readonly [key: string]: string | {
-                                        readonly eq?: string;
-                                        readonly neq?: string;
-                                        readonly gt?: string;
-                                        readonly gte?: string;
-                                        readonly lt?: string;
-                                        readonly lte?: string;
-                                        readonly startsWith?: string;
-                                        readonly endsWith?: string;
+                                path?: {
+                                    [key: string]: string | {
+                                        eq?: string;
+                                        neq?: string;
+                                        gt?: string;
+                                        gte?: string;
+                                        lt?: string;
+                                        lte?: string;
+                                        startsWith?: string;
+                                        endsWith?: string;
                                     } | {
-                                        readonly between: readonly [
+                                        between: [
                                             unknown,
                                             unknown
                                         ];
                                     };
                                 };
-                                readonly metadata?: {
-                                    readonly [key: string]: string | {
-                                        readonly eq?: string;
-                                        readonly neq?: string;
-                                        readonly gt?: string;
-                                        readonly gte?: string;
-                                        readonly lt?: string;
-                                        readonly lte?: string;
-                                        readonly startsWith?: string;
-                                        readonly endsWith?: string;
+                                metadata?: {
+                                    [key: string]: string | {
+                                        eq?: string;
+                                        neq?: string;
+                                        gt?: string;
+                                        gte?: string;
+                                        lt?: string;
+                                        lte?: string;
+                                        startsWith?: string;
+                                        endsWith?: string;
                                     } | {
-                                        readonly between: readonly [
+                                        between: [
                                             unknown,
                                             unknown
                                         ];
                                     };
                                 };
-                                readonly AND?: unknown;
-                                readonly OR?: unknown;
+                                AND?: unknown;
+                                OR?: unknown;
                             }[];
-                            readonly OR?: readonly {
-                                readonly uploadedAt?: string | {
-                                    readonly eq?: string;
-                                    readonly neq?: string;
-                                    readonly gt?: string;
-                                    readonly gte?: string;
-                                    readonly lt?: string;
-                                    readonly lte?: string;
-                                    readonly startsWith?: string;
-                                    readonly endsWith?: string;
+                            OR?: {
+                                uploadedAt?: string | {
+                                    eq?: string;
+                                    neq?: string;
+                                    gt?: string;
+                                    gte?: string;
+                                    lt?: string;
+                                    lte?: string;
+                                    startsWith?: string;
+                                    endsWith?: string;
                                 } | {
-                                    readonly between: readonly [
+                                    between: [
                                         string,
                                         string
                                     ];
                                 };
-                                readonly path?: {
-                                    readonly [key: string]: string | {
-                                        readonly eq?: string;
-                                        readonly neq?: string;
-                                        readonly gt?: string;
-                                        readonly gte?: string;
-                                        readonly lt?: string;
-                                        readonly lte?: string;
-                                        readonly startsWith?: string;
-                                        readonly endsWith?: string;
+                                path?: {
+                                    [key: string]: string | {
+                                        eq?: string;
+                                        neq?: string;
+                                        gt?: string;
+                                        gte?: string;
+                                        lt?: string;
+                                        lte?: string;
+                                        startsWith?: string;
+                                        endsWith?: string;
                                     } | {
-                                        readonly between: readonly [
+                                        between: [
                                             unknown,
                                             unknown
                                         ];
                                     };
                                 };
-                                readonly metadata?: {
-                                    readonly [key: string]: string | {
-                                        readonly eq?: string;
-                                        readonly neq?: string;
-                                        readonly gt?: string;
-                                        readonly gte?: string;
-                                        readonly lt?: string;
-                                        readonly lte?: string;
-                                        readonly startsWith?: string;
-                                        readonly endsWith?: string;
+                                metadata?: {
+                                    [key: string]: string | {
+                                        eq?: string;
+                                        neq?: string;
+                                        gt?: string;
+                                        gte?: string;
+                                        lt?: string;
+                                        lte?: string;
+                                        startsWith?: string;
+                                        endsWith?: string;
                                     } | {
-                                        readonly between: readonly [
+                                        between: [
                                             unknown,
                                             unknown
                                         ];
                                     };
                                 };
-                                readonly AND?: unknown;
-                                readonly OR?: unknown;
+                                AND?: unknown;
+                                OR?: unknown;
                             }[];
                         }[];
-                        readonly OR?: readonly {
-                            readonly uploadedAt?: string | {
-                                readonly eq?: string;
-                                readonly neq?: string;
-                                readonly gt?: string;
-                                readonly gte?: string;
-                                readonly lt?: string;
-                                readonly lte?: string;
-                                readonly startsWith?: string;
-                                readonly endsWith?: string;
+                        OR?: {
+                            uploadedAt?: string | {
+                                eq?: string;
+                                neq?: string;
+                                gt?: string;
+                                gte?: string;
+                                lt?: string;
+                                lte?: string;
+                                startsWith?: string;
+                                endsWith?: string;
                             } | {
-                                readonly between: readonly [
+                                between: [
                                     string,
                                     string
                                 ];
                             };
-                            readonly path?: {
-                                readonly [key: string]: string | {
-                                    readonly eq?: string;
-                                    readonly neq?: string;
-                                    readonly gt?: string;
-                                    readonly gte?: string;
-                                    readonly lt?: string;
-                                    readonly lte?: string;
-                                    readonly startsWith?: string;
-                                    readonly endsWith?: string;
+                            path?: {
+                                [key: string]: string | {
+                                    eq?: string;
+                                    neq?: string;
+                                    gt?: string;
+                                    gte?: string;
+                                    lt?: string;
+                                    lte?: string;
+                                    startsWith?: string;
+                                    endsWith?: string;
                                 } | {
-                                    readonly between: readonly [
+                                    between: [
                                         string,
                                         string
                                     ];
                                 };
                             };
-                            readonly metadata?: {
-                                readonly [key: string]: string | {
-                                    readonly eq?: string;
-                                    readonly neq?: string;
-                                    readonly gt?: string;
-                                    readonly gte?: string;
-                                    readonly lt?: string;
-                                    readonly lte?: string;
-                                    readonly startsWith?: string;
-                                    readonly endsWith?: string;
+                            metadata?: {
+                                [key: string]: string | {
+                                    eq?: string;
+                                    neq?: string;
+                                    gt?: string;
+                                    gte?: string;
+                                    lt?: string;
+                                    lte?: string;
+                                    startsWith?: string;
+                                    endsWith?: string;
                                 } | {
-                                    readonly between: readonly [
+                                    between: [
                                         string,
                                         string
                                     ];
                                 };
                             };
-                            readonly AND?: readonly {
-                                readonly uploadedAt?: string | {
-                                    readonly eq?: string;
-                                    readonly neq?: string;
-                                    readonly gt?: string;
-                                    readonly gte?: string;
-                                    readonly lt?: string;
-                                    readonly lte?: string;
-                                    readonly startsWith?: string;
-                                    readonly endsWith?: string;
+                            AND?: {
+                                uploadedAt?: string | {
+                                    eq?: string;
+                                    neq?: string;
+                                    gt?: string;
+                                    gte?: string;
+                                    lt?: string;
+                                    lte?: string;
+                                    startsWith?: string;
+                                    endsWith?: string;
                                 } | {
-                                    readonly between: readonly [
+                                    between: [
                                         string,
                                         string
                                     ];
                                 };
-                                readonly path?: {
-                                    readonly [key: string]: string | {
-                                        readonly eq?: string;
-                                        readonly neq?: string;
-                                        readonly gt?: string;
-                                        readonly gte?: string;
-                                        readonly lt?: string;
-                                        readonly lte?: string;
-                                        readonly startsWith?: string;
-                                        readonly endsWith?: string;
+                                path?: {
+                                    [key: string]: string | {
+                                        eq?: string;
+                                        neq?: string;
+                                        gt?: string;
+                                        gte?: string;
+                                        lt?: string;
+                                        lte?: string;
+                                        startsWith?: string;
+                                        endsWith?: string;
                                     } | {
-                                        readonly between: readonly [
+                                        between: [
                                             unknown,
                                             unknown
                                         ];
                                     };
                                 };
-                                readonly metadata?: {
-                                    readonly [key: string]: string | {
-                                        readonly eq?: string;
-                                        readonly neq?: string;
-                                        readonly gt?: string;
-                                        readonly gte?: string;
-                                        readonly lt?: string;
-                                        readonly lte?: string;
-                                        readonly startsWith?: string;
-                                        readonly endsWith?: string;
+                                metadata?: {
+                                    [key: string]: string | {
+                                        eq?: string;
+                                        neq?: string;
+                                        gt?: string;
+                                        gte?: string;
+                                        lt?: string;
+                                        lte?: string;
+                                        startsWith?: string;
+                                        endsWith?: string;
                                     } | {
-                                        readonly between: readonly [
+                                        between: [
                                             unknown,
                                             unknown
                                         ];
                                     };
                                 };
-                                readonly AND?: unknown;
-                                readonly OR?: unknown;
+                                AND?: unknown;
+                                OR?: unknown;
                             }[];
-                            readonly OR?: readonly {
-                                readonly uploadedAt?: string | {
-                                    readonly eq?: string;
-                                    readonly neq?: string;
-                                    readonly gt?: string;
-                                    readonly gte?: string;
-                                    readonly lt?: string;
-                                    readonly lte?: string;
-                                    readonly startsWith?: string;
-                                    readonly endsWith?: string;
+                            OR?: {
+                                uploadedAt?: string | {
+                                    eq?: string;
+                                    neq?: string;
+                                    gt?: string;
+                                    gte?: string;
+                                    lt?: string;
+                                    lte?: string;
+                                    startsWith?: string;
+                                    endsWith?: string;
                                 } | {
-                                    readonly between: readonly [
+                                    between: [
                                         string,
                                         string
                                     ];
                                 };
-                                readonly path?: {
-                                    readonly [key: string]: string | {
-                                        readonly eq?: string;
-                                        readonly neq?: string;
-                                        readonly gt?: string;
-                                        readonly gte?: string;
-                                        readonly lt?: string;
-                                        readonly lte?: string;
-                                        readonly startsWith?: string;
-                                        readonly endsWith?: string;
+                                path?: {
+                                    [key: string]: string | {
+                                        eq?: string;
+                                        neq?: string;
+                                        gt?: string;
+                                        gte?: string;
+                                        lt?: string;
+                                        lte?: string;
+                                        startsWith?: string;
+                                        endsWith?: string;
                                     } | {
-                                        readonly between: readonly [
+                                        between: [
                                             unknown,
                                             unknown
                                         ];
                                     };
                                 };
-                                readonly metadata?: {
-                                    readonly [key: string]: string | {
-                                        readonly eq?: string;
-                                        readonly neq?: string;
-                                        readonly gt?: string;
-                                        readonly gte?: string;
-                                        readonly lt?: string;
-                                        readonly lte?: string;
-                                        readonly startsWith?: string;
-                                        readonly endsWith?: string;
+                                metadata?: {
+                                    [key: string]: string | {
+                                        eq?: string;
+                                        neq?: string;
+                                        gt?: string;
+                                        gte?: string;
+                                        lt?: string;
+                                        lte?: string;
+                                        startsWith?: string;
+                                        endsWith?: string;
                                     } | {
-                                        readonly between: readonly [
+                                        between: [
                                             unknown,
                                             unknown
                                         ];
                                     };
                                 };
-                                readonly AND?: unknown;
-                                readonly OR?: unknown;
+                                AND?: unknown;
+                                OR?: unknown;
                             }[];
                         }[];
                     };
                     /** @default {
                      *       "limit": 20
                      *     } */
-                    readonly pagination?: {
-                        readonly cursor?: string;
+                    pagination?: {
+                        cursor?: string;
                         /** @default 20 */
-                        readonly limit?: number;
+                        limit?: number;
                     };
                 };
             };
         };
-        readonly responses: {
+        responses: {
             /** @description OK */
-            readonly 200: {
+            200: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: {
-                            readonly files: readonly components["schemas"]["File"][];
-                            readonly pagination: {
-                                readonly limit: number;
-                                readonly nextCursor: string | null;
-                                readonly hasMore: boolean;
+                    "application/json": {
+                        data: {
+                            files: components["schemas"]["File"][];
+                            pagination: {
+                                limit: number;
+                                nextCursor: string | null;
+                                hasMore: boolean;
                             };
                         };
                     };
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"];
+                    "application/json": components["schemas"]["InvalidRequestError"];
                 };
             };
             /** @description 401 */
-            readonly 401: {
+            401: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
+                    "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
                 };
             };
             /** @description 403 */
-            readonly 403: {
+            403: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
                 };
             };
             /** @description 404 */
-            readonly 404: {
+            404: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["ProjectNotFoundError"];
+                    "application/json": components["schemas"]["ProjectNotFoundError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };
     };
-    readonly "v2.runtime.files.lookup": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path: {
-                readonly projectRef: string;
+    "v2.runtime.files.lookup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectRef: string;
             };
-            readonly cookie?: never;
+            cookie?: never;
         };
-        readonly requestBody: {
-            readonly content: {
-                readonly "application/json": {
-                    readonly file: {
-                        readonly id: string;
+        requestBody: {
+            content: {
+                "application/json": {
+                    file: {
+                        id: string;
                     } | {
-                        readonly key: string;
+                        key: string;
                     } | {
-                        readonly url: string;
+                        url: string;
                     };
                 };
             };
         };
-        readonly responses: {
+        responses: {
             /** @description OK */
-            readonly 200: {
+            200: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: {
-                            readonly file: components["schemas"]["File"];
+                    "application/json": {
+                        data: {
+                            file: components["schemas"]["File"];
                         };
                     };
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"] | components["schemas"]["InvalidFileReferenceError"];
+                    "application/json": components["schemas"]["InvalidRequestError"] | components["schemas"]["InvalidFileReferenceError"];
                 };
             };
             /** @description 401 */
-            readonly 401: {
+            401: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
+                    "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
                 };
             };
             /** @description 403 */
-            readonly 403: {
+            403: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
                 };
             };
             /** @description 404 */
-            readonly 404: {
+            404: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["ProjectNotFoundError"] | components["schemas"]["FileNotFoundError"];
+                    "application/json": components["schemas"]["ProjectNotFoundError"] | components["schemas"]["FileNotFoundError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };
     };
-    readonly "v2.runtime.files.signedUrls.create": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path: {
-                readonly projectRef: string;
-                readonly bucketName: string;
+    "v2.runtime.files.signedUrls.create": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectRef: string;
+                bucketName: string;
             };
-            readonly cookie?: never;
+            cookie?: never;
         };
-        readonly requestBody: {
-            readonly content: {
-                readonly "application/json": {
-                    readonly urls: readonly string[];
-                    readonly expiresIn?: number;
-                    readonly includeThumbnails?: boolean;
+        requestBody: {
+            content: {
+                "application/json": {
+                    urls: string[];
+                    expiresIn?: number;
+                    includeThumbnails?: boolean;
                 };
             };
         };
-        readonly responses: {
+        responses: {
             /** @description OK */
-            readonly 200: {
+            200: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: {
-                            readonly signedUrls: readonly {
-                                readonly url: string;
-                                readonly signedUrl: string;
-                                readonly expiresAt: string;
-                                readonly expiresIn: number;
-                                readonly thumbnailUrl?: string | null;
-                                readonly signedThumbnailUrl?: string | null;
+                    "application/json": {
+                        data: {
+                            signedUrls: {
+                                url: string;
+                                signedUrl: string;
+                                expiresAt: string;
+                                expiresIn: number;
+                                thumbnailUrl?: string | null;
+                                signedThumbnailUrl?: string | null;
                             }[];
                         };
                     };
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"];
+                    "application/json": components["schemas"]["InvalidRequestError"];
                 };
             };
             /** @description 401 */
-            readonly 401: {
+            401: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
+                    "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
                 };
             };
             /** @description 403 */
-            readonly 403: {
+            403: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"] | components["schemas"]["AccountPausedError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"] | components["schemas"]["AccountPausedError"];
                 };
             };
             /** @description 404 */
-            readonly 404: {
+            404: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["ProjectNotFoundError"] | components["schemas"]["FileNotFoundError"];
+                    "application/json": components["schemas"]["ProjectNotFoundError"] | components["schemas"]["FileNotFoundError"];
                 };
             };
             /** @description 409 */
-            readonly 409: {
+            409: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["SignedReadUrlNotAvailableError"];
+                    "application/json": components["schemas"]["SignedReadUrlNotAvailableError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };
     };
-    readonly "v2.runtime.files.confirm": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path: {
-                readonly projectRef: string;
+    "v2.runtime.files.confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectRef: string;
             };
-            readonly cookie?: never;
+            cookie?: never;
         };
-        readonly requestBody: {
-            readonly content: {
-                readonly "application/json": {
-                    readonly files: readonly ({
-                        readonly id: string;
+        requestBody: {
+            content: {
+                "application/json": {
+                    files: ({
+                        id: string;
                     } | {
-                        readonly key: string;
+                        key: string;
                     } | {
-                        readonly url: string;
+                        url: string;
                     })[];
                 };
             };
         };
-        readonly responses: {
+        responses: {
             /** @description OK */
-            readonly 200: {
+            200: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: {
-                            readonly results: readonly ({
-                                readonly fileRef: {
-                                    readonly id: string;
+                    "application/json": {
+                        data: {
+                            results: ({
+                                fileRef: {
+                                    id: string;
                                 } | {
-                                    readonly key: string;
+                                    key: string;
                                 } | {
-                                    readonly url: string;
+                                    url: string;
                                 };
                                 /** @constant */
-                                readonly success: true;
+                                success: true;
                             } | {
-                                readonly fileRef: {
-                                    readonly id: string;
+                                fileRef: {
+                                    id: string;
                                 } | {
-                                    readonly key: string;
+                                    key: string;
                                 } | {
-                                    readonly url: string;
+                                    url: string;
                                 };
                                 /** @constant */
-                                readonly success: false;
-                                readonly error: {
+                                success: false;
+                                error: {
                                     /** @enum {string} */
-                                    readonly code: "FILE_NOT_CONFIRMABLE" | "FILE_NOT_DELETABLE" | "FILE_NOT_RESTORABLE" | "INVALID_FILE_REF";
-                                    readonly message: string;
+                                    code: "FILE_NOT_CONFIRMABLE" | "FILE_NOT_DELETABLE" | "FILE_NOT_RESTORABLE" | "INVALID_FILE_REF";
+                                    message: string;
                                 };
                             })[];
-                            readonly successCount: number;
-                            readonly failureCount: number;
+                            successCount: number;
+                            failureCount: number;
                         };
                     };
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"];
+                    "application/json": components["schemas"]["InvalidRequestError"];
                 };
             };
             /** @description 401 */
-            readonly 401: {
+            401: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
+                    "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
                 };
             };
             /** @description 403 */
-            readonly 403: {
+            403: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
                 };
             };
             /** @description 404 */
-            readonly 404: {
+            404: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["ProjectNotFoundError"];
+                    "application/json": components["schemas"]["ProjectNotFoundError"];
                 };
             };
             /** @description 409 */
-            readonly 409: {
+            409: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["BucketEmptyInProgressError"];
+                    "application/json": components["schemas"]["BucketEmptyInProgressError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };
     };
-    readonly "v2.runtime.files.delete": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path: {
-                readonly projectRef: string;
+    "v2.runtime.files.delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectRef: string;
             };
-            readonly cookie?: never;
+            cookie?: never;
         };
-        readonly requestBody: {
-            readonly content: {
-                readonly "application/json": {
-                    readonly files: readonly ({
-                        readonly id: string;
+        requestBody: {
+            content: {
+                "application/json": {
+                    files: ({
+                        id: string;
                     } | {
-                        readonly key: string;
+                        key: string;
                     } | {
-                        readonly url: string;
+                        url: string;
                     })[];
                 };
             };
         };
-        readonly responses: {
+        responses: {
             /** @description OK */
-            readonly 200: {
+            200: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: {
-                            readonly results: readonly ({
-                                readonly fileRef: {
-                                    readonly id: string;
+                    "application/json": {
+                        data: {
+                            results: ({
+                                fileRef: {
+                                    id: string;
                                 } | {
-                                    readonly key: string;
+                                    key: string;
                                 } | {
-                                    readonly url: string;
+                                    url: string;
                                 };
                                 /** @constant */
-                                readonly success: true;
+                                success: true;
                             } | {
-                                readonly fileRef: {
-                                    readonly id: string;
+                                fileRef: {
+                                    id: string;
                                 } | {
-                                    readonly key: string;
+                                    key: string;
                                 } | {
-                                    readonly url: string;
+                                    url: string;
                                 };
                                 /** @constant */
-                                readonly success: false;
-                                readonly error: {
+                                success: false;
+                                error: {
                                     /** @enum {string} */
-                                    readonly code: "FILE_NOT_CONFIRMABLE" | "FILE_NOT_DELETABLE" | "FILE_NOT_RESTORABLE" | "INVALID_FILE_REF";
-                                    readonly message: string;
+                                    code: "FILE_NOT_CONFIRMABLE" | "FILE_NOT_DELETABLE" | "FILE_NOT_RESTORABLE" | "INVALID_FILE_REF";
+                                    message: string;
                                 };
                             })[];
-                            readonly successCount: number;
-                            readonly failureCount: number;
+                            successCount: number;
+                            failureCount: number;
                         };
                     };
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"];
+                    "application/json": components["schemas"]["InvalidRequestError"];
                 };
             };
             /** @description 401 */
-            readonly 401: {
+            401: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
+                    "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
                 };
             };
             /** @description 403 */
-            readonly 403: {
+            403: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
                 };
             };
             /** @description 404 */
-            readonly 404: {
+            404: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["ProjectNotFoundError"];
+                    "application/json": components["schemas"]["ProjectNotFoundError"];
                 };
             };
             /** @description 409 */
-            readonly 409: {
+            409: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["BucketEmptyInProgressError"];
+                    "application/json": components["schemas"]["BucketEmptyInProgressError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };
     };
-    readonly "v2.runtime.files.restore": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path: {
-                readonly projectRef: string;
+    "v2.runtime.files.restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectRef: string;
             };
-            readonly cookie?: never;
+            cookie?: never;
         };
-        readonly requestBody: {
-            readonly content: {
-                readonly "application/json": {
-                    readonly files: readonly ({
-                        readonly id: string;
+        requestBody: {
+            content: {
+                "application/json": {
+                    files: ({
+                        id: string;
                     } | {
-                        readonly key: string;
+                        key: string;
                     } | {
-                        readonly url: string;
+                        url: string;
                     })[];
                 };
             };
         };
-        readonly responses: {
+        responses: {
             /** @description OK */
-            readonly 200: {
+            200: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: {
-                            readonly results: readonly ({
-                                readonly fileRef: {
-                                    readonly id: string;
+                    "application/json": {
+                        data: {
+                            results: ({
+                                fileRef: {
+                                    id: string;
                                 } | {
-                                    readonly key: string;
+                                    key: string;
                                 } | {
-                                    readonly url: string;
+                                    url: string;
                                 };
                                 /** @constant */
-                                readonly success: true;
+                                success: true;
                             } | {
-                                readonly fileRef: {
-                                    readonly id: string;
+                                fileRef: {
+                                    id: string;
                                 } | {
-                                    readonly key: string;
+                                    key: string;
                                 } | {
-                                    readonly url: string;
+                                    url: string;
                                 };
                                 /** @constant */
-                                readonly success: false;
-                                readonly error: {
+                                success: false;
+                                error: {
                                     /** @enum {string} */
-                                    readonly code: "FILE_NOT_CONFIRMABLE" | "FILE_NOT_DELETABLE" | "FILE_NOT_RESTORABLE" | "INVALID_FILE_REF";
-                                    readonly message: string;
+                                    code: "FILE_NOT_CONFIRMABLE" | "FILE_NOT_DELETABLE" | "FILE_NOT_RESTORABLE" | "INVALID_FILE_REF";
+                                    message: string;
                                 };
                             })[];
-                            readonly successCount: number;
-                            readonly failureCount: number;
+                            successCount: number;
+                            failureCount: number;
                         };
                     };
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"];
+                    "application/json": components["schemas"]["InvalidRequestError"];
                 };
             };
             /** @description 401 */
-            readonly 401: {
+            401: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
+                    "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
                 };
             };
             /** @description 403 */
-            readonly 403: {
+            403: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"] | components["schemas"]["RestoreNotAllowedError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"] | components["schemas"]["RestoreNotAllowedError"];
                 };
             };
             /** @description 404 */
-            readonly 404: {
+            404: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["ProjectNotFoundError"];
+                    "application/json": components["schemas"]["ProjectNotFoundError"];
                 };
             };
             /** @description 409 */
-            readonly 409: {
+            409: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["BucketEmptyInProgressError"];
+                    "application/json": components["schemas"]["BucketEmptyInProgressError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };
     };
-    readonly "v2.runtime.uploads.request": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: {
-                readonly "idempotency-key"?: string;
+    "v2.runtime.uploads.request": {
+        parameters: {
+            query?: never;
+            header?: {
+                "idempotency-key"?: string;
             };
-            readonly path: {
-                readonly projectRef: string;
-                readonly bucketName: string;
+            path: {
+                projectRef: string;
+                bucketName: string;
             };
-            readonly cookie?: never;
+            cookie?: never;
         };
-        readonly requestBody: {
-            readonly content: {
-                readonly "application/json": {
+        requestBody: {
+            content: {
+                "application/json": {
                     /** @enum {string} */
-                    readonly bucketType: "file" | "image";
+                    bucketType: "file" | "image";
                     /**
                      * @default protected
                      * @enum {string}
                      */
-                    readonly visibility?: "public" | "protected";
-                    readonly fileName?: string;
-                    readonly mimeType?: string;
-                    readonly temporary?: boolean;
+                    visibility?: "public" | "protected";
+                    fileName?: string;
+                    mimeType?: string;
+                    temporary?: boolean;
                     /** @default [] */
-                    readonly path?: readonly {
-                        readonly key: string;
-                        readonly value: string;
+                    path?: {
+                        key: string;
+                        value: string;
                     }[];
-                    readonly extension?: string;
-                    readonly sizeBytes: number;
-                    readonly metadata?: {
-                        readonly [key: string]: string;
+                    extension?: string;
+                    sizeBytes: number;
+                    metadata?: {
+                        [key: string]: string;
                     };
-                    readonly replaceTarget?: {
-                        readonly id: string;
+                    replaceTarget?: {
+                        id: string;
                     } | {
-                        readonly key: string;
+                        key: string;
                     } | {
-                        readonly url: string;
+                        url: string;
                     };
-                    readonly multipart?: {
-                        readonly partNumbers: readonly number[];
+                    multipart?: {
+                        partNumbers: number[];
                     };
-                    readonly signedReadUrl?: {
-                        readonly expiresIn?: number;
-                        readonly includeThumbnails?: boolean;
+                    signedReadUrl?: {
+                        expiresIn?: number;
+                        includeThumbnails?: boolean;
                     };
                 };
             };
         };
-        readonly responses: {
+        responses: {
             /** @description OK */
-            readonly 200: {
+            200: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: {
-                            readonly file: {
-                                readonly id: string;
-                                readonly url: string;
-                                readonly key: string;
-                                readonly thumbnailUrl: string | null;
-                                readonly thumbnailKey: string | null;
-                                readonly bucketId: string;
-                                readonly bucketName: string;
-                                readonly projectId: string;
-                                readonly accountId: string;
-                                readonly name: string;
-                                readonly sizeBytes: number;
-                                readonly mimeType: string | null;
+                    "application/json": {
+                        data: {
+                            file: {
+                                id: string;
+                                url: string;
+                                key: string;
+                                thumbnailUrl: string | null;
+                                thumbnailKey: string | null;
+                                bucketId: string;
+                                bucketName: string;
+                                projectId: string;
+                                accountId: string;
+                                name: string;
+                                sizeBytes: number;
+                                mimeType: string | null;
                                 /** @enum {string} */
-                                readonly state: "requested" | "replace_requested";
-                                readonly temporary: boolean;
+                                state: "requested" | "replace_requested";
+                                temporary: boolean;
                             };
-                            readonly upload: {
+                            upload: {
                                 /** @constant */
-                                readonly kind: "single";
-                                readonly id: string;
-                                readonly signedUrl: string;
+                                kind: "single";
+                                id: string;
+                                signedUrl: string;
                             } | {
                                 /** @constant */
-                                readonly kind: "multipart";
-                                readonly id: string;
-                                readonly parts: readonly {
-                                    readonly partNumber: number;
-                                    readonly signedUrl: string;
+                                kind: "multipart";
+                                id: string;
+                                parts: {
+                                    partNumber: number;
+                                    signedUrl: string;
                                 }[];
                             };
-                            readonly signedReadUrl?: {
-                                readonly url: string;
-                                readonly signedUrl: string;
-                                readonly expiresAt: string;
-                                readonly expiresIn: number;
-                                readonly thumbnailUrl?: string | null;
-                                readonly signedThumbnailUrl?: string | null;
+                            signedReadUrl?: {
+                                url: string;
+                                signedUrl: string;
+                                expiresAt: string;
+                                expiresIn: number;
+                                thumbnailUrl?: string | null;
+                                signedThumbnailUrl?: string | null;
                             };
                         };
                     };
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"] | components["schemas"]["InvalidFileReferenceError"];
+                    "application/json": components["schemas"]["InvalidRequestError"] | components["schemas"]["InvalidFileReferenceError"];
                 };
             };
             /** @description 401 */
-            readonly 401: {
+            401: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
+                    "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
                 };
             };
             /** @description 403 */
-            readonly 403: {
+            403: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"] | components["schemas"]["AccountPausedError"] | components["schemas"]["StorageLimitExceededError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"] | components["schemas"]["AccountPausedError"] | components["schemas"]["StorageLimitExceededError"];
                 };
             };
             /** @description 404 */
-            readonly 404: {
+            404: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["ProjectNotFoundError"];
+                    "application/json": components["schemas"]["ProjectNotFoundError"];
                 };
             };
             /** @description 409 */
-            readonly 409: {
+            409: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["BucketEmptyInProgressError"] | components["schemas"]["IdempotencyConflictError"];
+                    "application/json": components["schemas"]["BucketEmptyInProgressError"] | components["schemas"]["IdempotencyConflictError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };
     };
-    readonly "v2.runtime.uploads.get": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path: {
-                readonly projectRef: string;
-                readonly uploadId: string;
+    "v2.runtime.uploads.get": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectRef: string;
+                uploadId: string;
             };
-            readonly cookie?: never;
+            cookie?: never;
         };
-        readonly requestBody?: never;
-        readonly responses: {
+        requestBody?: never;
+        responses: {
             /** @description OK */
-            readonly 200: {
+            200: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: {
-                            readonly upload: {
-                                readonly id: string;
+                    "application/json": {
+                        data: {
+                            upload: {
+                                id: string;
                                 /** @constant */
-                                readonly status: "completed";
+                                status: "completed";
                             };
-                            readonly file: components["schemas"]["File"];
+                            file: components["schemas"]["File"];
                         } | {
-                            readonly upload: {
-                                readonly id: string;
+                            upload: {
+                                id: string;
                                 /** @constant */
-                                readonly status: "canceled";
+                                status: "canceled";
                             };
                         };
                     };
                 };
             };
             /** @description Accepted */
-            readonly 202: {
+            202: {
                 headers: {
-                    readonly "retry-after": components["headers"]["RetryAfter"];
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "retry-after": components["headers"]["RetryAfter"];
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: {
-                            readonly upload: {
-                                readonly id: string;
+                    "application/json": {
+                        data: {
+                            upload: {
+                                id: string;
                                 /** @constant */
-                                readonly status: "processing";
+                                status: "processing";
                             };
                         };
                     };
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"];
+                    "application/json": components["schemas"]["InvalidRequestError"];
                 };
             };
             /** @description 401 */
-            readonly 401: {
+            401: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
+                    "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
                 };
             };
             /** @description 403 */
-            readonly 403: {
+            403: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
                 };
             };
             /** @description 404 */
-            readonly 404: {
+            404: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["ProjectNotFoundError"] | components["schemas"]["UploadNotFoundError"];
+                    "application/json": components["schemas"]["ProjectNotFoundError"] | components["schemas"]["UploadNotFoundError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };
     };
-    readonly "v2.runtime.uploads.cancel": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path: {
-                readonly projectRef: string;
-                readonly uploadId: string;
+    "v2.runtime.uploads.cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectRef: string;
+                uploadId: string;
             };
-            readonly cookie?: never;
+            cookie?: never;
         };
-        readonly requestBody?: never;
-        readonly responses: {
+        requestBody?: never;
+        responses: {
             /** @description OK */
-            readonly 200: {
+            200: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: {
-                            readonly upload: {
-                                readonly id: string;
+                    "application/json": {
+                        data: {
+                            upload: {
+                                id: string;
                                 /** @constant */
-                                readonly status: "canceled";
+                                status: "canceled";
                             };
                         };
                     };
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"];
+                    "application/json": components["schemas"]["InvalidRequestError"];
                 };
             };
             /** @description 401 */
-            readonly 401: {
+            401: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
+                    "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
                 };
             };
             /** @description 403 */
-            readonly 403: {
+            403: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
                 };
             };
             /** @description 404 */
-            readonly 404: {
+            404: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["ProjectNotFoundError"] | components["schemas"]["UploadNotFoundError"];
+                    "application/json": components["schemas"]["ProjectNotFoundError"] | components["schemas"]["UploadNotFoundError"];
                 };
             };
             /** @description 409 */
-            readonly 409: {
+            409: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["UploadAlreadyCompletedError"] | components["schemas"]["BucketEmptyInProgressError"];
+                    "application/json": components["schemas"]["UploadAlreadyCompletedError"] | components["schemas"]["BucketEmptyInProgressError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };
     };
-    readonly "v2.runtime.uploads.parts.create": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path: {
-                readonly projectRef: string;
-                readonly uploadId: string;
+    "v2.runtime.uploads.parts.create": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectRef: string;
+                uploadId: string;
             };
-            readonly cookie?: never;
+            cookie?: never;
         };
-        readonly requestBody: {
-            readonly content: {
-                readonly "application/json": {
-                    readonly partNumbers: readonly number[];
+        requestBody: {
+            content: {
+                "application/json": {
+                    partNumbers: number[];
                 };
             };
         };
-        readonly responses: {
+        responses: {
             /** @description OK */
-            readonly 200: {
+            200: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: {
-                            readonly uploadId: string;
-                            readonly parts: readonly {
-                                readonly partNumber: number;
-                                readonly signedUrl: string;
+                    "application/json": {
+                        data: {
+                            uploadId: string;
+                            parts: {
+                                partNumber: number;
+                                signedUrl: string;
                             }[];
                         };
                     };
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"];
+                    "application/json": components["schemas"]["InvalidRequestError"];
                 };
             };
             /** @description 401 */
-            readonly 401: {
+            401: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
+                    "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
                 };
             };
             /** @description 403 */
-            readonly 403: {
+            403: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
                 };
             };
             /** @description 404 */
-            readonly 404: {
+            404: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["ProjectNotFoundError"] | components["schemas"]["UploadNotFoundError"];
+                    "application/json": components["schemas"]["ProjectNotFoundError"] | components["schemas"]["UploadNotFoundError"];
                 };
             };
             /** @description 409 */
-            readonly 409: {
+            409: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["BucketEmptyInProgressError"];
+                    "application/json": components["schemas"]["BucketEmptyInProgressError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };
     };
-    readonly "v2.runtime.uploads.multipart.complete": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path: {
-                readonly projectRef: string;
-                readonly uploadId: string;
+    "v2.runtime.uploads.multipart.complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectRef: string;
+                uploadId: string;
             };
-            readonly cookie?: never;
+            cookie?: never;
         };
-        readonly requestBody: {
-            readonly content: {
-                readonly "application/json": {
-                    readonly parts: readonly {
-                        readonly partNumber: number;
-                        readonly eTag: string;
+        requestBody: {
+            content: {
+                "application/json": {
+                    parts: {
+                        partNumber: number;
+                        eTag: string;
                     }[];
                 };
             };
         };
-        readonly responses: {
+        responses: {
             /** @description Accepted */
-            readonly 202: {
+            202: {
                 headers: {
-                    readonly "retry-after": components["headers"]["RetryAfter"];
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "retry-after": components["headers"]["RetryAfter"];
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": {
-                        readonly data: {
-                            readonly upload: {
-                                readonly id: string;
+                    "application/json": {
+                        data: {
+                            upload: {
+                                id: string;
                                 /** @constant */
-                                readonly status: "processing";
+                                status: "processing";
                             };
                         };
                     };
                 };
             };
             /** @description 400 */
-            readonly 400: {
+            400: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InvalidRequestError"];
+                    "application/json": components["schemas"]["InvalidRequestError"];
                 };
             };
             /** @description 401 */
-            readonly 401: {
+            401: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
+                    "application/json": components["schemas"]["AuthenticationRequiredError"] | components["schemas"]["InvalidCredentialError"];
                 };
             };
             /** @description 403 */
-            readonly 403: {
+            403: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
                 };
             };
             /** @description 404 */
-            readonly 404: {
+            404: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["ProjectNotFoundError"] | components["schemas"]["UploadNotFoundError"];
+                    "application/json": components["schemas"]["ProjectNotFoundError"] | components["schemas"]["UploadNotFoundError"];
                 };
             };
             /** @description 409 */
-            readonly 409: {
+            409: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["BucketEmptyInProgressError"];
+                    "application/json": components["schemas"]["BucketEmptyInProgressError"];
                 };
             };
             /** @description 413 */
-            readonly 413: {
+            413: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["PayloadTooLargeError"];
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
                 };
             };
             /** @description 500 */
-            readonly 500: {
+            500: {
                 headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["InternalError"];
+                    "application/json": components["schemas"]["InternalError"];
                 };
             };
         };

@@ -33,7 +33,7 @@
   "scripts": {
     "build": "pnpm codegen:check && rollup --config rollup.config.ts --configPlugin rollup-plugin-swc3",
     "dev": "pnpm build --watch",
-    "codegen:api": "openapi-typescript ./src/generated/openapi-v2.json -o ./src/generated/api-v2.ts --export-type --immutable",
+    "codegen:api": "openapi-typescript ./src/generated/openapi-v2.json -o ./src/generated/api-v2.ts --export-type",
     "codegen:check": "pnpm codegen:api --check",
     "codegen:entrypoints": "tsx entrypoints.script.ts",
     "test": "vitest run",
