@@ -15,6 +15,7 @@
     "paths": {
       "@edgestore/react": ["packages/react/src"],
       "@edgestore/react/*": ["packages/react/src/*"],
+      "@edgestore/sdk": ["packages/sdk/src"],
       "@edgestore/shared": ["packages/shared/src"]
     },
     "types": ["node"]
