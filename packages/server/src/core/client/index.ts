@@ -237,6 +237,7 @@ export class EdgeStoreFileMutationError extends Error {
     super(message);
   }
 }
+
 type GetSignedUrlRes = {
   url: string;
   signedUrl: string;

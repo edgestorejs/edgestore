@@ -133,7 +133,8 @@ await backendClient.publicFiles.listFiles({
     path: { type: 'post' },
     uploadedAt: { gt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
   },
-  pagination: { cursor: 'cursor-from-previous-response', limit: 50 },
+  cursor: 'cursor-from-previous-response',
+  limit: 50,
 });
 ```
 
