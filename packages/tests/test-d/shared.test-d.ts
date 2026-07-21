@@ -43,7 +43,7 @@ const imageBucket = es
   .beforeDelete(({ ctx, fileInfo }) => {
     expectType<Context>(ctx);
     expectType<{ author: string; type: string }>(fileInfo.path);
-    expectType<{ role: 'admin' | 'visitor'; extension: string | undefined }>(
+    expectType<{ role: 'admin' | 'visitor'; extension?: string }>(
       fileInfo.metadata,
     );
     return true;
@@ -59,7 +59,7 @@ expectType<{ author: string; type: string }>(
 expectType<('author' | 'type')[]>(
   {} as InferBucketPathOrder<typeof imageBucket>,
 );
-expectType<{ role: 'admin' | 'visitor'; extension: string | undefined }>(
+expectType<{ role: 'admin' | 'visitor'; extension?: string }>(
   {} as InferMetadataObject<typeof imageBucket>,
 );
 expectType<{ author: string }>({} as InferBucketPathObject<typeof fileBucket>);

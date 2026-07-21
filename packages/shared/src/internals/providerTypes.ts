@@ -38,6 +38,7 @@ export type RequestUploadParams = {
   bucketName: string;
   bucketType: string;
   fileInfo: {
+    type?: string;
     size: number;
     extension: string;
     isPublic: boolean;
@@ -53,6 +54,53 @@ export type RequestUploadParams = {
   autoSignedUrls?: {
     expiresIn?: number;
     includeThumbnails?: boolean;
+  };
+};
+
+export type ProviderFilterValue =
+  | string
+  | Partial<{
+      eq: string;
+      neq: string;
+      gt: string;
+      gte: string;
+      lt: string;
+      lte: string;
+      startsWith: string;
+      endsWith: string;
+      between: [string, string];
+    }>;
+
+export type ListFilesFilter = {
+  AND?: ListFilesFilter[];
+  OR?: ListFilesFilter[];
+  uploadedAt?: ProviderFilterValue;
+  path?: Record<string, ProviderFilterValue>;
+  metadata?: Record<string, ProviderFilterValue>;
+};
+
+export type ListFilesParams = {
+  bucketName: string;
+  filter?: ListFilesFilter;
+  pagination?: {
+    cursor?: string;
+    limit?: number;
+  };
+};
+
+export type ListFilesRes = {
+  data: {
+    url: string;
+    thumbnailUrl?: string | null;
+    size: number;
+    uploadedAt: Date;
+    path: Record<string, string>;
+    metadata: Record<string, string>;
+  }[];
+  pagination: {
+    limit: number;
+    nextCursor: string | null;
+    hasMore: boolean;
   };
 };
 
@@ -164,6 +212,7 @@ export type Provider = {
   getSignedUrls?: (
     params: GetSignedUrlsParams,
   ) => MaybePromise<GetSignedUrlRes[]>;
+  listFiles?: (params: ListFilesParams) => MaybePromise<ListFilesRes>;
   completeMultipartUpload: (
     params: CompleteMultipartUploadParams,
   ) => MaybePromise<CompleteMultipartUploadRes>;

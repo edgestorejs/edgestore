@@ -234,9 +234,9 @@ expectType<
       };
     }[];
     pagination: {
-      currentPage: number;
-      totalPages: number;
-      totalCount: number;
+      limit: number;
+      nextCursor: string | null;
+      hasMore: boolean;
     };
   }>
 >(client.avatars.listFiles());
@@ -304,9 +304,9 @@ expectType<{
         };
       }[];
       pagination: {
-        currentPage: number;
-        totalPages: number;
-        totalCount: number;
+        limit: number;
+        nextCursor: string | null;
+        hasMore: boolean;
       };
     };
   };
@@ -346,9 +346,9 @@ expectType<{
         };
       }[];
       pagination: {
-        currentPage: number;
-        totalPages: number;
-        totalCount: number;
+        limit: number;
+        nextCursor: string | null;
+        hasMore: boolean;
       };
     };
   };
@@ -385,9 +385,9 @@ expectType<{
         path: Record<string, never>;
       }[];
       pagination: {
-        currentPage: number;
-        totalPages: number;
-        totalCount: number;
+        limit: number;
+        nextCursor: string | null;
+        hasMore: boolean;
       };
     };
   };

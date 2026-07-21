@@ -1,239 +1,198 @@
-import { EdgeStoreError } from '@edgestore/shared';
+import { initEdgeStore } from '@edgestore/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { EdgeStoreProvider } from '.';
-import { initEdgeStoreSdk, type EdgeStoreSdk } from '../../core/sdk';
+import { edgestore } from '.';
 
-vi.mock('../../core/sdk', () => ({
-  initEdgeStoreSdk: vi.fn(),
+const runtime = vi.hoisted(() => ({
+  accessTokens: { create: vi.fn() },
+  files: {
+    lookup: vi.fn(),
+    createSignedUrls: vi.fn(),
+    search: vi.fn(),
+    confirm: vi.fn(),
+    delete: vi.fn(),
+  },
+  uploads: {
+    request: vi.fn(),
+    createParts: vi.fn(),
+    completeMultipart: vi.fn(),
+  },
 }));
 
-type MockSdk = {
-  [K in keyof EdgeStoreSdk]: ReturnType<typeof vi.fn>;
-};
-
-const initEdgeStoreSdkMock = vi.mocked(initEdgeStoreSdk);
+vi.mock('@edgestore/sdk', () => ({
+  createEdgeStoreSdk: vi.fn(() => ({ runtime })),
+  DEFAULT_MULTIPART_PART_SIZE_BYTES: 16 * 1024 * 1024,
+  DEFAULT_MULTIPART_THRESHOLD_BYTES: 100 * 1024 * 1024,
+}));
 
 const fileInfo = {
+  type: 'text/plain',
   size: 1024,
   extension: 'txt',
   isPublic: true,
   path: [{ key: 'org', value: 'acme' }],
-  metadata: { owner: 'user-1' },
+  metadata: { owner: 'user-1', omitted: null },
   temporary: false,
 };
 
-function createMockSdk(overrides: Partial<MockSdk> = {}) {
-  const sdk = {
-    getToken: vi.fn(),
-    getFile: vi.fn(),
-    requestUpload: vi.fn(),
-    requestUploadParts: vi.fn(),
-    completeMultipartUpload: vi.fn(),
-    confirmUpload: vi.fn(),
-    deleteFile: vi.fn(),
-    getSignedUrls: vi.fn(),
-    listFiles: vi.fn(),
-    ...overrides,
-  } satisfies MockSdk;
-  initEdgeStoreSdkMock.mockReturnValue(sdk as unknown as EdgeStoreSdk);
-  return sdk;
-}
-
-describe('EdgeStoreProvider', () => {
+describe('edgestore provider', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('maps signedUrl to uploadUrl below the multipart threshold', async () => {
-    const sdk = createMockSdk({
-      requestUpload: vi.fn(async () => ({
-        signedUrl: 'https://upload.example.com/file.txt',
-        accessUrl: 'https://files.example.com/file.txt',
-        path: 'documents/file.txt',
-        thumbnailUrl: 'https://files.example.com/thumb.jpg',
-      })),
+  it('creates a v2 access token from the router', async () => {
+    runtime.accessTokens.create.mockResolvedValue({
+      token: 'token',
+      basePath: '/runtime/projects/_current',
     });
-    const provider = EdgeStoreProvider({
-      accessKey: 'access-key',
-      secretKey: 'secret-key',
+    const es = initEdgeStore.context<{ userId: string }>().create();
+    const router = es.router({
+      files: es.fileBucket().path(({ ctx }) => [{ userId: ctx.userId }]),
     });
+    const provider = edgestore({ accessKey: 'access', secretKey: 'secret' });
+
+    await expect(
+      provider.init({ ctx: { userId: 'user-1' }, router }),
+    ).resolves.toEqual({ token: 'token' });
+    expect(runtime.accessTokens.create).toHaveBeenCalledWith({
+      context: { userId: 'user-1' },
+      buckets: {
+        files: {
+          path: [{ key: 'userId', value: expect.any(String) }],
+          accessControl: undefined,
+        },
+      },
+    });
+  });
+
+  it('maps a single v2 upload and omits nullish metadata', async () => {
+    runtime.uploads.request.mockResolvedValue({
+      file: {
+        url: 'https://files.example/file',
+        key: 'files/file',
+        thumbnailUrl: null,
+      },
+      upload: {
+        kind: 'single',
+        id: 'upload-1',
+        signedUrl: 'https://upload.example/file',
+      },
+    });
+    const provider = edgestore({ accessKey: 'access', secretKey: 'secret' });
 
     await expect(
       provider.requestUpload({
-        bucketName: 'documents',
+        bucketName: 'files',
         bucketType: 'FILE',
         fileInfo,
       }),
     ).resolves.toEqual({
-      uploadUrl: 'https://upload.example.com/file.txt',
-      accessUrl: 'https://files.example.com/file.txt',
-      thumbnailUrl: 'https://files.example.com/thumb.jpg',
-    });
-    expect(sdk.requestUpload).toHaveBeenCalledWith({
-      bucketName: 'documents',
-      bucketType: 'FILE',
-      fileInfo,
-    });
-  });
-
-  it('requests multipart parts and maps signedUrl to uploadUrl above the threshold', async () => {
-    const size = 11 * 1024 * 1024;
-    const sdk = createMockSdk({
-      requestUpload: vi.fn(async () => ({
-        multipart: {
-          key: 'documents/file.bin',
-          uploadId: 'upload-id',
-          parts: [
-            { partNumber: 1, signedUrl: 'https://upload.example.com/part-1' },
-            { partNumber: 2, signedUrl: 'https://upload.example.com/part-2' },
-            { partNumber: 3, signedUrl: 'https://upload.example.com/part-3' },
-          ],
-        },
-        accessUrl: 'https://files.example.com/file.bin',
-        path: 'documents/file.bin',
-        thumbnailUrl: null,
-      })),
-    });
-    const provider = EdgeStoreProvider({
-      accessKey: 'access-key',
-      secretKey: 'secret-key',
-    });
-
-    await expect(
-      provider.requestUpload({
-        bucketName: 'documents',
-        bucketType: 'FILE',
-        fileInfo: {
-          ...fileInfo,
-          size,
-          extension: 'bin',
-        },
-      }),
-    ).resolves.toEqual({
-      accessUrl: 'https://files.example.com/file.bin',
+      accessUrl: 'https://files.example/file',
       thumbnailUrl: null,
-      multipart: {
-        key: 'documents/file.bin',
-        uploadId: 'upload-id',
-        partSize: 5 * 1024 * 1024,
-        totalParts: 3,
-        parts: [
-          { partNumber: 1, uploadUrl: 'https://upload.example.com/part-1' },
-          { partNumber: 2, uploadUrl: 'https://upload.example.com/part-2' },
-          { partNumber: 3, uploadUrl: 'https://upload.example.com/part-3' },
-        ],
-      },
+      uploadUrl: 'https://upload.example/file',
+      accessSignedUrl: undefined,
+      accessSignedThumbnailUrl: undefined,
+      accessSignedUrlExpiresAt: undefined,
+      accessSignedUrlExpiresIn: undefined,
     });
-    expect(sdk.requestUpload).toHaveBeenCalledWith({
-      bucketName: 'documents',
-      bucketType: 'FILE',
-      fileInfo: {
-        ...fileInfo,
-        size,
-        extension: 'bin',
-      },
-      multipart: {
-        parts: [1, 2, 3],
-      },
+    expect(runtime.uploads.request).toHaveBeenCalledWith({
+      bucket: 'files',
+      bucketType: 'file',
+      visibility: 'public',
+      fileName: undefined,
+      mimeType: 'text/plain',
+      temporary: false,
+      path: fileInfo.path,
+      extension: 'txt',
+      sizeBytes: 1024,
+      metadata: { owner: 'user-1' },
+      replaceTarget: undefined,
+      signedReadUrl: undefined,
     });
   });
 
-  it('caps multipart uploads at 1000 parts and increases partSize', async () => {
-    const size = 1001 * 5 * 1024 * 1024;
-    const sdk = createMockSdk({
-      requestUpload: vi.fn(async () => ({
-        multipart: {
-          key: 'documents/large.bin',
-          uploadId: 'upload-id',
-          parts: [{ partNumber: 1, signedUrl: 'https://upload.example.com/1' }],
-        },
-        accessUrl: 'https://files.example.com/large.bin',
-        path: 'documents/large.bin',
+  it('requests multipart uploads above the shared threshold', async () => {
+    runtime.uploads.request.mockResolvedValue({
+      file: {
+        url: 'https://files.example/file',
+        key: 'files/file',
         thumbnailUrl: null,
-      })),
+      },
+      upload: {
+        kind: 'multipart',
+        id: 'upload-1',
+        parts: [{ partNumber: 1, signedUrl: 'https://upload.example/1' }],
+      },
     });
-    const provider = EdgeStoreProvider({
-      accessKey: 'access-key',
-      secretKey: 'secret-key',
-    });
+    const provider = edgestore({ accessKey: 'access', secretKey: 'secret' });
+    const size = 101 * 1024 * 1024;
 
-    const res = await provider.requestUpload({
-      bucketName: 'documents',
+    const result = await provider.requestUpload({
+      bucketName: 'files',
       bucketType: 'FILE',
-      fileInfo: {
-        ...fileInfo,
-        size,
-        extension: 'bin',
-      },
+      fileInfo: { ...fileInfo, size },
     });
 
-    const request = sdk.requestUpload.mock.calls[0]?.[0];
-    expect(request.multipart.parts).toHaveLength(1000);
-    expect(request.multipart.parts[0]).toBe(1);
-    expect(request.multipart.parts[999]).toBe(1000);
-    expect(res).toMatchObject({
+    expect(runtime.uploads.request).toHaveBeenCalledWith(
+      expect.objectContaining({
+        multipart: { partNumbers: [1, 2, 3, 4, 5, 6, 7] },
+      }),
+    );
+    expect(result).toMatchObject({
       multipart: {
-        partSize: Math.ceil(size / 1000),
-        totalParts: 1000,
+        key: 'files/file',
+        uploadId: 'upload-1',
+        partSize: 16 * 1024 * 1024,
+        totalParts: 7,
+        parts: [{ partNumber: 1, uploadUrl: 'https://upload.example/1' }],
       },
     });
   });
 
-  it('throws when the upload response has neither signedUrl nor multipart', async () => {
-    createMockSdk({
-      requestUpload: vi.fn(async () => ({
-        accessUrl: 'https://files.example.com/file.txt',
-        path: 'documents/file.txt',
-        thumbnailUrl: null,
-      })),
+  it('maps lookup, search, signed URL, confirm, and delete operations', async () => {
+    const file = {
+      url: 'https://files.example/file',
+      thumbnailUrl: null,
+      sizeBytes: 12,
+      uploadedAt: '2026-07-21T00:00:00.000Z',
+      path: { org: 'acme' },
+      metadata: { owner: 'user-1' },
+    };
+    runtime.files.lookup.mockResolvedValue({ file });
+    runtime.files.search.mockResolvedValue({
+      files: [file],
+      pagination: { limit: 20, nextCursor: null, hasMore: false },
     });
-    const provider = EdgeStoreProvider({
-      accessKey: 'access-key',
-      secretKey: 'secret-key',
+    runtime.files.createSignedUrls.mockResolvedValue({ signedUrls: [] });
+    runtime.files.confirm.mockResolvedValue({
+      successCount: 1,
+      failureCount: 0,
+      failures: [],
     });
+    runtime.files.delete.mockResolvedValue({
+      successCount: 1,
+      failureCount: 0,
+      failures: [],
+    });
+    const provider = edgestore({ accessKey: 'access', secretKey: 'secret' });
 
+    await expect(provider.getFile({ url: file.url })).resolves.toMatchObject({
+      size: 12,
+      uploadedAt: new Date(file.uploadedAt),
+    });
     await expect(
-      provider.requestUpload({
-        bucketName: 'documents',
-        bucketType: 'FILE',
-        fileInfo,
-      }),
-    ).rejects.toThrow(EdgeStoreError);
-  });
-
-  it('maps requestUploadParts signedUrl values to uploadUrl values', async () => {
-    createMockSdk({
-      requestUploadParts: vi.fn(async () => ({
-        multipart: {
-          uploadId: 'upload-id',
-          parts: [
-            { partNumber: 1, signedUrl: 'https://upload.example.com/part-1' },
-            { partNumber: 2, signedUrl: 'https://upload.example.com/part-2' },
-          ],
-        },
-      })),
+      provider.listFiles?.({ bucketName: 'files' }),
+    ).resolves.toMatchObject({
+      data: [{ size: 12 }],
+      pagination: { hasMore: false },
     });
-    const provider = EdgeStoreProvider({
-      accessKey: 'access-key',
-      secretKey: 'secret-key',
-    });
-
     await expect(
-      provider.requestUploadParts({
-        path: 'documents/file.bin',
-        multipart: {
-          uploadId: 'upload-id',
-          parts: [1, 2],
-        },
-      }),
-    ).resolves.toEqual({
-      multipart: {
-        uploadId: 'upload-id',
-        parts: [
-          { partNumber: 1, uploadUrl: 'https://upload.example.com/part-1' },
-          { partNumber: 2, uploadUrl: 'https://upload.example.com/part-2' },
-        ],
-      },
-    });
+      provider.getSignedUrls?.({ bucketName: 'files', urls: [file.url] }),
+    ).resolves.toEqual([]);
+    await expect(
+      provider.confirmUpload({ bucket: {} as never, url: file.url }),
+    ).resolves.toEqual({ success: true });
+    await expect(
+      provider.deleteFile({ bucket: {} as never, url: file.url }),
+    ).resolves.toEqual({ success: true });
   });
 });
