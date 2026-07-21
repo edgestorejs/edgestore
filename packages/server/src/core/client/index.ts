@@ -385,7 +385,7 @@ export function createEdgeStoreClient<TRouter extends AnyRouter>(config: {
               };
             } else {
               return {
-                blob: await getBlobFromUrl(content.url),
+                blob: await getBlobFromUrl(content.url, params.signal),
                 extension: content.extension,
               };
             }
@@ -603,8 +603,8 @@ function getUrl(url: string, baseUrl?: string) {
   return url;
 }
 
-async function getBlobFromUrl(url: string) {
-  const res = await fetch(url);
+async function getBlobFromUrl(url: string, signal?: AbortSignal) {
+  const res = await fetch(url, { signal });
   if (!res.ok) {
     throw new Error(`Could not fetch upload source: HTTP ${res.status}`);
   }
