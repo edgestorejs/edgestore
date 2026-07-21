@@ -15,6 +15,7 @@ import {
   type ProjectRuntimeClient,
 } from './runtime';
 import { createSystemClient, type SystemClient } from './system';
+import type { UploadDefaults } from './uploadTypes';
 
 export type EdgeStoreSdkOptions<
   TCredentials extends EdgeStoreCredentials = EdgeStoreCredentials,
@@ -22,6 +23,10 @@ export type EdgeStoreSdkOptions<
   credentials: TCredentials;
   baseUrl?: string;
   fetch?: typeof globalThis.fetch;
+  /** Defaults used by the complete-upload helpers. */
+  upload?: UploadDefaults;
+  /** Default timeout for API control-plane requests. Use an AbortSignal for a per-call timeout. */
+  controlTimeoutMs?: number;
 };
 
 export type ProjectEdgeStoreSdk = {
@@ -48,9 +53,12 @@ export function createEdgeStoreSdk(
 
   return 'token' in options.credentials
     ? {
-        runtime: createExplicitProjectRuntimeClient(transport),
+        runtime: createExplicitProjectRuntimeClient(transport, options.upload),
         management: createManagementClient(transport),
         system,
       }
-    : { runtime: createProjectRuntimeClient(transport), system };
+    : {
+        runtime: createProjectRuntimeClient(transport, options.upload),
+        system,
+      };
 }
