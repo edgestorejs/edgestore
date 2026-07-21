@@ -12,11 +12,13 @@ import {
 import type { paths } from '../generated/api-v2';
 
 export const DEFAULT_API_URL = 'https://api.edgestore.dev/v2';
+export const DEFAULT_CONTROL_TIMEOUT_MS = 30_000;
 
 export type TransportOptions = {
   credentials: EdgeStoreCredentials;
   baseUrl?: string;
   fetch?: typeof globalThis.fetch;
+  controlTimeoutMs?: number;
 };
 
 type ApiResult<TBody> = {
@@ -43,9 +45,25 @@ export type Transport = {
 export function createTransport(options: TransportOptions): Transport {
   const authorization = getAuthorizationHeader(options.credentials);
   const fetch = options.fetch ?? globalThis.fetch;
+  const controlTimeoutMs =
+    options.controlTimeoutMs ?? DEFAULT_CONTROL_TIMEOUT_MS;
+  if (!Number.isFinite(controlTimeoutMs) || controlTimeoutMs < 0) {
+    throw new RangeError('controlTimeoutMs must be a non-negative number.');
+  }
   const client = createClient<paths>({
     baseUrl: normalizeBaseUrl(options.baseUrl ?? DEFAULT_API_URL),
-    fetch: (request) => fetch(request),
+    fetch: (request) =>
+      fetch(
+        new Request(request, {
+          signal:
+            controlTimeoutMs === 0
+              ? request.signal
+              : AbortSignal.any([
+                  request.signal,
+                  AbortSignal.timeout(controlTimeoutMs),
+                ]),
+        }),
+      ),
     headers: {
       authorization,
       'user-agent': '@edgestore/sdk',

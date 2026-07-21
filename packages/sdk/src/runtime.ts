@@ -1,7 +1,12 @@
 import type { OperationBody, OperationResult } from './internal/operationTypes';
 import type { Transport } from './internal/transport';
-import { uploadRuntimeFile } from './upload';
-import type { RuntimeUploadInput, RuntimeUploadResult } from './uploadTypes';
+import { uploadRuntimeFile, uploadRuntimeFileFromUrl } from './upload';
+import type {
+  RuntimeUploadFromUrlInput,
+  RuntimeUploadInput,
+  RuntimeUploadResult,
+  UploadDefaults,
+} from './uploadTypes';
 
 export type RuntimeCallOptions = { signal?: AbortSignal };
 
@@ -110,6 +115,9 @@ export type RuntimeClient<TMode extends ProjectMode> = {
     upload(
       input: ScopedInput<TMode, RuntimeUploadInput>,
     ): Promise<RuntimeUploadResult>;
+    uploadFromUrl(
+      input: ScopedInput<TMode, RuntimeUploadFromUrlInput>,
+    ): Promise<RuntimeUploadResult>;
     request(
       input: ScopedInput<TMode, RuntimeUploadRequestInput>,
     ): Promise<RuntimeUploadRequestResult>;
@@ -133,6 +141,7 @@ export type ExplicitProjectRuntimeClient = RuntimeClient<'explicit'>;
 
 export function createExplicitProjectRuntimeClient(
   transport: Transport,
+  uploadDefaults?: UploadDefaults,
 ): ExplicitProjectRuntimeClient {
   return {
     accessTokens: {
@@ -242,7 +251,9 @@ export function createExplicitProjectRuntimeClient(
         ),
     },
     uploads: {
-      upload: (input) => uploadRuntimeFile(transport, input),
+      upload: (input) => uploadRuntimeFile(transport, input, uploadDefaults),
+      uploadFromUrl: (input) =>
+        uploadRuntimeFileFromUrl(transport, input, uploadDefaults),
       request: ({ project, bucket, idempotencyKey, signal, ...body }) =>
         transport.execute(() =>
           transport.client.POST(
@@ -305,8 +316,9 @@ export function createExplicitProjectRuntimeClient(
 
 export function createProjectRuntimeClient(
   transport: Transport,
+  uploadDefaults?: UploadDefaults,
 ): ProjectRuntimeClient {
-  const runtime = createExplicitProjectRuntimeClient(transport);
+  const runtime = createExplicitProjectRuntimeClient(transport, uploadDefaults);
   const project = '_current';
 
   return {
@@ -331,6 +343,8 @@ export function createProjectRuntimeClient(
     },
     uploads: {
       upload: (input) => runtime.uploads.upload({ ...input, project }),
+      uploadFromUrl: (input) =>
+        runtime.uploads.uploadFromUrl({ ...input, project }),
       request: (input) => runtime.uploads.request({ ...input, project }),
       get: (input) => runtime.uploads.get({ ...input, project }),
       cancel: (input) => runtime.uploads.cancel({ ...input, project }),
