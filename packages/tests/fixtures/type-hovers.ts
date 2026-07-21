@@ -1,7 +1,7 @@
 import { createEdgeStoreProvider } from '@edgestore/react';
 import { createEdgeStoreFastifyHandler } from '@edgestore/server/adapters/fastify';
 import { createEdgeStoreHonoHandler } from '@edgestore/server/adapters/hono';
-import { initEdgeStoreClient } from '@edgestore/server/core';
+import { createEdgeStoreClient } from '@edgestore/server/core';
 import { initEdgeStore } from '@edgestore/shared';
 import { z } from 'zod';
 
@@ -45,7 +45,7 @@ const router = es.router({
     .autoSignedUrls({ includeThumbnails: true }),
 });
 
-const backendClient = initEdgeStoreClient({ router });
+const backendClient = createEdgeStoreClient({ router });
 const { useEdgeStore } = createEdgeStoreProvider<typeof router>();
 const { edgestore, state: providerState } = useEdgeStore();
 const backendSignedUploadMethod = backendClient.privateFiles.upload;

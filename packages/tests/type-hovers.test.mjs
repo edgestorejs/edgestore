@@ -108,26 +108,19 @@ const expectedHovers = {
         transferredBytes: number;
         totalBytes: number;
         percentage: number;
+        phase: "preparing" | "uploading" | "processing";
     }) => void) | undefined;
     ctx: Context;
     input: {
         category: "invoice" | "contract";
     };
 }) => Promise<{
+    state: "requested" | "uploaded" | "deleted" | "replace_requested";
+    id: string;
     url: string;
-    size: number;
-    metadata: {
-        role: "admin" | "visitor";
-        category: "invoice" | "contract";
-    };
-    path: {
-        category: string;
-        owner: string;
-    };
-    pathOrder: ("category" | "owner")[];
-    signedUrl: string;
-    expiresAt: Date;
-    expiresIn: number;
+    key: string;
+    thumbnailUrl: string | null;
+    ... 17 more ...;
     signedThumbnailUrl?: string | null | undefined;
 }>`,
   reactSignedUploadMethod: `const reactSignedUploadMethod: (params: {
@@ -160,15 +153,43 @@ const expectedHovers = {
   fastifyHandler:
     'const fastifyHandler: (req: FastifyRequest, reply: FastifyReply) => Promise<void>',
   backendUnsignedUpload: `const backendUnsignedUpload: {
+    state: "requested" | "uploaded" | "deleted" | "replace_requested";
+    id: string;
     url: string;
-    size: number;
+    key: string;
+    thumbnailUrl: string | null;
+    thumbnailKey: string | null;
+    bucketId: string;
+    bucketName: string;
+    projectId: string;
+    accountId: string;
+    name: string;
+    sizeBytes: number;
+    mimeType: string | null;
+    temporary: boolean;
+    uploadedAt: Date;
+    updatedAt: Date;
     metadata: Record<string, never>;
     path: Record<string, never>;
     pathOrder: [];
 }`,
   backendSignedFileUpload: `const backendSignedFileUpload: {
+    state: "requested" | "uploaded" | "deleted" | "replace_requested";
+    id: string;
     url: string;
-    size: number;
+    key: string;
+    thumbnailUrl: string | null;
+    thumbnailKey: string | null;
+    bucketId: string;
+    bucketName: string;
+    projectId: string;
+    accountId: string;
+    name: string;
+    sizeBytes: number;
+    mimeType: string | null;
+    temporary: boolean;
+    uploadedAt: Date;
+    updatedAt: Date;
     metadata: {
         role: "admin" | "visitor";
         category: "invoice" | "contract";
@@ -184,9 +205,22 @@ const expectedHovers = {
     signedThumbnailUrl?: string | null | undefined;
 }`,
   backendGetFile: `const backendGetFile: {
+    state: "requested" | "uploaded" | "deleted" | "replace_requested";
+    id: string;
     url: string;
-    size: number;
+    key: string;
+    thumbnailUrl: string | null;
+    thumbnailKey: string | null;
+    bucketId: string;
+    bucketName: string;
+    projectId: string;
+    accountId: string;
+    name: string;
+    sizeBytes: number;
+    mimeType: string | null;
+    temporary: boolean;
     uploadedAt: Date;
+    updatedAt: Date;
     metadata: {
         role: "admin" | "visitor";
         category: "invoice" | "contract";
@@ -197,10 +231,23 @@ const expectedHovers = {
     };
 }`,
   backendListFiles: `const backendListFiles: {
-    data: {
+    items: {
+        state: "requested" | "uploaded" | "deleted" | "replace_requested";
+        id: string;
         url: string;
-        size: number;
+        key: string;
+        thumbnailUrl: string | null;
+        thumbnailKey: string | null;
+        bucketId: string;
+        bucketName: string;
+        projectId: string;
+        accountId: string;
+        name: string;
+        sizeBytes: number;
+        mimeType: string | null;
+        temporary: boolean;
         uploadedAt: Date;
+        updatedAt: Date;
         metadata: {
             role: "admin" | "visitor";
             category: "invoice" | "contract";
@@ -210,11 +257,9 @@ const expectedHovers = {
             owner: string;
         };
     }[];
-    pagination: {
-        limit: number;
-        nextCursor: string | null;
-        hasMore: boolean;
-    };
+    limit: number;
+    nextCursor: string | null;
+    hasMore: boolean;
 }`,
   backendGetSignedUrl: `const backendGetSignedUrl: {
     url: string;

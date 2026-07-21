@@ -199,7 +199,7 @@ export type ListFilesRequest<TBucket extends AnyBuilder> = {
 };
 
 export type ListFilesResponse<TBucket extends AnyBuilder> = {
-  items: FileRecord<TBucket>[];
+  items: Prettify<FileRecord<TBucket>>[];
   limit: number;
   nextCursor: string | null;
   hasMore: boolean;
@@ -580,9 +580,6 @@ export function createEdgeStoreClient<TRouter extends AnyRouter>(config: {
 
   return Object.fromEntries(entries) as EdgeStoreClient<TRouter>;
 }
-
-/** @deprecated Use `createEdgeStoreClient()` instead. */
-export const initEdgeStoreClient = createEdgeStoreClient;
 
 /**
  * Protected files need third-party cookies to work.
