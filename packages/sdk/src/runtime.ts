@@ -1,7 +1,20 @@
 import type { OperationBody, OperationResult } from './internal/operationTypes';
-import { scopeProjectOperations } from './internal/projectOperation';
-import { createRuntimeOperations } from './internal/runtimeOperations';
+import {
+  scopeProjectOperations,
+  type ProjectOperationTree,
+} from './internal/projectOperation';
+import {
+  createRuntimeOperations,
+  type RuntimeOperations,
+} from './internal/runtimeOperations';
 import type { Transport } from './internal/transport';
+import { uploadRuntimeFile, uploadRuntimeFileFromUrl } from './upload';
+import type {
+  RuntimeUploadFromUrlInput,
+  RuntimeUploadInput,
+  RuntimeUploadResult,
+  UploadDefaults,
+} from './uploadTypes';
 
 export type RuntimeCallOptions = { signal?: AbortSignal };
 
@@ -115,6 +128,12 @@ export type RuntimeClient<TMode extends ProjectMode> = {
     ): Promise<RuntimeFileRestoreResult>;
   };
   uploads: {
+    upload(
+      input: ScopedInput<TMode, RuntimeUploadInput>,
+    ): Promise<RuntimeUploadResult>;
+    uploadFromUrl(
+      input: ScopedInput<TMode, RuntimeUploadFromUrlInput>,
+    ): Promise<RuntimeUploadResult>;
     request(
       input: ScopedInput<TMode, RuntimeUploadRequestInput>,
     ): Promise<RuntimeUploadRequestResult>;
@@ -138,12 +157,31 @@ export type ExplicitProjectRuntimeClient = RuntimeClient<'explicit'>;
 
 export function createExplicitProjectRuntimeClient(
   transport: Transport,
-): ExplicitProjectRuntimeClient {
-  return createRuntimeOperations(transport);
+  uploadDefaults?: UploadDefaults,
+): ProjectOperationTree<ExplicitProjectRuntimeClient> {
+  const operations = createRuntimeOperations(transport);
+  const uploadContext = { transport, operations };
+
+  return {
+    ...operations,
+    uploads: {
+      ...operations.uploads,
+      upload: (input) =>
+        uploadRuntimeFile(uploadContext, input, uploadDefaults),
+      uploadFromUrl: (input) =>
+        uploadRuntimeFileFromUrl(uploadContext, input, uploadDefaults),
+    },
+  };
 }
 
 export function createProjectRuntimeClient(
   transport: Transport,
+  uploadDefaults?: UploadDefaults,
 ): ProjectRuntimeClient {
-  return scopeProjectOperations(createRuntimeOperations(transport), '_current');
+  return scopeProjectOperations(
+    createExplicitProjectRuntimeClient(transport, uploadDefaults),
+    '_current',
+  );
 }
+
+export type { RuntimeOperations };

@@ -30,50 +30,58 @@ export type ApiData<TBody> = TBody extends { readonly data: infer Data }
   : TBody;
 
 export type Transport = {
+  fetch: typeof globalThis.fetch;
   execute<TBody>(
     request: (client: Client<paths>) => Promise<ApiResult<TBody>>,
   ): Promise<ApiData<TBody>>;
+  executeWithResponse<TBody>(
+    request: (client: Client<paths>) => Promise<ApiResult<TBody>>,
+  ): Promise<{ data: ApiData<TBody>; response: Response }>;
 };
 
 export function createTransport(options: TransportOptions): Transport {
   const authorization = getAuthorizationHeader(options.credentials);
-  const customFetch = options.fetch;
+  const fetch = options.fetch ?? globalThis.fetch;
   const client = createClient<paths>({
     baseUrl: normalizeBaseUrl(options.baseUrl ?? DEFAULT_API_URL),
-    fetch: customFetch ? (request) => customFetch(request) : globalThis.fetch,
+    fetch: (request) => fetch(request),
     headers: {
       authorization,
       'user-agent': '@edgestore/sdk',
     },
   });
 
+  const executeWithResponse = async <TBody>(
+    request: (client: Client<paths>) => Promise<ApiResult<TBody>>,
+  ): Promise<{ data: ApiData<TBody>; response: Response }> => {
+    let result: ApiResult<TBody>;
+
+    try {
+      result = await request(client);
+    } catch (error) {
+      if (error instanceof EdgeStoreError) {
+        throw error;
+      }
+      if (isAbortError(error)) {
+        throw new EdgeStoreAbortError(undefined, { cause: error });
+      }
+      throw new EdgeStoreNetworkError(
+        'The EdgeStore API request could not be completed.',
+        { cause: error },
+      );
+    }
+
+    if (result.response.ok) {
+      return { data: unwrapData(result.data), response: result.response };
+    }
+
+    throw createApiError(result.response, result.error);
+  };
+
   return {
-    async execute<TBody>(
-      request: (client: Client<paths>) => Promise<ApiResult<TBody>>,
-    ): Promise<ApiData<TBody>> {
-      let result: ApiResult<TBody>;
-
-      try {
-        result = await request(client);
-      } catch (error) {
-        if (error instanceof EdgeStoreError) {
-          throw error;
-        }
-        if (isAbortError(error)) {
-          throw new EdgeStoreAbortError(undefined, { cause: error });
-        }
-        throw new EdgeStoreNetworkError(
-          'The EdgeStore API request could not be completed.',
-          { cause: error },
-        );
-      }
-
-      if (result.response.ok) {
-        return unwrapData(result.data);
-      }
-
-      throw createApiError(result.response, result.error);
-    },
+    fetch,
+    execute: async (request) => (await executeWithResponse(request)).data,
+    executeWithResponse,
   };
 }
 
