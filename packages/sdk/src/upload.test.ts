@@ -66,13 +66,19 @@ describe('runtime upload orchestration', () => {
     });
     const sdk = createSdk(fetch);
 
-    const result = await sdk.runtime.uploads.upload({
+    const input = {
       bucket: 'documents',
       source: 'content',
       fileName: 'invoice.pdf',
       metadata: { invoiceId: 42, paid: false, ignored: null },
       onProgress: progress,
-    });
+      // Simulate untyped JavaScript passing raw-only fields. High-level uploads
+      // must always use values derived from the source and bucket.
+      sizeBytes: 999,
+      bucketType: 'image',
+      visibility: 'public',
+    };
+    const result = await sdk.runtime.uploads.upload(input);
 
     expect(result.file.id).toBe('file-id');
     expect(progress.mock.calls).toEqual([
