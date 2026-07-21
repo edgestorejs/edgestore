@@ -197,7 +197,7 @@ export const getServerSideProps: GetServerSideProps<{
   });
   return {
     props: {
-      files: res.data.map((file) => ({
+      files: res.items.map((file) => ({
         url: file.url,
         thumbnailUrl: file.thumbnailUrl,
       })),
