@@ -31,21 +31,13 @@ function writeFileSyncRecursive(filePath: string, content: string) {
   fs.writeFileSync(filePath, content, 'utf8');
 }
 
-export async function generateEntrypoints(
-  rawInputs: string[],
-  options: { includeSource?: boolean } = {},
-) {
+export async function generateEntrypoints(rawInputs: string[]) {
   const inputs = [...rawInputs];
   // set some defaults for the package.json
   const pkgJsonPath = path.resolve('package.json');
   const pkgJson: PackageJson = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf8'));
 
-  pkgJson.files = [
-    'dist',
-    ...(options.includeSource === false ? [] : ['src']),
-    'README.md',
-    'LICENSE',
-  ];
+  pkgJson.files = ['dist', 'src', 'README.md', 'LICENSE'];
   pkgJson.exports = {
     './package.json': './package.json',
     '.': {
@@ -123,11 +115,9 @@ export async function generateEntrypoints(
     if (topLevel !== 'package.json') scriptOutputs.add(`${topLevel}/**`);
   });
 
-  if (options.includeSource !== false) {
-    // Exclude test files in builds
-    pkgJson.files.push('!**/*.test.*');
-    pkgJson.files.push('!**/__tests__');
-  }
+  // Exclude test files in builds
+  pkgJson.files.push('!**/*.test.*');
+  pkgJson.files.push('!**/__tests__');
   // Add `funding` in all packages
   // pkgJson.funding = ['https://edgestore.dev/sponsor'];
 
