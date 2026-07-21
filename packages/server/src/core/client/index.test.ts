@@ -1,19 +1,21 @@
 import { initEdgeStore } from '@edgestore/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
-import { initEdgeStoreClient } from './index';
+import { createEdgeStoreClient } from './index';
 
-const sdk = vi.hoisted(() => ({
+const provider = {
+  name: 'test',
+  init: vi.fn(),
+  getBaseUrl: vi.fn(),
   getFile: vi.fn(),
   requestUpload: vi.fn(),
+  requestUploadParts: vi.fn(),
+  completeMultipartUpload: vi.fn(),
   confirmUpload: vi.fn(),
   deleteFile: vi.fn(),
   listFiles: vi.fn(),
-}));
-
-vi.mock('../sdk', () => ({
-  initEdgeStoreSdk: vi.fn(() => sdk),
-}));
+  getSignedUrls: vi.fn(),
+};
 
 const fetchMock = vi.fn();
 
@@ -36,10 +38,9 @@ function createRouter() {
 }
 
 function createClient(config: { baseUrl?: string } = {}) {
-  return initEdgeStoreClient({
+  return createEdgeStoreClient({
     router: createRouter(),
-    accessKey: 'test-access-key',
-    secretKey: 'test-secret-key',
+    provider,
     ...config,
   }) as any;
 }
@@ -59,7 +60,7 @@ async function expectPutBodyBlob(params: {
   expect(await body.text()).toBe(params.expectedText);
 }
 
-describe('initEdgeStoreClient', () => {
+describe('createEdgeStoreClient', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     fetchMock.mockResolvedValue({
@@ -67,8 +68,8 @@ describe('initEdgeStoreClient', () => {
       status: 200,
       statusText: 'OK',
     });
-    sdk.requestUpload.mockResolvedValue({
-      signedUrl: 'https://upload.example.com/file',
+    provider.requestUpload.mockResolvedValue({
+      uploadUrl: 'https://upload.example.com/file',
       accessUrl: 'https://files.example.com/_public/file.txt',
       thumbnailUrl: null,
     });
@@ -86,7 +87,7 @@ describe('initEdgeStoreClient', () => {
       content: 'plain text',
     });
 
-    expect(sdk.requestUpload).toHaveBeenCalledWith({
+    expect(provider.requestUpload).toHaveBeenCalledWith({
       bucketName: 'publicFiles',
       bucketType: 'FILE',
       fileInfo: expect.objectContaining({
@@ -99,6 +100,7 @@ describe('initEdgeStoreClient', () => {
     expect(fetchMock).toHaveBeenCalledWith('https://upload.example.com/file', {
       method: 'PUT',
       body: expect.any(Blob),
+      signal: undefined,
     });
     await expectPutBodyBlob({
       expectedText: 'plain text',
@@ -117,7 +119,7 @@ describe('initEdgeStoreClient', () => {
       },
     });
 
-    expect(sdk.requestUpload).toHaveBeenCalledWith({
+    expect(provider.requestUpload).toHaveBeenCalledWith({
       bucketName: 'publicFiles',
       bucketType: 'FILE',
       fileInfo: expect.objectContaining({
@@ -140,6 +142,8 @@ describe('initEdgeStoreClient', () => {
     fetchMock.mockImplementation(async (_url: string, init?: RequestInit) => {
       if (!init) {
         return {
+          ok: true,
+          status: 200,
           blob: vi.fn(async () => {
             sourceBlobRead = true;
             return sourceBlob;
@@ -152,10 +156,10 @@ describe('initEdgeStoreClient', () => {
         statusText: 'OK',
       };
     });
-    sdk.requestUpload.mockImplementation(async () => {
+    provider.requestUpload.mockImplementation(async () => {
       expect(sourceBlobRead).toBe(true);
       return {
-        signedUrl: 'https://upload.example.com/file',
+        uploadUrl: 'https://upload.example.com/file',
         accessUrl: 'https://files.example.com/_public/file.json',
         thumbnailUrl: null,
       };
@@ -171,7 +175,7 @@ describe('initEdgeStoreClient', () => {
     expect(fetchMock.mock.calls[0]?.[0]).toBe(
       'https://source.example.com/file.json',
     );
-    expect(sdk.requestUpload).toHaveBeenCalledWith({
+    expect(provider.requestUpload).toHaveBeenCalledWith({
       bucketName: 'publicFiles',
       bucketType: 'FILE',
       fileInfo: expect.objectContaining({
@@ -209,7 +213,7 @@ describe('initEdgeStoreClient', () => {
       extension: 'txt',
       type: 'text/plain',
     });
-    expect(sdk.requestUpload).toHaveBeenCalledWith({
+    expect(provider.requestUpload).toHaveBeenCalledWith({
       bucketName: 'publicFiles',
       bucketType: 'FILE',
       fileInfo: expect.objectContaining({
@@ -242,7 +246,7 @@ describe('initEdgeStoreClient', () => {
       },
     });
 
-    expect(sdk.requestUpload).toHaveBeenCalledWith({
+    expect(provider.requestUpload).toHaveBeenCalledWith({
       bucketName: 'documents',
       bucketType: 'FILE',
       fileInfo: {
@@ -293,19 +297,103 @@ describe('initEdgeStoreClient', () => {
     ).rejects.toThrow('Upload failed with status 403: Forbidden');
   });
 
+  it('enforces input and file rules without running authorization hooks', async () => {
+    const beforeUpload = vi.fn(() => false);
+    const beforeDelete = vi.fn(() => false);
+    const es = initEdgeStore.context<{ userId: string }>().create();
+    const router = es.router({
+      documents: es
+        .fileBucket({ accept: ['application/json'], maxSize: 20 })
+        .input(z.object({ category: z.literal('invoice') }))
+        .beforeUpload(beforeUpload)
+        .beforeDelete(beforeDelete),
+    });
+    const client = createEdgeStoreClient({ router, provider });
+
+    await expect(
+      client.documents.upload({
+        content: {
+          blob: new Blob(['not json'], { type: 'text/plain' }),
+          extension: 'txt',
+        },
+        ctx: { userId: 'user-1' },
+        input: { category: 'invoice' },
+      }),
+    ).rejects.toMatchObject({ code: 'MIME_TYPE_NOT_ALLOWED' });
+    await expect(
+      client.documents.upload({
+        content: {
+          blob: new Blob(['{}'], { type: 'application/json' }),
+          extension: 'json',
+        },
+        ctx: { userId: 'user-1' },
+        input: { category: 'wrong' } as never,
+      }),
+    ).rejects.toThrow();
+    expect(beforeUpload).not.toHaveBeenCalled();
+
+    provider.deleteFile.mockResolvedValueOnce({ success: true });
+    await client.documents.deleteFile({ url: 'https://files.example/file' });
+    expect(beforeDelete).not.toHaveBeenCalled();
+  });
+
+  it('uploads and completes multipart files through the provider contract', async () => {
+    const blob = new Blob(['abcdef'], { type: 'application/octet-stream' });
+    provider.requestUpload.mockResolvedValueOnce({
+      accessUrl: 'https://files.example/file',
+      multipart: {
+        key: 'files/file',
+        uploadId: 'upload-1',
+        partSize: 3,
+        totalParts: 2,
+        parts: [
+          { partNumber: 1, uploadUrl: 'https://upload.example/1' },
+          { partNumber: 2, uploadUrl: 'https://upload.example/2' },
+        ],
+      },
+    });
+    fetchMock.mockImplementation(async (url: string) => ({
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      headers: new Headers({ etag: url.endsWith('/1') ? 'etag-1' : 'etag-2' }),
+    }));
+    const onProgress = vi.fn();
+    const client = createClient();
+
+    await client.publicFiles.upload({
+      content: { blob, extension: 'bin' },
+      onProgress,
+    });
+
+    expect(provider.completeMultipartUpload).toHaveBeenCalledWith({
+      uploadId: 'upload-1',
+      key: 'files/file',
+      parts: [
+        { partNumber: 1, eTag: 'etag-1' },
+        { partNumber: 2, eTag: 'etag-2' },
+      ],
+    });
+    expect(onProgress).toHaveBeenLastCalledWith({
+      transferredBytes: 6,
+      totalBytes: 6,
+      percentage: 100,
+    });
+  });
+
   it('converts uploadedAt to Date and proxies protected dev file URLs', async () => {
     vi.stubEnv('NODE_ENV', 'development');
     const client = createClient({
       baseUrl: 'http://localhost:3000/api/edgestore',
     });
-    sdk.getFile.mockResolvedValue({
+    provider.getFile.mockResolvedValue({
       url: 'https://files.example.com/_protected/file.txt',
       size: 10,
       uploadedAt: '2024-01-02T03:04:05.000Z',
       metadata: { kind: 'file' },
       path: { author: 'user-1' },
     });
-    sdk.listFiles.mockResolvedValue({
+    provider.listFiles.mockResolvedValue({
       data: [
         {
           url: 'https://files.example.com/_public/public.txt',
@@ -325,9 +413,9 @@ describe('initEdgeStoreClient', () => {
         },
       ],
       pagination: {
-        currentPage: 1,
-        totalPages: 1,
-        totalCount: 2,
+        limit: 20,
+        nextCursor: null,
+        hasMore: false,
       },
     });
 
@@ -352,15 +440,17 @@ describe('initEdgeStoreClient', () => {
     expect(files.data[1].url).toBe(
       'http://localhost:3000/api/edgestore/proxy-file?url=https%3A%2F%2Ffiles.example.com%2F_protected%2Fprivate.txt',
     );
-    expect(sdk.listFiles).toHaveBeenCalledWith({
+    expect(provider.listFiles).toHaveBeenCalledWith({
       bucketName: 'documents',
+      filter: undefined,
+      pagination: undefined,
     });
   });
 
   it('throws for protected dev file URLs when baseUrl is missing', async () => {
     vi.stubEnv('NODE_ENV', 'development');
     const client = createClient();
-    sdk.getFile.mockResolvedValue({
+    provider.getFile.mockResolvedValue({
       url: 'https://files.example.com/_protected/file.txt',
       size: 10,
       uploadedAt: '2024-01-02T03:04:05.000Z',
@@ -373,7 +463,7 @@ describe('initEdgeStoreClient', () => {
         url: 'https://files.example.com/_protected/file.txt',
       }),
     ).rejects.toThrow(
-      'Missing baseUrl. You need to pass the baseUrl to `initEdgeStoreClient` to get protected files in development.',
+      'Missing baseUrl. You need to pass the baseUrl to `createEdgeStoreClient` to get protected files in development.',
     );
   });
 

@@ -103,6 +103,12 @@ const expectedHovers = {
   backendSignedUploadMethod: `const backendSignedUploadMethod: (params: {
     content: UploadContent;
     options?: UploadOptions | undefined;
+    signal?: AbortSignal | undefined;
+    onProgress?: ((progress: {
+        transferredBytes: number;
+        totalBytes: number;
+        percentage: number;
+    }) => void) | undefined;
     ctx: Context;
     input: {
         category: "invoice" | "contract";
@@ -205,9 +211,9 @@ const expectedHovers = {
         };
     }[];
     pagination: {
-        currentPage: number;
-        totalPages: number;
-        totalCount: number;
+        limit: number;
+        nextCursor: string | null;
+        hasMore: boolean;
     };
 }`,
   backendGetSignedUrl: `const backendGetSignedUrl: {

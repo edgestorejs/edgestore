@@ -38,7 +38,6 @@
     "test:smoke:prod": "TEST_ENV=prod vitest run --config vitest.smoke.config.ts",
     "test:smoke:adapter": "vitest run --config vitest.smoke.config.ts src/adapters/edgestore.smoke.test.ts",
     "test:smoke:client": "vitest run --config vitest.smoke.config.ts src/core/client/edgestore.smoke.test.ts",
-    "test:smoke:errors": "vitest run --config vitest.smoke.config.ts src/core/sdk/edgestore.errors.smoke.test.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint --cache --ext \".js,.ts,.tsx\" --ignore-path ../../.gitignore --report-unused-disable-directives src"
   },
@@ -123,6 +122,7 @@
     "!**/__tests__"
   ],
   "dependencies": {
+    "@edgestore/sdk": "0.7.0",
     "@edgestore/shared": "0.7.0",
     "@panva/hkdf": "^1.0.4",
     "cookie": "^0.7.0",
