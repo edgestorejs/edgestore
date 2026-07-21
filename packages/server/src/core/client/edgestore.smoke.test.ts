@@ -35,26 +35,28 @@ describe('EdgeStore backend client live smoke test', () => {
     const uploadRes = await runSmokeUploadLifecycle({
       expectedSize: SMOKE_CONTENT.length,
       deleteDescription: 'deleteFile',
-      upload: () =>
-        bucketClient.upload({
+      upload: async () => {
+        const file = await bucketClient.upload({
           content: SMOKE_CONTENT,
           options: {
             manualFileName: createSmokeFileName('client'),
             temporary: true,
           },
-        }),
-      confirmUpload: (url) =>
-        bucketClient.confirmUpload({
-          url,
-        }),
-      getFile: (url) =>
-        bucketClient.getFile({
-          url,
-        }),
-      deleteFile: (url) =>
-        bucketClient.deleteFile({
-          url,
-        }),
+        });
+        return { url: file.url, size: file.sizeBytes };
+      },
+      confirmUpload: async (url) => {
+        await bucketClient.confirmUpload({ url });
+        return { success: true };
+      },
+      getFile: async (url) => {
+        const file = await bucketClient.getFile({ url });
+        return { url: file.url, size: file.sizeBytes };
+      },
+      deleteFile: async (url) => {
+        await bucketClient.deleteFile({ url });
+        return { success: true };
+      },
     });
 
     expect(uploadRes).toMatchObject({

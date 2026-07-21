@@ -29,7 +29,7 @@ describe('runtime upload orchestration', () => {
           bucketType: 'file',
           visibility: 'protected',
           fileName: 'invoice.pdf',
-          mimeType: 'application/pdf',
+          mimeType: 'text/plain',
           sizeBytes: 7,
           metadata: { invoiceId: '42', paid: 'false' },
         });
@@ -64,7 +64,7 @@ describe('runtime upload orchestration', () => {
 
     const result = await sdk.runtime.uploads.upload({
       bucket: 'documents',
-      source: new Blob(['content'], { type: 'application/pdf' }),
+      source: 'content',
       fileName: 'invoice.pdf',
       idempotencyKey: 'upload-request',
       metadata: { invoiceId: 42, paid: false, ignored: null },
@@ -78,7 +78,23 @@ describe('runtime upload orchestration', () => {
           transferredBytes: 0,
           totalBytes: 7,
           percentage: 0,
-          phase: 'transfer',
+          phase: 'preparing',
+        },
+      ],
+      [
+        {
+          transferredBytes: 0,
+          totalBytes: 7,
+          percentage: 0,
+          phase: 'uploading',
+        },
+      ],
+      [
+        {
+          transferredBytes: 7,
+          totalBytes: 7,
+          percentage: 100,
+          phase: 'uploading',
         },
       ],
       [
@@ -145,7 +161,16 @@ describe('runtime upload orchestration', () => {
 
     await sdk.runtime.uploads.upload({
       bucket: 'videos',
-      source: new Blob(['abcdef']),
+      source: {
+        stream: new ReadableStream({
+          start(controller) {
+            controller.enqueue(new TextEncoder().encode('ab'));
+            controller.enqueue(new TextEncoder().encode('cdef'));
+            controller.close();
+          },
+        }),
+        sizeBytes: 6,
+      },
       multipart: { partSizeBytes: 3, concurrency: 2 },
     });
 
@@ -156,6 +181,68 @@ describe('runtime upload orchestration', () => {
         { partNumber: 2, eTag: 'etag-2' },
       ],
     });
+  });
+
+  it('uploads remote URLs through the explicit streaming helper', async () => {
+    const fetch = vi.fn<typeof globalThis.fetch>(async (input, init) => {
+      const request = toRequest(input, init);
+      if (request.url === 'https://source.example/report.txt') {
+        return new Response('remote', {
+          headers: { 'content-length': '6', 'content-type': 'text/plain' },
+        });
+      }
+      if (request.url.endsWith('/buckets/documents')) {
+        return Response.json({
+          data: { bucket: { type: 'file', visibility: 'protected' } },
+        });
+      }
+      if (request.url.endsWith('/buckets/documents/uploads')) {
+        await expect(request.json()).resolves.toMatchObject({
+          fileName: 'report.txt',
+          mimeType: 'text/plain',
+          sizeBytes: 6,
+          multipart: { partNumbers: [1] },
+        });
+        return Response.json({
+          data: {
+            file: { id: 'remote-id' },
+            upload: {
+              kind: 'multipart',
+              id: 'remote-id',
+              parts: [
+                { partNumber: 1, signedUrl: 'https://storage.example/remote' },
+              ],
+            },
+          },
+        });
+      }
+      if (request.url === 'https://storage.example/remote') {
+        await expect(request.text()).resolves.toBe('remote');
+        return new Response(null, { headers: { etag: 'remote-etag' } });
+      }
+      if (request.url.endsWith('/uploads/remote-id/complete')) {
+        return Response.json({
+          data: { upload: { id: 'remote-id', status: 'processing' } },
+        });
+      }
+      if (request.url.endsWith('/uploads/remote-id')) {
+        return Response.json({
+          data: {
+            upload: { id: 'remote-id', status: 'completed' },
+            file: { id: 'remote-file' },
+          },
+        });
+      }
+      throw new Error(`Unexpected request: ${request.method} ${request.url}`);
+    });
+    const sdk = createSdk(fetch);
+
+    const result = await sdk.runtime.uploads.uploadFromUrl({
+      bucket: 'documents',
+      url: 'https://source.example/report.txt',
+    });
+
+    expect(result.file.id).toBe('remote-file');
   });
 
   it('retains the pending upload when processing times out', async () => {

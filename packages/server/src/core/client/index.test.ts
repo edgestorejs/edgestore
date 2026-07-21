@@ -1,7 +1,16 @@
-import { initEdgeStore } from '@edgestore/shared';
+import { initEdgeStore, type ProviderFile } from '@edgestore/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
-import { createEdgeStoreClient } from './index';
+import { createEdgeStoreClient, EdgeStoreFileMutationError } from './index';
+
+const backend = {
+  upload: vi.fn(),
+  getFile: vi.fn(),
+  listFiles: vi.fn(),
+  confirmFiles: vi.fn(),
+  deleteFiles: vi.fn(),
+  restoreFiles: vi.fn(),
+};
 
 const provider = {
   name: 'test',
@@ -15,9 +24,34 @@ const provider = {
   deleteFile: vi.fn(),
   listFiles: vi.fn(),
   getSignedUrls: vi.fn(),
+  backend,
 };
 
 const fetchMock = vi.fn();
+
+function createFile(overrides: Partial<ProviderFile> = {}): ProviderFile {
+  return {
+    id: 'file-id',
+    url: 'https://files.example.com/_public/file.txt',
+    key: 'files/file.txt',
+    thumbnailUrl: null,
+    thumbnailKey: null,
+    bucketId: 'bucket-id',
+    bucketName: 'publicFiles',
+    projectId: 'project-id',
+    accountId: 'account-id',
+    name: 'file.txt',
+    path: {},
+    metadata: {},
+    sizeBytes: 10,
+    mimeType: 'text/plain',
+    state: 'uploaded',
+    temporary: false,
+    uploadedAt: new Date('2026-01-01T00:00:00.000Z'),
+    updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+    ...overrides,
+  };
+}
 
 function createRouter() {
   const es = initEdgeStore.context<{ userId: string }>().create();
@@ -45,21 +79,6 @@ function createClient(config: { baseUrl?: string } = {}) {
   }) as any;
 }
 
-async function expectPutBodyBlob(params: {
-  expectedText: string;
-  expectedType: string;
-  callIndex?: number;
-}) {
-  const call = fetchMock.mock.calls[params.callIndex ?? 0];
-  expect(call?.[1]).toMatchObject({
-    method: 'PUT',
-  });
-  const body = call?.[1]?.body as Blob;
-  expect(body).toBeInstanceOf(Blob);
-  expect(body.type).toBe(params.expectedType);
-  expect(await body.text()).toBe(params.expectedText);
-}
-
 describe('createEdgeStoreClient', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -68,10 +87,21 @@ describe('createEdgeStoreClient', () => {
       status: 200,
       statusText: 'OK',
     });
-    provider.requestUpload.mockResolvedValue({
-      uploadUrl: 'https://upload.example.com/file',
-      accessUrl: 'https://files.example.com/_public/file.txt',
-      thumbnailUrl: null,
+    backend.upload.mockResolvedValue({ file: createFile() });
+    backend.confirmFiles.mockResolvedValue({
+      results: [],
+      successCount: 0,
+      failureCount: 0,
+    });
+    backend.deleteFiles.mockResolvedValue({
+      results: [],
+      successCount: 0,
+      failureCount: 0,
+    });
+    backend.restoreFiles.mockResolvedValue({
+      results: [],
+      successCount: 0,
+      failureCount: 0,
     });
     globalThis.fetch = fetchMock;
   });
@@ -80,16 +110,29 @@ describe('createEdgeStoreClient', () => {
     vi.unstubAllEnvs();
   });
 
-  it('uploads string content as a text/plain txt blob via signed PUT', async () => {
+  it('eagerly creates an inspectable client with stable bucket objects', async () => {
+    const client = createClient();
+
+    expect(Object.keys(client)).toEqual(['documents', 'publicFiles']);
+    expect(client.documents).toBe(client.documents);
+    expect(client.then).toBeUndefined();
+    await expect(Promise.resolve(client)).resolves.toBe(client);
+  });
+
+  it('uploads string content as a text/plain txt blob', async () => {
     const client = createClient();
 
     await client.publicFiles.upload({
       content: 'plain text',
     });
 
-    expect(provider.requestUpload).toHaveBeenCalledWith({
+    expect(backend.upload).toHaveBeenCalledWith({
       bucketName: 'publicFiles',
       bucketType: 'FILE',
+      autoSignedUrls: undefined,
+      source: expect.any(Blob),
+      signal: undefined,
+      onProgress: undefined,
       fileInfo: expect.objectContaining({
         type: 'text/plain',
         size: 10,
@@ -97,15 +140,9 @@ describe('createEdgeStoreClient', () => {
         isPublic: true,
       }),
     });
-    expect(fetchMock).toHaveBeenCalledWith('https://upload.example.com/file', {
-      method: 'PUT',
-      body: expect.any(Blob),
-      signal: undefined,
-    });
-    await expectPutBodyBlob({
-      expectedText: 'plain text',
-      expectedType: 'text/plain',
-    });
+    const source = backend.upload.mock.calls[0]?.[0].source as Blob;
+    expect(source.type).toBe('text/plain');
+    await expect(source.text()).resolves.toBe('plain text');
   });
 
   it('preserves blob MIME type, size, and explicit extension', async () => {
@@ -119,18 +156,18 @@ describe('createEdgeStoreClient', () => {
       },
     });
 
-    expect(provider.requestUpload).toHaveBeenCalledWith({
+    expect(backend.upload).toHaveBeenCalledWith({
       bucketName: 'publicFiles',
       bucketType: 'FILE',
+      autoSignedUrls: undefined,
+      source: blob,
+      signal: undefined,
+      onProgress: undefined,
       fileInfo: expect.objectContaining({
         type: 'text/csv',
         size: blob.size,
         extension: 'csv',
       }),
-    });
-    await expectPutBodyBlob({
-      expectedText: 'a,b,c',
-      expectedType: 'text/csv',
     });
   });
 
@@ -139,30 +176,19 @@ describe('createEdgeStoreClient', () => {
     const sourceBlob = new Blob(['from url'], { type: 'application/json' });
     let sourceBlobRead = false;
 
-    fetchMock.mockImplementation(async (_url: string, init?: RequestInit) => {
-      if (!init) {
-        return {
-          ok: true,
-          status: 200,
-          blob: vi.fn(async () => {
-            sourceBlobRead = true;
-            return sourceBlob;
-          }),
-        };
-      }
+    fetchMock.mockImplementation(async () => {
       return {
         ok: true,
         status: 200,
-        statusText: 'OK',
+        blob: vi.fn(async () => {
+          sourceBlobRead = true;
+          return sourceBlob;
+        }),
       };
     });
-    provider.requestUpload.mockImplementation(async () => {
+    backend.upload.mockImplementation(async () => {
       expect(sourceBlobRead).toBe(true);
-      return {
-        uploadUrl: 'https://upload.example.com/file',
-        accessUrl: 'https://files.example.com/_public/file.json',
-        thumbnailUrl: null,
-      };
+      return { file: createFile({ mimeType: 'application/json' }) };
     });
 
     await client.publicFiles.upload({
@@ -175,22 +201,18 @@ describe('createEdgeStoreClient', () => {
     expect(fetchMock.mock.calls[0]?.[0]).toBe(
       'https://source.example.com/file.json',
     );
-    expect(provider.requestUpload).toHaveBeenCalledWith({
+    expect(backend.upload).toHaveBeenCalledWith({
       bucketName: 'publicFiles',
       bucketType: 'FILE',
+      autoSignedUrls: undefined,
+      source: sourceBlob,
+      signal: undefined,
+      onProgress: undefined,
       fileInfo: expect.objectContaining({
         type: 'application/json',
         size: sourceBlob.size,
         extension: 'json',
       }),
-    });
-    expect(fetchMock.mock.calls[1]?.[0]).toBe(
-      'https://upload.example.com/file',
-    );
-    await expectPutBodyBlob({
-      expectedText: 'from url',
-      expectedType: 'application/json',
-      callIndex: 1,
     });
   });
 
@@ -213,23 +235,33 @@ describe('createEdgeStoreClient', () => {
       extension: 'txt',
       type: 'text/plain',
     });
-    expect(provider.requestUpload).toHaveBeenCalledWith({
+    expect(backend.upload).toHaveBeenCalledWith({
       bucketName: 'publicFiles',
       bucketType: 'FILE',
+      autoSignedUrls: undefined,
+      source: expect.any(Blob),
+      signal: undefined,
+      onProgress: undefined,
       fileInfo: expect.objectContaining({
         type: 'application/octet-stream',
         size: 11,
         extension: 'bin',
       }),
     });
-    await expectPutBodyBlob({
-      expectedText: 'transformed',
-      expectedType: 'application/octet-stream',
-    });
+    const source = backend.upload.mock.calls[0]?.[0].source as Blob;
+    await expect(source.text()).resolves.toBe('transformed');
   });
 
   it('computes path and metadata from ctx and input before requesting an upload', async () => {
     const client = createClient();
+    backend.upload.mockResolvedValueOnce({
+      file: createFile({
+        bucketName: 'documents',
+        sizeBytes: 7,
+        path: { author: 'user-1', type: 'invoice' },
+        metadata: { userId: 'user-1', type: 'invoice' },
+      }),
+    });
 
     const res = await client.documents.upload({
       content: 'invoice',
@@ -246,9 +278,13 @@ describe('createEdgeStoreClient', () => {
       },
     });
 
-    expect(provider.requestUpload).toHaveBeenCalledWith({
+    expect(backend.upload).toHaveBeenCalledWith({
       bucketName: 'documents',
       bucketType: 'FILE',
+      autoSignedUrls: undefined,
+      source: expect.any(Blob),
+      signal: undefined,
+      onProgress: undefined,
       fileInfo: {
         fileName: 'invoice.txt',
         replaceTargetUrl: 'https://files.example.com/_protected/old.txt',
@@ -269,7 +305,8 @@ describe('createEdgeStoreClient', () => {
     });
     expect(res).toMatchObject({
       url: 'https://files.example.com/_public/file.txt',
-      size: 7,
+      id: 'file-id',
+      sizeBytes: 7,
       metadata: {
         userId: 'user-1',
         type: 'invoice',
@@ -282,19 +319,15 @@ describe('createEdgeStoreClient', () => {
     });
   });
 
-  it('throws a useful error when the signed upload PUT fails', async () => {
+  it('preserves upload failures from the provider capability', async () => {
     const client = createClient();
-    fetchMock.mockResolvedValue({
-      ok: false,
-      status: 403,
-      statusText: 'Forbidden',
-    });
+    backend.upload.mockRejectedValueOnce(new Error('upload failed'));
 
     await expect(
       client.publicFiles.upload({
         content: 'plain text',
       }),
-    ).rejects.toThrow('Upload failed with status 403: Forbidden');
+    ).rejects.toThrow('upload failed');
   });
 
   it('enforces input and file rules without running authorization hooks', async () => {
@@ -332,33 +365,32 @@ describe('createEdgeStoreClient', () => {
     ).rejects.toThrow();
     expect(beforeUpload).not.toHaveBeenCalled();
 
-    provider.deleteFile.mockResolvedValueOnce({ success: true });
+    backend.deleteFiles.mockResolvedValueOnce({
+      results: [
+        {
+          fileRef: { url: 'https://files.example/file' },
+          success: true,
+        },
+      ],
+      successCount: 1,
+      failureCount: 0,
+    });
     await client.documents.deleteFile({ url: 'https://files.example/file' });
     expect(beforeDelete).not.toHaveBeenCalled();
   });
 
-  it('uploads and completes multipart files through the provider contract', async () => {
+  it('delegates upload orchestration and forwards progress', async () => {
     const blob = new Blob(['abcdef'], { type: 'application/octet-stream' });
-    provider.requestUpload.mockResolvedValueOnce({
-      accessUrl: 'https://files.example/file',
-      multipart: {
-        key: 'files/file',
-        uploadId: 'upload-1',
-        partSize: 3,
-        totalParts: 2,
-        parts: [
-          { partNumber: 1, uploadUrl: 'https://upload.example/1' },
-          { partNumber: 2, uploadUrl: 'https://upload.example/2' },
-        ],
-      },
-    });
-    fetchMock.mockImplementation(async (url: string) => ({
-      ok: true,
-      status: 200,
-      statusText: 'OK',
-      headers: new Headers({ etag: url.endsWith('/1') ? 'etag-1' : 'etag-2' }),
-    }));
     const onProgress = vi.fn();
+    backend.upload.mockImplementationOnce(async (params) => {
+      params.onProgress?.({
+        transferredBytes: 6,
+        totalBytes: 6,
+        percentage: 100,
+        phase: 'processing',
+      });
+      return { file: createFile({ sizeBytes: 6 }) };
+    });
     const client = createClient();
 
     await client.publicFiles.upload({
@@ -366,18 +398,11 @@ describe('createEdgeStoreClient', () => {
       onProgress,
     });
 
-    expect(provider.completeMultipartUpload).toHaveBeenCalledWith({
-      uploadId: 'upload-1',
-      key: 'files/file',
-      parts: [
-        { partNumber: 1, eTag: 'etag-1' },
-        { partNumber: 2, eTag: 'etag-2' },
-      ],
-    });
     expect(onProgress).toHaveBeenLastCalledWith({
       transferredBytes: 6,
       totalBytes: 6,
       percentage: 100,
+      phase: 'processing',
     });
   });
 
@@ -386,37 +411,34 @@ describe('createEdgeStoreClient', () => {
     const client = createClient({
       baseUrl: 'http://localhost:3000/api/edgestore',
     });
-    provider.getFile.mockResolvedValue({
-      url: 'https://files.example.com/_protected/file.txt',
-      size: 10,
-      uploadedAt: '2024-01-02T03:04:05.000Z',
-      metadata: { kind: 'file' },
-      path: { author: 'user-1' },
-    });
-    provider.listFiles.mockResolvedValue({
-      data: [
-        {
+    backend.getFile.mockResolvedValue(
+      createFile({
+        url: 'https://files.example.com/_protected/file.txt',
+        uploadedAt: new Date('2024-01-02T03:04:05.000Z'),
+        updatedAt: new Date('2024-01-02T03:04:05.000Z'),
+        metadata: { kind: 'file' },
+        path: { author: 'user-1' },
+      }),
+    );
+    backend.listFiles.mockResolvedValue({
+      items: [
+        createFile({
           url: 'https://files.example.com/_public/public.txt',
-          thumbnailUrl: null,
-          size: 1,
-          uploadedAt: '2024-02-03T04:05:06.000Z',
-          metadata: {},
-          path: {},
-        },
-        {
+          sizeBytes: 1,
+          uploadedAt: new Date('2024-02-03T04:05:06.000Z'),
+          updatedAt: new Date('2024-02-03T04:05:06.000Z'),
+        }),
+        createFile({
           url: 'https://files.example.com/_protected/private.txt',
-          thumbnailUrl: null,
-          size: 2,
-          uploadedAt: '2024-03-04T05:06:07.000Z',
-          metadata: {},
+          sizeBytes: 2,
+          uploadedAt: new Date('2024-03-04T05:06:07.000Z'),
+          updatedAt: new Date('2024-03-04T05:06:07.000Z'),
           path: { author: 'user-1' },
-        },
+        }),
       ],
-      pagination: {
-        limit: 20,
-        nextCursor: null,
-        hasMore: false,
-      },
+      limit: 20,
+      nextCursor: null,
+      hasMore: false,
     });
 
     const file = await client.documents.getFile({
@@ -428,79 +450,116 @@ describe('createEdgeStoreClient', () => {
     expect(file.url).toBe(
       'http://localhost:3000/api/edgestore/proxy-file?url=https%3A%2F%2Ffiles.example.com%2F_protected%2Ffile.txt',
     );
-    expect(files.data[0].uploadedAt).toEqual(
+    expect(files.items[0]?.uploadedAt).toEqual(
       new Date('2024-02-03T04:05:06.000Z'),
     );
-    expect(files.data[0].url).toBe(
+    expect(files.items[0]?.url).toBe(
       'https://files.example.com/_public/public.txt',
     );
-    expect(files.data[1].uploadedAt).toEqual(
+    expect(files.items[1]?.uploadedAt).toEqual(
       new Date('2024-03-04T05:06:07.000Z'),
     );
-    expect(files.data[1].url).toBe(
+    expect(files.items[1]?.url).toBe(
       'http://localhost:3000/api/edgestore/proxy-file?url=https%3A%2F%2Ffiles.example.com%2F_protected%2Fprivate.txt',
     );
-    expect(provider.listFiles).toHaveBeenCalledWith({
+    expect(backend.listFiles).toHaveBeenCalledWith({
       bucketName: 'documents',
       filter: undefined,
-      pagination: undefined,
+      cursor: undefined,
+      limit: undefined,
     });
   });
 
-  it('iterates through cursor pages with listAllFiles', async () => {
-    provider.listFiles
-      .mockResolvedValueOnce({
-        data: [
-          {
-            url: 'https://files.example/_public/first',
-            size: 1,
-            uploadedAt: new Date('2026-01-01T00:00:00.000Z'),
-            metadata: {},
-            path: {},
+  it('accepts id, key, and URL references and preserves batch failures', async () => {
+    const client = createClient();
+    backend.getFile.mockResolvedValueOnce(createFile());
+    backend.confirmFiles.mockResolvedValueOnce({
+      results: [
+        {
+          fileRef: { id: 'file-id' },
+          success: false,
+          error: {
+            code: 'FILE_NOT_CONFIRMABLE',
+            message: 'Already confirmed',
           },
-        ],
-        pagination: { limit: 1, nextCursor: 'next', hasMore: true },
+        },
+      ],
+      successCount: 0,
+      failureCount: 1,
+    });
+    backend.deleteFiles.mockResolvedValueOnce({
+      results: [
+        { fileRef: { key: 'files/one' }, success: true },
+        {
+          fileRef: { url: 'https://files.example/missing' },
+          success: false,
+          error: { code: 'INVALID_FILE_REF', message: 'Missing file' },
+        },
+      ],
+      successCount: 1,
+      failureCount: 1,
+    });
+
+    await client.publicFiles.getFile({ key: 'files/file.txt' });
+    await expect(
+      client.publicFiles.confirmUpload({ id: 'file-id' }),
+    ).rejects.toBeInstanceOf(EdgeStoreFileMutationError);
+    await expect(
+      client.publicFiles.deleteFiles({
+        refs: [{ key: 'files/one' }, { url: 'https://files.example/missing' }],
+      }),
+    ).resolves.toEqual({
+      succeeded: [{ key: 'files/one' }],
+      failed: [
+        {
+          ref: { url: 'https://files.example/missing' },
+          error: { code: 'INVALID_FILE_REF', message: 'Missing file' },
+        },
+      ],
+    });
+    expect(backend.getFile).toHaveBeenCalledWith({
+      file: { key: 'files/file.txt' },
+    });
+  });
+
+  it('iterates through cursor pages with flat pagination inputs', async () => {
+    backend.listFiles
+      .mockResolvedValueOnce({
+        items: [createFile({ id: 'first' })],
+        limit: 1,
+        nextCursor: 'next',
+        hasMore: true,
       })
       .mockResolvedValueOnce({
-        data: [
-          {
-            url: 'https://files.example/_public/second',
-            size: 2,
-            uploadedAt: new Date('2026-01-02T00:00:00.000Z'),
-            metadata: {},
-            path: {},
-          },
-        ],
-        pagination: { limit: 1, nextCursor: null, hasMore: false },
+        items: [createFile({ id: 'second' })],
+        limit: 1,
+        nextCursor: null,
+        hasMore: false,
       });
     const client = createClient();
 
-    const files = [];
+    const ids = [];
     for await (const file of client.publicFiles.listAllFiles({ limit: 1 })) {
-      files.push(file.url);
+      ids.push(file.id);
     }
 
-    expect(files).toEqual([
-      'https://files.example/_public/first',
-      'https://files.example/_public/second',
-    ]);
-    expect(provider.listFiles).toHaveBeenNthCalledWith(2, {
+    expect(ids).toEqual(['first', 'second']);
+    expect(backend.listFiles).toHaveBeenNthCalledWith(2, {
       bucketName: 'publicFiles',
       filter: undefined,
-      pagination: { cursor: 'next', limit: 1 },
+      cursor: 'next',
+      limit: 1,
     });
   });
 
   it('throws for protected dev file URLs when baseUrl is missing', async () => {
     vi.stubEnv('NODE_ENV', 'development');
     const client = createClient();
-    provider.getFile.mockResolvedValue({
-      url: 'https://files.example.com/_protected/file.txt',
-      size: 10,
-      uploadedAt: '2024-01-02T03:04:05.000Z',
-      metadata: {},
-      path: {},
-    });
+    backend.getFile.mockResolvedValue(
+      createFile({
+        url: 'https://files.example.com/_protected/file.txt',
+      }),
+    );
 
     await expect(
       client.documents.getFile({
@@ -511,11 +570,9 @@ describe('createEdgeStoreClient', () => {
     );
   });
 
-  it('throws for unknown buckets', () => {
+  it('leaves unknown buckets undefined', () => {
     const client = createClient();
 
-    expect(() => client.unknownBucket).toThrow(
-      'Bucket unknownBucket not found',
-    );
+    expect(client.unknownBucket).toBeUndefined();
   });
 });

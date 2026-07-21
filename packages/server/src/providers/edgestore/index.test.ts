@@ -9,9 +9,14 @@ const runtime = vi.hoisted(() => ({
     createSignedUrls: vi.fn(),
     search: vi.fn(),
     confirm: vi.fn(),
+    confirmMany: vi.fn(),
     delete: vi.fn(),
+    deleteMany: vi.fn(),
+    restore: vi.fn(),
+    restoreMany: vi.fn(),
   },
   uploads: {
+    upload: vi.fn(),
     request: vi.fn(),
     createParts: vi.fn(),
     completeMultipart: vi.fn(),
@@ -164,14 +169,14 @@ describe('edgestore provider', () => {
     });
     runtime.files.createSignedUrls.mockResolvedValue({ signedUrls: [] });
     runtime.files.confirm.mockResolvedValue({
+      results: [{ fileRef: { url: file.url }, success: true }],
       successCount: 1,
       failureCount: 0,
-      failures: [],
     });
     runtime.files.delete.mockResolvedValue({
+      results: [{ fileRef: { url: file.url }, success: true }],
       successCount: 1,
       failureCount: 0,
-      failures: [],
     });
     const provider = edgestore({ accessKey: 'access', secretKey: 'secret' });
 
@@ -194,5 +199,88 @@ describe('edgestore provider', () => {
     await expect(
       provider.deleteFile({ bucket: {} as never, url: file.url }),
     ).resolves.toEqual({ success: true });
+  });
+
+  it('exposes canonical privileged backend operations through the SDK', async () => {
+    const file = {
+      id: 'file-id',
+      url: 'https://files.example/file',
+      key: 'files/file',
+      thumbnailUrl: null,
+      thumbnailKey: null,
+      bucketId: 'bucket-id',
+      bucketName: 'files',
+      projectId: 'project-id',
+      accountId: 'account-id',
+      name: 'file.txt',
+      path: { org: 'acme' },
+      metadata: { owner: 'user-1' },
+      sizeBytes: 12,
+      mimeType: 'text/plain',
+      state: 'uploaded' as const,
+      temporary: false,
+      uploadedAt: '2026-07-21T00:00:00.000Z',
+      updatedAt: '2026-07-21T00:00:01.000Z',
+    };
+    runtime.uploads.upload.mockResolvedValue({ file });
+    runtime.files.lookup.mockResolvedValue({ file });
+    runtime.files.search.mockResolvedValue({
+      files: [file],
+      pagination: { limit: 10, nextCursor: 'next', hasMore: true },
+    });
+    runtime.files.restoreMany.mockResolvedValue({
+      results: [{ fileRef: { id: file.id }, success: true }],
+      successCount: 1,
+      failureCount: 0,
+    });
+    const provider = edgestore({ accessKey: 'access', secretKey: 'secret' });
+    const source = new Blob(['content'], { type: 'text/plain' });
+
+    await expect(
+      provider.backend.upload({
+        bucketName: 'files',
+        bucketType: 'FILE',
+        fileInfo,
+        source,
+      }),
+    ).resolves.toMatchObject({
+      file: {
+        id: file.id,
+        uploadedAt: new Date(file.uploadedAt),
+        updatedAt: new Date(file.updatedAt),
+      },
+    });
+    await expect(
+      provider.backend.getFile({ file: { key: file.key } }),
+    ).resolves.toMatchObject({ id: file.id });
+    await expect(
+      provider.backend.listFiles({
+        bucketName: 'files',
+        cursor: 'cursor',
+        limit: 10,
+      }),
+    ).resolves.toMatchObject({
+      items: [{ id: file.id }],
+      nextCursor: 'next',
+    });
+    await expect(
+      provider.backend.restoreFiles({ files: [{ id: file.id }] }),
+    ).resolves.toMatchObject({ successCount: 1 });
+
+    expect(runtime.uploads.upload).toHaveBeenCalledWith(
+      expect.objectContaining({
+        bucket: 'files',
+        source,
+        metadata: { owner: 'user-1' },
+      }),
+    );
+    expect(runtime.files.lookup).toHaveBeenCalledWith({
+      file: { key: file.key },
+    });
+    expect(runtime.files.search).toHaveBeenCalledWith({
+      bucket: 'files',
+      filter: undefined,
+      pagination: { cursor: 'cursor', limit: 10 },
+    });
   });
 });

@@ -46,6 +46,28 @@ processing to finish. You can also use `runtime.uploads.request`,
 `createParts`, and `completeMultipart` when you need to manage transfer details
 yourself.
 
+Sources can be text, a `Blob`, an `ArrayBuffer` or typed-array view, or a
+known-size Web `ReadableStream`:
+
+```ts
+await sdk.runtime.uploads.upload({
+  bucket: 'archives',
+  source: { stream, sizeBytes },
+  fileName: 'archive.tar',
+});
+
+await sdk.runtime.uploads.uploadFromUrl({
+  bucket: 'imports',
+  url: 'https://example.com/report.csv',
+});
+```
+
+The defaults are a 100 MiB multipart threshold, 16 MiB parts, concurrency 4,
+three attempts with jitter, a 30-second control timeout, no transfer timeout,
+and a 60-second processing timeout. Configure upload defaults with the
+`upload` option on `createEdgeStoreSdk`; pass an `AbortSignal` for per-operation
+cancellation or deadlines.
+
 ## Runtime resources
 
 ```ts
@@ -65,12 +87,22 @@ if (page.pagination.hasMore) {
   });
 }
 
-await sdk.runtime.files.confirm({ files: [{ url: file.file.url }] });
-await sdk.runtime.files.delete({ files: [{ url: file.file.url }] });
+await sdk.runtime.files.confirm({ file: { id: file.file.id } });
+await sdk.runtime.files.delete({ file: { key: file.file.key } });
+
+const batch = await sdk.runtime.files.deleteMany({
+  files: [{ id: file.file.id }, { url: legacyFileUrl }],
+});
+
+for (const result of batch.results) {
+  if (!result.success) console.error(result.fileRef, result.error.code);
+}
 ```
 
 Runtime resources also include projects, buckets, file lookup, signed read
-URLs, access tokens, upload inspection, cancellation, and restore operations.
+URLs, access tokens, upload inspection, cancellation, and singular or plural
+restore operations. Singular mutations throw `EdgeStoreFileMutationError` for
+an item failure; plural mutations return the complete partial result.
 
 ## Management client
 

@@ -5,7 +5,10 @@ import {
 } from '@edgestore/sdk';
 import {
   EdgeStoreError,
+  type BackendClientProvider,
   type Provider,
+  type ProviderBackend,
+  type ProviderFile,
   type RequestUploadRes,
 } from '@edgestore/shared';
 import { getEnv } from '../../adapters/shared';
@@ -32,7 +35,9 @@ export type EdgeStoreProviderOptions = {
   apiUrl?: string;
 };
 
-export function edgestore(options?: EdgeStoreProviderOptions): Provider {
+export function edgestore(
+  options?: EdgeStoreProviderOptions,
+): BackendClientProvider {
   const {
     accessKey = getEnv('EDGE_STORE_ACCESS_KEY') ??
       // @ts-expect-error - In Vite/Astro, the env variables are available on `import.meta`.
@@ -52,6 +57,57 @@ export function edgestore(options?: EdgeStoreProviderOptions): Provider {
     credentials: { accessKey, secretKey },
     baseUrl: options?.apiUrl ?? getApiUrl(),
   });
+
+  const backend: ProviderBackend = {
+    upload: async ({
+      bucketName,
+      bucketType,
+      fileInfo,
+      autoSignedUrls,
+      source,
+      signal,
+      onProgress,
+    }) => {
+      const result = await sdk.runtime.uploads.upload({
+        bucket: bucketName,
+        source,
+        ...mapUploadRequest(bucketType, fileInfo, autoSignedUrls),
+        signal,
+        onProgress,
+      });
+      return {
+        file: mapFile(result.file),
+        signedReadUrl: result.signedReadUrl
+          ? {
+              ...result.signedReadUrl,
+              expiresAt: new Date(result.signedReadUrl.expiresAt),
+            }
+          : undefined,
+      };
+    },
+    getFile: async ({ file: fileRef }) => {
+      const { file } = await sdk.runtime.files.lookup({ file: fileRef });
+      return mapFile(file);
+    },
+    listFiles: async ({ bucketName, filter, cursor, limit }) => {
+      const { files, pagination } = await sdk.runtime.files.search({
+        bucket: bucketName,
+        filter,
+        pagination: { cursor, limit },
+      });
+      return {
+        items: files.map(mapFile),
+        ...pagination,
+      };
+    },
+    confirmFiles: async ({ files }) =>
+      await sdk.runtime.files.confirmMany({ files }),
+    deleteFiles: async ({ files }) =>
+      await sdk.runtime.files.deleteMany({ files }),
+    restoreFiles: async ({ files }) =>
+      await sdk.runtime.files.restoreMany({ files }),
+  };
+
   return {
     name: 'edgestore',
     init: async ({ ctx, router }) => {
@@ -85,11 +141,11 @@ export function edgestore(options?: EdgeStoreProviderOptions): Provider {
       return baseUrl;
     },
     getFile: async ({ url }) => {
-      const { file } = await sdk.runtime.files.lookup({ file: { url } });
+      const file = await backend.getFile({ file: { url } });
       return {
         url: file.url,
         size: file.sizeBytes,
-        uploadedAt: new Date(file.uploadedAt),
+        uploadedAt: file.uploadedAt,
         path: file.path,
         metadata: file.metadata,
       };
@@ -180,13 +236,14 @@ export function edgestore(options?: EdgeStoreProviderOptions): Provider {
       return { success: true };
     },
     confirmUpload: async ({ url }) => {
-      const res = await sdk.runtime.files.confirm({ files: [{ url }] });
-      return { success: res.successCount === 1 };
+      await sdk.runtime.files.confirm({ file: { url } });
+      return { success: true };
     },
     deleteFile: async ({ url }) => {
-      const res = await sdk.runtime.files.delete({ files: [{ url }] });
-      return { success: res.successCount === 1 };
+      await sdk.runtime.files.delete({ file: { url } });
+      return { success: true };
     },
+    backend,
   };
 }
 
@@ -268,5 +325,19 @@ function mapUploadResponse(
       })),
       ...multipartConfig,
     },
+  };
+}
+
+function mapFile(
+  file: Awaited<
+    ReturnType<
+      ReturnType<typeof createEdgeStoreSdk>['runtime']['files']['lookup']
+    >
+  >['file'],
+): ProviderFile {
+  return {
+    ...file,
+    uploadedAt: new Date(file.uploadedAt),
+    updatedAt: new Date(file.updatedAt),
   };
 }

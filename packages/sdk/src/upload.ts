@@ -1,4 +1,6 @@
 import {
+  EdgeStoreAbortError,
+  EdgeStoreNetworkError,
   EdgeStoreUploadCanceledError,
   EdgeStoreUploadProcessingTimeoutError,
 } from './errors';
@@ -12,6 +14,7 @@ import {
   sleep,
   throwIfAborted,
   uploadParts,
+  uploadStreamParts,
 } from './internal/uploadTransfer';
 import type { RuntimeUploadRequestInput } from './runtime';
 import {
@@ -19,18 +22,34 @@ import {
   DEFAULT_MULTIPART_PART_SIZE_BYTES,
   DEFAULT_MULTIPART_THRESHOLD_BYTES,
   DEFAULT_PROCESSING_TIMEOUT_MS,
+  MAX_MULTIPART_PARTS,
   type CompletedUpload,
+  type RuntimeUploadFromUrlInput,
   type RuntimeUploadInput,
   type RuntimeUploadResult,
+  type UploadDefaults,
   type UploadMetadataValue,
   type UploadSource,
+  type UploadStreamSource,
 } from './uploadTypes';
 
 type ExplicitUploadInput = RuntimeUploadInput & { project: string };
+type ExplicitUploadFromUrlInput = RuntimeUploadFromUrlInput & {
+  project: string;
+};
+
+type PreparedUploadSource = {
+  sizeBytes: number;
+  body?: Blob;
+  stream?: ReadableStream<Uint8Array>;
+  fileName?: string;
+  mimeType?: string;
+};
 
 export async function uploadRuntimeFile(
   transport: Transport,
   input: ExplicitUploadInput,
+  defaults: UploadDefaults = {},
 ): Promise<RuntimeUploadResult> {
   const {
     project,
@@ -44,46 +63,53 @@ export async function uploadRuntimeFile(
     fileName,
     mimeType,
     idempotencyKey,
-    processingTimeoutMs = DEFAULT_PROCESSING_TIMEOUT_MS,
+    processingTimeoutMs = defaults.processingTimeoutMs ??
+      DEFAULT_PROCESSING_TIMEOUT_MS,
     ...requestOptions
   } = input;
-  const body = toBlob(source);
+  const prepared = prepareSource(source);
+  const totalBytes = prepared.sizeBytes;
   assertNonNegative(processingTimeoutMs, 'processingTimeoutMs');
+  const multipartThresholdBytes =
+    defaults.multipartThresholdBytes ?? DEFAULT_MULTIPART_THRESHOLD_BYTES;
+  assertNonNegative(multipartThresholdBytes, 'upload.multipartThresholdBytes');
+  const retryOptions = { ...defaults.retry, ...retry };
   const uploadIdempotencyKey = idempotencyKey ?? crypto.randomUUID();
+
+  throwIfAborted(signal);
+  reportProgress(onProgress, {
+    transferredBytes: 0,
+    totalBytes,
+    phase: 'preparing',
+  });
+
   const bucketResult = await getBucket(transport, {
     project,
     bucket,
     signal,
   });
-  const partSizeBytes = getPositiveInteger(
-    typeof multipart === 'object' ? multipart.partSizeBytes : undefined,
-    DEFAULT_MULTIPART_PART_SIZE_BYTES,
+  const requestedPartSizeBytes = getPositiveInteger(
+    typeof multipart === 'object'
+      ? multipart.partSizeBytes
+      : defaults.multipartPartSizeBytes,
+    defaults.multipartPartSizeBytes ?? DEFAULT_MULTIPART_PART_SIZE_BYTES,
     'multipart.partSizeBytes',
   );
+  const partSizeBytes = Math.max(
+    requestedPartSizeBytes,
+    Math.ceil(totalBytes / MAX_MULTIPART_PARTS),
+  );
   const useMultipart =
+    prepared.stream !== undefined ||
     multipart === true ||
     typeof multipart === 'object' ||
-    body.size > DEFAULT_MULTIPART_THRESHOLD_BYTES;
+    totalBytes > multipartThresholdBytes;
   const partNumbers = useMultipart
     ? Array.from(
-        { length: Math.max(1, Math.ceil(body.size / partSizeBytes)) },
+        { length: Math.max(1, Math.ceil(totalBytes / partSizeBytes)) },
         (_, index) => index + 1,
       )
     : undefined;
-
-  if (partNumbers && partNumbers.length > 10_000) {
-    throw new RangeError(
-      'Multipart uploads cannot contain more than 10,000 parts.',
-    );
-  }
-
-  throwIfAborted(signal);
-  onProgress?.({
-    transferredBytes: 0,
-    totalBytes: body.size,
-    percentage: 0,
-    phase: 'transfer',
-  });
 
   const requested = await retryOperation(
     () =>
@@ -92,44 +118,70 @@ export async function uploadRuntimeFile(
         bucket,
         bucketType: bucketResult.bucket.type,
         visibility: bucketResult.bucket.visibility,
-        sizeBytes: body.size,
-        fileName: fileName ?? getSourceName(source),
-        mimeType: mimeType ?? getSourceMimeType(source),
+        sizeBytes: totalBytes,
+        fileName: fileName ?? prepared.fileName,
+        mimeType: mimeType ?? prepared.mimeType,
         metadata: normalizeMetadata(metadata),
         multipart: partNumbers ? { partNumbers } : undefined,
         signal,
         ...requestOptions,
         idempotencyKey: uploadIdempotencyKey,
       }),
-    retry,
+    retryOptions,
     signal,
   );
   const uploadId = requested.upload.id;
 
   try {
+    reportProgress(onProgress, {
+      transferredBytes: 0,
+      totalBytes,
+      phase: 'uploading',
+    });
+
     if (requested.upload.kind === 'single') {
+      if (!prepared.body) {
+        throw new TypeError('Stream uploads require multipart upload URLs.');
+      }
       await putWithRetry(transport, {
         uploadId,
         url: requested.upload.signedUrl,
-        body,
+        body: prepared.body,
         signal,
-        retry,
+        retry: retryOptions,
+      });
+      reportProgress(onProgress, {
+        transferredBytes: totalBytes,
+        totalBytes,
+        phase: 'uploading',
       });
     } else {
-      const completedParts = await uploadParts(transport, {
-        body,
+      const concurrency = getPositiveInteger(
+        typeof multipart === 'object'
+          ? multipart.concurrency
+          : defaults.multipartConcurrency,
+        defaults.multipartConcurrency ?? DEFAULT_MULTIPART_CONCURRENCY,
+        'multipart.concurrency',
+      );
+      const transferOptions = {
         uploadId,
         parts: requested.upload.parts,
         partSizeBytes,
-        concurrency: getPositiveInteger(
-          typeof multipart === 'object' ? multipart.concurrency : undefined,
-          DEFAULT_MULTIPART_CONCURRENCY,
-          'multipart.concurrency',
-        ),
         signal,
-        retry,
+        retry: retryOptions,
         onProgress,
-      });
+      };
+      const completedParts = prepared.stream
+        ? await uploadStreamParts(transport, {
+            ...transferOptions,
+            stream: prepared.stream,
+            totalBytes,
+          })
+        : await uploadParts(transport, {
+            ...transferOptions,
+            body: prepared.body!,
+            concurrency,
+          });
       await completeMultipart(transport, {
         project,
         uploadId,
@@ -138,10 +190,9 @@ export async function uploadRuntimeFile(
       });
     }
 
-    onProgress?.({
-      transferredBytes: body.size,
-      totalBytes: body.size,
-      percentage: 100,
+    reportProgress(onProgress, {
+      transferredBytes: totalBytes,
+      totalBytes,
       phase: 'processing',
     });
 
@@ -162,6 +213,57 @@ export async function uploadRuntimeFile(
     }
     throw error;
   }
+}
+
+export async function uploadRuntimeFileFromUrl(
+  transport: Transport,
+  input: ExplicitUploadFromUrlInput,
+  defaults: UploadDefaults = {},
+): Promise<RuntimeUploadResult> {
+  const { url, signal, fileName, mimeType, ...uploadInput } = input;
+  let response: Response;
+
+  try {
+    response = await transport.fetch(url, { signal });
+  } catch (error) {
+    if (isAbortError(error)) {
+      throw new EdgeStoreAbortError(undefined, { cause: error });
+    }
+    throw new EdgeStoreNetworkError(
+      'The remote upload source could not be fetched.',
+      {
+        cause: error,
+      },
+    );
+  }
+
+  if (!response.ok) {
+    throw new EdgeStoreNetworkError(
+      `The remote upload source returned HTTP ${response.status}.`,
+    );
+  }
+
+  const sizeBytes = Number(response.headers.get('content-length'));
+  if (!Number.isSafeInteger(sizeBytes) || sizeBytes < 0) {
+    throw new TypeError(
+      'Remote uploads require a valid Content-Length response header.',
+    );
+  }
+
+  const source: UploadSource = response.body
+    ? { stream: response.body, sizeBytes }
+    : new Blob([]);
+  return uploadRuntimeFile(
+    transport,
+    {
+      ...uploadInput,
+      signal,
+      source,
+      fileName: fileName ?? getFileNameFromUrl(url),
+      mimeType: mimeType ?? response.headers.get('content-type') ?? undefined,
+    },
+    defaults,
+  );
 }
 
 async function getBucket(
@@ -308,22 +410,80 @@ function normalizeMetadata(
   return entries.length ? Object.fromEntries(entries) : undefined;
 }
 
-function toBlob(source: UploadSource): Blob {
-  if (source instanceof Blob) return source;
-  if (source instanceof ArrayBuffer) return new Blob([source]);
-  return new Blob([
+function prepareSource(source: UploadSource): PreparedUploadSource {
+  if (typeof source === 'string') {
+    const body = new Blob([source], { type: 'text/plain' });
+    return { body, sizeBytes: body.size, mimeType: body.type };
+  }
+  if (isStreamSource(source)) {
+    if (!Number.isSafeInteger(source.sizeBytes) || source.sizeBytes < 0) {
+      throw new RangeError('source.sizeBytes must be a non-negative integer.');
+    }
+    return { stream: source.stream, sizeBytes: source.sizeBytes };
+  }
+  if (source instanceof Blob) {
+    return {
+      body: source,
+      sizeBytes: source.size,
+      fileName:
+        'name' in source && typeof source.name === 'string'
+          ? source.name
+          : undefined,
+      mimeType: source.type || undefined,
+    };
+  }
+  if (source instanceof ArrayBuffer) {
+    const body = new Blob([source]);
+    return { body, sizeBytes: body.size };
+  }
+  const body = new Blob([
     Uint8Array.from(
       new Uint8Array(source.buffer, source.byteOffset, source.byteLength),
     ),
   ]);
+  return { body, sizeBytes: body.size };
 }
 
-function getSourceName(source: UploadSource): string | undefined {
-  return 'name' in source && typeof source.name === 'string'
-    ? source.name
-    : undefined;
+function isStreamSource(source: UploadSource): source is UploadStreamSource {
+  const stream =
+    typeof source === 'object' && source !== null && 'stream' in source
+      ? source.stream
+      : undefined;
+  return (
+    typeof stream === 'object' &&
+    stream !== null &&
+    'getReader' in stream &&
+    typeof stream.getReader === 'function'
+  );
 }
 
-function getSourceMimeType(source: UploadSource): string | undefined {
-  return source instanceof Blob && source.type ? source.type : undefined;
+function reportProgress(
+  onProgress: RuntimeUploadInput['onProgress'],
+  progress: {
+    transferredBytes: number;
+    totalBytes: number;
+    phase: 'preparing' | 'uploading' | 'processing';
+  },
+) {
+  const { transferredBytes, totalBytes, phase } = progress;
+  onProgress?.({
+    transferredBytes,
+    totalBytes,
+    percentage:
+      totalBytes === 0
+        ? phase === 'preparing'
+          ? 0
+          : 100
+        : Math.round((transferredBytes / totalBytes) * 10_000) / 100,
+    phase,
+  });
+}
+
+function getFileNameFromUrl(url: string): string | undefined {
+  const name = new URL(url).pathname.split('/').filter(Boolean).at(-1);
+  return name ? decodeURIComponent(name) : undefined;
+}
+
+function isAbortError(error: unknown): boolean {
+  return error instanceof Error && error.name === 'AbortError';
 }

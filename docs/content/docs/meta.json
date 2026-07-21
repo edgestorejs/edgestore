@@ -7,6 +7,7 @@
     "(getting-started)/configuration",
     "(getting-started)/backend-client",
     "(getting-started)/sdk",
+    "(getting-started)/migrate-to-v1",
     "(getting-started)/error-handling",
     "(getting-started)/logging",
     "(getting-started)/llms-vibe-coding",

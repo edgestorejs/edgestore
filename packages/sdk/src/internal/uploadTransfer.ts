@@ -65,13 +65,86 @@ export async function uploadParts(
               ? 100
               : Math.round((transferredBytes / options.body.size) * 10_000) /
                 100,
-          phase: 'transfer',
+          phase: 'uploading',
         });
       }
     }),
   );
 
   return completed;
+}
+
+export async function uploadStreamParts(
+  transport: Transport,
+  options: {
+    stream: ReadableStream<Uint8Array>;
+    totalBytes: number;
+    uploadId: string;
+    parts: { partNumber: number; signedUrl: string }[];
+    partSizeBytes: number;
+    signal?: AbortSignal;
+    retry?: RuntimeUploadInput['retry'];
+    onProgress?: RuntimeUploadInput['onProgress'];
+  },
+): Promise<{ partNumber: number; eTag: string }[]> {
+  const reader = createSizedStreamReader(options.stream);
+  const completed: { partNumber: number; eTag: string }[] = [];
+  let transferredBytes = 0;
+
+  try {
+    for (const part of options.parts) {
+      throwIfAborted(options.signal);
+      const expectedBytes = Math.min(
+        options.partSizeBytes,
+        options.totalBytes - transferredBytes,
+      );
+      const chunk = await reader.read(expectedBytes);
+      if (chunk.byteLength !== expectedBytes) {
+        throw new EdgeStoreUploadError(
+          `Upload stream ended after ${transferredBytes + chunk.byteLength} bytes; expected ${options.totalBytes}.`,
+          options.uploadId,
+        );
+      }
+      const response = await putWithRetry(transport, {
+        uploadId: options.uploadId,
+        url: part.signedUrl,
+        body: new Blob([Uint8Array.from(chunk)]),
+        signal: options.signal,
+        retry: options.retry,
+      });
+      const eTag = response.headers.get('etag');
+      if (!eTag) {
+        throw new EdgeStoreUploadError(
+          `Upload part ${part.partNumber} did not return an ETag.`,
+          options.uploadId,
+        );
+      }
+      completed.push({ partNumber: part.partNumber, eTag });
+      transferredBytes += chunk.byteLength;
+      options.onProgress?.({
+        transferredBytes,
+        totalBytes: options.totalBytes,
+        percentage:
+          options.totalBytes === 0
+            ? 100
+            : Math.round((transferredBytes / options.totalBytes) * 10_000) /
+              100,
+        phase: 'uploading',
+      });
+    }
+
+    if (transferredBytes !== options.totalBytes || !(await reader.isDone())) {
+      throw new EdgeStoreUploadError(
+        `Upload stream exceeded its declared size of ${options.totalBytes} bytes.`,
+        options.uploadId,
+      );
+    }
+    reader.release();
+    return completed;
+  } catch (error) {
+    await reader.cancel(error);
+    throw error;
+  }
 }
 
 export async function putWithRetry(
@@ -119,7 +192,7 @@ export async function putWithRetry(
       if (error instanceof EdgeStoreUploadError) throw error;
       lastError = error;
       if (attempt === maxAttempts) break;
-      await sleep(baseDelayMs * 2 ** (attempt - 1), options.signal);
+      await sleep(fullJitterDelay(baseDelayMs, attempt), options.signal);
     }
   }
 
@@ -154,7 +227,7 @@ export async function retryOperation<TResult>(
         error instanceof EdgeStoreApiError &&
         error.retryAfterSeconds !== undefined
           ? error.retryAfterSeconds * 1000
-          : baseDelayMs * 2 ** (attempt - 1);
+          : fullJitterDelay(baseDelayMs, attempt);
       await sleep(delayMs, signal);
     }
   }
@@ -216,7 +289,11 @@ function getRetryDelay(
   baseDelayMs: number,
   attempt: number,
 ) {
-  return getRetryAfterMs(response) ?? baseDelayMs * 2 ** (attempt - 1);
+  return getRetryAfterMs(response) ?? fullJitterDelay(baseDelayMs, attempt);
+}
+
+function fullJitterDelay(baseDelayMs: number, attempt: number) {
+  return Math.random() * baseDelayMs * 2 ** (attempt - 1);
 }
 
 function isRetryableError(error: unknown): boolean {
@@ -228,4 +305,61 @@ function isRetryableError(error: unknown): boolean {
 
 function isAbortError(error: unknown): boolean {
   return error instanceof Error && error.name === 'AbortError';
+}
+
+function createSizedStreamReader(
+  stream: ReadableStream<Uint8Array<ArrayBufferLike>>,
+) {
+  const reader = stream.getReader();
+  let remainder = new Uint8Array<ArrayBufferLike>(new ArrayBuffer(0));
+  let ended = false;
+
+  return {
+    async read(size: number) {
+      const chunks: Uint8Array<ArrayBufferLike>[] = [];
+      let length = 0;
+
+      while (length < size) {
+        if (remainder.byteLength > 0) {
+          const take = Math.min(size - length, remainder.byteLength);
+          chunks.push(remainder.subarray(0, take));
+          length += take;
+          remainder = remainder.subarray(take);
+          continue;
+        }
+        const next = await reader.read();
+        if (next.done) {
+          ended = true;
+          break;
+        }
+        remainder = next.value;
+      }
+
+      const result = new Uint8Array(length);
+      let offset = 0;
+      for (const chunk of chunks) {
+        result.set(chunk, offset);
+        offset += chunk.byteLength;
+      }
+      return result;
+    },
+    async isDone() {
+      if (remainder.byteLength > 0) return false;
+      if (ended) return true;
+      const next = await reader.read();
+      ended = next.done;
+      if (!next.done) remainder = next.value;
+      return ended;
+    },
+    async cancel(reason: unknown) {
+      try {
+        await reader.cancel(reason);
+      } finally {
+        reader.releaseLock();
+      }
+    },
+    release() {
+      reader.releaseLock();
+    },
+  };
 }

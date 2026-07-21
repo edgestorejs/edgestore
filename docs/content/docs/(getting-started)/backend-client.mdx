@@ -49,6 +49,10 @@ export { handler as GET, handler as POST };
   the server code that calls it.
 </Callout>
 
+The hosted `edgestore()` provider supports the complete backend client. AWS and
+Azure continue to support adapter uploads and deletes, but their router backend
+capabilities are planned separately and are not exposed by TypeScript yet.
+
 ## Backend Upload
 
 You can use the `upload` function to upload files from your backend.
@@ -84,10 +88,12 @@ const res = await backendClient.publicFiles.upload({
     type: 'post',
   },
   signal,
-  onProgress: ({ percentage }) => {
-    console.log(`${percentage}%`);
+  onProgress: ({ percentage, phase }) => {
+    console.log(phase, `${percentage}%`);
   },
 });
+
+console.log(res.id, res.key, res.sizeBytes);
 ```
 
 ### Copy an existing file
@@ -109,8 +115,22 @@ If you upload a temporary file, you can confirm it by using the `confirmUpload` 
 
 ```ts
 const res = await backendClient.publicFiles.confirmUpload({
-  url: fileUrl,
+  id: file.id,
 });
+```
+
+File operations accept a stable file ID, storage key, or URL. Singular
+operations throw `EdgeStoreFileMutationError` when that file fails. Use the
+plural form when partial success should be preserved:
+
+```ts
+const result = await backendClient.publicFiles.confirmUploads({
+  refs: [{ id: first.id }, { key: second.key }],
+});
+
+for (const failure of result.failed) {
+  console.error(failure.ref, failure.error.code);
+}
 ```
 
 ## Backend Delete
@@ -119,9 +139,12 @@ You can use the `deleteFile` function to delete files from your backend.
 
 ```ts
 const res = await backendClient.publicFiles.deleteFile({
-  url: fileUrl,
+  id: file.id,
 });
 ```
+
+`deleteFiles`, `restoreFile`, and `restoreFiles` use the same singular and
+partial-batch semantics.
 
 ## Backend List Files (search)
 
@@ -145,14 +168,16 @@ const res = await backendClient.publicFiles.listFiles({
       gt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7), // past 7 days
     },
   },
-  pagination: {
-    cursor: 'cursor-from-previous-response',
-    limit: 50, // default: 20 (max: 100)
-  },
+  cursor: 'cursor-from-previous-response',
+  limit: 50, // default: 20 (max: 100)
 });
 
-if (res.pagination.hasMore) {
-  console.log('Next cursor:', res.pagination.nextCursor);
+for (const file of res.items) {
+  console.log(file.id, file.url);
+}
+
+if (res.hasMore) {
+  console.log('Next cursor:', res.nextCursor);
 }
 ```
 
@@ -187,9 +212,9 @@ And you can use it like this:
 
 ```ts
 export const getServerSideProps: GetServerSideProps<{
-  files: ClientResponse['publicFiles']['listFiles']['data'];
+  files: ClientResponse['publicFiles']['listFiles']['items'];
 }> = async () => {
   const res = await backendClient.publicFiles.listFiles();
-  return { props: { files: res.data } };
+  return { props: { files: res.items } };
 };
 ```
