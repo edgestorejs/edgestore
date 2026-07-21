@@ -16,7 +16,11 @@ import type {
   UploadDefaults,
 } from './uploadTypes';
 
-export type RuntimeCallOptions = { signal?: AbortSignal };
+/** Options shared by runtime API calls. */
+export type RuntimeCallOptions = {
+  /** Cancels the request. */
+  signal?: AbortSignal;
+};
 
 type ProjectMode = 'current' | 'explicit';
 type ProjectScope<TMode extends ProjectMode> = TMode extends 'explicit'
@@ -68,6 +72,37 @@ export type RuntimeFileRestoreInput =
 export type RuntimeFileRestoreResult =
   OperationResult<'v2.runtime.files.restore'>;
 
+type FileMutationInput<TBatchInput extends { files: unknown[] }> = Omit<
+  TBatchInput,
+  'files'
+> & {
+  file: TBatchInput['files'][number];
+};
+type FileMutationResult<TResult extends { results: unknown[] }> =
+  TResult['results'][number] extends infer TItem
+    ? Extract<TItem, { success: true }> extends { fileRef: infer TFileRef }
+      ? { fileRef: TFileRef }
+      : never
+    : never;
+
+/** File selector accepted by runtime lookup and mutation operations. */
+export type RuntimeFileReference =
+  | RuntimeFileConfirmInput['files'][number]
+  | RuntimeFileDeleteInput['files'][number]
+  | RuntimeFileRestoreInput['files'][number];
+export type RuntimeFileConfirmOneInput =
+  FileMutationInput<RuntimeFileConfirmInput>;
+export type RuntimeFileConfirmOneResult =
+  FileMutationResult<RuntimeFileConfirmResult>;
+export type RuntimeFileDeleteOneInput =
+  FileMutationInput<RuntimeFileDeleteInput>;
+export type RuntimeFileDeleteOneResult =
+  FileMutationResult<RuntimeFileDeleteResult>;
+export type RuntimeFileRestoreOneInput =
+  FileMutationInput<RuntimeFileRestoreInput>;
+export type RuntimeFileRestoreOneResult =
+  FileMutationResult<RuntimeFileRestoreResult>;
+
 export type RuntimeUploadRequestInput = {
   bucket: string;
 } & OperationBody<'v2.runtime.uploads.request'> &
@@ -92,67 +127,125 @@ export type RuntimeUploadCompleteInput = {
 export type RuntimeUploadCompleteResult =
   OperationResult<'v2.runtime.uploads.multipart.complete'>;
 
+/** Resource-oriented runtime client for a current or explicitly selected project. */
 export type RuntimeClient<TMode extends ProjectMode> = {
   accessTokens: {
+    /** Creates a short-lived access token carrying trusted application context. */
     create(
       input: ScopedInput<TMode, RuntimeAccessTokenCreateInput>,
     ): Promise<RuntimeAccessTokenCreateResult>;
   };
   projects: {
+    /** Gets the project visible to the current credential. */
     get(...args: ProjectCallArgs<TMode>): Promise<RuntimeProjectGetResult>;
   };
   buckets: {
+    /** Lists the project's buckets. */
     list(...args: ProjectCallArgs<TMode>): Promise<RuntimeBucketListResult>;
+    /** Gets one bucket by name. */
     get(
       input: ScopedInput<TMode, RuntimeBucketGetInput>,
     ): Promise<RuntimeBucketGetResult>;
   };
   files: {
+    /** Searches files in a bucket using filters, sorting, and cursor pagination. */
     search(
       input: ScopedInput<TMode, RuntimeFileSearchInput>,
     ): Promise<RuntimeFileSearchResult>;
+    /** Looks up one file by ID, key, or URL. */
     lookup(
       input: ScopedInput<TMode, RuntimeFileLookupInput>,
     ): Promise<RuntimeFileLookupResult>;
+    /** Generates temporary signed read URLs for protected files. */
     generateSignedReadUrls(
       input: ScopedInput<TMode, RuntimeSignedReadUrlsGenerateInput>,
     ): Promise<RuntimeSignedReadUrlsGenerateResult>;
+    /**
+     * Confirms one uploaded file.
+     *
+     * @throws {@link EdgeStoreFileMutationError} when the file cannot be
+     * confirmed. Use `confirmMany` to preserve per-file partial results.
+     */
     confirm(
+      input: ScopedInput<TMode, RuntimeFileConfirmOneInput>,
+    ): Promise<RuntimeFileConfirmOneResult>;
+    /** Confirms files and returns a success or error result for every item. */
+    confirmMany(
       input: ScopedInput<TMode, RuntimeFileConfirmInput>,
     ): Promise<RuntimeFileConfirmResult>;
+    /**
+     * Soft-deletes one file.
+     *
+     * @throws {@link EdgeStoreFileMutationError} when the file cannot be
+     * deleted. Use `deleteMany` to preserve per-file partial results.
+     */
     delete(
+      input: ScopedInput<TMode, RuntimeFileDeleteOneInput>,
+    ): Promise<RuntimeFileDeleteOneResult>;
+    /** Soft-deletes files and returns a result for every item. */
+    deleteMany(
       input: ScopedInput<TMode, RuntimeFileDeleteInput>,
     ): Promise<RuntimeFileDeleteResult>;
+    /**
+     * Restores one soft-deleted file.
+     *
+     * @throws {@link EdgeStoreFileMutationError} when the file cannot be
+     * restored. Use `restoreMany` to preserve per-file partial results.
+     */
     restore(
+      input: ScopedInput<TMode, RuntimeFileRestoreOneInput>,
+    ): Promise<RuntimeFileRestoreOneResult>;
+    /** Restores files and returns a result for every item. */
+    restoreMany(
       input: ScopedInput<TMode, RuntimeFileRestoreInput>,
     ): Promise<RuntimeFileRestoreResult>;
   };
   uploads: {
+    /**
+     * Uploads a source and waits for server-side processing to complete.
+     *
+     * Automatically selects multipart mode, retries transient signed storage
+     * failures, reports progress, and cancels an incomplete upload after a
+     * transfer failure. Upload creation is never retried.
+     */
     upload(
       input: ScopedInput<TMode, RuntimeUploadInput>,
     ): Promise<RuntimeUploadResult>;
+    /**
+     * Fetches a URL in the current process, uploads it, and waits for
+     * server-side processing to complete.
+     *
+     * The remote response must include a valid `Content-Length` header.
+     */
     uploadFromUrl(
       input: ScopedInput<TMode, RuntimeUploadFromUrlInput>,
     ): Promise<RuntimeUploadResult>;
+    /** Requests signed upload destination(s) without transferring data. */
     request(
       input: ScopedInput<TMode, RuntimeUploadRequestInput>,
     ): Promise<RuntimeUploadRequestResult>;
+    /** Gets the current upload and processing state. */
     get(
       input: ScopedInput<TMode, RuntimeUploadGetInput>,
     ): Promise<RuntimeUploadGetResult>;
+    /** Cancels an incomplete upload. */
     cancel(
       input: ScopedInput<TMode, RuntimeUploadCancelInput>,
     ): Promise<RuntimeUploadCancelResult>;
+    /** Requests additional signed URLs for multipart upload parts. */
     createParts(
       input: ScopedInput<TMode, RuntimeUploadPartsCreateInput>,
     ): Promise<RuntimeUploadPartsCreateResult>;
+    /** Completes a multipart transfer and begins server-side processing. */
     completeMultipart(
       input: ScopedInput<TMode, RuntimeUploadCompleteInput>,
     ): Promise<RuntimeUploadCompleteResult>;
   };
 };
 
+/** Runtime client scoped to the project credential's current project. */
 export type ProjectRuntimeClient = RuntimeClient<'current'>;
+/** Runtime client whose calls require an explicit project ID or slug. */
 export type ExplicitProjectRuntimeClient = RuntimeClient<'explicit'>;
 
 export function createExplicitProjectRuntimeClient(
@@ -161,6 +254,7 @@ export function createExplicitProjectRuntimeClient(
 ): ProjectOperationTree<ExplicitProjectRuntimeClient> {
   const operations = createRuntimeOperations(transport);
   const uploadContext = { transport, operations };
+
   return {
     ...operations,
     uploads: {
