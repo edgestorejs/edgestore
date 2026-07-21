@@ -8,6 +8,9 @@ export {
   EdgeStoreApiError,
   EdgeStoreError,
   EdgeStoreNetworkError,
+  EdgeStoreUploadCanceledError,
+  EdgeStoreUploadError,
+  EdgeStoreUploadProcessingTimeoutError,
 } from './errors';
 export type { ManagementClient } from './managementClient';
 export {
@@ -46,3 +49,15 @@ export type {
   RuntimeUploadRequestInput,
   RuntimeUploadRequestResult,
 } from './runtime';
+export {
+  DEFAULT_MULTIPART_CONCURRENCY,
+  DEFAULT_MULTIPART_PART_SIZE_BYTES,
+  DEFAULT_MULTIPART_THRESHOLD_BYTES,
+  DEFAULT_PROCESSING_TIMEOUT_MS,
+  DEFAULT_UPLOAD_MAX_ATTEMPTS,
+  type RuntimeUploadInput,
+  type RuntimeUploadResult,
+  type UploadMetadataValue,
+  type UploadProgress,
+  type UploadSource,
+} from './uploadTypes';

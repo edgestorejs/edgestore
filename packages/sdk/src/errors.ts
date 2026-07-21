@@ -45,3 +45,21 @@ export class EdgeStoreAbortError extends EdgeStoreError {
     super(message, options);
   }
 }
+
+export class EdgeStoreUploadError extends EdgeStoreError {
+  override readonly name: string = 'EdgeStoreUploadError';
+  readonly uploadId: string;
+
+  constructor(message: string, uploadId: string, options?: ErrorOptions) {
+    super(message, options);
+    this.uploadId = uploadId;
+  }
+}
+
+export class EdgeStoreUploadCanceledError extends EdgeStoreUploadError {
+  override readonly name = 'EdgeStoreUploadCanceledError';
+}
+
+export class EdgeStoreUploadProcessingTimeoutError extends EdgeStoreUploadError {
+  override readonly name = 'EdgeStoreUploadProcessingTimeoutError';
+}
