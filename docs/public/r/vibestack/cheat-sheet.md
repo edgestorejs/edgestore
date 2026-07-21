@@ -1,11 +1,13 @@
 # EdgeStore Cheatsheet
 
 ## Buckets
+
 - **File Bucket**: `es.fileBucket()`
 - **Image Bucket**: `es.imageBucket()`
   - Auto-thumbnail generation for images >200px (included in upload response)
 
 ## File Validation
+
 ```ts
 es.fileBucket({
   maxSize: 1024 * 1024 * 10, // 10MB
@@ -14,6 +16,7 @@ es.fileBucket({
 ```
 
 ## Metadata & Path
+
 ```ts
 es.fileBucket()
   .input(z.object({ category: z.string() }))
@@ -22,12 +25,14 @@ es.fileBucket()
 ```
 
 ## Lifecycle Hooks
+
 ```ts
 .beforeUpload(({ ctx, input, fileInfo }) => true)
 .beforeDelete(({ ctx, fileInfo }) => true)
 ```
 
 ## Access Control (Experimental)
+
 ```ts
 .accessControl({
   OR: [
@@ -38,6 +43,7 @@ es.fileBucket()
 ```
 
 ## Client Usage
+
 ```ts
 import { useEdgeStore } from '../lib/edgestore';
 
@@ -45,6 +51,7 @@ const { edgestore } = useEdgeStore();
 ```
 
 ### Upload File
+
 ```ts
 await edgestore.publicFiles.upload({
   file,
@@ -53,6 +60,7 @@ await edgestore.publicFiles.upload({
 ```
 
 ### Replace File
+
 ```ts
 await edgestore.publicFiles.upload({
   file,
@@ -61,11 +69,13 @@ await edgestore.publicFiles.upload({
 ```
 
 ### Delete File
+
 ```ts
 await edgestore.publicFiles.delete({ url: urlToDelete });
 ```
 
 ### Temporary Files
+
 ```ts
 await edgestore.publicFiles.upload({
   file,
@@ -76,6 +86,7 @@ await edgestore.publicFiles.confirmUpload({ url });
 ```
 
 ### Cancel Upload
+
 ```ts
 const controller = new AbortController();
 await edgestore.publicFiles.upload({
@@ -86,8 +97,9 @@ controller.abort();
 ```
 
 ## Backend Client
+
 ```ts
-const backendClient = initEdgeStoreClient({ router: edgeStoreRouter });
+const backendClient = createEdgeStoreClient({ router: edgeStoreRouter });
 
 // Upload text
 await backendClient.publicFiles.upload({ content: 'text' });
@@ -121,11 +133,12 @@ await backendClient.publicFiles.listFiles({
     path: { type: 'post' },
     uploadedAt: { gt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
   },
-  pagination: { currentPage: 1, pageSize: 50 },
+  pagination: { cursor: 'cursor-from-previous-response', limit: 50 },
 });
 ```
 
 ## Utils
+
 ```ts
 import { getDownloadUrl, formatFileSize } from '@edgestore/react/utils';
 
@@ -134,6 +147,7 @@ formatFileSize(10485760); // => '10MB'
 ```
 
 ## Error Handling
+
 ```ts
 import {
   EdgeStoreApiClientError,
@@ -159,6 +173,7 @@ try {
 ```
 
 ### Error Codes
+
 - `BAD_REQUEST`
 - `FILE_TOO_LARGE`
 - `MIME_TYPE_NOT_ALLOWED`
@@ -169,16 +184,19 @@ try {
 - `SERVER_ERROR`
 
 ## Log Levels
+
 - `debug`, `info`, `warn`, `error`, `none`
+
 ```ts
 createEdgeStoreNextHandler({ logLevel: 'debug', router });
 ```
 
 ## Provider Options
+
 ```ts
 createEdgeStoreProvider({ maxConcurrentUploads: 5 });
 ```
 
 ## MIME Types (IMAGE bucket)
-- image/jpeg, image/png, image/gif, image/webp, image/svg+xml, image/tiff, image/bmp, image/x-icon
 
+- image/jpeg, image/png, image/gif, image/webp, image/svg+xml, image/tiff, image/bmp, image/x-icon

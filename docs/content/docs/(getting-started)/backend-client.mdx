@@ -12,7 +12,7 @@ You can use your EdgeStore router to initialize the backend client.
 Since Next.js doesn't allow exports in the api route, you will need to move your router to an external file.
 
 ```ts title="src/lib/edgestore-server.ts"
-import { initEdgeStoreClient } from '@edgestore/server/core';
+import { createEdgeStoreClient } from '@edgestore/server/core';
 
 // ...
 
@@ -23,7 +23,7 @@ export const handler = createEdgeStoreNextHandler({
 // ...
 
 // [!code ++:3]
-export const backendClient = initEdgeStoreClient({
+export const backendClient = createEdgeStoreClient({
   router: edgeStoreRouter,
 });
 ```
@@ -40,6 +40,13 @@ export { handler as GET, handler as POST };
   You can find an example of the backend client usage in the
   [next-advanced](https://github.com/edgestorejs/edgestore/tree/main/examples/next-advanced)
   example.
+</Callout>
+
+<Callout type="warn">
+  The backend client is privileged. It validates router input and applies file
+  type, size, transform, path, and metadata rules, but it does not run
+  `accessControl`, `beforeUpload`, or `beforeDelete`. Perform authorization in
+  the server code that calls it.
 </Callout>
 
 ## Backend Upload
@@ -75,6 +82,10 @@ const res = await backendClient.publicFiles.upload({
   },
   input: {
     type: 'post',
+  },
+  signal,
+  onProgress: ({ percentage }) => {
+    console.log(`${percentage}%`);
   },
 });
 ```
@@ -118,7 +129,7 @@ You can use the `listFiles` function to list files from your backend. It's also 
 
 ```ts
 // simple usage
-// get the first page (20 files) of all files in the bucket
+// get the first 20 files in the bucket
 const res = await backendClient.publicFiles.listFiles();
 
 // with filter and pagination
@@ -135,10 +146,26 @@ const res = await backendClient.publicFiles.listFiles({
     },
   },
   pagination: {
-    currentPage: 1, // default: 1
-    pageSize: 50, // default: 20 (max: 100)
+    cursor: 'cursor-from-previous-response',
+    limit: 50, // default: 20 (max: 100)
   },
 });
+
+if (res.pagination.hasMore) {
+  console.log('Next cursor:', res.pagination.nextCursor);
+}
+```
+
+Use `listAllFiles` when you want to iterate through all matching pages without
+managing cursors yourself:
+
+```ts
+for await (const file of backendClient.publicFiles.listAllFiles({
+  filter: { metadata: { role: 'admin' } },
+  limit: 50,
+})) {
+  console.log(file.url);
+}
 ```
 
 ## TypeScript Helpers

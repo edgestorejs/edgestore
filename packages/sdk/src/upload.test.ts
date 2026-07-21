@@ -73,8 +73,22 @@ describe('runtime upload orchestration', () => {
 
     expect(result.file.id).toBe('file-id');
     expect(progress.mock.calls).toEqual([
-      [{ transferredBytes: 0, totalBytes: 7 }],
-      [{ transferredBytes: 7, totalBytes: 7 }],
+      [
+        {
+          transferredBytes: 0,
+          totalBytes: 7,
+          percentage: 0,
+          phase: 'transfer',
+        },
+      ],
+      [
+        {
+          transferredBytes: 7,
+          totalBytes: 7,
+          percentage: 100,
+          phase: 'processing',
+        },
+      ],
     ]);
   });
 

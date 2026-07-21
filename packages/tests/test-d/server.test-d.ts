@@ -1,6 +1,6 @@
 import { initEdgeStore } from '@edgestore/server';
 import {
-  initEdgeStoreClient,
+  createEdgeStoreClient,
   type InferClientResponse,
 } from '@edgestore/server/core';
 import {
@@ -34,7 +34,7 @@ const router = es.router({
   documents: es.fileBucket().path(({ ctx }) => [{ author: ctx.userId }]),
 });
 
-const client = initEdgeStoreClient({
+const client = createEdgeStoreClient({
   router,
 });
 
@@ -42,7 +42,7 @@ const publicEs = initEdgeStore.create();
 const publicRouter = publicEs.router({
   files: publicEs.fileBucket(),
 });
-const publicClient = initEdgeStoreClient({
+const publicClient = createEdgeStoreClient({
   router: publicRouter,
 });
 const privateRouter = publicEs.router({
@@ -52,7 +52,7 @@ const privateRouter = publicEs.router({
     .accessControl('private')
     .autoSignedUrls({ expiresIn: 300 }),
 });
-const privateClient = initEdgeStoreClient({
+const privateClient = createEdgeStoreClient({
   router: privateRouter,
 });
 
@@ -309,6 +309,20 @@ expectType<{
         hasMore: boolean;
       };
     };
+    listAllFiles: AsyncIterable<{
+      url: string;
+      thumbnailUrl: string | null;
+      size: number;
+      uploadedAt: Date;
+      metadata: {
+        role: 'admin' | 'visitor';
+        type: 'profile' | 'post';
+      };
+      path: {
+        author: string;
+        type: string;
+      };
+    }>;
   };
   documents: {
     upload: {
@@ -351,6 +365,15 @@ expectType<{
         hasMore: boolean;
       };
     };
+    listAllFiles: AsyncIterable<{
+      url: string;
+      size: number;
+      uploadedAt: Date;
+      metadata: Record<string, never>;
+      path: {
+        author: string;
+      };
+    }>;
   };
 }>({} as InferClientResponse<typeof router>);
 
@@ -390,5 +413,12 @@ expectType<{
         hasMore: boolean;
       };
     };
+    listAllFiles: AsyncIterable<{
+      url: string;
+      size: number;
+      uploadedAt: Date;
+      metadata: Record<string, never>;
+      path: Record<string, never>;
+    }>;
   };
 }>({} as InferClientResponse<typeof publicRouter>);

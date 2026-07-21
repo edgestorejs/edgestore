@@ -232,6 +232,12 @@ export type ListFilesResponse<TBucket extends AnyBuilder> = {
   };
 };
 
+export type ListAllFilesRequest<TBucket extends AnyBuilder> = {
+  filter?: Filter<TBucket>;
+  /** Number of files fetched per API request. */
+  limit?: number;
+};
+
 type GetSignedUrlRes = {
   url: string;
   signedUrl: string;
@@ -306,6 +312,10 @@ type BucketClient<TBucket extends AnyBuilder> = {
   listFiles: (
     params?: ListFilesRequest<TBucket>,
   ) => Promise<Prettify<ListFilesResponse<TBucket>>>;
+  /** Iterate through every matching file without managing cursors manually. */
+  listAllFiles: (
+    params?: ListAllFilesRequest<TBucket>,
+  ) => AsyncIterable<ListFilesResponse<TBucket>['data'][number]>;
 } & (undefined extends TBucket['_def']['accessControl']
   ? unknown
   : {
@@ -519,6 +529,18 @@ export function createEdgeStoreClient<TRouter extends AnyRouter>(config: {
           };
         },
 
+        async *listAllFiles(params) {
+          let cursor: string | undefined;
+          do {
+            const page = await client.listFiles({
+              filter: params?.filter,
+              pagination: { cursor, limit: params?.limit },
+            });
+            for (const file of page.data) yield file;
+            cursor = page.pagination.nextCursor ?? undefined;
+          } while (cursor);
+        },
+
         async getSignedUrl(params: { url: string; expiresIn?: number }) {
           if (!provider.getSignedUrls) {
             throw unsupportedProviderOperation(provider, 'getSignedUrls');
@@ -561,9 +583,6 @@ export function createEdgeStoreClient<TRouter extends AnyRouter>(config: {
     },
   });
 }
-
-/** @deprecated Use `createEdgeStoreClient()` instead. */
-export const initEdgeStoreClient = createEdgeStoreClient;
 
 /**
  * Protected files need third-party cookies to work.

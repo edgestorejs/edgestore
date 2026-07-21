@@ -447,6 +447,50 @@ describe('createEdgeStoreClient', () => {
     });
   });
 
+  it('iterates through cursor pages with listAllFiles', async () => {
+    provider.listFiles
+      .mockResolvedValueOnce({
+        data: [
+          {
+            url: 'https://files.example/_public/first',
+            size: 1,
+            uploadedAt: new Date('2026-01-01T00:00:00.000Z'),
+            metadata: {},
+            path: {},
+          },
+        ],
+        pagination: { limit: 1, nextCursor: 'next', hasMore: true },
+      })
+      .mockResolvedValueOnce({
+        data: [
+          {
+            url: 'https://files.example/_public/second',
+            size: 2,
+            uploadedAt: new Date('2026-01-02T00:00:00.000Z'),
+            metadata: {},
+            path: {},
+          },
+        ],
+        pagination: { limit: 1, nextCursor: null, hasMore: false },
+      });
+    const client = createClient();
+
+    const files = [];
+    for await (const file of client.publicFiles.listAllFiles({ limit: 1 })) {
+      files.push(file.url);
+    }
+
+    expect(files).toEqual([
+      'https://files.example/_public/first',
+      'https://files.example/_public/second',
+    ]);
+    expect(provider.listFiles).toHaveBeenNthCalledWith(2, {
+      bucketName: 'publicFiles',
+      filter: undefined,
+      pagination: { cursor: 'next', limit: 1 },
+    });
+  });
+
   it('throws for protected dev file URLs when baseUrl is missing', async () => {
     vi.stubEnv('NODE_ENV', 'development');
     const client = createClient();

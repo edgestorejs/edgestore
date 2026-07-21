@@ -1,0 +1,127 @@
+---
+title: Low-level SDK
+description: Use the supported API v2 SDK directly from server-side TypeScript.
+---
+
+`@edgestore/sdk` is the public, low-level client for EdgeStore API v2. Use it
+when you need API operations that are not tied to an EdgeStore router. For
+router-derived bucket names, input, path, and metadata types, use the
+[backend client](/docs/backend-client) instead.
+
+<Callout type="warn">
+  The SDK is server-only. Project secrets and management tokens must never be
+  included in browser bundles.
+</Callout>
+
+## Project client
+
+Project credentials expose runtime operations for the credential's current
+project. The reserved project selector is handled internally.
+
+```ts
+import { createEdgeStoreSdk } from '@edgestore/sdk';
+
+const sdk = createEdgeStoreSdk({
+  credentials: {
+    accessKey: process.env.EDGE_STORE_ACCESS_KEY!,
+    secretKey: process.env.EDGE_STORE_SECRET_KEY!,
+  },
+});
+
+const file = await sdk.runtime.uploads.upload({
+  bucket: 'documents',
+  source: pdfBlob,
+  fileName: 'invoice.pdf',
+  metadata: { invoiceId: invoice.id },
+  signal,
+  onProgress: ({ percentage, phase }) => {
+    console.log(phase, percentage);
+  },
+});
+```
+
+The upload helper selects single or multipart upload automatically, retries
+safe requests, reports progress, supports cancellation, and waits for upload
+processing to finish. You can also use `runtime.uploads.request`,
+`createParts`, and `completeMultipart` when you need to manage transfer details
+yourself.
+
+## Runtime resources
+
+```ts
+const page = await sdk.runtime.files.search({
+  bucket: 'documents',
+  filter: { metadata: { ownerId: user.id } },
+  pagination: { limit: 50 },
+});
+
+if (page.pagination.hasMore) {
+  const nextPage = await sdk.runtime.files.search({
+    bucket: 'documents',
+    pagination: {
+      cursor: page.pagination.nextCursor ?? undefined,
+      limit: 50,
+    },
+  });
+}
+
+await sdk.runtime.files.confirm({ files: [{ url: file.file.url }] });
+await sdk.runtime.files.delete({ files: [{ url: file.file.url }] });
+```
+
+Runtime resources also include projects, buckets, file lookup, signed read
+URLs, access tokens, upload inspection, cancellation, and restore operations.
+
+## Management client
+
+Management credentials require an explicit project selector for runtime calls
+and also expose account, project, credential, token, and membership resources.
+
+```ts
+const management = createEdgeStoreSdk({
+  credentials: {
+    token: process.env.EDGE_STORE_MANAGEMENT_TOKEN!,
+  },
+});
+
+const projects = await management.management.projects.list({
+  account: 'account-id',
+});
+
+const buckets = await management.runtime.buckets.list({
+  project: projects.projects[0]!.id,
+});
+```
+
+## Errors
+
+```ts
+import { EdgeStoreApiError, EdgeStoreNetworkError } from '@edgestore/sdk';
+
+try {
+  await sdk.runtime.files.lookup({ file: { url } });
+} catch (error) {
+  if (error instanceof EdgeStoreApiError) {
+    console.error(error.status, error.code, error.requestId);
+  } else if (error instanceof EdgeStoreNetworkError) {
+    console.error('The API could not be reached', error.cause);
+  }
+}
+```
+
+API errors preserve the HTTP status, machine-readable code, details, request
+ID, and retry guidance. Abort, network, upload, cancellation, and processing
+timeout errors have dedicated classes.
+
+## Custom environments
+
+Use `baseUrl` for a compatible API v2 deployment and `fetch` to provide a
+custom server-side transport implementation.
+
+```ts
+const sdk = createEdgeStoreSdk({
+  credentials: { accessKey, secretKey },
+  baseUrl: 'https://api.example.com/v2',
+  fetch: instrumentedFetch,
+});
+```

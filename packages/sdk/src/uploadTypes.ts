@@ -16,6 +16,8 @@ export type UploadMetadataValue = string | number | boolean | null | undefined;
 export type UploadProgress = {
   transferredBytes: number;
   totalBytes: number;
+  percentage: number;
+  phase: 'transfer' | 'processing';
 };
 
 export type RuntimeUploadInput = Omit<

@@ -1,6 +1,6 @@
 import { initEdgeStore } from '@edgestore/shared';
 import { describe, expect, it } from 'vitest';
-import { initEdgeStoreClient } from '.';
+import { createEdgeStoreClient } from '.';
 import {
   createSmokeFileName,
   getSmokeBucketName,
@@ -16,7 +16,7 @@ function createSmokeBucketClient() {
   const router = es.router({
     [smokeBucketName]: es.fileBucket(),
   });
-  const client = initEdgeStoreClient({
+  const client = createEdgeStoreClient({
     router,
   });
   const bucketClient = client[smokeBucketName];

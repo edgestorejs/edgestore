@@ -3,7 +3,7 @@ import {
   createEdgeStoreNextHandler,
   type CreateContextOptions,
 } from '@edgestore/server/adapters/next/pages';
-import { initEdgeStoreClient } from '@edgestore/server/core';
+import { createEdgeStoreClient } from '@edgestore/server/core';
 import { z } from 'zod';
 
 type Context = {
@@ -74,7 +74,7 @@ export default createEdgeStoreNextHandler<Context>({
 /**
  * Use this to easily access the EdgeStore API from your backend.
  */
-export const edgeStoreClient = initEdgeStoreClient({
+export const edgeStoreClient = createEdgeStoreClient({
   router: edgeStoreRouter,
   baseUrl: 'http://localhost:3000/api/edgestore',
 });

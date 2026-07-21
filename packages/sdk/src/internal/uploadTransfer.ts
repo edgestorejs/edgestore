@@ -60,6 +60,12 @@ export async function uploadParts(
         options.onProgress?.({
           transferredBytes,
           totalBytes: options.body.size,
+          percentage:
+            options.body.size === 0
+              ? 100
+              : Math.round((transferredBytes / options.body.size) * 10_000) /
+                100,
+          phase: 'transfer',
         });
       }
     }),

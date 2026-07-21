@@ -78,7 +78,12 @@ export async function uploadRuntimeFile(
   }
 
   throwIfAborted(signal);
-  onProgress?.({ transferredBytes: 0, totalBytes: body.size });
+  onProgress?.({
+    transferredBytes: 0,
+    totalBytes: body.size,
+    percentage: 0,
+    phase: 'transfer',
+  });
 
   const requested = await retryOperation(
     () =>
@@ -110,7 +115,6 @@ export async function uploadRuntimeFile(
         signal,
         retry,
       });
-      onProgress?.({ transferredBytes: body.size, totalBytes: body.size });
     } else {
       const completedParts = await uploadParts(transport, {
         body,
@@ -133,6 +137,13 @@ export async function uploadRuntimeFile(
         signal,
       });
     }
+
+    onProgress?.({
+      transferredBytes: body.size,
+      totalBytes: body.size,
+      percentage: 100,
+      phase: 'processing',
+    });
 
     const completed = await waitForUpload(transport, {
       project,
