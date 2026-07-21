@@ -445,11 +445,15 @@ function prepareSource(source: UploadSource): PreparedUploadSource {
 }
 
 function isStreamSource(source: UploadSource): source is UploadStreamSource {
+  const stream =
+    typeof source === 'object' && source !== null && 'stream' in source
+      ? source.stream
+      : undefined;
   return (
-    typeof source === 'object' &&
-    source !== null &&
-    'stream' in source &&
-    source.stream instanceof ReadableStream
+    typeof stream === 'object' &&
+    stream !== null &&
+    'getReader' in stream &&
+    typeof stream.getReader === 'function'
   );
 }
 
