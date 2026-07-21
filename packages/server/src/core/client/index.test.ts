@@ -173,6 +173,7 @@ describe('createEdgeStoreClient', () => {
 
   it('fetches URL content as a blob before requesting an upload', async () => {
     const client = createClient();
+    const controller = new AbortController();
     const sourceBlob = new Blob(['from url'], { type: 'application/json' });
     let sourceBlobRead = false;
 
@@ -196,17 +197,19 @@ describe('createEdgeStoreClient', () => {
         url: 'https://source.example.com/file.json',
         extension: 'json',
       },
+      signal: controller.signal,
     });
 
-    expect(fetchMock.mock.calls[0]?.[0]).toBe(
+    expect(fetchMock).toHaveBeenCalledWith(
       'https://source.example.com/file.json',
+      { signal: controller.signal },
     );
     expect(backend.upload).toHaveBeenCalledWith({
       bucketName: 'publicFiles',
       bucketType: 'FILE',
       autoSignedUrls: undefined,
       source: sourceBlob,
-      signal: undefined,
+      signal: controller.signal,
       onProgress: undefined,
       fileInfo: expect.objectContaining({
         type: 'application/json',
