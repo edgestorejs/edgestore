@@ -31,13 +31,21 @@ function writeFileSyncRecursive(filePath: string, content: string) {
   fs.writeFileSync(filePath, content, 'utf8');
 }
 
-export async function generateEntrypoints(rawInputs: string[]) {
+export async function generateEntrypoints(
+  rawInputs: string[],
+  options: { includeSource?: boolean } = {},
+) {
   const inputs = [...rawInputs];
   // set some defaults for the package.json
   const pkgJsonPath = path.resolve('package.json');
   const pkgJson: PackageJson = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf8'));
 
-  pkgJson.files = ['dist', 'src', 'README.md', 'LICENSE'];
+  pkgJson.files = [
+    'dist',
+    ...(options.includeSource === false ? [] : ['src']),
+    'README.md',
+    'LICENSE',
+  ];
   pkgJson.exports = {
     './package.json': './package.json',
     '.': {
@@ -115,9 +123,11 @@ export async function generateEntrypoints(rawInputs: string[]) {
     if (topLevel !== 'package.json') scriptOutputs.add(`${topLevel}/**`);
   });
 
-  // Exclude test files in builds
-  pkgJson.files.push('!**/*.test.*');
-  pkgJson.files.push('!**/__tests__');
+  if (options.includeSource !== false) {
+    // Exclude test files in builds
+    pkgJson.files.push('!**/*.test.*');
+    pkgJson.files.push('!**/__tests__');
+  }
   // Add `funding` in all packages
   // pkgJson.funding = ['https://edgestore.dev/sponsor'];
 
@@ -136,10 +146,16 @@ export async function generateEntrypoints(rawInputs: string[]) {
 
   existingTurboJson.tasks ??= {};
   existingTurboJson.tasks['codegen:entrypoints'] ??= {};
-  existingTurboJson.tasks['codegen:entrypoints'].outputs = [...scriptOutputs];
+  const nextOutputs = [...scriptOutputs];
+  const currentOutputs =
+    existingTurboJson.tasks['codegen:entrypoints'].outputs ?? [];
+  if (JSON.stringify(currentOutputs) === JSON.stringify(nextOutputs)) {
+    return;
+  }
+  existingTurboJson.tasks['codegen:entrypoints'].outputs = nextOutputs;
 
   const formattedTurboJson = await prettier.format(
-    JSON.stringify(existingTurboJson),
+    JSON.stringify(existingTurboJson, null, 2),
     {
       parser: 'json',
       ...(await prettier.resolveConfig(turboPath)),
