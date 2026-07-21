@@ -9,7 +9,7 @@ import {
 import { type FastifyReply, type FastifyRequest } from 'fastify';
 import Logger, { type LogLevel } from '../../libs/logger';
 import { matchPath } from '../../libs/utils';
-import { EdgeStoreProvider } from '../../providers/edgestore';
+import { edgestore } from '../../providers/edgestore';
 import {
   completeMultipartUpload,
   confirmUpload,
@@ -74,7 +74,7 @@ function getCookie(req: FastifyRequest, name: string): string | undefined {
 }
 
 export function createEdgeStoreFastifyHandler<TCtx>(config: Config<TCtx>) {
-  const { provider = EdgeStoreProvider(), cookieConfig } = config;
+  const { provider = edgestore(), cookieConfig } = config;
   const log = new Logger(config.logLevel);
   globalThis._EDGE_STORE_LOGGER = log;
   log.debug('Creating EdgeStore Fastify handler');

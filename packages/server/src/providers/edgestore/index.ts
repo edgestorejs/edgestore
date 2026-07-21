@@ -247,9 +247,6 @@ export function edgestore(
   };
 }
 
-/** @deprecated Use `edgestore()` instead. */
-export const EdgeStoreProvider = edgestore;
-
 function getApiUrl() {
   const configured = getEnv('EDGE_STORE_API_ENDPOINT');
   if (!configured) return undefined;

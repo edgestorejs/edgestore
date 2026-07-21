@@ -13,10 +13,10 @@ export { EdgeStoreProvider, useEdgeStore };
  * @example
  * ```ts
  * export const getServerSideProps: GetServerSideProps<{
- *   files: ClientResponse['images']['listFiles']['data'];
+ *   files: ClientResponse['images']['listFiles']['items'];
  * }> = async () => {
  *   const res = await edgeStoreClient.images.listFiles();
- *   return { props: { files: res.data } };
+ *   return { props: { files: res.items } };
  * };
  * ```
  */

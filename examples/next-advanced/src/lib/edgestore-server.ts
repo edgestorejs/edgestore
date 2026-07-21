@@ -3,7 +3,7 @@ import {
   createEdgeStoreNextHandler,
   type CreateContextOptions,
 } from '@edgestore/server/adapters/next/app';
-import { initEdgeStoreClient } from '@edgestore/server/core';
+import { createEdgeStoreClient } from '@edgestore/server/core';
 import { z } from 'zod';
 
 type Context = {
@@ -55,6 +55,6 @@ export const handler = createEdgeStoreNextHandler({
  */
 export type EdgeStoreRouter = typeof edgeStoreRouter;
 
-export const backendClient = initEdgeStoreClient({
+export const backendClient = createEdgeStoreClient({
   router: edgeStoreRouter,
 });
