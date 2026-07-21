@@ -63,3 +63,19 @@ export class EdgeStoreUploadCanceledError extends EdgeStoreUploadError {
 export class EdgeStoreUploadProcessingTimeoutError extends EdgeStoreUploadError {
   override readonly name = 'EdgeStoreUploadProcessingTimeoutError';
 }
+
+export class EdgeStoreFileMutationError extends EdgeStoreError {
+  override readonly name = 'EdgeStoreFileMutationError';
+
+  constructor(
+    readonly code:
+      | 'FILE_NOT_CONFIRMABLE'
+      | 'FILE_NOT_DELETABLE'
+      | 'FILE_NOT_RESTORABLE'
+      | 'INVALID_FILE_REF',
+    message: string,
+    readonly fileRef: { id: string } | { key: string } | { url: string },
+  ) {
+    super(message);
+  }
+}

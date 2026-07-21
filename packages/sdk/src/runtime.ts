@@ -1,3 +1,4 @@
+import { EdgeStoreFileMutationError } from './errors';
 import type { OperationBody, OperationResult } from './internal/operationTypes';
 import type { Transport } from './internal/transport';
 import { uploadRuntimeFile, uploadRuntimeFileFromUrl } from './upload';
@@ -51,6 +52,13 @@ export type RuntimeFileBatchInput = OperationBody<'v2.runtime.files.confirm'> &
   RuntimeCallOptions;
 export type RuntimeFileBatchResult =
   OperationResult<'v2.runtime.files.confirm'>;
+export type RuntimeFileReference = RuntimeFileBatchInput['files'][number];
+export type RuntimeFileMutationInput = {
+  file: RuntimeFileReference;
+} & RuntimeCallOptions;
+export type RuntimeFileMutationResult = {
+  fileRef: RuntimeFileReference;
+};
 
 export type RuntimeUploadRequestInput = {
   bucket: string;
@@ -102,12 +110,21 @@ export type RuntimeClient<TMode extends ProjectMode> = {
       input: ScopedInput<TMode, RuntimeSignedUrlsCreateInput>,
     ): Promise<RuntimeSignedUrlsCreateResult>;
     confirm(
+      input: ScopedInput<TMode, RuntimeFileMutationInput>,
+    ): Promise<RuntimeFileMutationResult>;
+    confirmMany(
       input: ScopedInput<TMode, RuntimeFileBatchInput>,
     ): Promise<RuntimeFileBatchResult>;
     delete(
+      input: ScopedInput<TMode, RuntimeFileMutationInput>,
+    ): Promise<RuntimeFileMutationResult>;
+    deleteMany(
       input: ScopedInput<TMode, RuntimeFileBatchInput>,
     ): Promise<RuntimeFileBatchResult>;
     restore(
+      input: ScopedInput<TMode, RuntimeFileMutationInput>,
+    ): Promise<RuntimeFileMutationResult>;
+    restoreMany(
       input: ScopedInput<TMode, RuntimeFileBatchInput>,
     ): Promise<RuntimeFileBatchResult>;
   };
@@ -219,36 +236,33 @@ export function createExplicitProjectRuntimeClient(
             },
           ),
         ),
-      confirm: ({ project, signal, ...body }) =>
-        transport.execute(() =>
-          transport.client.POST(
-            '/runtime/projects/{projectRef}/files/confirm',
-            {
-              params: { path: { projectRef: project } },
-              body,
-              signal,
-            },
-          ),
-        ),
-      delete: ({ project, signal, ...body }) =>
-        transport.execute(() =>
-          transport.client.POST('/runtime/projects/{projectRef}/files/delete', {
-            params: { path: { projectRef: project } },
-            body,
+      confirm: async ({ project, file, signal }) =>
+        unwrapFileMutationResult(
+          await executeFileMutation(transport, 'confirm', {
+            project,
+            files: [file],
             signal,
           }),
         ),
-      restore: ({ project, signal, ...body }) =>
-        transport.execute(() =>
-          transport.client.POST(
-            '/runtime/projects/{projectRef}/files/restore',
-            {
-              params: { path: { projectRef: project } },
-              body,
-              signal,
-            },
-          ),
+      confirmMany: (input) => executeFileMutation(transport, 'confirm', input),
+      delete: async ({ project, file, signal }) =>
+        unwrapFileMutationResult(
+          await executeFileMutation(transport, 'delete', {
+            project,
+            files: [file],
+            signal,
+          }),
         ),
+      deleteMany: (input) => executeFileMutation(transport, 'delete', input),
+      restore: async ({ project, file, signal }) =>
+        unwrapFileMutationResult(
+          await executeFileMutation(transport, 'restore', {
+            project,
+            files: [file],
+            signal,
+          }),
+        ),
+      restoreMany: (input) => executeFileMutation(transport, 'restore', input),
     },
     uploads: {
       upload: (input) => uploadRuntimeFile(transport, input, uploadDefaults),
@@ -338,8 +352,11 @@ export function createProjectRuntimeClient(
       createSignedUrls: (input) =>
         runtime.files.createSignedUrls({ ...input, project }),
       confirm: (input) => runtime.files.confirm({ ...input, project }),
+      confirmMany: (input) => runtime.files.confirmMany({ ...input, project }),
       delete: (input) => runtime.files.delete({ ...input, project }),
+      deleteMany: (input) => runtime.files.deleteMany({ ...input, project }),
       restore: (input) => runtime.files.restore({ ...input, project }),
+      restoreMany: (input) => runtime.files.restoreMany({ ...input, project }),
     },
     uploads: {
       upload: (input) => runtime.uploads.upload({ ...input, project }),
@@ -354,4 +371,50 @@ export function createProjectRuntimeClient(
         runtime.uploads.completeMultipart({ ...input, project }),
     },
   };
+}
+
+function executeFileMutation(
+  transport: Transport,
+  operation: 'confirm' | 'delete' | 'restore',
+  input: RuntimeFileBatchInput & { project: string },
+): Promise<RuntimeFileBatchResult> {
+  const { project, signal, ...body } = input;
+  const request = (
+    path:
+      | '/runtime/projects/{projectRef}/files/confirm'
+      | '/runtime/projects/{projectRef}/files/delete'
+      | '/runtime/projects/{projectRef}/files/restore',
+  ) =>
+    transport.execute(() =>
+      transport.client.POST(path, {
+        params: { path: { projectRef: project } },
+        body,
+        signal,
+      }),
+    );
+
+  if (operation === 'confirm') {
+    return request('/runtime/projects/{projectRef}/files/confirm');
+  }
+  if (operation === 'delete') {
+    return request('/runtime/projects/{projectRef}/files/delete');
+  }
+  return request('/runtime/projects/{projectRef}/files/restore');
+}
+
+function unwrapFileMutationResult(
+  result: RuntimeFileBatchResult,
+): RuntimeFileMutationResult {
+  const item = result.results[0];
+  if (!item) {
+    throw new Error('EdgeStore returned no file mutation result.');
+  }
+  if (!item.success) {
+    throw new EdgeStoreFileMutationError(
+      item.error.code,
+      item.error.message,
+      item.fileRef,
+    );
+  }
+  return { fileRef: item.fileRef };
 }
