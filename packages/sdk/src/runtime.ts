@@ -161,7 +161,6 @@ export function createExplicitProjectRuntimeClient(
 ): ProjectOperationTree<ExplicitProjectRuntimeClient> {
   const operations = createRuntimeOperations(transport);
   const uploadContext = { transport, operations };
-
   return {
     ...operations,
     uploads: {
