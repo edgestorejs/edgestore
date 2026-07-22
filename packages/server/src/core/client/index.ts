@@ -1,16 +1,18 @@
 /* eslint-disable @typescript-eslint/ban-types */
 import {
+  parseBucketInput,
   type AnyBuilder,
   type AnyRouter,
   type InferBucketPathKeys,
   type InferBucketPathObject,
   type InferBucketPathOrder,
   type InferMetadataObject,
+  type InferSchemaInput,
   type MaybePromise,
+  type NoInput,
   type Prettify,
   type Simplify,
 } from '@edgestore/shared';
-import { type z, type ZodNever } from 'zod';
 import { type Comparison } from '..';
 import { buildPath, isDev, parsePath } from '../../adapters/shared';
 import { initEdgeStoreSdk } from '../sdk';
@@ -126,16 +128,16 @@ export type UploadFileRequest<TBucket extends AnyBuilder> = {
   : {
       ctx: TBucket['$config']['ctx'];
     }) &
-  (TBucket['_def']['input'] extends ZodNever
+  (TBucket['_def']['input'] extends NoInput
     ? {}
     : {
-        input: z.infer<TBucket['_def']['input']>;
+        input: InferSchemaInput<TBucket['_def']['input']>;
       });
 
 type UploadImplementationParams = {
   content: UploadContent;
   ctx?: Record<string, unknown>;
-  input?: Record<string, unknown>;
+  input?: unknown;
 };
 
 export type UploadFileRes<TBucket extends AnyBuilder> =
@@ -361,11 +363,13 @@ export function initEdgeStoreClient<TRouter extends AnyRouter>(config: {
             extension = transformed.extension;
           }
 
+          const parsedInput = await parseBucketInput(bucket._def.input, input);
+
           const path = buildPath({
             bucket,
             pathAttrs: {
               ctx,
-              input,
+              input: parsedInput,
             },
             fileInfo: {
               type: blob.type,
@@ -378,7 +382,7 @@ export function initEdgeStoreClient<TRouter extends AnyRouter>(config: {
           });
           const metadata = await bucket._def.metadata({
             ctx,
-            input,
+            input: parsedInput,
           });
 
           const requestUploadRes = await sdk.requestUpload({

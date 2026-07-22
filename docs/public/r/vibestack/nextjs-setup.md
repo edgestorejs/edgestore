@@ -7,24 +7,24 @@ EdgeStore simplifies file uploads with storage, CDN, and a type-safe library.
 Install the required packages:
 
 ```bash
-npm install @edgestore/server @edgestore/react zod
+npm install @edgestore/server @edgestore/react
 ```
 
 or
 
 ```bash
-pnpm add @edgestore/server @edgestore/react zod
+pnpm add @edgestore/server @edgestore/react
 ```
 or
 
 ```bash
-bun add @edgestore/server @edgestore/react zod
+bun add @edgestore/server @edgestore/react
 ```
 
 or
 
 ```bash
-yarn add @edgestore/server @edgestore/react zod
+yarn add @edgestore/server @edgestore/react
 ```
 
 ## Environment Variables

@@ -4,11 +4,12 @@ import {
   type InferBucketPathObject,
   type InferBucketPathOrder,
   type InferMetadataObject,
+  type InferSchemaInput,
+  type NoInput,
   type Prettify,
   type SharedRequestUploadRes,
   type UploadOptions,
 } from '@edgestore/shared';
-import { type z } from 'zod';
 import EdgeStoreClientError from './libs/errors/EdgeStoreClientError';
 import { handleError } from './libs/errors/handleError';
 import { UploadAbortedError } from './libs/errors/uploadAbortedError';
@@ -60,7 +61,7 @@ export type BucketFunctions<TRouter extends AnyRouter> = {
      * })
      */
     upload: (
-      params: z.infer<TRouter['buckets'][K]['_def']['input']> extends never
+      params: TRouter['buckets'][K]['_def']['input'] extends NoInput
         ? {
             file: File;
             signal?: AbortSignal;
@@ -70,7 +71,7 @@ export type BucketFunctions<TRouter extends AnyRouter> = {
         : {
             file: File;
             signal?: AbortSignal;
-            input: z.infer<TRouter['buckets'][K]['_def']['input']>;
+            input: InferSchemaInput<TRouter['buckets'][K]['_def']['input']>;
             onProgressChange?: (progress: number) => void;
             options?: UploadOptions;
           },

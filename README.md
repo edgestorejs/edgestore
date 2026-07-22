@@ -11,7 +11,7 @@ Check the official [documentation](https://edgestore.dev) for more information.
 Let's start by installing the required packages.
 
 ```shell
-npm install @edgestore/server @edgestore/react zod
+npm install @edgestore/server @edgestore/react
 ```
 
 ### Environment Variables

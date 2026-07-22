@@ -5,6 +5,7 @@
     "---Getting Started---",
     "(getting-started)/quick-start",
     "(getting-started)/configuration",
+    "(getting-started)/schema-validation",
     "(getting-started)/backend-client",
     "(getting-started)/error-handling",
     "(getting-started)/logging",
