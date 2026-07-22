@@ -83,7 +83,7 @@ export class EdgeStoreError<TCode extends EdgeStoreErrorCodeKey> extends Error {
       message:
         this.code === 'SERVER_ERROR' ? 'Internal server error' : this.message,
       code: this.code,
-      details: this.details as any,
-    } satisfies EdgeStoreJsonResponse;
+      details: this.details,
+    } as EdgeStoreJsonResponse;
   }
 }
