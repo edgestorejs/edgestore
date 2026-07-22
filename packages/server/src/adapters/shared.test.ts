@@ -510,6 +510,7 @@ describe('requestUpload', () => {
 
   it('passes computed upload info to the provider', async () => {
     const provider = createProvider();
+    const beforeUpload = vi.fn(() => true);
     const es = initEdgeStore.context<{ userId: string }>().create();
     const router = es.router({
       documents: es
@@ -523,6 +524,7 @@ describe('requestUpload', () => {
           userId: ctx.userId,
           type: input.type,
         }))
+        .beforeUpload(beforeUpload)
         .accessControl({
           userId: { path: 'author' },
         }),
@@ -545,6 +547,19 @@ describe('requestUpload', () => {
           fileName: 'invoice.txt',
         },
       }),
+    });
+
+    expect(beforeUpload).toHaveBeenCalledWith({
+      ctx: expect.objectContaining({ userId: 'user-1' }),
+      input: { type: 'invoice' },
+      fileInfo: {
+        size: 10,
+        type: 'text/plain',
+        extension: 'txt',
+        temporary: true,
+        fileName: 'invoice.txt',
+        replaceTargetUrl: undefined,
+      },
     });
 
     expect(provider.requestUpload).toHaveBeenCalledWith({
