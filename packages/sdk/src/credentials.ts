@@ -1,15 +1,21 @@
+/** Project-scoped credentials used by runtime API clients. */
 export type ProjectCredentials = {
+  /** Project access key. */
   accessKey: string;
+  /** Project secret key. */
   secretKey: string;
   token?: never;
 };
 
+/** Management token used by administrative API clients. */
 export type ManagementCredentials = {
+  /** Account- or user-owned management token. */
   token: string;
   accessKey?: never;
   secretKey?: never;
 };
 
+/** Credentials accepted by {@link createEdgeStoreSdk}. */
 export type EdgeStoreCredentials = ProjectCredentials | ManagementCredentials;
 
 export function getAuthorizationHeader(
