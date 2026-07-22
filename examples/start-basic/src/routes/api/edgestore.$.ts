@@ -1,6 +1,6 @@
 import { initEdgeStore } from '@edgestore/server';
 import { createEdgeStoreStartHandler } from '@edgestore/server/adapters/start';
-import { createAPIFileRoute } from '@tanstack/start/api';
+import { createFileRoute } from '@tanstack/react-router';
 
 const es = initEdgeStore.create();
 const edgeStoreRouter = es.router({
@@ -13,7 +13,11 @@ const handler = createEdgeStoreStartHandler({
   router: edgeStoreRouter,
 });
 
-export const APIRoute = createAPIFileRoute('/api/edgestore/$')({
-  GET: handler,
-  POST: handler,
+export const Route = createFileRoute('/api/edgestore/$')({
+  server: {
+    handlers: {
+      GET: handler,
+      POST: handler,
+    },
+  },
 });
