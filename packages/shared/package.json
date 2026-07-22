@@ -53,6 +53,9 @@
     "!**/*.test.*",
     "!**/__tests__"
   ],
+  "dependencies": {
+    "@standard-schema/spec": "^1.1.0"
+  },
   "peerDependencies": {
     "react": ">=16.8.0",
     "react-dom": ">=16.8.0",
@@ -65,9 +68,11 @@
   },
   "devDependencies": {
     "@types/node": "25.0.3",
+    "arktype": "2.2.3",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "typescript": "5.9.3",
+    "valibot": "1.4.2",
     "zod": "3.25.42"
   },
   "gitHead": "a223c4cb8df50e6b64f9db5dc2daf93848748da9"

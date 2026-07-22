@@ -1,7 +1,15 @@
-import { z } from 'zod';
 import { EdgeStoreError } from '../errors';
 import { type KeysOfUnion, type MaybePromise, type Simplify } from '../types';
 import { createPathParamProxy } from './createPathParamProxy';
+import {
+  NO_INPUT,
+  type AnyInput,
+  type AnySchema,
+  type InferSchemaOutput,
+  type NoInput,
+} from './schema';
+
+export type { AnyInput } from './schema';
 
 type Merge<TType, TWith> = {
   [TKey in keyof TType | keyof TWith]?: TKey extends keyof TType
@@ -65,8 +73,6 @@ export interface AnyContext {
   [key: string]: AnyContextValue;
 }
 
-export type AnyInput = z.AnyZodObject | z.ZodNever;
-
 export type AnyPath = Record<string, () => string>[];
 
 type PathParam<TPath extends AnyPath> = {
@@ -128,7 +134,7 @@ type BucketConfig = {
 
 type BeforeUploadFn<TCtx, TDef extends AnyDef> = (params: {
   ctx: TCtx;
-  input: z.infer<TDef['input']>;
+  input: InferSchemaOutput<TDef['input']>;
   fileInfo: {
     size: number;
     type: string;
@@ -156,9 +162,15 @@ type MetadataFn<
   TCtx,
   TInput extends AnyInput,
   TMetadata extends AnyMetadata,
-> = (params: { ctx: TCtx; input: z.infer<TInput> }) => MaybePromise<TMetadata>;
+> = (params: {
+  ctx: TCtx;
+  input: InferSchemaOutput<TInput>;
+}) => MaybePromise<TMetadata>;
 
-export type AnyMetadataFn = MetadataFn<any, AnyInput, AnyMetadata>;
+export type AnyMetadataFn = (params: {
+  ctx: any;
+  input: any;
+}) => MaybePromise<AnyMetadata>;
 
 type BucketType = 'IMAGE' | 'FILE';
 
@@ -178,7 +190,7 @@ type Def<
   beforeDelete?: BeforeDeleteFn<any, any>;
 };
 
-type AnyDef = Def<AnyInput, AnyPath, AnyMetadataFn>;
+type AnyDef = Def<any, AnyPath, AnyMetadataFn>;
 
 type Builder<TCtx, TDef extends AnyDef> = {
   /** only used for types */
@@ -194,7 +206,7 @@ type Builder<TCtx, TDef extends AnyDef> = {
    *
    * This can be used to add additional information to the file, like choose the file path or add metadata.
    */
-  input<TInput extends AnyInput>(
+  input<TInput extends AnySchema>(
     input: TInput,
   ): Builder<
     TCtx,
@@ -225,7 +237,9 @@ type Builder<TCtx, TDef extends AnyDef> = {
   path<TParams extends AnyPath>(
     pathResolver: (params: {
       ctx: Simplify<ConvertStringToFunction<TCtx>>;
-      input: Simplify<ConvertStringToFunction<z.infer<TDef['input']>>>;
+      input: Simplify<
+        ConvertStringToFunction<InferSchemaOutput<TDef['input']>>
+      >;
     }) => [...TParams],
   ): Builder<
     TCtx,
@@ -359,7 +373,7 @@ const createNewBuilder = (initDef: AnyDef, newDef: Partial<AnyDef>) => {
 function createBuilder<
   TCtx,
   TType extends BucketType,
-  TInput extends AnyInput = z.ZodNever,
+  TInput extends AnyInput = NoInput,
   TPath extends AnyPath = [],
   TMetadata extends AnyMetadataFn = () => Record<string, never>,
 >(
@@ -381,7 +395,7 @@ function createBuilder<
 > {
   const _def: AnyDef = {
     type: opts.type,
-    input: z.never(),
+    input: NO_INPUT,
     path: [],
     metadata: () => ({}),
     ...initDef,
