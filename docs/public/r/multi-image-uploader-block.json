@@ -1,7 +1,6 @@
 {
   "$schema": "https://ui.shadcn.com/schema/registry-item.json",
   "name": "multi-image-uploader-block",
-  "type": "registry:block",
   "title": "Multi Image Uploader Block",
   "description": "A block for uploading multiple images with preview grid and progress indicators.",
   "registryDependencies": [
@@ -15,5 +14,6 @@
       "type": "registry:block",
       "target": "components/upload/blocks/multi-image-block.tsx"
     }
-  ]
+  ],
+  "type": "registry:block"
 }

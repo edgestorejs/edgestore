@@ -1,7 +1,6 @@
 {
   "$schema": "https://ui.shadcn.com/schema/registry-item.json",
   "name": "uploader-provider",
-  "type": "registry:component",
   "title": "Uploader Provider",
   "description": "A provider component and hook for managing file uploads with progress tracking and state management.",
   "files": [
@@ -11,5 +10,6 @@
       "type": "registry:component",
       "target": "components/upload/uploader-provider.tsx"
     }
-  ]
+  ],
+  "type": "registry:component"
 }

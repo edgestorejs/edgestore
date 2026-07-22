@@ -1,7 +1,6 @@
 {
   "$schema": "https://ui.shadcn.com/schema/registry-item.json",
   "name": "progress-bar-block",
-  "type": "registry:block",
   "title": "Progress Bar Block",
   "description": "A demo block showing a horizontal progress bar with animated progress.",
   "registryDependencies": [
@@ -14,5 +13,6 @@
       "type": "registry:block",
       "target": "components/upload/blocks/progress-bar-block.tsx"
     }
-  ]
+  ],
+  "type": "registry:block"
 }

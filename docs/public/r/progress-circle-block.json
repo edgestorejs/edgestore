@@ -1,7 +1,6 @@
 {
   "$schema": "https://ui.shadcn.com/schema/registry-item.json",
   "name": "progress-circle-block",
-  "type": "registry:block",
   "title": "Progress Circle Block",
   "description": "A demo block showing a circular progress indicator with animated progress.",
   "registryDependencies": [
@@ -14,5 +13,6 @@
       "type": "registry:block",
       "target": "components/upload/blocks/progress-circle-block.tsx"
     }
-  ]
+  ],
+  "type": "registry:block"
 }

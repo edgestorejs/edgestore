@@ -1,7 +1,6 @@
 {
   "$schema": "https://ui.shadcn.com/schema/registry-item.json",
   "name": "progress-bar",
-  "type": "registry:component",
   "title": "Progress Bar",
   "description": "A horizontal progress bar component for visualizing completion percentage.",
   "files": [
@@ -11,5 +10,6 @@
       "type": "registry:component",
       "target": "components/upload/progress-bar.tsx"
     }
-  ]
+  ],
+  "type": "registry:component"
 }
