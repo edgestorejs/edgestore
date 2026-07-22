@@ -1,6 +1,5 @@
 import { initEdgeStore } from '@edgestore/server';
 import { createEdgeStoreExpressHandler } from '@edgestore/server/adapters/express';
-import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
@@ -30,7 +29,7 @@ app.use(cookieParser());
  * We need to have access to the json request body.
  * We can use the body parser middleware to parse the request.
  */
-app.use(bodyParser.json());
+app.use(express.json());
 
 // --- EDGESTORE ROUTER CONFIG ---
 
