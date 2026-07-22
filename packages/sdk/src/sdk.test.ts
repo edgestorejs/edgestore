@@ -1,4 +1,5 @@
 import { describe, expect, expectTypeOf, it, vi } from 'vitest';
+import { EdgeStoreFileMutationError } from './errors';
 import type { RuntimeCallOptions } from './runtime';
 import { createEdgeStoreSdk } from './sdk';
 
@@ -94,5 +95,61 @@ describe('createEdgeStoreSdk', () => {
     });
 
     expect(result.upload.id).toBe('upload-id');
+  });
+
+  it('throws singular file failures and preserves plural partial results', async () => {
+    const fetch = vi.fn<typeof globalThis.fetch>(async (input) => {
+      const request = input instanceof Request ? input : new Request(input);
+      const body = (await request.json()) as { files: { id: string }[] };
+      if (body.files.length === 1) {
+        return Response.json({
+          data: {
+            results: [
+              {
+                fileRef: body.files[0],
+                success: false,
+                error: {
+                  code: 'FILE_NOT_DELETABLE',
+                  message: 'Cannot delete this file',
+                },
+              },
+            ],
+            successCount: 0,
+            failureCount: 1,
+          },
+        });
+      }
+      return Response.json({
+        data: {
+          results: [
+            { fileRef: body.files[0], success: true },
+            {
+              fileRef: body.files[1],
+              success: false,
+              error: {
+                code: 'INVALID_FILE_REF',
+                message: 'Missing file',
+              },
+            },
+          ],
+          successCount: 1,
+          failureCount: 1,
+        },
+      });
+    });
+    const sdk = createEdgeStoreSdk({
+      credentials: { accessKey: 'project', secretKey: 'secret' },
+      baseUrl: 'https://example.com/v2',
+      fetch,
+    });
+
+    await expect(
+      sdk.runtime.files.delete({ file: { id: 'first' } }),
+    ).rejects.toBeInstanceOf(EdgeStoreFileMutationError);
+    await expect(
+      sdk.runtime.files.deleteMany({
+        files: [{ id: 'first' }, { id: 'missing' }],
+      }),
+    ).resolves.toMatchObject({ successCount: 1, failureCount: 1 });
   });
 });

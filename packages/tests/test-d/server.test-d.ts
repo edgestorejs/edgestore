@@ -1,6 +1,7 @@
 import { initEdgeStore } from '@edgestore/server';
 import {
-  initEdgeStoreClient,
+  createEdgeStoreClient,
+  type EdgeStoreFileReference,
   type InferClientResponse,
 } from '@edgestore/server/core';
 import {
@@ -21,11 +22,7 @@ const es = initEdgeStore.context<Context>().create();
 const router = es.router({
   avatars: es
     .imageBucket()
-    .input(
-      z.object({
-        type: z.enum(['profile', 'post']),
-      }),
-    )
+    .input(z.object({ type: z.enum(['profile', 'post']) }))
     .path(({ ctx, input }) => [{ author: ctx.userId }, { type: input.type }])
     .metadata(({ ctx, input }) => ({
       role: ctx.role,
@@ -34,71 +31,47 @@ const router = es.router({
   documents: es.fileBucket().path(({ ctx }) => [{ author: ctx.userId }]),
 });
 
-const client = initEdgeStoreClient({
-  router,
-});
+const client = createEdgeStoreClient({ router });
 
 const publicEs = initEdgeStore.create();
-const publicRouter = publicEs.router({
-  files: publicEs.fileBucket(),
+const publicClient = createEdgeStoreClient({
+  router: publicEs.router({ files: publicEs.fileBucket() }),
 });
-const publicClient = initEdgeStoreClient({
-  router: publicRouter,
-});
-const privateRouter = publicEs.router({
-  privateFiles: publicEs.fileBucket().accessControl('private'),
-  privateImages: publicEs
-    .imageBucket()
-    .accessControl('private')
-    .autoSignedUrls({ expiresIn: 300 }),
-});
-const privateClient = initEdgeStoreClient({
-  router: privateRouter,
+const privateClient = createEdgeStoreClient({
+  router: publicEs.router({
+    privateFiles: publicEs.fileBucket().accessControl('private'),
+    privateImages: publicEs
+      .imageBucket()
+      .accessControl('private')
+      .autoSignedUrls({ expiresIn: 300 }),
+  }),
 });
 
 void client.avatars.upload({
   content: 'hello',
-  ctx: {
-    userId: 'user-1',
-    role: 'admin',
-  },
-  input: {
-    type: 'profile',
-  },
+  ctx: { userId: 'user-1', role: 'admin' },
+  input: { type: 'profile' },
 });
 
 expectNotAssignable<Parameters<typeof client.avatars.upload>[0]>({
   content: 'hello',
-  ctx: {
-    userId: 'user-1',
-    role: 'admin',
-  },
+  ctx: { userId: 'user-1', role: 'admin' },
 });
-
 expectNotAssignable<Parameters<typeof client.avatars.upload>[0]>({
   content: 'hello',
-  input: {
-    type: 'profile',
-  },
+  input: { type: 'profile' },
 });
-
-void client.documents.upload({
-  content: 'hello',
-  ctx: {
-    userId: 'user-1',
-    role: 'visitor',
-  },
-});
-
 expectNotAssignable<Parameters<typeof client.documents.upload>[0]>({
   content: 'hello',
 });
 
-void publicClient.files.upload({
+void client.documents.upload({
   content: 'hello',
+  ctx: { userId: 'user-1', role: 'visitor' },
 });
-expectError(publicClient.files.getSignedUrl({ url: 'https://example.com/a' }));
+void publicClient.files.upload({ content: 'hello' });
 
+expectError(publicClient.files.getSignedUrl({ url: 'https://example.com/a' }));
 expectType<
   Promise<{
     url: string;
@@ -111,7 +84,6 @@ expectType<
     url: 'https://files.edgestore.dev/project/privateFiles/file.txt',
   }),
 );
-
 expectAssignable<
   Promise<
     {
@@ -130,265 +102,91 @@ expectAssignable<
   }),
 );
 
-expectType<
-  Promise<{
-    url: string;
-    thumbnailUrl: string | null;
-    size: number;
-    metadata: Record<string, never>;
-    path: Record<string, never>;
-    pathOrder: [];
-    signedUrl: string;
-    expiresAt: Date;
-    expiresIn: number;
-    signedThumbnailUrl?: string | null;
-  }>
->(
-  privateClient.privateImages.upload({
-    content: 'hello',
-  }),
-);
-
-expectType<
-  Promise<{
-    url: string;
-    thumbnailUrl: string | null;
-    size: number;
-    metadata: {
-      role: 'admin' | 'visitor';
-      type: 'profile' | 'post';
-    };
-    path: {
-      author: string;
-      type: string;
-    };
-    pathOrder: ('author' | 'type')[];
-  }>
->(
-  client.avatars.upload({
-    content: 'hello',
-    ctx: {
-      userId: 'user-1',
-      role: 'admin',
-    },
-    input: {
-      type: 'post',
-    },
-  }),
-);
-
-expectType<
-  Promise<{
-    url: string;
-    size: number;
-    metadata: Record<string, never>;
-    path: {
-      author: string;
-    };
-    pathOrder: 'author'[];
-  }>
->(
-  client.documents.upload({
-    content: 'hello',
-    ctx: {
-      userId: 'user-1',
-      role: 'visitor',
-    },
-  }),
-);
-
-expectType<
-  Promise<{
-    url: string;
-    size: number;
-    uploadedAt: Date;
-    metadata: {
-      role: 'admin' | 'visitor';
-      type: 'profile' | 'post';
-    };
-    path: {
-      author: string;
-      type: string;
-    };
-  }>
->(
-  client.avatars.getFile({
-    url: 'https://files.example.com/file.png',
-  }),
-);
-
-expectType<
-  Promise<{
-    data: {
-      url: string;
-      thumbnailUrl: string | null;
-      size: number;
-      uploadedAt: Date;
-      metadata: {
-        role: 'admin' | 'visitor';
-        type: 'profile' | 'post';
-      };
-      path: {
-        author: string;
-        type: string;
-      };
-    }[];
-    pagination: {
-      currentPage: number;
-      totalPages: number;
-      totalCount: number;
-    };
-  }>
->(client.avatars.listFiles());
-
-expectNotAssignable<
-  NonNullable<Parameters<typeof client.documents.listFiles>[0]>
->({
-  filter: {
-    path: {
-      unknown: {
-        eq: 'value',
-      },
-    },
-  },
+void privateClient.privateImages.upload({ content: 'hello' }).then((file) => {
+  expectType<string>(file.id);
+  expectType<string>(file.key);
+  expectType<number>(file.sizeBytes);
+  expectType<Date>(file.uploadedAt);
+  expectType<Record<string, never>>(file.metadata);
+  expectType<Record<string, never>>(file.path);
+  expectType<[]>(file.pathOrder);
+  expectType<string>(file.signedUrl);
 });
 
-expectType<{
-  avatars: {
-    upload: {
-      url: string;
-      thumbnailUrl: string | null;
-      size: number;
-      metadata: {
-        role: 'admin' | 'visitor';
-        type: 'profile' | 'post';
-      };
-      path: {
-        author: string;
-        type: string;
-      };
-      pathOrder: ('author' | 'type')[];
-    };
-    getFile: {
-      url: string;
-      size: number;
-      uploadedAt: Date;
-      metadata: {
-        role: 'admin' | 'visitor';
-        type: 'profile' | 'post';
-      };
-      path: {
-        author: string;
-        type: string;
-      };
-    };
-    confirmUpload: {
-      success: boolean;
-    };
-    deleteFile: {
-      success: boolean;
-    };
-    listFiles: {
-      data: {
-        url: string;
-        thumbnailUrl: string | null;
-        size: number;
-        uploadedAt: Date;
-        metadata: {
-          role: 'admin' | 'visitor';
-          type: 'profile' | 'post';
-        };
-        path: {
-          author: string;
-          type: string;
-        };
-      }[];
-      pagination: {
-        currentPage: number;
-        totalPages: number;
-        totalCount: number;
-      };
-    };
-  };
-  documents: {
-    upload: {
-      url: string;
-      size: number;
-      metadata: Record<string, never>;
-      path: {
-        author: string;
-      };
-      pathOrder: 'author'[];
-    };
-    getFile: {
-      url: string;
-      size: number;
-      uploadedAt: Date;
-      metadata: Record<string, never>;
-      path: {
-        author: string;
-      };
-    };
-    confirmUpload: {
-      success: boolean;
-    };
-    deleteFile: {
-      success: boolean;
-    };
-    listFiles: {
-      data: {
-        url: string;
-        size: number;
-        uploadedAt: Date;
-        metadata: Record<string, never>;
-        path: {
-          author: string;
-        };
-      }[];
-      pagination: {
-        currentPage: number;
-        totalPages: number;
-        totalCount: number;
-      };
-    };
-  };
-}>({} as InferClientResponse<typeof router>);
+void client.avatars
+  .upload({
+    content: 'hello',
+    ctx: { userId: 'user-1', role: 'admin' },
+    input: { type: 'post' },
+  })
+  .then((file) => {
+    expectType<{ role: 'admin' | 'visitor'; type: 'profile' | 'post' }>(
+      file.metadata,
+    );
+    expectType<{ author: string; type: string }>(file.path);
+    expectType<('author' | 'type')[]>(file.pathOrder);
+  });
 
-expectType<{
-  files: {
-    upload: {
-      url: string;
-      size: number;
-      metadata: Record<string, never>;
-      path: Record<string, never>;
-      pathOrder: [];
-    };
-    getFile: {
-      url: string;
-      size: number;
-      uploadedAt: Date;
-      metadata: Record<string, never>;
-      path: Record<string, never>;
-    };
-    confirmUpload: {
-      success: boolean;
-    };
-    deleteFile: {
-      success: boolean;
-    };
-    listFiles: {
-      data: {
-        url: string;
-        size: number;
-        uploadedAt: Date;
-        metadata: Record<string, never>;
-        path: Record<string, never>;
-      }[];
-      pagination: {
-        currentPage: number;
-        totalPages: number;
-        totalCount: number;
-      };
-    };
-  };
-}>({} as InferClientResponse<typeof publicRouter>);
+void client.avatars.getFile({ id: 'file-id' }).then((file) => {
+  expectType<string>(file.id);
+  expectType<number>(file.sizeBytes);
+  expectType<{ role: 'admin' | 'visitor'; type: 'profile' | 'post' }>(
+    file.metadata,
+  );
+  expectType<{ author: string; type: string }>(file.path);
+});
+void client.documents.getFile({ key: 'files/document.pdf' });
+void client.documents.getFile({ url: 'https://files.example/document.pdf' });
+
+void client.avatars.listFiles({ cursor: 'next', limit: 20 }).then((page) => {
+  expectType<number>(page.limit);
+  expectType<string | null>(page.nextCursor);
+  expectType<boolean>(page.hasMore);
+  expectType<{ role: 'admin' | 'visitor'; type: 'profile' | 'post' }>(
+    page.items[0]!.metadata,
+  );
+});
+expectError(client.avatars.listFiles({ pagination: { limit: 20 } }));
+expectNotAssignable<
+  NonNullable<Parameters<typeof client.documents.listFiles>[0]>
+>({ filter: { path: { unknown: { eq: 'value' } } } });
+
+expectAssignable<
+  AsyncIterable<{
+    id: string;
+    metadata: { role: 'admin' | 'visitor'; type: 'profile' | 'post' };
+    path: { author: string; type: string };
+  }>
+>(client.avatars.listAllFiles({ limit: 50 }));
+
+expectType<Promise<{ ref: EdgeStoreFileReference }>>(
+  client.documents.confirmUpload({ id: 'file-id' }),
+);
+expectType<Promise<{ ref: EdgeStoreFileReference }>>(
+  client.documents.deleteFile({ key: 'files/document.pdf' }),
+);
+expectType<Promise<{ ref: EdgeStoreFileReference }>>(
+  client.documents.restoreFile({ url: 'https://files.example/document.pdf' }),
+);
+void client.documents
+  .deleteFiles({ refs: [{ id: 'one' }, { key: 'files/two' }] })
+  .then((result) => {
+    expectType<EdgeStoreFileReference[]>(result.succeeded);
+    expectType<EdgeStoreFileReference>(result.failed[0]!.ref);
+    expectType<
+      | 'FILE_NOT_CONFIRMABLE'
+      | 'FILE_NOT_DELETABLE'
+      | 'FILE_NOT_RESTORABLE'
+      | 'INVALID_FILE_REF'
+    >(result.failed[0]!.error.code);
+  });
+
+type ClientResponses = InferClientResponse<typeof router>;
+expectType<string>({} as ClientResponses['avatars']['upload']['id']);
+expectType<number>({} as ClientResponses['documents']['getFile']['sizeBytes']);
+expectType<{ role: 'admin' | 'visitor'; type: 'profile' | 'post' }>(
+  {} as ClientResponses['avatars']['listFiles']['items'][number]['metadata'],
+);
+expectType<EdgeStoreFileReference>(
+  {} as ClientResponses['documents']['deleteFile']['ref'],
+);

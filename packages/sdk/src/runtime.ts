@@ -1,3 +1,4 @@
+import { EdgeStoreFileMutationError } from './errors';
 import type { OperationBody, OperationResult } from './internal/operationTypes';
 import type { Transport } from './internal/transport';
 import { uploadRuntimeFile, uploadRuntimeFileFromUrl } from './upload';
@@ -8,7 +9,11 @@ import type {
   UploadDefaults,
 } from './uploadTypes';
 
-export type RuntimeCallOptions = { signal?: AbortSignal };
+/** Options shared by runtime API calls. */
+export type RuntimeCallOptions = {
+  /** Cancels the request. */
+  signal?: AbortSignal;
+};
 
 type ProjectMode = 'current' | 'explicit';
 type ProjectScope<TMode extends ProjectMode> = TMode extends 'explicit'
@@ -51,6 +56,14 @@ export type RuntimeFileBatchInput = OperationBody<'v2.runtime.files.confirm'> &
   RuntimeCallOptions;
 export type RuntimeFileBatchResult =
   OperationResult<'v2.runtime.files.confirm'>;
+/** File selector accepted by runtime lookup and mutation operations. */
+export type RuntimeFileReference = RuntimeFileBatchInput['files'][number];
+export type RuntimeFileMutationInput = {
+  file: RuntimeFileReference;
+} & RuntimeCallOptions;
+export type RuntimeFileMutationResult = {
+  fileRef: RuntimeFileReference;
+};
 
 export type RuntimeUploadRequestInput = {
   bucket: string;
@@ -76,67 +89,125 @@ export type RuntimeUploadCompleteInput = {
 export type RuntimeUploadCompleteResult =
   OperationResult<'v2.runtime.uploads.multipart.complete'>;
 
+/** Resource-oriented runtime client for a current or explicitly selected project. */
 export type RuntimeClient<TMode extends ProjectMode> = {
   accessTokens: {
+    /** Creates a short-lived access token carrying trusted application context. */
     create(
       input: ScopedInput<TMode, RuntimeAccessTokenCreateInput>,
     ): Promise<RuntimeAccessTokenCreateResult>;
   };
   projects: {
+    /** Gets the project visible to the current credential. */
     get(...args: ProjectCallArgs<TMode>): Promise<RuntimeProjectGetResult>;
   };
   buckets: {
+    /** Lists the project's buckets. */
     list(...args: ProjectCallArgs<TMode>): Promise<RuntimeBucketListResult>;
+    /** Gets one bucket by name. */
     get(
       input: ScopedInput<TMode, RuntimeBucketGetInput>,
     ): Promise<RuntimeBucketGetResult>;
   };
   files: {
+    /** Searches files in a bucket using filters, sorting, and cursor pagination. */
     search(
       input: ScopedInput<TMode, RuntimeFileSearchInput>,
     ): Promise<RuntimeFileSearchResult>;
+    /** Looks up one file by ID, key, or URL. */
     lookup(
       input: ScopedInput<TMode, RuntimeFileLookupInput>,
     ): Promise<RuntimeFileLookupResult>;
+    /** Creates temporary read URLs for protected files. */
     createSignedUrls(
       input: ScopedInput<TMode, RuntimeSignedUrlsCreateInput>,
     ): Promise<RuntimeSignedUrlsCreateResult>;
+    /**
+     * Confirms one uploaded file.
+     *
+     * @throws {@link EdgeStoreFileMutationError} when the file cannot be
+     * confirmed. Use `confirmMany` to preserve per-file partial results.
+     */
     confirm(
+      input: ScopedInput<TMode, RuntimeFileMutationInput>,
+    ): Promise<RuntimeFileMutationResult>;
+    /** Confirms files and returns a success or error result for every item. */
+    confirmMany(
       input: ScopedInput<TMode, RuntimeFileBatchInput>,
     ): Promise<RuntimeFileBatchResult>;
+    /**
+     * Soft-deletes one file.
+     *
+     * @throws {@link EdgeStoreFileMutationError} when the file cannot be
+     * deleted. Use `deleteMany` to preserve per-file partial results.
+     */
     delete(
+      input: ScopedInput<TMode, RuntimeFileMutationInput>,
+    ): Promise<RuntimeFileMutationResult>;
+    /** Soft-deletes files and returns a result for every item. */
+    deleteMany(
       input: ScopedInput<TMode, RuntimeFileBatchInput>,
     ): Promise<RuntimeFileBatchResult>;
+    /**
+     * Restores one soft-deleted file.
+     *
+     * @throws {@link EdgeStoreFileMutationError} when the file cannot be
+     * restored. Use `restoreMany` to preserve per-file partial results.
+     */
     restore(
+      input: ScopedInput<TMode, RuntimeFileMutationInput>,
+    ): Promise<RuntimeFileMutationResult>;
+    /** Restores files and returns a result for every item. */
+    restoreMany(
       input: ScopedInput<TMode, RuntimeFileBatchInput>,
     ): Promise<RuntimeFileBatchResult>;
   };
   uploads: {
+    /**
+     * Uploads a source and waits for server-side processing to complete.
+     *
+     * Automatically selects multipart mode, retries retryable setup and
+     * storage requests, reports progress, and cancels an incomplete upload
+     * after a transfer failure.
+     */
     upload(
       input: ScopedInput<TMode, RuntimeUploadInput>,
     ): Promise<RuntimeUploadResult>;
+    /**
+     * Fetches a URL in the current process, uploads it, and waits for
+     * server-side processing to complete.
+     *
+     * The remote response must include a valid `Content-Length` header.
+     */
     uploadFromUrl(
       input: ScopedInput<TMode, RuntimeUploadFromUrlInput>,
     ): Promise<RuntimeUploadResult>;
+    /** Requests signed upload destination(s) without transferring data. */
     request(
       input: ScopedInput<TMode, RuntimeUploadRequestInput>,
     ): Promise<RuntimeUploadRequestResult>;
+    /** Gets the current upload and processing state. */
     get(
       input: ScopedInput<TMode, RuntimeUploadGetInput>,
     ): Promise<RuntimeUploadGetResult>;
+    /** Cancels an incomplete upload. */
     cancel(
       input: ScopedInput<TMode, RuntimeUploadCancelInput>,
     ): Promise<RuntimeUploadCancelResult>;
+    /** Requests additional signed URLs for multipart upload parts. */
     createParts(
       input: ScopedInput<TMode, RuntimeUploadPartsCreateInput>,
     ): Promise<RuntimeUploadPartsCreateResult>;
+    /** Completes a multipart transfer and begins server-side processing. */
     completeMultipart(
       input: ScopedInput<TMode, RuntimeUploadCompleteInput>,
     ): Promise<RuntimeUploadCompleteResult>;
   };
 };
 
+/** Runtime client scoped to the project credential's current project. */
 export type ProjectRuntimeClient = RuntimeClient<'current'>;
+/** Runtime client whose calls require an explicit project ID or slug. */
 export type ExplicitProjectRuntimeClient = RuntimeClient<'explicit'>;
 
 export function createExplicitProjectRuntimeClient(
@@ -219,36 +290,33 @@ export function createExplicitProjectRuntimeClient(
             },
           ),
         ),
-      confirm: ({ project, signal, ...body }) =>
-        transport.execute(() =>
-          transport.client.POST(
-            '/runtime/projects/{projectRef}/files/confirm',
-            {
-              params: { path: { projectRef: project } },
-              body,
-              signal,
-            },
-          ),
-        ),
-      delete: ({ project, signal, ...body }) =>
-        transport.execute(() =>
-          transport.client.POST('/runtime/projects/{projectRef}/files/delete', {
-            params: { path: { projectRef: project } },
-            body,
+      confirm: async ({ project, file, signal }) =>
+        unwrapFileMutationResult(
+          await executeFileMutation(transport, 'confirm', {
+            project,
+            files: [file],
             signal,
           }),
         ),
-      restore: ({ project, signal, ...body }) =>
-        transport.execute(() =>
-          transport.client.POST(
-            '/runtime/projects/{projectRef}/files/restore',
-            {
-              params: { path: { projectRef: project } },
-              body,
-              signal,
-            },
-          ),
+      confirmMany: (input) => executeFileMutation(transport, 'confirm', input),
+      delete: async ({ project, file, signal }) =>
+        unwrapFileMutationResult(
+          await executeFileMutation(transport, 'delete', {
+            project,
+            files: [file],
+            signal,
+          }),
         ),
+      deleteMany: (input) => executeFileMutation(transport, 'delete', input),
+      restore: async ({ project, file, signal }) =>
+        unwrapFileMutationResult(
+          await executeFileMutation(transport, 'restore', {
+            project,
+            files: [file],
+            signal,
+          }),
+        ),
+      restoreMany: (input) => executeFileMutation(transport, 'restore', input),
     },
     uploads: {
       upload: (input) => uploadRuntimeFile(transport, input, uploadDefaults),
@@ -338,8 +406,11 @@ export function createProjectRuntimeClient(
       createSignedUrls: (input) =>
         runtime.files.createSignedUrls({ ...input, project }),
       confirm: (input) => runtime.files.confirm({ ...input, project }),
+      confirmMany: (input) => runtime.files.confirmMany({ ...input, project }),
       delete: (input) => runtime.files.delete({ ...input, project }),
+      deleteMany: (input) => runtime.files.deleteMany({ ...input, project }),
       restore: (input) => runtime.files.restore({ ...input, project }),
+      restoreMany: (input) => runtime.files.restoreMany({ ...input, project }),
     },
     uploads: {
       upload: (input) => runtime.uploads.upload({ ...input, project }),
@@ -354,4 +425,50 @@ export function createProjectRuntimeClient(
         runtime.uploads.completeMultipart({ ...input, project }),
     },
   };
+}
+
+function executeFileMutation(
+  transport: Transport,
+  operation: 'confirm' | 'delete' | 'restore',
+  input: RuntimeFileBatchInput & { project: string },
+): Promise<RuntimeFileBatchResult> {
+  const { project, signal, ...body } = input;
+  const request = (
+    path:
+      | '/runtime/projects/{projectRef}/files/confirm'
+      | '/runtime/projects/{projectRef}/files/delete'
+      | '/runtime/projects/{projectRef}/files/restore',
+  ) =>
+    transport.execute(() =>
+      transport.client.POST(path, {
+        params: { path: { projectRef: project } },
+        body,
+        signal,
+      }),
+    );
+
+  if (operation === 'confirm') {
+    return request('/runtime/projects/{projectRef}/files/confirm');
+  }
+  if (operation === 'delete') {
+    return request('/runtime/projects/{projectRef}/files/delete');
+  }
+  return request('/runtime/projects/{projectRef}/files/restore');
+}
+
+function unwrapFileMutationResult(
+  result: RuntimeFileBatchResult,
+): RuntimeFileMutationResult {
+  const item = result.results[0];
+  if (!item) {
+    throw new Error('EdgeStore returned no file mutation result.');
+  }
+  if (!item.success) {
+    throw new EdgeStoreFileMutationError(
+      item.error.code,
+      item.error.message,
+      item.fileRef,
+    );
+  }
+  return { fileRef: item.fileRef };
 }

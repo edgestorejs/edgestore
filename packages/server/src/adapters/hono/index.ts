@@ -9,7 +9,7 @@ import {
 import { type Context as HonoContext } from 'hono';
 import Logger, { type LogLevel } from '../../libs/logger';
 import { matchPath } from '../../libs/utils';
-import { EdgeStoreProvider } from '../../providers/edgestore';
+import { edgestore } from '../../providers/edgestore';
 import {
   completeMultipartUpload,
   confirmUpload,
@@ -59,7 +59,7 @@ function getCookie(c: HonoContext, name: string): string | undefined {
 }
 
 export function createEdgeStoreHonoHandler<TCtx>(config: Config<TCtx>) {
-  const { provider = EdgeStoreProvider(), cookieConfig } = config;
+  const { provider = edgestore(), cookieConfig } = config;
   const log = new Logger(config.logLevel);
   globalThis._EDGE_STORE_LOGGER = log;
   log.debug('Creating EdgeStore Hono handler');

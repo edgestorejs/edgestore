@@ -3,7 +3,7 @@ import {
   createEdgeStoreNextHandler,
   type CreateContextOptions,
 } from '@edgestore/server/adapters/next/app';
-import { initEdgeStoreClient } from '@edgestore/server/core';
+import { createEdgeStoreClient } from '@edgestore/server/core';
 import { cookies } from 'next/headers';
 import { z } from 'zod';
 
@@ -45,7 +45,7 @@ export { handler as GET, handler as POST };
  */
 export type EdgeStoreRouter = typeof edgeStoreRouter;
 
-export const backendClient = initEdgeStoreClient({
+export const backendClient = createEdgeStoreClient({
   router: edgeStoreRouter,
   baseUrl: 'http://localhost:3000/api/edgestore',
 });

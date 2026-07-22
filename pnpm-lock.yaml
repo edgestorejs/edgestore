@@ -932,6 +932,9 @@ importers:
 
   packages/server:
     dependencies:
+      '@edgestore/sdk':
+        specifier: workspace:*
+        version: link:../sdk
       '@edgestore/shared':
         specifier: workspace:*
         version: link:../shared

@@ -70,19 +70,24 @@ async function syncPackageVersionConstants(
   localVersions: Record<string, string>,
 ): Promise<string[]> {
   const changedFiles: string[] = [];
-  const serverVersion = localVersions['@edgestore/server'];
+  const versionTargets = [
+    { packageName: '@edgestore/server', directory: 'server' },
+    { packageName: '@edgestore/sdk', directory: 'sdk' },
+  ] as const;
 
-  if (serverVersion) {
+  for (const target of versionTargets) {
+    const version = localVersions[target.packageName];
+    if (!version) continue;
     const versionFilePath = path.join(
       repoRoot,
       'packages',
-      'server',
+      target.directory,
       'src',
       'version.ts',
     );
     const nextText = [
-      "export const EDGE_STORE_PACKAGE_NAME = '@edgestore/server';",
-      `export const EDGE_STORE_PACKAGE_VERSION = '${serverVersion}';`,
+      `export const EDGE_STORE_PACKAGE_NAME = '${target.packageName}';`,
+      `export const EDGE_STORE_PACKAGE_VERSION = '${version}';`,
       '',
     ].join('\n');
     const prevText = await readFile(versionFilePath, 'utf8');

@@ -6,86 +6,125 @@ import type {
 } from './internal/operationTypes';
 import type { Transport } from './internal/transport';
 
-type CallOptions = { signal?: AbortSignal };
-type AccountInput = { account: string };
-type ProjectInput = { project: string };
-type BucketInput = ProjectInput & { bucket: string };
-type UploadInput = ProjectInput & { uploadId: string };
-type EmptyJobInput = BucketInput & { jobId: string };
-type Idempotent = { idempotencyKey?: string };
+type CallOptions = {
+  /** Cancels the request. */
+  signal?: AbortSignal;
+};
+type AccountInput = {
+  /** Account ID. */
+  account: string;
+};
+type ProjectInput = {
+  /** Project ID or slug. */
+  project: string;
+};
+type BucketInput = ProjectInput & {
+  /** Bucket name. */
+  bucket: string;
+};
+type UploadInput = ProjectInput & {
+  /** Upload ID. */
+  uploadId: string;
+};
+type EmptyJobInput = BucketInput & {
+  /** Empty-bucket job ID. */
+  jobId: string;
+};
+type Idempotent = {
+  /** Key used to safely retry this create request. */
+  idempotencyKey?: string;
+};
 
 type Result<TOperation extends OperationId> = OperationResult<TOperation>;
 
+/** Management operations for projects, buckets, files, and uploads. */
 export type ManagementResourceClient = {
   projects: {
+    /** Lists projects in an account. */
     list(
       input: AccountInput & CallOptions,
     ): Promise<Result<'v2.management.projects.list'>>;
+    /** Creates a project in an account. */
     create(
       input: AccountInput &
         OperationBody<'v2.management.projects.create'> &
         Idempotent &
         CallOptions,
     ): Promise<Result<'v2.management.projects.create'>>;
+    /** Gets a project by ID or slug. */
     get(
       input: ProjectInput & CallOptions,
     ): Promise<Result<'v2.management.projects.get'>>;
+    /** Deletes a project. */
     delete(
       input: ProjectInput & CallOptions,
     ): Promise<Result<'v2.management.projects.delete'>>;
   };
   buckets: {
+    /** Lists buckets in a project. */
     list(
       input: ProjectInput & CallOptions,
     ): Promise<Result<'v2.management.buckets.list'>>;
+    /** Creates a bucket. */
     create(
       input: ProjectInput &
         OperationBody<'v2.management.buckets.create'> &
         Idempotent &
         CallOptions,
     ): Promise<Result<'v2.management.buckets.create'>>;
+    /** Gets a bucket by name. */
     get(
       input: BucketInput & CallOptions,
     ): Promise<Result<'v2.management.buckets.get'>>;
+    /** Updates a bucket. */
     update(
       input: BucketInput &
         OperationBody<'v2.management.buckets.update'> &
         CallOptions,
     ): Promise<Result<'v2.management.buckets.update'>>;
+    /** Deletes an empty bucket. */
     delete(
       input: BucketInput & CallOptions,
     ): Promise<Result<'v2.management.buckets.delete'>>;
+    /** Starts an asynchronous job that deletes every file in a bucket. */
     empty(
       input: BucketInput & CallOptions,
     ): Promise<Result<'v2.management.buckets.empty'>>;
     emptyJobs: {
+      /** Gets the latest empty-bucket job. */
       latest(
         input: BucketInput & CallOptions,
       ): Promise<Result<'v2.management.buckets.emptyJobs.latest'>>;
+      /** Gets an empty-bucket job by ID. */
       get(
         input: EmptyJobInput & CallOptions,
       ): Promise<Result<'v2.management.buckets.emptyJobs.get'>>;
+      /** Retries the failed items in an empty-bucket job. */
       retry(
         input: EmptyJobInput & CallOptions,
       ): Promise<Result<'v2.management.buckets.emptyJobs.retry'>>;
     };
   };
   files: {
+    /** Lists files in a bucket using cursor pagination. */
     list(
       input: BucketInput &
         OperationQuery<'v2.management.files.list'> &
         CallOptions,
     ): Promise<Result<'v2.management.files.list'>>;
+    /** Looks up one file by ID, key, or URL. */
     lookup(
       input: ProjectInput &
         OperationBody<'v2.management.files.lookup'> &
         CallOptions,
     ): Promise<Result<'v2.management.files.lookup'>>;
+    /** Creates temporary download URLs for protected files. */
     createDownloadUrls(
       input: ProjectInput &
         OperationBody<'v2.management.files.downloadUrls.create'> &
         CallOptions,
     ): Promise<Result<'v2.management.files.downloadUrls.create'>>;
+    /** Deletes files and preserves a result for every requested item. */
     delete(
       input: ProjectInput &
         OperationBody<'v2.management.files.delete'> &
@@ -93,23 +132,28 @@ export type ManagementResourceClient = {
     ): Promise<Result<'v2.management.files.delete'>>;
   };
   uploads: {
+    /** Requests signed upload destination(s) without transferring data. */
     request(
       input: BucketInput &
         OperationBody<'v2.management.uploads.request'> &
         Idempotent &
         CallOptions,
     ): Promise<Result<'v2.management.uploads.request'>>;
+    /** Gets the current upload and processing state. */
     get(
       input: UploadInput & CallOptions,
     ): Promise<Result<'v2.management.uploads.get'>>;
+    /** Cancels an incomplete upload. */
     cancel(
       input: UploadInput & CallOptions,
     ): Promise<Result<'v2.management.uploads.cancel'>>;
+    /** Requests additional signed URLs for multipart upload parts. */
     createParts(
       input: UploadInput &
         OperationBody<'v2.management.uploads.parts.create'> &
         CallOptions,
     ): Promise<Result<'v2.management.uploads.parts.create'>>;
+    /** Completes a multipart transfer and begins server-side processing. */
     completeMultipart(
       input: UploadInput &
         OperationBody<'v2.management.uploads.multipart.complete'> &

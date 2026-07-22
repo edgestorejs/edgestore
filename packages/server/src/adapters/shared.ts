@@ -12,8 +12,8 @@ import { hkdf } from '@panva/hkdf';
 import { serialize } from 'cookie';
 import { EncryptJWT, jwtDecrypt } from 'jose';
 import { v4 as uuidv4 } from 'uuid';
+import { validateFileForBucket } from '../core/validateFile';
 import type Logger from '../libs/logger';
-import { IMAGE_MIME_TYPES } from './imageTypes';
 
 // TODO: change it to 1 hour when we have a way to refresh the token
 const DEFAULT_MAX_AGE = 30 * 24 * 60 * 60; // 30 days
@@ -294,60 +294,7 @@ export async function requestUpload<TCtx>(params: {
     }
   }
 
-  if (bucket._def.type === 'IMAGE') {
-    if (!IMAGE_MIME_TYPES.includes(fileInfo.type)) {
-      throw new EdgeStoreError({
-        code: 'MIME_TYPE_NOT_ALLOWED',
-        message: 'Only images are allowed in this bucket',
-        details: {
-          allowedMimeTypes: IMAGE_MIME_TYPES,
-          mimeType: fileInfo.type,
-        },
-      });
-    }
-  }
-
-  if (bucket._def.bucketConfig?.maxSize) {
-    if (fileInfo.size > bucket._def.bucketConfig.maxSize) {
-      throw new EdgeStoreError({
-        code: 'FILE_TOO_LARGE',
-        message: `File size is too big. Max size is ${bucket._def.bucketConfig.maxSize}`,
-        details: {
-          maxFileSize: bucket._def.bucketConfig.maxSize,
-          fileSize: fileInfo.size,
-        },
-      });
-    }
-  }
-
-  if (bucket._def.bucketConfig?.accept) {
-    const accept = bucket._def.bucketConfig.accept;
-    let accepted = false;
-    for (const acceptedMimeType of accept) {
-      if (acceptedMimeType.endsWith('/*')) {
-        const mimeType = acceptedMimeType.replace('/*', '');
-        if (fileInfo.type.startsWith(mimeType)) {
-          accepted = true;
-          break;
-        }
-      } else if (fileInfo.type === acceptedMimeType) {
-        accepted = true;
-        break;
-      }
-    }
-    if (!accepted) {
-      throw new EdgeStoreError({
-        code: 'MIME_TYPE_NOT_ALLOWED',
-        message: `"${
-          fileInfo.type
-        }" is not allowed. Accepted types are ${JSON.stringify(accept)}`,
-        details: {
-          allowedMimeTypes: accept,
-          mimeType: fileInfo.type,
-        },
-      });
-    }
-  }
+  validateFileForBucket({ bucket, fileInfo });
 
   const path = buildPath({
     fileInfo,

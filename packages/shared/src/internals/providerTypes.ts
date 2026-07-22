@@ -38,6 +38,7 @@ export type RequestUploadParams = {
   bucketName: string;
   bucketType: string;
   fileInfo: {
+    type?: string;
     size: number;
     extension: string;
     isPublic: boolean;
@@ -54,6 +55,144 @@ export type RequestUploadParams = {
     expiresIn?: number;
     includeThumbnails?: boolean;
   };
+};
+
+export type ProviderFilterValue =
+  | string
+  | Partial<{
+      eq: string;
+      neq: string;
+      gt: string;
+      gte: string;
+      lt: string;
+      lte: string;
+      startsWith: string;
+      endsWith: string;
+      between: [string, string];
+    }>;
+
+export type ListFilesFilter = {
+  AND?: ListFilesFilter[];
+  OR?: ListFilesFilter[];
+  uploadedAt?: ProviderFilterValue;
+  path?: Record<string, ProviderFilterValue>;
+  metadata?: Record<string, ProviderFilterValue>;
+};
+
+export type ListFilesParams = {
+  bucketName: string;
+  filter?: ListFilesFilter;
+  pagination?: {
+    cursor?: string;
+    limit?: number;
+  };
+};
+
+export type ListFilesRes = {
+  data: {
+    url: string;
+    thumbnailUrl?: string | null;
+    size: number;
+    uploadedAt: Date;
+    path: Record<string, string>;
+    metadata: Record<string, string>;
+  }[];
+  pagination: {
+    limit: number;
+    nextCursor: string | null;
+    hasMore: boolean;
+  };
+};
+
+export type FileReference = { id: string } | { key: string } | { url: string };
+
+export type ProviderFile = {
+  id: string;
+  url: string;
+  key: string;
+  thumbnailUrl: string | null;
+  thumbnailKey: string | null;
+  bucketId: string;
+  bucketName: string;
+  projectId: string;
+  accountId: string;
+  name: string;
+  path: Record<string, string>;
+  metadata: Record<string, string>;
+  sizeBytes: number;
+  mimeType: string | null;
+  state: 'requested' | 'uploaded' | 'deleted' | 'replace_requested';
+  temporary: boolean;
+  uploadedAt: Date;
+  updatedAt: Date;
+};
+
+export type ProviderFileMutationResult = {
+  results: (
+    | { fileRef: FileReference; success: true }
+    | {
+        fileRef: FileReference;
+        success: false;
+        error: {
+          code:
+            | 'FILE_NOT_CONFIRMABLE'
+            | 'FILE_NOT_DELETABLE'
+            | 'FILE_NOT_RESTORABLE'
+            | 'INVALID_FILE_REF';
+          message: string;
+        };
+      }
+  )[];
+  successCount: number;
+  failureCount: number;
+};
+
+export type ProviderBackendUploadParams = {
+  bucketName: string;
+  bucketType: string;
+  fileInfo: RequestUploadParams['fileInfo'];
+  autoSignedUrls?: RequestUploadParams['autoSignedUrls'];
+  source: Blob;
+  signal?: AbortSignal;
+  onProgress?: (progress: {
+    transferredBytes: number;
+    totalBytes: number;
+    percentage: number;
+    phase: 'preparing' | 'uploading' | 'processing';
+  }) => void;
+};
+
+export type ProviderBackend = {
+  upload: (params: ProviderBackendUploadParams) => MaybePromise<{
+    file: ProviderFile;
+    signedReadUrl?: {
+      signedUrl: string;
+      signedThumbnailUrl?: string | null;
+      expiresAt: Date;
+      expiresIn: number;
+    };
+  }>;
+  getFile: (params: { file: FileReference }) => MaybePromise<ProviderFile>;
+  listFiles: (params: {
+    bucketName: string;
+    filter?: ListFilesFilter;
+    cursor?: string;
+    limit?: number;
+  }) => MaybePromise<{
+    items: ProviderFile[];
+    limit: number;
+    nextCursor: string | null;
+    hasMore: boolean;
+  }>;
+  confirmFiles: (params: {
+    files: FileReference[];
+  }) => MaybePromise<ProviderFileMutationResult>;
+  deleteFiles: (params: {
+    files: FileReference[];
+  }) => MaybePromise<ProviderFileMutationResult>;
+  restoreFiles: (params: {
+    files: FileReference[];
+  }) => MaybePromise<ProviderFileMutationResult>;
 };
 
 export type RequestUploadPartsParams = {
@@ -164,9 +303,16 @@ export type Provider = {
   getSignedUrls?: (
     params: GetSignedUrlsParams,
   ) => MaybePromise<GetSignedUrlRes[]>;
+  listFiles?: (params: ListFilesParams) => MaybePromise<ListFilesRes>;
   completeMultipartUpload: (
     params: CompleteMultipartUploadParams,
   ) => MaybePromise<CompleteMultipartUploadRes>;
   confirmUpload: (params: ConfirmUpload) => MaybePromise<ConfirmUploadRes>;
   deleteFile: (params: DeleteFileParams) => MaybePromise<DeleteFileRes>;
+  /** Privileged router-client operations. Providers expose this capability only when supported. */
+  backend?: ProviderBackend;
+};
+
+export type BackendClientProvider = Provider & {
+  backend: ProviderBackend;
 };

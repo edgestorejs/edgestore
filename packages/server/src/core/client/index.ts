@@ -2,26 +2,50 @@
 import {
   type AnyBuilder,
   type AnyRouter,
+  type BackendClientProvider,
+  type FileReference,
   type InferBucketPathKeys,
   type InferBucketPathObject,
   type InferBucketPathOrder,
   type InferMetadataObject,
   type MaybePromise,
   type Prettify,
+  type ProviderFile,
+  type ProviderFileMutationResult,
+  type ProviderFilterValue,
+  type ListFilesFilter as ProviderListFilesFilter,
   type Simplify,
 } from '@edgestore/shared';
-import { type z, type ZodNever } from 'zod';
-import { type Comparison } from '..';
+import { ZodNever, type z } from 'zod';
 import { buildPath, isDev, parsePath } from '../../adapters/shared';
-import { initEdgeStoreSdk } from '../sdk';
+import { edgestore } from '../../providers/edgestore';
+import { validateFileForBucket } from '../validateFile';
 
-export type GetFileRes<TBucket extends AnyBuilder> = {
-  url: string;
-  size: number;
-  uploadedAt: Date;
+export type SimpleOperator =
+  | 'eq'
+  | 'neq'
+  | 'gt'
+  | 'gte'
+  | 'lt'
+  | 'lte'
+  | 'startsWith'
+  | 'endsWith';
+
+export type Comparison<TType = string> =
+  | TType
+  | Partial<Record<SimpleOperator, TType> & { between: [TType, TType] }>;
+
+export type EdgeStoreFileReference = FileReference;
+
+export type FileRecord<TBucket extends AnyBuilder> = Omit<
+  ProviderFile,
+  'metadata' | 'path'
+> & {
   metadata: InferMetadataObject<TBucket>;
   path: InferBucketPathObject<TBucket>;
 };
+
+export type GetFileRes<TBucket extends AnyBuilder> = FileRecord<TBucket>;
 
 export type UploadOptions = {
   /**
@@ -121,6 +145,13 @@ export type UploadFileRequest<TBucket extends AnyBuilder> = {
    */
   content: UploadContent;
   options?: UploadOptions;
+  signal?: AbortSignal;
+  onProgress?: (progress: {
+    transferredBytes: number;
+    totalBytes: number;
+    percentage: number;
+    phase: 'preparing' | 'uploading' | 'processing';
+  }) => void;
 } & (TBucket['$config']['ctx'] extends Record<string, never>
   ? {}
   : {
@@ -138,31 +169,16 @@ type UploadImplementationParams = {
   input?: Record<string, unknown>;
 };
 
-export type UploadFileRes<TBucket extends AnyBuilder> =
-  (TBucket['_def']['type'] extends 'IMAGE'
-    ? {
-        url: string;
-        thumbnailUrl: string | null;
-        size: number;
-        metadata: InferMetadataObject<TBucket>;
-        path: InferBucketPathObject<TBucket>;
-        pathOrder: InferBucketPathOrder<TBucket>;
-      }
+export type UploadFileRes<TBucket extends AnyBuilder> = FileRecord<TBucket> & {
+  pathOrder: InferBucketPathOrder<TBucket>;
+} & (undefined extends TBucket['_def']['autoSignedUrls']
+    ? unknown
     : {
-        url: string;
-        size: number;
-        metadata: InferMetadataObject<TBucket>;
-        path: InferBucketPathObject<TBucket>;
-        pathOrder: InferBucketPathOrder<TBucket>;
-      }) &
-    (undefined extends TBucket['_def']['autoSignedUrls']
-      ? unknown
-      : {
-          signedUrl: string;
-          expiresAt: Date;
-          expiresIn: number;
-          signedThumbnailUrl?: string | null;
-        });
+        signedUrl: string;
+        expiresAt: Date;
+        expiresIn: number;
+        signedThumbnailUrl?: string | null;
+      });
 
 type Filter<TBucket extends AnyBuilder> = {
   AND?: Filter<TBucket>[];
@@ -178,35 +194,49 @@ type Filter<TBucket extends AnyBuilder> = {
 
 export type ListFilesRequest<TBucket extends AnyBuilder> = {
   filter?: Filter<TBucket>;
-  pagination?: {
-    currentPage: number;
-    pageSize: number;
-  };
+  cursor?: string;
+  limit?: number;
 };
 
 export type ListFilesResponse<TBucket extends AnyBuilder> = {
-  data: TBucket['_def']['type'] extends 'IMAGE'
-    ? {
-        url: string;
-        thumbnailUrl: string | null;
-        size: number;
-        uploadedAt: Date;
-        metadata: InferMetadataObject<TBucket>;
-        path: InferBucketPathObject<TBucket>;
-      }[]
-    : {
-        url: string;
-        size: number;
-        uploadedAt: Date;
-        metadata: InferMetadataObject<TBucket>;
-        path: InferBucketPathObject<TBucket>;
-      }[];
-  pagination: {
-    currentPage: number;
-    totalPages: number;
-    totalCount: number;
-  };
+  items: Prettify<FileRecord<TBucket>>[];
+  limit: number;
+  nextCursor: string | null;
+  hasMore: boolean;
 };
+
+export type ListAllFilesRequest<TBucket extends AnyBuilder> = {
+  filter?: Filter<TBucket>;
+  /** Number of files fetched per API request. */
+  limit?: number;
+};
+
+export type FileMutationFailure = {
+  ref: FileReference;
+  error: Extract<
+    ProviderFileMutationResult['results'][number],
+    { success: false }
+  >['error'];
+};
+
+export type FileMutationResult = {
+  succeeded: FileReference[];
+  failed: FileMutationFailure[];
+};
+
+export type FileMutationSuccess = { ref: FileReference };
+
+export class EdgeStoreFileMutationError extends Error {
+  override readonly name = 'EdgeStoreFileMutationError';
+
+  constructor(
+    readonly code: FileMutationFailure['error']['code'],
+    message: string,
+    readonly ref: FileReference,
+  ) {
+    super(message);
+  }
+}
 
 type GetSignedUrlRes = {
   url: string;
@@ -224,7 +254,7 @@ type GetSignedUrlsRes<TBucket extends AnyBuilder> =
     : GetSignedUrlRes[];
 
 type BucketClient<TBucket extends AnyBuilder> = {
-  getFile: (params: { url: string }) => Promise<Prettify<GetFileRes<TBucket>>>;
+  getFile: (ref: FileReference) => Promise<Prettify<GetFileRes<TBucket>>>;
 
   /**
    * Use this function to upload a file to the bucket directly from your backend.
@@ -266,13 +296,24 @@ type BucketClient<TBucket extends AnyBuilder> = {
   /**
    * Confirm a temporary file upload directly from your backend.
    */
-  confirmUpload: (params: { url: string }) => Promise<{ success: boolean }>;
+  confirmUpload: (ref: FileReference) => Promise<FileMutationSuccess>;
+  /** Confirm temporary uploads while preserving per-file failures. */
+  confirmUploads: (params: {
+    refs: FileReference[];
+  }) => Promise<FileMutationResult>;
   /**
    * Programmatically delete a file directly from your backend.
    */
-  deleteFile: (params: { url: string }) => Promise<{
-    success: boolean;
-  }>;
+  deleteFile: (ref: FileReference) => Promise<FileMutationSuccess>;
+  /** Delete files while preserving per-file failures. */
+  deleteFiles: (params: {
+    refs: FileReference[];
+  }) => Promise<FileMutationResult>;
+  restoreFile: (ref: FileReference) => Promise<FileMutationSuccess>;
+  /** Restore files while preserving per-file failures. */
+  restoreFiles: (params: {
+    refs: FileReference[];
+  }) => Promise<FileMutationResult>;
   /**
    * List files in a bucket.
    *
@@ -282,6 +323,10 @@ type BucketClient<TBucket extends AnyBuilder> = {
   listFiles: (
     params?: ListFilesRequest<TBucket>,
   ) => Promise<Prettify<ListFilesResponse<TBucket>>>;
+  /** Iterate through every matching file without managing cursors manually. */
+  listAllFiles: (
+    params?: ListAllFilesRequest<TBucket>,
+  ) => AsyncIterable<ListFilesResponse<TBucket>['items'][number]>;
 } & (undefined extends TBucket['_def']['accessControl']
   ? unknown
   : {
@@ -300,8 +345,9 @@ type EdgeStoreClient<TRouter extends AnyRouter> = {
   [K in keyof TRouter['buckets']]: BucketClient<TRouter['buckets'][K]>;
 };
 
-export function initEdgeStoreClient<TRouter extends AnyRouter>(config: {
+export function createEdgeStoreClient<TRouter extends AnyRouter>(config: {
   router: TRouter;
+  provider?: BackendClientProvider;
   accessKey?: string;
   secretKey?: string;
   /**
@@ -313,18 +359,12 @@ export function initEdgeStoreClient<TRouter extends AnyRouter>(config: {
    */
   baseUrl?: string;
 }) {
-  const sdk = initEdgeStoreSdk({
-    accessKey: config.accessKey,
-    secretKey: config.secretKey,
-  });
-  return new Proxy<EdgeStoreClient<TRouter>>({} as any, {
-    get(_target, key) {
-      const bucketName = key as string;
-      const bucket = config.router.buckets[bucketName];
-      if (!bucket) {
-        throw new Error(`Bucket ${bucketName} not found`);
-      }
-      const client: EdgeStoreClient<TRouter>[string] = {
+  const provider =
+    config.provider ??
+    edgestore({ accessKey: config.accessKey, secretKey: config.secretKey });
+  const entries = Object.entries(config.router.buckets).map(
+    ([bucketName, bucket]) => {
+      const bucketClient: EdgeStoreClient<TRouter>[string] = {
         async upload(params) {
           const {
             content,
@@ -345,7 +385,7 @@ export function initEdgeStoreClient<TRouter extends AnyRouter>(config: {
               };
             } else {
               return {
-                blob: await getBlobFromUrl(content.url),
+                blob: await getBlobFromUrl(content.url, params.signal),
                 extension: content.extension,
               };
             }
@@ -361,11 +401,21 @@ export function initEdgeStoreClient<TRouter extends AnyRouter>(config: {
             extension = transformed.extension;
           }
 
+          const parsedInput =
+            bucket._def.input instanceof ZodNever
+              ? {}
+              : await bucket._def.input.parseAsync(input);
+
+          validateFileForBucket({
+            bucket,
+            fileInfo: { size: blob.size, type: blob.type },
+          });
+
           const path = buildPath({
             bucket,
             pathAttrs: {
               ctx,
-              input,
+              input: parsedInput,
             },
             fileInfo: {
               type: blob.type,
@@ -378,13 +428,17 @@ export function initEdgeStoreClient<TRouter extends AnyRouter>(config: {
           });
           const metadata = await bucket._def.metadata({
             ctx,
-            input,
+            input: parsedInput,
           });
+          const normalizedMetadata = normalizeMetadata(metadata);
 
-          const requestUploadRes = await sdk.requestUpload({
+          const uploadRes = await provider.backend.upload({
             bucketName,
             bucketType: bucket._def.type,
             autoSignedUrls: bucket._def.autoSignedUrls,
+            source: blob,
+            signal: params.signal,
+            onProgress: params.onProgress,
             fileInfo: {
               fileName: params.options?.manualFileName,
               replaceTargetUrl: params.options?.replaceTargetUrl,
@@ -394,91 +448,99 @@ export function initEdgeStoreClient<TRouter extends AnyRouter>(config: {
               isPublic: bucket._def.accessControl === undefined,
               temporary: params.options?.temporary ?? false,
               path,
-              metadata,
+              metadata: normalizedMetadata,
             },
           });
 
-          const { signedUrl, multipart } = requestUploadRes;
-
-          if (multipart) {
-            // TODO
-            throw new Error('Multipart upload not implemented');
-          } else if (signedUrl) {
-            const uploadResponse = await fetch(signedUrl, {
-              method: 'PUT',
-              body: blob,
-            });
-
-            if (!uploadResponse.ok) {
-              throw new Error(
-                `Upload failed with status ${uploadResponse.status}: ${uploadResponse.statusText}`,
-              );
-            }
-          } else {
-            throw new Error('Missing signedUrl');
-          }
-          const { parsedPath, pathOrder } = parsePath(path);
+          const { pathOrder } = parsePath(path);
           return {
-            url: requestUploadRes.accessUrl,
-            ...{
-              thumbnailUrl: requestUploadRes.thumbnailUrl,
-            },
-            ...mapSignedUploadAccess(requestUploadRes),
-            size: blob.size,
-            metadata,
-            path: parsedPath,
+            ...mapFileRecord(uploadRes.file, config.baseUrl),
+            ...mapSignedReadAccess(uploadRes.signedReadUrl),
             pathOrder,
           } as unknown as UploadFileRes<TRouter['buckets'][string]>;
         },
 
-        async getFile(params) {
-          const res = await sdk.getFile(params);
-          return {
-            url: getUrl(res.url, config.baseUrl),
-            size: res.size,
-            uploadedAt: new Date(res.uploadedAt),
-            metadata: res.metadata,
-            path: res.path as any,
-          } satisfies GetFileRes<typeof bucket> as GetFileRes<
-            TRouter['buckets'][string]
-          >;
+        async getFile(ref) {
+          const file = await provider.backend.getFile({ file: ref });
+          return mapFileRecord(file, config.baseUrl) satisfies GetFileRes<
+            typeof bucket
+          > as GetFileRes<TRouter['buckets'][string]>;
         },
 
-        async confirmUpload(params) {
-          return await sdk.confirmUpload(params);
+        async confirmUpload(ref) {
+          return requireMutationSuccess(
+            await provider.backend.confirmFiles({ files: [ref] }),
+          );
         },
 
-        async deleteFile(params) {
-          return await sdk.deleteFile(params);
+        async confirmUploads({ refs }) {
+          return mapMutationResult(
+            await provider.backend.confirmFiles({ files: refs }),
+          );
+        },
+
+        async deleteFile(ref) {
+          return requireMutationSuccess(
+            await provider.backend.deleteFiles({ files: [ref] }),
+          );
+        },
+
+        async deleteFiles({ refs }) {
+          return mapMutationResult(
+            await provider.backend.deleteFiles({ files: refs }),
+          );
+        },
+
+        async restoreFile(ref) {
+          return requireMutationSuccess(
+            await provider.backend.restoreFiles({ files: [ref] }),
+          );
+        },
+
+        async restoreFiles({ refs }) {
+          return mapMutationResult(
+            await provider.backend.restoreFiles({ files: refs }),
+          );
         },
 
         async listFiles(params) {
-          const res = await sdk.listFiles({
+          const res = await provider.backend.listFiles({
             bucketName,
-            ...params,
+            filter: serializeFilter(params?.filter),
+            cursor: params?.cursor,
+            limit: params?.limit,
           });
 
-          const files = res.data.map((file) => {
-            return {
-              url: getUrl(file.url, config.baseUrl),
-              thumbnailUrl: file.thumbnailUrl,
-              size: file.size,
-              uploadedAt: new Date(file.uploadedAt),
-              metadata: file.metadata,
-              path: file.path as any,
-            };
-          }) satisfies ListFilesResponse<
+          const items = res.items.map((file) =>
+            mapFileRecord(file, config.baseUrl),
+          ) satisfies ListFilesResponse<
             typeof bucket
-          >['data'] as ListFilesResponse<TRouter['buckets'][string]>['data'];
+          >['items'] as ListFilesResponse<TRouter['buckets'][string]>['items'];
 
           return {
-            data: files,
-            pagination: res.pagination,
+            ...res,
+            items,
           };
         },
 
+        async *listAllFiles(params) {
+          let cursor: string | undefined;
+          do {
+            const page = await bucketClient.listFiles({
+              filter: params?.filter,
+              cursor,
+              limit: params?.limit,
+            });
+            for (const file of page.items) yield file;
+            cursor = page.nextCursor ?? undefined;
+          } while (cursor);
+        },
+
         async getSignedUrl(params: { url: string; expiresIn?: number }) {
-          const [signedUrl] = await sdk.getSignedUrls({
+          if (!provider.getSignedUrls) {
+            throw unsupportedProviderOperation(provider, 'getSignedUrls');
+          }
+          const [signedUrl] = await provider.getSignedUrls({
             bucketName,
             urls: [params.url],
             expiresIn: params.expiresIn,
@@ -497,7 +559,10 @@ export function initEdgeStoreClient<TRouter extends AnyRouter>(config: {
           expiresIn?: number;
           includeThumbnails?: boolean;
         }) {
-          const signedUrls = await sdk.getSignedUrls({
+          if (!provider.getSignedUrls) {
+            throw unsupportedProviderOperation(provider, 'getSignedUrls');
+          }
+          const signedUrls = await provider.getSignedUrls({
             bucketName,
             urls: params.urls,
             expiresIn: params.expiresIn,
@@ -509,9 +574,11 @@ export function initEdgeStoreClient<TRouter extends AnyRouter>(config: {
           })) as any;
         },
       };
-      return client;
+      return [bucketName, bucketClient] as const;
     },
-  });
+  );
+
+  return Object.fromEntries(entries) as EdgeStoreClient<TRouter>;
 }
 
 /**
@@ -523,7 +590,7 @@ function getUrl(url: string, baseUrl?: string) {
   if (isDev() && !url.includes('/_public/')) {
     if (!baseUrl) {
       throw new Error(
-        'Missing baseUrl. You need to pass the baseUrl to `initEdgeStoreClient` to get protected files in development.',
+        'Missing baseUrl. You need to pass the baseUrl to `createEdgeStoreClient` to get protected files in development.',
       );
     }
     const proxyUrl = new URL(baseUrl);
@@ -536,28 +603,124 @@ function getUrl(url: string, baseUrl?: string) {
   return url;
 }
 
-async function getBlobFromUrl(url: string) {
-  const res = await fetch(url);
+async function getBlobFromUrl(url: string, signal?: AbortSignal) {
+  const res = await fetch(url, { signal });
+  if (!res.ok) {
+    throw new Error(`Could not fetch upload source: HTTP ${res.status}`);
+  }
   return await res.blob();
 }
 
-function mapSignedUploadAccess(res: {
-  accessSignedUrl?: string;
-  accessSignedThumbnailUrl?: string | null;
-  accessSignedUrlExpiresAt?: Date | string;
-  accessSignedUrlExpiresIn?: number;
-}) {
-  if (!res.accessSignedUrl) {
+function normalizeMetadata(
+  metadata: Record<string, string | null | undefined>,
+): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(metadata).filter(
+      (entry): entry is [string, string] => entry[1] != null,
+    ),
+  );
+}
+
+function serializeFilter<TBucket extends AnyBuilder>(
+  filter: Filter<TBucket> | undefined,
+): ProviderListFilesFilter | undefined {
+  if (!filter) return undefined;
+  return {
+    uploadedAt: serializeComparison(filter.uploadedAt),
+    path: serializeStringComparisons(filter.path),
+    metadata: serializeStringComparisons(filter.metadata),
+    AND: filter.AND?.map((item) => serializeFilter(item)!),
+    OR: filter.OR?.map((item) => serializeFilter(item)!),
+  };
+}
+
+function serializeComparison(
+  value: Comparison<Date> | undefined,
+): ProviderFilterValue | undefined {
+  if (value instanceof Date) return value.toISOString();
+  if (!value || typeof value !== 'object') return value;
+  return Object.fromEntries(
+    Object.entries(value).map(([key, item]) => [
+      key,
+      Array.isArray(item)
+        ? item.map((date) => date.toISOString())
+        : item?.toISOString(),
+    ]),
+  ) as ProviderFilterValue;
+}
+
+function serializeStringComparisons(
+  value: Record<string, Comparison | undefined> | undefined,
+): Record<string, ProviderFilterValue> | undefined {
+  if (!value) return undefined;
+  return Object.fromEntries(
+    Object.entries(value).filter(
+      (entry): entry is [string, ProviderFilterValue] => entry[1] !== undefined,
+    ),
+  );
+}
+
+function unsupportedProviderOperation(
+  provider: Pick<BackendClientProvider, 'name'>,
+  operation: string,
+) {
+  return new Error(
+    `Provider "${provider.name}" does not support ${operation}.`,
+  );
+}
+
+function mapSignedReadAccess(
+  signedReadUrl:
+    | Awaited<
+        ReturnType<BackendClientProvider['backend']['upload']>
+      >['signedReadUrl']
+    | undefined,
+) {
+  if (!signedReadUrl) {
     return {};
   }
   return {
-    signedUrl: res.accessSignedUrl,
-    expiresAt: res.accessSignedUrlExpiresAt
-      ? new Date(res.accessSignedUrlExpiresAt)
-      : new Date(),
-    expiresIn: res.accessSignedUrlExpiresIn ?? 0,
-    signedThumbnailUrl: res.accessSignedThumbnailUrl ?? null,
+    ...signedReadUrl,
+    expiresAt: new Date(signedReadUrl.expiresAt),
   };
+}
+
+function mapFileRecord(file: ProviderFile, baseUrl?: string) {
+  return {
+    ...file,
+    url: getUrl(file.url, baseUrl),
+    uploadedAt: new Date(file.uploadedAt),
+    updatedAt: new Date(file.updatedAt),
+  };
+}
+
+function mapMutationResult(
+  result: ProviderFileMutationResult,
+): FileMutationResult {
+  const succeeded: FileReference[] = [];
+  const failed: FileMutationFailure[] = [];
+  for (const item of result.results) {
+    if (item.success) succeeded.push(item.fileRef);
+    else failed.push({ ref: item.fileRef, error: item.error });
+  }
+  return { succeeded, failed };
+}
+
+function requireMutationSuccess(
+  result: ProviderFileMutationResult,
+): FileMutationSuccess {
+  const item = result.results[0];
+  if (!item) {
+    throw new Error('The provider returned no file mutation result.');
+  }
+  if (!item.success) {
+    throw new EdgeStoreFileMutationError(
+      item.error.code,
+      item.error.message,
+      item.fileRef,
+    );
+  }
+  return { ref: item.fileRef };
 }
 
 export type InferClientResponse<TRouter extends AnyRouter> = {
