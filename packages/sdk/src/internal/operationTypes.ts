@@ -1,7 +1,7 @@
 import type { operations } from '../generated/api-v2';
 import type { ApiData } from './transport';
 
-type OperationId = keyof operations;
+export type OperationId = keyof operations;
 type SuccessStatus = 200 | 201 | 202 | 204;
 
 export type Mutable<TValue> = {
@@ -13,6 +13,13 @@ export type OperationBody<TOperation extends OperationId> =
     requestBody: { content: { 'application/json': infer TBody } };
   }
     ? Mutable<TBody>
+    : never;
+
+export type OperationQuery<TOperation extends OperationId> =
+  operations[TOperation] extends {
+    parameters: { query?: infer TQuery };
+  }
+    ? Mutable<NonNullable<TQuery>>
     : never;
 
 type SuccessBody<TOperation extends OperationId> =
