@@ -1,8 +1,8 @@
+import { rm } from 'node:fs/promises';
 import path from 'path';
 import nodeResolve from '@rollup/plugin-node-resolve';
 import typescript from '@rollup/plugin-typescript';
 import { type RollupOptions } from 'rollup';
-import del from 'rollup-plugin-delete';
 import externals from 'rollup-plugin-node-externals';
 import { swc } from 'rollup-plugin-swc3';
 
@@ -33,10 +33,15 @@ function types({ input, packageDir }: Options): RollupOptions {
       preserveModulesRoot: 'src',
     },
     plugins: [
-      !isWatchMode &&
-        del({
-          targets: `${packageDir}/dist`,
-        }),
+      !isWatchMode && {
+        name: 'clean-dist',
+        async buildStart() {
+          await rm(path.resolve(packageDir, 'dist'), {
+            force: true,
+            recursive: true,
+          });
+        },
+      },
       externals({
         packagePath: path.resolve(packageDir, 'package.json'),
         deps: true,
@@ -55,24 +60,14 @@ function types({ input, packageDir }: Options): RollupOptions {
 function lib({ input, packageDir }: Options): RollupOptions {
   return {
     input,
-    output: [
-      {
-        dir: `${packageDir}/dist`,
-        format: 'cjs',
-        entryFileNames: '[name].js',
-        chunkFileNames: '[name]-[hash].js',
-        preserveModules: true,
-        preserveModulesRoot: 'src',
-      },
-      {
-        dir: `${packageDir}/dist`,
-        format: 'esm',
-        entryFileNames: '[name].mjs',
-        chunkFileNames: '[name]-[hash].mjs',
-        preserveModules: true,
-        preserveModulesRoot: 'src',
-      },
-    ],
+    output: {
+      dir: `${packageDir}/dist`,
+      format: 'esm',
+      entryFileNames: '[name].js',
+      chunkFileNames: '[name]-[hash].js',
+      preserveModules: true,
+      preserveModulesRoot: 'src',
+    },
     plugins: [
       externals({
         packagePath: path.resolve(packageDir, 'package.json'),

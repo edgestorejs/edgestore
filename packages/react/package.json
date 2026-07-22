@@ -5,6 +5,10 @@
   "homepage": "https://edgestore.dev",
   "license": "MIT",
   "sideEffects": false,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/edgestorejs/edgestore.git",
@@ -15,7 +19,6 @@
   },
   "author": "Ravi <me@ravi.com>",
   "main": "dist/index.js",
-  "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "keywords": [
     "react",
@@ -39,23 +42,23 @@
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
       "default": "./dist/index.js"
     },
     "./errors": {
-      "import": "./dist/errors/index.mjs",
-      "require": "./dist/errors/index.js",
+      "types": "./dist/errors/index.d.ts",
+      "import": "./dist/errors/index.js",
       "default": "./dist/errors/index.js"
     },
     "./shared": {
-      "import": "./dist/shared/index.mjs",
-      "require": "./dist/shared/index.js",
+      "types": "./dist/shared/index.d.ts",
+      "import": "./dist/shared/index.js",
       "default": "./dist/shared/index.js"
     },
     "./utils": {
-      "import": "./dist/utils/index.mjs",
-      "require": "./dist/utils/index.js",
+      "types": "./dist/utils/index.d.ts",
+      "import": "./dist/utils/index.js",
       "default": "./dist/utils/index.js"
     }
   },
@@ -87,7 +90,7 @@
     "next": "16.2.11",
     "react": "19.2.8",
     "react-dom": "19.2.8",
-    "tsx": "4.21.0",
+    "tsx": "4.23.1",
     "typescript": "6.0.3",
     "zod": "3.25.76"
   },

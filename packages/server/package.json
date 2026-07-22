@@ -5,6 +5,10 @@
   "homepage": "https://edgestore.dev",
   "license": "MIT",
   "sideEffects": false,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/edgestorejs/edgestore.git",
@@ -15,7 +19,6 @@
   },
   "author": "Ravi <me@ravi.com>",
   "main": "dist/index.js",
-  "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "keywords": [
     "react",
@@ -45,68 +48,68 @@
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
       "default": "./dist/index.js"
     },
     "./adapters/astro": {
-      "import": "./dist/adapters/astro/index.mjs",
-      "require": "./dist/adapters/astro/index.js",
+      "types": "./dist/adapters/astro/index.d.ts",
+      "import": "./dist/adapters/astro/index.js",
       "default": "./dist/adapters/astro/index.js"
     },
     "./adapters/express": {
-      "import": "./dist/adapters/express/index.mjs",
-      "require": "./dist/adapters/express/index.js",
+      "types": "./dist/adapters/express/index.d.ts",
+      "import": "./dist/adapters/express/index.js",
       "default": "./dist/adapters/express/index.js"
     },
     "./adapters/fastify": {
-      "import": "./dist/adapters/fastify/index.mjs",
-      "require": "./dist/adapters/fastify/index.js",
+      "types": "./dist/adapters/fastify/index.d.ts",
+      "import": "./dist/adapters/fastify/index.js",
       "default": "./dist/adapters/fastify/index.js"
     },
     "./adapters/hono": {
-      "import": "./dist/adapters/hono/index.mjs",
-      "require": "./dist/adapters/hono/index.js",
+      "types": "./dist/adapters/hono/index.d.ts",
+      "import": "./dist/adapters/hono/index.js",
       "default": "./dist/adapters/hono/index.js"
     },
     "./adapters/next/app": {
-      "import": "./dist/adapters/next/app/index.mjs",
-      "require": "./dist/adapters/next/app/index.js",
+      "types": "./dist/adapters/next/app/index.d.ts",
+      "import": "./dist/adapters/next/app/index.js",
       "default": "./dist/adapters/next/app/index.js"
     },
     "./adapters/next/pages": {
-      "import": "./dist/adapters/next/pages/index.mjs",
-      "require": "./dist/adapters/next/pages/index.js",
+      "types": "./dist/adapters/next/pages/index.d.ts",
+      "import": "./dist/adapters/next/pages/index.js",
       "default": "./dist/adapters/next/pages/index.js"
     },
     "./adapters/remix": {
-      "import": "./dist/adapters/remix/index.mjs",
-      "require": "./dist/adapters/remix/index.js",
+      "types": "./dist/adapters/remix/index.d.ts",
+      "import": "./dist/adapters/remix/index.js",
       "default": "./dist/adapters/remix/index.js"
     },
     "./adapters/start": {
-      "import": "./dist/adapters/start/index.mjs",
-      "require": "./dist/adapters/start/index.js",
+      "types": "./dist/adapters/start/index.d.ts",
+      "import": "./dist/adapters/start/index.js",
       "default": "./dist/adapters/start/index.js"
     },
     "./core": {
-      "import": "./dist/core/index.mjs",
-      "require": "./dist/core/index.js",
+      "types": "./dist/core/index.d.ts",
+      "import": "./dist/core/index.js",
       "default": "./dist/core/index.js"
     },
     "./providers/aws": {
-      "import": "./dist/providers/aws/index.mjs",
-      "require": "./dist/providers/aws/index.js",
+      "types": "./dist/providers/aws/index.d.ts",
+      "import": "./dist/providers/aws/index.js",
       "default": "./dist/providers/aws/index.js"
     },
     "./providers/azure": {
-      "import": "./dist/providers/azure/index.mjs",
-      "require": "./dist/providers/azure/index.js",
+      "types": "./dist/providers/azure/index.d.ts",
+      "import": "./dist/providers/azure/index.js",
       "default": "./dist/providers/azure/index.js"
     },
     "./providers/edgestore": {
-      "import": "./dist/providers/edgestore/index.mjs",
-      "require": "./dist/providers/edgestore/index.js",
+      "types": "./dist/providers/edgestore/index.d.ts",
+      "import": "./dist/providers/edgestore/index.js",
       "default": "./dist/providers/edgestore/index.js"
     }
   },
@@ -125,8 +128,8 @@
   "dependencies": {
     "@edgestore/shared": "0.7.0",
     "@panva/hkdf": "^1.2.1",
-    "cookie": "^0.7.2",
-    "jose": "^4.15.9"
+    "cookie": "^2.0.1",
+    "jose": "^6.2.4"
   },
   "peerDependencies": {
     "@aws-sdk/client-s3": ">=3.0.0",
@@ -162,7 +165,7 @@
     "next": "16.2.11",
     "react": "19.2.8",
     "react-dom": "19.2.8",
-    "tsx": "4.21.0",
+    "tsx": "4.23.1",
     "typescript": "5.9.3",
     "zod": "3.25.76"
   },
