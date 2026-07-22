@@ -12,11 +12,13 @@ import {
 import type { paths } from '../generated/api-v2';
 
 export const DEFAULT_API_URL = 'https://api.edgestore.dev/v2';
+export const DEFAULT_CONTROL_TIMEOUT_MS = 30_000;
 
 export type TransportOptions = {
   credentials: EdgeStoreCredentials;
   baseUrl?: string;
   fetch?: typeof globalThis.fetch;
+  controlTimeoutMs?: number;
 };
 
 type ApiResult<TBody> = {
@@ -31,51 +33,75 @@ export type ApiData<TBody> = TBody extends { readonly data: infer Data }
 
 export type Transport = {
   client: Client<paths>;
+  fetch: typeof globalThis.fetch;
   execute<TBody>(
     request: () => Promise<ApiResult<TBody>>,
   ): Promise<ApiData<TBody>>;
+  executeWithResponse<TBody>(
+    request: () => Promise<ApiResult<TBody>>,
+  ): Promise<{ data: ApiData<TBody>; response: Response }>;
 };
 
 export function createTransport(options: TransportOptions): Transport {
   const authorization = getAuthorizationHeader(options.credentials);
-  const customFetch = options.fetch;
+  const fetch = options.fetch ?? globalThis.fetch;
+  const controlTimeoutMs =
+    options.controlTimeoutMs ?? DEFAULT_CONTROL_TIMEOUT_MS;
+  if (!Number.isFinite(controlTimeoutMs) || controlTimeoutMs < 0) {
+    throw new RangeError('controlTimeoutMs must be a non-negative number.');
+  }
   const client = createClient<paths>({
     baseUrl: normalizeBaseUrl(options.baseUrl ?? DEFAULT_API_URL),
-    fetch: customFetch ? (request) => customFetch(request) : globalThis.fetch,
+    fetch: (request) =>
+      fetch(
+        new Request(request, {
+          signal:
+            controlTimeoutMs === 0
+              ? request.signal
+              : AbortSignal.any([
+                  request.signal,
+                  AbortSignal.timeout(controlTimeoutMs),
+                ]),
+        }),
+      ),
     headers: {
       authorization,
       'user-agent': '@edgestore/sdk',
     },
   });
 
+  const executeWithResponse = async <TBody>(
+    request: () => Promise<ApiResult<TBody>>,
+  ): Promise<{ data: ApiData<TBody>; response: Response }> => {
+    let result: ApiResult<TBody>;
+
+    try {
+      result = await request();
+    } catch (error) {
+      if (error instanceof EdgeStoreError) {
+        throw error;
+      }
+      if (isAbortError(error)) {
+        throw new EdgeStoreAbortError(undefined, { cause: error });
+      }
+      throw new EdgeStoreNetworkError(
+        'The EdgeStore API request could not be completed.',
+        { cause: error },
+      );
+    }
+
+    if (result.response.ok) {
+      return { data: unwrapData(result.data), response: result.response };
+    }
+
+    throw createApiError(result.response, result.error);
+  };
+
   return {
     client,
-    async execute<TBody>(
-      request: () => Promise<ApiResult<TBody>>,
-    ): Promise<ApiData<TBody>> {
-      let result: ApiResult<TBody>;
-
-      try {
-        result = await request();
-      } catch (error) {
-        if (error instanceof EdgeStoreError) {
-          throw error;
-        }
-        if (isAbortError(error)) {
-          throw new EdgeStoreAbortError(undefined, { cause: error });
-        }
-        throw new EdgeStoreNetworkError(
-          'The EdgeStore API request could not be completed.',
-          { cause: error },
-        );
-      }
-
-      if (result.response.ok) {
-        return unwrapData(result.data);
-      }
-
-      throw createApiError(result.response, result.error);
-    },
+    fetch,
+    execute: async (request) => (await executeWithResponse(request)).data,
+    executeWithResponse,
   };
 }
 

@@ -136,10 +136,16 @@ export async function generateEntrypoints(rawInputs: string[]) {
 
   existingTurboJson.tasks ??= {};
   existingTurboJson.tasks['codegen:entrypoints'] ??= {};
-  existingTurboJson.tasks['codegen:entrypoints'].outputs = [...scriptOutputs];
+  const nextOutputs = [...scriptOutputs];
+  const currentOutputs =
+    existingTurboJson.tasks['codegen:entrypoints'].outputs ?? [];
+  if (JSON.stringify(currentOutputs) === JSON.stringify(nextOutputs)) {
+    return;
+  }
+  existingTurboJson.tasks['codegen:entrypoints'].outputs = nextOutputs;
 
   const formattedTurboJson = await prettier.format(
-    JSON.stringify(existingTurboJson),
+    JSON.stringify(existingTurboJson, null, 2),
     {
       parser: 'json',
       ...(await prettier.resolveConfig(turboPath)),
