@@ -71,7 +71,7 @@ function SingleImageDetails() {
   return (
     <div className="flex flex-col">
       <h3 className="mt-4 text-base font-bold">See in GitHub</h3>
-      <ul className="text-foreground/80 text-sm">
+      <ul className="text-sm text-foreground/80">
         <li>
           <a
             href="https://github.com/edgestorejs/edgestore/blob/main/examples/components/src/app/(tabs)/single-image/page.tsx"
@@ -94,14 +94,14 @@ function SingleImageDetails() {
         </li>
       </ul>
       <h3 className="mt-4 text-base font-bold">About</h3>
-      <div className="text-foreground/80 text-sm">
+      <div className="text-sm text-foreground/80">
         <p>
           This component is a dropzone to upload an image. It is configured with
           a max file size of 1 MB. And since it&apos;s using an EdgeStore image
           bucket, it will only accept images.
         </p>
       </div>
-      <table className="text-foreground/80 mt-2 inline-block text-xs">
+      <table className="mt-2 inline-block text-xs text-foreground/80">
         <tbody>
           <tr className="border">
             <td className="p-1">image/jpeg</td>

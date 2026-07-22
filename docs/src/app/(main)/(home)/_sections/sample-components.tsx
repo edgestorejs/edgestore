@@ -57,11 +57,11 @@ export function SampleComponents() {
         <div className="mb-12 space-y-4 text-center">
           <h2 className="text-2xl font-bold sm:text-3xl md:text-4xl">
             Ready-to-Use{' '}
-            <span className="from-primary to-primary/60 bg-gradient-to-b bg-clip-text text-transparent">
+            <span className="bg-gradient-to-b from-primary to-primary/60 bg-clip-text text-transparent">
               Components
             </span>
           </h2>
-          <p className="text-muted-foreground mx-auto max-w-2xl text-base sm:text-lg">
+          <p className="mx-auto max-w-2xl text-base text-muted-foreground sm:text-lg">
             Beautiful, feature-rich file upload components that you can drop
             into your application. No need to build from scratch — just install
             and customize.
@@ -98,17 +98,17 @@ export function SampleComponents() {
               {features.map((feature) => (
                 <div
                   key={feature.title}
-                  className="border-border bg-card rounded-lg border p-4 transition-all duration-200 hover:shadow-md"
+                  className="rounded-lg border border-border bg-card p-4 transition-all duration-200 hover:shadow-md"
                 >
                   <div className="flex items-start gap-3">
-                    <div className="text-primary mt-1 flex-shrink-0">
+                    <div className="mt-1 flex-shrink-0 text-primary">
                       {feature.icon}
                     </div>
                     <div className="space-y-1">
                       <h3 className="text-sm font-semibold sm:text-base">
                         {feature.title}
                       </h3>
-                      <p className="text-muted-foreground text-xs sm:text-sm">
+                      <p className="text-xs text-muted-foreground sm:text-sm">
                         {feature.description}
                       </p>
                     </div>
@@ -118,9 +118,9 @@ export function SampleComponents() {
             </div>
 
             {/* Quick install example */}
-            <div className="border-border bg-muted/50 mt-6 flex flex-col gap-2 rounded-lg border p-4">
+            <div className="mt-6 flex flex-col gap-2 rounded-lg border border-border bg-muted/50 p-4">
               <div className="flex items-center gap-2">
-                <Terminal className="text-muted-foreground h-4 w-4" />
+                <Terminal className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm font-medium">Quick Install</span>
               </div>
               <div className="min-w-0">
