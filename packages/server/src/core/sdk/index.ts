@@ -35,14 +35,7 @@ type AutoSignedUrlsForUpload = {
 };
 
 export type SimpleOperator =
-  | 'eq'
-  | 'neq'
-  | 'gt'
-  | 'gte'
-  | 'lt'
-  | 'lte'
-  | 'startsWith'
-  | 'endsWith';
+  'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' | 'startsWith' | 'endsWith';
 
 export type Comparison<TType = string> =
   | TType

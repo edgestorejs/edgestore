@@ -157,25 +157,25 @@ const testimonials = [
 
 const platformIcons = {
   youtube: (
-    <YoutubeIcon className="text-muted-foreground h-5 w-5 sm:h-6 sm:w-6" />
+    <YoutubeIcon className="h-5 w-5 text-muted-foreground sm:h-6 sm:w-6" />
   ),
   twitter: (
-    <TwitterIcon className="text-muted-foreground h-5 w-5 sm:h-6 sm:w-6" />
+    <TwitterIcon className="h-5 w-5 text-muted-foreground sm:h-6 sm:w-6" />
   ),
-  devto: <DevtoIcon className="text-muted-foreground h-5 w-5 sm:h-6 sm:w-6" />,
+  devto: <DevtoIcon className="h-5 w-5 text-muted-foreground sm:h-6 sm:w-6" />,
 };
 
 export function Testimonials() {
   return (
-    <div className="container relative flex flex-col items-center justify-center gap-6 overflow-hidden px-4 py-10 md:gap-10 md:px-8 md:py-20">
+    <div className="relative container flex flex-col items-center justify-center gap-6 overflow-hidden px-4 py-10 md:gap-10 md:px-8 md:py-20">
       <div className="space-y-2 text-center">
         <h2 className="text-2xl font-bold sm:text-3xl md:text-4xl">
           Loved by{' '}
-          <span className="from-primary to-primary/60 bg-gradient-to-b bg-clip-text text-transparent">
+          <span className="bg-gradient-to-b from-primary to-primary/60 bg-clip-text text-transparent">
             Developers
           </span>
         </h2>
-        <p className="text-muted-foreground text-base sm:text-lg">
+        <p className="text-base text-muted-foreground sm:text-lg">
           Here is what our users are saying about Edge Store.
         </p>
       </div>
@@ -206,7 +206,7 @@ export function Testimonials() {
                   ]
                 }
               </div>
-              <p className="text-muted-foreground text-sm leading-relaxed sm:text-sm md:text-sm">
+              <p className="text-sm leading-relaxed text-muted-foreground sm:text-sm md:text-sm">
                 {testimonial.comment}
               </p>
             </Link>

@@ -68,7 +68,7 @@ const ImageList = React.forwardRef<HTMLDivElement, ImageListProps>(
             <div
               key={fileState.key}
               className={
-                'bg-muted relative aspect-square h-full w-full rounded-md border-0 p-0 shadow-md'
+                'relative aspect-square h-full w-full rounded-md border-0 bg-muted p-0 shadow-md'
               }
             >
               {displayUrl ? (
@@ -78,8 +78,8 @@ const ImageList = React.forwardRef<HTMLDivElement, ImageListProps>(
                   alt={fileState.file.name}
                 />
               ) : (
-                <div className="bg-secondary flex h-full w-full items-center justify-center">
-                  <span className="text-muted-foreground text-xs">
+                <div className="flex h-full w-full items-center justify-center bg-secondary">
+                  <span className="text-xs text-muted-foreground">
                     No Preview
                   </span>
                 </div>
@@ -87,7 +87,7 @@ const ImageList = React.forwardRef<HTMLDivElement, ImageListProps>(
 
               {/* Upload progress indicator */}
               {fileState.status === 'UPLOADING' && (
-                <div className="absolute left-0 top-0 flex h-full w-full items-center justify-center rounded-md bg-black/70">
+                <div className="absolute top-0 left-0 flex h-full w-full items-center justify-center rounded-md bg-black/70">
                   <ProgressCircle progress={fileState.progress} />
                 </div>
               )}
@@ -96,7 +96,7 @@ const ImageList = React.forwardRef<HTMLDivElement, ImageListProps>(
               {displayUrl && !initialDisabled && (
                 <button
                   type="button"
-                  className="border-muted-foreground bg-background group pointer-events-auto absolute right-1 top-1 z-10 -translate-y-1/4 translate-x-1/4 transform rounded-full border p-1 shadow-md transition-all hover:scale-110"
+                  className="group pointer-events-auto absolute top-1 right-1 z-10 translate-x-1/4 -translate-y-1/4 transform rounded-full border border-muted-foreground bg-background p-1 shadow-md transition-all hover:scale-110"
                   onClick={(e) => {
                     e.stopPropagation();
                     if (fileState.status === 'UPLOADING') {
@@ -107,9 +107,9 @@ const ImageList = React.forwardRef<HTMLDivElement, ImageListProps>(
                   }}
                 >
                   {fileState.status === 'UPLOADING' ? (
-                    <XIcon className="text-muted-foreground block h-4 w-4" />
+                    <XIcon className="block h-4 w-4 text-muted-foreground" />
                   ) : (
-                    <Trash2Icon className="text-muted-foreground block h-4 w-4" />
+                    <Trash2Icon className="block h-4 w-4 text-muted-foreground" />
                   )}
                 </button>
               )}
@@ -128,8 +128,7 @@ ImageList.displayName = 'ImageList';
  * @interface ImageDropzoneProps
  * @extends {React.HTMLAttributes<HTMLDivElement>}
  */
-export interface ImageDropzoneProps
-  extends React.HTMLAttributes<HTMLDivElement> {
+export interface ImageDropzoneProps extends React.HTMLAttributes<HTMLDivElement> {
   /**
    * Whether the dropzone is disabled.
    */
@@ -187,8 +186,7 @@ ImageDropzone.displayName = 'ImageDropzone';
  * @interface ImageUploaderProps
  * @extends {React.HTMLAttributes<HTMLDivElement>}
  */
-export interface ImageUploaderProps
-  extends React.HTMLAttributes<HTMLDivElement> {
+export interface ImageUploaderProps extends React.HTMLAttributes<HTMLDivElement> {
   /**
    * Maximum number of images allowed.
    */

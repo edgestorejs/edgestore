@@ -18,7 +18,8 @@ const iconVariants = cva('inline-flex shrink-0', {
 });
 
 export interface IconProps
-  extends Omit<React.SVGProps<SVGSVGElement>, 'color' | 'size'>,
+  extends
+    Omit<React.SVGProps<SVGSVGElement>, 'color' | 'size'>,
     VariantProps<typeof iconVariants> {
   className?: string;
 }

@@ -29,7 +29,7 @@ export function Footer() {
             href={GITHUB_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-muted-foreground hover:text-foreground transition-colors"
+            className="text-muted-foreground transition-colors hover:text-foreground"
           >
             <GithubIcon size="sm" />
             <span className="sr-only">GitHub</span>
@@ -38,7 +38,7 @@ export function Footer() {
             href={DISCORD_INVITE_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-muted-foreground hover:text-foreground transition-colors"
+            className="text-muted-foreground transition-colors hover:text-foreground"
           >
             <DiscordIcon size="sm" />
             <span className="sr-only">Discord</span>
@@ -47,7 +47,7 @@ export function Footer() {
             href={YOUTUBE_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-muted-foreground hover:text-foreground transition-colors"
+            className="text-muted-foreground transition-colors hover:text-foreground"
           >
             <YoutubeIcon size="sm" />
             <span className="sr-only">YouTube</span>
@@ -56,7 +56,7 @@ export function Footer() {
             href={X_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-muted-foreground hover:text-foreground transition-colors"
+            className="text-muted-foreground transition-colors hover:text-foreground"
           >
             <TwitterIcon size="sm" />
             <span className="sr-only">X</span>

@@ -142,7 +142,7 @@ function MultiFileInstantDetails() {
   return (
     <div className="flex flex-col">
       <h3 className="mt-4 text-base font-bold">See in GitHub</h3>
-      <ul className="text-foreground/80 text-sm">
+      <ul className="text-sm text-foreground/80">
         <li>
           <a
             href="https://github.com/edgestorejs/edgestore/blob/main/examples/components/src/app/(tabs)/forms/page.tsx"
@@ -165,7 +165,7 @@ function MultiFileInstantDetails() {
         </li>
       </ul>
       <h3 className="mt-4 text-base font-bold">About</h3>
-      <div className="text-foreground/80 flex flex-col gap-2 text-sm">
+      <div className="flex flex-col gap-2 text-sm text-foreground/80">
         <p>
           This example demonstrates how to use EdgeStore with{' '}
           <a

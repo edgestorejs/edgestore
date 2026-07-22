@@ -30,7 +30,7 @@ export function YouTubeVideo({
 
   return (
     <div
-      className={`border-muted group relative aspect-video w-full overflow-hidden rounded-2xl border bg-gradient-to-br from-slate-900 to-slate-800 shadow-2xl ${className}`}
+      className={`group relative aspect-video w-full overflow-hidden rounded-2xl border border-muted bg-gradient-to-br from-slate-900 to-slate-800 shadow-2xl ${className}`}
     >
       {!isVideoPlaying ? (
         <>
