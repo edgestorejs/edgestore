@@ -515,7 +515,11 @@ describe('requestUpload', () => {
     const router = es.router({
       documents: es
         .fileBucket()
-        .input(z.object({ type: z.string() }))
+        .input(
+          z.object({
+            type: z.string().transform((value) => value.trim().toUpperCase()),
+          }),
+        )
         .path(({ ctx, input }) => [
           { author: ctx.userId },
           { type: input.type },
@@ -540,7 +544,7 @@ describe('requestUpload', () => {
       ctxToken,
       body: uploadBody({
         input: {
-          type: 'invoice',
+          type: ' invoice ',
         },
         fileInfo: {
           temporary: true,
@@ -551,7 +555,7 @@ describe('requestUpload', () => {
 
     expect(beforeUpload).toHaveBeenCalledWith({
       ctx: expect.objectContaining({ userId: 'user-1' }),
-      input: { type: 'invoice' },
+      input: { type: 'INVOICE' },
       fileInfo: {
         size: 10,
         type: 'text/plain',
@@ -573,11 +577,11 @@ describe('requestUpload', () => {
         fileName: 'invoice.txt',
         path: [
           { key: 'author', value: 'user-1' },
-          { key: 'type', value: 'invoice' },
+          { key: 'type', value: 'INVOICE' },
         ],
         metadata: {
           userId: 'user-1',
-          type: 'invoice',
+          type: 'INVOICE',
         },
         isPublic: false,
       },
@@ -587,13 +591,45 @@ describe('requestUpload', () => {
       size: 10,
       path: {
         author: 'user-1',
-        type: 'invoice',
+        type: 'INVOICE',
       },
       pathOrder: ['author', 'type'],
       metadata: {
         userId: 'user-1',
-        type: 'invoice',
+        type: 'INVOICE',
       },
     });
+  });
+
+  it('rejects invalid async input before hooks and provider calls', async () => {
+    const provider = createProvider();
+    const beforeUpload = vi.fn(() => true);
+    const es = initEdgeStore.context<{ userId: string }>().create();
+    const router = es.router({
+      documents: es
+        .fileBucket()
+        .input(
+          z.object({ token: z.string() }).refine(async ({ token }) => {
+            await Promise.resolve();
+            return token === 'allowed';
+          }, 'Token is not allowed'),
+        )
+        .beforeUpload(beforeUpload),
+    });
+
+    await expect(
+      uploadWithContext({
+        provider,
+        router,
+        ctx: { userId: 'user-1' },
+        body: { input: { token: 'denied' } },
+      }),
+    ).rejects.toMatchObject({
+      code: 'BAD_REQUEST',
+      message: 'Invalid input: Token is not allowed',
+    });
+
+    expect(beforeUpload).not.toHaveBeenCalled();
+    expect(provider.requestUpload).not.toHaveBeenCalled();
   });
 });
