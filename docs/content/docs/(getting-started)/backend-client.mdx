@@ -12,7 +12,7 @@ You can use your EdgeStore router to initialize the backend client.
 Since Next.js doesn't allow exports in the api route, you will need to move your router to an external file.
 
 ```ts title="src/lib/edgestore-server.ts"
-import { initEdgeStoreClient } from '@edgestore/server/core';
+import { createEdgeStoreClient } from '@edgestore/server/core';
 
 // ...
 
@@ -23,7 +23,7 @@ export const handler = createEdgeStoreNextHandler({
 // ...
 
 // [!code ++:3]
-export const backendClient = initEdgeStoreClient({
+export const backendClient = createEdgeStoreClient({
   router: edgeStoreRouter,
 });
 ```
@@ -41,6 +41,17 @@ export { handler as GET, handler as POST };
   [next-advanced](https://github.com/edgestorejs/edgestore/tree/main/examples/next-advanced)
   example.
 </Callout>
+
+<Callout type="warn">
+  The backend client is privileged. It validates router input and applies file
+  type, size, transform, path, and metadata rules, but it does not run
+  `accessControl`, `beforeUpload`, or `beforeDelete`. Perform authorization in
+  the server code that calls it.
+</Callout>
+
+The hosted `edgestore()` provider supports the complete backend client. AWS and
+Azure continue to support adapter uploads and deletes, but their router backend
+capabilities are planned separately and are not exposed by TypeScript yet.
 
 ## Backend Upload
 
@@ -76,7 +87,13 @@ const res = await backendClient.publicFiles.upload({
   input: {
     type: 'post',
   },
+  signal,
+  onProgress: ({ percentage, phase }) => {
+    console.log(phase, `${percentage}%`);
+  },
 });
+
+console.log(res.id, res.key, res.sizeBytes);
 ```
 
 ### Copy an existing file
@@ -98,8 +115,22 @@ If you upload a temporary file, you can confirm it by using the `confirmUpload` 
 
 ```ts
 const res = await backendClient.publicFiles.confirmUpload({
-  url: fileUrl,
+  id: file.id,
 });
+```
+
+File operations accept a stable file ID, storage key, or URL. Singular
+operations throw `EdgeStoreFileMutationError` when that file fails. Use the
+plural form when partial success should be preserved:
+
+```ts
+const result = await backendClient.publicFiles.confirmUploads({
+  refs: [{ id: first.id }, { key: second.key }],
+});
+
+for (const failure of result.failed) {
+  console.error(failure.ref, failure.error.code);
+}
 ```
 
 ## Backend Delete
@@ -108,9 +139,12 @@ You can use the `deleteFile` function to delete files from your backend.
 
 ```ts
 const res = await backendClient.publicFiles.deleteFile({
-  url: fileUrl,
+  id: file.id,
 });
 ```
+
+`deleteFiles`, `restoreFile`, and `restoreFiles` use the same singular and
+partial-batch semantics.
 
 ## Backend List Files (search)
 
@@ -118,7 +152,7 @@ You can use the `listFiles` function to list files from your backend. It's also 
 
 ```ts
 // simple usage
-// get the first page (20 files) of all files in the bucket
+// get the first 20 files in the bucket
 const res = await backendClient.publicFiles.listFiles();
 
 // with filter and pagination
@@ -134,11 +168,29 @@ const res = await backendClient.publicFiles.listFiles({
       gt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7), // past 7 days
     },
   },
-  pagination: {
-    currentPage: 1, // default: 1
-    pageSize: 50, // default: 20 (max: 100)
-  },
+  cursor: 'cursor-from-previous-response',
+  limit: 50, // default: 20 (max: 100)
 });
+
+for (const file of res.items) {
+  console.log(file.id, file.url);
+}
+
+if (res.hasMore) {
+  console.log('Next cursor:', res.nextCursor);
+}
+```
+
+Use `listAllFiles` when you want to iterate through all matching pages without
+managing cursors yourself:
+
+```ts
+for await (const file of backendClient.publicFiles.listAllFiles({
+  filter: { metadata: { role: 'admin' } },
+  limit: 50,
+})) {
+  console.log(file.url);
+}
 ```
 
 ## TypeScript Helpers
@@ -160,9 +212,9 @@ And you can use it like this:
 
 ```ts
 export const getServerSideProps: GetServerSideProps<{
-  files: ClientResponse['publicFiles']['listFiles']['data'];
+  files: ClientResponse['publicFiles']['listFiles']['items'];
 }> = async () => {
   const res = await backendClient.publicFiles.listFiles();
-  return { props: { files: res.data } };
+  return { props: { files: res.items } };
 };
 ```

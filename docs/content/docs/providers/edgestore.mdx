@@ -14,14 +14,14 @@ import {
   type CreateContextOptions,
 } from '@edgestore/server/adapters/next/pages';
 // [!code ++]
-import { EdgeStoreProvider } from '@edgestore/server/providers/edgestore';
+import { edgestore } from '@edgestore/server/providers/edgestore';
 import { z } from 'zod';
 
 // ...
 
 export default createEdgeStoreNextHandler<Context>({
   // [!code ++]
-  provider: EdgeStoreProvider(), // this is the default provider and can be omitted
+  provider: edgestore(), // this is the default provider and can be omitted
   router: edgeStoreRouter,
   createContext,
 });
@@ -45,5 +45,9 @@ export type EdgeStoreProviderOptions = {
    * This can be omitted if the `EDGE_STORE_SECRET_KEY` environment variable is set.
    */
   secretKey?: string;
+  /**
+   * Override the API v2 base URL.
+   */
+  apiUrl?: string;
 };
 ```

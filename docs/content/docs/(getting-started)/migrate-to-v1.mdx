@@ -1,0 +1,65 @@
+---
+title: Migrate to v1
+description: Move an EdgeStore v0.7 application to the API v2 SDK and backend client.
+---
+
+EdgeStore v1 is a deliberate major-version redesign. The browser router DX is
+largely unchanged, while direct API and privileged backend code now use API v2
+semantics without a runtime v1 fallback.
+
+## Backend client codemod
+
+After installing the v1 packages, run the included rename codemod from your
+project root:
+
+```bash
+node node_modules/@edgestore/server/src/v1-backend-client-codemod.mjs src
+```
+
+This changes `initEdgeStoreClient` imports and calls to
+`createEdgeStoreClient`. It intentionally leaves the semantic migrations below
+for TypeScript to identify.
+
+## Breaking changes
+
+| v0.7                                | v1                                | Required change                                            |
+| ----------------------------------- | --------------------------------- | ---------------------------------------------------------- |
+| `initEdgeStoreClient`               | `createEdgeStoreClient`           | Run the codemod or rename it.                              |
+| URL-only identity                   | `{ id }`, `{ key }`, or `{ url }` | Prefer stable IDs in new code.                             |
+| Predicted upload result             | Canonical processed file          | Use `sizeBytes`, `id`, `key`, and the returned timestamps. |
+| `{ pagination: { cursor, limit } }` | `{ cursor, limit }`               | Move cursor fields to the top level.                       |
+| `result.data`                       | `result.items`                    | Read canonical file records from `items`.                  |
+| `{ success: boolean }`              | Singular result or partial batch  | Catch singular errors or inspect `failed`.                 |
+| Nullable metadata values            | Nullish values omitted            | Treat those inferred keys as optional strings.             |
+| Handcrafted server raw client       | `@edgestore/sdk`                  | Migrate direct API consumers to the public SDK.            |
+
+```ts
+const page = await backendClient.documents.listFiles({ limit: 50 });
+
+const deleted = await backendClient.documents.deleteFiles({
+  refs: page.items.map((file) => ({ id: file.id })),
+});
+
+for (const failure of deleted.failed) {
+  console.error(failure.ref, failure.error.code);
+}
+```
+
+## Provider capabilities
+
+The v1 backend client only accepts a provider that explicitly implements the
+privileged backend capability. This keeps its TypeScript surface honest while
+additional providers are developed.
+
+| Provider             | Router backend client            | Adapter upload/delete      | API v2 calls             |
+| -------------------- | -------------------------------- | -------------------------- | ------------------------ |
+| Hosted `edgestore()` | Full support                     | Full support               | Through `@edgestore/sdk` |
+| AWS                  | Planned                          | Existing support           | Never                    |
+| Azure                | Planned                          | Existing support           | Never                    |
+| Custom provider      | Implement the backend capability | Existing provider contract | Provider-defined         |
+
+## Release ordering
+
+API v2 must be deployed with the pinned OpenAPI contract before stable v1
+packages are published. Use prereleases against staging until that gate is met;
+v0.7 remains installable for applications that cannot migrate yet.

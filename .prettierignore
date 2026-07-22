@@ -6,6 +6,8 @@ packages/sdk/src/generated/api-v2.ts
 .docusaurus/
 .test/
 **/.next/
+**/.react-router/
+**/next-env.d.ts
 **/docs/build/
 dist/
 pnpm-lock.yaml
