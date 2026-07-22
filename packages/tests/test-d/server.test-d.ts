@@ -82,6 +82,17 @@ expectNotAssignable<Parameters<typeof client.avatars.upload>[0]>({
   },
 });
 
+expectNotAssignable<Parameters<typeof client.avatars.upload>[0]>({
+  content: 'hello',
+  ctx: {
+    userId: 'user-1',
+    role: 'admin',
+  },
+  input: {
+    type: 'other',
+  },
+});
+
 void client.documents.upload({
   content: 'hello',
   ctx: {
