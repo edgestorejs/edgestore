@@ -11,7 +11,10 @@ export type paths = {
             path?: never;
             cookie?: never;
         };
-        /** Health check */
+        /**
+         * Health check
+         * @description Checks whether API v2 is reachable and reports the active API version. This operation does not require authentication.
+         */
         get: operations["v2.health"];
         put?: never;
         post?: never;
@@ -28,7 +31,10 @@ export type paths = {
             path?: never;
             cookie?: never;
         };
-        /** Describe the authenticated actor */
+        /**
+         * Describe the authenticated actor
+         * @description Returns the resolved management principal, its credential kind, and its effective management scopes.
+         */
         get: operations["v2.whoami"];
         put?: never;
         post?: never;
@@ -45,7 +51,10 @@ export type paths = {
             path?: never;
             cookie?: never;
         };
-        /** List accessible accounts */
+        /**
+         * List accessible accounts
+         * @description Lists the active accounts visible to the current management credential, including plan limits, usage, and the caller's team role.
+         */
         get: operations["v2.management.accounts.list"];
         put?: never;
         post?: never;
@@ -62,7 +71,10 @@ export type paths = {
             path?: never;
             cookie?: never;
         };
-        /** Get an account */
+        /**
+         * Get an account
+         * @description Returns plan limits, storage usage, project count, and the caller's role for one accessible account.
+         */
         get: operations["v2.management.accounts.get"];
         put?: never;
         post?: never;
@@ -81,7 +93,10 @@ export type paths = {
         };
         get?: never;
         put?: never;
-        /** Leave an account */
+        /**
+         * Leave an account
+         * @description Removes the current user from a team account. Personal accounts, account tokens, and the team's last owner cannot use this operation.
+         */
         post: operations["v2.management.accounts.leave"];
         delete?: never;
         options?: never;
@@ -96,10 +111,16 @@ export type paths = {
             path?: never;
             cookie?: never;
         };
-        /** List projects in an account */
+        /**
+         * List projects in an account
+         * @description Lists active projects owned by an accessible account in creation order.
+         */
         get: operations["v2.management.projects.list"];
         put?: never;
-        /** Create a project */
+        /**
+         * Create a project
+         * @description Creates a project in an account and, by default, returns its first project key. The secret key is returned only in this response.
+         */
         post: operations["v2.management.projects.create"];
         delete?: never;
         options?: never;
@@ -114,11 +135,17 @@ export type paths = {
             path?: never;
             cookie?: never;
         };
-        /** Get a project */
+        /**
+         * Get a project
+         * @description Returns an accessible project resolved by its project ID or globally unique base path.
+         */
         get: operations["v2.management.projects.get"];
         put?: never;
         post?: never;
-        /** Delete a project */
+        /**
+         * Delete a project
+         * @description Deletes an accessible project after its buckets and files have been removed.
+         */
         delete: operations["v2.management.projects.delete"];
         options?: never;
         head?: never;
@@ -132,10 +159,16 @@ export type paths = {
             path?: never;
             cookie?: never;
         };
-        /** List management buckets */
+        /**
+         * List management buckets
+         * @description Lists active buckets in an accessible project, including visibility and current storage usage.
+         */
         get: operations["v2.management.buckets.list"];
         put?: never;
-        /** Create a bucket */
+        /**
+         * Create a bucket
+         * @description Creates a file or image bucket and configures the path and custom metadata fields accepted by its files.
+         */
         post: operations["v2.management.buckets.create"];
         delete?: never;
         options?: never;
@@ -150,15 +183,24 @@ export type paths = {
             path?: never;
             cookie?: never;
         };
-        /** Get a management bucket */
+        /**
+         * Get a management bucket
+         * @description Returns one active bucket by name from an accessible project.
+         */
         get: operations["v2.management.buckets.get"];
         put?: never;
         post?: never;
-        /** Delete a bucket */
+        /**
+         * Delete a bucket
+         * @description Deletes an empty bucket. Start an empty-bucket job first when the bucket contains files or incomplete uploads.
+         */
         delete: operations["v2.management.buckets.delete"];
         options?: never;
         head?: never;
-        /** Update a bucket */
+        /**
+         * Update a bucket
+         * @description Replaces the bucket's configured path and custom metadata field definitions.
+         */
         patch: operations["v2.management.buckets.update"];
         trace?: never;
     };
@@ -171,7 +213,10 @@ export type paths = {
         };
         get?: never;
         put?: never;
-        /** Start emptying a bucket */
+        /**
+         * Start emptying a bucket
+         * @description Starts an asynchronous job that deletes files, aborts uploads, reconciles stored objects, and invalidates cached content for the bucket.
+         */
         post: operations["v2.management.buckets.empty"];
         delete?: never;
         options?: never;
@@ -186,7 +231,10 @@ export type paths = {
             path?: never;
             cookie?: never;
         };
-        /** Get the latest empty-bucket job */
+        /**
+         * Get the latest empty-bucket job
+         * @description Returns the most recently created empty-bucket job for the selected bucket.
+         */
         get: operations["v2.management.buckets.emptyJobs.latest"];
         put?: never;
         post?: never;
@@ -203,7 +251,10 @@ export type paths = {
             path?: never;
             cookie?: never;
         };
-        /** Get an empty-bucket job */
+        /**
+         * Get an empty-bucket job
+         * @description Returns progress, cleanup counters, timestamps, and failure information for one empty-bucket job.
+         */
         get: operations["v2.management.buckets.emptyJobs.get"];
         put?: never;
         post?: never;
@@ -222,7 +273,10 @@ export type paths = {
         };
         get?: never;
         put?: never;
-        /** Retry an empty-bucket job */
+        /**
+         * Retry an empty-bucket job
+         * @description Queues a retry of a failed empty-bucket job. Jobs that are active or already succeeded cannot be retried.
+         */
         post: operations["v2.management.buckets.emptyJobs.retry"];
         delete?: never;
         options?: never;
@@ -237,7 +291,10 @@ export type paths = {
             path?: never;
             cookie?: never;
         };
-        /** List management files */
+        /**
+         * List management files
+         * @description Lists active uploaded files in a bucket using an opaque cursor.
+         */
         get: operations["v2.management.files.list"];
         put?: never;
         post?: never;
@@ -256,7 +313,10 @@ export type paths = {
         };
         get?: never;
         put?: never;
-        /** Look up a management file */
+        /**
+         * Look up a management file
+         * @description Resolves one file by ID, storage key, canonical URL, or bucket name and path.
+         */
         post: operations["v2.management.files.lookup"];
         delete?: never;
         options?: never;
@@ -273,7 +333,10 @@ export type paths = {
         };
         get?: never;
         put?: never;
-        /** Create management file download URLs */
+        /**
+         * Create management file download URLs
+         * @description Creates read URLs for one or more files. Protected files receive expiring signed URLs; public files may return their canonical URLs.
+         */
         post: operations["v2.management.files.downloadUrls.create"];
         delete?: never;
         options?: never;
@@ -290,7 +353,10 @@ export type paths = {
         };
         get?: never;
         put?: never;
-        /** Delete management files */
+        /**
+         * Delete management files
+         * @description Deletes multiple files and returns an ordered success or error result for every supplied file reference.
+         */
         post: operations["v2.management.files.delete"];
         delete?: never;
         options?: never;
@@ -307,7 +373,10 @@ export type paths = {
         };
         get?: never;
         put?: never;
-        /** Request a management upload */
+        /**
+         * Request a management upload
+         * @description Creates a logical upload and returns signed storage URLs for either a single request or the requested multipart parts.
+         */
         post: operations["v2.management.uploads.request"];
         delete?: never;
         options?: never;
@@ -322,11 +391,17 @@ export type paths = {
             path?: never;
             cookie?: never;
         };
-        /** Get management upload status */
+        /**
+         * Get management upload status
+         * @description Returns 202 while object processing continues, then returns the canonical file or canceled state. Follow Retry-After before polling again.
+         */
         get: operations["v2.management.uploads.get"];
         put?: never;
         post?: never;
-        /** Cancel a management upload */
+        /**
+         * Cancel a management upload
+         * @description Cancels an incomplete upload and aborts its multipart storage session when present. Repeating a successful cancellation is safe.
+         */
         delete: operations["v2.management.uploads.cancel"];
         options?: never;
         head?: never;
@@ -342,7 +417,10 @@ export type paths = {
         };
         get?: never;
         put?: never;
-        /** Create management upload part URLs */
+        /**
+         * Create management upload part URLs
+         * @description Creates or refreshes signed URLs for selected parts of an existing multipart upload.
+         */
         post: operations["v2.management.uploads.parts.create"];
         delete?: never;
         options?: never;
@@ -359,7 +437,10 @@ export type paths = {
         };
         get?: never;
         put?: never;
-        /** Complete a management multipart upload */
+        /**
+         * Complete a management multipart upload
+         * @description Submits uploaded part ETags for assembly and returns 202 while EdgeStore processes the resulting object.
+         */
         post: operations["v2.management.uploads.multipart.complete"];
         delete?: never;
         options?: never;
@@ -374,10 +455,16 @@ export type paths = {
             path?: never;
             cookie?: never;
         };
-        /** List project keys */
+        /**
+         * List project keys
+         * @description Lists project-key records without their secret keys, including revoked keys.
+         */
         get: operations["v2.management.projectKeys.list"];
         put?: never;
-        /** Create a project key */
+        /**
+         * Create a project key
+         * @description Creates a project credential. Its secret key is returned only in this response and cannot be retrieved later.
+         */
         post: operations["v2.management.projectKeys.create"];
         delete?: never;
         options?: never;
@@ -395,7 +482,10 @@ export type paths = {
         get?: never;
         put?: never;
         post?: never;
-        /** Revoke a project key */
+        /**
+         * Revoke a project key
+         * @description Permanently revokes a project key so it can no longer authenticate runtime requests.
+         */
         delete: operations["v2.management.projectKeys.revoke"];
         options?: never;
         head?: never;
@@ -409,7 +499,10 @@ export type paths = {
             path?: never;
             cookie?: never;
         };
-        /** List account members */
+        /**
+         * List account members
+         * @description Lists a page of members in a team account. Personal accounts do not have members.
+         */
         get: operations["v2.management.members.list"];
         put?: never;
         post?: never;
@@ -429,11 +522,17 @@ export type paths = {
         get?: never;
         put?: never;
         post?: never;
-        /** Remove an account member */
+        /**
+         * Remove an account member
+         * @description Removes a user from a team account. The last owner cannot be removed.
+         */
         delete: operations["v2.management.members.remove"];
         options?: never;
         head?: never;
-        /** Update an account member */
+        /**
+         * Update an account member
+         * @description Changes a team member's role. The last owner cannot be demoted.
+         */
         patch: operations["v2.management.members.update"];
         trace?: never;
     };
@@ -444,10 +543,16 @@ export type paths = {
             path?: never;
             cookie?: never;
         };
-        /** List account invitations */
+        /**
+         * List account invitations
+         * @description Lists a page of invitations for a team account, including active and terminal invitation states.
+         */
         get: operations["v2.management.invitations.list"];
         put?: never;
-        /** Create an account invitation */
+        /**
+         * Create an account invitation
+         * @description Creates a team invitation and queues its email for durable delivery. Reusing an idempotency key returns the original invitation.
+         */
         post: operations["v2.management.invitations.create"];
         delete?: never;
         options?: never;
@@ -465,7 +570,10 @@ export type paths = {
         get?: never;
         put?: never;
         post?: never;
-        /** Revoke an account invitation */
+        /**
+         * Revoke an account invitation
+         * @description Cancels an active team invitation and releases any seat reserved for it.
+         */
         delete: operations["v2.management.invitations.revoke"];
         options?: never;
         head?: never;
@@ -481,7 +589,10 @@ export type paths = {
         };
         get?: never;
         put?: never;
-        /** Resend an account invitation */
+        /**
+         * Resend an account invitation
+         * @description Sends a new email for an active team invitation and returns its updated record.
+         */
         post: operations["v2.management.invitations.resend"];
         delete?: never;
         options?: never;
@@ -496,10 +607,16 @@ export type paths = {
             path?: never;
             cookie?: never;
         };
-        /** List account management tokens */
+        /**
+         * List account management tokens
+         * @description Lists a page of management tokens owned by an account without exposing token secrets.
+         */
         get: operations["v2.management.tokens.listAccount"];
         put?: never;
-        /** Create an account management token */
+        /**
+         * Create an account management token
+         * @description Creates an account-owned management token with preset or explicit scopes. The token secret is returned only in this response.
+         */
         post: operations["v2.management.tokens.createAccount"];
         delete?: never;
         options?: never;
@@ -514,10 +631,16 @@ export type paths = {
             path?: never;
             cookie?: never;
         };
-        /** List current user management tokens */
+        /**
+         * List current user management tokens
+         * @description Lists a page of management tokens owned by the current user without exposing token secrets.
+         */
         get: operations["v2.management.tokens.listUser"];
         put?: never;
-        /** Create a current user management token */
+        /**
+         * Create a current user management token
+         * @description Creates a user-owned management token with preset or explicit scopes. The token secret is returned only in this response.
+         */
         post: operations["v2.management.tokens.createUser"];
         delete?: never;
         options?: never;
@@ -535,7 +658,10 @@ export type paths = {
         get?: never;
         put?: never;
         post?: never;
-        /** Revoke a management token */
+        /**
+         * Revoke a management token
+         * @description Revokes an account- or user-owned management token. Repeating the operation for the same visible token is safe.
+         */
         delete: operations["v2.management.tokens.revoke"];
         options?: never;
         head?: never;
@@ -551,7 +677,10 @@ export type paths = {
         };
         get?: never;
         put?: never;
-        /** Create a runtime access token */
+        /**
+         * Create a runtime access token
+         * @description Creates an encrypted token that carries runtime context, resolved bucket paths, and optional access-control data.
+         */
         post: operations["v2.runtime.accessToken.create"];
         delete?: never;
         options?: never;
@@ -566,7 +695,10 @@ export type paths = {
             path?: never;
             cookie?: never;
         };
-        /** Get a runtime project */
+        /**
+         * Get a runtime project
+         * @description Returns the authenticated project resolved by project ID or globally unique base path.
+         */
         get: operations["v2.runtime.projects.get"];
         put?: never;
         post?: never;
@@ -583,7 +715,10 @@ export type paths = {
             path?: never;
             cookie?: never;
         };
-        /** List runtime buckets */
+        /**
+         * List runtime buckets
+         * @description Lists active buckets in the authenticated project, including visibility and current storage usage.
+         */
         get: operations["v2.runtime.buckets.list"];
         put?: never;
         post?: never;
@@ -600,7 +735,10 @@ export type paths = {
             path?: never;
             cookie?: never;
         };
-        /** Get a runtime bucket */
+        /**
+         * Get a runtime bucket
+         * @description Returns one active bucket by name from the authenticated project.
+         */
         get: operations["v2.runtime.buckets.get"];
         put?: never;
         post?: never;
@@ -619,7 +757,10 @@ export type paths = {
         };
         get?: never;
         put?: never;
-        /** Search runtime files */
+        /**
+         * Search runtime files
+         * @description Searches files in a bucket using composable field filters and opaque cursor pagination.
+         */
         post: operations["v2.runtime.files.search"];
         delete?: never;
         options?: never;
@@ -636,7 +777,10 @@ export type paths = {
         };
         get?: never;
         put?: never;
-        /** Look up a runtime file */
+        /**
+         * Look up a runtime file
+         * @description Resolves one file in the authenticated project by file ID, storage key, or canonical URL.
+         */
         post: operations["v2.runtime.files.lookup"];
         delete?: never;
         options?: never;
@@ -653,7 +797,10 @@ export type paths = {
         };
         get?: never;
         put?: never;
-        /** Create runtime signed read URLs */
+        /**
+         * Create runtime signed read URLs
+         * @description Creates expiring read URLs for protected files and optionally their thumbnails.
+         */
         post: operations["v2.runtime.files.signedUrls.create"];
         delete?: never;
         options?: never;
@@ -670,7 +817,10 @@ export type paths = {
         };
         get?: never;
         put?: never;
-        /** Confirm runtime files */
+        /**
+         * Confirm runtime files
+         * @description Marks temporary files as permanent and returns an ordered result for every supplied file reference.
+         */
         post: operations["v2.runtime.files.confirm"];
         delete?: never;
         options?: never;
@@ -687,7 +837,10 @@ export type paths = {
         };
         get?: never;
         put?: never;
-        /** Delete runtime files */
+        /**
+         * Delete runtime files
+         * @description Soft-deletes multiple files and returns an ordered result for every supplied file reference.
+         */
         post: operations["v2.runtime.files.delete"];
         delete?: never;
         options?: never;
@@ -704,7 +857,10 @@ export type paths = {
         };
         get?: never;
         put?: never;
-        /** Restore runtime files */
+        /**
+         * Restore runtime files
+         * @description Restores multiple soft-deleted files when the account plan permits restoration and returns one result per reference.
+         */
         post: operations["v2.runtime.files.restore"];
         delete?: never;
         options?: never;
@@ -721,7 +877,10 @@ export type paths = {
         };
         get?: never;
         put?: never;
-        /** Request a runtime upload */
+        /**
+         * Request a runtime upload
+         * @description Creates a logical upload and returns signed storage URLs. The request can create a bucket, replace an existing file, or request multipart parts.
+         */
         post: operations["v2.runtime.uploads.request"];
         delete?: never;
         options?: never;
@@ -736,11 +895,17 @@ export type paths = {
             path?: never;
             cookie?: never;
         };
-        /** Get runtime upload status */
+        /**
+         * Get runtime upload status
+         * @description Returns 202 while object processing continues, then returns the canonical file or canceled state. Follow Retry-After before polling again.
+         */
         get: operations["v2.runtime.uploads.get"];
         put?: never;
         post?: never;
-        /** Cancel a runtime upload */
+        /**
+         * Cancel a runtime upload
+         * @description Cancels an incomplete upload and aborts its multipart storage session when present. Repeating a successful cancellation is safe.
+         */
         delete: operations["v2.runtime.uploads.cancel"];
         options?: never;
         head?: never;
@@ -756,7 +921,10 @@ export type paths = {
         };
         get?: never;
         put?: never;
-        /** Create runtime upload part URLs */
+        /**
+         * Create runtime upload part URLs
+         * @description Creates or refreshes signed URLs for selected parts of an existing multipart upload.
+         */
         post: operations["v2.runtime.uploads.parts.create"];
         delete?: never;
         options?: never;
@@ -773,7 +941,10 @@ export type paths = {
         };
         get?: never;
         put?: never;
-        /** Complete a runtime multipart upload */
+        /**
+         * Complete a runtime multipart upload
+         * @description Submits uploaded part ETags for assembly and returns 202 while EdgeStore processes the resulting object.
+         */
         post: operations["v2.runtime.uploads.multipart.complete"];
         delete?: never;
         options?: never;
@@ -785,431 +956,869 @@ export type paths = {
 export type webhooks = Record<string, never>;
 export type components = {
     schemas: {
+        /** @description Invalid request */
         InvalidRequestError: {
+            /** @description A structured EdgeStore API error. */
             error: {
-                /** @constant */
+                /**
+                 * @description Stable machine-readable error code.
+                 * @constant
+                 */
                 code: "invalid_request";
-                /** @default Invalid request */
+                /**
+                 * @description Human-readable explanation of the error.
+                 * @default Invalid request
+                 */
                 message: string;
-                /** @constant */
+                /**
+                 * @description HTTP status code returned with the error.
+                 * @constant
+                 */
                 status: 400;
+                /** @description Structured details specific to this error code. */
                 details?: {
+                    /** @description Request validation failures. */
                     issues: {
+                        /** @description Location of the invalid value in the request. */
                         path: (string | number)[];
+                        /** @description Validation failure message. */
                         message: string;
                     }[];
                 };
             };
         };
+        /** @description Payload too large */
         PayloadTooLargeError: {
+            /** @description A structured EdgeStore API error. */
             error: {
-                /** @constant */
+                /**
+                 * @description Stable machine-readable error code.
+                 * @constant
+                 */
                 code: "payload_too_large";
-                /** @default Payload too large */
+                /**
+                 * @description Human-readable explanation of the error.
+                 * @default Payload too large
+                 */
                 message: string;
-                /** @constant */
+                /**
+                 * @description HTTP status code returned with the error.
+                 * @constant
+                 */
                 status: 413;
             };
         };
+        /** @description Authentication required */
         AuthenticationRequiredError: {
+            /** @description A structured EdgeStore API error. */
             error: {
-                /** @constant */
+                /**
+                 * @description Stable machine-readable error code.
+                 * @constant
+                 */
                 code: "authentication_required";
-                /** @default Authentication required */
+                /**
+                 * @description Human-readable explanation of the error.
+                 * @default Authentication required
+                 */
                 message: string;
-                /** @constant */
+                /**
+                 * @description HTTP status code returned with the error.
+                 * @constant
+                 */
                 status: 401;
             };
         };
+        /** @description Invalid credential */
         InvalidCredentialError: {
+            /** @description A structured EdgeStore API error. */
             error: {
-                /** @constant */
+                /**
+                 * @description Stable machine-readable error code.
+                 * @constant
+                 */
                 code: "invalid_credential";
-                /** @default Invalid credential */
+                /**
+                 * @description Human-readable explanation of the error.
+                 * @default Invalid credential
+                 */
                 message: string;
-                /** @constant */
+                /**
+                 * @description HTTP status code returned with the error.
+                 * @constant
+                 */
                 status: 401;
             };
         };
+        /** @description This credential cannot access this operation */
         CredentialNotAllowedError: {
+            /** @description A structured EdgeStore API error. */
             error: {
-                /** @constant */
+                /**
+                 * @description Stable machine-readable error code.
+                 * @constant
+                 */
                 code: "credential_not_allowed";
-                /** @default This credential cannot access this operation */
+                /**
+                 * @description Human-readable explanation of the error.
+                 * @default This credential cannot access this operation
+                 */
                 message: string;
-                /** @constant */
+                /**
+                 * @description HTTP status code returned with the error.
+                 * @constant
+                 */
                 status: 403;
             };
         };
+        /** @description The credential is missing a required scope */
         MissingScopeError: {
+            /** @description A structured EdgeStore API error. */
             error: {
-                /** @constant */
+                /**
+                 * @description Stable machine-readable error code.
+                 * @constant
+                 */
                 code: "missing_scope";
-                /** @default The credential is missing a required scope */
+                /**
+                 * @description Human-readable explanation of the error.
+                 * @default The credential is missing a required scope
+                 */
                 message: string;
-                /** @constant */
+                /**
+                 * @description HTTP status code returned with the error.
+                 * @constant
+                 */
                 status: 403;
+                /** @description Structured details specific to this error code. */
                 details: {
+                    /** @description Permission required by the operation. */
                     requiredScope: string;
                 };
             };
         };
+        /** @description Account not found */
         AccountNotFoundError: {
+            /** @description A structured EdgeStore API error. */
             error: {
-                /** @constant */
+                /**
+                 * @description Stable machine-readable error code.
+                 * @constant
+                 */
                 code: "account_not_found";
-                /** @default Account not found */
+                /**
+                 * @description Human-readable explanation of the error.
+                 * @default Account not found
+                 */
                 message: string;
-                /** @constant */
+                /**
+                 * @description HTTP status code returned with the error.
+                 * @constant
+                 */
                 status: 404;
             };
         };
+        /** @description Project not found */
         ProjectNotFoundError: {
+            /** @description A structured EdgeStore API error. */
             error: {
-                /** @constant */
+                /**
+                 * @description Stable machine-readable error code.
+                 * @constant
+                 */
                 code: "project_not_found";
-                /** @default Project not found */
+                /**
+                 * @description Human-readable explanation of the error.
+                 * @default Project not found
+                 */
                 message: string;
-                /** @constant */
+                /**
+                 * @description HTTP status code returned with the error.
+                 * @constant
+                 */
                 status: 404;
             };
         };
+        /** @description Bucket not found */
         BucketNotFoundError: {
+            /** @description A structured EdgeStore API error. */
             error: {
-                /** @constant */
+                /**
+                 * @description Stable machine-readable error code.
+                 * @constant
+                 */
                 code: "bucket_not_found";
-                /** @default Bucket not found */
+                /**
+                 * @description Human-readable explanation of the error.
+                 * @default Bucket not found
+                 */
                 message: string;
-                /** @constant */
+                /**
+                 * @description HTTP status code returned with the error.
+                 * @constant
+                 */
                 status: 404;
             };
         };
+        /** @description File not found */
         FileNotFoundError: {
+            /** @description A structured EdgeStore API error. */
             error: {
-                /** @constant */
+                /**
+                 * @description Stable machine-readable error code.
+                 * @constant
+                 */
                 code: "file_not_found";
-                /** @default File not found */
+                /**
+                 * @description Human-readable explanation of the error.
+                 * @default File not found
+                 */
                 message: string;
-                /** @constant */
+                /**
+                 * @description HTTP status code returned with the error.
+                 * @constant
+                 */
                 status: 404;
             };
         };
+        /** @description Upload not found */
         UploadNotFoundError: {
+            /** @description A structured EdgeStore API error. */
             error: {
-                /** @constant */
+                /**
+                 * @description Stable machine-readable error code.
+                 * @constant
+                 */
                 code: "upload_not_found";
-                /** @default Upload not found */
+                /**
+                 * @description Human-readable explanation of the error.
+                 * @default Upload not found
+                 */
                 message: string;
-                /** @constant */
+                /**
+                 * @description HTTP status code returned with the error.
+                 * @constant
+                 */
                 status: 404;
             };
         };
+        /** @description The upload has already completed */
         UploadAlreadyCompletedError: {
+            /** @description A structured EdgeStore API error. */
             error: {
-                /** @constant */
+                /**
+                 * @description Stable machine-readable error code.
+                 * @constant
+                 */
                 code: "upload_already_completed";
-                /** @default The upload has already completed */
+                /**
+                 * @description Human-readable explanation of the error.
+                 * @default The upload has already completed
+                 */
                 message: string;
-                /** @constant */
+                /**
+                 * @description HTTP status code returned with the error.
+                 * @constant
+                 */
                 status: 409;
             };
         };
+        /** @description The idempotency key was already used with a different request */
         IdempotencyConflictError: {
+            /** @description A structured EdgeStore API error. */
             error: {
-                /** @constant */
+                /**
+                 * @description Stable machine-readable error code.
+                 * @constant
+                 */
                 code: "idempotency_conflict";
-                /** @default The idempotency key was already used with a different request */
+                /**
+                 * @description Human-readable explanation of the error.
+                 * @default The idempotency key was already used with a different request
+                 */
                 message: string;
-                /** @constant */
+                /**
+                 * @description HTTP status code returned with the error.
+                 * @constant
+                 */
                 status: 409;
             };
         };
-        IdempotencyInProgressError: {
-            error: {
-                /** @constant */
-                code: "idempotency_in_progress";
-                /** @default A request with this idempotency key is still in progress */
-                message: string;
-                /** @constant */
-                status: 409;
-            };
-        };
+        /** @description Member not found */
         MemberNotFoundError: {
+            /** @description A structured EdgeStore API error. */
             error: {
-                /** @constant */
+                /**
+                 * @description Stable machine-readable error code.
+                 * @constant
+                 */
                 code: "member_not_found";
-                /** @default Member not found */
+                /**
+                 * @description Human-readable explanation of the error.
+                 * @default Member not found
+                 */
                 message: string;
-                /** @constant */
+                /**
+                 * @description HTTP status code returned with the error.
+                 * @constant
+                 */
                 status: 404;
             };
         };
+        /** @description Invitation not found */
         InvitationNotFoundError: {
+            /** @description A structured EdgeStore API error. */
             error: {
-                /** @constant */
+                /**
+                 * @description Stable machine-readable error code.
+                 * @constant
+                 */
                 code: "invitation_not_found";
-                /** @default Invitation not found */
+                /**
+                 * @description Human-readable explanation of the error.
+                 * @default Invitation not found
+                 */
                 message: string;
-                /** @constant */
+                /**
+                 * @description HTTP status code returned with the error.
+                 * @constant
+                 */
                 status: 404;
             };
         };
+        /** @description Token not found */
         TokenNotFoundError: {
+            /** @description A structured EdgeStore API error. */
             error: {
-                /** @constant */
+                /**
+                 * @description Stable machine-readable error code.
+                 * @constant
+                 */
                 code: "token_not_found";
-                /** @default Token not found */
+                /**
+                 * @description Human-readable explanation of the error.
+                 * @default Token not found
+                 */
                 message: string;
-                /** @constant */
+                /**
+                 * @description HTTP status code returned with the error.
+                 * @constant
+                 */
                 status: 404;
             };
         };
+        /** @description Project key not found */
         ProjectKeyNotFoundError: {
+            /** @description A structured EdgeStore API error. */
             error: {
-                /** @constant */
+                /**
+                 * @description Stable machine-readable error code.
+                 * @constant
+                 */
                 code: "project_key_not_found";
-                /** @default Project key not found */
+                /**
+                 * @description Human-readable explanation of the error.
+                 * @default Project key not found
+                 */
                 message: string;
-                /** @constant */
+                /**
+                 * @description HTTP status code returned with the error.
+                 * @constant
+                 */
                 status: 404;
             };
         };
+        /** @description Empty-bucket job not found */
         EmptyBucketJobNotFoundError: {
+            /** @description A structured EdgeStore API error. */
             error: {
-                /** @constant */
+                /**
+                 * @description Stable machine-readable error code.
+                 * @constant
+                 */
                 code: "empty_bucket_job_not_found";
-                /** @default Empty-bucket job not found */
+                /**
+                 * @description Human-readable explanation of the error.
+                 * @default Empty-bucket job not found
+                 */
                 message: string;
-                /** @constant */
+                /**
+                 * @description HTTP status code returned with the error.
+                 * @constant
+                 */
                 status: 404;
             };
         };
+        /** @description This operation is not available for personal accounts */
         PersonalAccountError: {
+            /** @description A structured EdgeStore API error. */
             error: {
-                /** @constant */
+                /**
+                 * @description Stable machine-readable error code.
+                 * @constant
+                 */
                 code: "personal_account";
-                /** @default This operation is not available for personal accounts */
+                /**
+                 * @description Human-readable explanation of the error.
+                 * @default This operation is not available for personal accounts
+                 */
                 message: string;
-                /** @constant */
+                /**
+                 * @description HTTP status code returned with the error.
+                 * @constant
+                 */
                 status: 400;
             };
         };
+        /** @description The account is paused */
         AccountPausedError: {
+            /** @description A structured EdgeStore API error. */
             error: {
-                /** @constant */
+                /**
+                 * @description Stable machine-readable error code.
+                 * @constant
+                 */
                 code: "account_paused";
-                /** @default The account is paused */
+                /**
+                 * @description Human-readable explanation of the error.
+                 * @default The account is paused
+                 */
                 message: string;
-                /** @constant */
+                /**
+                 * @description HTTP status code returned with the error.
+                 * @constant
+                 */
                 status: 403;
             };
         };
+        /** @description The account storage limit has been exceeded */
         StorageLimitExceededError: {
+            /** @description A structured EdgeStore API error. */
             error: {
-                /** @constant */
+                /**
+                 * @description Stable machine-readable error code.
+                 * @constant
+                 */
                 code: "storage_limit_exceeded";
-                /** @default The account storage limit has been exceeded */
+                /**
+                 * @description Human-readable explanation of the error.
+                 * @default The account storage limit has been exceeded
+                 */
                 message: string;
-                /** @constant */
+                /**
+                 * @description HTTP status code returned with the error.
+                 * @constant
+                 */
                 status: 403;
             };
         };
+        /** @description The account plan does not support file restoration */
         RestoreNotAllowedError: {
+            /** @description A structured EdgeStore API error. */
             error: {
-                /** @constant */
+                /**
+                 * @description Stable machine-readable error code.
+                 * @constant
+                 */
                 code: "restore_not_allowed";
-                /** @default The account plan does not support file restoration */
+                /**
+                 * @description Human-readable explanation of the error.
+                 * @default The account plan does not support file restoration
+                 */
                 message: string;
-                /** @constant */
+                /**
+                 * @description HTTP status code returned with the error.
+                 * @constant
+                 */
                 status: 403;
             };
         };
+        /** @description Signed read URLs are not available for this file */
         SignedReadUrlNotAvailableError: {
+            /** @description A structured EdgeStore API error. */
             error: {
-                /** @constant */
+                /**
+                 * @description Stable machine-readable error code.
+                 * @constant
+                 */
                 code: "signed_read_url_not_available";
-                /** @default Signed read URLs are not available for this file */
+                /**
+                 * @description Human-readable explanation of the error.
+                 * @default Signed read URLs are not available for this file
+                 */
                 message: string;
-                /** @constant */
+                /**
+                 * @description HTTP status code returned with the error.
+                 * @constant
+                 */
                 status: 409;
             };
         };
+        /** @description An account must retain an owner */
         LastOwnerError: {
+            /** @description A structured EdgeStore API error. */
             error: {
-                /** @constant */
+                /**
+                 * @description Stable machine-readable error code.
+                 * @constant
+                 */
                 code: "last_owner";
-                /** @default An account must retain an owner */
+                /**
+                 * @description Human-readable explanation of the error.
+                 * @default An account must retain an owner
+                 */
                 message: string;
-                /** @constant */
+                /**
+                 * @description HTTP status code returned with the error.
+                 * @constant
+                 */
                 status: 409;
             };
         };
+        /** @description The account project limit has been reached */
         ProjectLimitReachedError: {
+            /** @description A structured EdgeStore API error. */
             error: {
-                /** @constant */
+                /**
+                 * @description Stable machine-readable error code.
+                 * @constant
+                 */
                 code: "project_limit_reached";
-                /** @default The account project limit has been reached */
+                /**
+                 * @description Human-readable explanation of the error.
+                 * @default The account project limit has been reached
+                 */
                 message: string;
-                /** @constant */
+                /**
+                 * @description HTTP status code returned with the error.
+                 * @constant
+                 */
                 status: 409;
             };
         };
+        /** @description The account member limit has been reached */
         MemberLimitReachedError: {
+            /** @description A structured EdgeStore API error. */
             error: {
-                /** @constant */
+                /**
+                 * @description Stable machine-readable error code.
+                 * @constant
+                 */
                 code: "member_limit_reached";
-                /** @default The account member limit has been reached */
+                /**
+                 * @description Human-readable explanation of the error.
+                 * @default The account member limit has been reached
+                 */
                 message: string;
-                /** @constant */
+                /**
+                 * @description HTTP status code returned with the error.
+                 * @constant
+                 */
                 status: 409;
             };
         };
+        /** @description The user is already an account member */
         UserAlreadyMemberError: {
+            /** @description A structured EdgeStore API error. */
             error: {
-                /** @constant */
+                /**
+                 * @description Stable machine-readable error code.
+                 * @constant
+                 */
                 code: "user_already_member";
-                /** @default The user is already an account member */
+                /**
+                 * @description Human-readable explanation of the error.
+                 * @default The user is already an account member
+                 */
                 message: string;
-                /** @constant */
+                /**
+                 * @description HTTP status code returned with the error.
+                 * @constant
+                 */
                 status: 409;
             };
         };
+        /** @description A bucket with this name already exists */
         BucketAlreadyExistsError: {
+            /** @description A structured EdgeStore API error. */
             error: {
-                /** @constant */
+                /**
+                 * @description Stable machine-readable error code.
+                 * @constant
+                 */
                 code: "bucket_already_exists";
-                /** @default A bucket with this name already exists */
+                /**
+                 * @description Human-readable explanation of the error.
+                 * @default A bucket with this name already exists
+                 */
                 message: string;
-                /** @constant */
+                /**
+                 * @description HTTP status code returned with the error.
+                 * @constant
+                 */
                 status: 409;
             };
         };
+        /** @description The bucket contains files */
         BucketNotEmptyError: {
+            /** @description A structured EdgeStore API error. */
             error: {
-                /** @constant */
+                /**
+                 * @description Stable machine-readable error code.
+                 * @constant
+                 */
                 code: "bucket_not_empty";
-                /** @default The bucket contains files */
+                /**
+                 * @description Human-readable explanation of the error.
+                 * @default The bucket contains files
+                 */
                 message: string;
-                /** @constant */
+                /**
+                 * @description HTTP status code returned with the error.
+                 * @constant
+                 */
                 status: 409;
             };
         };
+        /** @description The bucket is currently being emptied */
         BucketEmptyInProgressError: {
+            /** @description A structured EdgeStore API error. */
             error: {
-                /** @constant */
+                /**
+                 * @description Stable machine-readable error code.
+                 * @constant
+                 */
                 code: "bucket_empty_in_progress";
-                /** @default The bucket is currently being emptied */
+                /**
+                 * @description Human-readable explanation of the error.
+                 * @default The bucket is currently being emptied
+                 */
                 message: string;
-                /** @constant */
+                /**
+                 * @description HTTP status code returned with the error.
+                 * @constant
+                 */
                 status: 409;
             };
         };
+        /** @description The bucket state changed during the operation */
         BucketStateConflictError: {
+            /** @description A structured EdgeStore API error. */
             error: {
-                /** @constant */
+                /**
+                 * @description Stable machine-readable error code.
+                 * @constant
+                 */
                 code: "bucket_state_conflict";
-                /** @default The bucket state changed during the operation */
+                /**
+                 * @description Human-readable explanation of the error.
+                 * @default The bucket state changed during the operation
+                 */
                 message: string;
-                /** @constant */
+                /**
+                 * @description HTTP status code returned with the error.
+                 * @constant
+                 */
                 status: 409;
             };
         };
+        /** @description The project key is already revoked */
         KeyAlreadyRevokedError: {
+            /** @description A structured EdgeStore API error. */
             error: {
-                /** @constant */
+                /**
+                 * @description Stable machine-readable error code.
+                 * @constant
+                 */
                 code: "key_already_revoked";
-                /** @default The project key is already revoked */
+                /**
+                 * @description Human-readable explanation of the error.
+                 * @default The project key is already revoked
+                 */
                 message: string;
-                /** @constant */
+                /**
+                 * @description HTTP status code returned with the error.
+                 * @constant
+                 */
                 status: 409;
             };
         };
+        /** @description The invitation is no longer active */
         InvitationNotActiveError: {
+            /** @description A structured EdgeStore API error. */
             error: {
-                /** @constant */
+                /**
+                 * @description Stable machine-readable error code.
+                 * @constant
+                 */
                 code: "invitation_not_active";
-                /** @default The invitation is no longer active */
+                /**
+                 * @description Human-readable explanation of the error.
+                 * @default The invitation is no longer active
+                 */
                 message: string;
-                /** @constant */
+                /**
+                 * @description HTTP status code returned with the error.
+                 * @constant
+                 */
                 status: 409;
             };
         };
+        /** @description The file reference is invalid */
         InvalidFileReferenceError: {
+            /** @description A structured EdgeStore API error. */
             error: {
-                /** @constant */
+                /**
+                 * @description Stable machine-readable error code.
+                 * @constant
+                 */
                 code: "invalid_file_reference";
-                /** @default The file reference is invalid */
+                /**
+                 * @description Human-readable explanation of the error.
+                 * @default The file reference is invalid
+                 */
                 message: string;
-                /** @constant */
+                /**
+                 * @description HTTP status code returned with the error.
+                 * @constant
+                 */
                 status: 400;
             };
         };
+        /** @description The empty-bucket job cannot be retried */
         EmptyBucketJobNotRetryableError: {
+            /** @description A structured EdgeStore API error. */
             error: {
-                /** @constant */
+                /**
+                 * @description Stable machine-readable error code.
+                 * @constant
+                 */
                 code: "empty_bucket_job_not_retryable";
-                /** @default The empty-bucket job cannot be retried */
+                /**
+                 * @description Human-readable explanation of the error.
+                 * @default The empty-bucket job cannot be retried
+                 */
                 message: string;
-                /** @constant */
+                /**
+                 * @description HTTP status code returned with the error.
+                 * @constant
+                 */
                 status: 409;
             };
         };
+        /** @description Route not found */
         RouteNotFoundError: {
+            /** @description A structured EdgeStore API error. */
             error: {
-                /** @constant */
+                /**
+                 * @description Stable machine-readable error code.
+                 * @constant
+                 */
                 code: "route_not_found";
-                /** @default Route not found */
+                /**
+                 * @description Human-readable explanation of the error.
+                 * @default Route not found
+                 */
                 message: string;
-                /** @constant */
+                /**
+                 * @description HTTP status code returned with the error.
+                 * @constant
+                 */
                 status: 404;
             };
         };
+        /** @description Internal server error */
         InternalError: {
+            /** @description A structured EdgeStore API error. */
             error: {
-                /** @constant */
+                /**
+                 * @description Stable machine-readable error code.
+                 * @constant
+                 */
                 code: "internal_error";
-                /** @default Internal server error */
+                /**
+                 * @description Human-readable explanation of the error.
+                 * @default Internal server error
+                 */
                 message: string;
-                /** @constant */
+                /**
+                 * @description HTTP status code returned with the error.
+                 * @constant
+                 */
                 status: 500;
             };
         };
+        /** @description A canonical EdgeStore file record. */
         File: {
+            /** @description Unique file ID. Also used as the upload ID. */
             id: string;
+            /** @description Canonical file URL. */
             url: string;
+            /** @description Storage key relative to the project. */
             key: string;
+            /** @description Canonical thumbnail URL, or null when unavailable. */
             thumbnailUrl: string | null;
+            /** @description Thumbnail storage key, or null when unavailable. */
             thumbnailKey: string | null;
+            /** @description ID of the bucket containing the file. */
             bucketId: string;
+            /** @description Name of the bucket containing the file. */
             bucketName: string;
+            /** @description ID of the project that owns the file. */
             projectId: string;
+            /** @description ID of the account that owns the project. */
             accountId: string;
+            /** @description File name, including its extension when present. */
             name: string;
+            /** @description Configured path fields for the file. */
             path: {
                 [key: string]: string;
             };
+            /** @description Custom metadata attached to the file. */
             metadata: {
                 [key: string]: string;
             };
+            /** @description File size in bytes. */
             sizeBytes: number;
+            /** @description File media type, or null when not provided. */
             mimeType: string | null;
-            /** @enum {string} */
+            /**
+             * @description Current file lifecycle state.
+             * @enum {string}
+             */
             state: "requested" | "uploaded" | "deleted" | "replace_requested";
+            /** @description Whether the file still requires explicit confirmation. */
             temporary: boolean;
+            /** @description ISO 8601 upload timestamp. */
             uploadedAt: string;
+            /** @description ISO 8601 last-update timestamp. */
             updatedAt: string;
         };
+        /** @description An EdgeStore file or image bucket. */
         Bucket: {
+            /** @description Unique bucket ID. */
             id: string;
+            /** @description Bucket name, unique within the project. */
             name: string;
+            /** @description ID of the project that owns the bucket. */
             projectId: string;
+            /** @description ID of the account that owns the project. */
             accountId: string;
-            /** @enum {string} */
+            /**
+             * @description Bucket content type. Image buckets support thumbnails.
+             * @enum {string}
+             */
             type: "file" | "image";
-            /** @enum {string} */
+            /**
+             * @description Read visibility. Protected buckets require signed read URLs.
+             * @enum {string}
+             */
             visibility: "public" | "protected";
+            /** @description Current bucket storage usage in bytes. */
             usageBytes: number;
+            /** @description ISO 8601 creation timestamp. */
             createdAt: string;
+            /** @description ISO 8601 last-update timestamp. */
             updatedAt: string;
         };
     };
@@ -1243,10 +1852,17 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Successful response payload. */
                         data: {
-                            /** @constant */
+                            /**
+                             * @description Whether API v2 is reachable.
+                             * @constant
+                             */
                             ok: true;
-                            /** @constant */
+                            /**
+                             * @description Active API major version.
+                             * @constant
+                             */
                             version: "v2";
                         };
                     };
@@ -1301,42 +1917,79 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Successful response payload. */
                         data: {
                             actor: {
-                                /** @constant */
+                                /**
+                                 * @description Dashboard session principal.
+                                 * @constant
+                                 */
                                 kind: "dashboard_session";
-                                /** @constant */
+                                /**
+                                 * @description Identity provider.
+                                 * @constant
+                                 */
                                 provider: "clerk";
+                                /** @description Provider session ID when available. */
                                 sessionId?: string;
+                                /** @description Authenticated user identity. */
                                 user: {
+                                    /** @description Unique EdgeStore user ID. */
                                     id: string;
+                                    /** @description User ID from the identity provider. */
                                     clerkUserId: string;
+                                    /** @description User's personal account ID. */
                                     accountId: string;
+                                    /** @description Primary email address. */
                                     email: string;
+                                    /** @description Username when configured. */
                                     username: string | null;
+                                    /** @description First name when configured. */
                                     firstName: string | null;
+                                    /** @description Last name when configured. */
                                     lastName: string | null;
+                                    /** @description Profile image URL. */
                                     picture: string;
                                 };
                             } | {
-                                /** @constant */
+                                /**
+                                 * @description Account-owned management-token principal.
+                                 * @constant
+                                 */
                                 kind: "account_token";
+                                /** @description Authenticated token ID. */
                                 tokenId: string;
+                                /** @description Owning account ID. */
                                 accountId: string;
+                                /** @description Effective management permissions. */
                                 scopes: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "file:read" | "file:write" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
                             } | {
-                                /** @constant */
+                                /**
+                                 * @description User-owned management-token principal.
+                                 * @constant
+                                 */
                                 kind: "user_token";
+                                /** @description Authenticated token ID. */
                                 tokenId: string;
+                                /** @description Effective management permissions. */
                                 scopes: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "file:read" | "file:write" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
+                                /** @description Authenticated user identity. */
                                 user: {
+                                    /** @description Unique EdgeStore user ID. */
                                     id: string;
+                                    /** @description User ID from the identity provider. */
                                     clerkUserId: string;
+                                    /** @description User's personal account ID. */
                                     accountId: string;
+                                    /** @description Primary email address. */
                                     email: string;
+                                    /** @description Username when configured. */
                                     username: string | null;
+                                    /** @description First name when configured. */
                                     firstName: string | null;
+                                    /** @description Last name when configured. */
                                     lastName: string | null;
+                                    /** @description Profile image URL. */
                                     picture: string;
                                 };
                             };
@@ -1413,21 +2066,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Successful response payload. */
                         data: {
                             accounts: {
+                                /** @description Unique account ID. */
                                 id: string;
-                                /** @enum {string} */
+                                /**
+                                 * @description Whether the account belongs to one user or a team.
+                                 * @enum {string}
+                                 */
                                 type: "PERSONAL" | "TEAM";
+                                /** @description Human-readable account name. */
                                 displayName: string;
+                                /** @description Current user's account role, or null for account-token authentication. */
                                 role: ("OWNER" | "MEMBER" | "VIEWER") | null;
+                                /** @description Billing plan identifier. */
                                 planType: string;
+                                /** @description Number of active projects in the account. */
                                 projectCount: number;
+                                /** @description Current account storage usage in bytes. */
                                 usageBytes: number;
+                                /** @description Included storage limit in bytes. */
                                 storageLimitBytes: number;
+                                /** @description Included active-project limit. */
                                 projectLimit: number;
+                                /** @description Included team-member limit. */
                                 memberLimit: number;
+                                /** @description Whether write operations are paused for the account. */
                                 isPaused: boolean;
+                                /** @description ISO 8601 creation timestamp. */
                                 createdAt: string;
+                                /** @description ISO 8601 last-update timestamp. */
                                 updatedAt: string;
                             }[];
                         };
@@ -1505,21 +2174,38 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Successful response payload. */
                         data: {
+                            /** @description An account visible to the current management credential. */
                             account: {
+                                /** @description Unique account ID. */
                                 id: string;
-                                /** @enum {string} */
+                                /**
+                                 * @description Whether the account belongs to one user or a team.
+                                 * @enum {string}
+                                 */
                                 type: "PERSONAL" | "TEAM";
+                                /** @description Human-readable account name. */
                                 displayName: string;
+                                /** @description Current user's account role, or null for account-token authentication. */
                                 role: ("OWNER" | "MEMBER" | "VIEWER") | null;
+                                /** @description Billing plan identifier. */
                                 planType: string;
+                                /** @description Number of active projects in the account. */
                                 projectCount: number;
+                                /** @description Current account storage usage in bytes. */
                                 usageBytes: number;
+                                /** @description Included storage limit in bytes. */
                                 storageLimitBytes: number;
+                                /** @description Included active-project limit. */
                                 projectLimit: number;
+                                /** @description Included team-member limit. */
                                 memberLimit: number;
+                                /** @description Whether write operations are paused for the account. */
                                 isPaused: boolean;
+                                /** @description ISO 8601 creation timestamp. */
                                 createdAt: string;
+                                /** @description ISO 8601 last-update timestamp. */
                                 updatedAt: string;
                             };
                         };
@@ -1607,6 +2293,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Successful response payload. */
                         data: Record<string, never>;
                     };
                 };
@@ -1702,14 +2389,22 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Successful response payload. */
                         data: {
                             projects: {
+                                /** @description Unique project ID. */
                                 id: string;
+                                /** @description Globally unique project base path accepted anywhere projectRef is used. */
                                 basePath: string;
+                                /** @description Human-readable project name. */
                                 name: string;
+                                /** @description ID of the account that owns the project. */
                                 accountId: string;
+                                /** @description Current project storage usage in bytes. */
                                 usageBytes: number;
+                                /** @description ISO 8601 creation timestamp. */
                                 createdAt: string;
+                                /** @description ISO 8601 last-update timestamp. */
                                 updatedAt: string;
                             }[];
                         };
@@ -1792,11 +2487,19 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
+                    /** @description Human-readable project name. */
                     name: string;
-                    /** @default true */
+                    /**
+                     * @description Whether to create and return an initial project key.
+                     * @default true
+                     */
                     createKey?: boolean;
+                    /** @description Name for the initial project key. */
                     keyName?: string;
-                    /** @default false */
+                    /**
+                     * @description Allow billable creation beyond the included project limit.
+                     * @default false
+                     */
                     allowOverage?: boolean;
                 };
             };
@@ -1810,27 +2513,46 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Successful response payload. */
                         data: {
+                            /** @description An EdgeStore project. */
                             project: {
+                                /** @description Unique project ID. */
                                 id: string;
+                                /** @description Globally unique project base path accepted anywhere projectRef is used. */
                                 basePath: string;
+                                /** @description Human-readable project name. */
                                 name: string;
+                                /** @description ID of the account that owns the project. */
                                 accountId: string;
+                                /** @description Current project storage usage in bytes. */
                                 usageBytes: number;
+                                /** @description ISO 8601 creation timestamp. */
                                 createdAt: string;
+                                /** @description ISO 8601 last-update timestamp. */
                                 updatedAt: string;
                             };
                             projectKey?: {
+                                /** @description A project-scoped runtime credential without its secret. */
                                 key: {
+                                    /** @description Unique project-key ID. */
                                     id: string;
+                                    /** @description Human-readable project-key name. */
                                     name: string;
+                                    /** @description Public access-key portion used as the Basic Auth username. */
                                     accessKey: string;
+                                    /** @description ID of the project this key can access. */
                                     projectId: string;
+                                    /** @description ID of the project's account. */
                                     accountId: string;
+                                    /** @description ISO 8601 creation timestamp. */
                                     createdAt: string;
+                                    /** @description ISO 8601 last-update timestamp. */
                                     updatedAt: string;
+                                    /** @description ISO 8601 revocation timestamp, or null while active. */
                                     revokedAt: string | null;
                                 };
+                                /** @description Secret-key portion returned once; store it securely. */
                                 secretKey: string;
                             };
                         };
@@ -1884,7 +2606,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProjectLimitReachedError"] | components["schemas"]["IdempotencyConflictError"] | components["schemas"]["IdempotencyInProgressError"];
+                    "application/json": components["schemas"]["ProjectLimitReachedError"] | components["schemas"]["IdempotencyConflictError"];
                 };
             };
             /** @description 413 */
@@ -1928,14 +2650,23 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Successful response payload. */
                         data: {
+                            /** @description An EdgeStore project. */
                             project: {
+                                /** @description Unique project ID. */
                                 id: string;
+                                /** @description Globally unique project base path accepted anywhere projectRef is used. */
                                 basePath: string;
+                                /** @description Human-readable project name. */
                                 name: string;
+                                /** @description ID of the account that owns the project. */
                                 accountId: string;
+                                /** @description Current project storage usage in bytes. */
                                 usageBytes: number;
+                                /** @description ISO 8601 creation timestamp. */
                                 createdAt: string;
+                                /** @description ISO 8601 last-update timestamp. */
                                 updatedAt: string;
                             };
                         };
@@ -2023,6 +2754,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Successful response payload. */
                         data: Record<string, never>;
                     };
                 };
@@ -2118,6 +2850,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Successful response payload. */
                         data: {
                             buckets: components["schemas"]["Bucket"][];
                         };
@@ -2200,13 +2933,23 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
+                    /** @description Bucket name. Starts with an alphanumeric character and may contain letters, numbers, underscores, and hyphens. */
                     name: string;
-                    /** @enum {string} */
+                    /**
+                     * @description Bucket content type. Image buckets support thumbnails.
+                     * @enum {string}
+                     */
                     type: "file" | "image";
-                    /** @enum {string} */
+                    /**
+                     * @description Whether reads are public or require signed URLs.
+                     * @enum {string}
+                     */
                     visibility: "public" | "protected";
+                    /** @description Metadata field configuration for the bucket. */
                     metadata?: {
+                        /** @description Allowed path field names for files in this bucket. */
                         path?: string[];
+                        /** @description Allowed custom metadata field names for this bucket. */
                         custom?: string[];
                     };
                 };
@@ -2221,6 +2964,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Successful response payload. */
                         data: {
                             bucket: components["schemas"]["Bucket"];
                         };
@@ -2274,7 +3018,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["BucketAlreadyExistsError"] | components["schemas"]["IdempotencyConflictError"] | components["schemas"]["IdempotencyInProgressError"];
+                    "application/json": components["schemas"]["BucketAlreadyExistsError"] | components["schemas"]["IdempotencyConflictError"];
                 };
             };
             /** @description 413 */
@@ -2319,6 +3063,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Successful response payload. */
                         data: {
                             bucket: components["schemas"]["Bucket"];
                         };
@@ -2407,6 +3152,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Successful response payload. */
                         data: Record<string, never>;
                     };
                 };
@@ -2496,8 +3242,11 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
+                    /** @description Replacement metadata field configuration. */
                     metadata?: {
+                        /** @description Allowed path field names for files in this bucket. */
                         path?: string[];
+                        /** @description Allowed custom metadata field names for this bucket. */
                         custom?: string[];
                     };
                 };
@@ -2512,6 +3261,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Successful response payload. */
                         data: {
                             bucket: components["schemas"]["Bucket"];
                         };
@@ -2604,10 +3354,16 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Accepted operation payload. */
                         data: {
+                            /** @description Unique empty-bucket job ID. */
                             jobId: string;
+                            /** @description ID of the bucket being emptied. */
                             bucketId: string;
-                            /** @enum {string} */
+                            /**
+                             * @description Current job lifecycle state.
+                             * @enum {string}
+                             */
                             status: "QUEUED" | "RUNNING" | "SUCCEEDED" | "FAILED";
                         };
                     };
@@ -2695,30 +3451,57 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Successful response payload. */
                         data: {
+                            /** @description Progress and results for an asynchronous bucket cleanup. */
                             job: {
+                                /** @description Unique empty-bucket job ID. */
                                 id: string;
+                                /** @description ID of the bucket being emptied. */
                                 bucketId: string;
+                                /** @description ID of the bucket's project. */
                                 projectId: string;
+                                /** @description ID of the project's account. */
                                 accountId: string;
-                                /** @enum {string} */
+                                /**
+                                 * @description Current job lifecycle state.
+                                 * @enum {string}
+                                 */
                                 status: "QUEUED" | "RUNNING" | "SUCCEEDED" | "FAILED";
-                                /** @enum {string} */
+                                /**
+                                 * @description Current cleanup phase.
+                                 * @enum {string}
+                                 */
                                 phase: "DELETING_FILES" | "ABORTING_UPLOADS" | "RECONCILING_STORAGE" | "INVALIDATING_CACHE";
+                                /** @description Number of file records selected for cleanup. */
                                 totalCount: number;
+                                /** @description Total bytes represented by selected file records. */
                                 totalBytes: number;
+                                /** @description Number of file records processed so far. */
                                 processedCount: number;
+                                /** @description Storage bytes accounted as freed so far. */
                                 freedBytes: number;
+                                /** @description Stored objects still pending deletion. */
                                 pendingS3CleanupCount: number;
+                                /** @description Incomplete uploads canceled by the job. */
                                 canceledUploadCount: number;
+                                /** @description Stored objects found without matching active file records. */
                                 orphanObjectCount: number;
+                                /** @description Total bytes of orphaned stored objects found. */
                                 orphanBytes: number;
+                                /** @description Cache invalidation ID, or null until one is created. */
                                 cloudFrontInvalidationId: string | null;
+                                /** @description Failure message, or null when the job has not failed. */
                                 error: string | null;
+                                /** @description ISO 8601 timestamp of the latest worker heartbeat. */
                                 heartbeatAt: string | null;
+                                /** @description ISO 8601 timestamp when processing started. */
                                 startedAt: string | null;
+                                /** @description ISO 8601 timestamp when processing finished. */
                                 completedAt: string | null;
+                                /** @description ISO 8601 creation timestamp. */
                                 createdAt: string;
+                                /** @description ISO 8601 last-update timestamp. */
                                 updatedAt: string;
                             };
                         };
@@ -2808,30 +3591,57 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Successful response payload. */
                         data: {
+                            /** @description Progress and results for an asynchronous bucket cleanup. */
                             job: {
+                                /** @description Unique empty-bucket job ID. */
                                 id: string;
+                                /** @description ID of the bucket being emptied. */
                                 bucketId: string;
+                                /** @description ID of the bucket's project. */
                                 projectId: string;
+                                /** @description ID of the project's account. */
                                 accountId: string;
-                                /** @enum {string} */
+                                /**
+                                 * @description Current job lifecycle state.
+                                 * @enum {string}
+                                 */
                                 status: "QUEUED" | "RUNNING" | "SUCCEEDED" | "FAILED";
-                                /** @enum {string} */
+                                /**
+                                 * @description Current cleanup phase.
+                                 * @enum {string}
+                                 */
                                 phase: "DELETING_FILES" | "ABORTING_UPLOADS" | "RECONCILING_STORAGE" | "INVALIDATING_CACHE";
+                                /** @description Number of file records selected for cleanup. */
                                 totalCount: number;
+                                /** @description Total bytes represented by selected file records. */
                                 totalBytes: number;
+                                /** @description Number of file records processed so far. */
                                 processedCount: number;
+                                /** @description Storage bytes accounted as freed so far. */
                                 freedBytes: number;
+                                /** @description Stored objects still pending deletion. */
                                 pendingS3CleanupCount: number;
+                                /** @description Incomplete uploads canceled by the job. */
                                 canceledUploadCount: number;
+                                /** @description Stored objects found without matching active file records. */
                                 orphanObjectCount: number;
+                                /** @description Total bytes of orphaned stored objects found. */
                                 orphanBytes: number;
+                                /** @description Cache invalidation ID, or null until one is created. */
                                 cloudFrontInvalidationId: string | null;
+                                /** @description Failure message, or null when the job has not failed. */
                                 error: string | null;
+                                /** @description ISO 8601 timestamp of the latest worker heartbeat. */
                                 heartbeatAt: string | null;
+                                /** @description ISO 8601 timestamp when processing started. */
                                 startedAt: string | null;
+                                /** @description ISO 8601 timestamp when processing finished. */
                                 completedAt: string | null;
+                                /** @description ISO 8601 creation timestamp. */
                                 createdAt: string;
+                                /** @description ISO 8601 last-update timestamp. */
                                 updatedAt: string;
                             };
                         };
@@ -2925,10 +3735,16 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Accepted operation payload. */
                         data: {
+                            /** @description Unique empty-bucket job ID. */
                             jobId: string;
+                            /** @description ID of the bucket being emptied. */
                             bucketId: string;
-                            /** @enum {string} */
+                            /**
+                             * @description Current job lifecycle state.
+                             * @enum {string}
+                             */
                             status: "QUEUED" | "RUNNING" | "SUCCEEDED" | "FAILED";
                         };
                     };
@@ -3029,11 +3845,14 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Successful response payload. */
                         data: {
                             files: components["schemas"]["File"][];
                             pagination: {
                                 limit: number;
+                                /** @description Opaque cursor for the next page, or null at the end. */
                                 nextCursor: string | null;
+                                /** @description Whether another page is available. */
                                 hasMore: boolean;
                             };
                         };
@@ -3114,14 +3933,20 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
+                    /** @description A management file reference using exactly one supported form. */
                     file: ({
+                        /** @description Unique file ID. */
                         id: string;
                     } | {
+                        /** @description File storage key. */
                         key: string;
                     } | {
+                        /** @description Canonical file URL. */
                         url: string;
                     }) | {
+                        /** @description Bucket name. Starts with an alphanumeric character and may contain letters, numbers, underscores, and hyphens. */
                         bucketName: string;
+                        /** @description File path within the bucket. */
                         path: string;
                     };
                 };
@@ -3136,6 +3961,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Successful response payload. */
                         data: {
                             file: components["schemas"]["File"];
                         };
@@ -3216,16 +4042,23 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
+                    /** @description Files to create read URLs for. */
                     files: (({
+                        /** @description Unique file ID. */
                         id: string;
                     } | {
+                        /** @description File storage key. */
                         key: string;
                     } | {
+                        /** @description Canonical file URL. */
                         url: string;
                     }) | {
+                        /** @description Bucket name. Starts with an alphanumeric character and may contain letters, numbers, underscores, and hyphens. */
                         bucketName: string;
+                        /** @description File path within the bucket. */
                         path: string;
                     })[];
+                    /** @description Requested signed URL lifetime in seconds. */
                     expiresIn?: number;
                 };
             };
@@ -3239,20 +4072,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Successful response payload. */
                         data: {
                             downloadUrls: {
+                                /** @description Input reference for this result. */
                                 fileRef: ({
+                                    /** @description Unique file ID. */
                                     id: string;
                                 } | {
+                                    /** @description File storage key. */
                                     key: string;
                                 } | {
+                                    /** @description Canonical file URL. */
                                     url: string;
                                 }) | {
+                                    /** @description Bucket name. Starts with an alphanumeric character and may contain letters, numbers, underscores, and hyphens. */
                                     bucketName: string;
+                                    /** @description File path within the bucket. */
                                     path: string;
                                 };
+                                /** @description Readable URL for the file. */
                                 url: string;
+                                /** @description ISO 8601 expiration timestamp, or null for a public URL. */
                                 expiresAt: string | null;
+                                /** @description Lifetime in seconds, or null for a public URL. */
                                 expiresIn: number | null;
                             }[];
                         };
@@ -3333,14 +4176,20 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
+                    /** @description Files to delete. */
                     files: (({
+                        /** @description Unique file ID. */
                         id: string;
                     } | {
+                        /** @description File storage key. */
                         key: string;
                     } | {
+                        /** @description Canonical file URL. */
                         url: string;
                     }) | {
+                        /** @description Bucket name. Starts with an alphanumeric character and may contain letters, numbers, underscores, and hyphens. */
                         bucketName: string;
+                        /** @description File path within the bucket. */
                         path: string;
                     })[];
                 };
@@ -3355,40 +4204,67 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Successful response payload. */
                         data: {
+                            /** @description Ordered per-file results matching the request. */
                             results: ({
+                                /** @description Input reference for this result. */
                                 fileRef: ({
+                                    /** @description Unique file ID. */
                                     id: string;
                                 } | {
+                                    /** @description File storage key. */
                                     key: string;
                                 } | {
+                                    /** @description Canonical file URL. */
                                     url: string;
                                 }) | {
+                                    /** @description Bucket name. Starts with an alphanumeric character and may contain letters, numbers, underscores, and hyphens. */
                                     bucketName: string;
+                                    /** @description File path within the bucket. */
                                     path: string;
                                 };
-                                /** @constant */
+                                /**
+                                 * @description Whether this item succeeded.
+                                 * @constant
+                                 */
                                 success: true;
                             } | {
+                                /** @description Input reference for this result. */
                                 fileRef: ({
+                                    /** @description Unique file ID. */
                                     id: string;
                                 } | {
+                                    /** @description File storage key. */
                                     key: string;
                                 } | {
+                                    /** @description Canonical file URL. */
                                     url: string;
                                 }) | {
+                                    /** @description Bucket name. Starts with an alphanumeric character and may contain letters, numbers, underscores, and hyphens. */
                                     bucketName: string;
+                                    /** @description File path within the bucket. */
                                     path: string;
                                 };
-                                /** @constant */
+                                /**
+                                 * @description Whether this item succeeded.
+                                 * @constant
+                                 */
                                 success: false;
+                                /** @description Error returned for this item. */
                                 error: {
-                                    /** @enum {string} */
+                                    /**
+                                     * @description Stable machine-readable item error code.
+                                     * @enum {string}
+                                     */
                                     code: "FILE_NOT_CONFIRMABLE" | "FILE_NOT_DELETABLE" | "FILE_NOT_RESTORABLE" | "INVALID_FILE_REF";
+                                    /** @description Human-readable item error message. */
                                     message: string;
                                 };
                             })[];
+                            /** @description Number of successful items. */
                             successCount: number;
+                            /** @description Number of failed items. */
                             failureCount: number;
                         };
                     };
@@ -3481,20 +4357,32 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
+                    /** @description File path within the bucket. */
                     path?: string;
+                    /** @description Original file name. EdgeStore generates one when omitted. */
                     fileName?: string;
+                    /** @description File extension without the leading dot. */
                     extension?: string;
+                    /** @description File media type. */
                     mimeType?: string;
+                    /** @description Whether the file must later be confirmed. */
                     temporary?: boolean;
+                    /** @description Exact upload size in bytes. */
                     sizeBytes: number;
+                    /** @description Custom metadata values configured for the bucket. */
                     metadata?: {
                         [key: string]: string;
                     };
+                    /** @description Multipart upload configuration. Omit for a single upload. */
                     multipart?: {
+                        /** @description Unique multipart part numbers to create signed URLs for. */
                         partNumbers: number[];
                     };
+                    /** @description Request a signed read URL together with the upload. */
                     signedReadUrl?: {
+                        /** @description Requested signed read URL lifetime in seconds. */
                         expiresIn?: number;
+                        /** @description Whether to also sign the thumbnail URL when available. */
                         includeThumbnails?: boolean;
                     };
                 };
@@ -3509,44 +4397,74 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Successful response payload. */
                         data: {
                             file: {
+                                /** @description Unique file ID. Also used as the upload ID. */
                                 id: string;
+                                /** @description Canonical file URL. */
                                 url: string;
+                                /** @description Storage key relative to the project. */
                                 key: string;
+                                /** @description Canonical thumbnail URL. */
                                 thumbnailUrl: string | null;
+                                /** @description Thumbnail storage key. */
                                 thumbnailKey: string | null;
+                                /** @description ID of the target bucket. */
                                 bucketId: string;
+                                /** @description Name of the target bucket. */
                                 bucketName: string;
+                                /** @description ID of the owning project. */
                                 projectId: string;
+                                /** @description ID of the owning account. */
                                 accountId: string;
+                                /** @description Resolved file name. */
                                 name: string;
+                                /** @description File size in bytes. */
                                 sizeBytes: number;
+                                /** @description Resolved file media type. */
                                 mimeType: string | null;
-                                /** @constant */
+                                /**
+                                 * @description Initial file lifecycle state.
+                                 * @constant
+                                 */
                                 state: "requested";
+                                /** @description Whether the file requires confirmation. */
                                 temporary: boolean;
                             };
                             upload: {
                                 /** @constant */
                                 kind: "single";
+                                /** @description Logical upload ID. */
                                 id: string;
+                                /** @description Signed URL used to upload the object directly to storage. */
                                 signedUrl: string;
                             } | {
                                 /** @constant */
                                 kind: "multipart";
+                                /** @description Logical upload ID. */
                                 id: string;
+                                /** @description Requested upload parts. */
                                 parts: {
+                                    /** @description Multipart part number. */
                                     partNumber: number;
+                                    /** @description Signed URL used to upload this part directly to storage. */
                                     signedUrl: string;
                                 }[];
                             };
+                            /** @description Signed read URLs requested with the upload. */
                             signedReadUrl?: {
+                                /** @description Canonical file URL. */
                                 url: string;
+                                /** @description Expiring signed read URL. */
                                 signedUrl: string;
+                                /** @description ISO 8601 expiration timestamp. */
                                 expiresAt: string;
+                                /** @description Lifetime in seconds. */
                                 expiresIn: number;
+                                /** @description Canonical thumbnail URL when available. */
                                 thumbnailUrl?: string | null;
+                                /** @description Expiring signed thumbnail URL when requested. */
                                 signedThumbnailUrl?: string | null;
                             };
                         };
@@ -3645,17 +4563,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Successful response payload. */
                         data: {
                             upload: {
+                                /** @description Logical upload ID. */
                                 id: string;
-                                /** @constant */
+                                /**
+                                 * @description Processing completed and the canonical file is available.
+                                 * @constant
+                                 */
                                 status: "completed";
                             };
                             file: components["schemas"]["File"];
                         } | {
                             upload: {
+                                /** @description Logical upload ID. */
                                 id: string;
-                                /** @constant */
+                                /**
+                                 * @description The upload was canceled before completion.
+                                 * @constant
+                                 */
                                 status: "canceled";
                             };
                         };
@@ -3671,10 +4598,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Asynchronous operation payload. */
                         data: {
                             upload: {
+                                /** @description Logical upload ID. */
                                 id: string;
-                                /** @constant */
+                                /**
+                                 * @description The uploaded object is still being processed.
+                                 * @constant
+                                 */
                                 status: "processing";
                             };
                         };
@@ -3763,10 +4695,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Successful response payload. */
                         data: {
                             upload: {
+                                /** @description Logical upload ID. */
                                 id: string;
-                                /** @constant */
+                                /**
+                                 * @description The upload was canceled before completion.
+                                 * @constant
+                                 */
                                 status: "canceled";
                             };
                         };
@@ -3858,6 +4795,7 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
+                    /** @description Unique multipart part numbers to create signed URLs for. */
                     partNumbers: number[];
                 };
             };
@@ -3871,10 +4809,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Successful response payload. */
                         data: {
+                            /** @description Logical upload ID. */
                             uploadId: string;
+                            /** @description Requested upload parts. */
                             parts: {
+                                /** @description Multipart part number. */
                                 partNumber: number;
+                                /** @description Signed URL used to upload this part directly to storage. */
                                 signedUrl: string;
                             }[];
                         };
@@ -3966,8 +4909,11 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
+                    /** @description Uploaded multipart parts to assemble, in any order. */
                     parts: {
+                        /** @description One-based multipart part number. */
                         partNumber: number;
+                        /** @description Opaque ETag returned by storage after uploading the part. */
                         eTag: string;
                     }[];
                 };
@@ -3983,10 +4929,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Asynchronous operation payload. */
                         data: {
                             upload: {
+                                /** @description Logical upload ID. */
                                 id: string;
-                                /** @constant */
+                                /**
+                                 * @description The uploaded object is still being processed.
+                                 * @constant
+                                 */
                                 status: "processing";
                             };
                         };
@@ -4084,15 +5035,24 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Successful response payload. */
                         data: {
                             keys: {
+                                /** @description Unique project-key ID. */
                                 id: string;
+                                /** @description Human-readable project-key name. */
                                 name: string;
+                                /** @description Public access-key portion used as the Basic Auth username. */
                                 accessKey: string;
+                                /** @description ID of the project this key can access. */
                                 projectId: string;
+                                /** @description ID of the project's account. */
                                 accountId: string;
+                                /** @description ISO 8601 creation timestamp. */
                                 createdAt: string;
+                                /** @description ISO 8601 last-update timestamp. */
                                 updatedAt: string;
+                                /** @description ISO 8601 revocation timestamp, or null while active. */
                                 revokedAt: string | null;
                             }[];
                         };
@@ -4175,6 +5135,7 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
+                    /** @description Human-readable project-key name. */
                     name: string;
                 };
             };
@@ -4188,17 +5149,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Successful response payload. */
                         data: {
+                            /** @description A project-scoped runtime credential without its secret. */
                             key: {
+                                /** @description Unique project-key ID. */
                                 id: string;
+                                /** @description Human-readable project-key name. */
                                 name: string;
+                                /** @description Public access-key portion used as the Basic Auth username. */
                                 accessKey: string;
+                                /** @description ID of the project this key can access. */
                                 projectId: string;
+                                /** @description ID of the project's account. */
                                 accountId: string;
+                                /** @description ISO 8601 creation timestamp. */
                                 createdAt: string;
+                                /** @description ISO 8601 last-update timestamp. */
                                 updatedAt: string;
+                                /** @description ISO 8601 revocation timestamp, or null while active. */
                                 revokedAt: string | null;
                             };
+                            /** @description Secret-key portion returned once; store it securely. */
                             secretKey: string;
                         };
                     };
@@ -4251,7 +5223,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["IdempotencyConflictError"] | components["schemas"]["IdempotencyInProgressError"];
+                    "application/json": components["schemas"]["IdempotencyConflictError"];
                 };
             };
             /** @description 413 */
@@ -4296,6 +5268,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Successful response payload. */
                         data: Record<string, never>;
                     };
                 };
@@ -4394,16 +5367,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Successful response payload. */
                         data: {
                             members: {
+                                /** @description Unique membership ID. */
                                 id: string;
+                                /** @description ID of the member's user. */
                                 userId: string;
+                                /** @description ID of the team account. */
                                 accountId: string;
-                                /** Format: email */
+                                /**
+                                 * Format: email
+                                 * @description Member email address.
+                                 */
                                 email: string;
-                                /** @enum {string} */
+                                /**
+                                 * @description Member permissions within a team account.
+                                 * @enum {string}
+                                 */
                                 role: "OWNER" | "MEMBER" | "VIEWER";
+                                /** @description ISO 8601 membership creation timestamp. */
                                 createdAt: string;
+                                /** @description ISO 8601 last-update timestamp. */
                                 updatedAt: string;
                             }[];
                         };
@@ -4492,6 +5477,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Successful response payload. */
                         data: Record<string, never>;
                     };
                 };
@@ -4581,7 +5567,10 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
-                    /** @enum {string} */
+                    /**
+                     * @description Member permissions within a team account.
+                     * @enum {string}
+                     */
                     role: "OWNER" | "MEMBER" | "VIEWER";
                 };
             };
@@ -4595,16 +5584,29 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Successful response payload. */
                         data: {
+                            /** @description A member of a team account. */
                             member: {
+                                /** @description Unique membership ID. */
                                 id: string;
+                                /** @description ID of the member's user. */
                                 userId: string;
+                                /** @description ID of the team account. */
                                 accountId: string;
-                                /** Format: email */
+                                /**
+                                 * Format: email
+                                 * @description Member email address.
+                                 */
                                 email: string;
-                                /** @enum {string} */
+                                /**
+                                 * @description Member permissions within a team account.
+                                 * @enum {string}
+                                 */
                                 role: "OWNER" | "MEMBER" | "VIEWER";
+                                /** @description ISO 8601 membership creation timestamp. */
                                 createdAt: string;
+                                /** @description ISO 8601 last-update timestamp. */
                                 updatedAt: string;
                             };
                         };
@@ -4705,17 +5707,31 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Successful response payload. */
                         data: {
                             invitations: {
+                                /** @description Unique invitation ID. */
                                 id: string;
+                                /** @description ID of the invited team account. */
                                 accountId: string;
-                                /** Format: email */
+                                /**
+                                 * Format: email
+                                 * @description Invited email address.
+                                 */
                                 email: string;
-                                /** @enum {string} */
+                                /**
+                                 * @description Member permissions within a team account.
+                                 * @enum {string}
+                                 */
                                 role: "OWNER" | "MEMBER" | "VIEWER";
-                                /** @enum {string} */
+                                /**
+                                 * @description Current invitation lifecycle state.
+                                 * @enum {string}
+                                 */
                                 status: "INITIAL" | "PENDING" | "ACCEPTED" | "CANCELED";
+                                /** @description ISO 8601 invitation creation timestamp. */
                                 createdAt: string;
+                                /** @description ISO 8601 last-update timestamp. */
                                 updatedAt: string;
                             }[];
                         };
@@ -4798,11 +5814,20 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
-                    /** Format: email */
+                    /**
+                     * Format: email
+                     * @description Email address to invite.
+                     */
                     email: string;
-                    /** @enum {string} */
+                    /**
+                     * @description Member permissions within a team account.
+                     * @enum {string}
+                     */
                     role: "OWNER" | "MEMBER" | "VIEWER";
-                    /** @default false */
+                    /**
+                     * @description Allow a billable seat beyond the included member limit.
+                     * @default false
+                     */
                     allowOverage?: boolean;
                 };
             };
@@ -4816,17 +5841,32 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Successful response payload. */
                         data: {
+                            /** @description An invitation to join a team account. */
                             invitation: {
+                                /** @description Unique invitation ID. */
                                 id: string;
+                                /** @description ID of the invited team account. */
                                 accountId: string;
-                                /** Format: email */
+                                /**
+                                 * Format: email
+                                 * @description Invited email address.
+                                 */
                                 email: string;
-                                /** @enum {string} */
+                                /**
+                                 * @description Member permissions within a team account.
+                                 * @enum {string}
+                                 */
                                 role: "OWNER" | "MEMBER" | "VIEWER";
-                                /** @enum {string} */
+                                /**
+                                 * @description Current invitation lifecycle state.
+                                 * @enum {string}
+                                 */
                                 status: "INITIAL" | "PENDING" | "ACCEPTED" | "CANCELED";
+                                /** @description ISO 8601 invitation creation timestamp. */
                                 createdAt: string;
+                                /** @description ISO 8601 last-update timestamp. */
                                 updatedAt: string;
                             };
                         };
@@ -4880,7 +5920,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["UserAlreadyMemberError"] | components["schemas"]["MemberLimitReachedError"] | components["schemas"]["IdempotencyConflictError"] | components["schemas"]["IdempotencyInProgressError"];
+                    "application/json": components["schemas"]["UserAlreadyMemberError"] | components["schemas"]["MemberLimitReachedError"] | components["schemas"]["IdempotencyConflictError"];
                 };
             };
             /** @description 413 */
@@ -4925,6 +5965,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Successful response payload. */
                         data: Record<string, never>;
                     };
                 };
@@ -5021,17 +6062,32 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Successful response payload. */
                         data: {
+                            /** @description An invitation to join a team account. */
                             invitation: {
+                                /** @description Unique invitation ID. */
                                 id: string;
+                                /** @description ID of the invited team account. */
                                 accountId: string;
-                                /** Format: email */
+                                /**
+                                 * Format: email
+                                 * @description Invited email address.
+                                 */
                                 email: string;
-                                /** @enum {string} */
+                                /**
+                                 * @description Member permissions within a team account.
+                                 * @enum {string}
+                                 */
                                 role: "OWNER" | "MEMBER" | "VIEWER";
-                                /** @enum {string} */
+                                /**
+                                 * @description Current invitation lifecycle state.
+                                 * @enum {string}
+                                 */
                                 status: "INITIAL" | "PENDING" | "ACCEPTED" | "CANCELED";
+                                /** @description ISO 8601 invitation creation timestamp. */
                                 createdAt: string;
+                                /** @description ISO 8601 last-update timestamp. */
                                 updatedAt: string;
                             };
                         };
@@ -5132,20 +6188,35 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Successful response payload. */
                         data: {
                             tokens: {
+                                /** @description Unique management-token ID. */
                                 id: string;
+                                /** @description Human-readable token name. */
                                 name: string;
-                                /** @enum {string} */
+                                /**
+                                 * @description Whether the token is owned by an account or a user.
+                                 * @enum {string}
+                                 */
                                 kind: "ACCOUNT" | "USER";
+                                /** @description Non-secret token prefix used to identify the credential. */
                                 tokenPrefix: string;
+                                /** @description Granted permissions. */
                                 scopes: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "file:read" | "file:write" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
+                                /** @description ISO 8601 creation timestamp. */
                                 createdAt: string;
+                                /** @description ISO 8601 last-update timestamp. */
                                 updatedAt: string;
+                                /** @description ISO 8601 timestamp of the latest use, or null if unused. */
                                 lastUsedAt: string | null;
+                                /** @description ISO 8601 revocation timestamp, or null while active. */
                                 revokedAt: string | null;
+                                /** @description ISO 8601 expiration timestamp, or null for no expiration. */
                                 expiresAt: string | null;
+                                /** @description Owning account ID for account tokens, otherwise null. */
                                 accountId: string | null;
+                                /** @description Owning user ID for user tokens, otherwise null. */
                                 userId: string | null;
                             }[];
                         };
@@ -5228,10 +6299,16 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
+                    /** @description Human-readable token name. */
                     name: string;
-                    /** @enum {string} */
+                    /**
+                     * @description Named permission set. Mutually exclusive with scopes.
+                     * @enum {string}
+                     */
                     preset?: "deploy" | "read-only" | "full-access";
+                    /** @description Explicit permissions. Mutually exclusive with preset. */
                     scopes?: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "file:read" | "file:write" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
+                    /** @description ISO 8601 expiration timestamp, or null for no expiration. */
                     expiresAt?: string | null;
                 };
             };
@@ -5245,22 +6322,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Successful response payload. */
                         data: {
+                            /** @description A management credential without its secret. */
                             token: {
+                                /** @description Unique management-token ID. */
                                 id: string;
+                                /** @description Human-readable token name. */
                                 name: string;
-                                /** @enum {string} */
+                                /**
+                                 * @description Whether the token is owned by an account or a user.
+                                 * @enum {string}
+                                 */
                                 kind: "ACCOUNT" | "USER";
+                                /** @description Non-secret token prefix used to identify the credential. */
                                 tokenPrefix: string;
+                                /** @description Granted permissions. */
                                 scopes: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "file:read" | "file:write" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
+                                /** @description ISO 8601 creation timestamp. */
                                 createdAt: string;
+                                /** @description ISO 8601 last-update timestamp. */
                                 updatedAt: string;
+                                /** @description ISO 8601 timestamp of the latest use, or null if unused. */
                                 lastUsedAt: string | null;
+                                /** @description ISO 8601 revocation timestamp, or null while active. */
                                 revokedAt: string | null;
+                                /** @description ISO 8601 expiration timestamp, or null for no expiration. */
                                 expiresAt: string | null;
+                                /** @description Owning account ID for account tokens, otherwise null. */
                                 accountId: string | null;
+                                /** @description Owning user ID for user tokens, otherwise null. */
                                 userId: string | null;
                             };
+                            /** @description Bearer token secret returned once; store it securely. */
                             secret: string;
                         };
                     };
@@ -5313,7 +6407,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["IdempotencyConflictError"] | components["schemas"]["IdempotencyInProgressError"];
+                    "application/json": components["schemas"]["IdempotencyConflictError"];
                 };
             };
             /** @description 413 */
@@ -5358,20 +6452,35 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Successful response payload. */
                         data: {
                             tokens: {
+                                /** @description Unique management-token ID. */
                                 id: string;
+                                /** @description Human-readable token name. */
                                 name: string;
-                                /** @enum {string} */
+                                /**
+                                 * @description Whether the token is owned by an account or a user.
+                                 * @enum {string}
+                                 */
                                 kind: "ACCOUNT" | "USER";
+                                /** @description Non-secret token prefix used to identify the credential. */
                                 tokenPrefix: string;
+                                /** @description Granted permissions. */
                                 scopes: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "file:read" | "file:write" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
+                                /** @description ISO 8601 creation timestamp. */
                                 createdAt: string;
+                                /** @description ISO 8601 last-update timestamp. */
                                 updatedAt: string;
+                                /** @description ISO 8601 timestamp of the latest use, or null if unused. */
                                 lastUsedAt: string | null;
+                                /** @description ISO 8601 revocation timestamp, or null while active. */
                                 revokedAt: string | null;
+                                /** @description ISO 8601 expiration timestamp, or null for no expiration. */
                                 expiresAt: string | null;
+                                /** @description Owning account ID for account tokens, otherwise null. */
                                 accountId: string | null;
+                                /** @description Owning user ID for user tokens, otherwise null. */
                                 userId: string | null;
                             }[];
                         };
@@ -5442,10 +6551,16 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
+                    /** @description Human-readable token name. */
                     name: string;
-                    /** @enum {string} */
+                    /**
+                     * @description Named permission set. Mutually exclusive with scopes.
+                     * @enum {string}
+                     */
                     preset?: "deploy" | "read-only" | "full-access";
+                    /** @description Explicit permissions. Mutually exclusive with preset. */
                     scopes?: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "file:read" | "file:write" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
+                    /** @description ISO 8601 expiration timestamp, or null for no expiration. */
                     expiresAt?: string | null;
                 };
             };
@@ -5459,22 +6574,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Successful response payload. */
                         data: {
+                            /** @description A management credential without its secret. */
                             token: {
+                                /** @description Unique management-token ID. */
                                 id: string;
+                                /** @description Human-readable token name. */
                                 name: string;
-                                /** @enum {string} */
+                                /**
+                                 * @description Whether the token is owned by an account or a user.
+                                 * @enum {string}
+                                 */
                                 kind: "ACCOUNT" | "USER";
+                                /** @description Non-secret token prefix used to identify the credential. */
                                 tokenPrefix: string;
+                                /** @description Granted permissions. */
                                 scopes: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "file:read" | "file:write" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
+                                /** @description ISO 8601 creation timestamp. */
                                 createdAt: string;
+                                /** @description ISO 8601 last-update timestamp. */
                                 updatedAt: string;
+                                /** @description ISO 8601 timestamp of the latest use, or null if unused. */
                                 lastUsedAt: string | null;
+                                /** @description ISO 8601 revocation timestamp, or null while active. */
                                 revokedAt: string | null;
+                                /** @description ISO 8601 expiration timestamp, or null for no expiration. */
                                 expiresAt: string | null;
+                                /** @description Owning account ID for account tokens, otherwise null. */
                                 accountId: string | null;
+                                /** @description Owning user ID for user tokens, otherwise null. */
                                 userId: string | null;
                             };
+                            /** @description Bearer token secret returned once; store it securely. */
                             secret: string;
                         };
                     };
@@ -5517,7 +6649,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["IdempotencyConflictError"] | components["schemas"]["IdempotencyInProgressError"];
+                    "application/json": components["schemas"]["IdempotencyConflictError"];
                 };
             };
             /** @description 413 */
@@ -5561,6 +6693,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Successful response payload. */
                         data: Record<string, never>;
                     };
                 };
@@ -5639,15 +6772,21 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
+                    /** @description Application-defined values embedded in the token. */
                     context: {
                         [key: string]: string;
                     };
+                    /** @description Runtime bucket context keyed by bucket name. */
                     buckets: {
                         [key: string]: {
+                            /** @description Resolved path fields available to runtime operations. */
                             path: {
+                                /** @description Configured bucket path field name. */
                                 key: string;
+                                /** @description Resolved value for the path field. */
                                 value: string;
                             }[];
+                            /** @description Opaque application access-control data embedded in the token. */
                             accessControl?: unknown;
                         };
                     };
@@ -5663,8 +6802,11 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Successful response payload. */
                         data: {
+                            /** @description Encrypted runtime bearer token; store it securely. */
                             token: string;
+                            /** @description Globally unique project base path. */
                             basePath: string;
                         };
                     };
@@ -5751,14 +6893,23 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Successful response payload. */
                         data: {
+                            /** @description The project authenticated for runtime operations. */
                             project: {
+                                /** @description Unique project ID. */
                                 id: string;
+                                /** @description Globally unique project base path. */
                                 basePath: string;
+                                /** @description Human-readable project name. */
                                 name: string;
+                                /** @description ID of the account that owns the project. */
                                 accountId: string;
+                                /** @description Current project storage usage in bytes. */
                                 usageBytes: number;
+                                /** @description ISO 8601 creation timestamp. */
                                 createdAt: string;
+                                /** @description ISO 8601 last-update timestamp. */
                                 updatedAt: string;
                             };
                         };
@@ -5846,20 +6997,9 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Successful response payload. */
                         data: {
-                            buckets: {
-                                id: string;
-                                name: string;
-                                projectId: string;
-                                accountId: string;
-                                /** @enum {string} */
-                                type: "file" | "image";
-                                /** @enum {string} */
-                                visibility: "public" | "protected";
-                                usageBytes: number;
-                                createdAt: string;
-                                updatedAt: string;
-                            }[];
+                            buckets: components["schemas"]["Bucket"][];
                         };
                     };
                 };
@@ -5946,20 +7086,9 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Successful response payload. */
                         data: {
-                            bucket: {
-                                id: string;
-                                name: string;
-                                projectId: string;
-                                accountId: string;
-                                /** @enum {string} */
-                                type: "file" | "image";
-                                /** @enum {string} */
-                                visibility: "public" | "protected";
-                                usageBytes: number;
-                                createdAt: string;
-                                updatedAt: string;
-                            };
+                            bucket: components["schemas"]["Bucket"];
                         };
                     };
                 };
@@ -6039,377 +7168,609 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
+                    /** @description Optional composable file filter. */
                     filter?: {
+                        /** @description Filter by the ISO 8601 upload timestamp. */
                         uploadedAt?: string | {
+                            /** @description Equal to this value. */
                             eq?: string;
+                            /** @description Not equal to this value. */
                             neq?: string;
+                            /** @description Greater than this value. */
                             gt?: string;
+                            /** @description Greater than or equal to this value. */
                             gte?: string;
+                            /** @description Less than this value. */
                             lt?: string;
+                            /** @description Less than or equal to this value. */
                             lte?: string;
+                            /** @description Starts with this value. */
                             startsWith?: string;
+                            /** @description Ends with this value. */
                             endsWith?: string;
                         } | {
+                            /** @description Inclusive lower and upper bounds. */
                             between: [
                                 string,
                                 string
                             ];
                         };
+                        /** @description Filters keyed by configured path field name. */
                         path?: {
                             [key: string]: string | {
+                                /** @description Equal to this value. */
                                 eq?: string;
+                                /** @description Not equal to this value. */
                                 neq?: string;
+                                /** @description Greater than this value. */
                                 gt?: string;
+                                /** @description Greater than or equal to this value. */
                                 gte?: string;
+                                /** @description Less than this value. */
                                 lt?: string;
+                                /** @description Less than or equal to this value. */
                                 lte?: string;
+                                /** @description Starts with this value. */
                                 startsWith?: string;
+                                /** @description Ends with this value. */
                                 endsWith?: string;
                             } | {
+                                /** @description Inclusive lower and upper bounds. */
                                 between: [
                                     string,
                                     string
                                 ];
                             };
                         };
+                        /** @description Filters keyed by custom metadata field name. */
                         metadata?: {
                             [key: string]: string | {
+                                /** @description Equal to this value. */
                                 eq?: string;
+                                /** @description Not equal to this value. */
                                 neq?: string;
+                                /** @description Greater than this value. */
                                 gt?: string;
+                                /** @description Greater than or equal to this value. */
                                 gte?: string;
+                                /** @description Less than this value. */
                                 lt?: string;
+                                /** @description Less than or equal to this value. */
                                 lte?: string;
+                                /** @description Starts with this value. */
                                 startsWith?: string;
+                                /** @description Ends with this value. */
                                 endsWith?: string;
                             } | {
+                                /** @description Inclusive lower and upper bounds. */
                                 between: [
                                     string,
                                     string
                                 ];
                             };
                         };
+                        /** @description Filters that must all match. */
                         AND?: {
+                            /** @description Filter by the ISO 8601 upload timestamp. */
                             uploadedAt?: string | {
+                                /** @description Equal to this value. */
                                 eq?: string;
+                                /** @description Not equal to this value. */
                                 neq?: string;
+                                /** @description Greater than this value. */
                                 gt?: string;
+                                /** @description Greater than or equal to this value. */
                                 gte?: string;
+                                /** @description Less than this value. */
                                 lt?: string;
+                                /** @description Less than or equal to this value. */
                                 lte?: string;
+                                /** @description Starts with this value. */
                                 startsWith?: string;
+                                /** @description Ends with this value. */
                                 endsWith?: string;
                             } | {
+                                /** @description Inclusive lower and upper bounds. */
                                 between: [
                                     string,
                                     string
                                 ];
                             };
+                            /** @description Filters keyed by configured path field name. */
                             path?: {
                                 [key: string]: string | {
+                                    /** @description Equal to this value. */
                                     eq?: string;
+                                    /** @description Not equal to this value. */
                                     neq?: string;
+                                    /** @description Greater than this value. */
                                     gt?: string;
+                                    /** @description Greater than or equal to this value. */
                                     gte?: string;
+                                    /** @description Less than this value. */
                                     lt?: string;
+                                    /** @description Less than or equal to this value. */
                                     lte?: string;
+                                    /** @description Starts with this value. */
                                     startsWith?: string;
+                                    /** @description Ends with this value. */
                                     endsWith?: string;
                                 } | {
+                                    /** @description Inclusive lower and upper bounds. */
                                     between: [
                                         string,
                                         string
                                     ];
                                 };
                             };
+                            /** @description Filters keyed by custom metadata field name. */
                             metadata?: {
                                 [key: string]: string | {
+                                    /** @description Equal to this value. */
                                     eq?: string;
+                                    /** @description Not equal to this value. */
                                     neq?: string;
+                                    /** @description Greater than this value. */
                                     gt?: string;
+                                    /** @description Greater than or equal to this value. */
                                     gte?: string;
+                                    /** @description Less than this value. */
                                     lt?: string;
+                                    /** @description Less than or equal to this value. */
                                     lte?: string;
+                                    /** @description Starts with this value. */
                                     startsWith?: string;
+                                    /** @description Ends with this value. */
                                     endsWith?: string;
                                 } | {
+                                    /** @description Inclusive lower and upper bounds. */
                                     between: [
                                         string,
                                         string
                                     ];
                                 };
                             };
+                            /** @description Filters that must all match. */
                             AND?: {
+                                /** @description Filter by the ISO 8601 upload timestamp. */
                                 uploadedAt?: string | {
+                                    /** @description Equal to this value. */
                                     eq?: string;
+                                    /** @description Not equal to this value. */
                                     neq?: string;
+                                    /** @description Greater than this value. */
                                     gt?: string;
+                                    /** @description Greater than or equal to this value. */
                                     gte?: string;
+                                    /** @description Less than this value. */
                                     lt?: string;
+                                    /** @description Less than or equal to this value. */
                                     lte?: string;
+                                    /** @description Starts with this value. */
                                     startsWith?: string;
+                                    /** @description Ends with this value. */
                                     endsWith?: string;
                                 } | {
+                                    /** @description Inclusive lower and upper bounds. */
                                     between: [
                                         string,
                                         string
                                     ];
                                 };
+                                /** @description Filters keyed by configured path field name. */
                                 path?: {
                                     [key: string]: string | {
+                                        /** @description Equal to this value. */
                                         eq?: string;
+                                        /** @description Not equal to this value. */
                                         neq?: string;
+                                        /** @description Greater than this value. */
                                         gt?: string;
+                                        /** @description Greater than or equal to this value. */
                                         gte?: string;
+                                        /** @description Less than this value. */
                                         lt?: string;
+                                        /** @description Less than or equal to this value. */
                                         lte?: string;
+                                        /** @description Starts with this value. */
                                         startsWith?: string;
+                                        /** @description Ends with this value. */
                                         endsWith?: string;
                                     } | {
+                                        /** @description Inclusive lower and upper bounds. */
                                         between: [
                                             unknown,
                                             unknown
                                         ];
                                     };
                                 };
+                                /** @description Filters keyed by custom metadata field name. */
                                 metadata?: {
                                     [key: string]: string | {
+                                        /** @description Equal to this value. */
                                         eq?: string;
+                                        /** @description Not equal to this value. */
                                         neq?: string;
+                                        /** @description Greater than this value. */
                                         gt?: string;
+                                        /** @description Greater than or equal to this value. */
                                         gte?: string;
+                                        /** @description Less than this value. */
                                         lt?: string;
+                                        /** @description Less than or equal to this value. */
                                         lte?: string;
+                                        /** @description Starts with this value. */
                                         startsWith?: string;
+                                        /** @description Ends with this value. */
                                         endsWith?: string;
                                     } | {
+                                        /** @description Inclusive lower and upper bounds. */
                                         between: [
                                             unknown,
                                             unknown
                                         ];
                                     };
                                 };
+                                /** @description Filters that must all match. */
                                 AND?: unknown;
+                                /** @description Filters where at least one must match. */
                                 OR?: unknown;
                             }[];
+                            /** @description Filters where at least one must match. */
                             OR?: {
+                                /** @description Filter by the ISO 8601 upload timestamp. */
                                 uploadedAt?: string | {
+                                    /** @description Equal to this value. */
                                     eq?: string;
+                                    /** @description Not equal to this value. */
                                     neq?: string;
+                                    /** @description Greater than this value. */
                                     gt?: string;
+                                    /** @description Greater than or equal to this value. */
                                     gte?: string;
+                                    /** @description Less than this value. */
                                     lt?: string;
+                                    /** @description Less than or equal to this value. */
                                     lte?: string;
+                                    /** @description Starts with this value. */
                                     startsWith?: string;
+                                    /** @description Ends with this value. */
                                     endsWith?: string;
                                 } | {
+                                    /** @description Inclusive lower and upper bounds. */
                                     between: [
                                         string,
                                         string
                                     ];
                                 };
+                                /** @description Filters keyed by configured path field name. */
                                 path?: {
                                     [key: string]: string | {
+                                        /** @description Equal to this value. */
                                         eq?: string;
+                                        /** @description Not equal to this value. */
                                         neq?: string;
+                                        /** @description Greater than this value. */
                                         gt?: string;
+                                        /** @description Greater than or equal to this value. */
                                         gte?: string;
+                                        /** @description Less than this value. */
                                         lt?: string;
+                                        /** @description Less than or equal to this value. */
                                         lte?: string;
+                                        /** @description Starts with this value. */
                                         startsWith?: string;
+                                        /** @description Ends with this value. */
                                         endsWith?: string;
                                     } | {
+                                        /** @description Inclusive lower and upper bounds. */
                                         between: [
                                             unknown,
                                             unknown
                                         ];
                                     };
                                 };
+                                /** @description Filters keyed by custom metadata field name. */
                                 metadata?: {
                                     [key: string]: string | {
+                                        /** @description Equal to this value. */
                                         eq?: string;
+                                        /** @description Not equal to this value. */
                                         neq?: string;
+                                        /** @description Greater than this value. */
                                         gt?: string;
+                                        /** @description Greater than or equal to this value. */
                                         gte?: string;
+                                        /** @description Less than this value. */
                                         lt?: string;
+                                        /** @description Less than or equal to this value. */
                                         lte?: string;
+                                        /** @description Starts with this value. */
                                         startsWith?: string;
+                                        /** @description Ends with this value. */
                                         endsWith?: string;
                                     } | {
+                                        /** @description Inclusive lower and upper bounds. */
                                         between: [
                                             unknown,
                                             unknown
                                         ];
                                     };
                                 };
+                                /** @description Filters that must all match. */
                                 AND?: unknown;
+                                /** @description Filters where at least one must match. */
                                 OR?: unknown;
                             }[];
                         }[];
+                        /** @description Filters where at least one must match. */
                         OR?: {
+                            /** @description Filter by the ISO 8601 upload timestamp. */
                             uploadedAt?: string | {
+                                /** @description Equal to this value. */
                                 eq?: string;
+                                /** @description Not equal to this value. */
                                 neq?: string;
+                                /** @description Greater than this value. */
                                 gt?: string;
+                                /** @description Greater than or equal to this value. */
                                 gte?: string;
+                                /** @description Less than this value. */
                                 lt?: string;
+                                /** @description Less than or equal to this value. */
                                 lte?: string;
+                                /** @description Starts with this value. */
                                 startsWith?: string;
+                                /** @description Ends with this value. */
                                 endsWith?: string;
                             } | {
+                                /** @description Inclusive lower and upper bounds. */
                                 between: [
                                     string,
                                     string
                                 ];
                             };
+                            /** @description Filters keyed by configured path field name. */
                             path?: {
                                 [key: string]: string | {
+                                    /** @description Equal to this value. */
                                     eq?: string;
+                                    /** @description Not equal to this value. */
                                     neq?: string;
+                                    /** @description Greater than this value. */
                                     gt?: string;
+                                    /** @description Greater than or equal to this value. */
                                     gte?: string;
+                                    /** @description Less than this value. */
                                     lt?: string;
+                                    /** @description Less than or equal to this value. */
                                     lte?: string;
+                                    /** @description Starts with this value. */
                                     startsWith?: string;
+                                    /** @description Ends with this value. */
                                     endsWith?: string;
                                 } | {
+                                    /** @description Inclusive lower and upper bounds. */
                                     between: [
                                         string,
                                         string
                                     ];
                                 };
                             };
+                            /** @description Filters keyed by custom metadata field name. */
                             metadata?: {
                                 [key: string]: string | {
+                                    /** @description Equal to this value. */
                                     eq?: string;
+                                    /** @description Not equal to this value. */
                                     neq?: string;
+                                    /** @description Greater than this value. */
                                     gt?: string;
+                                    /** @description Greater than or equal to this value. */
                                     gte?: string;
+                                    /** @description Less than this value. */
                                     lt?: string;
+                                    /** @description Less than or equal to this value. */
                                     lte?: string;
+                                    /** @description Starts with this value. */
                                     startsWith?: string;
+                                    /** @description Ends with this value. */
                                     endsWith?: string;
                                 } | {
+                                    /** @description Inclusive lower and upper bounds. */
                                     between: [
                                         string,
                                         string
                                     ];
                                 };
                             };
+                            /** @description Filters that must all match. */
                             AND?: {
+                                /** @description Filter by the ISO 8601 upload timestamp. */
                                 uploadedAt?: string | {
+                                    /** @description Equal to this value. */
                                     eq?: string;
+                                    /** @description Not equal to this value. */
                                     neq?: string;
+                                    /** @description Greater than this value. */
                                     gt?: string;
+                                    /** @description Greater than or equal to this value. */
                                     gte?: string;
+                                    /** @description Less than this value. */
                                     lt?: string;
+                                    /** @description Less than or equal to this value. */
                                     lte?: string;
+                                    /** @description Starts with this value. */
                                     startsWith?: string;
+                                    /** @description Ends with this value. */
                                     endsWith?: string;
                                 } | {
+                                    /** @description Inclusive lower and upper bounds. */
                                     between: [
                                         string,
                                         string
                                     ];
                                 };
+                                /** @description Filters keyed by configured path field name. */
                                 path?: {
                                     [key: string]: string | {
+                                        /** @description Equal to this value. */
                                         eq?: string;
+                                        /** @description Not equal to this value. */
                                         neq?: string;
+                                        /** @description Greater than this value. */
                                         gt?: string;
+                                        /** @description Greater than or equal to this value. */
                                         gte?: string;
+                                        /** @description Less than this value. */
                                         lt?: string;
+                                        /** @description Less than or equal to this value. */
                                         lte?: string;
+                                        /** @description Starts with this value. */
                                         startsWith?: string;
+                                        /** @description Ends with this value. */
                                         endsWith?: string;
                                     } | {
+                                        /** @description Inclusive lower and upper bounds. */
                                         between: [
                                             unknown,
                                             unknown
                                         ];
                                     };
                                 };
+                                /** @description Filters keyed by custom metadata field name. */
                                 metadata?: {
                                     [key: string]: string | {
+                                        /** @description Equal to this value. */
                                         eq?: string;
+                                        /** @description Not equal to this value. */
                                         neq?: string;
+                                        /** @description Greater than this value. */
                                         gt?: string;
+                                        /** @description Greater than or equal to this value. */
                                         gte?: string;
+                                        /** @description Less than this value. */
                                         lt?: string;
+                                        /** @description Less than or equal to this value. */
                                         lte?: string;
+                                        /** @description Starts with this value. */
                                         startsWith?: string;
+                                        /** @description Ends with this value. */
                                         endsWith?: string;
                                     } | {
+                                        /** @description Inclusive lower and upper bounds. */
                                         between: [
                                             unknown,
                                             unknown
                                         ];
                                     };
                                 };
+                                /** @description Filters that must all match. */
                                 AND?: unknown;
+                                /** @description Filters where at least one must match. */
                                 OR?: unknown;
                             }[];
+                            /** @description Filters where at least one must match. */
                             OR?: {
+                                /** @description Filter by the ISO 8601 upload timestamp. */
                                 uploadedAt?: string | {
+                                    /** @description Equal to this value. */
                                     eq?: string;
+                                    /** @description Not equal to this value. */
                                     neq?: string;
+                                    /** @description Greater than this value. */
                                     gt?: string;
+                                    /** @description Greater than or equal to this value. */
                                     gte?: string;
+                                    /** @description Less than this value. */
                                     lt?: string;
+                                    /** @description Less than or equal to this value. */
                                     lte?: string;
+                                    /** @description Starts with this value. */
                                     startsWith?: string;
+                                    /** @description Ends with this value. */
                                     endsWith?: string;
                                 } | {
+                                    /** @description Inclusive lower and upper bounds. */
                                     between: [
                                         string,
                                         string
                                     ];
                                 };
+                                /** @description Filters keyed by configured path field name. */
                                 path?: {
                                     [key: string]: string | {
+                                        /** @description Equal to this value. */
                                         eq?: string;
+                                        /** @description Not equal to this value. */
                                         neq?: string;
+                                        /** @description Greater than this value. */
                                         gt?: string;
+                                        /** @description Greater than or equal to this value. */
                                         gte?: string;
+                                        /** @description Less than this value. */
                                         lt?: string;
+                                        /** @description Less than or equal to this value. */
                                         lte?: string;
+                                        /** @description Starts with this value. */
                                         startsWith?: string;
+                                        /** @description Ends with this value. */
                                         endsWith?: string;
                                     } | {
+                                        /** @description Inclusive lower and upper bounds. */
                                         between: [
                                             unknown,
                                             unknown
                                         ];
                                     };
                                 };
+                                /** @description Filters keyed by custom metadata field name. */
                                 metadata?: {
                                     [key: string]: string | {
+                                        /** @description Equal to this value. */
                                         eq?: string;
+                                        /** @description Not equal to this value. */
                                         neq?: string;
+                                        /** @description Greater than this value. */
                                         gt?: string;
+                                        /** @description Greater than or equal to this value. */
                                         gte?: string;
+                                        /** @description Less than this value. */
                                         lt?: string;
+                                        /** @description Less than or equal to this value. */
                                         lte?: string;
+                                        /** @description Starts with this value. */
                                         startsWith?: string;
+                                        /** @description Ends with this value. */
                                         endsWith?: string;
                                     } | {
+                                        /** @description Inclusive lower and upper bounds. */
                                         between: [
                                             unknown,
                                             unknown
                                         ];
                                     };
                                 };
+                                /** @description Filters that must all match. */
                                 AND?: unknown;
+                                /** @description Filters where at least one must match. */
                                 OR?: unknown;
                             }[];
                         }[];
                     };
-                    /** @default {
+                    /**
+                     * @description Cursor pagination options.
+                     * @default {
                      *       "limit": 20
-                     *     } */
+                     *     }
+                     */
                     pagination?: {
+                        /** @description Opaque cursor returned by the previous page. */
                         cursor?: string;
-                        /** @default 20 */
+                        /**
+                         * @description Maximum number of files returned.
+                         * @default 20
+                         */
                         limit?: number;
                     };
                 };
@@ -6424,11 +7785,14 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Successful response payload. */
                         data: {
                             files: components["schemas"]["File"][];
                             pagination: {
                                 limit: number;
+                                /** @description Opaque cursor for the next page, or null at the end. */
                                 nextCursor: string | null;
+                                /** @description Whether another page is available. */
                                 hasMore: boolean;
                             };
                         };
@@ -6509,11 +7873,15 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
+                    /** @description A file reference using exactly one supported identifier. */
                     file: {
+                        /** @description Unique file ID. */
                         id: string;
                     } | {
+                        /** @description File storage key. */
                         key: string;
                     } | {
+                        /** @description Canonical file URL. */
                         url: string;
                     };
                 };
@@ -6528,6 +7896,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Successful response payload. */
                         data: {
                             file: components["schemas"]["File"];
                         };
@@ -6609,8 +7978,11 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
+                    /** @description Canonical URLs to sign. */
                     urls: string[];
+                    /** @description Requested signed URL lifetime in seconds. */
                     expiresIn?: number;
+                    /** @description Whether to also sign thumbnail URLs when available. */
                     includeThumbnails?: boolean;
                 };
             };
@@ -6624,13 +7996,20 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Successful response payload. */
                         data: {
                             signedUrls: {
+                                /** @description Canonical file URL. */
                                 url: string;
+                                /** @description Expiring signed read URL. */
                                 signedUrl: string;
+                                /** @description ISO 8601 expiration timestamp. */
                                 expiresAt: string;
+                                /** @description Lifetime in seconds. */
                                 expiresIn: number;
+                                /** @description Canonical thumbnail URL when available. */
                                 thumbnailUrl?: string | null;
+                                /** @description Expiring signed thumbnail URL when requested. */
                                 signedThumbnailUrl?: string | null;
                             }[];
                         };
@@ -6721,11 +8100,15 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
+                    /** @description Files to process. */
                     files: ({
+                        /** @description Unique file ID. */
                         id: string;
                     } | {
+                        /** @description File storage key. */
                         key: string;
                     } | {
+                        /** @description Canonical file URL. */
                         url: string;
                     })[];
                 };
@@ -6740,34 +8123,56 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Successful response payload. */
                         data: {
                             results: ({
+                                /** @description Input reference for this result. */
                                 fileRef: {
+                                    /** @description Unique file ID. */
                                     id: string;
                                 } | {
+                                    /** @description File storage key. */
                                     key: string;
                                 } | {
+                                    /** @description Canonical file URL. */
                                     url: string;
                                 };
-                                /** @constant */
+                                /**
+                                 * @description Whether this item succeeded.
+                                 * @constant
+                                 */
                                 success: true;
                             } | {
+                                /** @description Input reference for this result. */
                                 fileRef: {
+                                    /** @description Unique file ID. */
                                     id: string;
                                 } | {
+                                    /** @description File storage key. */
                                     key: string;
                                 } | {
+                                    /** @description Canonical file URL. */
                                     url: string;
                                 };
-                                /** @constant */
+                                /**
+                                 * @description Whether this item succeeded.
+                                 * @constant
+                                 */
                                 success: false;
+                                /** @description Error returned for this item. */
                                 error: {
-                                    /** @enum {string} */
+                                    /**
+                                     * @description Stable machine-readable item error code.
+                                     * @enum {string}
+                                     */
                                     code: "FILE_NOT_CONFIRMABLE" | "FILE_NOT_DELETABLE" | "FILE_NOT_RESTORABLE" | "INVALID_FILE_REF";
+                                    /** @description Human-readable item error message. */
                                     message: string;
                                 };
                             })[];
+                            /** @description Number of successful items. */
                             successCount: number;
+                            /** @description Number of failed items. */
                             failureCount: number;
                         };
                     };
@@ -6857,11 +8262,15 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
+                    /** @description Files to process. */
                     files: ({
+                        /** @description Unique file ID. */
                         id: string;
                     } | {
+                        /** @description File storage key. */
                         key: string;
                     } | {
+                        /** @description Canonical file URL. */
                         url: string;
                     })[];
                 };
@@ -6876,34 +8285,56 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Successful response payload. */
                         data: {
                             results: ({
+                                /** @description Input reference for this result. */
                                 fileRef: {
+                                    /** @description Unique file ID. */
                                     id: string;
                                 } | {
+                                    /** @description File storage key. */
                                     key: string;
                                 } | {
+                                    /** @description Canonical file URL. */
                                     url: string;
                                 };
-                                /** @constant */
+                                /**
+                                 * @description Whether this item succeeded.
+                                 * @constant
+                                 */
                                 success: true;
                             } | {
+                                /** @description Input reference for this result. */
                                 fileRef: {
+                                    /** @description Unique file ID. */
                                     id: string;
                                 } | {
+                                    /** @description File storage key. */
                                     key: string;
                                 } | {
+                                    /** @description Canonical file URL. */
                                     url: string;
                                 };
-                                /** @constant */
+                                /**
+                                 * @description Whether this item succeeded.
+                                 * @constant
+                                 */
                                 success: false;
+                                /** @description Error returned for this item. */
                                 error: {
-                                    /** @enum {string} */
+                                    /**
+                                     * @description Stable machine-readable item error code.
+                                     * @enum {string}
+                                     */
                                     code: "FILE_NOT_CONFIRMABLE" | "FILE_NOT_DELETABLE" | "FILE_NOT_RESTORABLE" | "INVALID_FILE_REF";
+                                    /** @description Human-readable item error message. */
                                     message: string;
                                 };
                             })[];
+                            /** @description Number of successful items. */
                             successCount: number;
+                            /** @description Number of failed items. */
                             failureCount: number;
                         };
                     };
@@ -6993,11 +8424,15 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
+                    /** @description Files to process. */
                     files: ({
+                        /** @description Unique file ID. */
                         id: string;
                     } | {
+                        /** @description File storage key. */
                         key: string;
                     } | {
+                        /** @description Canonical file URL. */
                         url: string;
                     })[];
                 };
@@ -7012,34 +8447,56 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Successful response payload. */
                         data: {
                             results: ({
+                                /** @description Input reference for this result. */
                                 fileRef: {
+                                    /** @description Unique file ID. */
                                     id: string;
                                 } | {
+                                    /** @description File storage key. */
                                     key: string;
                                 } | {
+                                    /** @description Canonical file URL. */
                                     url: string;
                                 };
-                                /** @constant */
+                                /**
+                                 * @description Whether this item succeeded.
+                                 * @constant
+                                 */
                                 success: true;
                             } | {
+                                /** @description Input reference for this result. */
                                 fileRef: {
+                                    /** @description Unique file ID. */
                                     id: string;
                                 } | {
+                                    /** @description File storage key. */
                                     key: string;
                                 } | {
+                                    /** @description Canonical file URL. */
                                     url: string;
                                 };
-                                /** @constant */
+                                /**
+                                 * @description Whether this item succeeded.
+                                 * @constant
+                                 */
                                 success: false;
+                                /** @description Error returned for this item. */
                                 error: {
-                                    /** @enum {string} */
+                                    /**
+                                     * @description Stable machine-readable item error code.
+                                     * @enum {string}
+                                     */
                                     code: "FILE_NOT_CONFIRMABLE" | "FILE_NOT_DELETABLE" | "FILE_NOT_RESTORABLE" | "INVALID_FILE_REF";
+                                    /** @description Human-readable item error message. */
                                     message: string;
                                 };
                             })[];
+                            /** @description Number of successful items. */
                             successCount: number;
+                            /** @description Number of failed items. */
                             failureCount: number;
                         };
                     };
@@ -7132,38 +8589,62 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
-                    /** @enum {string} */
+                    /**
+                     * @description Type used if the target bucket must be created.
+                     * @enum {string}
+                     */
                     bucketType: "file" | "image";
                     /**
+                     * @description Visibility used if the target bucket must be created.
                      * @default protected
                      * @enum {string}
                      */
                     visibility?: "public" | "protected";
+                    /** @description Original file name. EdgeStore generates one when omitted. */
                     fileName?: string;
+                    /** @description File media type. */
                     mimeType?: string;
+                    /** @description Whether the file must later be confirmed. */
                     temporary?: boolean;
-                    /** @default [] */
+                    /**
+                     * @description Ordered path fields used to construct the file URL.
+                     * @default []
+                     */
                     path?: {
+                        /** @description Configured bucket path field name. */
                         key: string;
+                        /** @description Path segments separated by forward slashes. */
                         value: string;
                     }[];
+                    /** @description File extension without the leading dot. */
                     extension?: string;
+                    /** @description Exact upload size in bytes. */
                     sizeBytes: number;
+                    /** @description Custom metadata values configured for the bucket. */
                     metadata?: {
                         [key: string]: string;
                     };
+                    /** @description Existing file to atomically replace after upload processing. */
                     replaceTarget?: {
+                        /** @description Unique file ID. */
                         id: string;
                     } | {
+                        /** @description File storage key. */
                         key: string;
                     } | {
+                        /** @description Canonical file URL. */
                         url: string;
                     };
+                    /** @description Multipart upload configuration. Omit for a single upload. */
                     multipart?: {
+                        /** @description Multipart part numbers to sign. */
                         partNumbers: number[];
                     };
+                    /** @description Request a signed read URL together with the upload. */
                     signedReadUrl?: {
+                        /** @description Requested signed read URL lifetime in seconds. */
                         expiresIn?: number;
+                        /** @description Whether to also sign the thumbnail URL when available. */
                         includeThumbnails?: boolean;
                     };
                 };
@@ -7178,44 +8659,74 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Successful response payload. */
                         data: {
                             file: {
+                                /** @description Unique file ID. Also used as the upload ID. */
                                 id: string;
+                                /** @description Canonical file URL. */
                                 url: string;
+                                /** @description Storage key relative to the project. */
                                 key: string;
+                                /** @description Canonical thumbnail URL. */
                                 thumbnailUrl: string | null;
+                                /** @description Thumbnail storage key. */
                                 thumbnailKey: string | null;
+                                /** @description ID of the target bucket. */
                                 bucketId: string;
+                                /** @description Name of the target bucket. */
                                 bucketName: string;
+                                /** @description ID of the owning project. */
                                 projectId: string;
+                                /** @description ID of the owning account. */
                                 accountId: string;
+                                /** @description Resolved file name. */
                                 name: string;
+                                /** @description File size in bytes. */
                                 sizeBytes: number;
+                                /** @description Resolved file media type. */
                                 mimeType: string | null;
-                                /** @enum {string} */
+                                /**
+                                 * @description Initial file lifecycle state.
+                                 * @enum {string}
+                                 */
                                 state: "requested" | "replace_requested";
+                                /** @description Whether the file requires confirmation. */
                                 temporary: boolean;
                             };
                             upload: {
                                 /** @constant */
                                 kind: "single";
+                                /** @description Logical upload ID. */
                                 id: string;
+                                /** @description Signed URL used to upload the object directly to storage. */
                                 signedUrl: string;
                             } | {
                                 /** @constant */
                                 kind: "multipart";
+                                /** @description Logical upload ID. */
                                 id: string;
+                                /** @description Requested upload parts. */
                                 parts: {
+                                    /** @description Multipart part number. */
                                     partNumber: number;
+                                    /** @description Signed URL used to upload this part directly to storage. */
                                     signedUrl: string;
                                 }[];
                             };
+                            /** @description Signed read URLs requested with the upload. */
                             signedReadUrl?: {
+                                /** @description Canonical file URL. */
                                 url: string;
+                                /** @description Expiring signed read URL. */
                                 signedUrl: string;
+                                /** @description ISO 8601 expiration timestamp. */
                                 expiresAt: string;
+                                /** @description Lifetime in seconds. */
                                 expiresIn: number;
+                                /** @description Canonical thumbnail URL when available. */
                                 thumbnailUrl?: string | null;
+                                /** @description Expiring signed thumbnail URL when requested. */
                                 signedThumbnailUrl?: string | null;
                             };
                         };
@@ -7314,17 +8825,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Successful response payload. */
                         data: {
                             upload: {
+                                /** @description Logical upload ID. */
                                 id: string;
-                                /** @constant */
+                                /**
+                                 * @description Processing completed and the canonical file is available.
+                                 * @constant
+                                 */
                                 status: "completed";
                             };
                             file: components["schemas"]["File"];
                         } | {
                             upload: {
+                                /** @description Logical upload ID. */
                                 id: string;
-                                /** @constant */
+                                /**
+                                 * @description The upload was canceled before completion.
+                                 * @constant
+                                 */
                                 status: "canceled";
                             };
                         };
@@ -7340,10 +8860,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Asynchronous operation payload. */
                         data: {
                             upload: {
+                                /** @description Logical upload ID. */
                                 id: string;
-                                /** @constant */
+                                /**
+                                 * @description The uploaded object is still being processed.
+                                 * @constant
+                                 */
                                 status: "processing";
                             };
                         };
@@ -7432,10 +8957,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Successful response payload. */
                         data: {
                             upload: {
+                                /** @description Logical upload ID. */
                                 id: string;
-                                /** @constant */
+                                /**
+                                 * @description The upload was canceled before completion.
+                                 * @constant
+                                 */
                                 status: "canceled";
                             };
                         };
@@ -7527,6 +9057,7 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
+                    /** @description Multipart part numbers to create signed URLs for. */
                     partNumbers: number[];
                 };
             };
@@ -7540,10 +9071,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Successful response payload. */
                         data: {
+                            /** @description Logical upload ID. */
                             uploadId: string;
+                            /** @description Requested upload parts. */
                             parts: {
+                                /** @description Multipart part number. */
                                 partNumber: number;
+                                /** @description Signed URL used to upload this part directly to storage. */
                                 signedUrl: string;
                             }[];
                         };
@@ -7635,8 +9171,11 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
+                    /** @description Uploaded multipart parts to assemble, in any order. */
                     parts: {
+                        /** @description One-based multipart part number. */
                         partNumber: number;
+                        /** @description Opaque ETag returned by storage after uploading the part. */
                         eTag: string;
                     }[];
                 };
@@ -7652,10 +9191,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Asynchronous operation payload. */
                         data: {
                             upload: {
+                                /** @description Logical upload ID. */
                                 id: string;
-                                /** @constant */
+                                /**
+                                 * @description The uploaded object is still being processed.
+                                 * @constant
+                                 */
                                 status: "processing";
                             };
                         };
