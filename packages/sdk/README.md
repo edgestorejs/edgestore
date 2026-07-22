@@ -5,6 +5,9 @@ Official low-level TypeScript SDK for the EdgeStore API.
 The SDK is server-only and uses EdgeStore API v2. Generated OpenAPI types stay
 internal while the package exposes a stable, resource-oriented public API.
 
+Operation and field documentation is generated from the pinned OpenAPI schema;
+SDK-specific behavior is documented on the handwritten public facade.
+
 ```ts
 import { createEdgeStoreSdk } from '@edgestore/sdk';
 
