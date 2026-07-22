@@ -11,8 +11,10 @@ export default tseslint.config(
     ignores: [
       '**/.astro/**',
       '**/.next/**',
+      '**/.output/**',
       '**/.source/**',
       '**/.turbo/**',
+      '**/.vinxi/**',
       '**/coverage/**',
       '**/dist/**',
       '**/*.gen.ts',
