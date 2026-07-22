@@ -15,15 +15,15 @@
     "@tanstack/react-router": "1.170.18",
     "@tanstack/react-start": "1.168.32",
     "@tanstack/router-plugin": "1.168.23",
-    "nitro": "npm:nitro-nightly@3.0.1-20260722-103619-0192bba0",
-    "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "nitro": "npm:nitro-nightly@3.0.1-20260721-095825-c1ff6ba6",
+    "react": "19.2.7",
+    "react-dom": "19.2.7"
   },
   "devDependencies": {
     "@types/node": "25.0.3",
     "@types/react": "19.2.17",
     "@types/react-dom": "19.2.3",
-    "@vitejs/plugin-react": "6.0.4",
+    "@vitejs/plugin-react": "6.0.3",
     "typescript": "6.0.3",
     "vite": "8.1.5"
   }
