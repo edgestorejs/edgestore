@@ -1,6 +1,6 @@
+import react from '@eslint-react/eslint-plugin';
 import eslintConfigPrettier from 'eslint-config-prettier';
 import noOnlyTests from 'eslint-plugin-no-only-tests';
-import react from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
 import turbo from 'eslint-plugin-turbo';
 import unicorn from 'eslint-plugin-unicorn';
@@ -21,7 +21,7 @@ export default tseslint.config(
   },
   ...tseslint.configs.recommendedTypeChecked,
   ...tseslint.configs.stylisticTypeChecked,
-  react.configs.flat.recommended,
+  react.configs.jsx,
   {
     plugins: {
       'react-hooks': reactHooks,
@@ -90,8 +90,20 @@ export default tseslint.config(
       ],
       'max-params': ['error', 3],
       'no-only-tests/no-only-tests': 'error',
-      'react/prop-types': 'off',
-      'react/react-in-jsx-scope': 'off',
+      '@eslint-react/no-component-will-mount': 'error',
+      '@eslint-react/no-component-will-receive-props': 'error',
+      '@eslint-react/no-component-will-update': 'error',
+      '@eslint-react/no-direct-mutation-state': 'error',
+      '@eslint-react/no-missing-key': 'error',
+      '@eslint-react/no-unsafe-component-will-mount': 'warn',
+      '@eslint-react/no-unsafe-component-will-receive-props': 'warn',
+      '@eslint-react/no-unsafe-component-will-update': 'warn',
+      '@eslint-react/dom-no-dangerously-set-innerhtml-with-children': 'error',
+      '@eslint-react/dom-no-find-dom-node': 'error',
+      '@eslint-react/dom-no-render-return-value': 'error',
+      '@eslint-react/dom-no-unknown-property': 'error',
+      '@eslint-react/dom-no-unsafe-target-blank': 'warn',
+      '@eslint-react/dom-no-void-elements-with-children': 'error',
       'turbo/no-undeclared-env-vars': 'warn',
       'unicorn/filename-case': [
         'error',
@@ -108,11 +120,6 @@ export default tseslint.config(
           ],
         },
       ],
-    },
-    settings: {
-      react: {
-        version: 'detect',
-      },
     },
   },
   {
