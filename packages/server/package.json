@@ -132,13 +132,9 @@
   "peerDependencies": {
     "@aws-sdk/client-s3": ">=3.0.0",
     "@aws-sdk/s3-request-presigner": ">=3.0.0",
-    "@azure/storage-blob": "^12.17.0",
-    "zod": ">=3.0.0"
+    "@azure/storage-blob": "^12.17.0"
   },
   "peerDependenciesMeta": {
-    "zod": {
-      "optional": true
-    },
     "@aws-sdk/client-s3": {
       "optional": true
     },

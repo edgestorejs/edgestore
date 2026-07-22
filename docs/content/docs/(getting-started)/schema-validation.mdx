@@ -1,0 +1,102 @@
+---
+title: Schema Validation
+description: Validate bucket input with any Standard Schema-compatible library.
+---
+
+EdgeStore accepts any object schema that implements [Standard Schema](https://standardschema.dev/).
+You can use Zod, Valibot, ArkType, or another compatible validation library.
+The schema must validate and return an object because bucket input is shared with
+path, metadata, and lifecycle-hook configuration.
+
+Install the validation library you want to use. EdgeStore does not install or
+require a specific one.
+
+```package-install
+zod
+```
+
+## Zod
+
+Zod 3.24 and newer implements Standard Schema directly.
+
+```ts
+import { initEdgeStore } from '@edgestore/server';
+import { z } from 'zod';
+
+const es = initEdgeStore.create();
+
+const documents = es.fileBucket().input(
+  z.object({
+    category: z.enum(['invoice', 'contract']),
+  }),
+);
+```
+
+## Valibot
+
+```ts
+import { initEdgeStore } from '@edgestore/server';
+import * as v from 'valibot';
+
+const es = initEdgeStore.create();
+
+const documents = es.fileBucket().input(
+  v.object({
+    category: v.picklist(['invoice', 'contract']),
+  }),
+);
+```
+
+## ArkType
+
+```ts
+import { type } from 'arktype';
+import { initEdgeStore } from '@edgestore/server';
+
+const es = initEdgeStore.create();
+
+const documents = es.fileBucket().input(
+  type({ category: "'invoice' | 'contract'" }),
+);
+```
+
+## Input and output types
+
+Schema libraries can transform data while validating it. EdgeStore uses the
+schema's input type for client uploads and its output type after validation.
+The `path`, `metadata`, and `beforeUpload` callbacks therefore receive parsed
+output rather than the raw request value.
+
+```ts
+const documents = es
+  .fileBucket()
+  .input(
+    z.object({
+      count: z.string().transform(Number),
+    }),
+  )
+  .beforeUpload(({ input }) => {
+    input.count; // number
+    return input.count > 0;
+  });
+
+await edgestore.documents.upload({
+  file,
+  input: { count: '2' }, // string before validation
+});
+```
+
+Invalid input is rejected with an EdgeStore `BAD_REQUEST` error before upload
+hooks or storage-provider calls run. Both browser/API uploads and the backend
+client use the same validation behavior, including asynchronous schemas.
+
+## Migrating from the Zod-only API
+
+- Upgrade Zod to 3.24 or newer. Existing Zod object schemas do not otherwise
+  need to change.
+- Install Zod explicitly if your application uses it; EdgeStore no longer
+  declares Zod as a peer dependency.
+- If a schema transforms its input, pass the schema's input type from the
+  client. Server callbacks now receive the transformed output type.
+- HTTP uploads now validate configured bucket input. Requests that previously
+  reached hooks with malformed input are rejected with `BAD_REQUEST`.
