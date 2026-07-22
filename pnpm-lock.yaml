@@ -984,6 +984,10 @@ importers:
         version: 3.25.42
 
   packages/shared:
+    dependencies:
+      '@standard-schema/spec':
+        specifier: ^1.1.0
+        version: 1.1.0
     devDependencies:
       '@types/node':
         specifier: 25.0.3
