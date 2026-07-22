@@ -9,6 +9,7 @@ import {
   type ManagementResourceClient,
 } from './managementResources';
 
+/** Complete administrative client available to management credentials. */
 export type ManagementClient = ManagementResourceClient &
   ManagementAccessClient & {
     whoami(options?: {
