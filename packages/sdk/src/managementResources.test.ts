@@ -1,5 +1,5 @@
 import { describe, expect, expectTypeOf, it, vi } from 'vitest';
-import type { ManagementClient } from './management';
+import type { ManagementClient } from './managementClient';
 import { createEdgeStoreSdk } from './sdk';
 
 function createManagementSdk(fetch: typeof globalThis.fetch) {
