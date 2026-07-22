@@ -1,7 +1,6 @@
 {
   "$schema": "https://ui.shadcn.com/schema/registry-item.json",
   "name": "single-image-dropzone-block",
-  "type": "registry:block",
   "title": "Single Image Dropzone Block",
   "description": "A block for uploading a single image with preview and progress indicator.",
   "registryDependencies": [
@@ -15,5 +14,6 @@
       "type": "registry:block",
       "target": "components/upload/blocks/single-image-block.tsx"
     }
-  ]
+  ],
+  "type": "registry:block"
 }

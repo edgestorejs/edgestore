@@ -1,7 +1,6 @@
 {
   "$schema": "https://ui.shadcn.com/schema/registry-item.json",
   "name": "file-uploader-block",
-  "type": "registry:block",
   "title": "File Uploader Block",
   "description": "A block for uploading multiple files with preview and progress indicators.",
   "registryDependencies": [
@@ -14,5 +13,6 @@
       "type": "registry:block",
       "target": "components/upload/blocks/multi-file-block.tsx"
     }
-  ]
+  ],
+  "type": "registry:block"
 }
