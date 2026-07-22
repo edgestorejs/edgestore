@@ -65,7 +65,6 @@ export type Simplify<TType> = TType extends any[] | Date
  */
 export type Prettify<TType> = {
   [K in keyof TType]: TType[K];
-  // eslint-disable-next-line @typescript-eslint/ban-types
 } & {};
 
 /**

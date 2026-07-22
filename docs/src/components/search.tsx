@@ -358,7 +358,6 @@ export function AISearchPanel() {
     return () => {
       window.removeEventListener('keydown', onKeyPress);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

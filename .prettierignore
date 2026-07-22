@@ -5,6 +5,7 @@ docs/.source/
 .docusaurus/
 .test/
 **/.next/
+**/.astro/
 **/docs/build/
 dist/
 pnpm-lock.yaml
