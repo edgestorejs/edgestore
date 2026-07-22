@@ -7,7 +7,9 @@ const mocks = vi.hoisted(() => ({
   getBlobClient: vi.fn(),
   getContainerClient: vi.fn(),
   getProperties: vi.fn(),
-  uuidv4: vi.fn(),
+  randomUUID: vi.fn(
+    () => 'generated-id' as ReturnType<typeof crypto.randomUUID>,
+  ),
 }));
 
 vi.mock('@azure/storage-blob', () => ({
@@ -16,10 +18,6 @@ vi.mock('@azure/storage-blob', () => ({
       getContainerClient = mocks.getContainerClient;
     },
   ),
-}));
-
-vi.mock('uuid', () => ({
-  v4: mocks.uuidv4,
 }));
 
 function encodeBlobName(blobName: string) {
@@ -49,8 +47,9 @@ describe('AzureProvider', () => {
   const containerUrl = 'http://localhost:10000/devstoreaccount1/files';
 
   beforeEach(() => {
+    vi.restoreAllMocks();
     vi.clearAllMocks();
-    mocks.uuidv4.mockReturnValue('generated-id');
+    vi.spyOn(crypto, 'randomUUID').mockImplementation(mocks.randomUUID);
     mocks.getProperties.mockResolvedValue({
       contentLength: 123,
       lastModified: new Date('2026-01-02T03:04:05.000Z'),
@@ -141,7 +140,7 @@ describe('AzureProvider', () => {
       const res = await provider.requestUpload(createUploadParams(fileInfo));
 
       expect(mocks.getBlobClient).toHaveBeenCalledWith(expectedBlobName);
-      expect(mocks.uuidv4).toHaveBeenCalledTimes(expectedUuidCalls);
+      expect(mocks.randomUUID).toHaveBeenCalledTimes(expectedUuidCalls);
       expect(res).toEqual({
         accessUrl: `${containerUrl}/${encodeBlobName(expectedBlobName)}`,
         uploadUrl: `${containerUrl}/${encodeBlobName(expectedBlobName)}`,

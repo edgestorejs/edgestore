@@ -42,7 +42,9 @@ const awsMocks = vi.hoisted(() => {
   return {
     send,
     getSignedUrl: vi.fn(),
-    uuidv4: vi.fn(),
+    randomUUID: vi.fn(
+      () => 'generated-uuid' as ReturnType<typeof crypto.randomUUID>,
+    ),
     S3Client,
     PutObjectCommand,
     DeleteObjectCommand,
@@ -59,10 +61,6 @@ vi.mock('@aws-sdk/client-s3', () => ({
 
 vi.mock('@aws-sdk/s3-request-presigner', () => ({
   getSignedUrl: awsMocks.getSignedUrl,
-}));
-
-vi.mock('uuid', () => ({
-  v4: awsMocks.uuidv4,
 }));
 
 function uploadParams(
@@ -85,8 +83,9 @@ function uploadParams(
 
 describe('AWSProvider', () => {
   beforeEach(() => {
+    vi.restoreAllMocks();
     vi.clearAllMocks();
-    awsMocks.uuidv4.mockReturnValue('generated-uuid');
+    vi.spyOn(crypto, 'randomUUID').mockImplementation(awsMocks.randomUUID);
     awsMocks.getSignedUrl.mockResolvedValue(
       'https://signed-upload.example.com',
     );
@@ -182,7 +181,7 @@ describe('AWSProvider', () => {
     expect(result.accessUrl).toBe(
       'https://storage-bucket.s3.us-east-1.amazonaws.com/documents/manual-name.pdf',
     );
-    expect(awsMocks.uuidv4).not.toHaveBeenCalled();
+    expect(awsMocks.randomUUID).not.toHaveBeenCalled();
     expect(awsMocks.getSignedUrl).toHaveBeenCalledWith(
       expect.any(awsMocks.S3Client),
       expect.objectContaining({

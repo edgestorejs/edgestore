@@ -11,7 +11,6 @@ import {
   type MaybePromise,
   type RequestUploadParams,
 } from '@edgestore/shared';
-import { v4 as uuidv4 } from 'uuid';
 import { getEnv } from '../../adapters/shared';
 
 // FileInfo type as received by the provider's requestUpload, part of RequestUploadParams
@@ -179,7 +178,7 @@ export function AWSProvider(options?: AWSProviderOptions): EdgeStoreProvider {
         ? `.${fileInfo.extension.replace('.', '')}`
         : '';
       const defaultResolvedFileName =
-        fileInfo.fileName ?? `${uuidv4()}${extension}`;
+        fileInfo.fileName ?? `${crypto.randomUUID()}${extension}`;
       const defaultFilePathFromMetadata = fileInfo.path.reduce((acc, item) => {
         return `${acc}/${item.value}`;
       }, '');
