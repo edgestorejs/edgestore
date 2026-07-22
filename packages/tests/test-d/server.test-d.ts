@@ -37,6 +37,13 @@ const router = es.router({
 const client = initEdgeStoreClient({
   router,
 });
+const transformedClient = initEdgeStoreClient({
+  router: es.router({
+    transformed: es
+      .fileBucket()
+      .input(z.object({ count: z.string().transform(Number) })),
+  }),
+});
 
 const publicEs = initEdgeStore.create();
 const publicRouter = publicEs.router({
@@ -82,12 +89,32 @@ expectNotAssignable<Parameters<typeof client.avatars.upload>[0]>({
   },
 });
 
+expectNotAssignable<Parameters<typeof client.avatars.upload>[0]>({
+  content: 'hello',
+  ctx: {
+    userId: 'user-1',
+    role: 'admin',
+  },
+  input: {
+    type: 'other',
+  },
+});
+
 void client.documents.upload({
   content: 'hello',
   ctx: {
     userId: 'user-1',
     role: 'visitor',
   },
+});
+
+void transformedClient.transformed.upload({
+  content: 'hello',
+  ctx: {
+    userId: 'user-1',
+    role: 'visitor',
+  },
+  input: { count: '2' },
 });
 
 expectNotAssignable<Parameters<typeof client.documents.upload>[0]>({

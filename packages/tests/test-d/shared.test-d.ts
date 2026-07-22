@@ -52,6 +52,13 @@ const imageBucket = es
 const fileBucket = es.fileBucket().path(({ ctx }) => [{ author: ctx.userId }]);
 const privateFileBucket = es.fileBucket().accessControl('private');
 const emptyBucket = es.fileBucket();
+const transformedInputBucket = es
+  .fileBucket()
+  .input(z.object({ count: z.string().transform(Number) }))
+  .beforeUpload(({ input }) => {
+    expectType<number>(input.count);
+    return true;
+  });
 
 expectType<{ author: string; type: string }>(
   {} as InferBucketPathObject<typeof imageBucket>,
@@ -64,6 +71,7 @@ expectType<{ role: 'admin' | 'visitor'; extension: string | undefined }>(
 );
 expectType<{ author: string }>({} as InferBucketPathObject<typeof fileBucket>);
 expectType<[]>({} as InferBucketPathOrder<typeof emptyBucket>);
+void transformedInputBucket;
 
 expectAssignable<AccessControlSchema<Context, typeof imageBucket._def>>({
   userId: { path: 'author' },

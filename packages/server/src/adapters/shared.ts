@@ -1,5 +1,6 @@
 import {
   EdgeStoreError,
+  parseBucketInput,
   type AnyBuilder,
   type EdgeStoreRouter,
   type Provider,
@@ -271,11 +272,14 @@ export async function requestUpload<TCtx>(params: {
       code: 'BAD_REQUEST',
     });
   }
+
+  const parsedInput = await parseBucketInput(bucket._def.input, input);
+
   if (bucket._def.beforeUpload) {
     log.debug('Running [beforeUpload]');
     const canUpload = await bucket._def.beforeUpload?.({
       ctx,
-      input,
+      input: parsedInput,
       fileInfo: {
         size: fileInfo.size,
         type: fileInfo.type,
@@ -352,9 +356,12 @@ export async function requestUpload<TCtx>(params: {
   const path = buildPath({
     fileInfo,
     bucket,
-    pathAttrs: { ctx, input },
+    pathAttrs: { ctx, input: parsedInput },
   });
-  const metadata = await bucket._def.metadata?.({ ctx, input });
+  const metadata = await bucket._def.metadata?.({
+    ctx,
+    input: parsedInput,
+  });
   const isPublic = bucket._def.accessControl === undefined;
   const autoSignedUrls = bucket._def.autoSignedUrls;
 
