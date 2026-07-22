@@ -5,6 +5,10 @@
   "homepage": "https://edgestore.dev",
   "license": "MIT",
   "sideEffects": false,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/edgestorejs/edgestore.git",
@@ -15,7 +19,6 @@
   },
   "author": "Ravi <me@ravi.com>",
   "main": "dist/index.js",
-  "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "keywords": [
     "react",
@@ -39,8 +42,8 @@
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
       "default": "./dist/index.js"
     }
   },
@@ -67,7 +70,7 @@
     "@types/node": "25.0.3",
     "react": "19.2.8",
     "react-dom": "19.2.8",
-    "tsx": "4.21.0",
+    "tsx": "4.23.1",
     "typescript": "6.0.3",
     "zod": "3.25.76"
   },

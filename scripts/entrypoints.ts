@@ -7,7 +7,7 @@ export type PackageJson = {
   name: string;
   exports: Record<
     string,
-    { import: string; require: string; default: string } | string
+    { types: string; import: string; default: string } | string
   >;
   files: string[];
   dependencies: Record<string, string>;
@@ -41,8 +41,8 @@ export async function generateEntrypoints(rawInputs: string[]) {
   pkgJson.exports = {
     './package.json': './package.json',
     '.': {
-      import: './dist/index.mjs',
-      require: './dist/index.js',
+      types: './dist/index.d.ts',
+      import: './dist/index.js',
       default: './dist/index.js',
     },
   };
@@ -57,8 +57,8 @@ export async function generateEntrypoints(rawInputs: string[]) {
    *  src/adapters/express.ts -> adapters/express
    *
    *  Also, write to the package.json exports field, e.g.
-   *  src/adapters/aws-lambda/index.ts -> exports['adapters/aws-lambda'] = { import: './dist/adapters/aws-lambda/index.mjs', ... }
-   *  src/adapters/express.ts -> exports['adapters/express'] = { import: './dist/adapters/express.mjs', ... }
+   *  src/adapters/aws-lambda/index.ts -> exports['adapters/aws-lambda'] = { default: './dist/adapters/aws-lambda/index.js', ... }
+   *  src/adapters/express.ts -> exports['adapters/express'] = { default: './dist/adapters/express.js', ... }
    */
   inputs
     .filter((i) => i !== 'src/index.ts') // index included by the default above
@@ -76,12 +76,12 @@ export async function generateEntrypoints(rawInputs: string[]) {
           : pathWithoutSrc.replace(/\.(ts|tsx)$/, '');
 
       // write this entrypoint to the package.json exports field
-      const esm = './dist/' + pathWithoutSrc.replace(/\.(ts|tsx)$/, '.mjs');
-      const cjs = './dist/' + pathWithoutSrc.replace(/\.(ts|tsx)$/, '.js');
+      const js = './dist/' + pathWithoutSrc.replace(/\.(ts|tsx)$/, '.js');
+      const types = './dist/' + pathWithoutSrc.replace(/\.(ts|tsx)$/, '.d.ts');
       pkgJson.exports[`./${importPath}`] = {
-        import: esm,
-        require: cjs,
-        default: cjs,
+        types,
+        import: js,
+        default: js,
       };
 
       // create the barrel file, linking the declared exports to the compiled files in dist
@@ -94,7 +94,7 @@ export async function generateEntrypoints(rawInputs: string[]) {
       ].join('/');
       // index.js
       const indexFile = path.resolve(importPath, 'index.js');
-      const indexFileContent = `module.exports = require('${resolvedImport}');\n`;
+      const indexFileContent = `export * from '${resolvedImport}/index.js';\n`;
       writeFileSyncRecursive(indexFile, indexFileContent);
 
       // index.d.ts

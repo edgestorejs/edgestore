@@ -1,5 +1,5 @@
 import { initEdgeStore } from '@edgestore/shared';
-import { parse } from 'cookie';
+import { parseCookie } from 'cookie';
 import express from 'express';
 import { describe, expect, it } from 'vitest';
 import {
@@ -28,7 +28,7 @@ function getCookieHeader(res: Response) {
 
   return setCookies
     .map((cookie) => {
-      const [name, value] = Object.entries(parse(cookie))[0] ?? [];
+      const [name, value] = Object.entries(parseCookie(cookie))[0] ?? [];
       if (!name || !value) {
         throw new Error(`Could not parse Set-Cookie header: ${cookie}`);
       }
@@ -71,7 +71,7 @@ async function createSmokeServer() {
   const app = express();
   app.use(express.json());
   app.use((req, _res, next) => {
-    req.cookies = parse(req.headers.cookie ?? '');
+    req.cookies = parseCookie(req.headers.cookie ?? '');
     next();
   });
   app.get('/edgestore/*', handler);
