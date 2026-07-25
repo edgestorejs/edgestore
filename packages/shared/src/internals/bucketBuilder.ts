@@ -83,8 +83,15 @@ type InferMetadataObjectFromDef<TDef extends AnyDef> =
     ? NormalizeMetadata<Awaited<ReturnType<TDef['metadata']>>>
     : Record<string, never>;
 
-export type AnyContextValue = string | undefined | null | AnyContext;
+export type AnyContextValue = string | undefined;
 
+/**
+ * Context shared by router hooks, path and metadata builders, and providers.
+ *
+ * Values are limited to strings so every supported provider receives the same
+ * context shape. Optional properties may be `undefined`; providers omit them
+ * when serializing the context.
+ */
 export interface AnyContext {
   [key: string]: AnyContextValue;
 }

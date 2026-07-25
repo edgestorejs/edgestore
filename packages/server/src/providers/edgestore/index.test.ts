@@ -49,14 +49,19 @@ describe('edgestore provider', () => {
       token: 'token',
       basePath: '/runtime/projects/_current',
     });
-    const es = initEdgeStore.context<{ userId: string }>().create();
+    const es = initEdgeStore
+      .context<{ userId: string; role?: string }>()
+      .create();
     const router = es.router({
       files: es.fileBucket().path(({ ctx }) => [{ userId: ctx.userId }]),
     });
     const provider = edgestore({ accessKey: 'access', secretKey: 'secret' });
 
     await expect(
-      provider.init({ ctx: { userId: 'user-1' }, router }),
+      provider.init({
+        ctx: { userId: 'user-1', role: undefined },
+        router,
+      }),
     ).resolves.toEqual({ token: 'token' });
     expect(runtime.accessTokens.create).toHaveBeenCalledWith({
       context: { userId: 'user-1' },

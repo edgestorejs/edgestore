@@ -92,31 +92,18 @@ type ExactRouter = EdgeStoreRouter<Context, typeof router.buckets>;
 expectType<typeof imageBucket>({} as ExactRouter['buckets']['imageBucket']);
 expectType<typeof fileBucket>({} as ExactRouter['buckets']['fileBucket']);
 
-type NestedContext = {
-  user: {
-    id: string;
-    profile: {
-      role: 'admin' | 'visitor';
-    };
-  };
-};
-
-const nestedEs = initEdgeStore.context<NestedContext>().create();
-const nestedBucket = nestedEs
-  .fileBucket()
-  .path(({ ctx }) => [
-    { author: ctx.user.id },
-    { role: ctx.user.profile.role },
-  ]);
-
-expectType<{ author: string; role: string }>(
-  {} as InferBucketPathObject<typeof nestedBucket>,
-);
+expectAssignable<AnyContext>({
+  userId: 'user-1',
+  role: undefined,
+});
 
 expectNotAssignable<AnyContext>({
   user: {
-    id: 123,
+    id: 'user-1',
   },
 });
-// @ts-expect-error context path leaves must be string-compatible.
-initEdgeStore.context<{ user: { id: number } }>().create();
+// @ts-expect-error nested context values are not supported.
+initEdgeStore.context<{ user: { id: string } }>().create();
+expectNotAssignable<AnyContext>({ userId: null });
+// @ts-expect-error null context values are not supported.
+initEdgeStore.context<{ userId: null }>().create();

@@ -112,7 +112,11 @@ export function edgestore(
     name: 'edgestore',
     init: async ({ ctx, router }) => {
       const { token } = await sdk.runtime.accessTokens.create({
-        context: ctx as Record<string, string>,
+        context: Object.fromEntries(
+          Object.entries(ctx).filter(
+            (entry): entry is [string, string] => entry[1] !== undefined,
+          ),
+        ),
         buckets: Object.fromEntries(
           Object.entries(router.buckets).map(([bucketName, bucket]) => [
             bucketName,
