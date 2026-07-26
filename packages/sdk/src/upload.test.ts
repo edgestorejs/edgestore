@@ -434,6 +434,133 @@ describe('runtime upload orchestration', () => {
     expect(result.file.id).toBe('remote-file');
   });
 
+  it('cancels a rejected remote response body', async () => {
+    let canceled = false;
+    const remoteBody = new ReadableStream({
+      cancel() {
+        canceled = true;
+      },
+    });
+    const sdk = createSdk(
+      vi.fn<typeof globalThis.fetch>(async () => {
+        return new Response(remoteBody, {
+          status: 503,
+          headers: { 'content-length': '6' },
+        });
+      }),
+    );
+
+    await expect(
+      sdk.runtime.uploads.uploadFromUrl({
+        bucket: 'documents',
+        url: 'https://source.example/unavailable.txt',
+      }),
+    ).rejects.toMatchObject({
+      name: 'EdgeStoreNetworkError',
+    });
+    expect(canceled).toBe(true);
+  });
+
+  it.each([undefined, 'invalid', '-1'])(
+    'cancels a remote response with invalid Content-Length %s',
+    async (contentLength) => {
+      let canceled = false;
+      const remoteBody = new ReadableStream({
+        cancel() {
+          canceled = true;
+        },
+      });
+      const headers = new Headers();
+      if (contentLength !== undefined) {
+        headers.set('content-length', contentLength);
+      }
+      const sdk = createSdk(
+        vi.fn<typeof globalThis.fetch>(async () => {
+          return new Response(remoteBody, { headers });
+        }),
+      );
+
+      await expect(
+        sdk.runtime.uploads.uploadFromUrl({
+          bucket: 'documents',
+          url: 'https://source.example/invalid-length.txt',
+        }),
+      ).rejects.toThrow(
+        'Remote uploads require a valid Content-Length response header.',
+      );
+      expect(canceled).toBe(true);
+    },
+  );
+
+  it('rejects a missing non-empty remote response body', async () => {
+    const sdk = createSdk(
+      vi.fn<typeof globalThis.fetch>(async () => {
+        return new Response(null, {
+          headers: { 'content-length': '6' },
+        });
+      }),
+    );
+
+    await expect(
+      sdk.runtime.uploads.uploadFromUrl({
+        bucket: 'documents',
+        url: 'https://source.example/missing-body.txt',
+      }),
+    ).rejects.toThrow('The remote upload source returned no response body.');
+  });
+
+  it('accepts a missing body for a zero-byte remote source', async () => {
+    const fetch = vi.fn<typeof globalThis.fetch>(async (input, init) => {
+      const request = toRequest(input, init);
+      if (request.url === 'https://source.example/empty.txt') {
+        return new Response(null, {
+          headers: { 'content-length': '0' },
+        });
+      }
+      throw new Error('Bucket lookup reached.');
+    });
+    const sdk = createSdk(fetch);
+
+    await expect(
+      sdk.runtime.uploads.uploadFromUrl({
+        bucket: 'documents',
+        url: 'https://source.example/empty.txt',
+      }),
+    ).rejects.toMatchObject({
+      name: 'EdgeStoreNetworkError',
+    });
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it('cancels the remote body when setup fails before transfer', async () => {
+    let canceled = false;
+    const remoteBody = new ReadableStream({
+      cancel() {
+        canceled = true;
+      },
+    });
+    const fetch = vi.fn<typeof globalThis.fetch>(async (input, init) => {
+      const request = toRequest(input, init);
+      if (request.url === 'https://source.example/report.txt') {
+        return new Response(remoteBody, {
+          headers: { 'content-length': '6' },
+        });
+      }
+      throw new Error('Bucket lookup failed.');
+    });
+    const sdk = createSdk(fetch);
+
+    await expect(
+      sdk.runtime.uploads.uploadFromUrl({
+        bucket: 'documents',
+        url: 'https://source.example/report.txt',
+      }),
+    ).rejects.toMatchObject({
+      name: 'EdgeStoreNetworkError',
+    });
+    expect(canceled).toBe(true);
+  });
+
   it('retains the pending upload when processing times out', async () => {
     const methods: string[] = [];
     const fetch = vi.fn<typeof globalThis.fetch>(async (input, init) => {

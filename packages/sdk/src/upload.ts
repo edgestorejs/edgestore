@@ -225,33 +225,49 @@ export async function uploadRuntimeFileFromUrl(
     );
   }
 
-  if (!response.ok) {
-    throw new EdgeStoreNetworkError(
-      `The remote upload source returned HTTP ${response.status}.`,
-    );
-  }
+  try {
+    if (!response.ok) {
+      throw new EdgeStoreNetworkError(
+        `The remote upload source returned HTTP ${response.status}.`,
+      );
+    }
 
-  const sizeBytes = Number(response.headers.get('content-length'));
-  if (!Number.isSafeInteger(sizeBytes) || sizeBytes < 0) {
-    throw new TypeError(
-      'Remote uploads require a valid Content-Length response header.',
-    );
-  }
+    const contentLength = response.headers.get('content-length');
+    const sizeBytes =
+      contentLength === null ? Number.NaN : Number(contentLength);
+    if (!Number.isSafeInteger(sizeBytes) || sizeBytes < 0) {
+      throw new TypeError(
+        'Remote uploads require a valid Content-Length response header.',
+      );
+    }
+    if (!response.body && sizeBytes > 0) {
+      throw new TypeError(
+        'The remote upload source returned no response body.',
+      );
+    }
 
-  const source: UploadSource = response.body
-    ? { stream: response.body, sizeBytes }
-    : new Blob([]);
-  return uploadRuntimeFile(
-    transport,
-    {
-      ...uploadInput,
-      signal,
-      source,
-      fileName: fileName ?? getFileNameFromUrl(url),
-      mimeType: mimeType ?? response.headers.get('content-type') ?? undefined,
-    },
-    defaults,
-  );
+    const source: UploadSource = response.body
+      ? { stream: response.body, sizeBytes }
+      : new Blob([]);
+    return await uploadRuntimeFile(
+      context,
+      {
+        ...uploadInput,
+        signal,
+        source,
+        fileName: fileName ?? getFileNameFromUrl(url),
+        mimeType: mimeType ?? response.headers.get('content-type') ?? undefined,
+      },
+      defaults,
+    );
+  } finally {
+    cancelResponseBody(response.body);
+  }
+}
+
+function cancelResponseBody(body: ReadableStream<Uint8Array> | null) {
+  if (!body) return;
+  void body.cancel().catch(() => undefined);
 }
 
 async function getBucket(
