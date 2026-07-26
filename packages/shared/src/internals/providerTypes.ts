@@ -147,7 +147,7 @@ export type ProviderFileMutationResult = {
   failureCount: number;
 };
 
-export type ProviderBackendUploadParams = {
+export type BackendUploadParams = {
   bucketName: string;
   bucketType: string;
   fileInfo: RequestUploadParams['fileInfo'];
@@ -162,8 +162,9 @@ export type ProviderBackendUploadParams = {
   }) => void;
 };
 
-export type ProviderBackend = {
-  upload: (params: ProviderBackendUploadParams) => MaybePromise<{
+export type BackendProviderOperations = {
+  readonly supportsBackendClient: true;
+  upload: (params: BackendUploadParams) => MaybePromise<{
     file: ProviderFile;
     signedReadUrl?: {
       signedUrl: string;
@@ -193,6 +194,9 @@ export type ProviderBackend = {
   restoreFiles: (params: {
     files: FileReference[];
   }) => MaybePromise<ProviderFileMutationResult>;
+  getSignedUrls: (
+    params: GetSignedUrlsParams,
+  ) => MaybePromise<GetSignedUrlRes[]>;
 };
 
 export type RequestUploadPartsParams = {
@@ -289,11 +293,11 @@ export type DeleteFileRes = {
   success: boolean;
 };
 
-export type Provider = {
+export type EdgeStoreProvider = {
   name: string;
   init: (params: InitParams) => MaybePromise<InitRes>;
   getBaseUrl: () => MaybePromise<string>;
-  getFile: (params: GetFileParams) => MaybePromise<GetFileRes>;
+  getFileInfo: (params: GetFileParams) => MaybePromise<GetFileRes>;
   requestUpload: (
     params: RequestUploadParams,
   ) => MaybePromise<RequestUploadRes>;
@@ -303,16 +307,13 @@ export type Provider = {
   getSignedUrls?: (
     params: GetSignedUrlsParams,
   ) => MaybePromise<GetSignedUrlRes[]>;
-  listFiles?: (params: ListFilesParams) => MaybePromise<ListFilesRes>;
+  listAdapterFiles?: (params: ListFilesParams) => MaybePromise<ListFilesRes>;
   completeMultipartUpload: (
     params: CompleteMultipartUploadParams,
   ) => MaybePromise<CompleteMultipartUploadRes>;
   confirmUpload: (params: ConfirmUpload) => MaybePromise<ConfirmUploadRes>;
   deleteFile: (params: DeleteFileParams) => MaybePromise<DeleteFileRes>;
-  /** Privileged router-client operations. Providers expose this capability only when supported. */
-  backend?: ProviderBackend;
 };
 
-export type BackendClientProvider = Provider & {
-  backend: ProviderBackend;
-};
+export type BackendCapableEdgeStoreProvider = EdgeStoreProvider &
+  BackendProviderOperations;

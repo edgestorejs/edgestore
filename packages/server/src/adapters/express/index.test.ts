@@ -83,8 +83,7 @@ describe('Express adapter conformance', () => {
     const provider = createConformanceProvider();
     const router = createConformanceRouter();
     const handler = createEdgeStoreExpressHandler({
-      provider,
-      router,
+      edgeStore: { provider, router },
       cookieConfig: testCookieConfig,
       createContext,
     });

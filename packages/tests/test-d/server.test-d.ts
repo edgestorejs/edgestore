@@ -1,9 +1,10 @@
-import { initEdgeStore } from '@edgestore/server';
+import { createEdgeStore, initEdgeStore } from '@edgestore/server';
 import {
-  createEdgeStoreClient,
   type EdgeStoreFileReference,
   type InferClientResponse,
 } from '@edgestore/server/core';
+import { edgestore } from '@edgestore/server/providers/edgestore';
+import { s3 } from '@edgestore/server/providers/s3';
 import {
   expectAssignable,
   expectError,
@@ -31,13 +32,19 @@ const router = es.router({
   documents: es.fileBucket().path(({ ctx }) => [{ author: ctx.userId }]),
 });
 
-const client = createEdgeStoreClient({ router });
+const client = createEdgeStore({
+  router,
+  provider: edgestore(),
+}).client;
 
 const publicEs = initEdgeStore.create();
-const publicClient = createEdgeStoreClient({
-  router: publicEs.router({ files: publicEs.fileBucket() }),
-});
-const privateClient = createEdgeStoreClient({
+const publicRouter = publicEs.router({ files: publicEs.fileBucket() });
+const publicClient = createEdgeStore({
+  router: publicRouter,
+  provider: edgestore(),
+}).client;
+const protectedClient = createEdgeStore({
+  provider: edgestore(),
   router: publicEs.router({
     privateFiles: publicEs.fileBucket().accessControl('private'),
     privateImages: publicEs
@@ -45,7 +52,12 @@ const privateClient = createEdgeStoreClient({
       .accessControl('private')
       .autoSignedUrls({ expiresIn: 300 }),
   }),
+}).client;
+const s3EdgeStore = createEdgeStore({
+  router: publicRouter,
+  provider: s3(),
 });
+expectError(s3EdgeStore.client);
 
 void client.avatars.upload({
   content: 'hello',
@@ -80,7 +92,7 @@ expectType<
     expiresIn: number;
   }>
 >(
-  privateClient.privateFiles.getSignedUrl({
+  protectedClient.privateFiles.getSignedUrl({
     url: 'https://files.edgestore.dev/project/privateFiles/file.txt',
   }),
 );
@@ -96,13 +108,13 @@ expectAssignable<
     }[]
   >
 >(
-  privateClient.privateImages.getSignedUrls({
+  protectedClient.privateImages.getSignedUrls({
     urls: ['https://files.edgestore.dev/project/privateImages/image.png'],
     includeThumbnails: true,
   }),
 );
 
-void privateClient.privateImages.upload({ content: 'hello' }).then((file) => {
+void protectedClient.privateImages.upload({ content: 'hello' }).then((file) => {
   expectType<string>(file.id);
   expectType<string>(file.key);
   expectType<number>(file.sizeBytes);

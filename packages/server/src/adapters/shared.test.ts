@@ -2,8 +2,8 @@ import {
   EdgeStoreError,
   initEdgeStore,
   type AnyContext,
+  type EdgeStoreProvider,
   type EdgeStoreRouter,
-  type Provider,
 } from '@edgestore/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
@@ -52,7 +52,7 @@ async function uploadWithContext<TCtx extends AnyContext>({
   body,
 }: {
   ctx: TCtx;
-  provider?: Provider;
+  provider?: EdgeStoreProvider;
   router: EdgeStoreRouter<TCtx>;
   body?: UploadBodyOverrides;
 }) {

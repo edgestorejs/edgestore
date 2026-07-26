@@ -1,8 +1,8 @@
 import {
   EdgeStoreError,
   type AnyBuilder,
+  type EdgeStoreProvider,
   type EdgeStoreRouter,
-  type Provider,
   type SharedDeleteFileRes,
   type SharedInitRes,
   type SharedRequestUploadPartsRes,
@@ -19,6 +19,11 @@ const DEFAULT_MAX_AGE = 30 * 24 * 60 * 60; // 30 days
 
 declare const globalThis: {
   _EDGE_STORE_LOGGER: Logger;
+};
+
+export type HandlerEdgeStore<TCtx> = {
+  provider: EdgeStoreProvider;
+  router: EdgeStoreRouter<TCtx>;
 };
 
 const NO_BODY_STATUSES = new Set([204, 205, 304]);
@@ -159,7 +164,7 @@ export function getCookieConfig(
 }
 
 export async function init<TCtx>(params: {
-  provider: Provider;
+  provider: EdgeStoreProvider;
   router: EdgeStoreRouter<TCtx>;
   ctx: TCtx;
   cookieConfig?: CookieConfig;
@@ -239,7 +244,7 @@ export type RequestUploadBody = {
 };
 
 export async function requestUpload<TCtx>(params: {
-  provider: Provider;
+  provider: EdgeStoreProvider;
   router: EdgeStoreRouter<TCtx>;
   ctxToken: string | undefined;
   body: RequestUploadBody;
@@ -345,7 +350,7 @@ export type RequestUploadPartsParams = {
 };
 
 export async function requestUploadParts<TCtx>(params: {
-  provider: Provider;
+  provider: EdgeStoreProvider;
   router: EdgeStoreRouter<TCtx>;
   ctxToken: string | undefined;
   body: RequestUploadPartsParams;
@@ -388,7 +393,7 @@ export type CompleteMultipartUploadBody = {
 };
 
 export async function completeMultipartUpload<TCtx>(params: {
-  provider: Provider;
+  provider: EdgeStoreProvider;
   router: EdgeStoreRouter<TCtx>;
   ctxToken: string | undefined;
   body: CompleteMultipartUploadBody;
@@ -439,7 +444,7 @@ export type ConfirmUploadBody = {
 };
 
 export async function confirmUpload<TCtx>(params: {
-  provider: Provider;
+  provider: EdgeStoreProvider;
   router: EdgeStoreRouter<TCtx>;
   ctxToken: string | undefined;
   body: ConfirmUploadBody;
@@ -484,7 +489,7 @@ export type DeleteFileBody = {
 };
 
 export async function deleteFile<TCtx>(params: {
-  provider: Provider;
+  provider: EdgeStoreProvider;
   router: EdgeStoreRouter<TCtx>;
   ctxToken: string | undefined;
   body: DeleteFileBody;
@@ -522,7 +527,7 @@ export async function deleteFile<TCtx>(params: {
     });
   }
 
-  const fileInfo = await provider.getFile({
+  const fileInfo = await provider.getFileInfo({
     url: unproxyUrl(url),
   });
 

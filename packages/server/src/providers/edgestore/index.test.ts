@@ -185,12 +185,14 @@ describe('edgestore provider', () => {
     });
     const provider = edgestore({ accessKey: 'access', secretKey: 'secret' });
 
-    await expect(provider.getFile({ url: file.url })).resolves.toMatchObject({
+    await expect(
+      provider.getFileInfo({ url: file.url }),
+    ).resolves.toMatchObject({
       size: 12,
       uploadedAt: new Date(file.uploadedAt),
     });
     await expect(
-      provider.listFiles?.({ bucketName: 'files' }),
+      provider.listAdapterFiles?.({ bucketName: 'files' }),
     ).resolves.toMatchObject({
       data: [{ size: 12 }],
       pagination: { hasMore: false },
@@ -242,7 +244,7 @@ describe('edgestore provider', () => {
     const source = new Blob(['content'], { type: 'text/plain' });
 
     await expect(
-      provider.backend.upload({
+      provider.upload({
         bucketName: 'files',
         bucketType: 'FILE',
         fileInfo,
@@ -256,10 +258,10 @@ describe('edgestore provider', () => {
       },
     });
     await expect(
-      provider.backend.getFile({ file: { key: file.key } }),
+      provider.getFile({ file: { key: file.key } }),
     ).resolves.toMatchObject({ id: file.id });
     await expect(
-      provider.backend.listFiles({
+      provider.listFiles({
         bucketName: 'files',
         cursor: 'cursor',
         limit: 10,
@@ -269,7 +271,7 @@ describe('edgestore provider', () => {
       nextCursor: 'next',
     });
     await expect(
-      provider.backend.restoreFiles({ files: [{ id: file.id }] }),
+      provider.restoreFiles({ files: [{ id: file.id }] }),
     ).resolves.toMatchObject({ successCount: 1 });
 
     expect(runtime.uploads.upload).toHaveBeenCalledWith(

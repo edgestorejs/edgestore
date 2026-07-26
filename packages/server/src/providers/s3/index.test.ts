@@ -1,6 +1,6 @@
 import type { RequestUploadParams } from '@edgestore/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { AWSProvider } from './index';
+import { s3 } from './index';
 
 const awsMocks = vi.hoisted(() => {
   const send = vi.fn();
@@ -81,7 +81,7 @@ function uploadParams(
   };
 }
 
-describe('AWSProvider', () => {
+describe('s3', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     vi.clearAllMocks();
@@ -92,7 +92,7 @@ describe('AWSProvider', () => {
   });
 
   it('uses the default S3 key format for private files', async () => {
-    const provider = AWSProvider({
+    const provider = s3({
       bucketName: 'storage-bucket',
       region: 'us-east-1',
     });
@@ -117,7 +117,7 @@ describe('AWSProvider', () => {
   });
 
   it('uses the default S3 key format for public files', async () => {
-    const provider = AWSProvider({
+    const provider = s3({
       bucketName: 'storage-bucket',
       region: 'eu-west-1',
     });
@@ -142,7 +142,7 @@ describe('AWSProvider', () => {
   });
 
   it('includes path segments in the generated key', async () => {
-    const provider = AWSProvider({
+    const provider = s3({
       bucketName: 'storage-bucket',
       region: 'us-east-1',
     });
@@ -169,7 +169,7 @@ describe('AWSProvider', () => {
   });
 
   it('uses manual file names instead of generated UUID names', async () => {
-    const provider = AWSProvider({
+    const provider = s3({
       bucketName: 'storage-bucket',
       region: 'us-east-1',
     });
@@ -195,7 +195,7 @@ describe('AWSProvider', () => {
   });
 
   it('normalizes extensions by stripping leading dots', async () => {
-    const provider = AWSProvider({
+    const provider = s3({
       bucketName: 'storage-bucket',
       region: 'us-east-1',
     });
@@ -219,7 +219,7 @@ describe('AWSProvider', () => {
     const fileInfo = uploadParams({
       path: [{ key: 'tenant', value: 'tenant-1' }],
     }).fileInfo;
-    const provider = AWSProvider({
+    const provider = s3({
       bucketName: 'storage-bucket',
       region: 'us-east-1',
       overwritePath,
@@ -252,7 +252,7 @@ describe('AWSProvider', () => {
   });
 
   it('uses custom endpoint and baseUrl settings', async () => {
-    const provider = AWSProvider({
+    const provider = s3({
       bucketName: 'storage-bucket',
       region: 'us-east-1',
       endpoint: 'http://localhost:9000',
@@ -285,7 +285,7 @@ describe('AWSProvider', () => {
   });
 
   it('uses endpoint-derived baseUrl when no custom baseUrl is provided', () => {
-    const provider = AWSProvider({
+    const provider = s3({
       bucketName: 'storage-bucket',
       endpoint: 'http://localhost:9000',
     });
@@ -294,7 +294,7 @@ describe('AWSProvider', () => {
   });
 
   it('maps access URLs back to S3 keys on delete', async () => {
-    const provider = AWSProvider({
+    const provider = s3({
       bucketName: 'storage-bucket',
       region: 'us-east-1',
       baseUrl: 'https://cdn.example.com',
@@ -318,15 +318,15 @@ describe('AWSProvider', () => {
   });
 
   it('throws a clear error when bucketName is missing for requestUpload', async () => {
-    const provider = AWSProvider({ region: 'us-east-1' });
+    const provider = s3({ region: 'us-east-1' });
 
     await expect(provider.requestUpload(uploadParams())).rejects.toThrow(
-      'S3 bucketName is not configured in AWSProviderOptions.',
+      'S3 bucketName is not configured in S3ProviderOptions.',
     );
   });
 
   it('throws a clear error when bucketName is missing for deleteFile', async () => {
-    const provider = AWSProvider({ region: 'us-east-1' });
+    const provider = s3({ region: 'us-east-1' });
 
     await expect(
       provider.deleteFile({
@@ -334,7 +334,7 @@ describe('AWSProvider', () => {
         url: 'https://example.com/documents/file.txt',
       }),
     ).rejects.toThrow(
-      'S3 bucketName is not configured in AWSProviderOptions for deleteFile.',
+      'S3 bucketName is not configured in S3ProviderOptions for deleteFile.',
     );
   });
 });

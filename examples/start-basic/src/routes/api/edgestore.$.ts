@@ -1,5 +1,6 @@
-import { initEdgeStore } from '@edgestore/server';
+import { createEdgeStore, initEdgeStore } from '@edgestore/server';
 import { createEdgeStoreStartHandler } from '@edgestore/server/adapters/start';
+import { edgestore } from '@edgestore/server/providers/edgestore';
 import { createFileRoute } from '@tanstack/react-router';
 
 const es = initEdgeStore.create();
@@ -9,9 +10,11 @@ const edgeStoreRouter = es.router({
 
 export type EdgeStoreRouter = typeof edgeStoreRouter;
 
-const handler = createEdgeStoreStartHandler({
+const edgeStore = createEdgeStore({
   router: edgeStoreRouter,
+  provider: edgestore(),
 });
+const handler = createEdgeStoreStartHandler({ edgeStore });
 
 export const Route = createFileRoute('/api/edgestore/$')({
   server: {

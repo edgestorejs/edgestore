@@ -2,13 +2,10 @@ import {
   EDGE_STORE_ERROR_CODES,
   EdgeStoreError,
   type EdgeStoreErrorCodeKey,
-  type EdgeStoreRouter,
   type MaybePromise,
-  type Provider,
 } from '@edgestore/shared';
 import Logger, { type LogLevel } from '../../libs/logger';
 import { matchPath } from '../../libs/utils';
-import { edgestore } from '../../providers/edgestore';
 import {
   completeMultipartUpload,
   confirmUpload,
@@ -22,6 +19,7 @@ import {
   type ConfirmUploadBody,
   type CookieConfig,
   type DeleteFileBody,
+  type HandlerEdgeStore,
   type RequestUploadBody,
   type RequestUploadPartsParams,
 } from '../shared';
@@ -31,15 +29,13 @@ export type CreateContextOptions = {
 };
 
 export type Config<TCtx> = {
-  provider?: Provider;
-  router: EdgeStoreRouter<TCtx>;
+  edgeStore: HandlerEdgeStore<TCtx>;
   logLevel?: LogLevel;
   cookieConfig?: CookieConfig;
 } & (TCtx extends Record<string, never>
   ? object
   : {
-      provider?: Provider;
-      router: EdgeStoreRouter<TCtx>;
+      edgeStore: HandlerEdgeStore<TCtx>;
       createContext: (opts: CreateContextOptions) => MaybePromise<TCtx>;
       cookieConfig?: CookieConfig;
     });
@@ -65,7 +61,8 @@ function getCookie(req: Request, cookieName: string): string | undefined {
 }
 
 export function createEdgeStoreStartHandler<TCtx>(config: Config<TCtx>) {
-  const { provider = edgestore(), cookieConfig } = config;
+  const { provider, router } = config.edgeStore;
+  const { cookieConfig } = config;
   const log = new Logger(config.logLevel);
   globalThis._EDGE_STORE_LOGGER = log;
   log.debug('Creating EdgeStore TanStack Start handler');
@@ -94,7 +91,7 @@ export function createEdgeStoreStartHandler<TCtx>(config: Config<TCtx>) {
         const { newCookies, ...body } = await init({
           ctx,
           provider,
-          router: config.router,
+          router,
           cookieConfig,
         });
         const headers = new Headers();
@@ -111,7 +108,7 @@ export function createEdgeStoreStartHandler<TCtx>(config: Config<TCtx>) {
         const ctxToken = getCookie(request, resolvedCookieConfig.ctx.name);
         const result = await requestUpload({
           provider,
-          router: config.router,
+          router,
           body: body as RequestUploadBody,
           ctxToken,
         });
@@ -124,7 +121,7 @@ export function createEdgeStoreStartHandler<TCtx>(config: Config<TCtx>) {
         const ctxToken = getCookie(request, resolvedCookieConfig.ctx.name);
         const result = await requestUploadParts({
           provider,
-          router: config.router,
+          router,
           body: body as RequestUploadPartsParams,
           ctxToken,
         });
@@ -137,7 +134,7 @@ export function createEdgeStoreStartHandler<TCtx>(config: Config<TCtx>) {
         const ctxToken = getCookie(request, resolvedCookieConfig.ctx.name);
         await completeMultipartUpload({
           provider,
-          router: config.router,
+          router,
           body: body as CompleteMultipartUploadBody,
           ctxToken,
         });
@@ -147,7 +144,7 @@ export function createEdgeStoreStartHandler<TCtx>(config: Config<TCtx>) {
         const ctxToken = getCookie(request, resolvedCookieConfig.ctx.name);
         const result = await confirmUpload({
           provider,
-          router: config.router,
+          router,
           body: body as ConfirmUploadBody,
           ctxToken,
         });
@@ -160,7 +157,7 @@ export function createEdgeStoreStartHandler<TCtx>(config: Config<TCtx>) {
         const ctxToken = getCookie(request, resolvedCookieConfig.ctx.name);
         const result = await deleteFile({
           provider,
-          router: config.router,
+          router,
           body: body as DeleteFileBody,
           ctxToken,
         });

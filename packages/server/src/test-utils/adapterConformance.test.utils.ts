@@ -1,7 +1,7 @@
 import {
   initEdgeStore,
+  type EdgeStoreProvider,
   type EdgeStoreRouter,
-  type Provider,
 } from '@edgestore/shared';
 import { expect, vi } from 'vitest';
 import { z } from 'zod';
@@ -72,13 +72,13 @@ export function setupAdapterTestEnv() {
 }
 
 export function createConformanceProvider(
-  overrides: Partial<Provider> = {},
-): Provider {
+  overrides: Partial<EdgeStoreProvider> = {},
+): EdgeStoreProvider {
   return {
     name: 'test-provider',
     init: vi.fn(() => ({ token: 'provider-token' })),
     getBaseUrl: vi.fn(() => 'https://files.example.com'),
-    getFile: vi.fn(() => ({
+    getFileInfo: vi.fn(() => ({
       url: 'https://files.example.com/file.txt',
       size: 10,
       uploadedAt: new Date(),
@@ -127,7 +127,9 @@ export function extractCookieValue(
   return cookie?.match(new RegExp(`${name}=([^;,]+)`))?.[1];
 }
 
-export function expectRequestUploadCalledWithContext(provider: Provider) {
+export function expectRequestUploadCalledWithContext(
+  provider: EdgeStoreProvider,
+) {
   expect(provider.requestUpload).toHaveBeenCalledWith({
     bucketName: 'documents',
     bucketType: 'FILE',

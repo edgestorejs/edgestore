@@ -206,7 +206,7 @@ describe('deleteFile', () => {
     ).rejects.toMatchObject({
       code: 'UNAUTHORIZED',
     });
-    expect(provider.getFile).not.toHaveBeenCalled();
+    expect(provider.getFileInfo).not.toHaveBeenCalled();
     expect(provider.deleteFile).not.toHaveBeenCalled();
   });
 
@@ -233,7 +233,7 @@ describe('deleteFile', () => {
     ).rejects.toMatchObject({
       code: 'BAD_REQUEST',
     });
-    expect(provider.getFile).not.toHaveBeenCalled();
+    expect(provider.getFileInfo).not.toHaveBeenCalled();
     expect(provider.deleteFile).not.toHaveBeenCalled();
   });
 
@@ -258,7 +258,7 @@ describe('deleteFile', () => {
     ).rejects.toMatchObject({
       code: 'SERVER_ERROR',
     });
-    expect(provider.getFile).not.toHaveBeenCalled();
+    expect(provider.getFileInfo).not.toHaveBeenCalled();
     expect(provider.deleteFile).not.toHaveBeenCalled();
   });
 
@@ -284,7 +284,7 @@ describe('deleteFile', () => {
     ).rejects.toMatchObject({
       code: 'DELETE_NOT_ALLOWED',
     });
-    expect(provider.getFile).toHaveBeenCalledWith({
+    expect(provider.getFileInfo).toHaveBeenCalledWith({
       url: originalUrl,
     });
     expect(beforeDelete).toHaveBeenCalledWith({
@@ -296,7 +296,7 @@ describe('deleteFile', () => {
     expect(provider.deleteFile).not.toHaveBeenCalled();
   });
 
-  it('calls getFile, beforeDelete, then deleteFile with ctx/fileInfo and unproxied URL', async () => {
+  it('calls getFileInfo, beforeDelete, then deleteFile with ctx/fileInfo and unproxied URL', async () => {
     const provider = createProvider();
     const beforeDelete = vi.fn(() => true);
     const es = initEdgeStore.context<{ userId: string }>().create();
@@ -316,7 +316,7 @@ describe('deleteFile', () => {
       body: deleteFileBody(),
     });
 
-    expect(provider.getFile).toHaveBeenCalledWith({
+    expect(provider.getFileInfo).toHaveBeenCalledWith({
       url: originalUrl,
     });
     expect(beforeDelete).toHaveBeenCalledWith({
@@ -329,7 +329,7 @@ describe('deleteFile', () => {
       bucket,
       url: originalUrl,
     });
-    const getFileCallOrder = vi.mocked(provider.getFile).mock
+    const getFileCallOrder = vi.mocked(provider.getFileInfo).mock
       .invocationCallOrder[0];
     const beforeDeleteCallOrder = beforeDelete.mock.invocationCallOrder[0];
     const deleteFileCallOrder = vi.mocked(provider.deleteFile).mock
@@ -363,7 +363,7 @@ describe('deleteFile', () => {
         body: deleteFileBody(),
       }),
     ).rejects.toThrow();
-    expect(provider.getFile).not.toHaveBeenCalled();
+    expect(provider.getFileInfo).not.toHaveBeenCalled();
     expect(provider.deleteFile).not.toHaveBeenCalled();
   });
 });

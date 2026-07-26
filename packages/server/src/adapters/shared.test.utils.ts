@@ -1,7 +1,7 @@
 import {
   type AnyContext,
+  type EdgeStoreProvider,
   type EdgeStoreRouter,
-  type Provider,
 } from '@edgestore/shared';
 import { vi } from 'vitest';
 import { init } from './shared';
@@ -15,12 +15,14 @@ export const logger: TestLogger = {
   error: vi.fn(),
 };
 
-export function createProvider(overrides: Partial<Provider> = {}): Provider {
+export function createProvider(
+  overrides: Partial<EdgeStoreProvider> = {},
+): EdgeStoreProvider {
   return {
     name: 'test-provider',
     init: vi.fn(() => ({ token: 'provider-token' })),
     getBaseUrl: vi.fn(() => 'https://files.example.com'),
-    getFile: vi.fn(() => ({
+    getFileInfo: vi.fn(() => ({
       url: 'https://files.example.com/file.txt',
       size: 10,
       uploadedAt: new Date(),
@@ -51,7 +53,7 @@ export async function createContextToken<TCtx extends AnyContext>({
   router,
 }: {
   ctx: TCtx;
-  provider?: Provider;
+  provider?: EdgeStoreProvider;
   router: EdgeStoreRouter<TCtx>;
 }) {
   const res = await init({

@@ -1,7 +1,8 @@
 import { initEdgeStore, type ProviderFile } from '@edgestore/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
-import { createEdgeStoreClient, EdgeStoreFileMutationError } from './index';
+import { createEdgeStore } from '../index';
+import { EdgeStoreFileMutationError } from './index';
 
 const backend = {
   upload: vi.fn(),
@@ -14,17 +15,17 @@ const backend = {
 
 const provider = {
   name: 'test',
+  supportsBackendClient: true as const,
   init: vi.fn(),
   getBaseUrl: vi.fn(),
-  getFile: vi.fn(),
+  getFileInfo: vi.fn(),
   requestUpload: vi.fn(),
   requestUploadParts: vi.fn(),
   completeMultipartUpload: vi.fn(),
   confirmUpload: vi.fn(),
   deleteFile: vi.fn(),
-  listFiles: vi.fn(),
   getSignedUrls: vi.fn(),
-  backend,
+  ...backend,
 };
 
 const fetchMock = vi.fn();
@@ -72,14 +73,14 @@ function createRouter() {
 }
 
 function createClient(config: { baseUrl?: string } = {}) {
-  return createEdgeStoreClient({
+  return createEdgeStore({
     router: createRouter(),
     provider,
     ...config,
-  }) as any;
+  }).client;
 }
 
-describe('createEdgeStoreClient', () => {
+describe('createEdgeStore', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     fetchMock.mockResolvedValue({
@@ -115,7 +116,7 @@ describe('createEdgeStoreClient', () => {
 
     expect(Object.keys(client)).toEqual(['documents', 'publicFiles']);
     expect(client.documents).toBe(client.documents);
-    expect(client.then).toBeUndefined();
+    expect('then' in client).toBe(false);
     await expect(Promise.resolve(client)).resolves.toBe(client);
   });
 
@@ -124,6 +125,7 @@ describe('createEdgeStoreClient', () => {
 
     await client.publicFiles.upload({
       content: 'plain text',
+      ctx: { userId: 'user-1' },
     });
 
     expect(backend.upload).toHaveBeenCalledWith({
@@ -154,6 +156,7 @@ describe('createEdgeStoreClient', () => {
         blob,
         extension: 'csv',
       },
+      ctx: { userId: 'user-1' },
     });
 
     expect(backend.upload).toHaveBeenCalledWith({
@@ -197,6 +200,7 @@ describe('createEdgeStoreClient', () => {
         url: 'https://source.example.com/file.json',
         extension: 'json',
       },
+      ctx: { userId: 'user-1' },
       signal: controller.signal,
     });
 
@@ -228,6 +232,7 @@ describe('createEdgeStoreClient', () => {
 
     await client.publicFiles.upload({
       content: 'original',
+      ctx: { userId: 'user-1' },
       options: {
         transform,
       },
@@ -329,6 +334,7 @@ describe('createEdgeStoreClient', () => {
     await expect(
       client.publicFiles.upload({
         content: 'plain text',
+        ctx: { userId: 'user-1' },
       }),
     ).rejects.toThrow('upload failed');
   });
@@ -344,7 +350,7 @@ describe('createEdgeStoreClient', () => {
         .beforeUpload(beforeUpload)
         .beforeDelete(beforeDelete),
     });
-    const client = createEdgeStoreClient({ router, provider });
+    const client = createEdgeStore({ router, provider }).client;
 
     await expect(
       client.documents.upload({
@@ -398,6 +404,7 @@ describe('createEdgeStoreClient', () => {
 
     await client.publicFiles.upload({
       content: { blob, extension: 'bin' },
+      ctx: { userId: 'user-1' },
       onProgress,
     });
 
@@ -569,13 +576,13 @@ describe('createEdgeStoreClient', () => {
         url: 'https://files.example.com/_protected/file.txt',
       }),
     ).rejects.toThrow(
-      'Missing baseUrl. You need to pass the baseUrl to `createEdgeStoreClient` to get protected files in development.',
+      'Missing baseUrl. Pass the baseUrl to `createEdgeStore` to get protected files in development.',
     );
   });
 
   it('leaves unknown buckets undefined', () => {
     const client = createClient();
 
-    expect(client.unknownBucket).toBeUndefined();
+    expect('unknownBucket' in client).toBe(false);
   });
 });

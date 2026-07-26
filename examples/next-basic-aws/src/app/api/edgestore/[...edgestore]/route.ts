@@ -1,9 +1,9 @@
-import { initEdgeStore } from '@edgestore/server';
+import { createEdgeStore, initEdgeStore } from '@edgestore/server';
 import {
   createEdgeStoreNextHandler,
   type CreateContextOptions,
 } from '@edgestore/server/adapters/next/app';
-import { AWSProvider } from '@edgestore/server/providers/aws';
+import { s3 } from '@edgestore/server/providers/s3';
 
 type MyContext = {
   userId: string;
@@ -24,15 +24,19 @@ const edgeStoreRouter = es.router({
   publicFiles: es.fileBucket().path(({ ctx }) => [{ author: ctx.userId }]),
 });
 
-const handler = createEdgeStoreNextHandler({
-  createContext,
-  provider: AWSProvider({
+const edgeStore = createEdgeStore({
+  router: edgeStoreRouter,
+  provider: s3({
     overwritePath: ({ defaultAccessPath }) => {
       // `publicFiles/_public/123/test.png` -> `123/test.png`
       return defaultAccessPath.split('/_public/')[1];
     },
   }),
-  router: edgeStoreRouter,
+});
+
+const handler = createEdgeStoreNextHandler({
+  edgeStore,
+  createContext,
 });
 
 export { handler as GET, handler as POST };

@@ -1,6 +1,6 @@
 import { type RequestUploadParams } from '@edgestore/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { AzureProvider } from './index';
+import { azureBlob } from './index';
 
 const mocks = vi.hoisted(() => ({
   deleteBlob: vi.fn(),
@@ -43,7 +43,7 @@ function createUploadParams(
   };
 }
 
-describe('AzureProvider', () => {
+describe('azureBlob', () => {
   const containerUrl = 'http://localhost:10000/devstoreaccount1/files';
 
   beforeEach(() => {
@@ -67,7 +67,7 @@ describe('AzureProvider', () => {
   });
 
   it('constructs a base URL from the storage account', () => {
-    const provider = AzureProvider({
+    const provider = azureBlob({
       storageAccountName: 'storageacct',
       sasToken: 'sig=token',
       containerName: 'documents',
@@ -80,7 +80,7 @@ describe('AzureProvider', () => {
   });
 
   it('uses a customBaseUrl when provided', () => {
-    const provider = AzureProvider({
+    const provider = azureBlob({
       storageAccountName: 'storageacct',
       sasToken: 'sig=token',
       containerName: 'documents',
@@ -130,7 +130,7 @@ describe('AzureProvider', () => {
   ])(
     'uses the EdgeStore path shape as the Azure blob name',
     async ({ fileInfo, expectedBlobName, expectedUuidCalls }) => {
-      const provider = AzureProvider({
+      const provider = azureBlob({
         containerName: 'files',
         customBaseUrl: 'http://localhost:10000/devstoreaccount1',
         sasToken: 'token',
@@ -149,14 +149,14 @@ describe('AzureProvider', () => {
   );
 
   it('normalizes an Azure access URL to a blob name for getFile', async () => {
-    const provider = AzureProvider({
+    const provider = azureBlob({
       containerName: 'files',
       customBaseUrl: 'http://localhost:10000/devstoreaccount1',
       sasToken: 'token',
       storageAccountName: 'devstoreaccount1',
     });
 
-    const res = await provider.getFile({
+    const res = await provider.getFileInfo({
       url: `${containerUrl}/documents/_public/a%20b/file.txt?sv=token`,
     });
 
@@ -173,7 +173,7 @@ describe('AzureProvider', () => {
   });
 
   it('normalizes an Azure access URL to a blob name for deleteFile', async () => {
-    const provider = AzureProvider({
+    const provider = azureBlob({
       containerName: 'files',
       customBaseUrl: 'http://localhost:10000/devstoreaccount1',
       sasToken: 'token',

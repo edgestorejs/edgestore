@@ -45,8 +45,7 @@ describe('Next app adapter conformance', () => {
     const provider = createConformanceProvider();
     const router = createConformanceRouter();
     const handler = createEdgeStoreNextHandler({
-      provider,
-      router,
+      edgeStore: { provider, router },
       cookieConfig: testCookieConfig,
       createContext,
     });

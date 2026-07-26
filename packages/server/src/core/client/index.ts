@@ -1,7 +1,7 @@
 import {
   type AnyBuilder,
   type AnyRouter,
-  type BackendClientProvider,
+  type BackendCapableEdgeStoreProvider,
   type FileReference,
   type InferBucketPathKeys,
   type InferBucketPathObject,
@@ -17,7 +17,6 @@ import {
 } from '@edgestore/shared';
 import { ZodNever, type z } from 'zod';
 import { buildPath, isDev, parsePath } from '../../adapters/shared';
-import { edgestore } from '../../providers/edgestore';
 import { validateFileForBucket } from '../validateFile';
 
 export type SimpleOperator =
@@ -244,7 +243,7 @@ type GetSignedUrlsRes<TBucket extends AnyBuilder> =
       })[]
     : GetSignedUrlRes[];
 
-type BucketClient<TBucket extends AnyBuilder> = {
+export type BucketClient<TBucket extends AnyBuilder> = {
   getFile: (ref: FileReference) => Promise<Prettify<GetFileRes<TBucket>>>;
 
   /**
@@ -332,244 +331,228 @@ type BucketClient<TBucket extends AnyBuilder> = {
       }) => Promise<Prettify<GetSignedUrlsRes<TBucket>[number]>[]>;
     });
 
-type EdgeStoreClient<TRouter extends AnyRouter> = {
+export type EdgeStoreClient<TRouter extends AnyRouter> = {
   [K in keyof TRouter['buckets']]: BucketClient<TRouter['buckets'][K]>;
 };
 
-export function createEdgeStoreClient<TRouter extends AnyRouter>(config: {
-  router: TRouter;
-  provider?: BackendClientProvider;
-  accessKey?: string;
-  secretKey?: string;
-  /**
-   * The base URL of your application.
-   *
-   * This is only needed for getting protected files in a development environment.
-   *
-   * @example http://localhost:3000/api/edgestore
-   */
-  baseUrl?: string;
-}) {
-  const provider =
-    config.provider ??
-    edgestore({ accessKey: config.accessKey, secretKey: config.secretKey });
-  const entries = Object.entries(config.router.buckets).map(
-    ([bucketName, bucket]) => {
-      const bucketClient: EdgeStoreClient<TRouter>[string] = {
-        async upload(params) {
-          const {
-            content,
-            ctx = {},
-            input = {},
-          }: UploadImplementationParams = params;
-
-          let { blob, extension } = await (async () => {
-            if (isTextContent(content)) {
-              return {
-                blob: new Blob([content], { type: 'text/plain' }),
-                extension: 'txt',
-              };
-            } else if (isBlobContent(content)) {
-              return {
-                blob: content.blob,
-                extension: content.extension,
-              };
-            } else {
-              return {
-                blob: await getBlobFromUrl(content.url, params.signal),
-                extension: content.extension,
-              };
-            }
-          })();
-
-          if (params.options?.transform) {
-            const transformed = await params.options.transform({
-              blob,
-              extension,
-              type: blob.type,
-            });
-            blob = transformed.blob;
-            extension = transformed.extension;
-          }
-
-          const parsedInput =
-            bucket._def.input instanceof ZodNever
-              ? {}
-              : await bucket._def.input.parseAsync(input);
-
-          validateFileForBucket({
-            bucket,
-            fileInfo: { size: blob.size, type: blob.type },
-          });
-
-          const path = buildPath({
-            bucket,
-            pathAttrs: {
-              ctx,
-              input: parsedInput,
-            },
-            fileInfo: {
-              type: blob.type,
-              size: blob.size,
-              extension,
-              temporary: false,
-              fileName: params.options?.manualFileName,
-              replaceTargetUrl: params.options?.replaceTargetUrl,
-            },
-          });
-          const metadata = await bucket._def.metadata({
-            ctx,
-            input: parsedInput,
-          });
-          const normalizedMetadata = normalizeMetadata(metadata);
-
-          const uploadRes = await provider.backend.upload({
-            bucketName,
-            bucketType: bucket._def.type,
-            autoSignedUrls: bucket._def.autoSignedUrls,
-            source: blob,
-            signal: params.signal,
-            onProgress: params.onProgress,
-            fileInfo: {
-              fileName: params.options?.manualFileName,
-              replaceTargetUrl: params.options?.replaceTargetUrl,
-              type: blob.type,
-              size: blob.size,
-              extension,
-              isPublic: bucket._def.accessControl === undefined,
-              temporary: params.options?.temporary ?? false,
-              path,
-              metadata: normalizedMetadata,
-            },
-          });
-
-          const { pathOrder } = parsePath(path);
-          return {
-            ...mapFileRecord(uploadRes.file, config.baseUrl),
-            ...mapSignedReadAccess(uploadRes.signedReadUrl),
-            pathOrder,
-          } as unknown as UploadFileRes<TRouter['buckets'][string]>;
-        },
-
-        async getFile(ref) {
-          const file = await provider.backend.getFile({ file: ref });
-          return mapFileRecord(file, config.baseUrl) satisfies GetFileRes<
-            typeof bucket
-          > as GetFileRes<TRouter['buckets'][string]>;
-        },
-
-        async confirmUpload(ref) {
-          return requireMutationSuccess(
-            await provider.backend.confirmFiles({ files: [ref] }),
-          );
-        },
-
-        async confirmUploads({ refs }) {
-          return mapMutationResult(
-            await provider.backend.confirmFiles({ files: refs }),
-          );
-        },
-
-        async deleteFile(ref) {
-          return requireMutationSuccess(
-            await provider.backend.deleteFiles({ files: [ref] }),
-          );
-        },
-
-        async deleteFiles({ refs }) {
-          return mapMutationResult(
-            await provider.backend.deleteFiles({ files: refs }),
-          );
-        },
-
-        async restoreFile(ref) {
-          return requireMutationSuccess(
-            await provider.backend.restoreFiles({ files: [ref] }),
-          );
-        },
-
-        async restoreFiles({ refs }) {
-          return mapMutationResult(
-            await provider.backend.restoreFiles({ files: refs }),
-          );
-        },
-
-        async listFiles(params) {
-          const res = await provider.backend.listFiles({
-            bucketName,
-            filter: serializeFilter(params?.filter),
-            cursor: params?.cursor,
-            limit: params?.limit,
-          });
-
-          const items = res.items.map((file) =>
-            mapFileRecord(file, config.baseUrl),
-          ) satisfies ListFilesResponse<
-            typeof bucket
-          >['items'] as ListFilesResponse<TRouter['buckets'][string]>['items'];
-
-          return {
-            ...res,
-            items,
-          };
-        },
-
-        async *listAllFiles(params) {
-          let cursor: string | undefined;
-          do {
-            const page = await bucketClient.listFiles({
-              filter: params?.filter,
-              cursor,
-              limit: params?.limit,
-            });
-            for (const file of page.items) yield file;
-            cursor = page.nextCursor ?? undefined;
-          } while (cursor);
-        },
-
-        async getSignedUrl(params: { url: string; expiresIn?: number }) {
-          if (!provider.getSignedUrls) {
-            throw unsupportedProviderOperation(provider, 'getSignedUrls');
-          }
-          const [signedUrl] = await provider.getSignedUrls({
-            bucketName,
-            urls: [params.url],
-            expiresIn: params.expiresIn,
-          });
-          if (!signedUrl) {
-            throw new Error('Missing signed URL response');
-          }
-          return {
-            ...signedUrl,
-            expiresAt: new Date(signedUrl.expiresAt),
-          };
-        },
-
-        async getSignedUrls(params: {
-          urls: string[];
-          expiresIn?: number;
-          includeThumbnails?: boolean;
-        }) {
-          if (!provider.getSignedUrls) {
-            throw unsupportedProviderOperation(provider, 'getSignedUrls');
-          }
-          const signedUrls = await provider.getSignedUrls({
-            bucketName,
-            urls: params.urls,
-            expiresIn: params.expiresIn,
-            includeThumbnails: params.includeThumbnails,
-          });
-          return signedUrls.map((signedUrl) => ({
-            ...signedUrl,
-            expiresAt: new Date(signedUrl.expiresAt),
-          })) as any;
-        },
-      };
-      return [bucketName, bucketClient] as const;
-    },
-  );
+export function createBackendClient<TRouter extends AnyRouter>(
+  router: TRouter,
+  provider: BackendCapableEdgeStoreProvider,
+  baseUrl?: string,
+): EdgeStoreClient<TRouter> {
+  const bucketNames = Object.keys(router.buckets) as (keyof TRouter['buckets'] &
+    string)[];
+  const entries = bucketNames.map((bucketName) => [
+    bucketName,
+    createBucketClient(router, bucketName, { provider, baseUrl }),
+  ]);
 
   return Object.fromEntries(entries) as EdgeStoreClient<TRouter>;
+}
+
+function createBucketClient<
+  TRouter extends AnyRouter,
+  TName extends keyof TRouter['buckets'] & string,
+>(
+  router: TRouter,
+  bucketName: TName,
+  options: {
+    provider: BackendCapableEdgeStoreProvider;
+    baseUrl?: string;
+  },
+): BucketClient<TRouter['buckets'][TName]> {
+  type TBucket = TRouter['buckets'][TName];
+  const bucket = router.buckets[bucketName] as TBucket;
+  const { provider, baseUrl } = options;
+
+  const bucketClient = {
+    async upload(params: Prettify<UploadFileRequest<TBucket>>) {
+      const {
+        content,
+        ctx = {},
+        input = {},
+      }: UploadImplementationParams = params;
+
+      let { blob, extension } = await (async () => {
+        if (isTextContent(content)) {
+          return {
+            blob: new Blob([content], { type: 'text/plain' }),
+            extension: 'txt',
+          };
+        }
+        if (isBlobContent(content)) {
+          return {
+            blob: content.blob,
+            extension: content.extension,
+          };
+        }
+        return {
+          blob: await getBlobFromUrl(content.url, params.signal),
+          extension: content.extension,
+        };
+      })();
+
+      if (params.options?.transform) {
+        const transformed = await params.options.transform({
+          blob,
+          extension,
+          type: blob.type,
+        });
+        blob = transformed.blob;
+        extension = transformed.extension;
+      }
+
+      const parsedInput =
+        bucket._def.input instanceof ZodNever
+          ? {}
+          : await bucket._def.input.parseAsync(input);
+
+      validateFileForBucket({
+        bucket,
+        fileInfo: { size: blob.size, type: blob.type },
+      });
+
+      const path = buildPath({
+        bucket,
+        pathAttrs: { ctx, input: parsedInput },
+        fileInfo: {
+          type: blob.type,
+          size: blob.size,
+          extension,
+          temporary: false,
+          fileName: params.options?.manualFileName,
+          replaceTargetUrl: params.options?.replaceTargetUrl,
+        },
+      });
+      const metadata = await bucket._def.metadata({
+        ctx,
+        input: parsedInput,
+      });
+      const uploadRes = await provider.upload({
+        bucketName,
+        bucketType: bucket._def.type,
+        autoSignedUrls: bucket._def.autoSignedUrls,
+        source: blob,
+        signal: params.signal,
+        onProgress: params.onProgress,
+        fileInfo: {
+          fileName: params.options?.manualFileName,
+          replaceTargetUrl: params.options?.replaceTargetUrl,
+          type: blob.type,
+          size: blob.size,
+          extension,
+          isPublic: bucket._def.accessControl === undefined,
+          temporary: params.options?.temporary ?? false,
+          path,
+          metadata: normalizeMetadata(metadata),
+        },
+      });
+
+      const { pathOrder } = parsePath(path);
+      return {
+        ...mapFileRecord(uploadRes.file, baseUrl),
+        ...mapSignedReadAccess(uploadRes.signedReadUrl),
+        pathOrder,
+      } as UploadFileRes<TBucket>;
+    },
+
+    async getFile(ref: FileReference) {
+      const file = await provider.getFile({ file: ref });
+      return mapFileRecord(file, baseUrl) as GetFileRes<TBucket>;
+    },
+
+    async confirmUpload(ref: FileReference) {
+      return requireMutationSuccess(
+        await provider.confirmFiles({ files: [ref] }),
+      );
+    },
+
+    async confirmUploads({ refs }: { refs: FileReference[] }) {
+      return mapMutationResult(await provider.confirmFiles({ files: refs }));
+    },
+
+    async deleteFile(ref: FileReference) {
+      return requireMutationSuccess(
+        await provider.deleteFiles({ files: [ref] }),
+      );
+    },
+
+    async deleteFiles({ refs }: { refs: FileReference[] }) {
+      return mapMutationResult(await provider.deleteFiles({ files: refs }));
+    },
+
+    async restoreFile(ref: FileReference) {
+      return requireMutationSuccess(
+        await provider.restoreFiles({ files: [ref] }),
+      );
+    },
+
+    async restoreFiles({ refs }: { refs: FileReference[] }) {
+      return mapMutationResult(await provider.restoreFiles({ files: refs }));
+    },
+
+    async listFiles(params?: ListFilesRequest<TBucket>) {
+      const result = await provider.listFiles({
+        bucketName,
+        filter: serializeFilter(params?.filter),
+        cursor: params?.cursor,
+        limit: params?.limit,
+      });
+      return {
+        ...result,
+        items: result.items.map((file) =>
+          mapFileRecord(file, baseUrl),
+        ) as ListFilesResponse<TBucket>['items'],
+      };
+    },
+
+    async *listAllFiles(params?: ListAllFilesRequest<TBucket>) {
+      let cursor: string | undefined;
+      do {
+        const page = await bucketClient.listFiles({
+          filter: params?.filter,
+          cursor,
+          limit: params?.limit,
+        });
+        for (const file of page.items) yield file;
+        cursor = page.nextCursor ?? undefined;
+      } while (cursor);
+    },
+
+    async getSignedUrl(params: { url: string; expiresIn?: number }) {
+      const [signedUrl] = await provider.getSignedUrls({
+        bucketName,
+        urls: [params.url],
+        expiresIn: params.expiresIn,
+      });
+      if (!signedUrl) {
+        throw new Error('Missing signed URL response');
+      }
+      return {
+        ...signedUrl,
+        expiresAt: new Date(signedUrl.expiresAt),
+      };
+    },
+
+    async getSignedUrls(params: {
+      urls: string[];
+      expiresIn?: number;
+      includeThumbnails?: boolean;
+    }) {
+      const signedUrls = await provider.getSignedUrls({
+        bucketName,
+        urls: params.urls,
+        expiresIn: params.expiresIn,
+        includeThumbnails: params.includeThumbnails,
+      });
+      return signedUrls.map((signedUrl) => ({
+        ...signedUrl,
+        expiresAt: new Date(signedUrl.expiresAt),
+      }));
+    },
+  };
+
+  return bucketClient as BucketClient<TBucket>;
 }
 
 /**
@@ -581,7 +564,7 @@ function getUrl(url: string, baseUrl?: string) {
   if (isDev() && !url.includes('/_public/')) {
     if (!baseUrl) {
       throw new Error(
-        'Missing baseUrl. You need to pass the baseUrl to `createEdgeStoreClient` to get protected files in development.',
+        'Missing baseUrl. Pass the baseUrl to `createEdgeStore` to get protected files in development.',
       );
     }
     const proxyUrl = new URL(baseUrl);
@@ -651,19 +634,10 @@ function serializeStringComparisons(
   );
 }
 
-function unsupportedProviderOperation(
-  provider: Pick<BackendClientProvider, 'name'>,
-  operation: string,
-) {
-  return new Error(
-    `Provider "${provider.name}" does not support ${operation}.`,
-  );
-}
-
 function mapSignedReadAccess(
   signedReadUrl:
     | Awaited<
-        ReturnType<BackendClientProvider['backend']['upload']>
+        ReturnType<BackendCapableEdgeStoreProvider['upload']>
       >['signedReadUrl']
     | undefined,
 ) {

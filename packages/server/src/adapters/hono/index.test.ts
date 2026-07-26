@@ -30,8 +30,7 @@ describe('Hono adapter conformance', () => {
     const provider = createConformanceProvider();
     const router = createConformanceRouter();
     const handler = createEdgeStoreHonoHandler({
-      provider,
-      router,
+      edgeStore: { provider, router },
       cookieConfig: testCookieConfig,
       createContext,
     });

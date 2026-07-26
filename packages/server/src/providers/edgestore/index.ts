@@ -5,9 +5,9 @@ import {
 } from '@edgestore/sdk';
 import {
   EdgeStoreError,
-  type BackendClientProvider,
-  type Provider,
-  type ProviderBackend,
+  type BackendCapableEdgeStoreProvider,
+  type BackendProviderOperations,
+  type EdgeStoreProvider,
   type ProviderFile,
   type RequestUploadRes,
 } from '@edgestore/shared';
@@ -37,7 +37,7 @@ export type EdgeStoreProviderOptions = {
 
 export function edgestore(
   options?: EdgeStoreProviderOptions,
-): BackendClientProvider {
+): BackendCapableEdgeStoreProvider {
   const {
     accessKey = getEnv('EDGE_STORE_ACCESS_KEY') ??
       // @ts-expect-error - In Vite/Astro, the env variables are available on `import.meta`.
@@ -58,7 +58,8 @@ export function edgestore(
     baseUrl: options?.apiUrl ?? getApiUrl(),
   });
 
-  const backend: ProviderBackend = {
+  const backend: BackendProviderOperations = {
+    supportsBackendClient: true,
     upload: async ({
       bucketName,
       bucketType,
@@ -106,6 +107,18 @@ export function edgestore(
       await sdk.runtime.files.deleteMany({ files }),
     restoreFiles: async ({ files }) =>
       await sdk.runtime.files.restoreMany({ files }),
+    getSignedUrls: async (params) => {
+      const { signedUrls } = await sdk.runtime.files.createSignedUrls({
+        bucket: params.bucketName,
+        urls: params.urls,
+        expiresIn: params.expiresIn,
+        includeThumbnails: params.includeThumbnails,
+      });
+      return signedUrls.map((item) => ({
+        ...item,
+        expiresAt: new Date(item.expiresAt),
+      }));
+    },
   };
 
   return {
@@ -144,7 +157,7 @@ export function edgestore(
     getBaseUrl() {
       return baseUrl;
     },
-    getFile: async ({ url }) => {
+    getFileInfo: async ({ url }) => {
       const file = await backend.getFile({ file: { url } });
       return {
         url: file.url,
@@ -203,19 +216,7 @@ export function edgestore(
         },
       };
     },
-    getSignedUrls: async (params) => {
-      const { signedUrls } = await sdk.runtime.files.createSignedUrls({
-        bucket: params.bucketName,
-        urls: params.urls,
-        expiresIn: params.expiresIn,
-        includeThumbnails: params.includeThumbnails,
-      });
-      return signedUrls.map((item) => ({
-        ...item,
-        expiresAt: new Date(item.expiresAt),
-      }));
-    },
-    listFiles: async ({ bucketName, ...params }) => {
+    listAdapterFiles: async ({ bucketName, ...params }) => {
       const { files, pagination } = await sdk.runtime.files.search({
         bucket: bucketName,
         ...params,
@@ -247,7 +248,7 @@ export function edgestore(
       await sdk.runtime.files.delete({ file: { url } });
       return { success: true };
     },
-    backend,
+    ...backend,
   };
 }
 
@@ -270,8 +271,10 @@ function normalizeMetadata(
 
 function mapUploadRequest(
   bucketType: string,
-  fileInfo: Parameters<Provider['requestUpload']>[0]['fileInfo'],
-  signedReadUrl: Parameters<Provider['requestUpload']>[0]['autoSignedUrls'],
+  fileInfo: Parameters<EdgeStoreProvider['requestUpload']>[0]['fileInfo'],
+  signedReadUrl: Parameters<
+    EdgeStoreProvider['requestUpload']
+  >[0]['autoSignedUrls'],
 ) {
   return {
     bucketType: bucketType.toLowerCase() as 'file' | 'image',

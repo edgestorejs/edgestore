@@ -2,14 +2,11 @@ import {
   EDGE_STORE_ERROR_CODES,
   EdgeStoreError,
   type EdgeStoreErrorCodeKey,
-  type EdgeStoreRouter,
   type MaybePromise,
-  type Provider,
 } from '@edgestore/shared';
 import type { APIContext } from 'astro';
 import Logger, { type LogLevel } from '../../libs/logger';
 import { matchPath } from '../../libs/utils';
-import { edgestore } from '../../providers/edgestore';
 import {
   completeMultipartUpload,
   confirmUpload,
@@ -23,20 +20,19 @@ import {
   type ConfirmUploadBody,
   type CookieConfig,
   type DeleteFileBody,
+  type HandlerEdgeStore,
   type RequestUploadBody,
   type RequestUploadPartsParams,
 } from '../shared';
 
 export type Config<TCtx> = {
-  provider?: Provider;
-  router: EdgeStoreRouter<TCtx>;
+  edgeStore: HandlerEdgeStore<TCtx>;
   logLevel?: LogLevel;
   cookieConfig?: CookieConfig;
 } & (TCtx extends Record<string, never>
   ? object
   : {
-      provider?: Provider;
-      router: EdgeStoreRouter<TCtx>;
+      edgeStore: HandlerEdgeStore<TCtx>;
       createContext: (opts: APIContext) => MaybePromise<TCtx>;
       cookieConfig?: CookieConfig;
     });
@@ -62,7 +58,8 @@ function getCookie(request: Request, name: string): string | undefined {
 }
 
 export function createEdgeStoreAstroHandler<TCtx>(config: Config<TCtx>) {
-  const { provider = edgestore(), cookieConfig } = config;
+  const { provider, router } = config.edgeStore;
+  const { cookieConfig } = config;
   const log = new Logger(config.logLevel);
   globalThis._EDGE_STORE_LOGGER = log;
   log.debug('Creating EdgeStore Astro handler');
@@ -93,7 +90,7 @@ export function createEdgeStoreAstroHandler<TCtx>(config: Config<TCtx>) {
         const { newCookies, ...body } = await init({
           ctx,
           provider,
-          router: config.router,
+          router,
           cookieConfig,
         });
 
@@ -114,7 +111,7 @@ export function createEdgeStoreAstroHandler<TCtx>(config: Config<TCtx>) {
         const body = (await request.json()) as RequestUploadBody;
         const result = await requestUpload({
           provider,
-          router: config.router,
+          router,
           body,
           ctxToken: getCookie(request, resolvedCookieConfig.ctx.name),
         });
@@ -126,7 +123,7 @@ export function createEdgeStoreAstroHandler<TCtx>(config: Config<TCtx>) {
         const body = (await request.json()) as RequestUploadPartsParams;
         const result = await requestUploadParts({
           provider,
-          router: config.router,
+          router,
           body,
           ctxToken: getCookie(request, resolvedCookieConfig.ctx.name),
         });
@@ -138,7 +135,7 @@ export function createEdgeStoreAstroHandler<TCtx>(config: Config<TCtx>) {
         const body = (await request.json()) as CompleteMultipartUploadBody;
         await completeMultipartUpload({
           provider,
-          router: config.router,
+          router,
           body,
           ctxToken: getCookie(request, resolvedCookieConfig.ctx.name),
         });
@@ -148,7 +145,7 @@ export function createEdgeStoreAstroHandler<TCtx>(config: Config<TCtx>) {
         const body = (await request.json()) as ConfirmUploadBody;
         const result = await confirmUpload({
           provider,
-          router: config.router,
+          router,
           body,
           ctxToken: getCookie(request, resolvedCookieConfig.ctx.name),
         });
@@ -160,7 +157,7 @@ export function createEdgeStoreAstroHandler<TCtx>(config: Config<TCtx>) {
         const body = (await request.json()) as DeleteFileBody;
         const result = await deleteFile({
           provider,
-          router: config.router,
+          router,
           body,
           ctxToken: getCookie(request, resolvedCookieConfig.ctx.name),
         });

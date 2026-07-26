@@ -96,20 +96,20 @@
       "import": "./dist/core/index.js",
       "default": "./dist/core/index.js"
     },
-    "./providers/aws": {
-      "types": "./dist/providers/aws/index.d.ts",
-      "import": "./dist/providers/aws/index.js",
-      "default": "./dist/providers/aws/index.js"
-    },
-    "./providers/azure": {
-      "types": "./dist/providers/azure/index.d.ts",
-      "import": "./dist/providers/azure/index.js",
-      "default": "./dist/providers/azure/index.js"
+    "./providers/azure-blob": {
+      "types": "./dist/providers/azure-blob/index.d.ts",
+      "import": "./dist/providers/azure-blob/index.js",
+      "default": "./dist/providers/azure-blob/index.js"
     },
     "./providers/edgestore": {
       "types": "./dist/providers/edgestore/index.d.ts",
       "import": "./dist/providers/edgestore/index.js",
       "default": "./dist/providers/edgestore/index.js"
+    },
+    "./providers/s3": {
+      "types": "./dist/providers/s3/index.d.ts",
+      "import": "./dist/providers/s3/index.js",
+      "default": "./dist/providers/s3/index.js"
     }
   },
   "files": [
@@ -127,6 +127,7 @@
   "dependencies": {
     "@edgestore/sdk": "0.7.0",
     "@edgestore/shared": "1.0.0-next.0",
+    "@standard-schema/spec": "^1.1.0",
     "@panva/hkdf": "^1.2.1",
     "cookie": "^2.0.1",
     "jose": "^6.2.3"

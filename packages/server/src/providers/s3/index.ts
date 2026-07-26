@@ -7,7 +7,7 @@ import {
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import {
-  type Provider as EdgeStoreProvider,
+  type EdgeStoreProvider,
   type MaybePromise,
   type RequestUploadParams,
 } from '@edgestore/shared';
@@ -16,7 +16,7 @@ import { getEnv } from '../../adapters/shared';
 // FileInfo type as received by the provider's requestUpload, part of RequestUploadParams
 type ProviderUploadedFileInfo = RequestUploadParams['fileInfo'];
 
-export type AWSOverwritePathFnArgs = {
+export type S3OverwritePathFnArgs = {
   /* EdgeStore bucket name */
   esBucketName: string;
   /* File info after path generation and metadata by EdgeStore */
@@ -25,11 +25,11 @@ export type AWSOverwritePathFnArgs = {
   defaultAccessPath: string;
 };
 
-export type AWSOverwritePathFn = (
-  args: AWSOverwritePathFnArgs,
+export type S3OverwritePathFn = (
+  args: S3OverwritePathFnArgs,
 ) => MaybePromise<string>;
 
-export type AWSProviderOptions = {
+export type S3ProviderOptions = {
   /**
    * AWS SDK credentials (or credentials provider) to use for S3 requests.
    *
@@ -95,10 +95,10 @@ export type AWSProviderOptions = {
    * This function receives the EdgeStore bucket name, fileInfo and the default S3 key
    * and should return the desired S3 key string.
    */
-  overwritePath?: AWSOverwritePathFn;
+  overwritePath?: S3OverwritePathFn;
 };
 
-export function AWSProvider(options?: AWSProviderOptions): EdgeStoreProvider {
+export function s3(options?: S3ProviderOptions): EdgeStoreProvider {
   const {
     credentials: credentialsFromOptions,
     accessKeyId = getEnv('ES_AWS_ACCESS_KEY_ID'),
@@ -133,14 +133,14 @@ export function AWSProvider(options?: AWSProviderOptions): EdgeStoreProvider {
   });
 
   return {
-    name: 'aws',
+    name: 's3',
     async init() {
       return {};
     },
     getBaseUrl() {
       return baseUrl;
     },
-    async getFile({ url }) {
+    async getFileInfo({ url }) {
       const path = url.replace(`${baseUrl}/`, '');
       const { ContentLength, LastModified } = await s3Client.send(
         new HeadObjectCommand({
@@ -166,7 +166,7 @@ export function AWSProvider(options?: AWSProviderOptions): EdgeStoreProvider {
 
       if (!bucketName) {
         throw new Error(
-          'S3 bucketName is not configured in AWSProviderOptions.',
+          'S3 bucketName is not configured in S3ProviderOptions.',
         );
       }
 
@@ -221,7 +221,7 @@ export function AWSProvider(options?: AWSProviderOptions): EdgeStoreProvider {
     async deleteFile({ url }) {
       if (!bucketName) {
         throw new Error(
-          'S3 bucketName is not configured in AWSProviderOptions for deleteFile.',
+          'S3 bucketName is not configured in S3ProviderOptions for deleteFile.',
         );
       }
       const path = url.replace(`${baseUrl}/`, '');
