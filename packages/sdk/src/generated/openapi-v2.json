@@ -15463,6 +15463,13 @@
                       }
                     ],
                     "description": "A file reference using exactly one supported identifier."
+                  },
+                  "bucketName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 255,
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
+                    "description": "Optional bucket the resolved file must belong to."
                   }
                 },
                 "required": [
@@ -16009,6 +16016,13 @@
                       "description": "A file reference using exactly one supported identifier."
                     },
                     "description": "Files to process."
+                  },
+                  "bucketName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 255,
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
+                    "description": "Optional bucket every processed file must belong to."
                   }
                 },
                 "required": [
@@ -16422,6 +16436,13 @@
                       "description": "A file reference using exactly one supported identifier."
                     },
                     "description": "Files to process."
+                  },
+                  "bucketName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 255,
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
+                    "description": "Optional bucket every processed file must belong to."
                   }
                 },
                 "required": [
@@ -16835,6 +16856,13 @@
                       "description": "A file reference using exactly one supported identifier."
                     },
                     "description": "Files to process."
+                  },
+                  "bucketName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 255,
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
+                    "description": "Optional bucket every processed file must belong to."
                   }
                 },
                 "required": [

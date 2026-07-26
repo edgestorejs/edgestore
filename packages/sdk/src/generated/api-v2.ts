@@ -7819,6 +7819,8 @@ export interface operations {
                         /** @description Canonical file URL. */
                         readonly url: string;
                     };
+                    /** @description Optional bucket the resolved file must belong to. */
+                    readonly bucketName?: string;
                 };
             };
         };
@@ -8046,6 +8048,8 @@ export interface operations {
                         /** @description Canonical file URL. */
                         readonly url: string;
                     })[];
+                    /** @description Optional bucket every processed file must belong to. */
+                    readonly bucketName?: string;
                 };
             };
         };
@@ -8208,6 +8212,8 @@ export interface operations {
                         /** @description Canonical file URL. */
                         readonly url: string;
                     })[];
+                    /** @description Optional bucket every processed file must belong to. */
+                    readonly bucketName?: string;
                 };
             };
         };
@@ -8370,6 +8376,8 @@ export interface operations {
                         /** @description Canonical file URL. */
                         readonly url: string;
                     })[];
+                    /** @description Optional bucket every processed file must belong to. */
+                    readonly bucketName?: string;
                 };
             };
         };
