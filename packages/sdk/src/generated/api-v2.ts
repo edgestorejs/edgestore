@@ -551,7 +551,7 @@ export type paths = {
         put?: never;
         /**
          * Create an account invitation
-         * @description Creates a team invitation and queues its email for durable delivery. Reusing an idempotency key returns the original invitation.
+         * @description Creates or updates a pending team invitation and sends its invitation email.
          */
         post: operations["v2.management.invitations.create"];
         delete?: never;
@@ -1214,27 +1214,6 @@ export type components = {
                 /**
                  * @description Human-readable explanation of the error.
                  * @default The upload has already completed
-                 */
-                message: string;
-                /**
-                 * @description HTTP status code returned with the error.
-                 * @constant
-                 */
-                status: 409;
-            };
-        };
-        /** @description The idempotency key was already used with a different request */
-        IdempotencyConflictError: {
-            /** @description A structured EdgeStore API error. */
-            error: {
-                /**
-                 * @description Stable machine-readable error code.
-                 * @constant
-                 */
-                code: "idempotency_conflict";
-                /**
-                 * @description Human-readable explanation of the error.
-                 * @default The idempotency key was already used with a different request
                  */
                 message: string;
                 /**
@@ -2476,9 +2455,7 @@ export interface operations {
     "v2.management.projects.create": {
         parameters: {
             query?: never;
-            header?: {
-                "idempotency-key"?: string;
-            };
+            header?: never;
             path: {
                 accountId: string;
             };
@@ -2606,7 +2583,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProjectLimitReachedError"] | components["schemas"]["IdempotencyConflictError"];
+                    "application/json": components["schemas"]["ProjectLimitReachedError"];
                 };
             };
             /** @description 413 */
@@ -2922,9 +2899,7 @@ export interface operations {
     "v2.management.buckets.create": {
         parameters: {
             query?: never;
-            header?: {
-                "idempotency-key"?: string;
-            };
+            header?: never;
             path: {
                 projectRef: string;
             };
@@ -3018,7 +2993,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["BucketAlreadyExistsError"] | components["schemas"]["IdempotencyConflictError"];
+                    "application/json": components["schemas"]["BucketAlreadyExistsError"];
                 };
             };
             /** @description 413 */
@@ -4345,9 +4320,7 @@ export interface operations {
     "v2.management.uploads.request": {
         parameters: {
             query?: never;
-            header?: {
-                "idempotency-key"?: string;
-            };
+            header?: never;
             path: {
                 projectRef: string;
                 bucketName: string;
@@ -4424,13 +4397,13 @@ export interface operations {
                                 sizeBytes: number;
                                 /** @description Resolved file media type. */
                                 mimeType: string | null;
+                                /** @description Whether the file requires confirmation. */
+                                temporary: boolean;
                                 /**
                                  * @description Initial file lifecycle state.
                                  * @constant
                                  */
                                 state: "requested";
-                                /** @description Whether the file requires confirmation. */
-                                temporary: boolean;
                             };
                             upload: {
                                 /** @constant */
@@ -4508,7 +4481,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProjectNotFoundError"] | components["schemas"]["BucketNotFoundError"];
+                    "application/json": components["schemas"]["ProjectNotFoundError"] | components["schemas"]["BucketNotFoundError"] | components["schemas"]["UploadNotFoundError"];
                 };
             };
             /** @description 409 */
@@ -4518,7 +4491,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["BucketEmptyInProgressError"] | components["schemas"]["IdempotencyConflictError"];
+                    "application/json": components["schemas"]["BucketEmptyInProgressError"];
                 };
             };
             /** @description 413 */
@@ -5124,9 +5097,7 @@ export interface operations {
     "v2.management.projectKeys.create": {
         parameters: {
             query?: never;
-            header?: {
-                "idempotency-key"?: string;
-            };
+            header?: never;
             path: {
                 projectRef: string;
             };
@@ -5214,16 +5185,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProjectNotFoundError"];
-                };
-            };
-            /** @description 409 */
-            409: {
-                headers: {
-                    "x-request-id": components["headers"]["RequestId"];
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["IdempotencyConflictError"];
                 };
             };
             /** @description 413 */
@@ -5803,9 +5764,7 @@ export interface operations {
     "v2.management.invitations.create": {
         parameters: {
             query?: never;
-            header?: {
-                "idempotency-key"?: string;
-            };
+            header?: never;
             path: {
                 accountId: string;
             };
@@ -5920,7 +5879,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["UserAlreadyMemberError"] | components["schemas"]["MemberLimitReachedError"] | components["schemas"]["IdempotencyConflictError"];
+                    "application/json": components["schemas"]["UserAlreadyMemberError"] | components["schemas"]["MemberLimitReachedError"];
                 };
             };
             /** @description 413 */
@@ -6288,9 +6247,7 @@ export interface operations {
     "v2.management.tokens.createAccount": {
         parameters: {
             query?: never;
-            header?: {
-                "idempotency-key"?: string;
-            };
+            header?: never;
             path: {
                 accountId: string;
             };
@@ -6398,16 +6355,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AccountNotFoundError"];
-                };
-            };
-            /** @description 409 */
-            409: {
-                headers: {
-                    "x-request-id": components["headers"]["RequestId"];
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["IdempotencyConflictError"];
                 };
             };
             /** @description 413 */
@@ -6542,9 +6489,7 @@ export interface operations {
     "v2.management.tokens.createUser": {
         parameters: {
             query?: never;
-            header?: {
-                "idempotency-key"?: string;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -6640,16 +6585,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
-                };
-            };
-            /** @description 409 */
-            409: {
-                headers: {
-                    "x-request-id": components["headers"]["RequestId"];
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["IdempotencyConflictError"];
                 };
             };
             /** @description 413 */
@@ -8577,9 +8512,7 @@ export interface operations {
     "v2.runtime.uploads.request": {
         parameters: {
             query?: never;
-            header?: {
-                "idempotency-key"?: string;
-            };
+            header?: never;
             path: {
                 projectRef: string;
                 bucketName: string;
@@ -8637,7 +8570,7 @@ export interface operations {
                     };
                     /** @description Multipart upload configuration. Omit for a single upload. */
                     multipart?: {
-                        /** @description Multipart part numbers to sign. */
+                        /** @description Unique multipart part numbers to create signed URLs for. */
                         partNumbers: number[];
                     };
                     /** @description Request a signed read URL together with the upload. */
@@ -8686,13 +8619,13 @@ export interface operations {
                                 sizeBytes: number;
                                 /** @description Resolved file media type. */
                                 mimeType: string | null;
+                                /** @description Whether the file requires confirmation. */
+                                temporary: boolean;
                                 /**
                                  * @description Initial file lifecycle state.
                                  * @enum {string}
                                  */
                                 state: "requested" | "replace_requested";
-                                /** @description Whether the file requires confirmation. */
-                                temporary: boolean;
                             };
                             upload: {
                                 /** @constant */
@@ -8770,7 +8703,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProjectNotFoundError"];
+                    "application/json": components["schemas"]["ProjectNotFoundError"] | components["schemas"]["UploadNotFoundError"];
                 };
             };
             /** @description 409 */
@@ -8780,7 +8713,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["BucketEmptyInProgressError"] | components["schemas"]["IdempotencyConflictError"];
+                    "application/json": components["schemas"]["BucketEmptyInProgressError"];
                 };
             };
             /** @description 413 */
@@ -9057,7 +8990,7 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
-                    /** @description Multipart part numbers to create signed URLs for. */
+                    /** @description Unique multipart part numbers to create signed URLs for. */
                     partNumbers: number[];
                 };
             };

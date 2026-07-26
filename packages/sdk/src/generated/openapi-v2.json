@@ -566,41 +566,6 @@
         ],
         "additionalProperties": false
       },
-      "IdempotencyConflictError": {
-        "type": "object",
-        "description": "The idempotency key was already used with a different request",
-        "properties": {
-          "error": {
-            "type": "object",
-            "description": "A structured EdgeStore API error.",
-            "properties": {
-              "code": {
-                "const": "idempotency_conflict",
-                "description": "Stable machine-readable error code."
-              },
-              "message": {
-                "type": "string",
-                "default": "The idempotency key was already used with a different request",
-                "description": "Human-readable explanation of the error."
-              },
-              "status": {
-                "const": 409,
-                "description": "HTTP status code returned with the error."
-              }
-            },
-            "required": [
-              "code",
-              "message",
-              "status"
-            ],
-            "additionalProperties": false
-          }
-        },
-        "required": [
-          "error"
-        ],
-        "additionalProperties": false
-      },
       "MemberNotFoundError": {
         "type": "object",
         "description": "Member not found",
@@ -3048,16 +3013,6 @@
               "minLength": 1,
               "description": "Unique account ID."
             }
-          },
-          {
-            "name": "idempotency-key",
-            "in": "header",
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 255,
-              "description": "Makes creation retry-safe for 24 hours. Reusing a key with different input returns a conflict."
-            }
           }
         ],
         "requestBody": {
@@ -3320,14 +3275,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": [
-                    {
-                      "$ref": "#/components/schemas/ProjectLimitReachedError"
-                    },
-                    {
-                      "$ref": "#/components/schemas/IdempotencyConflictError"
-                    }
-                  ]
+                  "$ref": "#/components/schemas/ProjectLimitReachedError"
                 }
               }
             },
@@ -3942,16 +3890,6 @@
               "maxLength": 100,
               "description": "A project ID or globally unique base path."
             }
-          },
-          {
-            "name": "idempotency-key",
-            "in": "header",
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 255,
-              "description": "Makes creation retry-safe for 24 hours. Reusing a key with different input returns a conflict."
-            }
           }
         ],
         "requestBody": {
@@ -4134,14 +4072,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": [
-                    {
-                      "$ref": "#/components/schemas/BucketAlreadyExistsError"
-                    },
-                    {
-                      "$ref": "#/components/schemas/IdempotencyConflictError"
-                    }
-                  ]
+                  "$ref": "#/components/schemas/BucketAlreadyExistsError"
                 }
               }
             },
@@ -7454,16 +7385,6 @@
               "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
               "description": "Bucket name. Starts with an alphanumeric character and may contain letters, numbers, underscores, and hyphens."
             }
-          },
-          {
-            "name": "idempotency-key",
-            "in": "header",
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 255,
-              "description": "Makes creation retry-safe for 24 hours. Reusing a key with different input returns a conflict."
-            }
           }
         ],
         "requestBody": {
@@ -7536,6 +7457,7 @@
                     "required": [
                       "partNumbers"
                     ],
+                    "additionalProperties": false,
                     "description": "Multipart upload configuration. Omit for a single upload."
                   },
                   "signedReadUrl": {
@@ -7552,6 +7474,7 @@
                         "description": "Whether to also sign the thumbnail URL when available."
                       }
                     },
+                    "additionalProperties": false,
                     "description": "Request a signed read URL together with the upload."
                   }
                 },
@@ -7648,13 +7571,13 @@
                               ],
                               "description": "Resolved file media type."
                             },
-                            "state": {
-                              "const": "requested",
-                              "description": "Initial file lifecycle state."
-                            },
                             "temporary": {
                               "type": "boolean",
                               "description": "Whether the file requires confirmation."
+                            },
+                            "state": {
+                              "const": "requested",
+                              "description": "Initial file lifecycle state."
                             }
                           },
                           "required": [
@@ -7670,8 +7593,8 @@
                             "name",
                             "sizeBytes",
                             "mimeType",
-                            "state",
-                            "temporary"
+                            "temporary",
+                            "state"
                           ]
                         },
                         "upload": {
@@ -7887,6 +7810,9 @@
                     },
                     {
                       "$ref": "#/components/schemas/BucketNotFoundError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/UploadNotFoundError"
                     }
                   ]
                 }
@@ -7903,14 +7829,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": [
-                    {
-                      "$ref": "#/components/schemas/BucketEmptyInProgressError"
-                    },
-                    {
-                      "$ref": "#/components/schemas/IdempotencyConflictError"
-                    }
-                  ]
+                  "$ref": "#/components/schemas/BucketEmptyInProgressError"
                 }
               }
             },
@@ -9210,16 +9129,6 @@
               "maxLength": 100,
               "description": "A project ID or globally unique base path."
             }
-          },
-          {
-            "name": "idempotency-key",
-            "in": "header",
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 255,
-              "description": "Makes creation retry-safe for 24 hours. Reusing a key with different input returns a conflict."
-            }
           }
         ],
         "requestBody": {
@@ -9399,21 +9308,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProjectNotFoundError"
-                }
-              }
-            },
-            "headers": {
-              "x-request-id": {
-                "$ref": "#/components/headers/RequestId"
-              }
-            }
-          },
-          "409": {
-            "description": "409",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/IdempotencyConflictError"
                 }
               }
             },
@@ -10634,7 +10528,7 @@
       "post": {
         "operationId": "v2.management.invitations.create",
         "summary": "Create an account invitation",
-        "description": "Creates a team invitation and queues its email for durable delivery. Reusing an idempotency key returns the original invitation.",
+        "description": "Creates or updates a pending team invitation and sends its invitation email.",
         "tags": [
           "management",
           "members"
@@ -10649,16 +10543,6 @@
               "minLength": 1,
               "maxLength": 100,
               "description": "Unique account ID."
-            }
-          },
-          {
-            "name": "idempotency-key",
-            "in": "header",
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 255,
-              "description": "Makes creation retry-safe for 24 hours. Reusing a key with different input returns a conflict."
             }
           }
         ],
@@ -10876,9 +10760,6 @@
                     },
                     {
                       "$ref": "#/components/schemas/MemberLimitReachedError"
-                    },
-                    {
-                      "$ref": "#/components/schemas/IdempotencyConflictError"
                     }
                   ]
                 }
@@ -11726,16 +11607,6 @@
               "maxLength": 100,
               "description": "Unique account ID."
             }
-          },
-          {
-            "name": "idempotency-key",
-            "in": "header",
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 255,
-              "description": "Makes creation retry-safe for 24 hours. Reusing a key with different input returns a conflict."
-            }
           }
         ],
         "requestBody": {
@@ -12037,21 +11908,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AccountNotFoundError"
-                }
-              }
-            },
-            "headers": {
-              "x-request-id": {
-                "$ref": "#/components/headers/RequestId"
-              }
-            }
-          },
-          "409": {
-            "description": "409",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/IdempotencyConflictError"
                 }
               }
             },
@@ -12402,18 +12258,6 @@
           "management",
           "tokens"
         ],
-        "parameters": [
-          {
-            "name": "idempotency-key",
-            "in": "header",
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 255,
-              "description": "Makes creation retry-safe for 24 hours. Reusing a key with different input returns a conflict."
-            }
-          }
-        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -12698,21 +12542,6 @@
                       "$ref": "#/components/schemas/MissingScopeError"
                     }
                   ]
-                }
-              }
-            },
-            "headers": {
-              "x-request-id": {
-                "$ref": "#/components/headers/RequestId"
-              }
-            }
-          },
-          "409": {
-            "description": "409",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/IdempotencyConflictError"
                 }
               }
             },
@@ -17374,16 +17203,6 @@
               "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
               "description": "Bucket name. Starts with an alphanumeric character and may contain letters, numbers, underscores, and hyphens."
             }
-          },
-          {
-            "name": "idempotency-key",
-            "in": "header",
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 255,
-              "description": "Makes creation retry-safe for 24 hours. Reusing a key with different input returns a conflict."
-            }
           }
         ],
         "requestBody": {
@@ -17536,12 +17355,13 @@
                           "maximum": 9007199254740991,
                           "description": "One-based multipart part number."
                         },
-                        "description": "Multipart part numbers to sign."
+                        "description": "Unique multipart part numbers to create signed URLs for."
                       }
                     },
                     "required": [
                       "partNumbers"
                     ],
+                    "additionalProperties": false,
                     "description": "Multipart upload configuration. Omit for a single upload."
                   },
                   "signedReadUrl": {
@@ -17558,13 +17378,15 @@
                         "description": "Whether to also sign the thumbnail URL when available."
                       }
                     },
+                    "additionalProperties": false,
                     "description": "Request a signed read URL together with the upload."
                   }
                 },
                 "required": [
                   "bucketType",
                   "sizeBytes"
-                ]
+                ],
+                "additionalProperties": false
               }
             }
           }
@@ -17654,6 +17476,10 @@
                               ],
                               "description": "Resolved file media type."
                             },
+                            "temporary": {
+                              "type": "boolean",
+                              "description": "Whether the file requires confirmation."
+                            },
                             "state": {
                               "enum": [
                                 "requested",
@@ -17661,10 +17487,6 @@
                               ],
                               "type": "string",
                               "description": "Initial file lifecycle state."
-                            },
-                            "temporary": {
-                              "type": "boolean",
-                              "description": "Whether the file requires confirmation."
                             }
                           },
                           "required": [
@@ -17680,8 +17502,8 @@
                             "name",
                             "sizeBytes",
                             "mimeType",
-                            "state",
-                            "temporary"
+                            "temporary",
+                            "state"
                           ]
                         },
                         "upload": {
@@ -17898,7 +17720,14 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProjectNotFoundError"
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/ProjectNotFoundError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/UploadNotFoundError"
+                    }
+                  ]
                 }
               }
             },
@@ -17913,14 +17742,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": [
-                    {
-                      "$ref": "#/components/schemas/BucketEmptyInProgressError"
-                    },
-                    {
-                      "$ref": "#/components/schemas/IdempotencyConflictError"
-                    }
-                  ]
+                  "$ref": "#/components/schemas/BucketEmptyInProgressError"
                 }
               }
             },
@@ -18527,12 +18349,13 @@
                       "maximum": 9007199254740991,
                       "description": "One-based multipart part number."
                     },
-                    "description": "Multipart part numbers to create signed URLs for."
+                    "description": "Unique multipart part numbers to create signed URLs for."
                   }
                 },
                 "required": [
                   "partNumbers"
-                ]
+                ],
+                "additionalProperties": false
               }
             }
           }
@@ -18774,6 +18597,8 @@
                 "properties": {
                   "parts": {
                     "type": "array",
+                    "minItems": 1,
+                    "maxItems": 10000,
                     "items": {
                       "type": "object",
                       "properties": {
@@ -18799,7 +18624,8 @@
                 },
                 "required": [
                   "parts"
-                ]
+                ],
+                "additionalProperties": false
               }
             }
           }
