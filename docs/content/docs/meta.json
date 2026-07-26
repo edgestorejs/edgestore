@@ -30,8 +30,8 @@
     "adapters/tanstack-start",
     "---Providers---",
     "providers/edgestore",
-    "providers/aws",
-    "providers/azure",
+    "providers/s3",
+    "providers/azure-blob",
     "providers/custom"
   ]
 }

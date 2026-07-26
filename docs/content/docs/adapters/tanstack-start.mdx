@@ -34,8 +34,9 @@ EDGE_STORE_SECRET_KEY=your-secret-key
 In your TanStack Start application, create an API route for EdgeStore with the following content:
 
 ```ts title="app/routes/api/edgestore.$.ts"
-import { initEdgeStore } from '@edgestore/server';
+import { createEdgeStore, initEdgeStore } from '@edgestore/server';
 import { createEdgeStoreStartHandler } from '@edgestore/server/adapters/start';
+import { edgestore } from '@edgestore/server/providers/edgestore';
 import { createAPIFileRoute } from '@tanstack/start/api';
 
 const es = initEdgeStore.create();
@@ -45,8 +46,13 @@ const edgeStoreRouter = es.router({
 
 export type EdgeStoreRouter = typeof edgeStoreRouter;
 
-const handler = createEdgeStoreStartHandler({
+const edgeStore = createEdgeStore({
   router: edgeStoreRouter,
+  provider: edgestore(),
+});
+
+const handler = createEdgeStoreStartHandler({
+  edgeStore,
 });
 
 export const APIRoute = createAPIFileRoute('/api/edgestore/$')({

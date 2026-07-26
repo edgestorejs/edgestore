@@ -7,25 +7,32 @@ Sometimes you might want to use the EdgeStore functionality directly from your b
 
 ## Setup
 
-You can use your EdgeStore router to initialize the backend client.
+Configure the router and hosted provider once. The resulting `edgeStore`
+instance is used by the HTTP handler and exposes the type-safe backend client.
 
 Since Next.js doesn't allow exports in the api route, you will need to move your router to an external file.
 
 ```ts title="src/lib/edgestore-server.ts"
-import { createEdgeStoreClient } from '@edgestore/server/core';
+import { createEdgeStore, initEdgeStore } from '@edgestore/server';
+import { createEdgeStoreNextHandler } from '@edgestore/server/adapters/next/app';
+import { edgestore } from '@edgestore/server/providers/edgestore';
 
-// ...
+const es = initEdgeStore.create();
+
+export const edgeStoreRouter = es.router({
+  publicFiles: es.fileBucket(),
+});
+
+export const edgeStore = createEdgeStore({
+  router: edgeStoreRouter,
+  provider: edgestore(),
+});
 
 export const handler = createEdgeStoreNextHandler({
-  router: edgeStoreRouter,
+  edgeStore,
 });
 
-// ...
-
-// [!code ++:3]
-export const backendClient = createEdgeStoreClient({
-  router: edgeStoreRouter,
-});
+export const backendClient = edgeStore.client;
 ```
 
 Then you will need to update your api route to use the exported handler.
@@ -48,6 +55,12 @@ export { handler as GET, handler as POST };
   `accessControl`, `beforeUpload`, or `beforeDelete`. Perform authorization in
   the server code that calls it.
 </Callout>
+
+The hosted `edgestore()` provider supports the complete backend client. S3
+currently exposes `get`, `delete`, and `deleteMany`. Azure Blob Storage also
+exposes `createSignedUrl` and `createSignedUrls` for private reads. Methods such
+as backend upload and listing remain absent from those clients until the
+provider implements them.
 
 ## Backend Upload
 
@@ -84,10 +97,12 @@ const res = await backendClient.publicFiles.upload({
     type: 'post',
   },
   signal,
-  onProgress: ({ percentage }) => {
-    console.log(`${percentage}%`);
+  onProgress: ({ percentage, phase }) => {
+    console.log(phase, `${percentage}%`);
   },
 });
+
+console.log(res.id, res.key, res.sizeBytes);
 ```
 
 ### Copy an existing file
@@ -139,35 +154,52 @@ const res = await backendClient.publicImages.upload({
 
 ### Confirm a temporary file upload
 
-If you upload a temporary file, you can confirm it by using the `confirmUpload` function.
+If you upload a temporary file, you can confirm it by using the `confirm` function.
 
 ```ts
-const res = await backendClient.publicFiles.confirmUpload({
-  url: fileUrl,
+const res = await backendClient.publicFiles.confirm({
+  id: file.id,
 });
+```
+
+File operations accept a stable file ID, storage key, or URL. Singular
+operations throw `EdgeStoreFileMutationError` when that file fails. Use the
+plural form when partial success should be preserved:
+
+```ts
+const result = await backendClient.publicFiles.confirmMany({
+  refs: [{ id: first.id }, { key: second.key }],
+});
+
+for (const failure of result.failed) {
+  console.error(failure.ref, failure.error.code);
+}
 ```
 
 ## Backend Delete
 
-You can use the `deleteFile` function to delete files from your backend.
+You can use the `delete` function to delete files from your backend.
 
 ```ts
-const res = await backendClient.publicFiles.deleteFile({
-  url: fileUrl,
+const res = await backendClient.publicFiles.delete({
+  id: file.id,
 });
 ```
 
+`deleteMany`, `restore`, and `restoreMany` use the same singular and
+partial-batch semantics.
+
 ## Backend List Files (search)
 
-You can use the `listFiles` function to list files from your backend. It's also possible to filter the results by path, metadata or upload timing.
+You can use the `list` function to list files from your backend. It's also possible to filter the results by path, metadata or upload timing.
 
 ```ts
 // simple usage
 // get the first 20 files in the bucket
-const res = await backendClient.publicFiles.listFiles();
+const res = await backendClient.publicFiles.list();
 
 // with filter and pagination
-const res = await backendClient.publicFiles.listFiles({
+const res = await backendClient.publicFiles.list({
   filter: {
     metadata: {
       role: 'admin',
@@ -179,22 +211,24 @@ const res = await backendClient.publicFiles.listFiles({
       gt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7), // past 7 days
     },
   },
-  pagination: {
-    cursor: 'cursor-from-previous-response',
-    limit: 50, // default: 20 (max: 100)
-  },
+  cursor: 'cursor-from-previous-response',
+  limit: 50, // default: 20 (max: 100)
 });
 
-if (res.pagination.hasMore) {
-  console.log('Next cursor:', res.pagination.nextCursor);
+for (const file of res.items) {
+  console.log(file.id, file.url);
+}
+
+if (res.hasMore) {
+  console.log('Next cursor:', res.nextCursor);
 }
 ```
 
-Use `listAllFiles` when you want to iterate through all matching pages without
+Use `listAll` when you want to iterate through all matching pages without
 managing cursors yourself:
 
 ```ts
-for await (const file of backendClient.publicFiles.listAllFiles({
+for await (const file of backendClient.publicFiles.listAll({
   filter: { metadata: { role: 'admin' } },
   limit: 50,
 })) {
@@ -202,28 +236,64 @@ for await (const file of backendClient.publicFiles.listAllFiles({
 }
 ```
 
-## TypeScript Helpers
+## Private read URLs
 
-Sometimes you might want to have the response type of the backend client functions, so you can use it to build your own functions. You can use the `InferClientResponse` helper type to infer the response type of the backend client.
-
-```ts title="src/lib/edgestore.ts"
-import { type InferClientResponse } from '@edgestore/server/core';
-
-// ...
-
-/**
- * This helper type can be used to infer the response type of the backend client
- */
-export type ClientResponse = InferClientResponse<EdgeStoreRouter>;
-```
-
-And you can use it like this:
+Providers with signed-read support expose `createSignedUrl` on protected
+buckets:
 
 ```ts
-export const getServerSideProps: GetServerSideProps<{
-  files: ClientResponse['publicFiles']['listFiles']['data'];
-}> = async () => {
-  const res = await backendClient.publicFiles.listFiles();
-  return { props: { files: res.data } };
-};
+const access = await backendClient.privateFiles.createSignedUrl({
+  url: { id: file.id },
+  expiresIn: 15 * 60,
+});
+
+console.log(access.signedUrl, access.expiresAt);
 ```
+
+Use `createSignedUrls` to sign several references in one provider call.
+
+## Reusing backend client types
+
+Derive a single method's exact input or output directly from the configured
+client:
+
+```ts
+type UploadInput = Parameters<
+  typeof edgeStore.client.publicFiles.upload
+>[0];
+
+type UploadOutput = Awaited<
+  ReturnType<typeof edgeStore.client.publicFiles.upload>
+>;
+```
+
+This includes the router's context, input, path, and metadata configuration and
+the provider's file and reference types.
+
+Use `InferClientInputs` and `InferClientOutputs` when you need a reusable map of
+every bucket and method:
+
+```ts title="src/lib/edgestore-server.ts"
+import type {
+  InferClientInputs,
+  InferClientOutputs,
+} from '@edgestore/server';
+
+export type BackendInputs = InferClientInputs<typeof edgeStoreRouter>;
+export type BackendOutputs = InferClientOutputs<typeof edgeStoreRouter>;
+
+type UploadInput = BackendInputs['publicFiles']['upload'];
+type UploadOutput = BackendOutputs['publicFiles']['upload'];
+```
+
+The default represents the hosted provider. Pass a custom provider as the
+second generic when its capabilities or associated types differ:
+
+```ts
+type BackendOutputs = InferClientOutputs<
+  typeof edgeStoreRouter,
+  typeof customProvider
+>;
+```
+
+`InferClientResponse` remains as a deprecated alias of `InferClientOutputs`.

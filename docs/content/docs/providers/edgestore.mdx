@@ -3,12 +3,11 @@ title: EdgeStore
 description: Learn about the EdgeStore provider and its configuration options for customizing your EdgeStore integration.
 ---
 
-You can optionally pass in a provider to the `createEdgeStoreNextHandler` function. This is useful if you want to use a different provider than the default one or if you want to pass some custom options to the provider.
-
-The EdgeStore Provider is the default provider. If you followed the documentation, you already have it configured in your app.
+The hosted `edgestore()` provider uses EdgeStore API v2. Configure it together
+with your router, then pass that configured instance to the HTTP adapter.
 
 ```ts
-import { initEdgeStore } from '@edgestore/server';
+import { createEdgeStore, initEdgeStore } from '@edgestore/server';
 import {
   createEdgeStoreNextHandler,
   type CreateContextOptions,
@@ -17,12 +16,14 @@ import {
 import { edgestore } from '@edgestore/server/providers/edgestore';
 import { z } from 'zod';
 
-// ...
+const edgeStore = createEdgeStore({
+  router: edgeStoreRouter,
+  // [!code ++]
+  provider: edgestore(),
+});
 
 export default createEdgeStoreNextHandler<Context>({
-  // [!code ++]
-  provider: edgestore(), // this is the default provider and can be omitted
-  router: edgeStoreRouter,
+  edgeStore,
   createContext,
 });
 ```

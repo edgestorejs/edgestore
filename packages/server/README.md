@@ -33,8 +33,9 @@ The example below is the simplest bucket you can create with EdgeStore. Just a s
 You can have multiple buckets in your app, each with its own configuration.
 
 ```ts title="src/app/api/edgestore/[...edgestore]/route.ts"
-import { initEdgeStore } from '@edgestore/server';
+import { createEdgeStore, initEdgeStore } from '@edgestore/server';
 import { createEdgeStoreNextHandler } from '@edgestore/server/adapters/next/app';
+import { edgestore } from '@edgestore/server/providers/edgestore';
 
 const es = initEdgeStore.create();
 
@@ -45,8 +46,13 @@ const router = es.router({
   publicFiles: es.fileBucket(),
 });
 
-const handler = createEdgeStoreNextHandler({
+const configuredEdgeStore = createEdgeStore({
   router,
+  provider: edgestore(),
+});
+
+const handler = createEdgeStoreNextHandler({
+  edgestore: configuredEdgeStore,
 });
 
 export { handler as GET, handler as POST };

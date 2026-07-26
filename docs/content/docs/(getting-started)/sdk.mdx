@@ -40,11 +40,34 @@ const file = await sdk.runtime.uploads.upload({
 });
 ```
 
-The upload helper selects single or multipart upload automatically, retries
-safe requests, reports progress, supports cancellation, and waits for upload
-processing to finish. You can also use `runtime.uploads.request`,
-`createParts`, and `completeMultipart` when you need to manage transfer details
-yourself.
+The upload helper selects single or multipart upload automatically, reports
+progress, supports cancellation, and waits for upload processing to finish.
+Upload creation is never retried because it is not idempotent. Signed storage
+transfers may be retried safely, and processing polls follow `Retry-After`. You
+can also use `runtime.uploads.request`, `createParts`, and `completeMultipart`
+when you need to manage transfer details yourself.
+
+Sources can be text, a `Blob`, an `ArrayBuffer` or typed-array view, or a
+known-size Web `ReadableStream`:
+
+```ts
+await sdk.runtime.uploads.upload({
+  bucket: 'archives',
+  source: { stream, sizeBytes },
+  fileName: 'archive.tar',
+});
+
+await sdk.runtime.uploads.uploadFromUrl({
+  bucket: 'imports',
+  url: 'https://example.com/report.csv',
+});
+```
+
+The defaults are a 100 MiB multipart threshold, 16 MiB parts, concurrency 4, a
+30-second control timeout, no transfer timeout, and a 60-second processing
+timeout. Configure upload defaults with the `upload` option on
+`createEdgeStoreSdk`; pass an `AbortSignal` for per-operation cancellation or
+deadlines.
 
 ## Runtime resources
 
@@ -65,12 +88,28 @@ if (page.pagination.hasMore) {
   });
 }
 
-await sdk.runtime.files.confirm({ files: [{ url: file.file.url }] });
-await sdk.runtime.files.delete({ files: [{ url: file.file.url }] });
+const { signedUrls } = await sdk.runtime.files.generateSignedReadUrls({
+  bucket: 'documents',
+  urls: page.files.map((file) => file.url),
+  expiresIn: 15 * 60,
+});
+
+await sdk.runtime.files.confirm({ file: { id: file.file.id } });
+await sdk.runtime.files.delete({ file: { key: file.file.key } });
+
+const batch = await sdk.runtime.files.deleteMany({
+  files: [{ id: file.file.id }, { url: legacyFileUrl }],
+});
+
+for (const result of batch.results) {
+  if (!result.success) console.error(result.fileRef, result.error.code);
+}
 ```
 
 Runtime resources also include projects, buckets, file lookup, signed read
-URLs, access tokens, upload inspection, cancellation, and restore operations.
+URLs, access tokens, upload inspection, cancellation, and singular or plural
+restore operations. Singular mutations throw `EdgeStoreFileMutationError` for
+an item failure; plural mutations return the complete partial result.
 
 ## Management client
 
@@ -91,7 +130,55 @@ const projects = await management.management.projects.list({
 const buckets = await management.runtime.buckets.list({
   project: projects.projects[0]!.id,
 });
+
+const { accessUrls } =
+  await management.management.files.generateAccessUrls({
+    project: projects.projects[0]!.id,
+    files: [{ id: 'file-id' }],
+    expiresIn: 15 * 60,
+  });
 ```
+
+## Reusing SDK types
+
+Common runtime workflows have named public input and result types:
+
+```ts
+import type {
+  RuntimeFileLookupInput,
+  RuntimeFileLookupResult,
+  RuntimeSignedReadUrlsGenerateInput,
+  RuntimeSignedReadUrlsGenerateResult,
+  RuntimeUploadInput,
+  RuntimeUploadResult,
+} from '@edgestore/sdk';
+```
+
+For any other operation, derive its friendly input and resolved output from the
+public SDK interface. This includes SDK selectors such as `account`, `project`,
+and `bucket`, plus `signal`.
+
+```ts
+import type { ManagementEdgeStoreSdk } from '@edgestore/sdk';
+
+type CreateProjectMethod =
+  ManagementEdgeStoreSdk['management']['projects']['create'];
+
+type CreateProjectInput = Parameters<CreateProjectMethod>[0];
+type CreateProjectOutput = Awaited<ReturnType<CreateProjectMethod>>;
+```
+
+You can use the same pattern with a configured SDK value:
+
+```ts
+type LookupInput = Parameters<typeof sdk.runtime.files.lookup>[0];
+type LookupOutput = Awaited<
+  ReturnType<typeof sdk.runtime.files.lookup>
+>;
+```
+
+The generated OpenAPI operation types remain internal. Deriving from the public
+interface keeps application types aligned with the supported SDK surface.
 
 ## Errors
 
