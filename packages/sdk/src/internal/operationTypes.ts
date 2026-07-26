@@ -78,6 +78,28 @@ type GroupedOperationId =
 
 type IsNever<TValue> = [TValue] extends [never] ? true : false;
 type AssertTrue<TValue extends true> = TValue;
+type AreDisjoint<TLeft, TRight> = IsNever<Extract<TLeft, TRight>>;
+type OperationGroupsArePairwiseDisjoint =
+  AreDisjoint<SystemOperationId, RuntimeOperationId> extends true
+    ? AreDisjoint<SystemOperationId, ManagementResourceOperationId> extends true
+      ? AreDisjoint<SystemOperationId, ManagementAccessOperationId> extends true
+        ? AreDisjoint<
+            RuntimeOperationId,
+            ManagementResourceOperationId
+          > extends true
+          ? AreDisjoint<
+              RuntimeOperationId,
+              ManagementAccessOperationId
+            > extends true
+            ? AreDisjoint<
+                ManagementResourceOperationId,
+                ManagementAccessOperationId
+              >
+            : false
+          : false
+        : false
+      : false
+    : false;
 
 export type OperationGroupsAreExhaustive = AssertTrue<
   IsNever<Exclude<OperationId, GroupedOperationId>>
@@ -85,16 +107,8 @@ export type OperationGroupsAreExhaustive = AssertTrue<
 export type OperationGroupsContainOnlyOperations = AssertTrue<
   IsNever<Exclude<GroupedOperationId, OperationId>>
 >;
-export type OperationGroupsDoNotOverlap = AssertTrue<
-  IsNever<
-    | Extract<SystemOperationId, RuntimeOperationId>
-    | Extract<SystemOperationId, ManagementResourceOperationId>
-    | Extract<SystemOperationId, ManagementAccessOperationId>
-    | Extract<RuntimeOperationId, ManagementResourceOperationId>
-    | Extract<RuntimeOperationId, ManagementAccessOperationId>
-    | Extract<ManagementResourceOperationId, ManagementAccessOperationId>
-  >
->;
+export type OperationGroupsDoNotOverlap =
+  AssertTrue<OperationGroupsArePairwiseDisjoint>;
 
 export type OperationBody<TOperation extends OperationId> =
   operations[TOperation] extends {
