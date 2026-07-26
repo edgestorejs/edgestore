@@ -551,7 +551,7 @@ export type paths = {
         readonly put?: never;
         /**
          * Create an account invitation
-         * @description Creates a team invitation and queues its email for durable delivery. Reusing an idempotency key returns the original invitation.
+         * @description Creates or updates a pending team invitation and sends its invitation email.
          */
         readonly post: operations["v2.management.invitations.create"];
         readonly delete?: never;
@@ -1214,27 +1214,6 @@ export type components = {
                 /**
                  * @description Human-readable explanation of the error.
                  * @default The upload has already completed
-                 */
-                readonly message: string;
-                /**
-                 * @description HTTP status code returned with the error.
-                 * @constant
-                 */
-                readonly status: 409;
-            };
-        };
-        /** @description The idempotency key was already used with a different request */
-        readonly IdempotencyConflictError: {
-            /** @description A structured EdgeStore API error. */
-            readonly error: {
-                /**
-                 * @description Stable machine-readable error code.
-                 * @constant
-                 */
-                readonly code: "idempotency_conflict";
-                /**
-                 * @description Human-readable explanation of the error.
-                 * @default The idempotency key was already used with a different request
                  */
                 readonly message: string;
                 /**
@@ -2476,9 +2455,7 @@ export interface operations {
     readonly "v2.management.projects.create": {
         readonly parameters: {
             readonly query?: never;
-            readonly header?: {
-                readonly "idempotency-key"?: string;
-            };
+            readonly header?: never;
             readonly path: {
                 readonly accountId: string;
             };
@@ -2606,7 +2583,7 @@ export interface operations {
                     readonly [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["ProjectLimitReachedError"] | components["schemas"]["IdempotencyConflictError"];
+                    readonly "application/json": components["schemas"]["ProjectLimitReachedError"];
                 };
             };
             /** @description 413 */
@@ -2922,9 +2899,7 @@ export interface operations {
     readonly "v2.management.buckets.create": {
         readonly parameters: {
             readonly query?: never;
-            readonly header?: {
-                readonly "idempotency-key"?: string;
-            };
+            readonly header?: never;
             readonly path: {
                 readonly projectRef: string;
             };
@@ -3018,7 +2993,7 @@ export interface operations {
                     readonly [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["BucketAlreadyExistsError"] | components["schemas"]["IdempotencyConflictError"];
+                    readonly "application/json": components["schemas"]["BucketAlreadyExistsError"];
                 };
             };
             /** @description 413 */
@@ -4345,9 +4320,7 @@ export interface operations {
     readonly "v2.management.uploads.request": {
         readonly parameters: {
             readonly query?: never;
-            readonly header?: {
-                readonly "idempotency-key"?: string;
-            };
+            readonly header?: never;
             readonly path: {
                 readonly projectRef: string;
                 readonly bucketName: string;
@@ -4424,13 +4397,13 @@ export interface operations {
                                 readonly sizeBytes: number;
                                 /** @description Resolved file media type. */
                                 readonly mimeType: string | null;
+                                /** @description Whether the file requires confirmation. */
+                                readonly temporary: boolean;
                                 /**
                                  * @description Initial file lifecycle state.
                                  * @constant
                                  */
                                 readonly state: "requested";
-                                /** @description Whether the file requires confirmation. */
-                                readonly temporary: boolean;
                             };
                             readonly upload: {
                                 /** @constant */
@@ -4508,7 +4481,7 @@ export interface operations {
                     readonly [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["ProjectNotFoundError"] | components["schemas"]["BucketNotFoundError"];
+                    readonly "application/json": components["schemas"]["ProjectNotFoundError"] | components["schemas"]["BucketNotFoundError"] | components["schemas"]["UploadNotFoundError"];
                 };
             };
             /** @description 409 */
@@ -4518,7 +4491,7 @@ export interface operations {
                     readonly [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["BucketEmptyInProgressError"] | components["schemas"]["IdempotencyConflictError"];
+                    readonly "application/json": components["schemas"]["BucketEmptyInProgressError"];
                 };
             };
             /** @description 413 */
@@ -5124,9 +5097,7 @@ export interface operations {
     readonly "v2.management.projectKeys.create": {
         readonly parameters: {
             readonly query?: never;
-            readonly header?: {
-                readonly "idempotency-key"?: string;
-            };
+            readonly header?: never;
             readonly path: {
                 readonly projectRef: string;
             };
@@ -5214,16 +5185,6 @@ export interface operations {
                 };
                 content: {
                     readonly "application/json": components["schemas"]["ProjectNotFoundError"];
-                };
-            };
-            /** @description 409 */
-            readonly 409: {
-                headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    readonly "application/json": components["schemas"]["IdempotencyConflictError"];
                 };
             };
             /** @description 413 */
@@ -5803,9 +5764,7 @@ export interface operations {
     readonly "v2.management.invitations.create": {
         readonly parameters: {
             readonly query?: never;
-            readonly header?: {
-                readonly "idempotency-key"?: string;
-            };
+            readonly header?: never;
             readonly path: {
                 readonly accountId: string;
             };
@@ -5920,7 +5879,7 @@ export interface operations {
                     readonly [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["UserAlreadyMemberError"] | components["schemas"]["MemberLimitReachedError"] | components["schemas"]["IdempotencyConflictError"];
+                    readonly "application/json": components["schemas"]["UserAlreadyMemberError"] | components["schemas"]["MemberLimitReachedError"];
                 };
             };
             /** @description 413 */
@@ -6288,9 +6247,7 @@ export interface operations {
     readonly "v2.management.tokens.createAccount": {
         readonly parameters: {
             readonly query?: never;
-            readonly header?: {
-                readonly "idempotency-key"?: string;
-            };
+            readonly header?: never;
             readonly path: {
                 readonly accountId: string;
             };
@@ -6398,16 +6355,6 @@ export interface operations {
                 };
                 content: {
                     readonly "application/json": components["schemas"]["AccountNotFoundError"];
-                };
-            };
-            /** @description 409 */
-            readonly 409: {
-                headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    readonly "application/json": components["schemas"]["IdempotencyConflictError"];
                 };
             };
             /** @description 413 */
@@ -6542,9 +6489,7 @@ export interface operations {
     readonly "v2.management.tokens.createUser": {
         readonly parameters: {
             readonly query?: never;
-            readonly header?: {
-                readonly "idempotency-key"?: string;
-            };
+            readonly header?: never;
             readonly path?: never;
             readonly cookie?: never;
         };
@@ -6640,16 +6585,6 @@ export interface operations {
                 };
                 content: {
                     readonly "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
-                };
-            };
-            /** @description 409 */
-            readonly 409: {
-                headers: {
-                    readonly "x-request-id": components["headers"]["RequestId"];
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    readonly "application/json": components["schemas"]["IdempotencyConflictError"];
                 };
             };
             /** @description 413 */
@@ -8577,9 +8512,7 @@ export interface operations {
     readonly "v2.runtime.uploads.request": {
         readonly parameters: {
             readonly query?: never;
-            readonly header?: {
-                readonly "idempotency-key"?: string;
-            };
+            readonly header?: never;
             readonly path: {
                 readonly projectRef: string;
                 readonly bucketName: string;
@@ -8637,7 +8570,7 @@ export interface operations {
                     };
                     /** @description Multipart upload configuration. Omit for a single upload. */
                     readonly multipart?: {
-                        /** @description Multipart part numbers to sign. */
+                        /** @description Unique multipart part numbers to create signed URLs for. */
                         readonly partNumbers: readonly number[];
                     };
                     /** @description Request a signed read URL together with the upload. */
@@ -8686,13 +8619,13 @@ export interface operations {
                                 readonly sizeBytes: number;
                                 /** @description Resolved file media type. */
                                 readonly mimeType: string | null;
+                                /** @description Whether the file requires confirmation. */
+                                readonly temporary: boolean;
                                 /**
                                  * @description Initial file lifecycle state.
                                  * @enum {string}
                                  */
                                 readonly state: "requested" | "replace_requested";
-                                /** @description Whether the file requires confirmation. */
-                                readonly temporary: boolean;
                             };
                             readonly upload: {
                                 /** @constant */
@@ -8770,7 +8703,7 @@ export interface operations {
                     readonly [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["ProjectNotFoundError"];
+                    readonly "application/json": components["schemas"]["ProjectNotFoundError"] | components["schemas"]["UploadNotFoundError"];
                 };
             };
             /** @description 409 */
@@ -8780,7 +8713,7 @@ export interface operations {
                     readonly [name: string]: unknown;
                 };
                 content: {
-                    readonly "application/json": components["schemas"]["BucketEmptyInProgressError"] | components["schemas"]["IdempotencyConflictError"];
+                    readonly "application/json": components["schemas"]["BucketEmptyInProgressError"];
                 };
             };
             /** @description 413 */
@@ -9057,7 +8990,7 @@ export interface operations {
         readonly requestBody: {
             readonly content: {
                 readonly "application/json": {
-                    /** @description Multipart part numbers to create signed URLs for. */
+                    /** @description Unique multipart part numbers to create signed URLs for. */
                     readonly partNumbers: readonly number[];
                 };
             };

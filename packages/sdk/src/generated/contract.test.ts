@@ -1,7 +1,11 @@
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
-import { API_V2_SCHEMA_SHA256, API_V2_SOURCE_COMMIT } from './source';
+import {
+  API_V2_SCHEMA_SHA256,
+  API_V2_SOURCE_COMMIT,
+  API_V2_SOURCE_REPOSITORY,
+} from './source';
 
 type JsonObject = Record<string, unknown>;
 type OpenApiOperation = JsonObject & {
@@ -28,7 +32,8 @@ describe('API v2 contract snapshot', () => {
       0,
     );
 
-    expect(API_V2_SOURCE_COMMIT).toBe('bf4bf0c');
+    expect(API_V2_SOURCE_REPOSITORY).toMatch(/^https:\/\/github\.com\//);
+    expect(API_V2_SOURCE_COMMIT).toMatch(/^[\da-f]{40}$/);
     expect(createHash('sha256').update(schemaBytes).digest('hex')).toBe(
       API_V2_SCHEMA_SHA256,
     );

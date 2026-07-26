@@ -36,6 +36,7 @@
     "codegen:api": "openapi-typescript ./src/generated/openapi-v2.json -o ./src/generated/api-v2.ts --export-type --immutable",
     "codegen:check": "pnpm codegen:api --check",
     "codegen:entrypoints": "tsx entrypoints.script.ts",
+    "schema:sync": "node ./sync-openapi.mjs",
     "test": "vitest run",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint --cache --ext \".js,.ts\" --ignore-path ../../.gitignore --ignore-pattern src/generated --report-unused-disable-directives src"
