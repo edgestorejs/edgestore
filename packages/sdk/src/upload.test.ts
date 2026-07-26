@@ -233,6 +233,82 @@ describe('runtime upload orchestration', () => {
     });
   });
 
+  it('aborts a stalled stream read and cancels the upload', async () => {
+    const controller = new AbortController();
+    let markPullStarted: (() => void) | undefined;
+    const pullStarted = new Promise<void>((resolve) => {
+      markPullStarted = resolve;
+    });
+    let uploadCanceled = false;
+    const fetch = vi.fn<typeof globalThis.fetch>(async (input, init) => {
+      const request = toRequest(input, init);
+      if (request.url.endsWith('/buckets/videos')) {
+        return Response.json({
+          data: { bucket: { type: 'file', visibility: 'protected' } },
+        });
+      }
+      if (request.url.endsWith('/buckets/videos/uploads')) {
+        return Response.json({
+          data: {
+            file: { id: 'stalled-id' },
+            upload: {
+              kind: 'multipart',
+              id: 'stalled-id',
+              parts: [
+                {
+                  partNumber: 1,
+                  signedUrl: 'https://storage.example/stalled',
+                },
+              ],
+            },
+          },
+        });
+      }
+      if (
+        request.method === 'DELETE' &&
+        request.url.endsWith('/uploads/stalled-id')
+      ) {
+        uploadCanceled = true;
+        return Response.json({
+          data: { upload: { id: 'stalled-id', status: 'canceled' } },
+        });
+      }
+      throw new Error(`Unexpected request: ${request.method} ${request.url}`);
+    });
+    const sdk = createSdk(fetch);
+    const upload = sdk.runtime.uploads.upload({
+      bucket: 'videos',
+      source: {
+        stream: new ReadableStream({
+          pull() {
+            markPullStarted?.();
+            return new Promise<void>(() => undefined);
+          },
+          cancel() {
+            return new Promise<void>(() => undefined);
+          },
+        }),
+        sizeBytes: 3,
+      },
+      multipart: { partSizeBytes: 3 },
+      signal: controller.signal,
+    });
+
+    await pullStarted;
+    controller.abort();
+
+    const result = Promise.race([
+      upload,
+      new Promise<never>((_resolve, reject) => {
+        setTimeout(() => {
+          reject(new Error('Upload did not abort promptly.'));
+        }, 100);
+      }),
+    ]);
+    await expect(result).rejects.toBeInstanceOf(EdgeStoreAbortError);
+    expect(uploadCanceled).toBe(true);
+  });
+
   it('aborts sibling multipart transfers before canceling the upload', async () => {
     const events: string[] = [];
     const fetch = vi.fn<typeof globalThis.fetch>(async (input, init) => {

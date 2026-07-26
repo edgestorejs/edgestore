@@ -347,12 +347,14 @@ function createSizedStreamReader(
       if (!next.done) remainder = next.value;
       return ended;
     },
-    async cancel(reason: unknown) {
-      try {
-        await reader.cancel(reason);
-      } finally {
-        reader.releaseLock();
-      }
+    cancel(reason: unknown) {
+      void reader
+        .cancel(reason)
+        .catch(() => undefined)
+        .finally(() => {
+          releaseReader(reader);
+        });
+      releaseReader(reader);
     },
     release() {
       reader.releaseLock();
