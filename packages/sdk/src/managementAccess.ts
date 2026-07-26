@@ -10,7 +10,6 @@ type AccountInput = { account: string };
 type ProjectInput = { project: string };
 type UserInput = AccountInput & { userId: string };
 type InvitationInput = AccountInput & { invitationId: string };
-type Idempotent = { idempotencyKey?: string };
 
 export type ManagementAccessClient = {
   accounts: {
@@ -31,7 +30,6 @@ export type ManagementAccessClient = {
     create(
       input: ProjectInput &
         OperationBody<'v2.management.projectKeys.create'> &
-        Idempotent &
         CallOptions,
     ): Promise<OperationResult<'v2.management.projectKeys.create'>>;
     revoke(
@@ -62,7 +60,6 @@ export type ManagementAccessClient = {
     create(
       input: AccountInput &
         OperationBody<'v2.management.invitations.create'> &
-        Idempotent &
         CallOptions,
     ): Promise<OperationResult<'v2.management.invitations.create'>>;
     revoke(
@@ -81,16 +78,13 @@ export type ManagementAccessClient = {
     createAccount(
       input: AccountInput &
         OperationBody<'v2.management.tokens.createAccount'> &
-        Idempotent &
         CallOptions,
     ): Promise<OperationResult<'v2.management.tokens.createAccount'>>;
     listUser(
       input?: OperationQuery<'v2.management.tokens.listUser'> & CallOptions,
     ): Promise<OperationResult<'v2.management.tokens.listUser'>>;
     createUser(
-      input: OperationBody<'v2.management.tokens.createUser'> &
-        Idempotent &
-        CallOptions,
+      input: OperationBody<'v2.management.tokens.createUser'> & CallOptions,
     ): Promise<OperationResult<'v2.management.tokens.createUser'>>;
     revoke(
       input: { tokenId: string } & CallOptions,
@@ -132,13 +126,10 @@ export function createManagementAccessClient(
             signal,
           }),
         ),
-      create: ({ project, idempotencyKey, signal, ...body }) =>
+      create: ({ project, signal, ...body }) =>
         transport.execute(() =>
           transport.client.POST('/management/projects/{projectRef}/keys', {
-            params: {
-              path: { projectRef: project },
-              header: { 'idempotency-key': idempotencyKey },
-            },
+            params: { path: { projectRef: project } },
             body,
             signal,
           }),
@@ -155,12 +146,12 @@ export function createManagementAccessClient(
         ),
     },
     members: {
-      list: ({ account, page, pageSize, signal }) =>
+      list: ({ account, signal, ...query }) =>
         transport.execute(() =>
           transport.client.GET('/management/accounts/{accountId}/members', {
             params: {
               path: { accountId: account },
-              query: { page, pageSize },
+              query,
             },
             signal,
           }),
@@ -188,24 +179,23 @@ export function createManagementAccessClient(
         ),
     },
     invitations: {
-      list: ({ account, page, pageSize, signal }) =>
+      list: ({ account, signal, ...query }) =>
         transport.execute(() =>
           transport.client.GET('/management/accounts/{accountId}/invitations', {
             params: {
               path: { accountId: account },
-              query: { page, pageSize },
+              query,
             },
             signal,
           }),
         ),
-      create: ({ account, idempotencyKey, signal, ...body }) =>
+      create: ({ account, signal, ...body }) =>
         transport.execute(() =>
           transport.client.POST(
             '/management/accounts/{accountId}/invitations',
             {
               params: {
                 path: { accountId: account },
-                header: { 'idempotency-key': idempotencyKey },
               },
               body,
               signal,
@@ -234,38 +224,34 @@ export function createManagementAccessClient(
         ),
     },
     tokens: {
-      listAccount: ({ account, page, pageSize, signal }) =>
+      listAccount: ({ account, signal, ...query }) =>
         transport.execute(() =>
           transport.client.GET('/management/accounts/{accountId}/tokens', {
             params: {
               path: { accountId: account },
-              query: { page, pageSize },
+              query,
             },
             signal,
           }),
         ),
-      createAccount: ({ account, idempotencyKey, signal, ...body }) =>
+      createAccount: ({ account, signal, ...body }) =>
         transport.execute(() =>
           transport.client.POST('/management/accounts/{accountId}/tokens', {
-            params: {
-              path: { accountId: account },
-              header: { 'idempotency-key': idempotencyKey },
-            },
+            params: { path: { accountId: account } },
             body,
             signal,
           }),
         ),
-      listUser: (input) =>
+      listUser: ({ signal, ...query } = {}) =>
         transport.execute(() =>
           transport.client.GET('/management/users/me/tokens', {
-            params: { query: { page: input?.page, pageSize: input?.pageSize } },
-            signal: input?.signal,
+            params: { query },
+            signal,
           }),
         ),
-      createUser: ({ idempotencyKey, signal, ...body }) =>
+      createUser: ({ signal, ...body }) =>
         transport.execute(() =>
           transport.client.POST('/management/users/me/tokens', {
-            params: { header: { 'idempotency-key': idempotencyKey } },
             body,
             signal,
           }),

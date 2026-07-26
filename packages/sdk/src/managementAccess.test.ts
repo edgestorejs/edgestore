@@ -2,14 +2,14 @@ import { describe, expect, it, vi } from 'vitest';
 import { createEdgeStoreSdk } from './sdk';
 
 describe('management access resources', () => {
-  it('maps invitation creation and idempotency to the API contract', async () => {
+  it('maps invitation creation to the API contract', async () => {
     const fetch = vi.fn<typeof globalThis.fetch>(async (input) => {
       const request = input instanceof Request ? input : new Request(input);
       expect(request.method).toBe('POST');
       expect(request.url).toBe(
         'https://example.com/v2/management/accounts/account-id/invitations',
       );
-      expect(request.headers.get('idempotency-key')).toBe('invite-request');
+      expect(request.headers.has('idempotency-key')).toBe(false);
       await expect(request.json()).resolves.toEqual({
         email: 'dev@example.com',
         role: 'MEMBER',
@@ -26,7 +26,6 @@ describe('management access resources', () => {
       account: 'account-id',
       email: 'dev@example.com',
       role: 'MEMBER',
-      idempotencyKey: 'invite-request',
     });
 
     expect(result.invitation.id).toBe('invitation-id');
