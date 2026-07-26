@@ -5,7 +5,7 @@ import {
   API_V2_SCHEMA_SHA256,
   API_V2_SOURCE_COMMIT,
   API_V2_SOURCE_REPOSITORY,
-} from './source';
+} from './generated/source';
 
 type JsonObject = Record<string, unknown>;
 type OpenApiOperation = JsonObject & {
@@ -18,7 +18,7 @@ type OpenApiOperation = JsonObject & {
 
 describe('API v2 contract snapshot', () => {
   it('matches its recorded source and checksum', async () => {
-    const schemaUrl = new URL('./openapi-v2.json', import.meta.url);
+    const schemaUrl = new URL('./generated/openapi-v2.json', import.meta.url);
     const schemaBytes = await readFile(schemaUrl);
     const schema = JSON.parse(schemaBytes.toString()) as {
       openapi: string;
@@ -43,7 +43,7 @@ describe('API v2 contract snapshot', () => {
   });
 
   it('documents generated operations and their public inputs', async () => {
-    const schemaUrl = new URL('./openapi-v2.json', import.meta.url);
+    const schemaUrl = new URL('./generated/openapi-v2.json', import.meta.url);
     const schema = JSON.parse(await readFile(schemaUrl, 'utf8')) as {
       components?: { schemas?: JsonObject };
       paths: Record<string, Record<string, OpenApiOperation>>;

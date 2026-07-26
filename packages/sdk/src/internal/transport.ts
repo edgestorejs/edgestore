@@ -30,9 +30,8 @@ export type ApiData<TBody> = TBody extends { readonly data: infer Data }
   : TBody;
 
 export type Transport = {
-  client: Client<paths>;
   execute<TBody>(
-    request: () => Promise<ApiResult<TBody>>,
+    request: (client: Client<paths>) => Promise<ApiResult<TBody>>,
   ): Promise<ApiData<TBody>>;
 };
 
@@ -49,14 +48,13 @@ export function createTransport(options: TransportOptions): Transport {
   });
 
   return {
-    client,
     async execute<TBody>(
-      request: () => Promise<ApiResult<TBody>>,
+      request: (client: Client<paths>) => Promise<ApiResult<TBody>>,
     ): Promise<ApiData<TBody>> {
       let result: ApiResult<TBody>;
 
       try {
-        result = await request();
+        result = await request(client);
       } catch (error) {
         if (error instanceof EdgeStoreError) {
           throw error;
