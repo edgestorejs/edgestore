@@ -8,19 +8,23 @@ import {
 describe('getAuthorizationHeader', () => {
   it('encodes project credentials as Basic authentication', () => {
     expect(
-      getAuthorizationHeader({ accessKey: 'project', secretKey: 'secret' }),
+      getAuthorizationHeader(
+        classifyCredentials({ accessKey: 'project', secretKey: 'secret' }),
+      ),
     ).toBe('Basic cHJvamVjdDpzZWNyZXQ=');
   });
 
   it('encodes management credentials as Bearer authentication', () => {
-    expect(getAuthorizationHeader({ token: 'management-token' })).toBe(
-      'Bearer management-token',
-    );
+    expect(
+      getAuthorizationHeader(
+        classifyCredentials({ token: 'management-token' }),
+      ),
+    ).toBe('Bearer management-token');
   });
 
   it('rejects empty credentials before making a request', () => {
     expect(() =>
-      getAuthorizationHeader({ accessKey: '', secretKey: 'secret' }),
+      classifyCredentials({ accessKey: '', secretKey: 'secret' }),
     ).toThrow('accessKey');
   });
 

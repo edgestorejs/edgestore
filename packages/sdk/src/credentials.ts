@@ -37,17 +37,14 @@ export function classifyCredentials(
 }
 
 export function getAuthorizationHeader(
-  credentials: EdgeStoreCredentials | ClassifiedCredentials,
+  credentials: ClassifiedCredentials,
 ): string {
-  const classified =
-    'kind' in credentials ? credentials : classifyCredentials(credentials);
-
-  if (classified.kind === 'management') {
-    return `Bearer ${classified.token}`;
+  if (credentials.kind === 'management') {
+    return `Bearer ${credentials.token}`;
   }
 
   const encodedCredentials = Buffer.from(
-    `${classified.accessKey}:${classified.secretKey}`,
+    `${credentials.accessKey}:${credentials.secretKey}`,
     'utf8',
   ).toString('base64');
 

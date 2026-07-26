@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { classifyCredentials } from '../credentials';
 import { EdgeStoreAbortError, EdgeStoreNetworkError } from '../errors';
 import type { EdgeStoreApiError } from '../errors';
 import { createTransport } from './transport';
@@ -14,7 +15,10 @@ describe('createTransport', () => {
       return Response.json({ data: { ok: true, version: 'v2' } });
     });
     const transport = createTransport({
-      credentials: { accessKey: 'project', secretKey: 'secret' },
+      credentials: classifyCredentials({
+        accessKey: 'project',
+        secretKey: 'secret',
+      }),
       baseUrl: 'https://example.com/v2/',
       fetch,
     });
@@ -43,7 +47,7 @@ describe('createTransport', () => {
       ),
     );
     const transport = createTransport({
-      credentials: { token: 'management-token' },
+      credentials: classifyCredentials({ token: 'management-token' }),
       fetch,
     });
 
@@ -62,13 +66,13 @@ describe('createTransport', () => {
 
   it('distinguishes aborted and failed network requests', async () => {
     const aborted = createTransport({
-      credentials: { token: 'management-token' },
+      credentials: classifyCredentials({ token: 'management-token' }),
       fetch: async () => {
         throw new DOMException('aborted', 'AbortError');
       },
     });
     const failed = createTransport({
-      credentials: { token: 'management-token' },
+      credentials: classifyCredentials({ token: 'management-token' }),
       fetch: async () => {
         throw new TypeError('offline');
       },

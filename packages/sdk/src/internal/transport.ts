@@ -1,9 +1,7 @@
 import createClient, { type Client } from 'openapi-fetch';
 import {
-  classifyCredentials,
   getAuthorizationHeader,
   type ClassifiedCredentials,
-  type EdgeStoreCredentials,
 } from '../credentials';
 import {
   EdgeStoreAbortError,
@@ -16,7 +14,7 @@ import type { paths } from '../generated/api-v2';
 export const DEFAULT_API_URL = 'https://api.edgestore.dev/v2';
 
 export type TransportOptions = {
-  credentials: EdgeStoreCredentials | ClassifiedCredentials;
+  credentials: ClassifiedCredentials;
   baseUrl?: string;
   fetch?: typeof globalThis.fetch;
 };
@@ -38,11 +36,7 @@ export type Transport = {
 };
 
 export function createTransport(options: TransportOptions): Transport {
-  const credentials =
-    'kind' in options.credentials
-      ? options.credentials
-      : classifyCredentials(options.credentials);
-  const authorization = getAuthorizationHeader(credentials);
+  const authorization = getAuthorizationHeader(options.credentials);
   const customFetch = options.fetch;
   const client = createClient<paths>({
     baseUrl: normalizeBaseUrl(options.baseUrl ?? DEFAULT_API_URL),
