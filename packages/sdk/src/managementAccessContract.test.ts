@@ -1,5 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
+import type { ManagementAccessOperationId } from './internal/operationTypes';
 import { createEdgeStoreSdk } from './sdk';
+
+type MappingCase = {
+  invoke: () => Promise<unknown>;
+  method: string;
+  path: string;
+  body?: unknown;
+};
 
 describe('management access request mappings', () => {
   it('maps every access operation to its HTTP contract', async () => {
@@ -15,61 +23,47 @@ describe('management access request mappings', () => {
     });
     const account = 'account-id';
     const project = 'project-id';
-    const cases: {
-      name: string;
-      invoke: () => Promise<unknown>;
-      method: string;
-      path: string;
-      body?: unknown;
-    }[] = [
-      {
-        name: 'accounts.list',
+    const cases = {
+      'v2.management.accounts.list': {
         invoke: () => sdk.management.accounts.list(),
         method: 'GET',
         path: '/v2/management/accounts',
       },
-      {
-        name: 'accounts.get',
+      'v2.management.accounts.get': {
         invoke: () => sdk.management.accounts.get({ account }),
         method: 'GET',
         path: `/v2/management/accounts/${account}`,
       },
-      {
-        name: 'accounts.leave',
+      'v2.management.accounts.leave': {
         invoke: () => sdk.management.accounts.leave({ account }),
         method: 'POST',
         path: `/v2/management/accounts/${account}/leave`,
       },
-      {
-        name: 'projectKeys.list',
+      'v2.management.projectKeys.list': {
         invoke: () => sdk.management.projectKeys.list({ project }),
         method: 'GET',
         path: `/v2/management/projects/${project}/keys`,
       },
-      {
-        name: 'projectKeys.create',
+      'v2.management.projectKeys.create': {
         invoke: () =>
           sdk.management.projectKeys.create({ project, name: 'Deploy key' }),
         method: 'POST',
         path: `/v2/management/projects/${project}/keys`,
         body: { name: 'Deploy key' },
       },
-      {
-        name: 'projectKeys.revoke',
+      'v2.management.projectKeys.revoke': {
         invoke: () =>
           sdk.management.projectKeys.revoke({ project, keyId: 'key-id' }),
         method: 'DELETE',
         path: `/v2/management/projects/${project}/keys/key-id`,
       },
-      {
-        name: 'members.list',
+      'v2.management.members.list': {
         invoke: () =>
           sdk.management.members.list({ account, page: 2, pageSize: 10 }),
         method: 'GET',
         path: `/v2/management/accounts/${account}/members?page=2&pageSize=10`,
       },
-      {
-        name: 'members.update',
+      'v2.management.members.update': {
         invoke: () =>
           sdk.management.members.update({
             account,
@@ -80,22 +74,19 @@ describe('management access request mappings', () => {
         path: `/v2/management/accounts/${account}/members/user-id`,
         body: { role: 'MEMBER' },
       },
-      {
-        name: 'members.remove',
+      'v2.management.members.remove': {
         invoke: () =>
           sdk.management.members.remove({ account, userId: 'user-id' }),
         method: 'DELETE',
         path: `/v2/management/accounts/${account}/members/user-id`,
       },
-      {
-        name: 'invitations.list',
+      'v2.management.invitations.list': {
         invoke: () =>
           sdk.management.invitations.list({ account, page: 2, pageSize: 10 }),
         method: 'GET',
         path: `/v2/management/accounts/${account}/invitations?page=2&pageSize=10`,
       },
-      {
-        name: 'invitations.create',
+      'v2.management.invitations.create': {
         invoke: () =>
           sdk.management.invitations.create({
             account,
@@ -106,8 +97,7 @@ describe('management access request mappings', () => {
         path: `/v2/management/accounts/${account}/invitations`,
         body: { email: 'dev@example.com', role: 'MEMBER' },
       },
-      {
-        name: 'invitations.revoke',
+      'v2.management.invitations.revoke': {
         invoke: () =>
           sdk.management.invitations.revoke({
             account,
@@ -116,8 +106,7 @@ describe('management access request mappings', () => {
         method: 'DELETE',
         path: `/v2/management/accounts/${account}/invitations/invitation-id`,
       },
-      {
-        name: 'invitations.resend',
+      'v2.management.invitations.resend': {
         invoke: () =>
           sdk.management.invitations.resend({
             account,
@@ -126,8 +115,7 @@ describe('management access request mappings', () => {
         method: 'POST',
         path: `/v2/management/accounts/${account}/invitations/invitation-id/resend`,
       },
-      {
-        name: 'tokens.listAccount',
+      'v2.management.tokens.listAccount': {
         invoke: () =>
           sdk.management.tokens.listAccount({
             account,
@@ -137,8 +125,7 @@ describe('management access request mappings', () => {
         method: 'GET',
         path: `/v2/management/accounts/${account}/tokens?page=2&pageSize=10`,
       },
-      {
-        name: 'tokens.createAccount',
+      'v2.management.tokens.createAccount': {
         invoke: () =>
           sdk.management.tokens.createAccount({
             account,
@@ -149,14 +136,12 @@ describe('management access request mappings', () => {
         path: `/v2/management/accounts/${account}/tokens`,
         body: { name: 'CI token', scopes: ['project:read'] },
       },
-      {
-        name: 'tokens.listUser',
+      'v2.management.tokens.listUser': {
         invoke: () => sdk.management.tokens.listUser({ page: 2, pageSize: 10 }),
         method: 'GET',
         path: '/v2/management/users/me/tokens?page=2&pageSize=10',
       },
-      {
-        name: 'tokens.createUser',
+      'v2.management.tokens.createUser': {
         invoke: () =>
           sdk.management.tokens.createUser({
             name: 'CLI token',
@@ -166,24 +151,23 @@ describe('management access request mappings', () => {
         path: '/v2/management/users/me/tokens',
         body: { name: 'CLI token', scopes: ['account:read'] },
       },
-      {
-        name: 'tokens.revoke',
+      'v2.management.tokens.revoke': {
         invoke: () => sdk.management.tokens.revoke({ tokenId: 'token-id' }),
         method: 'DELETE',
         path: '/v2/management/tokens/token-id',
       },
-    ];
+    } satisfies Record<ManagementAccessOperationId, MappingCase>;
 
-    for (const testCase of cases) {
+    for (const [operationId, testCase] of Object.entries(cases)) {
       requests.length = 0;
       await testCase.invoke();
-      expect(requests, testCase.name).toHaveLength(1);
+      expect(requests, operationId).toHaveLength(1);
       const request = requests[0]!;
-      expect(request.method, testCase.name).toBe(testCase.method);
+      expect(request.method, operationId).toBe(testCase.method);
       const url = new URL(request.url);
-      expect(`${url.pathname}${url.search}`, testCase.name).toBe(testCase.path);
-      if (testCase.body !== undefined) {
-        await expect(request.json(), testCase.name).resolves.toEqual(
+      expect(`${url.pathname}${url.search}`, operationId).toBe(testCase.path);
+      if ('body' in testCase) {
+        await expect(request.json(), operationId).resolves.toEqual(
           testCase.body,
         );
       }
