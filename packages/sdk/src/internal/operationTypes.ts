@@ -7,15 +7,11 @@ import type { ApiData } from './transport';
 
 type OperationId = keyof operations;
 
-export type Mutable<TValue> = {
-  -readonly [TKey in keyof TValue]: TValue[TKey];
-};
-
 export type OperationBody<TOperation extends OperationId> =
   operations[TOperation] extends {
     requestBody: { content: { 'application/json': infer TBody } };
   }
-    ? Mutable<TBody>
+    ? TBody
     : never;
 
 export type SuccessBody<TResponses extends Record<string | number, unknown>> =

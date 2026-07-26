@@ -1,8 +1,25 @@
 import { describe, expect, expectTypeOf, it, vi } from 'vitest';
+import type { EdgeStoreCredentials } from './credentials';
 import type { RuntimeCallOptions } from './runtime';
-import { createEdgeStoreSdk } from './sdk';
+import {
+  createEdgeStoreSdk,
+  type ManagementEdgeStoreSdk,
+  type ProjectEdgeStoreSdk,
+} from './sdk';
 
 describe('createEdgeStoreSdk', () => {
+  it('accepts credentials stored as the public union', () => {
+    const credentials = {
+      accessKey: 'project',
+      secretKey: 'secret',
+    } as EdgeStoreCredentials;
+    const sdk = createEdgeStoreSdk({ credentials });
+
+    expectTypeOf(sdk).toEqualTypeOf<
+      ProjectEdgeStoreSdk | ManagementEdgeStoreSdk
+    >();
+  });
+
   it('uses the current project implicitly for project credentials', async () => {
     const fetch = vi.fn<typeof globalThis.fetch>(async (input) => {
       const request = input instanceof Request ? input : new Request(input);

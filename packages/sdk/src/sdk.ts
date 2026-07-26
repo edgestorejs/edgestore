@@ -3,6 +3,7 @@ import type {
   ManagementCredentials,
   ProjectCredentials,
 } from './credentials';
+import { classifyCredentials } from './credentials';
 import { createTransport } from './internal/transport';
 import {
   createExplicitProjectRuntimeClient,
@@ -31,11 +32,15 @@ export function createEdgeStoreSdk(
   options: EdgeStoreSdkOptions<ManagementCredentials>,
 ): ManagementEdgeStoreSdk;
 export function createEdgeStoreSdk(
+  options: EdgeStoreSdkOptions<EdgeStoreCredentials>,
+): ProjectEdgeStoreSdk | ManagementEdgeStoreSdk;
+export function createEdgeStoreSdk(
   options: EdgeStoreSdkOptions,
 ): ProjectEdgeStoreSdk | ManagementEdgeStoreSdk {
-  const transport = createTransport(options);
+  const credentials = classifyCredentials(options.credentials);
+  const transport = createTransport({ ...options, credentials });
 
-  return 'token' in options.credentials
+  return credentials.kind === 'management'
     ? { runtime: createExplicitProjectRuntimeClient(transport) }
     : { runtime: createProjectRuntimeClient(transport) };
 }

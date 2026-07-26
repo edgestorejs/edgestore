@@ -1,4 +1,8 @@
 import type { OperationBody, OperationResult } from './internal/operationTypes';
+import {
+  createRuntimeOperations,
+  type RuntimeOperations,
+} from './internal/runtimeOperations';
 import type { Transport } from './internal/transport';
 
 export type RuntimeCallOptions = { signal?: AbortSignal };
@@ -137,207 +141,29 @@ export type ExplicitProjectRuntimeClient = RuntimeClient<'explicit'>;
 export function createExplicitProjectRuntimeClient(
   transport: Transport,
 ): ExplicitProjectRuntimeClient {
-  return {
-    accessTokens: {
-      create: ({ project, signal, ...body }) =>
-        transport.execute(() =>
-          transport.client.POST('/runtime/projects/{projectRef}/access-token', {
-            params: { path: { projectRef: project } },
-            body,
-            signal,
-          }),
-        ),
-    },
-    projects: {
-      get: ({ project, signal }) =>
-        transport.execute(() =>
-          transport.client.GET('/runtime/projects/{projectRef}', {
-            params: { path: { projectRef: project } },
-            signal,
-          }),
-        ),
-    },
-    buckets: {
-      list: ({ project, signal }) =>
-        transport.execute(() =>
-          transport.client.GET('/runtime/projects/{projectRef}/buckets', {
-            params: { path: { projectRef: project } },
-            signal,
-          }),
-        ),
-      get: ({ project, bucket, signal }) =>
-        transport.execute(() =>
-          transport.client.GET(
-            '/runtime/projects/{projectRef}/buckets/{bucketName}',
-            {
-              params: {
-                path: { projectRef: project, bucketName: bucket },
-              },
-              signal,
-            },
-          ),
-        ),
-    },
-    files: {
-      search: ({ project, bucket, signal, ...body }) =>
-        transport.execute(() =>
-          transport.client.POST(
-            '/runtime/projects/{projectRef}/buckets/{bucketName}/files/search',
-            {
-              params: {
-                path: { projectRef: project, bucketName: bucket },
-              },
-              body,
-              signal,
-            },
-          ),
-        ),
-      lookup: ({ project, signal, ...body }) =>
-        transport.execute(() =>
-          transport.client.POST('/runtime/projects/{projectRef}/files/lookup', {
-            params: { path: { projectRef: project } },
-            body,
-            signal,
-          }),
-        ),
-      createSignedUrls: ({ project, bucket, signal, ...body }) =>
-        transport.execute(() =>
-          transport.client.POST(
-            '/runtime/projects/{projectRef}/buckets/{bucketName}/files/signed-urls',
-            {
-              params: {
-                path: { projectRef: project, bucketName: bucket },
-              },
-              body,
-              signal,
-            },
-          ),
-        ),
-      confirm: ({ project, signal, ...body }) =>
-        transport.execute(() =>
-          transport.client.POST(
-            '/runtime/projects/{projectRef}/files/confirm',
-            {
-              params: { path: { projectRef: project } },
-              body,
-              signal,
-            },
-          ),
-        ),
-      delete: ({ project, signal, ...body }) =>
-        transport.execute(() =>
-          transport.client.POST('/runtime/projects/{projectRef}/files/delete', {
-            params: { path: { projectRef: project } },
-            body,
-            signal,
-          }),
-        ),
-      restore: ({ project, signal, ...body }) =>
-        transport.execute(() =>
-          transport.client.POST(
-            '/runtime/projects/{projectRef}/files/restore',
-            {
-              params: { path: { projectRef: project } },
-              body,
-              signal,
-            },
-          ),
-        ),
-    },
-    uploads: {
-      request: ({ project, bucket, signal, ...body }) =>
-        transport.execute(() =>
-          transport.client.POST(
-            '/runtime/projects/{projectRef}/buckets/{bucketName}/uploads',
-            {
-              params: {
-                path: { projectRef: project, bucketName: bucket },
-              },
-              body,
-              signal,
-            },
-          ),
-        ),
-      get: ({ project, uploadId, signal }) =>
-        transport.execute(() =>
-          transport.client.GET(
-            '/runtime/projects/{projectRef}/uploads/{uploadId}',
-            {
-              params: { path: { projectRef: project, uploadId } },
-              signal,
-            },
-          ),
-        ),
-      cancel: ({ project, uploadId, signal }) =>
-        transport.execute(() =>
-          transport.client.DELETE(
-            '/runtime/projects/{projectRef}/uploads/{uploadId}',
-            {
-              params: { path: { projectRef: project, uploadId } },
-              signal,
-            },
-          ),
-        ),
-      createParts: ({ project, uploadId, signal, ...body }) =>
-        transport.execute(() =>
-          transport.client.POST(
-            '/runtime/projects/{projectRef}/uploads/{uploadId}/parts',
-            {
-              params: { path: { projectRef: project, uploadId } },
-              body,
-              signal,
-            },
-          ),
-        ),
-      completeMultipart: ({ project, uploadId, signal, ...body }) =>
-        transport.execute(() =>
-          transport.client.POST(
-            '/runtime/projects/{projectRef}/uploads/{uploadId}/complete',
-            {
-              params: { path: { projectRef: project, uploadId } },
-              body,
-              signal,
-            },
-          ),
-        ),
-    },
-  };
+  return createRuntimeOperations(transport);
 }
 
 export function createProjectRuntimeClient(
   transport: Transport,
 ): ProjectRuntimeClient {
-  const runtime = createExplicitProjectRuntimeClient(transport);
-  const project = '_current';
+  return scopeRuntimeOperations(createRuntimeOperations(transport), '_current');
+}
 
-  return {
-    accessTokens: {
-      create: (input) => runtime.accessTokens.create({ ...input, project }),
-    },
-    projects: {
-      get: (options) => runtime.projects.get({ ...options, project }),
-    },
-    buckets: {
-      list: (options) => runtime.buckets.list({ ...options, project }),
-      get: (input) => runtime.buckets.get({ ...input, project }),
-    },
-    files: {
-      search: (input) => runtime.files.search({ ...input, project }),
-      lookup: (input) => runtime.files.lookup({ ...input, project }),
-      createSignedUrls: (input) =>
-        runtime.files.createSignedUrls({ ...input, project }),
-      confirm: (input) => runtime.files.confirm({ ...input, project }),
-      delete: (input) => runtime.files.delete({ ...input, project }),
-      restore: (input) => runtime.files.restore({ ...input, project }),
-    },
-    uploads: {
-      request: (input) => runtime.uploads.request({ ...input, project }),
-      get: (input) => runtime.uploads.get({ ...input, project }),
-      cancel: (input) => runtime.uploads.cancel({ ...input, project }),
-      createParts: (input) =>
-        runtime.uploads.createParts({ ...input, project }),
-      completeMultipart: (input) =>
-        runtime.uploads.completeMultipart({ ...input, project }),
-    },
-  };
+function scopeRuntimeOperations(
+  operations: RuntimeOperations,
+  project: string,
+): ProjectRuntimeClient {
+  const entries = Object.entries(operations).map(([resourceName, resource]) => [
+    resourceName,
+    Object.fromEntries(
+      Object.entries(resource).map(([operationName, operation]) => [
+        operationName,
+        (input: object | undefined) =>
+          operation({ ...input, project } as never),
+      ]),
+    ),
+  ]);
+
+  return Object.fromEntries(entries) as ProjectRuntimeClient;
 }
