@@ -118,30 +118,30 @@ export function createManagementClient(transport: Transport): ManagementClient {
   return {
     projects: {
       list: ({ account, signal }) =>
-        transport.execute(() =>
-          transport.client.GET('/management/accounts/{accountId}/projects', {
+        transport.execute((client) =>
+          client.GET('/management/accounts/{accountId}/projects', {
             params: { path: { accountId: account } },
             signal,
           }),
         ),
       create: ({ account, signal, ...body }) =>
-        transport.execute(() =>
-          transport.client.POST('/management/accounts/{accountId}/projects', {
+        transport.execute((client) =>
+          client.POST('/management/accounts/{accountId}/projects', {
             params: { path: { accountId: account } },
             body,
             signal,
           }),
         ),
       get: ({ project, signal }) =>
-        transport.execute(() =>
-          transport.client.GET('/management/projects/{projectRef}', {
+        transport.execute((client) =>
+          client.GET('/management/projects/{projectRef}', {
             params: { path: { projectRef: project } },
             signal,
           }),
         ),
       delete: ({ project, signal }) =>
-        transport.execute(() =>
-          transport.client.DELETE('/management/projects/{projectRef}', {
+        transport.execute((client) =>
+          client.DELETE('/management/projects/{projectRef}', {
             params: { path: { projectRef: project } },
             signal,
           }),
@@ -149,33 +149,30 @@ export function createManagementClient(transport: Transport): ManagementClient {
     },
     buckets: {
       list: ({ project, signal }) =>
-        transport.execute(() =>
-          transport.client.GET('/management/projects/{projectRef}/buckets', {
+        transport.execute((client) =>
+          client.GET('/management/projects/{projectRef}/buckets', {
             params: { path: { projectRef: project } },
             signal,
           }),
         ),
       create: ({ project, signal, ...body }) =>
-        transport.execute(() =>
-          transport.client.POST('/management/projects/{projectRef}/buckets', {
+        transport.execute((client) =>
+          client.POST('/management/projects/{projectRef}/buckets', {
             params: { path: { projectRef: project } },
             body,
             signal,
           }),
         ),
       get: ({ project, bucket, signal }) =>
-        transport.execute(() =>
-          transport.client.GET(
-            '/management/projects/{projectRef}/buckets/{bucketName}',
-            {
-              params: { path: { projectRef: project, bucketName: bucket } },
-              signal,
-            },
-          ),
+        transport.execute((client) =>
+          client.GET('/management/projects/{projectRef}/buckets/{bucketName}', {
+            params: { path: { projectRef: project, bucketName: bucket } },
+            signal,
+          }),
         ),
       update: ({ project, bucket, signal, ...body }) =>
-        transport.execute(() =>
-          transport.client.PATCH(
+        transport.execute((client) =>
+          client.PATCH(
             '/management/projects/{projectRef}/buckets/{bucketName}',
             {
               params: { path: { projectRef: project, bucketName: bucket } },
@@ -185,8 +182,8 @@ export function createManagementClient(transport: Transport): ManagementClient {
           ),
         ),
       delete: ({ project, bucket, signal }) =>
-        transport.execute(() =>
-          transport.client.DELETE(
+        transport.execute((client) =>
+          client.DELETE(
             '/management/projects/{projectRef}/buckets/{bucketName}',
             {
               params: { path: { projectRef: project, bucketName: bucket } },
@@ -195,8 +192,8 @@ export function createManagementClient(transport: Transport): ManagementClient {
           ),
         ),
       empty: ({ project, bucket, signal }) =>
-        transport.execute(() =>
-          transport.client.POST(
+        transport.execute((client) =>
+          client.POST(
             '/management/projects/{projectRef}/buckets/{bucketName}/empty',
             {
               params: { path: { projectRef: project, bucketName: bucket } },
@@ -207,8 +204,8 @@ export function createManagementClient(transport: Transport): ManagementClient {
         ),
       emptyJobs: {
         latest: ({ project, bucket, signal }) =>
-          transport.execute(() =>
-            transport.client.GET(
+          transport.execute((client) =>
+            client.GET(
               '/management/projects/{projectRef}/buckets/{bucketName}/empty-job',
               {
                 params: { path: { projectRef: project, bucketName: bucket } },
@@ -217,8 +214,8 @@ export function createManagementClient(transport: Transport): ManagementClient {
             ),
           ),
         get: ({ project, bucket, jobId, signal }) =>
-          transport.execute(() =>
-            transport.client.GET(
+          transport.execute((client) =>
+            client.GET(
               '/management/projects/{projectRef}/buckets/{bucketName}/empty-jobs/{jobId}',
               {
                 params: {
@@ -229,8 +226,8 @@ export function createManagementClient(transport: Transport): ManagementClient {
             ),
           ),
         retry: ({ project, bucket, jobId, signal }) =>
-          transport.execute(() =>
-            transport.client.POST(
+          transport.execute((client) =>
+            client.POST(
               '/management/projects/{projectRef}/buckets/{bucketName}/empty-jobs/{jobId}/retry',
               {
                 params: {
@@ -245,8 +242,8 @@ export function createManagementClient(transport: Transport): ManagementClient {
     },
     files: {
       list: ({ project, bucket, signal, ...query }) =>
-        transport.execute(() =>
-          transport.client.GET(
+        transport.execute((client) =>
+          client.GET(
             '/management/projects/{projectRef}/buckets/{bucketName}/files',
             {
               params: {
@@ -258,43 +255,34 @@ export function createManagementClient(transport: Transport): ManagementClient {
           ),
         ),
       lookup: ({ project, signal, ...body }) =>
-        transport.execute(() =>
-          transport.client.POST(
-            '/management/projects/{projectRef}/files/lookup',
-            {
-              params: { path: { projectRef: project } },
-              body,
-              signal,
-            },
-          ),
+        transport.execute((client) =>
+          client.POST('/management/projects/{projectRef}/files/lookup', {
+            params: { path: { projectRef: project } },
+            body,
+            signal,
+          }),
         ),
       createDownloadUrls: ({ project, signal, ...body }) =>
-        transport.execute(() =>
-          transport.client.POST(
-            '/management/projects/{projectRef}/files/download-urls',
-            {
-              params: { path: { projectRef: project } },
-              body,
-              signal,
-            },
-          ),
+        transport.execute((client) =>
+          client.POST('/management/projects/{projectRef}/files/download-urls', {
+            params: { path: { projectRef: project } },
+            body,
+            signal,
+          }),
         ),
       delete: ({ project, signal, ...body }) =>
-        transport.execute(() =>
-          transport.client.POST(
-            '/management/projects/{projectRef}/files/delete',
-            {
-              params: { path: { projectRef: project } },
-              body,
-              signal,
-            },
-          ),
+        transport.execute((client) =>
+          client.POST('/management/projects/{projectRef}/files/delete', {
+            params: { path: { projectRef: project } },
+            body,
+            signal,
+          }),
         ),
     },
     uploads: {
       request: ({ project, bucket, signal, ...body }) =>
-        transport.execute(() =>
-          transport.client.POST(
+        transport.execute((client) =>
+          client.POST(
             '/management/projects/{projectRef}/buckets/{bucketName}/uploads',
             {
               params: {
@@ -306,18 +294,15 @@ export function createManagementClient(transport: Transport): ManagementClient {
           ),
         ),
       get: ({ project, uploadId, signal }) =>
-        transport.execute(() =>
-          transport.client.GET(
-            '/management/projects/{projectRef}/uploads/{uploadId}',
-            {
-              params: { path: { projectRef: project, uploadId } },
-              signal,
-            },
-          ),
+        transport.execute((client) =>
+          client.GET('/management/projects/{projectRef}/uploads/{uploadId}', {
+            params: { path: { projectRef: project, uploadId } },
+            signal,
+          }),
         ),
       cancel: ({ project, uploadId, signal }) =>
-        transport.execute(() =>
-          transport.client.DELETE(
+        transport.execute((client) =>
+          client.DELETE(
             '/management/projects/{projectRef}/uploads/{uploadId}',
             {
               params: { path: { projectRef: project, uploadId } },
@@ -326,8 +311,8 @@ export function createManagementClient(transport: Transport): ManagementClient {
           ),
         ),
       createParts: ({ project, uploadId, signal, ...body }) =>
-        transport.execute(() =>
-          transport.client.POST(
+        transport.execute((client) =>
+          client.POST(
             '/management/projects/{projectRef}/uploads/{uploadId}/parts',
             {
               params: { path: { projectRef: project, uploadId } },
@@ -337,8 +322,8 @@ export function createManagementClient(transport: Transport): ManagementClient {
           ),
         ),
       completeMultipart: ({ project, uploadId, signal, ...body }) =>
-        transport.execute(() =>
-          transport.client.POST(
+        transport.execute((client) =>
+          client.POST(
             '/management/projects/{projectRef}/uploads/{uploadId}/complete',
             {
               params: { path: { projectRef: project, uploadId } },
