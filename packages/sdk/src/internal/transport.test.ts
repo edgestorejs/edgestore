@@ -20,7 +20,7 @@ describe('createTransport', () => {
     });
 
     await expect(
-      transport.execute(() => transport.client.GET('/health')),
+      transport.execute((client) => client.GET('/health')),
     ).resolves.toEqual({ ok: true, version: 'v2' });
     expect(fetch).toHaveBeenCalledOnce();
   });
@@ -47,7 +47,7 @@ describe('createTransport', () => {
       fetch,
     });
 
-    const request = transport.execute(() => transport.client.GET('/health'));
+    const request = transport.execute((client) => client.GET('/health'));
 
     await expect(request).rejects.toMatchObject({
       name: 'EdgeStoreApiError',
@@ -75,10 +75,10 @@ describe('createTransport', () => {
     });
 
     await expect(
-      aborted.execute(() => aborted.client.GET('/health')),
+      aborted.execute((client) => client.GET('/health')),
     ).rejects.toBeInstanceOf(EdgeStoreAbortError);
     await expect(
-      failed.execute(() => failed.client.GET('/health')),
+      failed.execute((client) => client.GET('/health')),
     ).rejects.toBeInstanceOf(EdgeStoreNetworkError);
   });
 });
