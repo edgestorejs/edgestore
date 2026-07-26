@@ -11,14 +11,14 @@ function createManagementSdk(fetch: typeof globalThis.fetch) {
 }
 
 describe('management resources', () => {
-  it('maps project creation and idempotency to the API contract', async () => {
+  it('maps project creation to the API contract', async () => {
     const fetch = vi.fn<typeof globalThis.fetch>(async (input) => {
       const request = input instanceof Request ? input : new Request(input);
       expect(request.method).toBe('POST');
       expect(request.url).toBe(
         'https://example.com/v2/management/accounts/account-id/projects',
       );
-      expect(request.headers.get('idempotency-key')).toBe('project-request');
+      expect(request.headers.has('idempotency-key')).toBe(false);
       await expect(request.json()).resolves.toEqual({
         name: 'Customer portal',
         createKey: true,
@@ -31,7 +31,6 @@ describe('management resources', () => {
       account: 'account-id',
       name: 'Customer portal',
       createKey: true,
-      idempotencyKey: 'project-request',
     });
 
     expect(result.project.id).toBe('project-id');

@@ -12,7 +12,6 @@ type ProjectInput = { project: string };
 type BucketInput = ProjectInput & { bucket: string };
 type UploadInput = ProjectInput & { uploadId: string };
 type EmptyJobInput = BucketInput & { jobId: string };
-type Idempotent = { idempotencyKey?: string };
 
 type Result<TOperation extends OperationId> = OperationResult<TOperation>;
 
@@ -24,7 +23,6 @@ export type ManagementClient = {
     create(
       input: AccountInput &
         OperationBody<'v2.management.projects.create'> &
-        Idempotent &
         CallOptions,
     ): Promise<Result<'v2.management.projects.create'>>;
     get(
@@ -41,7 +39,6 @@ export type ManagementClient = {
     create(
       input: ProjectInput &
         OperationBody<'v2.management.buckets.create'> &
-        Idempotent &
         CallOptions,
     ): Promise<Result<'v2.management.buckets.create'>>;
     get(
@@ -96,7 +93,6 @@ export type ManagementClient = {
     request(
       input: BucketInput &
         OperationBody<'v2.management.uploads.request'> &
-        Idempotent &
         CallOptions,
     ): Promise<Result<'v2.management.uploads.request'>>;
     get(
@@ -128,13 +124,10 @@ export function createManagementClient(transport: Transport): ManagementClient {
             signal,
           }),
         ),
-      create: ({ account, idempotencyKey, signal, ...body }) =>
+      create: ({ account, signal, ...body }) =>
         transport.execute(() =>
           transport.client.POST('/management/accounts/{accountId}/projects', {
-            params: {
-              path: { accountId: account },
-              header: { 'idempotency-key': idempotencyKey },
-            },
+            params: { path: { accountId: account } },
             body,
             signal,
           }),
@@ -162,13 +155,10 @@ export function createManagementClient(transport: Transport): ManagementClient {
             signal,
           }),
         ),
-      create: ({ project, idempotencyKey, signal, ...body }) =>
+      create: ({ project, signal, ...body }) =>
         transport.execute(() =>
           transport.client.POST('/management/projects/{projectRef}/buckets', {
-            params: {
-              path: { projectRef: project },
-              header: { 'idempotency-key': idempotencyKey },
-            },
+            params: { path: { projectRef: project } },
             body,
             signal,
           }),
@@ -254,14 +244,14 @@ export function createManagementClient(transport: Transport): ManagementClient {
       },
     },
     files: {
-      list: ({ project, bucket, cursor, limit, signal }) =>
+      list: ({ project, bucket, signal, ...query }) =>
         transport.execute(() =>
           transport.client.GET(
             '/management/projects/{projectRef}/buckets/{bucketName}/files',
             {
               params: {
                 path: { projectRef: project, bucketName: bucket },
-                query: { cursor, limit },
+                query,
               },
               signal,
             },
@@ -302,14 +292,13 @@ export function createManagementClient(transport: Transport): ManagementClient {
         ),
     },
     uploads: {
-      request: ({ project, bucket, idempotencyKey, signal, ...body }) =>
+      request: ({ project, bucket, signal, ...body }) =>
         transport.execute(() =>
           transport.client.POST(
             '/management/projects/{projectRef}/buckets/{bucketName}/uploads',
             {
               params: {
                 path: { projectRef: project, bucketName: bucket },
-                header: { 'idempotency-key': idempotencyKey },
               },
               body,
               signal,
