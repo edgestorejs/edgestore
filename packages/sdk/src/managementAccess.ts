@@ -98,21 +98,21 @@ export function createManagementAccessClient(
   return {
     accounts: {
       list: (options) =>
-        transport.execute(() =>
-          transport.client.GET('/management/accounts', {
+        transport.execute((client) =>
+          client.GET('/management/accounts', {
             signal: options?.signal,
           }),
         ),
       get: ({ account, signal }) =>
-        transport.execute(() =>
-          transport.client.GET('/management/accounts/{accountId}', {
+        transport.execute((client) =>
+          client.GET('/management/accounts/{accountId}', {
             params: { path: { accountId: account } },
             signal,
           }),
         ),
       leave: ({ account, signal }) =>
-        transport.execute(() =>
-          transport.client.POST('/management/accounts/{accountId}/leave', {
+        transport.execute((client) =>
+          client.POST('/management/accounts/{accountId}/leave', {
             params: { path: { accountId: account } },
             signal,
           }),
@@ -120,35 +120,32 @@ export function createManagementAccessClient(
     },
     projectKeys: {
       list: ({ project, signal }) =>
-        transport.execute(() =>
-          transport.client.GET('/management/projects/{projectRef}/keys', {
+        transport.execute((client) =>
+          client.GET('/management/projects/{projectRef}/keys', {
             params: { path: { projectRef: project } },
             signal,
           }),
         ),
       create: ({ project, signal, ...body }) =>
-        transport.execute(() =>
-          transport.client.POST('/management/projects/{projectRef}/keys', {
+        transport.execute((client) =>
+          client.POST('/management/projects/{projectRef}/keys', {
             params: { path: { projectRef: project } },
             body,
             signal,
           }),
         ),
       revoke: ({ project, keyId, signal }) =>
-        transport.execute(() =>
-          transport.client.DELETE(
-            '/management/projects/{projectRef}/keys/{keyId}',
-            {
-              params: { path: { projectRef: project, keyId } },
-              signal,
-            },
-          ),
+        transport.execute((client) =>
+          client.DELETE('/management/projects/{projectRef}/keys/{keyId}', {
+            params: { path: { projectRef: project, keyId } },
+            signal,
+          }),
         ),
     },
     members: {
       list: ({ account, signal, ...query }) =>
-        transport.execute(() =>
-          transport.client.GET('/management/accounts/{accountId}/members', {
+        transport.execute((client) =>
+          client.GET('/management/accounts/{accountId}/members', {
             params: {
               path: { accountId: account },
               query,
@@ -157,31 +154,25 @@ export function createManagementAccessClient(
           }),
         ),
       update: ({ account, userId, signal, ...body }) =>
-        transport.execute(() =>
-          transport.client.PATCH(
-            '/management/accounts/{accountId}/members/{userId}',
-            {
-              params: { path: { accountId: account, userId } },
-              body,
-              signal,
-            },
-          ),
+        transport.execute((client) =>
+          client.PATCH('/management/accounts/{accountId}/members/{userId}', {
+            params: { path: { accountId: account, userId } },
+            body,
+            signal,
+          }),
         ),
       remove: ({ account, userId, signal }) =>
-        transport.execute(() =>
-          transport.client.DELETE(
-            '/management/accounts/{accountId}/members/{userId}',
-            {
-              params: { path: { accountId: account, userId } },
-              signal,
-            },
-          ),
+        transport.execute((client) =>
+          client.DELETE('/management/accounts/{accountId}/members/{userId}', {
+            params: { path: { accountId: account, userId } },
+            signal,
+          }),
         ),
     },
     invitations: {
       list: ({ account, signal, ...query }) =>
-        transport.execute(() =>
-          transport.client.GET('/management/accounts/{accountId}/invitations', {
+        transport.execute((client) =>
+          client.GET('/management/accounts/{accountId}/invitations', {
             params: {
               path: { accountId: account },
               query,
@@ -190,21 +181,18 @@ export function createManagementAccessClient(
           }),
         ),
       create: ({ account, signal, ...body }) =>
-        transport.execute(() =>
-          transport.client.POST(
-            '/management/accounts/{accountId}/invitations',
-            {
-              params: {
-                path: { accountId: account },
-              },
-              body,
-              signal,
+        transport.execute((client) =>
+          client.POST('/management/accounts/{accountId}/invitations', {
+            params: {
+              path: { accountId: account },
             },
-          ),
+            body,
+            signal,
+          }),
         ),
       revoke: ({ account, invitationId, signal }) =>
-        transport.execute(() =>
-          transport.client.DELETE(
+        transport.execute((client) =>
+          client.DELETE(
             '/management/accounts/{accountId}/invitations/{invitationId}',
             {
               params: { path: { accountId: account, invitationId } },
@@ -213,8 +201,8 @@ export function createManagementAccessClient(
           ),
         ),
       resend: ({ account, invitationId, signal }) =>
-        transport.execute(() =>
-          transport.client.POST(
+        transport.execute((client) =>
+          client.POST(
             '/management/accounts/{accountId}/invitations/{invitationId}/resend',
             {
               params: { path: { accountId: account, invitationId } },
@@ -225,8 +213,8 @@ export function createManagementAccessClient(
     },
     tokens: {
       listAccount: ({ account, signal, ...query }) =>
-        transport.execute(() =>
-          transport.client.GET('/management/accounts/{accountId}/tokens', {
+        transport.execute((client) =>
+          client.GET('/management/accounts/{accountId}/tokens', {
             params: {
               path: { accountId: account },
               query,
@@ -235,30 +223,30 @@ export function createManagementAccessClient(
           }),
         ),
       createAccount: ({ account, signal, ...body }) =>
-        transport.execute(() =>
-          transport.client.POST('/management/accounts/{accountId}/tokens', {
+        transport.execute((client) =>
+          client.POST('/management/accounts/{accountId}/tokens', {
             params: { path: { accountId: account } },
             body,
             signal,
           }),
         ),
       listUser: ({ signal, ...query } = {}) =>
-        transport.execute(() =>
-          transport.client.GET('/management/users/me/tokens', {
+        transport.execute((client) =>
+          client.GET('/management/users/me/tokens', {
             params: { query },
             signal,
           }),
         ),
       createUser: ({ signal, ...body }) =>
-        transport.execute(() =>
-          transport.client.POST('/management/users/me/tokens', {
+        transport.execute((client) =>
+          client.POST('/management/users/me/tokens', {
             body,
             signal,
           }),
         ),
       revoke: ({ tokenId, signal }) =>
-        transport.execute(() =>
-          transport.client.DELETE('/management/tokens/{tokenId}', {
+        transport.execute((client) =>
+          client.DELETE('/management/tokens/{tokenId}', {
             params: { path: { tokenId } },
             signal,
           }),
