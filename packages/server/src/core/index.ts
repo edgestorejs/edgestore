@@ -2,6 +2,7 @@ import type {
   AnyRouter,
   BackendCapableEdgeStoreProvider,
   BackendProviderOperations,
+  BackendProviderOperationsAreValid,
   EdgeStoreProvider,
 } from '@edgestore/shared';
 import { createBackendClient, type EdgeStoreClient } from './client';
@@ -15,24 +16,37 @@ export type ConfiguredEdgeStore<
   router: TRouter;
   provider: TProvider;
   baseUrl?: string;
-} & (TProvider extends BackendCapableEdgeStoreProvider<BackendProviderOperations>
-  ? { client: EdgeStoreClient<TRouter, TProvider> }
+} & (TProvider extends {
+  readonly supportsBackendClient: true;
+}
+  ? BackendProviderOperationsAreValid<TProvider> extends true
+    ? { client: EdgeStoreClient<TRouter, TProvider> }
+    : object
   : object);
+
+type BackendProviderConfigConstraint<TProvider extends EdgeStoreProvider> =
+  TProvider extends { readonly supportsBackendClient: true }
+    ? BackendProviderOperationsAreValid<TProvider> extends true
+      ? object
+      : { provider: never }
+    : object;
 
 export function createEdgeStore<
   TRouter extends AnyRouter,
   TProvider extends EdgeStoreProvider,
->(config: {
-  router: TRouter;
-  provider: TProvider;
-  /**
-   * Application EdgeStore handler URL used to proxy protected files during
-   * local development.
-   *
-   * @example http://localhost:3000/api/edgestore
-   */
-  baseUrl?: string;
-}): ConfiguredEdgeStore<TRouter, TProvider> {
+>(
+  config: {
+    router: TRouter;
+    provider: TProvider;
+    /**
+     * Application EdgeStore handler URL used to proxy protected files during
+     * local development.
+     *
+     * @example http://localhost:3000/api/edgestore
+     */
+    baseUrl?: string;
+  } & BackendProviderConfigConstraint<TProvider>,
+): ConfiguredEdgeStore<TRouter, TProvider> {
   const edgeStore = {
     router: config.router,
     provider: config.provider,

@@ -157,6 +157,7 @@ describe('azureBlob', () => {
     });
 
     const res = await provider.getFileInfo({
+      bucketName: 'documents',
       url: `${containerUrl}/documents/_public/a%20b/file.txt?sv=token`,
     });
 
@@ -183,6 +184,7 @@ describe('azureBlob', () => {
     await expect(
       provider.deleteFile({
         bucket: {} as Parameters<typeof provider.deleteFile>[0]['bucket'],
+        bucketName: 'documents',
         url: `${containerUrl}/documents/report.pdf`,
       }),
     ).resolves.toEqual({ success: true });

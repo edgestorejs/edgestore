@@ -129,7 +129,7 @@ describe('createEdgeStore', () => {
     await expect(Promise.resolve(client)).resolves.toBe(client);
   });
 
-  it('exposes only the concrete provider capabilities', () => {
+  it('exposes and dispatches only concrete provider capabilities', async () => {
     const {
       upload: _upload,
       listFiles: _listFiles,
@@ -148,6 +148,15 @@ describe('createEdgeStore', () => {
     }).client;
 
     expect(Object.keys(client.documents)).toEqual(['getFile']);
+    backend.getFile.mockResolvedValue(createFile());
+
+    await expect(
+      client.documents.getFile({ id: 'file-id' }),
+    ).resolves.toMatchObject({ id: 'file-id' });
+    expect(backend.getFile).toHaveBeenCalledWith({
+      bucketName: 'documents',
+      file: { id: 'file-id' },
+    });
   });
 
   it('uploads string content as a text/plain txt blob', async () => {

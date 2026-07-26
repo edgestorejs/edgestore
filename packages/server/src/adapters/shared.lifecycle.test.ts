@@ -153,6 +153,7 @@ describe('confirmUpload', () => {
 
     expect(provider.confirmUpload).toHaveBeenCalledWith({
       bucket,
+      bucketName: 'documents',
       url: originalUrl,
     });
     expect(res).toEqual({ success: true });
@@ -285,6 +286,7 @@ describe('deleteFile', () => {
       code: 'DELETE_NOT_ALLOWED',
     });
     expect(provider.getFileInfo).toHaveBeenCalledWith({
+      bucketName: 'documents',
       url: originalUrl,
     });
     expect(beforeDelete).toHaveBeenCalledWith({
@@ -317,6 +319,7 @@ describe('deleteFile', () => {
     });
 
     expect(provider.getFileInfo).toHaveBeenCalledWith({
+      bucketName: 'documents',
       url: originalUrl,
     });
     expect(beforeDelete).toHaveBeenCalledWith({
@@ -327,6 +330,7 @@ describe('deleteFile', () => {
     });
     expect(provider.deleteFile).toHaveBeenCalledWith({
       bucket,
+      bucketName: 'documents',
       url: originalUrl,
     });
     const getFileCallOrder = vi.mocked(provider.getFileInfo).mock

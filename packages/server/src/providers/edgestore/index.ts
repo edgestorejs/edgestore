@@ -5,19 +5,29 @@ import {
 } from '@edgestore/sdk';
 import {
   EdgeStoreError,
-  type BackendFileMutationOperation,
-  type BackendGetFileOperation,
-  type BackendGetSignedUrlsOperation,
-  type BackendListFilesOperation,
-  type BackendUploadOperation,
-  type EdgeStoreProvider,
   type ProviderFile,
+  type ProviderFileMutationResult,
+  type RequestUploadParams,
   type RequestUploadRes,
+  type RouterFileFieldsProvider,
 } from '@edgestore/shared';
+import { z } from 'zod';
+import { defineProvider } from '../../core/provider';
 import { getEnv } from '../../libs/env';
 import EdgeStoreCredentialsError from '../../libs/errors/EdgeStoreCredentialsError';
 
 const DEFAULT_BASE_URL = 'https://files.edgestore.dev';
+
+const fileReferenceSchema = z
+  .union([
+    z.string(),
+    z.object({ id: z.string() }),
+    z.object({ key: z.string() }),
+    z.object({ url: z.string() }),
+  ])
+  .transform((reference) =>
+    typeof reference === 'string' ? { url: reference } : reference,
+  );
 
 export type EdgeStoreProviderOptions = {
   /**
@@ -38,23 +48,7 @@ export type EdgeStoreProviderOptions = {
   apiUrl?: string;
 };
 
-type EdgeStoreBackendOperations = {
-  upload: BackendUploadOperation;
-  getFile: BackendGetFileOperation;
-  listFiles: BackendListFilesOperation;
-  confirmFiles: BackendFileMutationOperation;
-  deleteFiles: BackendFileMutationOperation;
-  restoreFiles: BackendFileMutationOperation;
-  getSignedUrls: BackendGetSignedUrlsOperation;
-};
-
-export type EdgeStoreBackendProvider = EdgeStoreProvider & {
-  readonly supportsBackendClient: true;
-} & EdgeStoreBackendOperations;
-
-export function edgestore(
-  options?: EdgeStoreProviderOptions,
-): EdgeStoreBackendProvider {
+export function edgestore(options?: EdgeStoreProviderOptions) {
   const {
     accessKey = getEnv('EDGE_STORE_ACCESS_KEY') ??
       // @ts-expect-error - In Vite/Astro, the env variables are available on `import.meta`.
@@ -75,72 +69,21 @@ export function edgestore(
     baseUrl: options?.apiUrl ?? getApiUrl(),
   });
 
-  const backend: EdgeStoreBackendOperations = {
-    upload: async ({
-      bucketName,
-      bucketType,
-      fileInfo,
-      autoSignedUrls,
-      source,
-      signal,
-      onProgress,
-    }) => {
-      const result = await sdk.runtime.uploads.upload({
-        bucket: bucketName,
-        source,
-        ...mapUploadRequest(bucketType, fileInfo, autoSignedUrls),
-        signal,
-        onProgress,
-      });
-      return {
-        file: mapFile(result.file),
-        signedReadUrl: result.signedReadUrl
-          ? {
-              ...result.signedReadUrl,
-              expiresAt: new Date(result.signedReadUrl.expiresAt),
-            }
-          : undefined,
-      };
-    },
-    getFile: async ({ file: fileRef }) => {
-      const { file } = await sdk.runtime.files.lookup({ file: fileRef });
-      return mapFile(file);
-    },
-    listFiles: async ({ bucketName, filter, cursor, limit }) => {
-      const { files, pagination } = await sdk.runtime.files.search({
-        bucket: bucketName,
-        filter,
-        pagination: { cursor, limit },
-      });
-      return {
-        items: files.map(mapFile),
-        ...pagination,
-      };
-    },
-    confirmFiles: async ({ files }) =>
-      await sdk.runtime.files.confirmMany({ files }),
-    deleteFiles: async ({ files }) =>
-      await sdk.runtime.files.deleteMany({ files }),
-    restoreFiles: async ({ files }) =>
-      await sdk.runtime.files.restoreMany({ files }),
-    getSignedUrls: async (params) => {
-      const { signedUrls } = await sdk.runtime.files.createSignedUrls({
-        bucket: params.bucketName,
-        urls: params.urls,
-        expiresIn: params.expiresIn,
-        includeThumbnails: params.includeThumbnails,
-      });
-      return signedUrls.map((item) => ({
-        ...item,
-        expiresAt: new Date(item.expiresAt),
-      }));
-    },
-  };
-
-  return {
+  const provider = defineProvider({
     name: 'edgestore',
-    supportsBackendClient: true,
+    baseUrl,
+    reference: {
+      schema: fileReferenceSchema,
+      fromUrl: (url) => ({ url }),
+    },
     init: async ({ ctx, router }) => {
+      const requiresFileAccessCookie = Object.values(router.buckets).some(
+        (bucket) =>
+          bucket._def.accessControl !== undefined &&
+          bucket._def.accessControl !== 'private',
+      );
+      if (!requiresFileAccessCookie) return {};
+
       const { token } = await sdk.runtime.accessTokens.create({
         context: Object.fromEntries(
           Object.entries(ctx).filter(
@@ -169,103 +112,180 @@ export function edgestore(
       });
       return {
         token,
+        clientInit: {
+          path: '/_init',
+          headers: {
+            'x-edgestore-token': token,
+          },
+        },
       };
     },
-    getBaseUrl() {
-      return baseUrl;
-    },
-    getFileInfo: async ({ url }) => {
-      const file = await backend.getFile({ file: { url } });
-      return {
-        url: file.url,
-        size: file.sizeBytes,
-        uploadedAt: file.uploadedAt,
-        path: file.path,
-        metadata: file.metadata,
-      };
-    },
-    async requestUpload({
-      bucketName,
-      bucketType,
-      fileInfo,
-      autoSignedUrls,
-    }): Promise<RequestUploadRes> {
-      let partSize = DEFAULT_MULTIPART_PART_SIZE_BYTES;
-      if (fileInfo.size > DEFAULT_MULTIPART_THRESHOLD_BYTES) {
-        let totalParts = Math.ceil(fileInfo.size / partSize);
-        if (totalParts > 10_000) {
-          totalParts = 10_000;
-          partSize = Math.ceil(fileInfo.size / totalParts);
+    uploads: {
+      async request({
+        bucketName,
+        bucketType,
+        fileInfo,
+        autoSignedUrls,
+      }): Promise<RequestUploadRes> {
+        let partSize = DEFAULT_MULTIPART_PART_SIZE_BYTES;
+        if (fileInfo.size > DEFAULT_MULTIPART_THRESHOLD_BYTES) {
+          let totalParts = Math.ceil(fileInfo.size / partSize);
+          if (totalParts > 10_000) {
+            totalParts = 10_000;
+            partSize = Math.ceil(fileInfo.size / totalParts);
+          }
+          return mapUploadResponse(
+            await sdk.runtime.uploads.request({
+              bucket: bucketName,
+              ...mapRawUploadRequest(bucketType, fileInfo, autoSignedUrls),
+              multipart: {
+                partNumbers: Array.from(
+                  { length: totalParts },
+                  (_, index) => index + 1,
+                ),
+              },
+            }),
+            { partSize, totalParts },
+          );
         }
         return mapUploadResponse(
           await sdk.runtime.uploads.request({
             bucket: bucketName,
-            ...mapUploadRequest(bucketType, fileInfo, autoSignedUrls),
-            multipart: {
-              partNumbers: Array.from(
-                { length: totalParts },
-                (_, index) => index + 1,
-              ),
-            },
+            ...mapRawUploadRequest(bucketType, fileInfo, autoSignedUrls),
           }),
-          { partSize, totalParts },
         );
-      }
-      return mapUploadResponse(
-        await sdk.runtime.uploads.request({
-          bucket: bucketName,
-          ...mapUploadRequest(bucketType, fileInfo, autoSignedUrls),
-        }),
-      );
-    },
-    requestUploadParts: async ({ multipart }) => {
-      const res = await sdk.runtime.uploads.createParts({
-        uploadId: multipart.uploadId,
-        partNumbers: multipart.parts,
-      });
-      return {
-        multipart: {
-          uploadId: multipart.uploadId,
-          parts: res.parts.map((part) => ({
-            partNumber: part.partNumber,
-            uploadUrl: part.signedUrl,
-          })),
+      },
+      multipart: {
+        requestParts: async ({ multipart }) => {
+          const res = await sdk.runtime.uploads.createParts({
+            uploadId: multipart.uploadId,
+            partNumbers: multipart.parts,
+          });
+          return {
+            multipart: {
+              uploadId: multipart.uploadId,
+              parts: res.parts.map((part) => ({
+                partNumber: part.partNumber,
+                uploadUrl: part.signedUrl,
+              })),
+            },
+          };
         },
-      };
+        complete: async ({ uploadId, parts }) => {
+          await sdk.runtime.uploads.completeMultipart({
+            uploadId,
+            parts,
+          });
+        },
+      },
+      upload: async ({
+        bucketName,
+        fileInfo,
+        autoSignedUrls,
+        source,
+        signal,
+        onProgress,
+      }) => {
+        const result = await sdk.runtime.uploads.upload({
+          bucket: bucketName,
+          source,
+          ...mapHighLevelUploadOptions(fileInfo, autoSignedUrls),
+          signal,
+          onProgress,
+        });
+        return {
+          file: mapFile(result.file),
+          signedReadUrl: result.signedReadUrl
+            ? {
+                ...result.signedReadUrl,
+                expiresAt: new Date(result.signedReadUrl.expiresAt),
+              }
+            : undefined,
+        };
+      },
     },
-    listAdapterFiles: async ({ bucketName, ...params }) => {
-      const { files, pagination } = await sdk.runtime.files.search({
-        bucket: bucketName,
-        ...params,
-      });
-      return {
-        data: files.map((file) => ({
-          url: file.url,
-          thumbnailUrl: file.thumbnailUrl,
-          size: file.sizeBytes,
-          uploadedAt: new Date(file.uploadedAt),
-          path: file.path,
-          metadata: file.metadata,
-        })),
-        pagination,
-      };
+    files: {
+      cursorSchema: z.string(),
+      get: async ({ bucketName, file: fileRef }) => {
+        const { file } = await sdk.runtime.files.lookup({
+          bucketName,
+          file: fileRef,
+        });
+        return mapFile(file);
+      },
+      list: async ({ bucketName, filter, cursor, limit }) => {
+        const { files, pagination } = await sdk.runtime.files.search({
+          bucket: bucketName,
+          filter,
+          pagination: { cursor, limit },
+        });
+        return {
+          items: files.map(mapFile),
+          ...pagination,
+        };
+      },
+      confirm: async ({ bucketName, files }) =>
+        mapMutationResult(
+          await sdk.runtime.files.confirmMany({ bucketName, files }),
+        ),
+      delete: async ({ bucketName, files }) =>
+        mapMutationResult(
+          await sdk.runtime.files.deleteMany({ bucketName, files }),
+        ),
+      restore: async ({ bucketName, files }) =>
+        mapMutationResult(
+          await sdk.runtime.files.restoreMany({ bucketName, files }),
+        ),
+      getSignedUrls: async (params) => {
+        const urls = await Promise.all(
+          params.files.map(async (fileRef) =>
+            'url' in fileRef
+              ? fileRef.url
+              : (
+                  await sdk.runtime.files.lookup({
+                    bucketName: params.bucketName,
+                    file: fileRef,
+                  })
+                ).file.url,
+          ),
+        );
+        const { signedUrls } = await sdk.runtime.files.generateSignedReadUrls({
+          bucket: params.bucketName,
+          urls,
+          expiresIn: params.expiresIn,
+          includeThumbnails: params.includeThumbnails,
+        });
+        return signedUrls.map((item) => ({
+          ...item,
+          expiresAt: new Date(item.expiresAt),
+        }));
+      },
     },
-    completeMultipartUpload: async ({ uploadId, parts }) => {
-      await sdk.runtime.uploads.completeMultipart({
-        uploadId,
-        parts,
-      });
-      return { success: true };
-    },
-    confirmUpload: async ({ url }) => {
-      await sdk.runtime.files.confirm({ file: { url } });
-      return { success: true };
-    },
-    deleteFile: async ({ url }) => {
-      await sdk.runtime.files.delete({ file: { url } });
-      return { success: true };
-    },
-    ...backend,
+  });
+
+  return provider as typeof provider & RouterFileFieldsProvider;
+}
+
+export type EdgeStoreBackendProvider = ReturnType<typeof edgestore>;
+
+function mapMutationResult<TErrorCode extends string>(result: {
+  results: (
+    | { success: true }
+    | {
+        success: false;
+        error: {
+          code: TErrorCode;
+          message: string;
+        };
+      }
+  )[];
+}): ProviderFileMutationResult<TErrorCode> {
+  return {
+    results: result.results.map((item) =>
+      item.success
+        ? { success: true as const }
+        : { success: false as const, error: item.error },
+    ),
   };
 }
 
@@ -286,29 +306,36 @@ function normalizeMetadata(
   );
 }
 
-function mapUploadRequest(
+function mapHighLevelUploadOptions(
+  fileInfo: RequestUploadParams['fileInfo'],
+  signedReadUrl: RequestUploadParams['autoSignedUrls'],
+) {
+  return {
+    fileName: fileInfo.fileName,
+    mimeType: fileInfo.type,
+    temporary: fileInfo.temporary,
+    path: fileInfo.path,
+    extension: fileInfo.extension,
+    metadata: normalizeMetadata(fileInfo.metadata),
+    replaceTarget: fileInfo.replaceTargetUrl
+      ? { url: fileInfo.replaceTargetUrl }
+      : undefined,
+    signedReadUrl,
+  };
+}
+
+function mapRawUploadRequest(
   bucketType: string,
-  fileInfo: Parameters<EdgeStoreProvider['requestUpload']>[0]['fileInfo'],
-  signedReadUrl: Parameters<
-    EdgeStoreProvider['requestUpload']
-  >[0]['autoSignedUrls'],
+  fileInfo: RequestUploadParams['fileInfo'],
+  signedReadUrl: RequestUploadParams['autoSignedUrls'],
 ) {
   return {
     bucketType: bucketType.toLowerCase() as 'file' | 'image',
     visibility: fileInfo.isPublic
       ? ('public' as const)
       : ('protected' as const),
-    fileName: fileInfo.fileName,
-    mimeType: fileInfo.type,
-    temporary: fileInfo.temporary,
-    path: fileInfo.path,
-    extension: fileInfo.extension,
     sizeBytes: fileInfo.size,
-    metadata: normalizeMetadata(fileInfo.metadata),
-    replaceTarget: fileInfo.replaceTargetUrl
-      ? { url: fileInfo.replaceTargetUrl }
-      : undefined,
-    signedReadUrl,
+    ...mapHighLevelUploadOptions(fileInfo, signedReadUrl),
   };
 }
 

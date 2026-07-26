@@ -303,6 +303,7 @@ describe('s3', () => {
     await expect(
       provider.deleteFile({
         bucket: {} as Parameters<typeof provider.deleteFile>[0]['bucket'],
+        bucketName: 'documents',
         url: 'https://cdn.example.com/documents/path/file.txt',
       }),
     ).resolves.toEqual({ success: true });
@@ -331,6 +332,7 @@ describe('s3', () => {
     await expect(
       provider.deleteFile({
         bucket: {} as Parameters<typeof provider.deleteFile>[0]['bucket'],
+        bucketName: 'documents',
         url: 'https://example.com/documents/file.txt',
       }),
     ).rejects.toThrow(

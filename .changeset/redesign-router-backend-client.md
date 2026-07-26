@@ -10,6 +10,14 @@ context is now a flat map of string values (with optional properties) so hooks,
 path and metadata builders, and provider access tokens share one contract.
 Concrete providers now determine which backend methods exist and the file,
 reference, cursor, mutation, and signed-URL types returned by those methods.
+Backend-capable providers are structurally checked at configuration time,
+including cursor and mutation-reference consistency, while unsupported
+capabilities remain absent from the derived client. Frontend file lookup,
+confirmation, and deletion now preserve the selected bucket through the
+provider boundary so router authorization cannot be applied to one bucket and
+then mutate a file from another. The unused adapter-level `getSignedUrls`
+overlap is removed; `getSignedUrls` now belongs exclusively to backend
+capabilities.
 `EdgeStoreFileMutationError` is shared with `@edgestore/sdk` and exposes the
 failed reference as `fileRef`.
 

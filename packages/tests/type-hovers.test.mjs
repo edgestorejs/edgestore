@@ -117,10 +117,10 @@ const expectedHovers = {
 }) => Promise<{
     state: "requested" | "uploaded" | "deleted" | "replace_requested";
     name: string;
+    bucketName: string;
     id: string;
     url: string;
     key: string;
-    thumbnailUrl: string | null;
     ... 16 more ...;
     signedThumbnailUrl?: string | null | undefined;
 }>`,
@@ -156,13 +156,13 @@ const expectedHovers = {
   backendUnsignedUpload: `const backendUnsignedUpload: {
     state: "requested" | "uploaded" | "deleted" | "replace_requested";
     name: string;
+    bucketName: string;
     id: string;
     url: string;
     key: string;
     thumbnailUrl: string | null;
     thumbnailKey: string | null;
     bucketId: string;
-    bucketName: string;
     projectId: string;
     accountId: string;
     sizeBytes: number;
@@ -177,13 +177,13 @@ const expectedHovers = {
   backendSignedFileUpload: `const backendSignedFileUpload: {
     state: "requested" | "uploaded" | "deleted" | "replace_requested";
     name: string;
+    bucketName: string;
     id: string;
     url: string;
     key: string;
     thumbnailUrl: string | null;
     thumbnailKey: string | null;
     bucketId: string;
-    bucketName: string;
     projectId: string;
     accountId: string;
     sizeBytes: number;
@@ -208,13 +208,13 @@ const expectedHovers = {
   backendGetFile: `const backendGetFile: {
     state: "requested" | "uploaded" | "deleted" | "replace_requested";
     name: string;
+    bucketName: string;
     id: string;
     url: string;
     key: string;
     thumbnailUrl: string | null;
     thumbnailKey: string | null;
     bucketId: string;
-    bucketName: string;
     projectId: string;
     accountId: string;
     sizeBytes: number;
@@ -235,13 +235,13 @@ const expectedHovers = {
     items: {
         state: "requested" | "uploaded" | "deleted" | "replace_requested";
         name: string;
+        bucketName: string;
         id: string;
         url: string;
         key: string;
         thumbnailUrl: string | null;
         thumbnailKey: string | null;
         bucketId: string;
-        bucketName: string;
         projectId: string;
         accountId: string;
         sizeBytes: number;

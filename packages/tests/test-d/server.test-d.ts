@@ -72,6 +72,16 @@ const {
 } = edgestore();
 const syntheticProvider = {
   ...providerWithoutRestore,
+  upload: async () => ({
+    file: {
+      url: 'https://s3.example/files/uploaded.txt',
+      path: {},
+      metadata: {},
+      uploadedAt: new Date(),
+      updatedAt: new Date(),
+      eTag: 'upload-etag',
+    },
+  }),
   getFile: async ({
     file,
   }: {
@@ -108,9 +118,47 @@ const syntheticProvider = {
     nextCursor: cursor === undefined ? 2 : null,
     hasMore: cursor === undefined,
   }),
+  deleteFiles: async ({
+    files,
+  }: {
+    bucketName: string;
+    files: { objectKey: string }[];
+  }) => ({
+    results: files.map((fileRef) => ({
+      fileRef,
+      success: false as const,
+      error: {
+        code: 'OBJECT_LOCKED' as const,
+        message: 'The object is locked.',
+      },
+    })),
+    successCount: 0,
+    failureCount: files.length,
+  }),
+  getSignedUrls: async ({
+    urls,
+  }: {
+    bucketName: string;
+    urls: { objectKey: string }[];
+    expiresIn?: number;
+    includeThumbnails?: boolean;
+  }) =>
+    urls.map(({ objectKey }) => ({
+      url: `https://s3.example/${objectKey}`,
+      signedUrl: `https://signed.s3.example/${objectKey}`,
+      expiresAt: new Date(),
+      expiresIn: 60,
+      providerRegion: 'us-east-1' as const,
+    })),
 };
 const syntheticClient = createEdgeStore({
   router: publicRouter,
+  provider: syntheticProvider,
+}).client;
+const syntheticProtectedClient = createEdgeStore({
+  router: publicEs.router({
+    files: publicEs.fileBucket().accessControl('private'),
+  }),
   provider: syntheticProvider,
 }).client;
 
@@ -128,6 +176,87 @@ void syntheticClient.files.listFiles({ cursor: 1 }).then((page) => {
   expectType<string>(page.items[0]!.eTag);
   expectError(page.items[0]!.accountId);
 });
+void syntheticClient.files.upload({ content: 'hello' }).then((file) => {
+  expectType<string>(file.eTag);
+  expectError(file.accountId);
+});
+expectError(syntheticClient.files.deleteFile({ id: 'file-id' }));
+void syntheticClient.files
+  .deleteFiles({ refs: [{ objectKey: 'files/file.txt' }] })
+  .then(({ failed }) => {
+    expectType<'OBJECT_LOCKED'>(failed[0]!.error.code);
+    expectType<string>(failed[0]!.ref.objectKey);
+  });
+expectError(
+  syntheticProtectedClient.files.getSignedUrl({
+    url: 'https://s3.example/files/file.txt',
+  }),
+);
+void syntheticProtectedClient.files
+  .getSignedUrl({
+    url: { objectKey: 'files/file.txt' },
+  })
+  .then((signedUrl) => {
+    expectType<'us-east-1'>(signedUrl.providerRegion);
+    expectType<Date>(signedUrl.expiresAt);
+  });
+
+expectError(
+  createEdgeStore({
+    router: publicRouter,
+    provider: {
+      ...syntheticProvider,
+      getFile: async ({
+        file,
+      }: {
+        bucketName: string;
+        file: { objectKey: string };
+      }) => file.objectKey,
+    },
+  }),
+);
+
+expectError(
+  createEdgeStore({
+    router: publicRouter,
+    provider: {
+      ...syntheticProvider,
+      listFiles: async ({
+        cursor,
+      }: {
+        bucketName: string;
+        cursor?: number;
+      }) => ({
+        items: [],
+        limit: 20,
+        nextCursor: cursor === undefined ? 'next' : null,
+        hasMore: cursor === undefined,
+      }),
+    },
+  }),
+);
+
+expectError(
+  createEdgeStore({
+    router: publicRouter,
+    provider: {
+      ...syntheticProvider,
+      deleteFiles: async ({
+        files,
+      }: {
+        bucketName: string;
+        files: { objectKey: string }[];
+      }) => ({
+        results: files.map(() => ({
+          fileRef: { id: 'different-reference' },
+          success: true as const,
+        })),
+        successCount: files.length,
+        failureCount: 0,
+      }),
+    },
+  }),
+);
 
 void client.avatars.upload({
   content: 'hello',

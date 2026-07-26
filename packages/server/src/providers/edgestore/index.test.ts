@@ -186,7 +186,7 @@ describe('edgestore provider', () => {
     const provider = edgestore({ accessKey: 'access', secretKey: 'secret' });
 
     await expect(
-      provider.getFileInfo({ url: file.url }),
+      provider.getFileInfo({ bucketName: 'files', url: file.url }),
     ).resolves.toMatchObject({
       size: 12,
       uploadedAt: new Date(file.uploadedAt),
@@ -201,11 +201,31 @@ describe('edgestore provider', () => {
       provider.getSignedUrls?.({ bucketName: 'files', urls: [file.url] }),
     ).resolves.toEqual([]);
     await expect(
-      provider.confirmUpload({ bucket: {} as never, url: file.url }),
+      provider.confirmUpload({
+        bucket: {} as never,
+        bucketName: 'files',
+        url: file.url,
+      }),
     ).resolves.toEqual({ success: true });
     await expect(
-      provider.deleteFile({ bucket: {} as never, url: file.url }),
+      provider.deleteFile({
+        bucket: {} as never,
+        bucketName: 'files',
+        url: file.url,
+      }),
     ).resolves.toEqual({ success: true });
+    expect(runtime.files.lookup).toHaveBeenCalledWith({
+      bucketName: 'files',
+      file: { url: file.url },
+    });
+    expect(runtime.files.confirm).toHaveBeenCalledWith({
+      bucketName: 'files',
+      file: { url: file.url },
+    });
+    expect(runtime.files.delete).toHaveBeenCalledWith({
+      bucketName: 'files',
+      file: { url: file.url },
+    });
   });
 
   it('exposes canonical privileged backend operations through the SDK', async () => {
