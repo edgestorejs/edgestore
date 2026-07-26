@@ -116,11 +116,12 @@ const expectedHovers = {
     };
 }) => Promise<{
     state: "requested" | "uploaded" | "deleted" | "replace_requested";
+    name: string;
     id: string;
     url: string;
     key: string;
     thumbnailUrl: string | null;
-    ... 17 more ...;
+    ... 16 more ...;
     signedThumbnailUrl?: string | null | undefined;
 }>`,
   reactSignedUploadMethod: `const reactSignedUploadMethod: (params: {
@@ -154,6 +155,7 @@ const expectedHovers = {
     'const fastifyHandler: (req: FastifyRequest, reply: FastifyReply) => Promise<void>',
   backendUnsignedUpload: `const backendUnsignedUpload: {
     state: "requested" | "uploaded" | "deleted" | "replace_requested";
+    name: string;
     id: string;
     url: string;
     key: string;
@@ -163,7 +165,6 @@ const expectedHovers = {
     bucketName: string;
     projectId: string;
     accountId: string;
-    name: string;
     sizeBytes: number;
     mimeType: string | null;
     temporary: boolean;
@@ -175,6 +176,7 @@ const expectedHovers = {
 }`,
   backendSignedFileUpload: `const backendSignedFileUpload: {
     state: "requested" | "uploaded" | "deleted" | "replace_requested";
+    name: string;
     id: string;
     url: string;
     key: string;
@@ -184,7 +186,6 @@ const expectedHovers = {
     bucketName: string;
     projectId: string;
     accountId: string;
-    name: string;
     sizeBytes: number;
     mimeType: string | null;
     temporary: boolean;
@@ -206,6 +207,7 @@ const expectedHovers = {
 }`,
   backendGetFile: `const backendGetFile: {
     state: "requested" | "uploaded" | "deleted" | "replace_requested";
+    name: string;
     id: string;
     url: string;
     key: string;
@@ -215,7 +217,6 @@ const expectedHovers = {
     bucketName: string;
     projectId: string;
     accountId: string;
-    name: string;
     sizeBytes: number;
     mimeType: string | null;
     temporary: boolean;
@@ -233,6 +234,7 @@ const expectedHovers = {
   backendListFiles: `const backendListFiles: {
     items: {
         state: "requested" | "uploaded" | "deleted" | "replace_requested";
+        name: string;
         id: string;
         url: string;
         key: string;
@@ -242,7 +244,6 @@ const expectedHovers = {
         bucketName: string;
         projectId: string;
         accountId: string;
-        name: string;
         sizeBytes: number;
         mimeType: string | null;
         temporary: boolean;

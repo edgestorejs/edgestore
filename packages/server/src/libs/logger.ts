@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 
-import { isDev } from '../adapters/shared';
+import { isDev } from './env';
 
 const logLevel = ['debug', 'info', 'warn', 'error', 'none'] as const;
 

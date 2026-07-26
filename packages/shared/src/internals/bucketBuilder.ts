@@ -50,7 +50,7 @@ export type InferBucketPathObjectFromDef<TDef extends AnyDef> =
       };
 
 type NormalizeMetadata<TMetadata> = string extends keyof TMetadata
-  ? TMetadata
+  ? Record<string, Exclude<TMetadata[string], null | undefined>>
   : Simplify<
       {
         [

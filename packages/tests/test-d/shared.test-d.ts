@@ -52,6 +52,12 @@ const imageBucket = es
 const fileBucket = es.fileBucket().path(({ ctx }) => [{ author: ctx.userId }]);
 const privateFileBucket = es.fileBucket().accessControl('private');
 const emptyBucket = es.fileBucket();
+const broadMetadataBucket = es.fileBucket().metadata(
+  (): Record<string, string | null | undefined> => ({
+    present: 'value',
+    absent: undefined,
+  }),
+);
 
 expectType<{ author: string; type: string }>(
   {} as InferBucketPathObject<typeof imageBucket>,
@@ -64,6 +70,9 @@ expectType<{ role: 'admin' | 'visitor'; extension?: string }>(
 );
 expectType<{ author: string }>({} as InferBucketPathObject<typeof fileBucket>);
 expectType<[]>({} as InferBucketPathOrder<typeof emptyBucket>);
+expectType<Record<string, string>>(
+  {} as InferMetadataObject<typeof broadMetadataBucket>,
+);
 
 expectAssignable<AccessControlSchema<Context, typeof imageBucket._def>>({
   userId: { path: 'author' },

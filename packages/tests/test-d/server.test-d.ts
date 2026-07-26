@@ -30,6 +30,12 @@ const router = es.router({
       type: input.type,
     })),
   documents: es.fileBucket().path(({ ctx }) => [{ author: ctx.userId }]),
+  broadMetadata: es.fileBucket().metadata(
+    (): Record<string, string | null | undefined> => ({
+      present: 'value',
+      absent: undefined,
+    }),
+  ),
 });
 
 const client = createEdgeStore({
@@ -58,6 +64,70 @@ const s3EdgeStore = createEdgeStore({
   provider: s3(),
 });
 expectError(s3EdgeStore.client);
+
+const {
+  restoreFiles: _restoreFiles,
+  getFile: _hostedGetFile,
+  ...providerWithoutRestore
+} = edgestore();
+const syntheticProvider = {
+  ...providerWithoutRestore,
+  getFile: async ({
+    file,
+  }: {
+    bucketName: string;
+    file: { objectKey: string };
+  }) => ({
+    url: `https://s3.example/${file.objectKey}`,
+    path: {},
+    metadata: {},
+    uploadedAt: new Date(),
+    updatedAt: new Date(),
+    eTag: 'etag',
+  }),
+  listFiles: async ({
+    cursor,
+    limit = 20,
+  }: {
+    bucketName: string;
+    filter?: unknown;
+    cursor?: number;
+    limit?: number;
+  }) => ({
+    items: [
+      {
+        url: 'https://s3.example/files/file.txt',
+        path: {},
+        metadata: {},
+        uploadedAt: new Date(),
+        updatedAt: new Date(),
+        eTag: 'etag',
+      },
+    ],
+    limit,
+    nextCursor: cursor === undefined ? 2 : null,
+    hasMore: cursor === undefined,
+  }),
+};
+const syntheticClient = createEdgeStore({
+  router: publicRouter,
+  provider: syntheticProvider,
+}).client;
+
+expectError(syntheticClient.files.restoreFile);
+expectError(syntheticClient.files.getFile({ id: 'file-id' }));
+void syntheticClient.files
+  .getFile({ objectKey: 'files/file.txt' })
+  .then((file) => {
+    expectType<string>(file.eTag);
+    expectError(file.accountId);
+  });
+expectError(syntheticClient.files.listFiles({ cursor: 'next' }));
+void syntheticClient.files.listFiles({ cursor: 1 }).then((page) => {
+  expectType<number | null>(page.nextCursor);
+  expectType<string>(page.items[0]!.eTag);
+  expectError(page.items[0]!.accountId);
+});
 
 void client.avatars.upload({
   content: 'hello',
@@ -146,6 +216,20 @@ void client.avatars.getFile({ id: 'file-id' }).then((file) => {
     file.metadata,
   );
   expectType<{ author: string; type: string }>(file.path);
+});
+void client.broadMetadata
+  .upload({
+    content: 'hello',
+    ctx: { userId: 'user-1', role: 'admin' },
+  })
+  .then((file) => {
+    expectType<Record<string, string>>(file.metadata);
+  });
+void client.broadMetadata.getFile({ id: 'file-id' }).then((file) => {
+  expectType<Record<string, string>>(file.metadata);
+});
+void client.broadMetadata.listFiles().then((page) => {
+  expectType<Record<string, string>>(page.items[0]!.metadata);
 });
 void client.documents.getFile({ key: 'files/document.pdf' });
 void client.documents.getFile({ url: 'https://files.example/document.pdf' });

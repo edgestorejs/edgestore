@@ -1,5 +1,4 @@
 import {
-  EdgeStoreError,
   initEdgeStore,
   type AnyContext,
   type EdgeStoreProvider,
@@ -7,13 +6,7 @@ import {
 } from '@edgestore/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
-import {
-  buildPath,
-  getCookieConfig,
-  init,
-  parsePath,
-  requestUpload,
-} from './shared';
+import { getCookieConfig, init, requestUpload } from './shared';
 import {
   createContextToken,
   createProvider,
@@ -128,78 +121,6 @@ describe('getCookieConfig', () => {
         },
       },
     });
-  });
-});
-
-describe('path helpers', () => {
-  it('builds and parses ordered path values from context and input', () => {
-    const es = initEdgeStore.context<{ userId: string }>().create();
-    const bucket = es
-      .fileBucket()
-      .input(
-        z.object({ org: z.object({ slug: z.string() }), type: z.string() }),
-      )
-      .path(({ ctx, input }) => [
-        { author: ctx.userId },
-        { org: input.org.slug },
-        { type: input.type },
-      ]);
-
-    const path = buildPath({
-      bucket,
-      pathAttrs: {
-        ctx: {
-          userId: 'user-1',
-        },
-        input: {
-          org: {
-            slug: 'acme',
-          },
-          type: 'avatar',
-        },
-      },
-      fileInfo: {
-        size: 10,
-        type: 'text/plain',
-        extension: 'txt',
-        temporary: false,
-      },
-    });
-
-    expect(path).toEqual([
-      { key: 'author', value: 'user-1' },
-      { key: 'org', value: 'acme' },
-      { key: 'type', value: 'avatar' },
-    ]);
-    expect(parsePath(path)).toEqual({
-      parsedPath: {
-        author: 'user-1',
-        org: 'acme',
-        type: 'avatar',
-      },
-      pathOrder: ['author', 'org', 'type'],
-    });
-  });
-
-  it('throws an EdgeStoreError when a path value is missing', () => {
-    const es = initEdgeStore.context<{ userId: string }>().create();
-    const bucket = es.fileBucket().path(({ ctx }) => [{ author: ctx.userId }]);
-
-    expect(() =>
-      buildPath({
-        bucket,
-        pathAttrs: {
-          ctx: {},
-          input: {},
-        },
-        fileInfo: {
-          size: 10,
-          type: 'text/plain',
-          extension: 'txt',
-          temporary: false,
-        },
-      }),
-    ).toThrow(EdgeStoreError);
   });
 });
 

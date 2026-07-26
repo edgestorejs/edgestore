@@ -1,6 +1,7 @@
 import type {
   AnyRouter,
   BackendCapableEdgeStoreProvider,
+  BackendProviderOperations,
   EdgeStoreProvider,
 } from '@edgestore/shared';
 import { createBackendClient, type EdgeStoreClient } from './client';
@@ -14,8 +15,8 @@ export type ConfiguredEdgeStore<
   router: TRouter;
   provider: TProvider;
   baseUrl?: string;
-} & (TProvider extends BackendCapableEdgeStoreProvider
-  ? { client: EdgeStoreClient<TRouter> }
+} & (TProvider extends BackendCapableEdgeStoreProvider<BackendProviderOperations>
+  ? { client: EdgeStoreClient<TRouter, TProvider> }
   : object);
 
 export function createEdgeStore<
@@ -46,15 +47,16 @@ export function createEdgeStore<
         config.provider,
         config.baseUrl,
       ),
-    } as ConfiguredEdgeStore<TRouter, TProvider>;
+    } as unknown as ConfiguredEdgeStore<TRouter, TProvider>;
   }
 
   return edgeStore as ConfiguredEdgeStore<TRouter, TProvider>;
 }
 
-function isBackendCapableProvider(
-  provider: EdgeStoreProvider,
-): provider is BackendCapableEdgeStoreProvider {
+function isBackendCapableProvider<TProvider extends EdgeStoreProvider>(
+  provider: TProvider,
+): provider is TProvider &
+  BackendCapableEdgeStoreProvider<BackendProviderOperations> {
   return (
     'supportsBackendClient' in provider &&
     provider.supportsBackendClient === true

@@ -78,17 +78,20 @@ export class EdgeStoreUploadProcessingTimeoutError extends EdgeStoreUploadError 
 }
 
 /** Failure returned for a singular file mutation. */
-export class EdgeStoreFileMutationError extends EdgeStoreError {
+export class EdgeStoreFileMutationError<
+  TFileReference = { id: string } | { key: string } | { url: string },
+  TCode extends string =
+    | 'FILE_NOT_CONFIRMABLE'
+    | 'FILE_NOT_DELETABLE'
+    | 'FILE_NOT_RESTORABLE'
+    | 'INVALID_FILE_REF',
+> extends EdgeStoreError {
   override readonly name = 'EdgeStoreFileMutationError';
 
   constructor(
-    readonly code:
-      | 'FILE_NOT_CONFIRMABLE'
-      | 'FILE_NOT_DELETABLE'
-      | 'FILE_NOT_RESTORABLE'
-      | 'INVALID_FILE_REF',
+    readonly code: TCode,
     message: string,
-    readonly fileRef: { id: string } | { key: string } | { url: string },
+    readonly fileRef: TFileReference,
   ) {
     super(message);
   }

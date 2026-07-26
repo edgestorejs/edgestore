@@ -3,4 +3,5 @@ export {
   createEdgeStore,
   type ConfiguredEdgeStore,
   type EdgeStoreClient,
+  EdgeStoreFileMutationError,
 } from './core';

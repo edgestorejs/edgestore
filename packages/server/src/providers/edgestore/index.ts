@@ -5,13 +5,16 @@ import {
 } from '@edgestore/sdk';
 import {
   EdgeStoreError,
-  type BackendCapableEdgeStoreProvider,
-  type BackendProviderOperations,
+  type BackendFileMutationOperation,
+  type BackendGetFileOperation,
+  type BackendGetSignedUrlsOperation,
+  type BackendListFilesOperation,
+  type BackendUploadOperation,
   type EdgeStoreProvider,
   type ProviderFile,
   type RequestUploadRes,
 } from '@edgestore/shared';
-import { getEnv } from '../../adapters/shared';
+import { getEnv } from '../../libs/env';
 import EdgeStoreCredentialsError from '../../libs/errors/EdgeStoreCredentialsError';
 
 const DEFAULT_BASE_URL = 'https://files.edgestore.dev';
@@ -35,9 +38,23 @@ export type EdgeStoreProviderOptions = {
   apiUrl?: string;
 };
 
+type EdgeStoreBackendOperations = {
+  upload: BackendUploadOperation;
+  getFile: BackendGetFileOperation;
+  listFiles: BackendListFilesOperation;
+  confirmFiles: BackendFileMutationOperation;
+  deleteFiles: BackendFileMutationOperation;
+  restoreFiles: BackendFileMutationOperation;
+  getSignedUrls: BackendGetSignedUrlsOperation;
+};
+
+export type EdgeStoreBackendProvider = EdgeStoreProvider & {
+  readonly supportsBackendClient: true;
+} & EdgeStoreBackendOperations;
+
 export function edgestore(
   options?: EdgeStoreProviderOptions,
-): BackendCapableEdgeStoreProvider {
+): EdgeStoreBackendProvider {
   const {
     accessKey = getEnv('EDGE_STORE_ACCESS_KEY') ??
       // @ts-expect-error - In Vite/Astro, the env variables are available on `import.meta`.
@@ -58,8 +75,7 @@ export function edgestore(
     baseUrl: options?.apiUrl ?? getApiUrl(),
   });
 
-  const backend: BackendProviderOperations = {
-    supportsBackendClient: true,
+  const backend: EdgeStoreBackendOperations = {
     upload: async ({
       bucketName,
       bucketType,
@@ -123,6 +139,7 @@ export function edgestore(
 
   return {
     name: 'edgestore',
+    supportsBackendClient: true,
     init: async ({ ctx, router }) => {
       const { token } = await sdk.runtime.accessTokens.create({
         context: Object.fromEntries(

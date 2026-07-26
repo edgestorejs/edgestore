@@ -1,16 +1,25 @@
-import { initEdgeStore, type ProviderFile } from '@edgestore/shared';
+import { EdgeStoreFileMutationError as SdkFileMutationError } from '@edgestore/sdk';
+import {
+  initEdgeStore,
+  type BackendFileMutationOperation,
+  type BackendGetFileOperation,
+  type BackendGetSignedUrlsOperation,
+  type BackendListFilesOperation,
+  type BackendUploadOperation,
+  type ProviderFile,
+} from '@edgestore/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import { createEdgeStore } from '../index';
 import { EdgeStoreFileMutationError } from './index';
 
 const backend = {
-  upload: vi.fn(),
-  getFile: vi.fn(),
-  listFiles: vi.fn(),
-  confirmFiles: vi.fn(),
-  deleteFiles: vi.fn(),
-  restoreFiles: vi.fn(),
+  upload: vi.fn<BackendUploadOperation>(),
+  getFile: vi.fn<BackendGetFileOperation>(),
+  listFiles: vi.fn<BackendListFilesOperation>(),
+  confirmFiles: vi.fn<BackendFileMutationOperation>(),
+  deleteFiles: vi.fn<BackendFileMutationOperation>(),
+  restoreFiles: vi.fn<BackendFileMutationOperation>(),
 };
 
 const provider = {
@@ -24,7 +33,7 @@ const provider = {
   completeMultipartUpload: vi.fn(),
   confirmUpload: vi.fn(),
   deleteFile: vi.fn(),
-  getSignedUrls: vi.fn(),
+  getSignedUrls: vi.fn<BackendGetSignedUrlsOperation>(),
   ...backend,
 };
 
@@ -120,6 +129,27 @@ describe('createEdgeStore', () => {
     await expect(Promise.resolve(client)).resolves.toBe(client);
   });
 
+  it('exposes only the concrete provider capabilities', () => {
+    const {
+      upload: _upload,
+      listFiles: _listFiles,
+      confirmFiles: _confirmFiles,
+      deleteFiles: _deleteFiles,
+      restoreFiles: _restoreFiles,
+      getSignedUrls: _getSignedUrls,
+      ...adapterProvider
+    } = provider;
+    const client = createEdgeStore({
+      router: createRouter(),
+      provider: {
+        ...adapterProvider,
+        getFile: backend.getFile,
+      },
+    }).client;
+
+    expect(Object.keys(client.documents)).toEqual(['getFile']);
+  });
+
   it('uploads string content as a text/plain txt blob', async () => {
     const client = createClient();
 
@@ -142,7 +172,7 @@ describe('createEdgeStore', () => {
         isPublic: true,
       }),
     });
-    const source = backend.upload.mock.calls[0]?.[0].source as Blob;
+    const source = backend.upload.mock.calls[0]![0].source;
     expect(source.type).toBe('text/plain');
     await expect(source.text()).resolves.toBe('plain text');
   });
@@ -256,7 +286,7 @@ describe('createEdgeStore', () => {
         extension: 'bin',
       }),
     });
-    const source = backend.upload.mock.calls[0]?.[0].source as Blob;
+    const source = backend.upload.mock.calls[0]![0].source;
     await expect(source.text()).resolves.toBe('transformed');
   });
 
@@ -511,9 +541,13 @@ describe('createEdgeStore', () => {
     });
 
     await client.publicFiles.getFile({ key: 'files/file.txt' });
+    expect(EdgeStoreFileMutationError).toBe(SdkFileMutationError);
     await expect(
       client.publicFiles.confirmUpload({ id: 'file-id' }),
-    ).rejects.toBeInstanceOf(EdgeStoreFileMutationError);
+    ).rejects.toMatchObject({
+      name: 'EdgeStoreFileMutationError',
+      fileRef: { id: 'file-id' },
+    });
     await expect(
       client.publicFiles.deleteFiles({
         refs: [{ key: 'files/one' }, { url: 'https://files.example/missing' }],
