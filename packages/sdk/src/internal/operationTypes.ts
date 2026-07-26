@@ -1,8 +1,11 @@
+import type {
+  ResponseObjectMap,
+  SuccessResponse,
+} from 'openapi-typescript-helpers';
 import type { operations } from '../generated/api-v2';
 import type { ApiData } from './transport';
 
 type OperationId = keyof operations;
-type SuccessStatus = 200 | 201 | 202 | 204;
 
 export type Mutable<TValue> = {
   -readonly [TKey in keyof TValue]: TValue[TKey];
@@ -15,15 +18,9 @@ export type OperationBody<TOperation extends OperationId> =
     ? Mutable<TBody>
     : never;
 
-type SuccessBody<TOperation extends OperationId> =
-  operations[TOperation] extends { responses: infer TResponses }
-    ? TResponses[SuccessStatus & keyof TResponses] extends {
-        content: { 'application/json': infer TBody };
-      }
-      ? TBody
-      : undefined
-    : never;
+export type SuccessBody<TResponses extends Record<string | number, unknown>> =
+  SuccessResponse<TResponses, 'application/json'>;
 
 export type OperationResult<TOperation extends OperationId> = ApiData<
-  SuccessBody<TOperation>
+  SuccessBody<ResponseObjectMap<operations[TOperation]>>
 >;

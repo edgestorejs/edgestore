@@ -40,15 +40,23 @@ export type RuntimeSignedUrlsCreateInput = {
   RuntimeCallOptions;
 export type RuntimeSignedUrlsCreateResult =
   OperationResult<'v2.runtime.files.signedUrls.create'>;
-export type RuntimeFileBatchInput = OperationBody<'v2.runtime.files.confirm'> &
-  RuntimeCallOptions;
-export type RuntimeFileBatchResult =
+export type RuntimeFileConfirmInput =
+  OperationBody<'v2.runtime.files.confirm'> & RuntimeCallOptions;
+export type RuntimeFileConfirmResult =
   OperationResult<'v2.runtime.files.confirm'>;
+export type RuntimeFileDeleteInput = OperationBody<'v2.runtime.files.delete'> &
+  RuntimeCallOptions;
+export type RuntimeFileDeleteResult =
+  OperationResult<'v2.runtime.files.delete'>;
+export type RuntimeFileRestoreInput =
+  OperationBody<'v2.runtime.files.restore'> & RuntimeCallOptions;
+export type RuntimeFileRestoreResult =
+  OperationResult<'v2.runtime.files.restore'>;
 
 export type RuntimeUploadRequestInput = {
   bucket: string;
 } & OperationBody<'v2.runtime.uploads.request'> &
-  RuntimeCallOptions & { idempotencyKey?: string };
+  RuntimeCallOptions;
 export type RuntimeUploadRequestResult =
   OperationResult<'v2.runtime.uploads.request'>;
 export type RuntimeUploadGetInput = { uploadId: string } & RuntimeCallOptions;
@@ -95,14 +103,14 @@ export type RuntimeClient<TMode extends ProjectMode> = {
       input: ScopedInput<TMode, RuntimeSignedUrlsCreateInput>,
     ): Promise<RuntimeSignedUrlsCreateResult>;
     confirm(
-      input: ScopedInput<TMode, RuntimeFileBatchInput>,
-    ): Promise<RuntimeFileBatchResult>;
+      input: ScopedInput<TMode, RuntimeFileConfirmInput>,
+    ): Promise<RuntimeFileConfirmResult>;
     delete(
-      input: ScopedInput<TMode, RuntimeFileBatchInput>,
-    ): Promise<RuntimeFileBatchResult>;
+      input: ScopedInput<TMode, RuntimeFileDeleteInput>,
+    ): Promise<RuntimeFileDeleteResult>;
     restore(
-      input: ScopedInput<TMode, RuntimeFileBatchInput>,
-    ): Promise<RuntimeFileBatchResult>;
+      input: ScopedInput<TMode, RuntimeFileRestoreInput>,
+    ): Promise<RuntimeFileRestoreResult>;
   };
   uploads: {
     request(
@@ -237,14 +245,13 @@ export function createExplicitProjectRuntimeClient(
         ),
     },
     uploads: {
-      request: ({ project, bucket, idempotencyKey, signal, ...body }) =>
+      request: ({ project, bucket, signal, ...body }) =>
         transport.execute(() =>
           transport.client.POST(
             '/runtime/projects/{projectRef}/buckets/{bucketName}/uploads',
             {
               params: {
                 path: { projectRef: project, bucketName: bucket },
-                header: { 'idempotency-key': idempotencyKey },
               },
               body,
               signal,

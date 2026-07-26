@@ -59,14 +59,14 @@ describe('createEdgeStoreSdk', () => {
     }>();
   });
 
-  it('maps upload idempotency and request fields to the API contract', async () => {
+  it('maps upload request fields to the API contract', async () => {
     const fetch = vi.fn<typeof globalThis.fetch>(async (input) => {
       const request = input instanceof Request ? input : new Request(input);
       expect(request.method).toBe('POST');
       expect(request.url).toBe(
         'https://example.com/v2/runtime/projects/_current/buckets/documents/uploads',
       );
-      expect(request.headers.get('idempotency-key')).toBe('upload-123');
+      expect(request.headers.has('idempotency-key')).toBe(false);
       await expect(request.json()).resolves.toEqual({
         bucketType: 'file',
         sizeBytes: 42,
@@ -90,7 +90,6 @@ describe('createEdgeStoreSdk', () => {
       bucketType: 'file',
       sizeBytes: 42,
       fileName: 'invoice.pdf',
-      idempotencyKey: 'upload-123',
     });
 
     expect(result.upload.id).toBe('upload-id');
