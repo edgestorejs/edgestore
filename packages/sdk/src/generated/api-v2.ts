@@ -7820,7 +7820,7 @@ export interface operations {
                         url: string;
                     };
                     /** @description Optional bucket the resolved file must belong to. */
-                    readonly bucketName?: string;
+                    bucketName?: string;
                 };
             };
         };
@@ -8049,7 +8049,7 @@ export interface operations {
                         url: string;
                     })[];
                     /** @description Optional bucket every processed file must belong to. */
-                    readonly bucketName?: string;
+                    bucketName?: string;
                 };
             };
         };
@@ -8213,7 +8213,7 @@ export interface operations {
                         url: string;
                     })[];
                     /** @description Optional bucket every processed file must belong to. */
-                    readonly bucketName?: string;
+                    bucketName?: string;
                 };
             };
         };
@@ -8377,7 +8377,7 @@ export interface operations {
                         url: string;
                     })[];
                     /** @description Optional bucket every processed file must belong to. */
-                    readonly bucketName?: string;
+                    bucketName?: string;
                 };
             };
         };
