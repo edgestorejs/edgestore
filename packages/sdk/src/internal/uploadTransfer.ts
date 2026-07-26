@@ -4,11 +4,11 @@ import {
   EdgeStoreNetworkError,
   EdgeStoreUploadError,
 } from '../errors';
-import {
-  DEFAULT_UPLOAD_MAX_ATTEMPTS,
-  type RuntimeUploadInput,
-} from '../uploadTypes';
+import type { RuntimeUploadInput } from '../uploadTypes';
 import type { Transport } from './transport';
+
+const DEFAULT_UPLOAD_MAX_ATTEMPTS = 3;
+const DEFAULT_UPLOAD_BASE_DELAY_MS = 250;
 
 export async function uploadParts(
   transport: Transport,
@@ -19,7 +19,6 @@ export async function uploadParts(
     partSizeBytes: number;
     concurrency: number;
     signal?: AbortSignal;
-    retry?: RuntimeUploadInput['retry'];
     onProgress?: RuntimeUploadInput['onProgress'];
   },
 ): Promise<{ partNumber: number; eTag: string }[]> {
@@ -29,47 +28,55 @@ export async function uploadParts(
   let nextIndex = 0;
   let transferredBytes = 0;
   const workerCount = Math.min(options.concurrency, options.parts.length);
+  const controller = new AbortController();
+  const signal = options.signal
+    ? AbortSignal.any([options.signal, controller.signal])
+    : controller.signal;
 
-  await Promise.all(
-    Array.from({ length: workerCount }, async () => {
-      while (nextIndex < options.parts.length) {
-        const index = nextIndex++;
-        const part = options.parts[index];
-        if (!part) continue;
-        const start = (part.partNumber - 1) * options.partSizeBytes;
-        const chunk = options.body.slice(
-          start,
-          Math.min(start + options.partSizeBytes, options.body.size),
+  const workers = Array.from({ length: workerCount }, async () => {
+    while (nextIndex < options.parts.length) {
+      const index = nextIndex++;
+      const part = options.parts[index];
+      if (!part) continue;
+      const start = (part.partNumber - 1) * options.partSizeBytes;
+      const chunk = options.body.slice(
+        start,
+        Math.min(start + options.partSizeBytes, options.body.size),
+      );
+      const response = await putWithRetry(transport, {
+        uploadId: options.uploadId,
+        url: part.signedUrl,
+        body: chunk,
+        signal,
+      });
+      const eTag = response.headers.get('etag');
+      if (!eTag) {
+        throw new EdgeStoreUploadError(
+          `Upload part ${part.partNumber} did not return an ETag.`,
+          options.uploadId,
         );
-        const response = await putWithRetry(transport, {
-          uploadId: options.uploadId,
-          url: part.signedUrl,
-          body: chunk,
-          signal: options.signal,
-          retry: options.retry,
-        });
-        const eTag = response.headers.get('etag');
-        if (!eTag) {
-          throw new EdgeStoreUploadError(
-            `Upload part ${part.partNumber} did not return an ETag.`,
-            options.uploadId,
-          );
-        }
-        completed[index] = { partNumber: part.partNumber, eTag };
-        transferredBytes += chunk.size;
-        options.onProgress?.({
-          transferredBytes,
-          totalBytes: options.body.size,
-          percentage:
-            options.body.size === 0
-              ? 100
-              : Math.round((transferredBytes / options.body.size) * 10_000) /
-                100,
-          phase: 'uploading',
-        });
       }
-    }),
-  );
+      completed[index] = { partNumber: part.partNumber, eTag };
+      transferredBytes += chunk.size;
+      options.onProgress?.({
+        transferredBytes,
+        totalBytes: options.body.size,
+        percentage:
+          options.body.size === 0
+            ? 100
+            : Math.round((transferredBytes / options.body.size) * 10_000) / 100,
+        phase: 'uploading',
+      });
+    }
+  });
+
+  try {
+    await Promise.all(workers);
+  } catch (error) {
+    controller.abort(error);
+    await Promise.allSettled(workers);
+    throw error;
+  }
 
   return completed;
 }
@@ -83,7 +90,6 @@ export async function uploadStreamParts(
     parts: { partNumber: number; signedUrl: string }[];
     partSizeBytes: number;
     signal?: AbortSignal;
-    retry?: RuntimeUploadInput['retry'];
     onProgress?: RuntimeUploadInput['onProgress'];
   },
 ): Promise<{ partNumber: number; eTag: string }[]> {
@@ -110,7 +116,6 @@ export async function uploadStreamParts(
         url: part.signedUrl,
         body: new Blob([Uint8Array.from(chunk)]),
         signal: options.signal,
-        retry: options.retry,
       });
       const eTag = response.headers.get('etag');
       if (!eTag) {
@@ -154,19 +159,11 @@ export async function putWithRetry(
     body: Blob;
     uploadId: string;
     signal?: AbortSignal;
-    retry?: RuntimeUploadInput['retry'];
   },
 ): Promise<Response> {
-  const maxAttempts = getPositiveInteger(
-    options.retry?.maxAttempts,
-    DEFAULT_UPLOAD_MAX_ATTEMPTS,
-    'retry.maxAttempts',
-  );
-  const baseDelayMs = options.retry?.baseDelayMs ?? 250;
-  assertNonNegative(baseDelayMs, 'retry.baseDelayMs');
   let lastError: unknown;
 
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+  for (let attempt = 1; attempt <= DEFAULT_UPLOAD_MAX_ATTEMPTS; attempt++) {
     throwIfAborted(options.signal);
     try {
       const response = await transport.fetch(options.url, {
@@ -175,14 +172,17 @@ export async function putWithRetry(
         signal: options.signal,
       });
       if (response.ok) return response;
-      if (!isRetryableStatus(response.status) || attempt === maxAttempts) {
+      if (
+        !isRetryableStatus(response.status) ||
+        attempt === DEFAULT_UPLOAD_MAX_ATTEMPTS
+      ) {
         throw new EdgeStoreUploadError(
           `Signed upload failed with status ${response.status}.`,
           options.uploadId,
         );
       }
       await sleep(
-        getRetryDelay(response, baseDelayMs, attempt),
+        getRetryDelay(response, DEFAULT_UPLOAD_BASE_DELAY_MS, attempt),
         options.signal,
       );
     } catch (error) {
@@ -191,8 +191,11 @@ export async function putWithRetry(
       }
       if (error instanceof EdgeStoreUploadError) throw error;
       lastError = error;
-      if (attempt === maxAttempts) break;
-      await sleep(fullJitterDelay(baseDelayMs, attempt), options.signal);
+      if (attempt === DEFAULT_UPLOAD_MAX_ATTEMPTS) break;
+      await sleep(
+        fullJitterDelay(DEFAULT_UPLOAD_BASE_DELAY_MS, attempt),
+        options.signal,
+      );
     }
   }
 
@@ -203,17 +206,8 @@ export async function putWithRetry(
 
 export async function retryOperation<TResult>(
   operation: () => Promise<TResult>,
-  retry: RuntimeUploadInput['retry'],
   signal?: AbortSignal,
 ): Promise<TResult> {
-  const maxAttempts = getPositiveInteger(
-    retry?.maxAttempts,
-    DEFAULT_UPLOAD_MAX_ATTEMPTS,
-    'retry.maxAttempts',
-  );
-  const baseDelayMs = retry?.baseDelayMs ?? 250;
-  assertNonNegative(baseDelayMs, 'retry.baseDelayMs');
-
   for (let attempt = 1; ; attempt++) {
     throwIfAborted(signal);
     try {
@@ -222,12 +216,14 @@ export async function retryOperation<TResult>(
       if (error instanceof EdgeStoreAbortError || isAbortError(error)) {
         throw new EdgeStoreAbortError(undefined, { cause: error });
       }
-      if (attempt >= maxAttempts || !isRetryableError(error)) throw error;
+      if (attempt >= DEFAULT_UPLOAD_MAX_ATTEMPTS || !isRetryableError(error)) {
+        throw error;
+      }
       const delayMs =
         error instanceof EdgeStoreApiError &&
         error.retryAfterSeconds !== undefined
           ? error.retryAfterSeconds * 1000
-          : fullJitterDelay(baseDelayMs, attempt);
+          : fullJitterDelay(DEFAULT_UPLOAD_BASE_DELAY_MS, attempt);
       await sleep(delayMs, signal);
     }
   }

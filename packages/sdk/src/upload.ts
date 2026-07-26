@@ -59,10 +59,8 @@ export async function uploadRuntimeFile(
     signal,
     onProgress,
     multipart,
-    retry,
     fileName,
     mimeType,
-    idempotencyKey,
     processingTimeoutMs = defaults.processingTimeoutMs ??
       DEFAULT_PROCESSING_TIMEOUT_MS,
     ...requestOptions
@@ -73,8 +71,6 @@ export async function uploadRuntimeFile(
   const multipartThresholdBytes =
     defaults.multipartThresholdBytes ?? DEFAULT_MULTIPART_THRESHOLD_BYTES;
   assertNonNegative(multipartThresholdBytes, 'upload.multipartThresholdBytes');
-  const retryOptions = { ...defaults.retry, ...retry };
-  const uploadIdempotencyKey = idempotencyKey ?? crypto.randomUUID();
 
   throwIfAborted(signal);
   reportProgress(onProgress, {
@@ -111,25 +107,19 @@ export async function uploadRuntimeFile(
       )
     : undefined;
 
-  const requested = await retryOperation(
-    () =>
-      requestUpload(transport, {
-        project,
-        bucket,
-        bucketType: bucketResult.bucket.type,
-        visibility: bucketResult.bucket.visibility,
-        sizeBytes: totalBytes,
-        fileName: fileName ?? prepared.fileName,
-        mimeType: mimeType ?? prepared.mimeType,
-        metadata: normalizeMetadata(metadata),
-        multipart: partNumbers ? { partNumbers } : undefined,
-        signal,
-        ...requestOptions,
-        idempotencyKey: uploadIdempotencyKey,
-      }),
-    retryOptions,
+  const requested = await requestUpload(transport, {
+    project,
+    bucket,
+    bucketType: bucketResult.bucket.type,
+    visibility: bucketResult.bucket.visibility,
+    sizeBytes: totalBytes,
+    fileName: fileName ?? prepared.fileName,
+    mimeType: mimeType ?? prepared.mimeType,
+    metadata: normalizeMetadata(metadata),
+    multipart: partNumbers ? { partNumbers } : undefined,
     signal,
-  );
+    ...requestOptions,
+  });
   const uploadId = requested.upload.id;
 
   try {
@@ -148,7 +138,6 @@ export async function uploadRuntimeFile(
         url: requested.upload.signedUrl,
         body: prepared.body,
         signal,
-        retry: retryOptions,
       });
       reportProgress(onProgress, {
         transferredBytes: totalBytes,
@@ -168,7 +157,6 @@ export async function uploadRuntimeFile(
         parts: requested.upload.parts,
         partSizeBytes,
         signal,
-        retry: retryOptions,
         onProgress,
       };
       const completedParts = prepared.stream
@@ -290,14 +278,13 @@ async function requestUpload(
   transport: Transport,
   input: RuntimeUploadRequestInput & { project: string },
 ) {
-  const { project, bucket, idempotencyKey, signal, ...body } = input;
+  const { project, bucket, signal, ...body } = input;
   return transport.execute(() =>
     transport.client.POST(
       '/runtime/projects/{projectRef}/buckets/{bucketName}/uploads',
       {
         params: {
           path: { projectRef: project, bucketName: bucket },
-          header: { 'idempotency-key': idempotencyKey },
         },
         body,
         signal,
@@ -360,7 +347,6 @@ async function waitForUpload(
             },
           ),
         ),
-      undefined,
       options.signal,
     );
 

@@ -33,7 +33,7 @@ describe('runtime upload orchestration', () => {
           sizeBytes: 7,
           metadata: { invoiceId: '42', paid: 'false' },
         });
-        expect(request.headers.get('idempotency-key')).toBe('upload-request');
+        expect(request.headers.has('idempotency-key')).toBe(false);
         return Response.json({
           data: {
             file: { id: 'upload-id' },
@@ -66,7 +66,6 @@ describe('runtime upload orchestration', () => {
       bucket: 'documents',
       source: 'content',
       fileName: 'invoice.pdf',
-      idempotencyKey: 'upload-request',
       metadata: { invoiceId: 42, paid: false, ignored: null },
       onProgress: progress,
     });
@@ -106,6 +105,57 @@ describe('runtime upload orchestration', () => {
         },
       ],
     ]);
+  });
+
+  it('retries transient signed storage failures with the internal policy', async () => {
+    let transferAttempts = 0;
+    const fetch = vi.fn<typeof globalThis.fetch>(async (input, init) => {
+      const request = toRequest(input, init);
+      if (request.url.endsWith('/buckets/documents')) {
+        return Response.json({
+          data: { bucket: { type: 'file', visibility: 'protected' } },
+        });
+      }
+      if (request.url.endsWith('/buckets/documents/uploads')) {
+        return Response.json({
+          data: {
+            file: { id: 'retry-id' },
+            upload: {
+              kind: 'single',
+              id: 'retry-id',
+              signedUrl: 'https://storage.example/retry',
+            },
+          },
+        });
+      }
+      if (request.url === 'https://storage.example/retry') {
+        transferAttempts++;
+        if (transferAttempts < 3) {
+          return new Response(null, {
+            status: 503,
+            headers: { 'retry-after': '0' },
+          });
+        }
+        return new Response(null, { status: 200 });
+      }
+      if (request.url.endsWith('/uploads/retry-id')) {
+        return Response.json({
+          data: {
+            upload: { id: 'retry-id', status: 'completed' },
+            file: { id: 'file-id' },
+          },
+        });
+      }
+      throw new Error(`Unexpected request: ${request.method} ${request.url}`);
+    });
+    const sdk = createSdk(fetch);
+
+    await sdk.runtime.uploads.upload({
+      bucket: 'documents',
+      source: new Blob(['content']),
+    });
+
+    expect(transferAttempts).toBe(3);
   });
 
   it('uploads multipart chunks concurrently and completes with ETags', async () => {
@@ -181,6 +231,69 @@ describe('runtime upload orchestration', () => {
         { partNumber: 2, eTag: 'etag-2' },
       ],
     });
+  });
+
+  it('aborts sibling multipart transfers before canceling the upload', async () => {
+    const events: string[] = [];
+    const fetch = vi.fn<typeof globalThis.fetch>(async (input, init) => {
+      const request = toRequest(input, init);
+      if (request.url.endsWith('/buckets/videos')) {
+        return Response.json({
+          data: { bucket: { type: 'file', visibility: 'protected' } },
+        });
+      }
+      if (request.url.endsWith('/buckets/videos/uploads')) {
+        return Response.json({
+          data: {
+            file: { id: 'race-id' },
+            upload: {
+              kind: 'multipart',
+              id: 'race-id',
+              parts: [
+                { partNumber: 1, signedUrl: 'https://storage.example/fail' },
+                { partNumber: 2, signedUrl: 'https://storage.example/blocked' },
+              ],
+            },
+          },
+        });
+      }
+      if (request.url === 'https://storage.example/fail') {
+        return new Response(null, { status: 400 });
+      }
+      if (request.url === 'https://storage.example/blocked') {
+        return await new Promise<Response>((_resolve, reject) => {
+          request.signal.addEventListener(
+            'abort',
+            () => {
+              events.push('sibling-aborted');
+              reject(new DOMException('Aborted', 'AbortError'));
+            },
+            { once: true },
+          );
+        });
+      }
+      if (
+        request.method === 'DELETE' &&
+        request.url.endsWith('/uploads/race-id')
+      ) {
+        events.push('upload-canceled');
+        return Response.json({
+          data: { upload: { id: 'race-id', status: 'canceled' } },
+        });
+      }
+      throw new Error(`Unexpected request: ${request.method} ${request.url}`);
+    });
+    const sdk = createSdk(fetch);
+
+    await expect(
+      sdk.runtime.uploads.upload({
+        bucket: 'videos',
+        source: new Blob(['abcdef']),
+        multipart: { partSizeBytes: 3, concurrency: 2 },
+      }),
+    ).rejects.toMatchObject({ name: 'EdgeStoreUploadError' });
+
+    expect(events).toEqual(['sibling-aborted', 'upload-canceled']);
   });
 
   it('uploads remote URLs through the explicit streaming helper', async () => {
@@ -293,8 +406,7 @@ describe('runtime upload orchestration', () => {
     expect(methods).not.toContain('DELETE');
   });
 
-  it('retries upload creation with the same idempotency key', async () => {
-    const idempotencyKeys: (string | null)[] = [];
+  it('does not retry upload creation', async () => {
     let requestAttempts = 0;
     const fetch = vi.fn<typeof globalThis.fetch>(async (input, init) => {
       const request = toRequest(input, init);
@@ -305,53 +417,28 @@ describe('runtime upload orchestration', () => {
       }
       if (request.url.endsWith('/buckets/documents/uploads')) {
         requestAttempts++;
-        idempotencyKeys.push(request.headers.get('idempotency-key'));
-        if (requestAttempts === 1) {
-          return Response.json(
-            {
-              error: {
-                code: 'temporarily_unavailable',
-                message: 'Try again',
-                status: 503,
-              },
-            },
-            { status: 503 },
-          );
-        }
-        return Response.json({
-          data: {
-            file: { id: 'retry-id' },
-            upload: {
-              kind: 'single',
-              id: 'retry-id',
-              signedUrl: 'https://storage.example/retry',
+        return Response.json(
+          {
+            error: {
+              code: 'temporarily_unavailable',
+              message: 'Try again',
+              status: 503,
             },
           },
-        });
-      }
-      if (request.url === 'https://storage.example/retry') {
-        return new Response(null, { status: 200 });
-      }
-      if (request.url.endsWith('/uploads/retry-id')) {
-        return Response.json({
-          data: {
-            upload: { id: 'retry-id', status: 'completed' },
-            file: { id: 'file-id' },
-          },
-        });
+          { status: 503 },
+        );
       }
       throw new Error(`Unexpected request: ${request.method} ${request.url}`);
     });
     const sdk = createSdk(fetch);
 
-    await sdk.runtime.uploads.upload({
-      bucket: 'documents',
-      source: new Blob(['content']),
-      retry: { maxAttempts: 2, baseDelayMs: 0 },
-    });
+    await expect(
+      sdk.runtime.uploads.upload({
+        bucket: 'documents',
+        source: new Blob(['content']),
+      }),
+    ).rejects.toMatchObject({ status: 503 });
 
-    expect(requestAttempts).toBe(2);
-    expect(idempotencyKeys[0]).toBeTruthy();
-    expect(idempotencyKeys[1]).toBe(idempotencyKeys[0]);
+    expect(requestAttempts).toBe(1);
   });
 });
