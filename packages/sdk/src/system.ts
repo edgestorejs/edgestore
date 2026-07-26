@@ -13,12 +13,12 @@ export type SystemClient = {
 export function createSystemClient(transport: Transport): SystemClient {
   return {
     health: (options) =>
-      transport.execute(() =>
-        transport.client.GET('/health', { signal: options?.signal }),
+      transport.execute((client) =>
+        client.GET('/health', { signal: options?.signal }),
       ),
     whoami: (options) =>
-      transport.execute(() =>
-        transport.client.GET('/whoami', { signal: options?.signal }),
+      transport.execute((client) =>
+        client.GET('/whoami', { signal: options?.signal }),
       ),
   };
 }
