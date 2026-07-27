@@ -40,12 +40,21 @@ capability; single-part providers omit it entirely. Provider batch mutations
 return one ordered status per input while EdgeStore attaches references and
 derives counts. The S3 provider reserves the logical router bucket as the first
 object-key segment and replaces `overwritePath` with a `path` callback that
-customizes everything beneath that boundary.
+customizes everything beneath that boundary. S3 access URLs percent-encode
+object-key segments so keys containing URL delimiters, percent signs, spaces,
+or Unicode round-trip through lookup and deletion.
+
+Provider initialization is now context-safe and provider-neutral. `init`
+receives the router's flat context type and may return an explicit
+`clientInit` instruction when the browser must initialize provider-side state.
+The React provider follows that instruction against the provider's returned
+base URL instead of selecting behavior through `provider.name`.
 
 All HTTP adapters now delegate EdgeStore route dispatch, response
 normalization, cookie handling, proxy behavior, and error formatting to one
 framework-neutral dispatcher. Framework adapters only translate their native
-request and response primitives.
+request and response primitives, and handler logging no longer depends on
+process-global state.
 
 The React client now exposes `confirmUpload`, `confirmUploads`, `deleteFile`,
 and `deleteFiles`. Plural mutations use one request and preserve per-file

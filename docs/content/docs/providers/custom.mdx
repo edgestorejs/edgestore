@@ -60,8 +60,11 @@ export const myProvider = defineProvider({
     },
   },
   files: {
-    async get({ file }) {
-      const object = await storage.head(file.key);
+    async get({ bucketName, file }) {
+      const object = await storage.head({
+        bucketName,
+        key: file.key,
+      });
       return {
         url: `${baseUrl}/${file.key}`,
         sizeBytes: object.size,
@@ -143,8 +146,13 @@ export const myProvider = defineProvider({
   },
   files: {
     cursorSchema: z.string().min(1),
-    async get({ file }) {
-      return toFile(await storage.head(file.key));
+    async get({ bucketName, file }) {
+      return toFile(
+        await storage.head({
+          bucketName,
+          key: file.key,
+        }),
+      );
     },
     async list({ bucketName, cursor, filter, limit = 20 }) {
       const page = await storage.list({ bucketName, cursor, filter, limit });
@@ -155,20 +163,39 @@ export const myProvider = defineProvider({
         hasMore: page.nextCursor !== null,
       };
     },
-    async confirm({ files }) {
-      return { results: await storage.confirm(files) };
+    async confirm({ bucketName, files }) {
+      return {
+        results: await storage.confirm({
+          bucketName,
+          files,
+        }),
+      };
     },
-    async delete({ files }) {
-      return { results: await storage.delete(files) };
+    async delete({ bucketName, files }) {
+      return {
+        results: await storage.delete({
+          bucketName,
+          files,
+        }),
+      };
     },
-    async restore({ files }) {
-      return { results: await storage.restore(files) };
+    async restore({ bucketName, files }) {
+      return {
+        results: await storage.restore({
+          bucketName,
+          files,
+        }),
+      };
     },
-    async getSignedUrls({ files, expiresIn = 3600 }) {
+    async getSignedUrls({ bucketName, files, expiresIn = 3600 }) {
       return Promise.all(
         files.map(async (file) => ({
           url: `${baseUrl}/${file.key}`,
-          signedUrl: await storage.signRead(file.key, expiresIn),
+          signedUrl: await storage.signRead({
+            bucketName,
+            key: file.key,
+            expiresIn,
+          }),
           expiresAt: new Date(Date.now() + expiresIn * 1000),
           expiresIn,
         })),
@@ -182,6 +209,12 @@ Here, callers may pass either a URL or `{ key }`, but every provider operation
 receives `{ key: string }` after runtime validation. The backend client also
 inherits the string cursor, the extra `etag` file field, and any literal
 mutation error codes returned by the storage driver.
+
+Every file operation must enforce the logical EdgeStore `bucketName`. Treat
+`bucketName` and the normalized file reference as the complete storage
+identity, and reject a reference that belongs to another logical bucket. This
+keeps a frontend request authorized through bucket A from loading or mutating a
+file in bucket B. The official providers enforce the same ownership invariant.
 
 Mutation providers return exactly one status for each input file, in the same
 order. EdgeStore attaches the original file references and derives success and
