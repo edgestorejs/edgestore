@@ -35,7 +35,17 @@ references and list cursors are inferred from Standard Schema definitions and
 validated before provider operations run. A single resource-oriented provider
 surface supplies both HTTP handlers and the router-derived backend client, so
 providers no longer repeat handler-specific get, confirm, delete, or list
-methods.
+methods. Multipart upload support is one optional `uploads.multipart`
+capability; single-part providers omit it entirely. Provider batch mutations
+return one ordered status per input while EdgeStore attaches references and
+derives counts. The S3 provider reserves the logical router bucket as the first
+object-key segment and replaces `overwritePath` with a `path` callback that
+customizes everything beneath that boundary.
+
+All HTTP adapters now delegate EdgeStore route dispatch, response
+normalization, cookie handling, proxy behavior, and error formatting to one
+framework-neutral dispatcher. Framework adapters only translate their native
+request and response primitives.
 
 The React client now exposes `confirmUpload`, `confirmUploads`, `deleteFile`,
 and `deleteFiles`. Plural mutations use one request and preserve per-file

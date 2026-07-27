@@ -91,34 +91,41 @@ export type S3ProviderOptions = {
    */
   jwtSecret?: string;
   /**
-   * Optional function to overwrite the S3 key (object path) for uploads.
-   * This function receives the EdgeStore bucket name, fileInfo and the default S3 key
-   * and should return the desired S3 key string.
+   * Customizes the object path beneath the logical EdgeStore bucket prefix.
+   *
+   * The logical bucket prefix is always preserved so router authorization for
+   * one bucket cannot access objects from another.
    */
-  overwritePath?: (args: {
-    esBucketName: string;
+  path?: (args: {
+    edgestoreBucketName: string;
     fileInfo: FileInfo;
-    defaultAccessPath: string;
+    defaultPath: string;
   }) => Promise<string> | string;
 };
 ```
 
-## Overwriting S3 Object Keys
+## Customizing S3 Object Paths
 
 By default, the S3 provider uses the same path-generation logic as the hosted
-provider. You can use `overwritePath` when you want a different S3 object key.
+provider. The first object-key segment is always the logical EdgeStore router
+bucket. This lets multiple logical buckets safely share one physical S3 bucket:
 
-For that, you can use the `overwritePath` option.
+```text
+documents/_public/acme/invoice.pdf
+avatars/_public/user-123/profile.png
+```
 
-```ts
-// ...
+Use `path` to customize everything beneath that protected prefix. For example,
+this removes `_public` while keeping the remaining generated path:
+
+```ts title="src/server/edgestore.ts"
 const edgeStore = createEdgeStore({
   router: edgeStoreRouter,
   provider: s3({
-    // [!code ++:4]
-    overwritePath: ({ defaultAccessPath }) => {
-      // `publicFiles/_public/123/test.png` -> `123/test.png`
-      return defaultAccessPath.split('/_public/')[1];
+    path: ({ defaultPath }) => {
+      // `documents/_public/acme/invoice.pdf`
+      // becomes `documents/acme/invoice.pdf`
+      return defaultPath.replace(/^_public\//, '');
     },
   }),
 });
@@ -129,7 +136,12 @@ const handler = createEdgeStoreNextHandler({
 });
 ```
 
-If you are removing the `_public` folder from the path like in the example above, you might also want to disable the dev proxy in the `createEdgeStoreProvider` function.
+The callback returns a path relative to the logical bucket and cannot escape
+that boundary. It also receives `edgestoreBucketName` and `fileInfo` when you
+need provider-specific naming logic.
+
+If you remove `_public`, you might also want to disable the development proxy
+in `createEdgeStoreProvider`.
 
 ```ts
 const { EdgeStoreProvider, useEdgeStore } =

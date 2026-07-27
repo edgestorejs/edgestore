@@ -58,12 +58,6 @@ export const myProvider = defineProvider({
         accessUrl: `${baseUrl}/${key}`,
       };
     },
-    async requestParts() {
-      throw new Error('Multipart uploads are not supported');
-    },
-    async complete() {
-      throw new Error('Multipart uploads are not supported');
-    },
   },
   files: {
     async get({ file }) {
@@ -128,12 +122,13 @@ export const myProvider = defineProvider({
     async request({ bucketName, fileInfo }) {
       return storage.createUploadPlan({ bucketName, fileInfo });
     },
-    async requestParts({ multipart, path }) {
-      return storage.createUploadParts({ multipart, path });
-    },
-    async complete({ uploadId, key, parts }) {
-      await storage.completeMultipart({ uploadId, key, parts });
-      return { success: true };
+    multipart: {
+      async requestParts({ multipart, path }) {
+        return storage.createUploadParts({ multipart, path });
+      },
+      async complete({ uploadId, key, parts }) {
+        await storage.completeMultipart({ uploadId, key, parts });
+      },
     },
     async upload({ bucketName, fileInfo, source, signal, onProgress }) {
       const object = await storage.upload({
@@ -161,28 +156,13 @@ export const myProvider = defineProvider({
       };
     },
     async confirm({ files }) {
-      const results = await storage.confirm(files);
-      return {
-        results,
-        successCount: results.filter((result) => result.success).length,
-        failureCount: results.filter((result) => !result.success).length,
-      };
+      return { results: await storage.confirm(files) };
     },
     async delete({ files }) {
-      const results = await storage.delete(files);
-      return {
-        results,
-        successCount: results.filter((result) => result.success).length,
-        failureCount: results.filter((result) => !result.success).length,
-      };
+      return { results: await storage.delete(files) };
     },
     async restore({ files }) {
-      const results = await storage.restore(files);
-      return {
-        results,
-        successCount: results.filter((result) => result.success).length,
-        failureCount: results.filter((result) => !result.success).length,
-      };
+      return { results: await storage.restore(files) };
     },
     async getSignedUrls({ files, expiresIn = 3600 }) {
       return Promise.all(
@@ -202,6 +182,17 @@ Here, callers may pass either a URL or `{ key }`, but every provider operation
 receives `{ key: string }` after runtime validation. The backend client also
 inherits the string cursor, the extra `etag` file field, and any literal
 mutation error codes returned by the storage driver.
+
+Mutation providers return exactly one status for each input file, in the same
+order. EdgeStore attaches the original file references and derives success and
+failure counts for the public client. A provider result therefore contains
+only `{ success: true }` or `{ success: false, error }`; it does not repeat the
+file reference or calculate counts.
+
+Multipart support is optional. A single-part provider defines only
+`uploads.request`. When `uploads.multipart` is present, `uploads.request` may
+return a multipart plan and EdgeStore exposes the matching part-request and
+completion routes.
 
 `uploads.request` and `uploads.upload` remain separate because they perform
 different work: the former creates signed instructions for a browser transfer,

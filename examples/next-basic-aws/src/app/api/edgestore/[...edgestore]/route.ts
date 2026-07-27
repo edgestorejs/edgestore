@@ -27,9 +27,9 @@ const router = es.router({
 const configuredEdgeStore = createEdgeStore({
   router,
   provider: s3({
-    overwritePath: ({ defaultAccessPath }) => {
-      // `publicFiles/_public/123/test.png` -> `123/test.png`
-      return defaultAccessPath.split('/_public/')[1];
+    path: ({ defaultPath }) => {
+      // `publicFiles/_public/123/test.png` -> `publicFiles/123/test.png`
+      return defaultPath.replace(/^_public\//, '');
     },
   }),
 });
