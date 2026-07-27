@@ -43,19 +43,13 @@ export async function uploadParts(
         start,
         Math.min(start + options.partSizeBytes, options.body.size),
       );
-      const response = await putWithRetry(transport, {
+      const eTag = await putWithRetry(transport, {
         uploadId: options.uploadId,
         url: part.signedUrl,
         body: chunk,
         signal,
+        requireETag: true,
       });
-      const eTag = response.headers.get('etag');
-      if (!eTag) {
-        throw new EdgeStoreUploadError(
-          `Upload part ${part.partNumber} did not return an ETag.`,
-          options.uploadId,
-        );
-      }
       completed[index] = { partNumber: part.partNumber, eTag };
       transferredBytes += chunk.size;
       options.onProgress?.({
@@ -111,19 +105,13 @@ export async function uploadStreamParts(
           options.uploadId,
         );
       }
-      const response = await putWithRetry(transport, {
+      const eTag = await putWithRetry(transport, {
         uploadId: options.uploadId,
         url: part.signedUrl,
         body: new Blob([Uint8Array.from(chunk)]),
         signal: options.signal,
+        requireETag: true,
       });
-      const eTag = response.headers.get('etag');
-      if (!eTag) {
-        throw new EdgeStoreUploadError(
-          `Upload part ${part.partNumber} did not return an ETag.`,
-          options.uploadId,
-        );
-      }
       completed.push({ partNumber: part.partNumber, eTag });
       transferredBytes += chunk.byteLength;
       options.onProgress?.({
@@ -152,6 +140,26 @@ export async function uploadStreamParts(
   }
 }
 
+export function putWithRetry(
+  transport: Transport,
+  options: {
+    url: string;
+    body: Blob;
+    uploadId: string;
+    signal?: AbortSignal;
+    requireETag: true;
+  },
+): Promise<string>;
+export function putWithRetry(
+  transport: Transport,
+  options: {
+    url: string;
+    body: Blob;
+    uploadId: string;
+    signal?: AbortSignal;
+    requireETag?: false;
+  },
+): Promise<string | undefined>;
 export async function putWithRetry(
   transport: Transport,
   options: {
@@ -159,8 +167,9 @@ export async function putWithRetry(
     body: Blob;
     uploadId: string;
     signal?: AbortSignal;
+    requireETag?: boolean;
   },
-): Promise<Response> {
+): Promise<string | undefined> {
   let lastError: unknown;
 
   for (let attempt = 1; attempt <= DEFAULT_UPLOAD_MAX_ATTEMPTS; attempt++) {
@@ -171,7 +180,23 @@ export async function putWithRetry(
         body: options.body,
         signal: options.signal,
       });
-      if (response.ok) return response;
+      const eTag = response.headers.get('etag') ?? undefined;
+      const retryDelay = getRetryDelay(
+        response,
+        DEFAULT_UPLOAD_BASE_DELAY_MS,
+        attempt,
+      );
+      await cancelResponseBody(response.body);
+
+      if (response.ok) {
+        if (options.requireETag && !eTag) {
+          throw new EdgeStoreUploadError(
+            'The signed upload did not return an ETag.',
+            options.uploadId,
+          );
+        }
+        return eTag;
+      }
       if (
         !isRetryableStatus(response.status) ||
         attempt === DEFAULT_UPLOAD_MAX_ATTEMPTS
@@ -181,10 +206,7 @@ export async function putWithRetry(
           options.uploadId,
         );
       }
-      await sleep(
-        getRetryDelay(response, DEFAULT_UPLOAD_BASE_DELAY_MS, attempt),
-        options.signal,
-      );
+      await sleep(retryDelay, options.signal);
     } catch (error) {
       if (error instanceof EdgeStoreAbortError || isAbortError(error)) {
         throw new EdgeStoreAbortError(undefined, { cause: error });
@@ -202,6 +224,13 @@ export async function putWithRetry(
   throw new EdgeStoreNetworkError('The signed upload could not be completed.', {
     cause: lastError,
   });
+}
+
+async function cancelResponseBody(
+  body: ReadableStream<Uint8Array> | null,
+): Promise<void> {
+  if (!body) return;
+  await body.cancel().catch(() => undefined);
 }
 
 export async function retryOperation<TResult>(

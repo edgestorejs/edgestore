@@ -107,8 +107,9 @@ describe('runtime upload orchestration', () => {
     ]);
   });
 
-  it('retries transient signed storage failures with the internal policy', async () => {
+  it('closes signed storage responses before retrying or completing', async () => {
     let transferAttempts = 0;
+    const closedResponses: number[] = [];
     const fetch = vi.fn<typeof globalThis.fetch>(async (input, init) => {
       const request = toRequest(input, init);
       if (request.url.endsWith('/buckets/documents')) {
@@ -130,13 +131,19 @@ describe('runtime upload orchestration', () => {
       }
       if (request.url === 'https://storage.example/retry') {
         transferAttempts++;
-        if (transferAttempts < 3) {
-          return new Response(null, {
-            status: 503,
-            headers: { 'retry-after': '0' },
-          });
-        }
-        return new Response(null, { status: 200 });
+        const attempt = transferAttempts;
+        return new Response(
+          new ReadableStream({
+            async cancel() {
+              await Promise.resolve();
+              closedResponses.push(attempt);
+            },
+          }),
+          {
+            status: attempt < 3 ? 503 : 200,
+            headers: attempt < 3 ? { 'retry-after': '0' } : undefined,
+          },
+        );
       }
       if (request.url.endsWith('/uploads/retry-id')) {
         return Response.json({
@@ -156,6 +163,7 @@ describe('runtime upload orchestration', () => {
     });
 
     expect(transferAttempts).toBe(3);
+    expect(closedResponses).toEqual([1, 2, 3]);
   });
 
   it('uploads multipart chunks concurrently and completes with ETags', async () => {
@@ -437,7 +445,8 @@ describe('runtime upload orchestration', () => {
   it('cancels a rejected remote response body', async () => {
     let canceled = false;
     const remoteBody = new ReadableStream({
-      cancel() {
+      async cancel() {
+        await new Promise((resolve) => setTimeout(resolve, 0));
         canceled = true;
       },
     });

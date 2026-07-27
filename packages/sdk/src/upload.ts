@@ -261,13 +261,15 @@ export async function uploadRuntimeFileFromUrl(
       defaults,
     );
   } finally {
-    cancelResponseBody(response.body);
+    await cancelResponseBody(response.body);
   }
 }
 
-function cancelResponseBody(body: ReadableStream<Uint8Array> | null) {
+async function cancelResponseBody(
+  body: ReadableStream<Uint8Array> | null,
+): Promise<void> {
   if (!body) return;
-  void body.cancel().catch(() => undefined);
+  await body.cancel().catch(() => undefined);
 }
 
 async function getBucket(
