@@ -1,6 +1,7 @@
 ---
 "@edgestore/server": major
 "@edgestore/shared": major
+"@edgestore/react": major
 ---
 
 Redesign the router-derived backend client around explicit provider capabilities,
@@ -27,3 +28,16 @@ its router-derived backend client as `edgeStore.client`. Providers use the
 `EdgeStoreProvider` contract; the direct-storage factories and entrypoints are
 renamed to `s3()` from `providers/s3` and `azureBlob()` from
 `providers/azure-blob`.
+
+Custom and official providers now use the public `defineProvider` API. File
+references and list cursors are inferred from Standard Schema definitions and
+validated before provider operations run. A single resource-oriented provider
+surface supplies both HTTP handlers and the router-derived backend client, so
+providers no longer repeat handler-specific get, confirm, delete, or list
+methods.
+
+The React client now exposes `confirmUpload`, `confirmUploads`, `deleteFile`,
+and `deleteFiles`. Plural mutations use one request and preserve per-file
+storage failures. Frontend deletion authorizes every file through
+`beforeDelete` before issuing one provider batch mutation; if any file is
+unauthorized, none are deleted.

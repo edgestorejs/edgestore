@@ -8,17 +8,17 @@ import Logger, { type LogLevel } from '../../libs/logger';
 import { matchPath } from '../../libs/utils';
 import {
   completeMultipartUpload,
-  confirmUpload,
-  deleteFile,
+  confirmUploads,
+  deleteFiles,
   fetchProxyFile,
   getCookieConfig,
   init,
   requestUpload,
   requestUploadParts,
   type CompleteMultipartUploadBody,
-  type ConfirmUploadBody,
+  type ConfirmUploadsBody,
   type CookieConfig,
-  type DeleteFileBody,
+  type DeleteFilesBody,
   type HandlerEdgeStore,
   type RequestUploadBody,
   type RequestUploadPartsParams,
@@ -141,20 +141,20 @@ export function createEdgeStoreRemixHandler<TCtx>(config: Config<TCtx>) {
           ctxToken: getCookie(req, resolvedCookieConfig.ctx.name),
         });
         return new Response(null, { status: 200 });
-      } else if (matchPath(pathname, '/confirm-upload')) {
-        const body = (await req.json()) as ConfirmUploadBody;
+      } else if (matchPath(pathname, '/confirm-uploads')) {
+        const body = (await req.json()) as ConfirmUploadsBody;
         return Response.json(
-          await confirmUpload({
+          await confirmUploads({
             provider,
             router,
             body,
             ctxToken: getCookie(req, resolvedCookieConfig.ctx.name),
           }),
         );
-      } else if (matchPath(pathname, '/delete-file')) {
-        const body = (await req.json()) as DeleteFileBody;
+      } else if (matchPath(pathname, '/delete-files')) {
+        const body = (await req.json()) as DeleteFilesBody;
         return Response.json(
-          await deleteFile({
+          await deleteFiles({
             provider,
             router,
             body,

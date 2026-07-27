@@ -468,7 +468,7 @@ describe('requestUpload', () => {
       }),
     });
 
-    expect(provider.requestUpload).toHaveBeenCalledWith({
+    expect(provider.uploads.request).toHaveBeenCalledWith({
       bucketName: 'documents',
       bucketType: 'FILE',
       fileInfo: {

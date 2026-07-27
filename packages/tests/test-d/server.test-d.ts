@@ -1,5 +1,6 @@
 import {
   createEdgeStore,
+  defineProvider,
   initEdgeStore,
   type InferClientInputs,
   type InferClientOutputs,
@@ -68,94 +69,90 @@ const s3EdgeStore = createEdgeStore({
   router: publicRouter,
   provider: s3(),
 });
-expectError(s3EdgeStore.client);
+void s3EdgeStore.client.files.getFile({ url: 'https://s3.example/file' });
+expectError(s3EdgeStore.client.files.upload);
+expectError(s3EdgeStore.client.files.listFiles);
+expectError(s3EdgeStore.client.files.confirmUpload);
 
-const {
-  restoreFiles: _restoreFiles,
-  getFile: _hostedGetFile,
-  ...providerWithoutRestore
-} = edgestore();
-const syntheticProvider = {
-  ...providerWithoutRestore,
-  upload: async () => ({
-    file: {
-      url: 'https://s3.example/files/uploaded.txt',
-      path: {},
-      metadata: {},
-      uploadedAt: new Date(),
-      updatedAt: new Date(),
-      eTag: 'upload-etag',
+const syntheticProvider = defineProvider({
+  name: 'synthetic',
+  baseUrl: 'https://s3.example',
+  init: async () => ({}),
+  reference: {
+    schema: z.object({ objectKey: z.string() }),
+    fromUrl: (url) => ({ objectKey: new URL(url).pathname.slice(1) }),
+  },
+  uploads: {
+    request: async () => {
+      throw new Error('Not implemented');
     },
-  }),
-  getFile: async ({
-    file,
-  }: {
-    bucketName: string;
-    file: { objectKey: string };
-  }) => ({
-    url: `https://s3.example/${file.objectKey}`,
-    path: {},
-    metadata: {},
-    uploadedAt: new Date(),
-    updatedAt: new Date(),
-    eTag: 'etag',
-  }),
-  listFiles: async ({
-    cursor,
-    limit = 20,
-  }: {
-    bucketName: string;
-    filter?: unknown;
-    cursor?: number;
-    limit?: number;
-  }) => ({
-    items: [
-      {
-        url: 'https://s3.example/files/file.txt',
+    requestParts: async () => {
+      throw new Error('Not implemented');
+    },
+    complete: async () => {
+      throw new Error('Not implemented');
+    },
+    upload: async () => ({
+      file: {
+        url: 'https://s3.example/files/uploaded.txt',
+        sizeBytes: 5,
         path: {},
         metadata: {},
         uploadedAt: new Date(),
         updatedAt: new Date(),
-        eTag: 'etag',
+        eTag: 'upload-etag',
       },
-    ],
-    limit,
-    nextCursor: cursor === undefined ? 2 : null,
-    hasMore: cursor === undefined,
-  }),
-  deleteFiles: async ({
-    files,
-  }: {
-    bucketName: string;
-    files: { objectKey: string }[];
-  }) => ({
-    results: files.map((fileRef) => ({
-      fileRef,
-      success: false as const,
-      error: {
-        code: 'OBJECT_LOCKED' as const,
-        message: 'The object is locked.',
-      },
-    })),
-    successCount: 0,
-    failureCount: files.length,
-  }),
-  getSignedUrls: async ({
-    urls,
-  }: {
-    bucketName: string;
-    urls: { objectKey: string }[];
-    expiresIn?: number;
-    includeThumbnails?: boolean;
-  }) =>
-    urls.map(({ objectKey }) => ({
-      url: `https://s3.example/${objectKey}`,
-      signedUrl: `https://signed.s3.example/${objectKey}`,
-      expiresAt: new Date(),
-      expiresIn: 60,
-      providerRegion: 'us-east-1' as const,
-    })),
-};
+    }),
+  },
+  files: {
+    cursorSchema: z.number(),
+    get: async ({ file }) => ({
+      url: `https://s3.example/${file.objectKey}`,
+      sizeBytes: 5,
+      path: {},
+      metadata: {},
+      uploadedAt: new Date(),
+      updatedAt: new Date(),
+      eTag: 'etag',
+    }),
+    list: async ({ cursor, limit = 20 }) => ({
+      items: [
+        {
+          url: 'https://s3.example/files/file.txt',
+          sizeBytes: 5,
+          path: {},
+          metadata: {},
+          uploadedAt: new Date(),
+          updatedAt: new Date(),
+          eTag: 'etag',
+        },
+      ],
+      limit,
+      nextCursor: cursor === undefined ? 2 : null,
+      hasMore: cursor === undefined,
+    }),
+    delete: async ({ files }) => ({
+      results: files.map((fileRef) => ({
+        fileRef,
+        success: false as const,
+        error: {
+          code: 'OBJECT_LOCKED' as const,
+          message: 'The object is locked.',
+        },
+      })),
+      successCount: 0,
+      failureCount: files.length,
+    }),
+    getSignedUrls: async ({ files }) =>
+      files.map(({ objectKey }) => ({
+        url: `https://s3.example/${objectKey}`,
+        signedUrl: `https://signed.s3.example/${objectKey}`,
+        expiresAt: new Date(),
+        expiresIn: 60,
+        providerRegion: 'us-east-1' as const,
+      })),
+  },
+});
 const syntheticClient = createEdgeStore({
   router: publicRouter,
   provider: syntheticProvider,
@@ -208,31 +205,11 @@ void syntheticProtectedClient.files
   });
 
 expectError(
-  createEdgeStore({
-    router: publicRouter,
-    provider: {
-      ...syntheticProvider,
-      getFile: async ({
-        file,
-      }: {
-        bucketName: string;
-        file: { objectKey: string };
-      }) => file.objectKey,
-    },
-  }),
-);
-
-expectError(
-  createEdgeStore({
-    router: publicRouter,
-    provider: {
-      ...syntheticProvider,
-      listFiles: async ({
-        cursor,
-      }: {
-        bucketName: string;
-        cursor?: number;
-      }) => ({
+  defineProvider({
+    ...syntheticProvider,
+    files: {
+      ...syntheticProvider.files,
+      list: async ({ cursor }) => ({
         items: [],
         limit: 20,
         nextCursor: cursor === undefined ? 'next' : null,
@@ -243,16 +220,11 @@ expectError(
 );
 
 expectError(
-  createEdgeStore({
-    router: publicRouter,
-    provider: {
-      ...syntheticProvider,
-      deleteFiles: async ({
-        files,
-      }: {
-        bucketName: string;
-        files: { objectKey: string }[];
-      }) => ({
+  defineProvider({
+    ...syntheticProvider,
+    files: {
+      ...syntheticProvider.files,
+      delete: async ({ files }) => ({
         results: files.map(() => ({
           fileRef: { id: 'different-reference' },
           success: true as const,

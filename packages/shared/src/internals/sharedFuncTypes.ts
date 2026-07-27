@@ -1,7 +1,6 @@
 import { type Simplify } from '../types';
 import { type AnyMetadata } from './bucketBuilder';
 import {
-  type DeleteFileRes,
   type RequestUploadPartsRes,
   type RequestUploadRes,
 } from './providerTypes';
@@ -23,4 +22,17 @@ export type SharedRequestUploadRes = Simplify<
   }
 >;
 export type SharedRequestUploadPartsRes = RequestUploadPartsRes;
-export type SharedDeleteFileRes = DeleteFileRes;
+
+export type SharedFileMutationRes = {
+  succeeded: string[];
+  failed: {
+    url: string;
+    error: {
+      code: string;
+      message: string;
+    };
+  }[];
+};
+
+export type SharedConfirmUploadsRes = SharedFileMutationRes;
+export type SharedDeleteFilesRes = SharedFileMutationRes;

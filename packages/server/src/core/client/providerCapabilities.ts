@@ -1,146 +1,125 @@
-import type {
-  BackendCapabilityName,
-  BackendCapableEdgeStoreProvider,
-  BackendFile,
-  BackendFileMutationOperation,
-  BackendGetFileOperation,
-  BackendGetSignedUrlsOperation,
-  BackendListFilesOperation,
-  BackendProviderOperations,
-  BackendUploadOperation,
-  GetSignedUrlRes,
+import {
+  type AnyEdgeStoreProvider,
+  type ProviderCapability,
+  type ProviderCapabilityFile,
+  type ProviderCapabilityName,
+  type ProviderCapabilityResult,
+  type ProviderCursor,
+  type ProviderMutationError,
+  type ProviderMutationReference,
+  type ProviderReferenceInput,
+  type ResolvedProviderCapabilities,
 } from '@edgestore/shared';
 
-export type AnyBackendProvider =
-  BackendCapableEdgeStoreProvider<BackendProviderOperations>;
+export type AnyBackendProvider = AnyEdgeStoreProvider;
+
+type LegacyCapabilityName =
+  | 'upload'
+  | 'getFile'
+  | 'listFiles'
+  | 'confirmFiles'
+  | 'deleteFiles'
+  | 'restoreFiles'
+  | 'getSignedUrls';
+
+type CanonicalCapabilityName<TName extends LegacyCapabilityName> =
+  TName extends 'getFile'
+    ? 'get'
+    : TName extends 'listFiles'
+      ? 'list'
+      : TName extends 'confirmFiles'
+        ? 'confirm'
+        : TName extends 'deleteFiles'
+          ? 'delete'
+          : TName extends 'restoreFiles'
+            ? 'restore'
+            : Extract<TName, ProviderCapabilityName>;
 
 export type BackendCapability<
   TProvider,
-  TName extends BackendCapabilityName,
-> = TName extends keyof TProvider
-  ? Extract<TProvider[TName], (...args: never[]) => unknown>
-  : never;
-
-export type CapabilityInput<
-  TProvider,
-  TName extends BackendCapabilityName,
-> = Parameters<BackendCapability<TProvider, TName>>[0];
+  TName extends LegacyCapabilityName,
+> = ProviderCapability<TProvider, CanonicalCapabilityName<TName>>;
 
 export type CapabilityResult<
   TProvider,
-  TName extends BackendCapabilityName,
-> = Awaited<ReturnType<BackendCapability<TProvider, TName>>>;
+  TName extends LegacyCapabilityName,
+> = ProviderCapabilityResult<TProvider, CanonicalCapabilityName<TName>>;
 
 export type CapabilityFile<
   TProvider,
   TName extends 'upload' | 'getFile' | 'listFiles',
-> = TName extends 'upload'
-  ? CapabilityResult<TProvider, TName> extends {
-      file: infer TFile extends BackendFile;
-    }
-    ? TFile
-    : never
-  : TName extends 'listFiles'
-    ? CapabilityResult<TProvider, TName> extends {
-        items: (infer TFile extends BackendFile)[];
-      }
-      ? TFile
-      : never
-    : CapabilityResult<TProvider, TName> extends BackendFile
-      ? CapabilityResult<TProvider, TName>
-      : never;
-
-export type GetFileReference<TProvider> =
-  CapabilityInput<TProvider, 'getFile'> extends { file: infer TReference }
-    ? TReference
-    : never;
-
-type MutationItem<
+> = ProviderCapabilityFile<
   TProvider,
-  TName extends 'confirmFiles' | 'deleteFiles' | 'restoreFiles',
-> =
-  CapabilityResult<TProvider, TName> extends {
-    results: (infer TItem)[];
-  }
-    ? TItem
-    : never;
+  TName extends 'getFile'
+    ? 'get'
+    : TName extends 'listFiles'
+      ? 'list'
+      : 'upload'
+>;
+
+export type GetFileReference<TProvider> = ProviderReferenceInput<TProvider>;
 
 export type MutationReference<
   TProvider,
+  _TName extends 'confirmFiles' | 'deleteFiles' | 'restoreFiles',
+> = ProviderReferenceInput<TProvider>;
+
+export type MutationResultReference<
+  TProvider,
   TName extends 'confirmFiles' | 'deleteFiles' | 'restoreFiles',
-> =
-  MutationItem<TProvider, TName> extends { fileRef: infer TReference }
-    ? TReference
-    : never;
+> = ProviderMutationReference<
+  TProvider,
+  TName extends 'confirmFiles'
+    ? 'confirm'
+    : TName extends 'deleteFiles'
+      ? 'delete'
+      : 'restore'
+>;
 
 export type MutationError<
   TProvider,
   TName extends 'confirmFiles' | 'deleteFiles' | 'restoreFiles',
-> =
-  Extract<MutationItem<TProvider, TName>, { success: false }> extends {
-    error: infer TError;
-  }
-    ? TError
-    : never;
-
-export type ListCursor<TProvider> =
-  CapabilityInput<TProvider, 'listFiles'> extends { cursor?: infer TCursor }
-    ? Exclude<TCursor, undefined>
-    : never;
-
-export type SignedUrlReference<TProvider> =
-  CapabilityInput<TProvider, 'getSignedUrls'> extends {
-    urls: (infer TReference)[];
-  }
-    ? TReference
-    : never;
-
-type MutationErrorCode<
+> = ProviderMutationError<
   TProvider,
-  TName extends 'confirmFiles' | 'deleteFiles' | 'restoreFiles',
-> =
-  MutationError<TProvider, TName> extends {
-    code: infer TErrorCode extends string;
-  }
-    ? TErrorCode
-    : never;
+  TName extends 'confirmFiles'
+    ? 'confirm'
+    : TName extends 'deleteFiles'
+      ? 'delete'
+      : 'restore'
+>;
 
-type ProviderSignedUrlResult<TProvider> =
-  CapabilityResult<TProvider, 'getSignedUrls'> extends (infer TResult extends
-    GetSignedUrlRes)[]
-    ? TResult
-    : never;
+export type ListCursor<TProvider> = ProviderCursor<TProvider>;
 
-type ResolvedBackendCapabilities<TProvider> = {
-  upload?: BackendUploadOperation<CapabilityFile<TProvider, 'upload'>>;
-  getFile?: BackendGetFileOperation<
-    CapabilityFile<TProvider, 'getFile'>,
-    GetFileReference<TProvider>
-  >;
-  listFiles?: BackendListFilesOperation<
-    CapabilityFile<TProvider, 'listFiles'>,
-    ListCursor<TProvider>
-  >;
-  confirmFiles?: BackendFileMutationOperation<
-    MutationReference<TProvider, 'confirmFiles'>,
-    MutationErrorCode<TProvider, 'confirmFiles'>
-  >;
-  deleteFiles?: BackendFileMutationOperation<
-    MutationReference<TProvider, 'deleteFiles'>,
-    MutationErrorCode<TProvider, 'deleteFiles'>
-  >;
-  restoreFiles?: BackendFileMutationOperation<
-    MutationReference<TProvider, 'restoreFiles'>,
-    MutationErrorCode<TProvider, 'restoreFiles'>
-  >;
-  getSignedUrls?: BackendGetSignedUrlsOperation<
-    SignedUrlReference<TProvider>,
-    ProviderSignedUrlResult<TProvider>
-  >;
-};
+export type SignedUrlReference<TProvider> = ProviderReferenceInput<TProvider>;
 
 export function resolveBackendCapabilities<
   TProvider extends AnyBackendProvider,
->(provider: TProvider): ResolvedBackendCapabilities<TProvider> {
-  return provider as unknown as ResolvedBackendCapabilities<TProvider>;
+>(
+  provider: TProvider,
+): {
+  upload?: ResolvedProviderCapabilities<TProvider>['upload'];
+  getFile?: ResolvedProviderCapabilities<TProvider>['get'];
+  listFiles?: ResolvedProviderCapabilities<TProvider>['list'];
+  confirmFiles?: ResolvedProviderCapabilities<TProvider>['confirm'];
+  deleteFiles?: ResolvedProviderCapabilities<TProvider>['delete'];
+  restoreFiles?: ResolvedProviderCapabilities<TProvider>['restore'];
+  getSignedUrls?: ResolvedProviderCapabilities<TProvider>['getSignedUrls'];
+} {
+  return {
+    upload: provider.uploads.upload,
+    getFile: provider.files.get,
+    listFiles: provider.files.list,
+    confirmFiles: provider.files.confirm,
+    deleteFiles: provider.files.delete,
+    restoreFiles: provider.files.restore,
+    getSignedUrls: provider.files.getSignedUrls,
+  } as {
+    upload?: ResolvedProviderCapabilities<TProvider>['upload'];
+    getFile?: ResolvedProviderCapabilities<TProvider>['get'];
+    listFiles?: ResolvedProviderCapabilities<TProvider>['list'];
+    confirmFiles?: ResolvedProviderCapabilities<TProvider>['confirm'];
+    deleteFiles?: ResolvedProviderCapabilities<TProvider>['delete'];
+    restoreFiles?: ResolvedProviderCapabilities<TProvider>['restore'];
+    getSignedUrls?: ResolvedProviderCapabilities<TProvider>['getSignedUrls'];
+  };
 }

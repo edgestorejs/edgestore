@@ -107,7 +107,7 @@ describe('Hono adapter conformance', () => {
     });
 
     expect(res.status).toBe(200);
-    expect(provider.completeMultipartUpload).toHaveBeenCalledWith({
+    expect(provider.uploads.complete).toHaveBeenCalledWith({
       uploadId: 'upload-id',
       key: 'uploads/file.txt',
       parts: completeMultipartUploadBody.parts,

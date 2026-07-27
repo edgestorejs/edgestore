@@ -6,7 +6,7 @@ const runtime = vi.hoisted(() => ({
   accessTokens: { create: vi.fn() },
   files: {
     lookup: vi.fn(),
-    createSignedUrls: vi.fn(),
+    generateSignedReadUrls: vi.fn(),
     search: vi.fn(),
     confirm: vi.fn(),
     confirmMany: vi.fn(),
@@ -44,7 +44,7 @@ describe('edgestore provider', () => {
     vi.clearAllMocks();
   });
 
-  it('creates a v2 access token from the router', async () => {
+  it('creates a client-init instruction for buckets with file access control', async () => {
     runtime.accessTokens.create.mockResolvedValue({
       token: 'token',
       basePath: '/runtime/projects/_current',
@@ -53,7 +53,10 @@ describe('edgestore provider', () => {
       .context<{ userId: string; role?: string }>()
       .create();
     const router = es.router({
-      files: es.fileBucket().path(({ ctx }) => [{ userId: ctx.userId }]),
+      files: es
+        .fileBucket()
+        .path(({ ctx }) => [{ userId: ctx.userId }])
+        .accessControl({ userId: 'user-1' }),
     });
     const provider = edgestore({ accessKey: 'access', secretKey: 'secret' });
 
@@ -62,16 +65,35 @@ describe('edgestore provider', () => {
         ctx: { userId: 'user-1', role: undefined },
         router,
       }),
-    ).resolves.toEqual({ token: 'token' });
+    ).resolves.toEqual({
+      token: 'token',
+      clientInit: {
+        path: '/_init',
+        headers: {
+          'x-edgestore-token': 'token',
+        },
+      },
+    });
     expect(runtime.accessTokens.create).toHaveBeenCalledWith({
       context: { userId: 'user-1' },
       buckets: {
         files: {
           path: [{ key: 'userId', value: expect.any(String) }],
-          accessControl: undefined,
+          accessControl: { userId: 'user-1' },
         },
       },
     });
+  });
+
+  it('does not create an access token for public-only buckets', async () => {
+    const es = initEdgeStore.create();
+    const router = es.router({
+      files: es.fileBucket(),
+    });
+    const provider = edgestore({ accessKey: 'access', secretKey: 'secret' });
+
+    await expect(provider.init({ ctx: {}, router })).resolves.toEqual({});
+    expect(runtime.accessTokens.create).not.toHaveBeenCalled();
   });
 
   it('maps a single v2 upload and omits nullish metadata', async () => {
@@ -90,7 +112,7 @@ describe('edgestore provider', () => {
     const provider = edgestore({ accessKey: 'access', secretKey: 'secret' });
 
     await expect(
-      provider.requestUpload({
+      provider.uploads.request({
         bucketName: 'files',
         bucketType: 'FILE',
         fileInfo,
@@ -136,7 +158,7 @@ describe('edgestore provider', () => {
     const provider = edgestore({ accessKey: 'access', secretKey: 'secret' });
     const size = 101 * 1024 * 1024;
 
-    const result = await provider.requestUpload({
+    const result = await provider.uploads.request({
       bucketName: 'files',
       bucketType: 'FILE',
       fileInfo: { ...fileInfo, size },
@@ -172,13 +194,13 @@ describe('edgestore provider', () => {
       files: [file],
       pagination: { limit: 20, nextCursor: null, hasMore: false },
     });
-    runtime.files.createSignedUrls.mockResolvedValue({ signedUrls: [] });
-    runtime.files.confirm.mockResolvedValue({
+    runtime.files.generateSignedReadUrls.mockResolvedValue({ signedUrls: [] });
+    runtime.files.confirmMany.mockResolvedValue({
       results: [{ fileRef: { url: file.url }, success: true }],
       successCount: 1,
       failureCount: 0,
     });
-    runtime.files.delete.mockResolvedValue({
+    runtime.files.deleteMany.mockResolvedValue({
       results: [{ fileRef: { url: file.url }, success: true }],
       successCount: 1,
       failureCount: 0,
@@ -186,45 +208,49 @@ describe('edgestore provider', () => {
     const provider = edgestore({ accessKey: 'access', secretKey: 'secret' });
 
     await expect(
-      provider.getFileInfo({ bucketName: 'files', url: file.url }),
+      provider.files.get({
+        bucketName: 'files',
+        file: { url: file.url },
+      }),
     ).resolves.toMatchObject({
-      size: 12,
+      sizeBytes: 12,
       uploadedAt: new Date(file.uploadedAt),
     });
     await expect(
-      provider.listAdapterFiles?.({ bucketName: 'files' }),
+      provider.files.list?.({ bucketName: 'files' }),
     ).resolves.toMatchObject({
-      data: [{ size: 12 }],
-      pagination: { hasMore: false },
+      items: [{ sizeBytes: 12 }],
+      hasMore: false,
     });
     await expect(
-      provider.getSignedUrls?.({ bucketName: 'files', urls: [file.url] }),
+      provider.files.getSignedUrls?.({
+        bucketName: 'files',
+        files: [{ url: file.url }],
+      }),
     ).resolves.toEqual([]);
     await expect(
-      provider.confirmUpload({
-        bucket: {} as never,
+      provider.files.confirm?.({
         bucketName: 'files',
-        url: file.url,
+        files: [{ url: file.url }],
       }),
-    ).resolves.toEqual({ success: true });
+    ).resolves.toEqual({ results: [{ success: true }] });
     await expect(
-      provider.deleteFile({
-        bucket: {} as never,
+      provider.files.delete?.({
         bucketName: 'files',
-        url: file.url,
+        files: [{ url: file.url }],
       }),
-    ).resolves.toEqual({ success: true });
+    ).resolves.toEqual({ results: [{ success: true }] });
     expect(runtime.files.lookup).toHaveBeenCalledWith({
       bucketName: 'files',
       file: { url: file.url },
     });
-    expect(runtime.files.confirm).toHaveBeenCalledWith({
+    expect(runtime.files.confirmMany).toHaveBeenCalledWith({
       bucketName: 'files',
-      file: { url: file.url },
+      files: [{ url: file.url }],
     });
-    expect(runtime.files.delete).toHaveBeenCalledWith({
+    expect(runtime.files.deleteMany).toHaveBeenCalledWith({
       bucketName: 'files',
-      file: { url: file.url },
+      files: [{ url: file.url }],
     });
   });
 
@@ -264,7 +290,7 @@ describe('edgestore provider', () => {
     const source = new Blob(['content'], { type: 'text/plain' });
 
     await expect(
-      provider.upload({
+      provider.uploads.upload?.({
         bucketName: 'files',
         bucketType: 'FILE',
         fileInfo,
@@ -278,10 +304,10 @@ describe('edgestore provider', () => {
       },
     });
     await expect(
-      provider.getFile({ file: { key: file.key } }),
+      provider.files.get({ bucketName: 'files', file: { key: file.key } }),
     ).resolves.toMatchObject({ id: file.id });
     await expect(
-      provider.listFiles({
+      provider.files.list?.({
         bucketName: 'files',
         cursor: 'cursor',
         limit: 10,
@@ -291,8 +317,11 @@ describe('edgestore provider', () => {
       nextCursor: 'next',
     });
     await expect(
-      provider.restoreFiles({ files: [{ id: file.id }] }),
-    ).resolves.toMatchObject({ successCount: 1 });
+      provider.files.restore?.({
+        bucketName: 'files',
+        files: [{ id: file.id }],
+      }),
+    ).resolves.toEqual({ results: [{ success: true }] });
 
     expect(runtime.uploads.upload).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -302,6 +331,7 @@ describe('edgestore provider', () => {
       }),
     );
     expect(runtime.files.lookup).toHaveBeenCalledWith({
+      bucketName: 'files',
       file: { key: file.key },
     });
     expect(runtime.files.search).toHaveBeenCalledWith({
@@ -309,5 +339,16 @@ describe('edgestore provider', () => {
       filter: undefined,
       pagination: { cursor: 'cursor', limit: 10 },
     });
+    expect(runtime.files.restoreMany).toHaveBeenCalledWith({
+      bucketName: 'files',
+      files: [{ id: file.id }],
+    });
+    expect(runtime.uploads.upload.mock.calls[0]?.[0]).not.toEqual(
+      expect.objectContaining({
+        bucketType: expect.anything(),
+        visibility: expect.anything(),
+        sizeBytes: expect.anything(),
+      }),
+    );
   });
 });

@@ -73,9 +73,7 @@ describe('azureBlob', () => {
       containerName: 'documents',
     });
 
-    expect(provider.getBaseUrl()).toBe(
-      'https://storageacct.blob.core.windows.net',
-    );
+    expect(provider.baseUrl).toBe('https://storageacct.blob.core.windows.net');
     expect(mocks.getContainerClient).toHaveBeenCalledWith('documents');
   });
 
@@ -87,9 +85,7 @@ describe('azureBlob', () => {
       customBaseUrl: 'http://localhost:10000/devstoreaccount1',
     });
 
-    expect(provider.getBaseUrl()).toBe(
-      'http://localhost:10000/devstoreaccount1',
-    );
+    expect(provider.baseUrl).toBe('http://localhost:10000/devstoreaccount1');
     expect(mocks.getContainerClient).toHaveBeenCalledWith('documents');
   });
 
@@ -137,7 +133,7 @@ describe('azureBlob', () => {
         storageAccountName: 'devstoreaccount1',
       });
 
-      const res = await provider.requestUpload(createUploadParams(fileInfo));
+      const res = await provider.uploads.request(createUploadParams(fileInfo));
 
       expect(mocks.getBlobClient).toHaveBeenCalledWith(expectedBlobName);
       expect(mocks.randomUUID).toHaveBeenCalledTimes(expectedUuidCalls);
@@ -156,9 +152,11 @@ describe('azureBlob', () => {
       storageAccountName: 'devstoreaccount1',
     });
 
-    const res = await provider.getFileInfo({
+    const res = await provider.files.get({
       bucketName: 'documents',
-      url: `${containerUrl}/documents/_public/a%20b/file.txt?sv=token`,
+      file: {
+        url: `${containerUrl}/documents/_public/a%20b/file.txt?sv=token`,
+      },
     });
 
     expect(mocks.getBlobClient).toHaveBeenCalledWith(
@@ -167,8 +165,9 @@ describe('azureBlob', () => {
     expect(res).toEqual({
       metadata: {},
       path: {},
-      size: 123,
+      sizeBytes: 123,
       uploadedAt: new Date('2026-01-02T03:04:05.000Z'),
+      updatedAt: new Date('2026-01-02T03:04:05.000Z'),
       url: `${containerUrl}/documents/_public/a%20b/file.txt?sv=token`,
     });
   });
@@ -182,12 +181,11 @@ describe('azureBlob', () => {
     });
 
     await expect(
-      provider.deleteFile({
-        bucket: {} as Parameters<typeof provider.deleteFile>[0]['bucket'],
+      provider.files.delete?.({
         bucketName: 'documents',
-        url: `${containerUrl}/documents/report.pdf`,
+        files: [{ url: `${containerUrl}/documents/report.pdf` }],
       }),
-    ).resolves.toEqual({ success: true });
+    ).resolves.toMatchObject({ successCount: 1 });
 
     expect(mocks.getBlobClient).toHaveBeenCalledWith('documents/report.pdf');
     expect(mocks.deleteBlob).toHaveBeenCalledOnce();

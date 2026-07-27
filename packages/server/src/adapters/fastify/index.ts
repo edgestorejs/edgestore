@@ -9,17 +9,17 @@ import Logger, { type LogLevel } from '../../libs/logger';
 import { matchPath } from '../../libs/utils';
 import {
   completeMultipartUpload,
-  confirmUpload,
-  deleteFile,
+  confirmUploads,
+  deleteFiles,
   fetchProxyFile,
   getCookieConfig,
   init,
   requestUpload,
   requestUploadParts,
   type CompleteMultipartUploadBody,
-  type ConfirmUploadBody,
+  type ConfirmUploadsBody,
   type CookieConfig,
-  type DeleteFileBody,
+  type DeleteFilesBody,
   type HandlerEdgeStore,
   type RequestUploadBody,
   type RequestUploadPartsParams,
@@ -145,21 +145,21 @@ export function createEdgeStoreFastifyHandler<TCtx>(config: Config<TCtx>) {
           ctxToken: getCookie(req, resolvedCookieConfig.ctx.name),
         });
         return reply.status(200).send();
-      } else if (matchPath(pathname, '/confirm-upload')) {
+      } else if (matchPath(pathname, '/confirm-uploads')) {
         return reply.send(
-          await confirmUpload({
+          await confirmUploads({
             provider,
             router,
-            body: req.body as ConfirmUploadBody,
+            body: req.body as ConfirmUploadsBody,
             ctxToken: getCookie(req, resolvedCookieConfig.ctx.name),
           }),
         );
-      } else if (matchPath(pathname, '/delete-file')) {
+      } else if (matchPath(pathname, '/delete-files')) {
         return reply.send(
-          await deleteFile({
+          await deleteFiles({
             provider,
             router,
-            body: req.body as DeleteFileBody,
+            body: req.body as DeleteFilesBody,
             ctxToken: getCookie(req, resolvedCookieConfig.ctx.name),
           }),
         );

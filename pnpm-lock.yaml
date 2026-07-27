@@ -940,6 +940,9 @@ importers:
       '@panva/hkdf':
         specifier: ^1.2.1
         version: 1.2.1
+      '@standard-schema/spec':
+        specifier: ^1.1.0
+        version: 1.1.0
       cookie:
         specifier: ^2.0.1
         version: 2.0.1
@@ -997,6 +1000,10 @@ importers:
         version: 3.25.76
 
   packages/shared:
+    dependencies:
+      '@standard-schema/spec':
+        specifier: ^1.1.0
+        version: 1.1.0
     devDependencies:
       '@types/node':
         specifier: 'catalog:'

@@ -1,6 +1,6 @@
 import {
   initEdgeStore,
-  type EdgeStoreProvider,
+  type AnyEdgeStoreProvider,
   type EdgeStoreRouter,
 } from '@edgestore/shared';
 import { expect, vi } from 'vitest';
@@ -72,34 +72,62 @@ export function setupAdapterTestEnv() {
 }
 
 export function createConformanceProvider(
-  overrides: Partial<EdgeStoreProvider> = {},
-): EdgeStoreProvider {
-  return {
+  overrides: Partial<AnyEdgeStoreProvider> = {},
+): AnyEdgeStoreProvider {
+  const provider: AnyEdgeStoreProvider = {
     name: 'test-provider',
+    baseUrl: 'https://files.example.com',
     init: vi.fn(() => ({ token: 'provider-token' })),
-    getBaseUrl: vi.fn(() => 'https://files.example.com'),
-    getFileInfo: vi.fn(() => ({
-      url: 'https://files.example.com/file.txt',
-      size: 10,
-      uploadedAt: new Date(),
-      path: {},
-      metadata: {},
-    })),
-    requestUpload: vi.fn(() => ({
-      uploadUrl: 'https://upload.example.com/file.txt',
-      accessUrl: 'https://files.example.com/file.txt',
-      thumbnailUrl: null,
-    })),
-    requestUploadParts: vi.fn(() => ({
-      multipart: {
-        uploadId: 'upload-id',
-        parts: [],
-      },
-    })),
-    completeMultipartUpload: vi.fn(() => ({ success: true })),
-    confirmUpload: vi.fn(() => ({ success: true })),
-    deleteFile: vi.fn(() => ({ success: true })),
+    reference: {
+      schema: z.object({ url: z.string() }),
+      fromUrl: (url) => ({ url }),
+    },
+    uploads: {
+      request: vi.fn(() => ({
+        uploadUrl: 'https://upload.example.com/file.txt',
+        accessUrl: 'https://files.example.com/file.txt',
+        thumbnailUrl: null,
+      })),
+      requestParts: vi.fn(() => ({
+        multipart: {
+          uploadId: 'upload-id',
+          parts: [],
+        },
+      })),
+      complete: vi.fn(() => ({ success: true })),
+    },
+    files: {
+      get: vi.fn(({ file }) => ({
+        url: file.url,
+        sizeBytes: 10,
+        uploadedAt: new Date(),
+        updatedAt: new Date(),
+        path: {},
+        metadata: {},
+      })),
+      confirm: vi.fn(({ files }) => ({
+        results: files.map((fileRef: unknown) => ({
+          fileRef,
+          success: true as const,
+        })),
+        successCount: files.length,
+        failureCount: 0,
+      })),
+      delete: vi.fn(({ files }) => ({
+        results: files.map((fileRef: unknown) => ({
+          fileRef,
+          success: true as const,
+        })),
+        successCount: files.length,
+        failureCount: 0,
+      })),
+    },
+  };
+  return {
+    ...provider,
     ...overrides,
+    uploads: { ...provider.uploads, ...overrides.uploads },
+    files: { ...provider.files, ...overrides.files },
   };
 }
 
@@ -128,9 +156,9 @@ export function extractCookieValue(
 }
 
 export function expectRequestUploadCalledWithContext(
-  provider: EdgeStoreProvider,
+  provider: AnyEdgeStoreProvider,
 ) {
-  expect(provider.requestUpload).toHaveBeenCalledWith({
+  expect(provider.uploads.request).toHaveBeenCalledWith({
     bucketName: 'documents',
     bucketType: 'FILE',
     fileInfo: {

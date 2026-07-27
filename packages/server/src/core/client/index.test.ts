@@ -11,6 +11,7 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import { createEdgeStore } from '../index';
+import { defineProvider } from '../provider';
 import { EdgeStoreFileMutationError } from './index';
 
 const backend = {
@@ -20,22 +21,37 @@ const backend = {
   confirmFiles: vi.fn<BackendFileMutationOperation>(),
   deleteFiles: vi.fn<BackendFileMutationOperation>(),
   restoreFiles: vi.fn<BackendFileMutationOperation>(),
+  getSignedUrls: vi.fn<BackendGetSignedUrlsOperation>(),
 };
 
-const provider = {
+const provider = defineProvider({
   name: 'test',
-  supportsBackendClient: true as const,
+  baseUrl: 'https://files.example.com',
   init: vi.fn(),
-  getBaseUrl: vi.fn(),
-  getFileInfo: vi.fn(),
-  requestUpload: vi.fn(),
-  requestUploadParts: vi.fn(),
-  completeMultipartUpload: vi.fn(),
-  confirmUpload: vi.fn(),
-  deleteFile: vi.fn(),
-  getSignedUrls: vi.fn<BackendGetSignedUrlsOperation>(),
-  ...backend,
-};
+  reference: {
+    schema: z.union([
+      z.object({ id: z.string() }),
+      z.object({ key: z.string() }),
+      z.object({ url: z.string() }),
+    ]),
+    fromUrl: (url) => ({ url }),
+  },
+  uploads: {
+    request: vi.fn(),
+    requestParts: vi.fn(),
+    complete: vi.fn(),
+    upload: backend.upload,
+  },
+  files: {
+    cursorSchema: z.string(),
+    get: backend.getFile,
+    list: backend.listFiles,
+    confirm: backend.confirmFiles,
+    delete: backend.deleteFiles,
+    restore: backend.restoreFiles,
+    getSignedUrls: backend.getSignedUrls,
+  },
+});
 
 const fetchMock = vi.fn();
 
@@ -130,21 +146,20 @@ describe('createEdgeStore', () => {
   });
 
   it('exposes and dispatches only concrete provider capabilities', async () => {
-    const {
-      upload: _upload,
-      listFiles: _listFiles,
-      confirmFiles: _confirmFiles,
-      deleteFiles: _deleteFiles,
-      restoreFiles: _restoreFiles,
-      getSignedUrls: _getSignedUrls,
-      ...adapterProvider
-    } = provider;
+    const getOnlyProvider = defineProvider({
+      ...provider,
+      uploads: {
+        request: provider.uploads.request,
+        requestParts: provider.uploads.requestParts,
+        complete: provider.uploads.complete,
+      },
+      files: {
+        get: backend.getFile,
+      },
+    });
     const client = createEdgeStore({
       router: createRouter(),
-      provider: {
-        ...adapterProvider,
-        getFile: backend.getFile,
-      },
+      provider: getOnlyProvider,
     }).client;
 
     expect(Object.keys(client.documents)).toEqual(['getFile']);

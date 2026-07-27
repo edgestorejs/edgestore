@@ -461,9 +461,19 @@ describe('createNextProxy upload', () => {
   });
 });
 
-describe('createNextProxy confirmUpload/delete', () => {
-  it('throws when confirmUpload returns success false', async () => {
-    createFetchMock([jsonResponse({ success: false })]);
+describe('createNextProxy file mutations', () => {
+  it('throws when singular confirmation fails', async () => {
+    createFetchMock([
+      jsonResponse({
+        succeeded: [],
+        failed: [
+          {
+            url: 'https://files.example/file.txt',
+            error: { code: 'NOT_CONFIRMABLE', message: 'Not confirmable' },
+          },
+        ],
+      }),
+    ]);
     const { assets } = createProxy();
 
     await expect(
@@ -471,12 +481,51 @@ describe('createNextProxy confirmUpload/delete', () => {
     ).rejects.toBeInstanceOf(EdgeStoreClientError);
   });
 
-  it('throws when delete returns success false', async () => {
-    createFetchMock([jsonResponse({ success: false })]);
+  it('throws when singular deletion fails', async () => {
+    createFetchMock([
+      jsonResponse({
+        succeeded: [],
+        failed: [
+          {
+            url: 'https://files.example/file.txt',
+            error: { code: 'DELETE_FAILED', message: 'Delete failed' },
+          },
+        ],
+      }),
+    ]);
     const { assets } = createProxy();
 
     await expect(
-      assets.delete({ url: 'https://files.example/file.txt' }),
+      assets.deleteFile({ url: 'https://files.example/file.txt' }),
     ).rejects.toBeInstanceOf(EdgeStoreClientError);
+  });
+
+  it('sends one request for plural deletion and preserves partial failures', async () => {
+    const result = {
+      succeeded: ['https://files.example/one.txt'],
+      failed: [
+        {
+          url: 'https://files.example/two.txt',
+          error: { code: 'DELETE_FAILED', message: 'Delete failed' },
+        },
+      ],
+    };
+    const { fetchMock } = createFetchMock([jsonResponse(result)]);
+    const { assets } = createProxy();
+
+    await expect(
+      assets.deleteFiles({
+        urls: [
+          'https://files.example/one.txt',
+          'https://files.example/two.txt',
+        ],
+      }),
+    ).resolves.toEqual(result);
+    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/edgestore/delete-files');
+    expect(JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body))).toEqual({
+      bucketName: 'assets',
+      urls: ['https://files.example/one.txt', 'https://files.example/two.txt'],
+    });
   });
 });

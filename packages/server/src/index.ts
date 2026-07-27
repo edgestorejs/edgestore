@@ -1,6 +1,7 @@
 export { initEdgeStore } from '@edgestore/shared';
 export {
   createEdgeStore,
+  defineProvider,
   type ConfiguredEdgeStore,
   type EdgeStoreClient,
   type InferClientInputs,

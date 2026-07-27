@@ -8,17 +8,17 @@ import Logger, { type LogLevel } from '../../libs/logger';
 import { matchPath } from '../../libs/utils';
 import {
   completeMultipartUpload,
-  confirmUpload,
-  deleteFile,
+  confirmUploads,
+  deleteFiles,
   fetchProxyFile,
   getCookieConfig,
   init,
   requestUpload,
   requestUploadParts,
   type CompleteMultipartUploadBody,
-  type ConfirmUploadBody,
+  type ConfirmUploadsBody,
   type CookieConfig,
-  type DeleteFileBody,
+  type DeleteFilesBody,
   type HandlerEdgeStore,
   type RequestUploadBody,
   type RequestUploadPartsParams,
@@ -139,26 +139,26 @@ export function createEdgeStoreStartHandler<TCtx>(config: Config<TCtx>) {
           ctxToken,
         });
         return new Response(null, { status: 200 });
-      } else if (matchPath(pathname, '/confirm-upload')) {
+      } else if (matchPath(pathname, '/confirm-uploads')) {
         const body = await request.json();
         const ctxToken = getCookie(request, resolvedCookieConfig.ctx.name);
-        const result = await confirmUpload({
+        const result = await confirmUploads({
           provider,
           router,
-          body: body as ConfirmUploadBody,
+          body: body as ConfirmUploadsBody,
           ctxToken,
         });
         return new Response(JSON.stringify(result), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         });
-      } else if (matchPath(pathname, '/delete-file')) {
+      } else if (matchPath(pathname, '/delete-files')) {
         const body = await request.json();
         const ctxToken = getCookie(request, resolvedCookieConfig.ctx.name);
-        const result = await deleteFile({
+        const result = await deleteFiles({
           provider,
           router,
-          body: body as DeleteFileBody,
+          body: body as DeleteFilesBody,
           ctxToken,
         });
         return new Response(JSON.stringify(result), {

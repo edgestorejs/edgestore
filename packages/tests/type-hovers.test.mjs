@@ -116,12 +116,11 @@ const expectedHovers = {
     };
 }) => Promise<{
     state: "requested" | "uploaded" | "deleted" | "replace_requested";
-    name: string;
-    bucketName: string;
     id: string;
     url: string;
     key: string;
-    ... 16 more ...;
+    thumbnailUrl: string | null;
+    ... 17 more ...;
     signedThumbnailUrl?: string | null | undefined;
 }>`,
   reactSignedUploadMethod: `const reactSignedUploadMethod: (params: {
@@ -155,16 +154,16 @@ const expectedHovers = {
     'const fastifyHandler: (req: FastifyRequest, reply: FastifyReply) => Promise<void>',
   backendUnsignedUpload: `const backendUnsignedUpload: {
     state: "requested" | "uploaded" | "deleted" | "replace_requested";
-    name: string;
-    bucketName: string;
     id: string;
     url: string;
     key: string;
     thumbnailUrl: string | null;
     thumbnailKey: string | null;
     bucketId: string;
+    bucketName: string;
     projectId: string;
     accountId: string;
+    name: string;
     sizeBytes: number;
     mimeType: string | null;
     temporary: boolean;
@@ -176,16 +175,16 @@ const expectedHovers = {
 }`,
   backendSignedFileUpload: `const backendSignedFileUpload: {
     state: "requested" | "uploaded" | "deleted" | "replace_requested";
-    name: string;
-    bucketName: string;
     id: string;
     url: string;
     key: string;
     thumbnailUrl: string | null;
     thumbnailKey: string | null;
     bucketId: string;
+    bucketName: string;
     projectId: string;
     accountId: string;
+    name: string;
     sizeBytes: number;
     mimeType: string | null;
     temporary: boolean;
@@ -207,16 +206,16 @@ const expectedHovers = {
 }`,
   backendGetFile: `const backendGetFile: {
     state: "requested" | "uploaded" | "deleted" | "replace_requested";
-    name: string;
-    bucketName: string;
     id: string;
     url: string;
     key: string;
     thumbnailUrl: string | null;
     thumbnailKey: string | null;
     bucketId: string;
+    bucketName: string;
     projectId: string;
     accountId: string;
+    name: string;
     sizeBytes: number;
     mimeType: string | null;
     temporary: boolean;
@@ -234,16 +233,16 @@ const expectedHovers = {
   backendListFiles: `const backendListFiles: {
     items: {
         state: "requested" | "uploaded" | "deleted" | "replace_requested";
-        name: string;
-        bucketName: string;
         id: string;
         url: string;
         key: string;
         thumbnailUrl: string | null;
         thumbnailKey: string | null;
         bucketId: string;
+        bucketName: string;
         projectId: string;
         accountId: string;
+        name: string;
         sizeBytes: number;
         mimeType: string | null;
         temporary: boolean;
@@ -269,9 +268,9 @@ const expectedHovers = {
     expiresIn: number;
 }`,
   backendGetSignedUrls: `const backendGetSignedUrls: {
+    expiresAt: Date;
     url: string;
     signedUrl: string;
-    expiresAt: Date;
     expiresIn: number;
     thumbnailUrl?: string | null | undefined;
     signedThumbnailUrl?: string | null | undefined;

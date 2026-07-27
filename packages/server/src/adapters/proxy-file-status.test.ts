@@ -1,8 +1,5 @@
 import { createServer, request as httpRequest, type Server } from 'node:http';
-import {
-  type EdgeStoreProvider,
-  type EdgeStoreRouter,
-} from '@edgestore/shared';
+import { type EdgeStoreRouter } from '@edgestore/shared';
 import express from 'express';
 import fastify from 'fastify';
 import { Hono } from 'hono';
@@ -15,21 +12,8 @@ import { createEdgeStoreHonoHandler } from './hono';
 import { createEdgeStoreNextHandler as createEdgeStoreNextAppHandler } from './next/app';
 import { createEdgeStoreNextHandler as createEdgeStoreNextPagesHandler } from './next/pages';
 import { createEdgeStoreRemixHandler } from './remix';
+import { createProvider } from './shared.test.utils';
 import { createEdgeStoreStartHandler } from './start';
-
-function createProvider(): EdgeStoreProvider {
-  return {
-    name: 'test-provider',
-    init: vi.fn(() => ({ token: 'provider-token' })),
-    getBaseUrl: vi.fn(() => 'https://files.example.com'),
-    getFileInfo: vi.fn(),
-    requestUpload: vi.fn(),
-    requestUploadParts: vi.fn(),
-    completeMultipartUpload: vi.fn(),
-    confirmUpload: vi.fn(),
-    deleteFile: vi.fn(),
-  };
-}
 
 function createRouter() {
   return {} as EdgeStoreRouter<Record<string, never>>;
