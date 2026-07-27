@@ -165,7 +165,7 @@ const res = await edgestore.publicFiles.upload({
 ### Delete file
 
 ```tsx
-await edgestore.publicFiles.delete({
+await edgestore.publicFiles.deleteFile({
   url: urlToDelete,
 });
 ```

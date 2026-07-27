@@ -70,7 +70,9 @@ export default function Home({
               <ImageFileBlock
                 fileData={fileData}
                 onDelete={async (fileData) => {
-                  await edgestore.myPublicImages.delete({ url: fileData.url });
+                  await edgestore.myPublicImages.deleteFile({
+                    url: fileData.url,
+                  });
                   setFiles((files) =>
                     files.filter((f) => f.url !== fileData.url),
                   );

@@ -1,10 +1,228 @@
 ---
 title: Custom
-description: Learn how to create your own custom storage provider for EdgeStore or contribute to the project.
+description: Build a type-safe custom storage provider with defineProvider.
 ---
 
-You can also create a custom provider for a different storage solution or just a different implementation for the existing providers.
+Use `defineProvider` to integrate another storage service or a custom storage
+implementation. The same provider instance powers the EdgeStore HTTP handler
+and the router-derived backend client:
 
-You can use the [EdgeStore Provider](https://github.com/edgestorejs/edgestore/blob/next/packages/server/src/providers/edgestore/index.ts) as a reference implementation.
+```ts
+const edgeStore = createEdgeStore({
+  router,
+  provider: myProvider,
+});
 
-If you build a provider that you believe could be useful for others, please consider contributing it to the EdgeStore project by opening a pull request.
+createEdgeStoreNextHandler({ edgeStore });
+edgeStore.client.files.getFile({ key: 'files/report.pdf' });
+```
+
+Method inputs are contextually typed. File references, cursors, returned file
+fields, and provider-specific errors are inferred from the definition, so you
+do not need to maintain a parallel provider interface or backend-operation
+map.
+
+## Minimal provider
+
+A provider must implement the upload-planning operations used by browser
+uploads and `files.get`, which EdgeStore uses to resolve a file before running
+router lifecycle hooks. Other operations are optional and only appear on the
+backend client when implemented.
+
+This single-part example delegates storage-specific work to a small driver:
+
+```ts title="src/lib/my-provider.ts"
+import { defineProvider } from '@edgestore/server';
+import { z } from 'zod';
+import { storage } from './storage';
+
+const baseUrl = 'https://files.example.com';
+
+export const myProvider = defineProvider({
+  name: 'my-storage',
+  baseUrl,
+  async init() {
+    return {};
+  },
+  reference: {
+    schema: z.object({ key: z.string().min(1) }),
+    fromUrl(url) {
+      return { key: new URL(url).pathname.slice(1) };
+    },
+  },
+  uploads: {
+    async request({ bucketName, fileInfo }) {
+      const key = storage.createKey({ bucketName, fileInfo });
+      return {
+        uploadUrl: await storage.signUpload(key),
+        accessUrl: `${baseUrl}/${key}`,
+      };
+    },
+    async requestParts() {
+      throw new Error('Multipart uploads are not supported');
+    },
+    async complete() {
+      throw new Error('Multipart uploads are not supported');
+    },
+  },
+  files: {
+    async get({ file }) {
+      const object = await storage.head(file.key);
+      return {
+        url: `${baseUrl}/${file.key}`,
+        sizeBytes: object.size,
+        path: object.path,
+        metadata: object.metadata,
+        uploadedAt: object.createdAt,
+        updatedAt: object.updatedAt,
+      };
+    },
+  },
+});
+```
+
+The resulting backend client exposes `getFile`, but not `upload`, `listFiles`,
+or mutations, because those optional capabilities were not defined.
+
+## Complete provider
+
+A complete provider can add direct backend uploads, pagination, mutations, and
+signed read URLs. Standard Schema transformations let callers use convenient
+input references while provider methods receive one normalized output shape:
+
+```ts title="src/lib/my-provider.ts"
+import { defineProvider } from '@edgestore/server';
+import { z } from 'zod';
+import { storage } from './storage';
+
+const baseUrl = 'https://files.example.com';
+const referenceSchema = z
+  .union([z.string().url(), z.object({ key: z.string().min(1) })])
+  .transform((reference) =>
+    typeof reference === 'string'
+      ? { key: new URL(reference).pathname.slice(1) }
+      : reference,
+  );
+
+const toFile = (object: Awaited<ReturnType<typeof storage.head>>) => ({
+  url: `${baseUrl}/${object.key}`,
+  sizeBytes: object.size,
+  path: object.path,
+  metadata: object.metadata,
+  uploadedAt: object.createdAt,
+  updatedAt: object.updatedAt,
+  etag: object.etag,
+});
+
+export const myProvider = defineProvider({
+  name: 'my-storage',
+  baseUrl,
+  async init() {
+    return {};
+  },
+  reference: {
+    schema: referenceSchema,
+    fromUrl: (url) => url,
+  },
+  uploads: {
+    async request({ bucketName, fileInfo }) {
+      return storage.createUploadPlan({ bucketName, fileInfo });
+    },
+    async requestParts({ multipart, path }) {
+      return storage.createUploadParts({ multipart, path });
+    },
+    async complete({ uploadId, key, parts }) {
+      await storage.completeMultipart({ uploadId, key, parts });
+      return { success: true };
+    },
+    async upload({ bucketName, fileInfo, source, signal, onProgress }) {
+      const object = await storage.upload({
+        bucketName,
+        fileInfo,
+        source,
+        signal,
+        onProgress,
+      });
+      return { file: toFile(object) };
+    },
+  },
+  files: {
+    cursorSchema: z.string().min(1),
+    async get({ file }) {
+      return toFile(await storage.head(file.key));
+    },
+    async list({ bucketName, cursor, filter, limit = 20 }) {
+      const page = await storage.list({ bucketName, cursor, filter, limit });
+      return {
+        items: page.objects.map(toFile),
+        limit,
+        nextCursor: page.nextCursor,
+        hasMore: page.nextCursor !== null,
+      };
+    },
+    async confirm({ files }) {
+      const results = await storage.confirm(files);
+      return {
+        results,
+        successCount: results.filter((result) => result.success).length,
+        failureCount: results.filter((result) => !result.success).length,
+      };
+    },
+    async delete({ files }) {
+      const results = await storage.delete(files);
+      return {
+        results,
+        successCount: results.filter((result) => result.success).length,
+        failureCount: results.filter((result) => !result.success).length,
+      };
+    },
+    async restore({ files }) {
+      const results = await storage.restore(files);
+      return {
+        results,
+        successCount: results.filter((result) => result.success).length,
+        failureCount: results.filter((result) => !result.success).length,
+      };
+    },
+    async getSignedUrls({ files, expiresIn = 3600 }) {
+      return Promise.all(
+        files.map(async (file) => ({
+          url: `${baseUrl}/${file.key}`,
+          signedUrl: await storage.signRead(file.key, expiresIn),
+          expiresAt: new Date(Date.now() + expiresIn * 1000),
+          expiresIn,
+        })),
+      );
+    },
+  },
+});
+```
+
+Here, callers may pass either a URL or `{ key }`, but every provider operation
+receives `{ key: string }` after runtime validation. The backend client also
+inherits the string cursor, the extra `etag` file field, and any literal
+mutation error codes returned by the storage driver.
+
+`uploads.request` and `uploads.upload` remain separate because they perform
+different work: the former creates signed instructions for a browser transfer,
+while the latter receives bytes and performs a privileged server-side upload.
+
+## Operation groups
+
+The provider is organized by storage resource, not by caller:
+
+- `uploads` contains browser upload planning and optional direct backend
+  upload.
+- `files` contains canonical file operations shared by HTTP adapters and the
+  backend client.
+- `reference` defines how frontend URLs and backend inputs become the
+  provider's normalized file reference.
+
+Frontend deletion still obeys the router: EdgeStore loads every file and runs
+`beforeDelete` for all of them before calling `files.delete`. The privileged
+backend client calls `files.delete` directly and is responsible for its own
+authorization.
+
+The official EdgeStore, S3, and Azure Blob providers use `defineProvider`
+themselves and are useful reference implementations. If your provider could be
+useful to others, consider contributing it to EdgeStore.

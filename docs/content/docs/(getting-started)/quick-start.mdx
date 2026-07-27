@@ -242,15 +242,33 @@ const res = await edgestore.publicFiles.upload({
 
 ### Delete file
 
-You can delete a file by passing its url to the `delete` method.
+You can delete a file by passing its URL to the `deleteFile` method.
 
 To be able to delete a file from a client component like this, you will need to set the `beforeDelete` [lifecycle hook](/docs/configuration#lifecycle-hooks) on the bucket.
 
 ```tsx
-await edgestore.publicFiles.delete({
+await edgestore.publicFiles.deleteFile({
   url: urlToDelete,
 });
 ```
+
+Use `deleteFiles` to send one request for multiple files. Storage failures are
+reported per URL:
+
+```tsx
+const result = await edgestore.publicFiles.deleteFiles({
+  urls: selectedFiles.map((file) => file.url),
+});
+
+for (const failure of result.failed) {
+  console.error(failure.url, failure.error.code);
+}
+```
+
+EdgeStore runs `beforeDelete` for every file before deleting any of them. If
+one file is unauthorized, the entire request is rejected without calling the
+storage provider. Once authorization succeeds, the provider may still return
+partial storage failures in `result.failed`.
 
 ### Cancel upload
 
@@ -345,6 +363,14 @@ To confirm a temporary file, you can use the `confirmUpload` method.
 ```tsx
 await edgestore.publicFiles.confirmUpload({
   url: urlToConfirm,
+});
+```
+
+To confirm several temporary files in one request, use `confirmUploads`:
+
+```tsx
+const result = await edgestore.publicFiles.confirmUploads({
+  urls: temporaryFiles.map((file) => file.url),
 });
 ```
 

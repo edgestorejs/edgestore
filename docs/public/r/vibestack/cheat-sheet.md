@@ -71,7 +71,7 @@ await edgestore.publicFiles.upload({
 ### Delete File
 
 ```ts
-await edgestore.publicFiles.delete({ url: urlToDelete });
+await edgestore.publicFiles.deleteFile({ url: urlToDelete });
 ```
 
 ### Temporary Files
