@@ -57,14 +57,14 @@ describe('management resources', () => {
     expect(fetch).toHaveBeenCalledOnce();
   });
 
-  it('returns undefined for successful empty responses', async () => {
-    const fetch = vi.fn<typeof globalThis.fetch>(
-      async () => new Response(null, { status: 204 }),
+  it('returns the API response for project deletion', async () => {
+    const fetch = vi.fn<typeof globalThis.fetch>(async () =>
+      Response.json({ data: {} }),
     );
     const sdk = createManagementSdk(fetch);
 
     await expect(
       sdk.management.projects.delete({ project: 'project-id' }),
-    ).resolves.toBeUndefined();
+    ).resolves.toEqual({});
   });
 });
