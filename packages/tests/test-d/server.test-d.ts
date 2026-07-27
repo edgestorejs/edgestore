@@ -1,4 +1,9 @@
-import { createEdgeStore, initEdgeStore } from '@edgestore/server';
+import {
+  createEdgeStore,
+  initEdgeStore,
+  type InferClientInputs,
+  type InferClientOutputs,
+} from '@edgestore/server';
 import {
   type EdgeStoreFileReference,
   type InferClientResponse,
@@ -155,10 +160,11 @@ const syntheticClient = createEdgeStore({
   router: publicRouter,
   provider: syntheticProvider,
 }).client;
+const syntheticProtectedRouter = publicEs.router({
+  files: publicEs.fileBucket().accessControl('private'),
+});
 const syntheticProtectedClient = createEdgeStore({
-  router: publicEs.router({
-    files: publicEs.fileBucket().accessControl('private'),
-  }),
+  router: syntheticProtectedRouter,
   provider: syntheticProvider,
 }).client;
 
@@ -406,12 +412,69 @@ void client.documents
     >(result.failed[0]!.error.code);
   });
 
-type ClientResponses = InferClientResponse<typeof router>;
-expectType<string>({} as ClientResponses['avatars']['upload']['id']);
-expectType<number>({} as ClientResponses['documents']['getFile']['sizeBytes']);
+type ClientInputs = InferClientInputs<typeof router>;
+type ClientOutputs = InferClientOutputs<typeof router>;
+type DeprecatedClientResponses = InferClientResponse<typeof router>;
+
+expectType<Context>({} as ClientInputs['avatars']['upload']['ctx']);
+expectType<{ type: 'profile' | 'post' }>(
+  {} as ClientInputs['avatars']['upload']['input'],
+);
+expectNotAssignable<ClientInputs['avatars']['upload']>({
+  content: 'hello',
+  ctx: { userId: 'user-1', role: 'admin' },
+});
+expectType<string>({} as ClientOutputs['avatars']['upload']['id']);
+expectType<number>({} as ClientOutputs['documents']['getFile']['sizeBytes']);
 expectType<{ role: 'admin' | 'visitor'; type: 'profile' | 'post' }>(
-  {} as ClientResponses['avatars']['listFiles']['items'][number]['metadata'],
+  {} as ClientOutputs['avatars']['listFiles']['items'][number]['metadata'],
+);
+expectType<{ author: string; type: string }>(
+  {} as ClientOutputs['avatars']['upload']['path'],
 );
 expectType<EdgeStoreFileReference>(
-  {} as ClientResponses['documents']['deleteFile']['ref'],
+  {} as ClientOutputs['documents']['deleteFile']['ref'],
 );
+expectAssignable<ClientOutputs>({} as DeprecatedClientResponses);
+expectAssignable<DeprecatedClientResponses>({} as ClientOutputs);
+
+type SyntheticInputs = InferClientInputs<
+  typeof publicRouter,
+  typeof syntheticProvider
+>;
+type SyntheticOutputs = InferClientOutputs<
+  typeof publicRouter,
+  typeof syntheticProvider
+>;
+type SyntheticProtectedInputs = InferClientInputs<
+  typeof syntheticProtectedRouter,
+  typeof syntheticProvider
+>;
+type SyntheticProtectedOutputs = InferClientOutputs<
+  typeof syntheticProtectedRouter,
+  typeof syntheticProvider
+>;
+
+expectType<{ objectKey: string }>({} as SyntheticInputs['files']['getFile']);
+expectType<number | undefined>(
+  {} as NonNullable<SyntheticInputs['files']['listFiles']>['cursor'],
+);
+expectType<{ objectKey: string }[]>(
+  {} as SyntheticInputs['files']['deleteFiles']['refs'],
+);
+expectType<{ objectKey: string }>(
+  {} as SyntheticProtectedInputs['files']['getSignedUrl']['url'],
+);
+expectError(({} as SyntheticInputs['files']).restoreFile);
+
+expectType<string>({} as SyntheticOutputs['files']['upload']['eTag']);
+expectType<number | null>(
+  {} as SyntheticOutputs['files']['listFiles']['nextCursor'],
+);
+expectType<'OBJECT_LOCKED'>(
+  {} as SyntheticOutputs['files']['deleteFiles']['failed'][number]['error']['code'],
+);
+expectType<'us-east-1'>(
+  {} as SyntheticProtectedOutputs['files']['getSignedUrl']['providerRegion'],
+);
+expectError(({} as SyntheticOutputs['files']).restoreFile);
