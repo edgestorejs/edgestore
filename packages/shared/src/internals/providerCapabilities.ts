@@ -1,12 +1,6 @@
 import type { StandardSchemaV1 } from '@standard-schema/spec';
 import type {
-  AnyEdgeStoreProvider,
   BackendFile,
-  BackendFileMutationOperation,
-  BackendGetFileOperation,
-  BackendGetSignedUrlsOperation,
-  BackendListFilesOperation,
-  BackendUploadOperation,
   GetSignedUrlRes,
   ProviderFileMutationResult,
 } from './providerTypes';
@@ -108,16 +102,6 @@ export type ProviderMutationError<
     ? TError
     : never;
 
-export type ProviderMutationReference<
-  TProvider,
-  TName extends 'confirm' | 'delete' | 'restore',
-> =
-  ProviderMutationItem<TProvider, TName> extends {
-    fileRef: infer TReference;
-  }
-    ? TReference
-    : never;
-
 type ProviderMutationErrorCode<
   TProvider,
   TName extends 'confirm' | 'delete' | 'restore',
@@ -128,7 +112,7 @@ type ProviderMutationErrorCode<
     ? TErrorCode
     : never;
 
-type ProviderSignedUrlResult<TProvider> =
+export type ProviderSignedUrlResult<TProvider> =
   ProviderCapabilityResult<
     TProvider,
     'getSignedUrls'
@@ -136,52 +120,7 @@ type ProviderSignedUrlResult<TProvider> =
     ? TResult
     : never;
 
-export type ResolvedProviderCapabilities<TProvider> = {
-  upload?: BackendUploadOperation<ProviderCapabilityFile<TProvider, 'upload'>>;
-  get?: BackendGetFileOperation<
-    ProviderCapabilityFile<TProvider, 'get'>,
-    ProviderReference<TProvider>
-  >;
-  list?: BackendListFilesOperation<
-    ProviderCapabilityFile<TProvider, 'list'>,
-    ProviderCursor<TProvider>
-  >;
-  confirm?: BackendFileMutationOperation<
-    ProviderReference<TProvider>,
-    ProviderMutationErrorCode<TProvider, 'confirm'>
-  >;
-  delete?: BackendFileMutationOperation<
-    ProviderReference<TProvider>,
-    ProviderMutationErrorCode<TProvider, 'delete'>
-  >;
-  restore?: BackendFileMutationOperation<
-    ProviderReference<TProvider>,
-    ProviderMutationErrorCode<TProvider, 'restore'>
-  >;
-  getSignedUrls?: BackendGetSignedUrlsOperation<
-    ProviderReference<TProvider>,
-    ProviderSignedUrlResult<TProvider>
-  >;
-};
-
-export function resolveProviderCapabilities<
-  TProvider extends AnyEdgeStoreProvider,
->(provider: TProvider): ResolvedProviderCapabilities<TProvider> {
-  return {
-    upload: provider.uploads.upload,
-    get: provider.files.get,
-    list: provider.files.list,
-    confirm: provider.files.confirm,
-    delete: provider.files.delete,
-    restore: provider.files.restore,
-    getSignedUrls: provider.files.getSignedUrls,
-  } as ResolvedProviderCapabilities<TProvider>;
-}
-
 export type ProviderMutationResult<
   TProvider,
   TName extends 'confirm' | 'delete' | 'restore',
-> = ProviderFileMutationResult<
-  ProviderReference<TProvider>,
-  ProviderMutationErrorCode<TProvider, TName>
->;
+> = ProviderFileMutationResult<ProviderMutationErrorCode<TProvider, TName>>;

@@ -214,15 +214,18 @@ describe('s3', () => {
     );
   });
 
-  it('allows overwritePath to control the final URL and key', async () => {
-    const overwritePath = vi.fn(() => '/custom/key.bin');
+  it('customizes the path beneath the logical bucket prefix', async () => {
+    const path = vi.fn(({ defaultPath }: { defaultPath: string }) =>
+      defaultPath.replace(/^_public\//, 'custom/'),
+    );
     const fileInfo = uploadParams({
+      isPublic: true,
       path: [{ key: 'tenant', value: 'tenant-1' }],
     }).fileInfo;
     const provider = s3({
       bucketName: 'storage-bucket',
       region: 'us-east-1',
-      overwritePath,
+      path,
     });
 
     const result = await provider.uploads.request({
@@ -231,20 +234,20 @@ describe('s3', () => {
       fileInfo,
     });
 
-    expect(overwritePath).toHaveBeenCalledWith({
-      esBucketName: 'documents',
+    expect(path).toHaveBeenCalledWith({
+      edgestoreBucketName: 'documents',
       fileInfo,
-      defaultAccessPath: 'documents/tenant-1/generated-uuid.txt',
+      defaultPath: '_public/tenant-1/generated-uuid.txt',
     });
     expect(result.accessUrl).toBe(
-      'https://storage-bucket.s3.us-east-1.amazonaws.com/custom/key.bin',
+      'https://storage-bucket.s3.us-east-1.amazonaws.com/documents/custom/tenant-1/generated-uuid.txt',
     );
     expect(awsMocks.getSignedUrl).toHaveBeenCalledWith(
       expect.any(awsMocks.S3Client),
       expect.objectContaining({
         input: {
           Bucket: 'storage-bucket',
-          Key: 'custom/key.bin',
+          Key: 'documents/custom/tenant-1/generated-uuid.txt',
         },
       }),
       { expiresIn: 60 * 60 },
@@ -305,7 +308,7 @@ describe('s3', () => {
         bucketName: 'documents',
         files: [{ url: 'https://cdn.example.com/documents/path/file.txt' }],
       }),
-    ).resolves.toMatchObject({ successCount: 1 });
+    ).resolves.toEqual({ results: [{ success: true }] });
 
     expect(awsMocks.send).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -315,6 +318,38 @@ describe('s3', () => {
         },
       }),
     );
+  });
+
+  it('rejects cross-bucket deletion before contacting S3', async () => {
+    const provider = s3({
+      bucketName: 'storage-bucket',
+      region: 'us-east-1',
+      baseUrl: 'https://cdn.example.com',
+    });
+
+    await expect(
+      provider.files.delete?.({
+        bucketName: 'documents',
+        files: [{ url: 'https://cdn.example.com/avatars/file.txt' }],
+      }),
+    ).rejects.toThrow('File does not belong to EdgeStore bucket "documents".');
+    expect(awsMocks.send).not.toHaveBeenCalled();
+  });
+
+  it('rejects cross-bucket lookup before contacting S3', async () => {
+    const provider = s3({
+      bucketName: 'storage-bucket',
+      region: 'us-east-1',
+      baseUrl: 'https://cdn.example.com',
+    });
+
+    await expect(
+      provider.files.get({
+        bucketName: 'documents',
+        file: { url: 'https://cdn.example.com/avatars/file.txt' },
+      }),
+    ).rejects.toThrow('File does not belong to EdgeStore bucket "documents".');
+    expect(awsMocks.send).not.toHaveBeenCalled();
   });
 
   it('throws a clear error when bucketName is missing for requestUpload', async () => {

@@ -86,12 +86,6 @@ const syntheticProvider = defineProvider({
     request: async () => {
       throw new Error('Not implemented');
     },
-    requestParts: async () => {
-      throw new Error('Not implemented');
-    },
-    complete: async () => {
-      throw new Error('Not implemented');
-    },
     upload: async () => ({
       file: {
         url: 'https://s3.example/files/uploaded.txt',
@@ -132,16 +126,13 @@ const syntheticProvider = defineProvider({
       hasMore: cursor === undefined,
     }),
     delete: async ({ files }) => ({
-      results: files.map((fileRef) => ({
-        fileRef,
+      results: files.map(() => ({
         success: false as const,
         error: {
           code: 'OBJECT_LOCKED' as const,
           message: 'The object is locked.',
         },
       })),
-      successCount: 0,
-      failureCount: files.length,
     }),
     getSignedUrls: async ({ files }) =>
       files.map(({ objectKey }) => ({
@@ -153,6 +144,30 @@ const syntheticProvider = defineProvider({
       })),
   },
 });
+
+expectError(
+  defineProvider({
+    ...syntheticProvider,
+    uploads: {
+      request: async () => ({
+        accessUrl: 'https://s3.example/files/uploaded.txt',
+        multipart: {
+          key: 'files/uploaded.txt',
+          uploadId: 'upload-id',
+          partSize: 5,
+          totalParts: 1,
+          parts: [
+            {
+              partNumber: 1,
+              uploadUrl: 'https://upload.s3.example/part-1',
+            },
+          ],
+        },
+      }),
+    },
+  }),
+);
+
 const syntheticClient = createEdgeStore({
   router: publicRouter,
   provider: syntheticProvider,
@@ -214,23 +229,6 @@ expectError(
         limit: 20,
         nextCursor: cursor === undefined ? 'next' : null,
         hasMore: cursor === undefined,
-      }),
-    },
-  }),
-);
-
-expectError(
-  defineProvider({
-    ...syntheticProvider,
-    files: {
-      ...syntheticProvider.files,
-      delete: async ({ files }) => ({
-        results: files.map(() => ({
-          fileRef: { id: 'different-reference' },
-          success: true as const,
-        })),
-        successCount: files.length,
-        failureCount: 0,
       }),
     },
   }),

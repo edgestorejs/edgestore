@@ -185,9 +185,43 @@ describe('azureBlob', () => {
         bucketName: 'documents',
         files: [{ url: `${containerUrl}/documents/report.pdf` }],
       }),
-    ).resolves.toMatchObject({ successCount: 1 });
+    ).resolves.toEqual({ results: [{ success: true }] });
 
     expect(mocks.getBlobClient).toHaveBeenCalledWith('documents/report.pdf');
     expect(mocks.deleteBlob).toHaveBeenCalledOnce();
+  });
+
+  it('rejects cross-bucket deletion before contacting Azure', async () => {
+    const provider = azureBlob({
+      containerName: 'files',
+      customBaseUrl: 'http://localhost:10000/devstoreaccount1',
+      sasToken: 'token',
+      storageAccountName: 'devstoreaccount1',
+    });
+
+    await expect(
+      provider.files.delete?.({
+        bucketName: 'documents',
+        files: [{ url: `${containerUrl}/avatars/report.pdf` }],
+      }),
+    ).rejects.toThrow('File does not belong to EdgeStore bucket "documents".');
+    expect(mocks.deleteBlob).not.toHaveBeenCalled();
+  });
+
+  it('rejects cross-bucket lookup before contacting Azure', async () => {
+    const provider = azureBlob({
+      containerName: 'files',
+      customBaseUrl: 'http://localhost:10000/devstoreaccount1',
+      sasToken: 'token',
+      storageAccountName: 'devstoreaccount1',
+    });
+
+    await expect(
+      provider.files.get({
+        bucketName: 'documents',
+        file: { url: `${containerUrl}/avatars/report.pdf` },
+      }),
+    ).rejects.toThrow('File does not belong to EdgeStore bucket "documents".');
+    expect(mocks.getProperties).not.toHaveBeenCalled();
   });
 });

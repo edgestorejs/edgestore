@@ -1,29 +1,8 @@
-import {
-  EDGE_STORE_ERROR_CODES,
-  EdgeStoreError,
-  type EdgeStoreErrorCodeKey,
-  type MaybePromise,
-} from '@edgestore/shared';
+import { type MaybePromise } from '@edgestore/shared';
 import { type Context as HonoContext } from 'hono';
 import Logger, { type LogLevel } from '../../libs/logger';
-import { matchPath } from '../../libs/utils';
-import {
-  completeMultipartUpload,
-  confirmUploads,
-  deleteFiles,
-  fetchProxyFile,
-  getCookieConfig,
-  init,
-  requestUpload,
-  requestUploadParts,
-  type CompleteMultipartUploadBody,
-  type ConfirmUploadsBody,
-  type CookieConfig,
-  type DeleteFilesBody,
-  type HandlerEdgeStore,
-  type RequestUploadBody,
-  type RequestUploadPartsParams,
-} from '../shared';
+import { dispatchEdgeStoreRequest } from '../dispatcher';
+import { type CookieConfig, type HandlerEdgeStore } from '../shared';
 
 export type CreateContextOptions = {
   c: HonoContext;
@@ -45,152 +24,26 @@ declare const globalThis: {
   _EDGE_STORE_LOGGER: Logger;
 };
 
-// Helper to get a cookie value from Hono Context
-function getCookie(c: HonoContext, name: string): string | undefined {
-  const cookies = c.req.header('cookie');
-  if (!cookies) return undefined;
-
-  const match = new RegExp(`${name}=([^;]+)`).exec(cookies);
-  return match ? match[1] : undefined;
-}
-
 export function createEdgeStoreHonoHandler<TCtx>(config: Config<TCtx>) {
-  const { provider, router } = config.edgeStore;
   const { cookieConfig } = config;
   const log = new Logger(config.logLevel);
   globalThis._EDGE_STORE_LOGGER = log;
   log.debug('Creating EdgeStore Hono handler');
 
-  const resolvedCookieConfig = getCookieConfig(cookieConfig);
-
-  return async (c: HonoContext): Promise<Response> => {
-    try {
-      const pathname = new URL(c.req.url).pathname;
-
-      if (matchPath(pathname, '/health')) {
-        return c.text('OK');
-      } else if (matchPath(pathname, '/init')) {
-        let ctx = {} as TCtx;
-        try {
-          ctx =
-            'createContext' in config
-              ? await config.createContext({ c })
-              : ({} as TCtx);
-        } catch (err) {
-          throw new EdgeStoreError({
-            message: 'Error creating context',
-            code: 'CREATE_CONTEXT_ERROR',
-            cause: err instanceof Error ? err : undefined,
-          });
-        }
-        const { newCookies, ...body } = await init({
-          ctx,
-          provider,
-          router,
-          cookieConfig,
-        });
-
-        // Set cookies
-        if (Array.isArray(newCookies)) {
-          for (const cookie of newCookies) {
-            c.header('Set-Cookie', cookie, { append: true });
-          }
-        } else if (newCookies) {
-          c.header('Set-Cookie', newCookies);
-        }
-
-        return c.json(body);
-      } else if (matchPath(pathname, '/request-upload')) {
-        const body = await c.req.json<RequestUploadBody>();
-        return c.json(
-          await requestUpload({
-            provider,
-            router,
-            body,
-            ctxToken: getCookie(c, resolvedCookieConfig.ctx.name),
-          }),
-        );
-      } else if (matchPath(pathname, '/request-upload-parts')) {
-        const body = await c.req.json<RequestUploadPartsParams>();
-        return c.json(
-          await requestUploadParts({
-            provider,
-            router,
-            body,
-            ctxToken: getCookie(c, resolvedCookieConfig.ctx.name),
-          }),
-        );
-      } else if (matchPath(pathname, '/complete-multipart-upload')) {
-        const body = await c.req.json<CompleteMultipartUploadBody>();
-        await completeMultipartUpload({
-          provider,
-          router,
-          body,
-          ctxToken: getCookie(c, resolvedCookieConfig.ctx.name),
-        });
-        return c.body(null, 200);
-      } else if (matchPath(pathname, '/confirm-uploads')) {
-        const body = await c.req.json<ConfirmUploadsBody>();
-        return c.json(
-          await confirmUploads({
-            provider,
-            router,
-            body,
-            ctxToken: getCookie(c, resolvedCookieConfig.ctx.name),
-          }),
-        );
-      } else if (matchPath(pathname, '/delete-files')) {
-        const body = await c.req.json<DeleteFilesBody>();
-        return c.json(
-          await deleteFiles({
-            provider,
-            router,
-            body,
-            ctxToken: getCookie(c, resolvedCookieConfig.ctx.name),
-          }),
-        );
-      } else if (matchPath(pathname, '/proxy-file')) {
-        const url = c.req.query('url');
-
-        if (typeof url === 'string') {
-          const proxyRes = await fetchProxyFile({
-            cookieHeader: c.req.header('cookie'),
-            url,
-          });
-
-          return new Response(
-            proxyRes.body === null ? null : Buffer.from(proxyRes.body),
-            {
-              status: proxyRes.status,
-              headers: {
-                'Content-Type': proxyRes.contentType,
-              },
-            },
-          );
-        } else {
-          return c.body(null, 400);
-        }
-      } else {
-        return c.body(null, 404);
-      }
-    } catch (err) {
-      if (err instanceof EdgeStoreError) {
-        log[err.level](err.formattedMessage());
-        if (err.cause) log[err.level](err.cause);
-        return c.json(
-          err.formattedJson(),
-          EDGE_STORE_ERROR_CODES[err.code as EdgeStoreErrorCodeKey],
-        );
-      } else {
-        log.error(err);
-        return c.json(
-          new EdgeStoreError({
-            message: 'Internal Server Error',
-            code: 'SERVER_ERROR',
-          }).formattedJson(),
-          500,
-        );
-      }
-    }
-  };
+  return async (c: HonoContext): Promise<Response> =>
+    await dispatchEdgeStoreRequest({
+      edgeStore: config.edgeStore,
+      logger: log,
+      cookieConfig,
+      request: {
+        pathname: new URL(c.req.url).pathname,
+        readJson: () => c.req.json(),
+        getQuery: (name) => c.req.query(name),
+        cookieHeader: c.req.header('cookie'),
+        createContext: () =>
+          'createContext' in config
+            ? config.createContext({ c })
+            : ({} as TCtx),
+      },
+    });
 }

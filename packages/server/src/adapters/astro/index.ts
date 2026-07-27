@@ -1,29 +1,8 @@
-import {
-  EDGE_STORE_ERROR_CODES,
-  EdgeStoreError,
-  type EdgeStoreErrorCodeKey,
-  type MaybePromise,
-} from '@edgestore/shared';
+import { type MaybePromise } from '@edgestore/shared';
 import type { APIContext } from 'astro';
 import Logger, { type LogLevel } from '../../libs/logger';
-import { matchPath } from '../../libs/utils';
-import {
-  completeMultipartUpload,
-  confirmUploads,
-  deleteFiles,
-  fetchProxyFile,
-  getCookieConfig,
-  init,
-  requestUpload,
-  requestUploadParts,
-  type CompleteMultipartUploadBody,
-  type ConfirmUploadsBody,
-  type CookieConfig,
-  type DeleteFilesBody,
-  type HandlerEdgeStore,
-  type RequestUploadBody,
-  type RequestUploadPartsParams,
-} from '../shared';
+import { dispatchEdgeStoreRequest } from '../dispatcher';
+import type { CookieConfig, HandlerEdgeStore } from '../shared';
 
 export type Config<TCtx> = {
   edgeStore: HandlerEdgeStore<TCtx>;
@@ -41,180 +20,28 @@ declare const globalThis: {
   _EDGE_STORE_LOGGER: Logger;
 };
 
-// Helper to safely get cookies from Astro request
-function getCookie(request: Request, name: string): string | undefined {
-  const cookieHeader = request.headers.get('cookie');
-  if (!cookieHeader) return undefined;
-
-  const cookies = cookieHeader
-    .split(';')
-    .reduce<Record<string, string>>((acc, cookie) => {
-      const [key, value] = cookie.trim().split('=');
-      if (key && value) acc[key] = value;
-      return acc;
-    }, {});
-
-  return cookies[name];
-}
-
 export function createEdgeStoreAstroHandler<TCtx>(config: Config<TCtx>) {
-  const { provider, router } = config.edgeStore;
-  const { cookieConfig } = config;
   const log = new Logger(config.logLevel);
   globalThis._EDGE_STORE_LOGGER = log;
   log.debug('Creating EdgeStore Astro handler');
 
-  const resolvedCookieConfig = getCookieConfig(cookieConfig);
-
   return async (context: APIContext) => {
-    try {
-      const { request } = context;
-      const url = new URL(request.url);
-
-      if (matchPath(url.pathname, 'health')) {
-        return new Response('OK');
-      } else if (matchPath(url.pathname, 'init')) {
-        let ctx = {} as TCtx;
-        try {
-          ctx =
-            'createContext' in config
-              ? await config.createContext(context)
-              : ({} as TCtx);
-        } catch (err) {
-          throw new EdgeStoreError({
-            message: 'Error creating context',
-            code: 'CREATE_CONTEXT_ERROR',
-            cause: err instanceof Error ? err : undefined,
-          });
-        }
-        const { newCookies, ...body } = await init({
-          ctx,
-          provider,
-          router,
-          cookieConfig,
-        });
-
-        const headers = new Headers();
-        headers.set('Content-Type', 'application/json');
-
-        // Set cookies
-        if (Array.isArray(newCookies)) {
-          for (const cookie of newCookies) {
-            headers.append('Set-Cookie', cookie);
-          }
-        } else if (newCookies) {
-          headers.append('Set-Cookie', newCookies);
-        }
-
-        return new Response(JSON.stringify(body), { headers });
-      } else if (matchPath(url.pathname, 'request-upload')) {
-        const body = (await request.json()) as RequestUploadBody;
-        const result = await requestUpload({
-          provider,
-          router,
-          body,
-          ctxToken: getCookie(request, resolvedCookieConfig.ctx.name),
-        });
-
-        return new Response(JSON.stringify(result), {
-          headers: { 'Content-Type': 'application/json' },
-        });
-      } else if (matchPath(url.pathname, 'request-upload-parts')) {
-        const body = (await request.json()) as RequestUploadPartsParams;
-        const result = await requestUploadParts({
-          provider,
-          router,
-          body,
-          ctxToken: getCookie(request, resolvedCookieConfig.ctx.name),
-        });
-
-        return new Response(JSON.stringify(result), {
-          headers: { 'Content-Type': 'application/json' },
-        });
-      } else if (matchPath(url.pathname, 'complete-multipart-upload')) {
-        const body = (await request.json()) as CompleteMultipartUploadBody;
-        await completeMultipartUpload({
-          provider,
-          router,
-          body,
-          ctxToken: getCookie(request, resolvedCookieConfig.ctx.name),
-        });
-
-        return new Response(null, { status: 200 });
-      } else if (matchPath(url.pathname, 'confirm-uploads')) {
-        const body = (await request.json()) as ConfirmUploadsBody;
-        const result = await confirmUploads({
-          provider,
-          router,
-          body,
-          ctxToken: getCookie(request, resolvedCookieConfig.ctx.name),
-        });
-
-        return new Response(JSON.stringify(result), {
-          headers: { 'Content-Type': 'application/json' },
-        });
-      } else if (matchPath(url.pathname, 'delete-files')) {
-        const body = (await request.json()) as DeleteFilesBody;
-        const result = await deleteFiles({
-          provider,
-          router,
-          body,
-          ctxToken: getCookie(request, resolvedCookieConfig.ctx.name),
-        });
-
-        return new Response(JSON.stringify(result), {
-          headers: { 'Content-Type': 'application/json' },
-        });
-      } else if (matchPath(url.pathname, 'proxy-file')) {
-        const url = new URL(request.url).searchParams.get('url');
-
-        if (typeof url === 'string') {
-          const proxyRes = await fetchProxyFile({
-            cookieHeader: request.headers.get('cookie') ?? undefined,
-            url,
-          });
-
-          const headers = new Headers();
-          headers.set('Content-Type', proxyRes.contentType);
-
-          return new Response(proxyRes.body, {
-            headers,
-            status: proxyRes.status,
-          });
-        } else {
-          return new Response(null, { status: 400 });
-        }
-      } else {
-        return new Response(null, { status: 404 });
-      }
-    } catch (err) {
-      if (err instanceof EdgeStoreError) {
-        log[err.level](err.formattedMessage());
-        if (err.cause) log[err.level](err.cause);
-
-        return new Response(JSON.stringify(err.formattedJson()), {
-          status: EDGE_STORE_ERROR_CODES[err.code as EdgeStoreErrorCodeKey],
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-      } else {
-        log.error(err);
-        return new Response(
-          JSON.stringify(
-            new EdgeStoreError({
-              message: 'Internal Server Error',
-              code: 'SERVER_ERROR',
-            }).formattedJson(),
-          ),
-          {
-            status: 500,
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          },
-        );
-      }
-    }
+    const { request } = context;
+    const url = new URL(request.url);
+    return await dispatchEdgeStoreRequest({
+      edgeStore: config.edgeStore,
+      logger: log,
+      cookieConfig: config.cookieConfig,
+      request: {
+        pathname: url.pathname,
+        readJson: () => request.json(),
+        getQuery: (name) => url.searchParams.get(name) ?? undefined,
+        cookieHeader: request.headers.get('cookie') ?? undefined,
+        createContext: () =>
+          'createContext' in config
+            ? config.createContext(context)
+            : ({} as TCtx),
+      },
+    });
   };
 }

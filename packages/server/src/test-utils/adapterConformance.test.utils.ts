@@ -88,13 +88,15 @@ export function createConformanceProvider(
         accessUrl: 'https://files.example.com/file.txt',
         thumbnailUrl: null,
       })),
-      requestParts: vi.fn(() => ({
-        multipart: {
-          uploadId: 'upload-id',
-          parts: [],
-        },
-      })),
-      complete: vi.fn(() => ({ success: true })),
+      multipart: {
+        requestParts: vi.fn(() => ({
+          multipart: {
+            uploadId: 'upload-id',
+            parts: [],
+          },
+        })),
+        complete: vi.fn(),
+      },
     },
     files: {
       get: vi.fn(({ file }) => ({
@@ -106,27 +108,17 @@ export function createConformanceProvider(
         metadata: {},
       })),
       confirm: vi.fn(({ files }) => ({
-        results: files.map((fileRef: unknown) => ({
-          fileRef,
-          success: true as const,
-        })),
-        successCount: files.length,
-        failureCount: 0,
+        results: files.map(() => ({ success: true as const })),
       })),
       delete: vi.fn(({ files }) => ({
-        results: files.map((fileRef: unknown) => ({
-          fileRef,
-          success: true as const,
-        })),
-        successCount: files.length,
-        failureCount: 0,
+        results: files.map(() => ({ success: true as const })),
       })),
     },
   };
   return {
     ...provider,
     ...overrides,
-    uploads: { ...provider.uploads, ...overrides.uploads },
+    uploads: overrides.uploads ?? provider.uploads,
     files: { ...provider.files, ...overrides.files },
   };
 }

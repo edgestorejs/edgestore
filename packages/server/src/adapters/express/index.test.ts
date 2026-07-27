@@ -167,7 +167,7 @@ describe('Express adapter conformance', () => {
     );
 
     expect(completeRes.statusCode).toBe(200);
-    expect(provider.uploads.complete).toHaveBeenCalledWith({
+    expect(provider.uploads.multipart?.complete).toHaveBeenCalledWith({
       uploadId: 'upload-id',
       key: 'uploads/file.txt',
       parts: completeMultipartUploadBody.parts,
@@ -201,8 +201,7 @@ describe('Express adapter conformance', () => {
     });
     expect(res.statusCode).toBe(202);
     expect(res.headers['Content-Type']).toBe('text/custom');
-    expect(Buffer.isBuffer(res.body)).toBe(true);
-    expect((res.body as Buffer).toString()).toBe('proxied body');
+    expect(res.body).toBe('proxied body');
   });
 
   it('createContext failure maps to CREATE_CONTEXT_ERROR status/body', async () => {

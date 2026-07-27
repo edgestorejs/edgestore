@@ -24,8 +24,6 @@ function createProvider() {
     },
     uploads: {
       request: vi.fn(),
-      requestParts: vi.fn(),
-      complete: vi.fn(),
     },
     files: {
       cursorSchema: z.number().int().nonnegative(),

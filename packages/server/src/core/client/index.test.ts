@@ -38,8 +38,10 @@ const provider = defineProvider({
   },
   uploads: {
     request: vi.fn(),
-    requestParts: vi.fn(),
-    complete: vi.fn(),
+    multipart: {
+      requestParts: vi.fn(),
+      complete: vi.fn(),
+    },
     upload: backend.upload,
   },
   files: {
@@ -114,21 +116,15 @@ describe('createEdgeStore', () => {
       statusText: 'OK',
     });
     backend.upload.mockResolvedValue({ file: createFile() });
-    backend.confirmFiles.mockResolvedValue({
-      results: [],
-      successCount: 0,
-      failureCount: 0,
-    });
-    backend.deleteFiles.mockResolvedValue({
-      results: [],
-      successCount: 0,
-      failureCount: 0,
-    });
-    backend.restoreFiles.mockResolvedValue({
-      results: [],
-      successCount: 0,
-      failureCount: 0,
-    });
+    backend.confirmFiles.mockImplementation(({ files }) => ({
+      results: files.map(() => ({ success: true })),
+    }));
+    backend.deleteFiles.mockImplementation(({ files }) => ({
+      results: files.map(() => ({ success: true })),
+    }));
+    backend.restoreFiles.mockImplementation(({ files }) => ({
+      results: files.map(() => ({ success: true })),
+    }));
     globalThis.fetch = fetchMock;
   });
 
@@ -150,8 +146,6 @@ describe('createEdgeStore', () => {
       ...provider,
       uploads: {
         request: provider.uploads.request,
-        requestParts: provider.uploads.requestParts,
-        complete: provider.uploads.complete,
       },
       files: {
         get: backend.getFile,
@@ -429,14 +423,7 @@ describe('createEdgeStore', () => {
     expect(beforeUpload).not.toHaveBeenCalled();
 
     backend.deleteFiles.mockResolvedValueOnce({
-      results: [
-        {
-          fileRef: { url: 'https://files.example/file' },
-          success: true,
-        },
-      ],
-      successCount: 1,
-      failureCount: 0,
+      results: [{ success: true }],
     });
     await client.documents.deleteFile({ url: 'https://files.example/file' });
     expect(beforeDelete).not.toHaveBeenCalled();
@@ -540,7 +527,6 @@ describe('createEdgeStore', () => {
     backend.confirmFiles.mockResolvedValueOnce({
       results: [
         {
-          fileRef: { id: 'file-id' },
           success: false,
           error: {
             code: 'FILE_NOT_CONFIRMABLE',
@@ -548,20 +534,15 @@ describe('createEdgeStore', () => {
           },
         },
       ],
-      successCount: 0,
-      failureCount: 1,
     });
     backend.deleteFiles.mockResolvedValueOnce({
       results: [
-        { fileRef: { key: 'files/one' }, success: true },
+        { success: true },
         {
-          fileRef: { url: 'https://files.example/missing' },
           success: false,
           error: { code: 'INVALID_FILE_REF', message: 'Missing file' },
         },
       ],
-      successCount: 1,
-      failureCount: 1,
     });
 
     await client.publicFiles.getFile({ key: 'files/file.txt' });
@@ -588,6 +569,19 @@ describe('createEdgeStore', () => {
     expect(backend.getFile).toHaveBeenCalledWith({
       file: { key: 'files/file.txt' },
     });
+  });
+
+  it('rejects provider mutation results with the wrong cardinality', async () => {
+    const client = createClient();
+    backend.deleteFiles.mockResolvedValueOnce({
+      results: [{ success: true }],
+    });
+
+    await expect(
+      client.publicFiles.deleteFiles({
+        refs: [{ key: 'files/one' }, { key: 'files/two' }],
+      }),
+    ).rejects.toThrow('The provider returned 1 mutation results for 2 files.');
   });
 
   it('iterates through cursor pages with flat pagination inputs', async () => {

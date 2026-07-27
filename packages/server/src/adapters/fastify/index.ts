@@ -1,29 +1,11 @@
-import {
-  EDGE_STORE_ERROR_CODES,
-  EdgeStoreError,
-  type EdgeStoreErrorCodeKey,
-  type MaybePromise,
-} from '@edgestore/shared';
+import { type MaybePromise } from '@edgestore/shared';
 import { type FastifyReply, type FastifyRequest } from 'fastify';
 import Logger, { type LogLevel } from '../../libs/logger';
-import { matchPath } from '../../libs/utils';
 import {
-  completeMultipartUpload,
-  confirmUploads,
-  deleteFiles,
-  fetchProxyFile,
-  getCookieConfig,
-  init,
-  requestUpload,
-  requestUploadParts,
-  type CompleteMultipartUploadBody,
-  type ConfirmUploadsBody,
-  type CookieConfig,
-  type DeleteFilesBody,
-  type HandlerEdgeStore,
-  type RequestUploadBody,
-  type RequestUploadPartsParams,
-} from '../shared';
+  dispatchEdgeStoreRequest,
+  toNodeDispatchResponse,
+} from '../dispatcher';
+import type { CookieConfig, HandlerEdgeStore } from '../shared';
 
 export type CreateContextOptions = {
   req: FastifyRequest;
@@ -46,163 +28,42 @@ declare const globalThis: {
   _EDGE_STORE_LOGGER: Logger;
 };
 
-// Helper to safely get cookies from Fastify request
-function getCookie(req: FastifyRequest, name: string): string | undefined {
-  // Check if cookies plugin is available
-  if ('cookies' in req) {
-    // Type assertion for TypeScript
-    return (req as any).cookies[name];
-  }
-
-  // Fallback to parsing cookie header
-  const cookieHeader = req.headers.cookie;
-  if (!cookieHeader) return undefined;
-
-  const cookies = cookieHeader
-    .split(';')
-    .reduce<Record<string, string>>((acc, cookie) => {
-      const [key, value] = cookie.trim().split('=');
-      if (key && value) acc[key] = value;
-      return acc;
-    }, {});
-
-  return cookies[name];
-}
-
 export function createEdgeStoreFastifyHandler<TCtx>(config: Config<TCtx>) {
-  const { provider, router } = config.edgeStore;
-  const { cookieConfig } = config;
   const log = new Logger(config.logLevel);
   globalThis._EDGE_STORE_LOGGER = log;
   log.debug('Creating EdgeStore Fastify handler');
 
-  const resolvedCookieConfig = getCookieConfig(cookieConfig);
-
   return async (req: FastifyRequest, reply: FastifyReply): Promise<void> => {
-    try {
-      // Get the URL from the request - simplified approach
-      const pathname = req.url;
-
-      if (matchPath(pathname, '/health')) {
-        return reply.send('OK');
-      } else if (matchPath(pathname, '/init')) {
-        let ctx = {} as TCtx;
-        try {
-          ctx =
-            'createContext' in config
-              ? await config.createContext({ req, reply })
-              : ({} as TCtx);
-        } catch (err) {
-          throw new EdgeStoreError({
-            message: 'Error creating context',
-            code: 'CREATE_CONTEXT_ERROR',
-            cause: err instanceof Error ? err : undefined,
-          });
-        }
-        const { newCookies, ...body } = await init({
-          ctx,
-          provider,
-          router,
-          cookieConfig,
-        });
-
-        // Set cookies more efficiently - handling them using void operator
-        // to explicitly mark these synchronous calls as intentionally not awaited
-        if (Array.isArray(newCookies)) {
-          // If it's an array of cookies, set them all
-          for (const cookie of newCookies) {
-            void reply.header('Set-Cookie', cookie);
-          }
-        } else if (newCookies) {
-          // If it's a single cookie string
-          void reply.header('Set-Cookie', newCookies);
-        }
-
-        return reply.send(body);
-      } else if (matchPath(pathname, '/request-upload')) {
-        return reply.send(
-          await requestUpload({
-            provider,
-            router,
-            body: req.body as RequestUploadBody,
-            ctxToken: getCookie(req, resolvedCookieConfig.ctx.name),
-          }),
-        );
-      } else if (matchPath(pathname, '/request-upload-parts')) {
-        return reply.send(
-          await requestUploadParts({
-            provider,
-            router,
-            body: req.body as RequestUploadPartsParams,
-            ctxToken: getCookie(req, resolvedCookieConfig.ctx.name),
-          }),
-        );
-      } else if (matchPath(pathname, '/complete-multipart-upload')) {
-        await completeMultipartUpload({
-          provider,
-          router,
-          body: req.body as CompleteMultipartUploadBody,
-          ctxToken: getCookie(req, resolvedCookieConfig.ctx.name),
-        });
-        return reply.status(200).send();
-      } else if (matchPath(pathname, '/confirm-uploads')) {
-        return reply.send(
-          await confirmUploads({
-            provider,
-            router,
-            body: req.body as ConfirmUploadsBody,
-            ctxToken: getCookie(req, resolvedCookieConfig.ctx.name),
-          }),
-        );
-      } else if (matchPath(pathname, '/delete-files')) {
-        return reply.send(
-          await deleteFiles({
-            provider,
-            router,
-            body: req.body as DeleteFilesBody,
-            ctxToken: getCookie(req, resolvedCookieConfig.ctx.name),
-          }),
-        );
-      } else if (matchPath(pathname, '/proxy-file')) {
-        const url = req.query
-          ? (req.query as Record<string, any>).url
-          : undefined;
-
-        if (typeof url === 'string') {
-          const proxyRes = await fetchProxyFile({
-            cookieHeader: req.headers.cookie,
-            url,
-          });
-
-          void reply.header('Content-Type', proxyRes.contentType);
-
-          return reply
-            .status(proxyRes.status)
-            .send(
-              proxyRes.body === null ? undefined : Buffer.from(proxyRes.body),
-            );
-        } else {
-          return reply.status(400).send();
-        }
-      } else {
-        return reply.status(404).send();
-      }
-    } catch (err) {
-      if (err instanceof EdgeStoreError) {
-        log[err.level](err.formattedMessage());
-        if (err.cause) log[err.level](err.cause);
-        return reply
-          .status(EDGE_STORE_ERROR_CODES[err.code as EdgeStoreErrorCodeKey])
-          .send(err.formattedJson());
-      } else {
-        log.error(err);
-        return reply.status(500).send(
-          new EdgeStoreError({
-            message: 'Internal Server Error',
-            code: 'SERVER_ERROR',
-          }).formattedJson(),
-        );
-      }
+    const url = new URL(req.url, 'http://edgestore.local');
+    const response = await dispatchEdgeStoreRequest({
+      edgeStore: config.edgeStore,
+      logger: log,
+      cookieConfig: config.cookieConfig,
+      request: {
+        pathname: url.pathname,
+        readJson: async () => req.body,
+        getQuery: (name) => {
+          const value = (req.query as Record<string, unknown>)[name];
+          return typeof value === 'string'
+            ? value
+            : (url.searchParams.get(name) ?? undefined);
+        },
+        cookieHeader: req.headers.cookie,
+        cookies:
+          'cookies' in req
+            ? (req.cookies as Record<string, string>)
+            : undefined,
+        createContext: () =>
+          'createContext' in config
+            ? config.createContext({ req, reply })
+            : ({} as TCtx),
+      },
+    });
+    const normalized = await toNodeDispatchResponse(response);
+    for (const [name, value] of normalized.headers) {
+      void reply.header(name, value);
     }
+    void reply.status(normalized.status);
+    return reply.send(normalized.body);
   };
 }
