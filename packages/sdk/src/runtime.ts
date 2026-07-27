@@ -1,8 +1,6 @@
 import type { OperationBody, OperationResult } from './internal/operationTypes';
-import {
-  createRuntimeOperations,
-  type RuntimeOperations,
-} from './internal/runtimeOperations';
+import { scopeProjectOperations } from './internal/projectOperation';
+import { createRuntimeOperations } from './internal/runtimeOperations';
 import type { Transport } from './internal/transport';
 
 export type RuntimeCallOptions = { signal?: AbortSignal };
@@ -147,23 +145,5 @@ export function createExplicitProjectRuntimeClient(
 export function createProjectRuntimeClient(
   transport: Transport,
 ): ProjectRuntimeClient {
-  return scopeRuntimeOperations(createRuntimeOperations(transport), '_current');
-}
-
-function scopeRuntimeOperations(
-  operations: RuntimeOperations,
-  project: string,
-): ProjectRuntimeClient {
-  const entries = Object.entries(operations).map(([resourceName, resource]) => [
-    resourceName,
-    Object.fromEntries(
-      Object.entries(resource).map(([operationName, operation]) => [
-        operationName,
-        (input: object | undefined) =>
-          operation({ ...input, project } as never),
-      ]),
-    ),
-  ]);
-
-  return Object.fromEntries(entries) as ProjectRuntimeClient;
+  return scopeProjectOperations(createRuntimeOperations(transport), '_current');
 }

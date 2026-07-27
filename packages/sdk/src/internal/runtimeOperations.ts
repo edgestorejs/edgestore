@@ -4,18 +4,23 @@ import type {
   RuntimeFileDeleteInput,
   RuntimeFileRestoreInput,
 } from '../runtime';
+import {
+  projectOperation,
+  type ProjectOperationTree,
+} from './projectOperation';
 import type { Transport } from './transport';
 
 type Explicit<TInput> = TInput & { project: string };
 
-export type RuntimeOperations = ExplicitProjectRuntimeClient;
+export type RuntimeOperations =
+  ProjectOperationTree<ExplicitProjectRuntimeClient>;
 
 export function createRuntimeOperations(
   transport: Transport,
 ): RuntimeOperations {
   return {
     accessTokens: {
-      create: ({ project, signal, ...body }) =>
+      create: projectOperation(({ project, signal, ...body }) =>
         transport.execute((client) =>
           client.POST('/runtime/projects/{projectRef}/access-token', {
             params: { path: { projectRef: project } },
@@ -23,25 +28,28 @@ export function createRuntimeOperations(
             signal,
           }),
         ),
+      ),
     },
     projects: {
-      get: ({ project, signal }) =>
+      get: projectOperation(({ project, signal }) =>
         transport.execute((client) =>
           client.GET('/runtime/projects/{projectRef}', {
             params: { path: { projectRef: project } },
             signal,
           }),
         ),
+      ),
     },
     buckets: {
-      list: ({ project, signal }) =>
+      list: projectOperation(({ project, signal }) =>
         transport.execute((client) =>
           client.GET('/runtime/projects/{projectRef}/buckets', {
             params: { path: { projectRef: project } },
             signal,
           }),
         ),
-      get: ({ project, bucket, signal }) =>
+      ),
+      get: projectOperation(({ project, bucket, signal }) =>
         transport.execute((client) =>
           client.GET('/runtime/projects/{projectRef}/buckets/{bucketName}', {
             params: {
@@ -50,9 +58,10 @@ export function createRuntimeOperations(
             signal,
           }),
         ),
+      ),
     },
     files: {
-      search: ({ project, bucket, signal, ...body }) =>
+      search: projectOperation(({ project, bucket, signal, ...body }) =>
         transport.execute((client) =>
           client.POST(
             '/runtime/projects/{projectRef}/buckets/{bucketName}/files/search',
@@ -65,7 +74,8 @@ export function createRuntimeOperations(
             },
           ),
         ),
-      lookup: ({ project, signal, ...body }) =>
+      ),
+      lookup: projectOperation(({ project, signal, ...body }) =>
         transport.execute((client) =>
           client.POST('/runtime/projects/{projectRef}/files/lookup', {
             params: { path: { projectRef: project } },
@@ -73,28 +83,46 @@ export function createRuntimeOperations(
             signal,
           }),
         ),
-      generateSignedReadUrls: ({ project, bucket, signal, ...body }) =>
-        transport.execute((client) =>
-          client.POST(
-            '/runtime/projects/{projectRef}/buckets/{bucketName}/files/signed-urls',
-            {
-              params: {
-                path: { projectRef: project, bucketName: bucket },
+      ),
+      generateSignedReadUrls: projectOperation(
+        ({ project, bucket, signal, ...body }) =>
+          transport.execute((client) =>
+            client.POST(
+              '/runtime/projects/{projectRef}/buckets/{bucketName}/files/signed-urls',
+              {
+                params: {
+                  path: { projectRef: project, bucketName: bucket },
+                },
+                body,
+                signal,
               },
-              body,
-              signal,
-            },
+            ),
           ),
-        ),
-      confirm: ({ project, signal, ...body }) =>
-        executeFileMutation(transport, 'confirm', { project, signal, ...body }),
-      delete: ({ project, signal, ...body }) =>
-        executeFileMutation(transport, 'delete', { project, signal, ...body }),
-      restore: ({ project, signal, ...body }) =>
-        executeFileMutation(transport, 'restore', { project, signal, ...body }),
+      ),
+      confirm: projectOperation(({ project, signal, ...body }) =>
+        executeFileMutation(transport, 'confirm', {
+          project,
+          signal,
+          ...body,
+        }),
+      ),
+      delete: projectOperation(({ project, signal, ...body }) =>
+        executeFileMutation(transport, 'delete', {
+          project,
+          signal,
+          ...body,
+        }),
+      ),
+      restore: projectOperation(({ project, signal, ...body }) =>
+        executeFileMutation(transport, 'restore', {
+          project,
+          signal,
+          ...body,
+        }),
+      ),
     },
     uploads: {
-      request: ({ project, bucket, signal, ...body }) =>
+      request: projectOperation(({ project, bucket, signal, ...body }) =>
         transport.execute((client) =>
           client.POST(
             '/runtime/projects/{projectRef}/buckets/{bucketName}/uploads',
@@ -107,21 +135,24 @@ export function createRuntimeOperations(
             },
           ),
         ),
-      get: ({ project, uploadId, signal }) =>
+      ),
+      get: projectOperation(({ project, uploadId, signal }) =>
         transport.execute((client) =>
           client.GET('/runtime/projects/{projectRef}/uploads/{uploadId}', {
             params: { path: { projectRef: project, uploadId } },
             signal,
           }),
         ),
-      cancel: ({ project, uploadId, signal }) =>
+      ),
+      cancel: projectOperation(({ project, uploadId, signal }) =>
         transport.execute((client) =>
           client.DELETE('/runtime/projects/{projectRef}/uploads/{uploadId}', {
             params: { path: { projectRef: project, uploadId } },
             signal,
           }),
         ),
-      createParts: ({ project, uploadId, signal, ...body }) =>
+      ),
+      createParts: projectOperation(({ project, uploadId, signal, ...body }) =>
         transport.execute((client) =>
           client.POST(
             '/runtime/projects/{projectRef}/uploads/{uploadId}/parts',
@@ -132,17 +163,20 @@ export function createRuntimeOperations(
             },
           ),
         ),
-      completeMultipart: ({ project, uploadId, signal, ...body }) =>
-        transport.execute((client) =>
-          client.POST(
-            '/runtime/projects/{projectRef}/uploads/{uploadId}/complete',
-            {
-              params: { path: { projectRef: project, uploadId } },
-              body,
-              signal,
-            },
+      ),
+      completeMultipart: projectOperation(
+        ({ project, uploadId, signal, ...body }) =>
+          transport.execute((client) =>
+            client.POST(
+              '/runtime/projects/{projectRef}/uploads/{uploadId}/complete',
+              {
+                params: { path: { projectRef: project, uploadId } },
+                body,
+                signal,
+              },
+            ),
           ),
-        ),
+      ),
     },
   };
 }
