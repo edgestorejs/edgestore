@@ -1,37 +1,32 @@
-import { type MaybePromise } from '@edgestore/shared';
+import { type AnyContext } from '@edgestore/shared';
 import { type Context as HonoContext } from 'hono';
 import Logger, { type LogLevel } from '../../libs/logger';
-import { dispatchEdgeStoreRequest } from '../dispatcher';
+import {
+  dispatchEdgeStoreRequest,
+  resolveContext,
+  type CreateContextConfig,
+} from '../dispatcher';
 import { type CookieConfig, type HandlerEdgeStore } from '../shared';
 
 export type CreateContextOptions = {
   c: HonoContext;
 };
 
-export type Config<TCtx> = {
+export type Config<TCtx extends AnyContext> = {
   edgeStore: HandlerEdgeStore<TCtx>;
   logLevel?: LogLevel;
   cookieConfig?: CookieConfig;
-} & (TCtx extends Record<string, never>
-  ? object
-  : {
-      edgeStore: HandlerEdgeStore<TCtx>;
-      createContext: (opts: CreateContextOptions) => MaybePromise<TCtx>;
-      cookieConfig?: CookieConfig;
-    });
+} & CreateContextConfig<TCtx, CreateContextOptions>;
 
-declare const globalThis: {
-  _EDGE_STORE_LOGGER: Logger;
-};
-
-export function createEdgeStoreHonoHandler<TCtx>(config: Config<TCtx>) {
+export function createEdgeStoreHonoHandler<TCtx extends AnyContext>(
+  config: Config<TCtx>,
+) {
   const { cookieConfig } = config;
   const log = new Logger(config.logLevel);
-  globalThis._EDGE_STORE_LOGGER = log;
   log.debug('Creating EdgeStore Hono handler');
 
   return async (c: HonoContext): Promise<Response> =>
-    await dispatchEdgeStoreRequest({
+    await dispatchEdgeStoreRequest<TCtx>({
       edgeStore: config.edgeStore,
       logger: log,
       cookieConfig,
@@ -41,9 +36,9 @@ export function createEdgeStoreHonoHandler<TCtx>(config: Config<TCtx>) {
         getQuery: (name) => c.req.query(name),
         cookieHeader: c.req.header('cookie'),
         createContext: () =>
-          'createContext' in config
-            ? config.createContext({ c })
-            : ({} as TCtx),
+          resolveContext<TCtx, CreateContextOptions>(config, {
+            c,
+          }),
       },
     });
 }

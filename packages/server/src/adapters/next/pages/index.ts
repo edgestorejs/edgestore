@@ -1,9 +1,11 @@
-import { EdgeStoreError, type MaybePromise } from '@edgestore/shared';
+import { EdgeStoreError, type AnyContext } from '@edgestore/shared';
 import { type NextApiRequest, type NextApiResponse } from 'next/types';
 import Logger, { type LogLevel } from '../../../libs/logger';
 import {
   dispatchEdgeStoreRequest,
+  resolveContext,
   toNodeDispatchResponse,
+  type CreateContextConfig,
 } from '../../dispatcher';
 import type { CookieConfig, HandlerEdgeStore } from '../../shared';
 
@@ -12,25 +14,16 @@ export type CreateContextOptions = {
   res: NextApiResponse;
 };
 
-export type Config<TCtx> = {
+export type Config<TCtx extends AnyContext> = {
   edgeStore: HandlerEdgeStore<TCtx>;
   logLevel?: LogLevel;
   cookieConfig?: CookieConfig;
-} & (TCtx extends Record<string, never>
-  ? object
-  : {
-      edgeStore: HandlerEdgeStore<TCtx>;
-      createContext: (opts: CreateContextOptions) => MaybePromise<TCtx>;
-      cookieConfig?: CookieConfig;
-    });
+} & CreateContextConfig<TCtx, CreateContextOptions>;
 
-declare const globalThis: {
-  _EDGE_STORE_LOGGER: Logger;
-};
-
-export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
+export function createEdgeStoreNextHandler<TCtx extends AnyContext>(
+  config: Config<TCtx>,
+) {
   const log = new Logger(config.logLevel);
-  globalThis._EDGE_STORE_LOGGER = log;
   log.debug('Creating EdgeStore Next handler (pages adapter)');
 
   return async (req: NextApiRequest, res: NextApiResponse) => {
@@ -45,7 +38,7 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
     }
 
     const url = new URL(req.url ?? '', 'http://edgestore.local');
-    const response = await dispatchEdgeStoreRequest({
+    const response = await dispatchEdgeStoreRequest<TCtx>({
       edgeStore: config.edgeStore,
       logger: log,
       cookieConfig: config.cookieConfig,
@@ -61,9 +54,10 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
         cookieHeader: req.headers.cookie,
         cookies: req.cookies,
         createContext: () =>
-          'createContext' in config
-            ? config.createContext({ req, res })
-            : ({} as TCtx),
+          resolveContext<TCtx, CreateContextOptions>(config, {
+            req,
+            res,
+          }),
       },
     });
     const normalized = await toNodeDispatchResponse(response);

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import Logger from '../libs/logger';
+import Logger, { type LoggerLike } from '../libs/logger';
 import {
   completeMultipartUploadBody,
   createConformanceProvider,
@@ -20,14 +20,12 @@ describe('adapter dispatcher', () => {
     vi.unstubAllGlobals();
   });
 
-  function createDispatcher() {
+  function createDispatcher(logger: LoggerLike = new Logger()) {
     const provider = createConformanceProvider();
     const edgeStore = {
       provider,
       router: createConformanceRouter(),
     };
-    const logger = new Logger();
-
     const dispatch = (
       pathname: string,
       options: {
@@ -102,6 +100,30 @@ describe('adapter dispatcher', () => {
       code: 'CREATE_CONTEXT_ERROR',
       message: 'Error creating context',
     });
+  });
+
+  it('keeps operation logging scoped to the selected handler', async () => {
+    const firstLogger = {
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    };
+    const secondLogger = {
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    };
+    const first = createDispatcher(firstLogger);
+    createDispatcher(secondLogger);
+
+    await first.dispatch('/api/edgestore/init');
+
+    expect(firstLogger.debug).toHaveBeenCalledWith('Running [init]', {
+      ctx: testCtx,
+    });
+    expect(secondLogger.debug).not.toHaveBeenCalled();
   });
 
   it('rejects proxy requests without a URL', async () => {

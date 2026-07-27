@@ -68,7 +68,6 @@ export function setupAdapterTestEnv() {
   vi.stubEnv('EDGE_STORE_JWT_SECRET', 'test-secret');
   vi.stubEnv('NODE_ENV', 'test');
   vi.clearAllMocks();
-  (globalThis as any)._EDGE_STORE_LOGGER = logger;
 }
 
 export function createConformanceProvider(

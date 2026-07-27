@@ -83,11 +83,11 @@ describe('createEdgeStoreProvider initialization', () => {
     vi.unstubAllGlobals();
   });
 
-  it('skips _init for public EdgeStore responses', async () => {
+  it('skips client initialization when the server returns no instruction', async () => {
     const { calls } = createFetchMock([
       jsonResponse({
+        baseUrl: 'https://files.example.com',
         providerName: 'edgestore',
-        requiresFileAccessCookie: false,
       }),
     ]);
     const { EdgeStoreProvider, useEdgeStore } = createEdgeStoreProvider<any>();
@@ -117,11 +117,17 @@ describe('createEdgeStoreProvider initialization', () => {
     expect(calls.map((call) => call.url)).toEqual(['/api/edgestore/init']);
   });
 
-  it('calls _init for older or protected EdgeStore responses', async () => {
+  it('executes the returned client-init instruction against the provider base URL', async () => {
     const { calls } = createFetchMock([
       jsonResponse({
-        providerName: 'edgestore',
-        token: 'token_1',
+        baseUrl: 'https://files.example.com/storage',
+        providerName: 'custom-provider',
+        clientInit: {
+          path: '/_init',
+          headers: {
+            'x-provider-token': 'token_1',
+          },
+        },
       }),
       jsonResponse({ success: true }),
     ]);
@@ -152,21 +158,22 @@ describe('createEdgeStoreProvider initialization', () => {
       },
     });
     expect(calls[1]).toMatchObject({
-      url: 'https://files.edgestore.dev/_init',
+      url: 'https://files.example.com/storage/_init',
       init: {
         method: 'GET',
         credentials: 'include',
         headers: {
-          'x-edgestore-token': 'token_1',
+          'x-provider-token': 'token_1',
         },
       },
     });
   });
 
-  it('skips _init for non-EdgeStore providers', async () => {
+  it('does not infer client initialization from the provider name', async () => {
     const { calls } = createFetchMock([
       jsonResponse({
-        providerName: 's3',
+        baseUrl: 'https://files.example.com',
+        providerName: 'edgestore',
       }),
     ]);
     const { EdgeStoreProvider, useEdgeStore } = createEdgeStoreProvider<any>();
@@ -193,12 +200,12 @@ describe('createEdgeStoreProvider initialization', () => {
   it('reset reruns initialization', async () => {
     const { calls } = createFetchMock([
       jsonResponse({
+        baseUrl: 'https://files.example.com',
         providerName: 'edgestore',
-        requiresFileAccessCookie: false,
       }),
       jsonResponse({
+        baseUrl: 'https://files.example.com',
         providerName: 'edgestore',
-        requiresFileAccessCookie: false,
       }),
     ]);
     const { EdgeStoreProvider, useEdgeStore } = createEdgeStoreProvider<any>();

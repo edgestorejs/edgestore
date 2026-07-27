@@ -287,6 +287,80 @@ describe('s3', () => {
     );
   });
 
+  it.each([
+    ['spaces', 'quarter 1.pdf', 'quarter%201.pdf'],
+    ['URL delimiters', 'quarter #1?.pdf', 'quarter%20%231%3F.pdf'],
+    ['percent signs', '100%.txt', '100%25.txt'],
+    [
+      'Unicode',
+      'こんにちは 世界.txt',
+      '%E3%81%93%E3%82%93%E3%81%AB%E3%81%A1%E3%81%AF%20%E4%B8%96%E7%95%8C.txt',
+    ],
+  ])(
+    'round-trips S3 keys containing %s through access URLs',
+    async (_label, fileName, encodedFileName) => {
+      const provider = s3({
+        bucketName: 'storage-bucket',
+        region: 'us-east-1',
+        baseUrl: 'https://cdn.example.com/assets',
+      });
+      const result = await provider.uploads.request(
+        uploadParams({ fileName, extension: '' }),
+      );
+      const objectKey = `documents/${fileName}`;
+
+      expect(result.accessUrl).toBe(
+        `https://cdn.example.com/assets/documents/${encodedFileName}`,
+      );
+      expect(awsMocks.getSignedUrl).toHaveBeenCalledWith(
+        expect.any(awsMocks.S3Client),
+        expect.objectContaining({
+          input: {
+            Bucket: 'storage-bucket',
+            Key: objectKey,
+          },
+        }),
+        { expiresIn: 60 * 60 },
+      );
+
+      const lastModified = new Date('2026-01-01T00:00:00.000Z');
+      awsMocks.send
+        .mockResolvedValueOnce({
+          ContentLength: 10,
+          LastModified: lastModified,
+        })
+        .mockResolvedValueOnce({});
+
+      await provider.files.get({
+        bucketName: 'documents',
+        file: { url: result.accessUrl },
+      });
+      await provider.files.delete?.({
+        bucketName: 'documents',
+        files: [{ url: result.accessUrl }],
+      });
+
+      expect(awsMocks.send).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({
+          input: {
+            Bucket: 'storage-bucket',
+            Key: objectKey,
+          },
+        }),
+      );
+      expect(awsMocks.send).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({
+          input: {
+            Bucket: 'storage-bucket',
+            Key: objectKey,
+          },
+        }),
+      );
+    },
+  );
+
   it('uses endpoint-derived baseUrl when no custom baseUrl is provided', () => {
     const provider = s3({
       bucketName: 'storage-bucket',

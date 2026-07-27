@@ -1,11 +1,12 @@
 import {
   EDGE_STORE_ERROR_CODES,
   EdgeStoreError,
+  type AnyContext,
   type EdgeStoreErrorCodeKey,
   type MaybePromise,
 } from '@edgestore/shared';
 import { parse } from 'cookie';
-import type Logger from '../libs/logger';
+import type { LoggerLike } from '../libs/logger';
 import { matchPath } from '../libs/utils';
 import {
   completeMultipartUpload,
@@ -25,7 +26,7 @@ import {
   type RequestUploadPartsParams,
 } from './shared';
 
-export type EdgeStoreDispatchRequest<TCtx> = {
+export type EdgeStoreDispatchRequest<TCtx extends AnyContext> = {
   pathname: string;
   readJson: () => Promise<unknown>;
   getQuery: (name: string) => string | undefined;
@@ -34,10 +35,40 @@ export type EdgeStoreDispatchRequest<TCtx> = {
   createContext: () => MaybePromise<TCtx>;
 };
 
-export async function dispatchEdgeStoreRequest<TCtx>(params: {
+export type CreateContextConfig<TCtx extends AnyContext, TOptions> =
+  TCtx extends Record<string, never>
+    ? {
+        createContext?: (options: TOptions) => MaybePromise<TCtx>;
+      }
+    : {
+        createContext: (options: TOptions) => MaybePromise<TCtx>;
+      };
+
+export function resolveContext<TCtx extends AnyContext, TOptions>(
+  config: object,
+  options: TOptions,
+): MaybePromise<TCtx> {
+  return hasCreateContext<TCtx, TOptions>(config)
+    ? config.createContext(options)
+    : ({} as TCtx);
+}
+
+function hasCreateContext<TCtx extends AnyContext, TOptions>(
+  config: object,
+): config is {
+  createContext: (options: TOptions) => MaybePromise<TCtx>;
+} {
+  return (
+    'createContext' in config && typeof config.createContext === 'function'
+  );
+}
+
+export async function dispatchEdgeStoreRequest<
+  TCtx extends AnyContext,
+>(params: {
   edgeStore: HandlerEdgeStore<TCtx>;
   request: EdgeStoreDispatchRequest<TCtx>;
-  logger: Logger;
+  logger: LoggerLike;
   cookieConfig?: CookieConfig;
 }): Promise<Response> {
   const { edgeStore, request, logger, cookieConfig } = params;
@@ -75,6 +106,7 @@ export async function dispatchEdgeStoreRequest<TCtx>(params: {
         ctx,
         provider,
         router,
+        logger,
         cookieConfig,
       });
       const headers = new Headers({ 'Content-Type': 'application/json' });
@@ -89,6 +121,7 @@ export async function dispatchEdgeStoreRequest<TCtx>(params: {
           router,
           body: (await request.readJson()) as RequestUploadBody,
           ctxToken,
+          logger,
         }),
       );
     }
@@ -100,6 +133,7 @@ export async function dispatchEdgeStoreRequest<TCtx>(params: {
           router,
           body: (await request.readJson()) as RequestUploadPartsParams,
           ctxToken,
+          logger,
         }),
       );
     }
@@ -110,6 +144,7 @@ export async function dispatchEdgeStoreRequest<TCtx>(params: {
         router,
         body: (await request.readJson()) as CompleteMultipartUploadBody,
         ctxToken,
+        logger,
       });
       return new Response(null, { status: 200 });
     }
@@ -121,6 +156,7 @@ export async function dispatchEdgeStoreRequest<TCtx>(params: {
           router,
           body: (await request.readJson()) as ConfirmUploadsBody,
           ctxToken,
+          logger,
         }),
       );
     }
@@ -132,6 +168,7 @@ export async function dispatchEdgeStoreRequest<TCtx>(params: {
           router,
           body: (await request.readJson()) as DeleteFilesBody,
           ctxToken,
+          logger,
         }),
       );
     }

@@ -39,6 +39,63 @@ function createProvider() {
   });
 }
 
+function createBucketScopedProvider() {
+  function assertBucketOwnership(
+    bucketName: string,
+    file: { bucketName: string; key: string },
+  ) {
+    if (file.bucketName !== bucketName) {
+      throw new Error(`File does not belong to bucket "${bucketName}".`);
+    }
+  }
+
+  return defineProvider({
+    name: 'bucket-scoped',
+    baseUrl: 'https://files.example.com',
+    init: async () => ({}),
+    reference: {
+      schema: z.object({
+        bucketName: z.string(),
+        key: z.string(),
+      }),
+      fromUrl(url) {
+        const [bucketName = '', ...keyParts] = new URL(url).pathname
+          .slice(1)
+          .split('/');
+        return { bucketName, key: keyParts.join('/') };
+      },
+    },
+    uploads: {
+      request: vi.fn(),
+    },
+    files: {
+      async get({ bucketName, file }) {
+        assertBucketOwnership(bucketName, file);
+        return {
+          url: `https://files.example.com/${file.bucketName}/${file.key}`,
+          sizeBytes: 1,
+          path: {},
+          metadata: {},
+          uploadedAt: new Date(),
+          updatedAt: new Date(),
+        };
+      },
+      async confirm({ bucketName, files }) {
+        files.forEach((file) => {
+          assertBucketOwnership(bucketName, file);
+        });
+        return { results: files.map(() => ({ success: true as const })) };
+      },
+      async delete({ bucketName, files }) {
+        files.forEach((file) => {
+          assertBucketOwnership(bucketName, file);
+        });
+        return { results: files.map(() => ({ success: true as const })) };
+      },
+    },
+  });
+}
+
 describe('defineProvider validation', () => {
   it('normalizes URL inputs through the provider reference schema', async () => {
     const provider = createProvider();
@@ -63,4 +120,31 @@ describe('defineProvider validation', () => {
       'Invalid provider list cursor',
     );
   });
+
+  it.each(['get', 'confirm', 'delete'] as const)(
+    'keeps custom-provider %s operations inside the requested logical bucket',
+    async (operation) => {
+      const provider = createBucketScopedProvider();
+      const file = await referenceFromUrl(
+        provider,
+        'https://files.example.com/avatars/profile.png',
+      );
+      const params = {
+        bucketName: 'documents',
+        files: [file],
+      };
+
+      const result =
+        operation === 'get'
+          ? provider.files.get({
+              bucketName: params.bucketName,
+              file,
+            })
+          : provider.files[operation](params);
+
+      await expect(result).rejects.toThrow(
+        'File does not belong to bucket "documents".',
+      );
+    },
+  );
 });

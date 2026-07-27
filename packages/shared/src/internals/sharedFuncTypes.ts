@@ -1,16 +1,16 @@
 import { type Simplify } from '../types';
 import { type AnyMetadata } from './bucketBuilder';
 import {
+  type ClientInit,
   type RequestUploadPartsRes,
   type RequestUploadRes,
 } from './providerTypes';
 
 export type SharedInitRes = {
   newCookies: string[];
-  token: string | undefined;
   baseUrl: string;
   providerName: string;
-  requiresFileAccessCookie: boolean;
+  clientInit?: ClientInit;
 };
 export type SharedRequestUploadRes = Simplify<
   RequestUploadRes & {

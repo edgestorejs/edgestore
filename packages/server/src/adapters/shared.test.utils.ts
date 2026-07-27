@@ -83,6 +83,7 @@ export async function createContextToken<TCtx extends AnyContext>({
     provider,
     router,
     ctx,
+    logger,
   });
   const cookie = res.newCookies.find((value) =>
     value.startsWith('edgestore-ctx='),

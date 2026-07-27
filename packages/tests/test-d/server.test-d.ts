@@ -11,6 +11,7 @@ import {
 } from '@edgestore/server/core';
 import { edgestore } from '@edgestore/server/providers/edgestore';
 import { s3 } from '@edgestore/server/providers/s3';
+import { type InitParams } from '@edgestore/shared';
 import {
   expectAssignable,
   expectError,
@@ -144,6 +145,21 @@ const syntheticProvider = defineProvider({
       })),
   },
 });
+
+defineProvider({
+  ...syntheticProvider,
+  async init({ ctx, router }) {
+    expectType<string | undefined>(ctx.userId);
+    expectType<typeof ctx>(router.$config.ctx);
+    return {};
+  },
+});
+
+type ProviderInitContext = InitParams['ctx'];
+expectNotAssignable<ProviderInitContext>({
+  organization: { id: 'org-1' },
+});
+expectNotAssignable<ProviderInitContext>({ retryCount: 3 });
 
 expectError(
   defineProvider({

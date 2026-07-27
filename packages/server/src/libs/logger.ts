@@ -6,7 +6,9 @@ const logLevel = ['debug', 'info', 'warn', 'error', 'none'] as const;
 
 export type LogLevel = (typeof logLevel)[number];
 
-class Logger {
+export type LoggerLike = Pick<Console, 'debug' | 'info' | 'warn' | 'error'>;
+
+class Logger implements LoggerLike {
   private logLevel: LogLevel;
 
   constructor(logLevel?: LogLevel) {

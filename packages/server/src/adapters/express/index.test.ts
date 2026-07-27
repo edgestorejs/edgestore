@@ -115,7 +115,6 @@ describe('Express adapter conformance', () => {
     expect(res.body).toMatchObject({
       baseUrl: 'https://files.example.com',
       providerName: 'test-provider',
-      token: 'provider-token',
     });
     expect(extractCookieValue(res.headers['Set-Cookie'])).toBeTruthy();
   });

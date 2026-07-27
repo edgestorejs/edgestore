@@ -28,7 +28,6 @@ describe('frontend file mutations', () => {
     vi.stubEnv('EDGE_STORE_JWT_SECRET', 'test-secret');
     vi.stubEnv('NODE_ENV', 'development');
     vi.clearAllMocks();
-    (globalThis as any)._EDGE_STORE_LOGGER = logger;
   });
 
   afterEach(() => {
@@ -45,6 +44,7 @@ describe('frontend file mutations', () => {
         router: es.router({ documents: es.fileBucket() }),
         ctxToken: undefined,
         body: { bucketName: 'documents', urls: proxiedUrls },
+        logger,
       }),
     ).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
     expect(provider.files.confirm).not.toHaveBeenCalled();
@@ -71,6 +71,7 @@ describe('frontend file mutations', () => {
         router,
         ctxToken,
         body: { bucketName: 'documents', urls: proxiedUrls },
+        logger,
       }),
     ).resolves.toEqual({
       succeeded: [proxiedUrls[0]],
@@ -103,6 +104,7 @@ describe('frontend file mutations', () => {
         router,
         ctxToken,
         body: { bucketName: 'documents', urls: proxiedUrls },
+        logger,
       }),
     ).rejects.toThrow('The provider returned 1 mutation results for 2 files.');
   });
@@ -119,6 +121,7 @@ describe('frontend file mutations', () => {
         router,
         ctxToken,
         body: { bucketName: 'documents', urls: proxiedUrls },
+        logger,
       }),
     ).rejects.toMatchObject({ code: 'SERVER_ERROR' });
     expect(provider.files.get).not.toHaveBeenCalled();
@@ -146,6 +149,7 @@ describe('frontend file mutations', () => {
         router,
         ctxToken,
         body: { bucketName: 'documents', urls: proxiedUrls },
+        logger,
       }),
     ).rejects.toMatchObject({ code: 'DELETE_NOT_ALLOWED' });
     expect(beforeDelete).toHaveBeenCalledTimes(2);
@@ -180,6 +184,7 @@ describe('frontend file mutations', () => {
         router,
         ctxToken,
         body: { bucketName: 'documents', urls: proxiedUrls },
+        logger,
       }),
     ).resolves.toEqual({
       succeeded: [proxiedUrls[0]],
@@ -203,7 +208,6 @@ describe('multipart lifecycle', () => {
   beforeEach(() => {
     vi.stubEnv('EDGE_STORE_JWT_SECRET', 'test-secret');
     vi.clearAllMocks();
-    (globalThis as any)._EDGE_STORE_LOGGER = logger;
   });
 
   afterEach(() => {
@@ -223,6 +227,7 @@ describe('multipart lifecycle', () => {
           multipart: { uploadId: 'upload-id', parts: [1, 2] },
           path: 'documents/file.txt',
         },
+        logger,
       }),
     ).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
     expect(provider.uploads.multipart?.requestParts).not.toHaveBeenCalled();
@@ -238,7 +243,7 @@ describe('multipart lifecycle', () => {
       path: 'documents/file.txt',
     };
 
-    await requestUploadParts({ provider, router, ctxToken, body });
+    await requestUploadParts({ provider, router, ctxToken, body, logger });
 
     expect(provider.uploads.multipart?.requestParts).toHaveBeenCalledWith(body);
   });
@@ -265,6 +270,7 @@ describe('multipart lifecycle', () => {
           multipart: { uploadId: 'upload-id', parts: [1] },
           path: 'documents/file.txt',
         },
+        logger,
       }),
     ).rejects.toMatchObject({
       code: 'BAD_REQUEST',
@@ -284,7 +290,13 @@ describe('multipart lifecycle', () => {
       parts: [{ partNumber: 1, eTag: 'etag-1' }],
     };
 
-    await completeMultipartUpload({ provider, router, ctxToken, body });
+    await completeMultipartUpload({
+      provider,
+      router,
+      ctxToken,
+      body,
+      logger,
+    });
 
     expect(provider.uploads.multipart?.complete).toHaveBeenCalledWith({
       uploadId: body.uploadId,
