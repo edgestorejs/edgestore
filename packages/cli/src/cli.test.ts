@@ -253,6 +253,23 @@ describe('runCli', () => {
     expect(fixture.createAccountToken).not.toHaveBeenCalled();
   });
 
+  it('creates a bucket in the linked project', async () => {
+    fixture.repoConfig.config = {
+      account: account.id,
+      project: project.basePath,
+    };
+
+    await runCli(
+      ['bucket', 'create', 'publicFiles', '--type', 'file', '--public'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(fixture.stdout()).toContain(
+      'Created public file bucket publicFiles.',
+    );
+  });
+
   it('validates a token before saving it', async () => {
     await runCli(['login', '--token'], fixture.runtime, '0.0.0');
 
@@ -459,6 +476,36 @@ function createFixture() {
         createAccount: createAccountToken,
         createUser: createUserToken,
         revoke: vi.fn(async () => ({})),
+      },
+      buckets: {
+        list: vi.fn(async () => ({ buckets: [] })),
+        get: vi.fn(async () => ({
+          bucket: {
+            id: 'bucket_123',
+            name: 'publicFiles',
+            projectId: project.id,
+            accountId: account.id,
+            type: 'file',
+            visibility: 'public',
+            usageBytes: 0,
+            createdAt: project.createdAt,
+            updatedAt: project.updatedAt,
+          },
+        })),
+        create: vi.fn(async () => ({
+          bucket: {
+            id: 'bucket_123',
+            name: 'publicFiles',
+            projectId: project.id,
+            accountId: account.id,
+            type: 'file',
+            visibility: 'public',
+            usageBytes: 0,
+            createdAt: project.createdAt,
+            updatedAt: project.updatedAt,
+          },
+        })),
+        delete: vi.fn(async () => ({})),
       },
     },
   } as unknown as ManagementEdgeStoreSdk;

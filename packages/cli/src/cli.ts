@@ -5,6 +5,12 @@ import {
   accountSwitchCommand,
 } from './commands/account';
 import { loginCommand, logoutCommand, whoamiCommand } from './commands/auth';
+import {
+  bucketCreateCommand,
+  bucketDeleteCommand,
+  bucketListCommand,
+  bucketShowCommand,
+} from './commands/bucket';
 import { doctorCommand } from './commands/doctor';
 import {
   projectCreateCommand,
@@ -301,6 +307,57 @@ function createProgram(runtime: CliRuntime, version: string): Command {
     .action(async (tokenId: string, options) => {
       await tokenRevokeCommand(runtime, globalFlags(program), {
         tokenId,
+        ...options,
+      });
+    });
+
+  const bucket = program
+    .command('bucket')
+    .description('Manage project buckets');
+
+  bucket
+    .command('list')
+    .alias('ls')
+    .description('List buckets in a project')
+    .option('--project <project>', 'override the linked project')
+    .action(async (options: { project?: string }) => {
+      await bucketListCommand(runtime, globalFlags(program), options.project);
+    });
+
+  bucket
+    .command('show <bucket>')
+    .description('Show bucket details')
+    .option('--project <project>', 'override the linked project')
+    .action(async (bucketName: string, options: { project?: string }) => {
+      await bucketShowCommand(runtime, globalFlags(program), {
+        bucket: bucketName,
+        ...options,
+      });
+    });
+
+  bucket
+    .command('create <bucket>')
+    .description('Create a bucket')
+    .requiredOption('--type <type>', 'bucket type: file or image')
+    .option('--project <project>', 'override the linked project')
+    .option('--public', 'allow public reads')
+    .option('--protected', 'require signed reads')
+    .action(async (bucketName: string, options) => {
+      await bucketCreateCommand(runtime, globalFlags(program), {
+        bucket: bucketName,
+        ...options,
+      });
+    });
+
+  bucket
+    .command('delete <bucket>')
+    .alias('rm')
+    .description('Delete an empty bucket')
+    .option('--project <project>', 'override the linked project')
+    .option('--yes', 'skip interactive confirmation')
+    .action(async (bucketName: string, options) => {
+      await bucketDeleteCommand(runtime, globalFlags(program), {
+        bucket: bucketName,
         ...options,
       });
     });
