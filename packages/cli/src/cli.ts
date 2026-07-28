@@ -40,6 +40,11 @@ import {
   tokenListCommand,
   tokenRevokeCommand,
 } from './commands/token';
+import {
+  fileUploadCancelCommand,
+  fileUploadCommand,
+  fileUploadStatusCommand,
+} from './commands/upload';
 import { normalizeError } from './core/errors';
 import { outputFor, type CliRuntime, type GlobalFlags } from './core/runtime';
 
@@ -382,6 +387,43 @@ function createProgram(runtime: CliRuntime, version: string): Command {
     .action(async (references: string[], options) => {
       await fileDeleteCommand(runtime, globalFlags(program), {
         references,
+        ...options,
+      });
+    });
+
+  file
+    .command('upload <path...>')
+    .description('Upload one or more local files')
+    .requiredOption('--bucket <bucket>', 'existing bucket name')
+    .option('--project <project>', 'override the linked project')
+    .option('--path <path>', 'destination path or prefix')
+    .option('--keep-name', 'preserve original file names')
+    .action(async (paths: string[], options) => {
+      await fileUploadCommand(runtime, globalFlags(program), {
+        paths,
+        ...options,
+      });
+    });
+
+  file
+    .command('upload-status <upload-id>')
+    .description('Show upload processing status')
+    .option('--project <project>', 'override the linked project')
+    .action(async (uploadId: string, options) => {
+      await fileUploadStatusCommand(runtime, globalFlags(program), {
+        uploadId,
+        ...options,
+      });
+    });
+
+  file
+    .command('upload-cancel <upload-id>')
+    .description('Cancel an incomplete upload')
+    .option('--project <project>', 'override the linked project')
+    .option('--yes', 'skip interactive confirmation')
+    .action(async (uploadId: string, options) => {
+      await fileUploadCancelCommand(runtime, globalFlags(program), {
+        uploadId,
         ...options,
       });
     });

@@ -324,6 +324,22 @@ describe('runCli', () => {
     expect(fixture.stdout()).toContain('logo.png');
   });
 
+  it('reports completed upload status with the canonical URL', async () => {
+    fixture.repoConfig.config = {
+      account: account.id,
+      project: project.basePath,
+    };
+
+    await runCli(
+      ['file', 'upload-status', 'file_123'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(fixture.stdout()).toContain('completed');
+    expect(fixture.stdout()).toContain('https://files.example/logo.png');
+  });
+
   it('validates a token before saving it', async () => {
     await runCli(['login', '--token'], fixture.runtime, '0.0.0');
 
@@ -448,6 +464,11 @@ function createFixture() {
   }));
 
   const sdk = {
+    runtime: {
+      uploads: {
+        upload: vi.fn(),
+      },
+    },
     system: {
       health: vi.fn(async () => ({ status: 'ok' })),
     },
@@ -600,6 +621,16 @@ function createFixture() {
         lookup: vi.fn(),
         generateAccessUrls: vi.fn(),
         delete: vi.fn(),
+      },
+      uploads: {
+        get: vi.fn(async () => ({
+          upload: { id: 'file_123', status: 'completed' },
+          file: {
+            id: 'file_123',
+            url: 'https://files.example/logo.png',
+          },
+        })),
+        cancel: vi.fn(),
       },
     },
   } as unknown as ManagementEdgeStoreSdk;
