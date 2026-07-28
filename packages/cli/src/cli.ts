@@ -7,9 +7,12 @@ import {
 import { loginCommand, logoutCommand, whoamiCommand } from './commands/auth';
 import { doctorCommand } from './commands/doctor';
 import {
+  projectCreateCommand,
   projectCurrentCommand,
+  projectDeleteCommand,
   projectLinkCommand,
   projectListCommand,
+  projectShowCommand,
   projectUnlinkCommand,
 } from './commands/project';
 import { normalizeError } from './core/errors';
@@ -139,6 +142,43 @@ function createProgram(runtime: CliRuntime, version: string): Command {
     .description('Show the locally linked project')
     .action(async () => {
       await projectCurrentCommand(runtime, globalFlags(program));
+    });
+
+  project
+    .command('show [project]')
+    .description('Show a project by base path or ID')
+    .action(async (projectRef?: string) => {
+      await projectShowCommand(runtime, globalFlags(program), projectRef);
+    });
+
+  project
+    .command('create')
+    .description('Create a project')
+    .requiredOption('--name <name>', 'project name')
+    .option('--account <account-id>', 'override the active account')
+    .option('--without-key', 'create the project without an initial key')
+    .option('--allow-overage', 'allow billable project overage')
+    .action(
+      async (options: {
+        name: string;
+        account?: string;
+        withoutKey?: boolean;
+        allowOverage?: boolean;
+      }) => {
+        await projectCreateCommand(runtime, globalFlags(program), options);
+      },
+    );
+
+  project
+    .command('delete <project>')
+    .alias('rm')
+    .description('Delete a project')
+    .option('--yes', 'skip interactive confirmation')
+    .action(async (projectRef: string, options: { yes?: boolean }) => {
+      await projectDeleteCommand(runtime, globalFlags(program), {
+        project: projectRef,
+        ...options,
+      });
     });
 
   project

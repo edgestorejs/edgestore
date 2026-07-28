@@ -29,6 +29,100 @@ export async function projectListCommand(
   outputFor(runtime, flags).result(result, human);
 }
 
+export async function projectShowCommand(
+  runtime: CliRuntime,
+  flags: GlobalFlags,
+  projectRef?: string,
+): Promise<void> {
+  const project = await getProject(runtime, flags, projectRef);
+  outputFor(runtime, flags).result(
+    { project },
+    [
+      `Name: ${project.name}`,
+      `Base path: ${project.basePath}`,
+      `ID: ${project.id}`,
+      `Account: ${project.accountId}`,
+      `Usage: ${project.usageBytes} bytes`,
+      `Created: ${project.createdAt}`,
+    ].join('\n'),
+    project.basePath,
+  );
+}
+
+export async function projectCreateCommand(
+  runtime: CliRuntime,
+  flags: GlobalFlags,
+  options: {
+    account?: string;
+    name: string;
+    withoutKey?: boolean;
+    allowOverage?: boolean;
+  },
+): Promise<void> {
+  const account = await activeAccount(runtime, options.account);
+  const sdk = await sdkFor(runtime, flags);
+  const result = await sdk.management.projects.create({
+    account,
+    name: options.name,
+    createKey: !options.withoutKey,
+    allowOverage: Boolean(options.allowOverage),
+    signal: runtime.signal,
+  });
+  const keyLines = result.projectKey
+    ? [
+        '',
+        `EDGE_STORE_ACCESS_KEY=${result.projectKey.key.accessKey}`,
+        `EDGE_STORE_SECRET_KEY=${result.projectKey.secretKey}`,
+        '',
+        'Save this secret now. You will not be able to view it again.',
+      ]
+    : [];
+
+  outputFor(runtime, flags).result(
+    result,
+    [
+      `Created project "${result.project.name}" (${result.project.basePath}).`,
+      ...keyLines,
+      '',
+      'Link this directory:',
+      `  edgestore project link ${result.project.basePath}`,
+    ].join('\n'),
+    result.project.basePath,
+  );
+}
+
+export async function projectDeleteCommand(
+  runtime: CliRuntime,
+  flags: GlobalFlags,
+  options: { project: string; yes?: boolean },
+): Promise<void> {
+  const project = await getProject(runtime, flags, options.project);
+  if (!options.yes) {
+    if (!runtime.io.inputIsTty || flags.json) {
+      throw usageError(
+        'confirmation_required',
+        'Project deletion requires confirmation.',
+        [`edgestore project delete ${project.basePath} --yes`],
+      );
+    }
+    await runtime.prompts.confirmTyped(
+      `Delete project "${project.name}"? Type ${project.basePath} to confirm`,
+      project.basePath,
+    );
+  }
+
+  const sdk = await sdkFor(runtime, flags);
+  await sdk.management.projects.delete({
+    project: project.basePath,
+    signal: runtime.signal,
+  });
+  outputFor(runtime, flags).result(
+    { deleted: true, project },
+    `Deleted project "${project.name}" (${project.basePath}).`,
+    project.basePath,
+  );
+}
+
 export async function projectCurrentCommand(
   runtime: CliRuntime,
   flags: GlobalFlags,
@@ -95,7 +189,30 @@ export async function projectUnlinkCommand(
   );
 }
 
-function missingProjectError() {
+export async function resolvedProjectRef(
+  runtime: CliRuntime,
+  explicit?: string,
+): Promise<string> {
+  if (explicit) return explicit;
+  const located = await runtime.repoConfig.read();
+  if (!located) throw missingProjectError();
+  return located.config.project;
+}
+
+async function getProject(
+  runtime: CliRuntime,
+  flags: GlobalFlags,
+  explicit?: string,
+) {
+  const sdk = await sdkFor(runtime, flags);
+  const result = await sdk.management.projects.get({
+    project: await resolvedProjectRef(runtime, explicit),
+    signal: runtime.signal,
+  });
+  return result.project;
+}
+
+export function missingProjectError() {
   return usageError(
     'project_context_required',
     'No project specified or linked.',

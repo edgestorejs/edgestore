@@ -1,8 +1,9 @@
-import { isCancel, password } from '@clack/prompts';
+import { isCancel, password, text } from '@clack/prompts';
 import { CliError, usageError } from './errors';
 
 export interface CliPrompts {
   readToken(input: NodeJS.ReadableStream, inputIsTty: boolean): Promise<string>;
+  confirmTyped(message: string, expected: string): Promise<void>;
 }
 
 export class DefaultCliPrompts implements CliPrompts {
@@ -28,6 +29,20 @@ export class DefaultCliPrompts implements CliPrompts {
       throw new CliError('interrupted', 'Login canceled.', { exitCode: 130 });
     }
     return validateToken(result);
+  }
+
+  async confirmTyped(message: string, expected: string): Promise<void> {
+    const result = await text({
+      message,
+      placeholder: expected,
+      validate: (value) =>
+        value === expected ? undefined : `Type ${expected} to confirm.`,
+    });
+    if (isCancel(result)) {
+      throw new CliError('interrupted', 'Operation canceled.', {
+        exitCode: 130,
+      });
+    }
   }
 }
 

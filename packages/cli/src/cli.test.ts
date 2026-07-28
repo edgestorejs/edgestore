@@ -86,6 +86,43 @@ describe('runCli', () => {
     expect(fixture.stdout()).toContain('Marketing Site (x36t1ejdlz)');
   });
 
+  it('creates a project without linking the current directory', async () => {
+    await runCli(
+      ['project', 'create', '--name', 'Marketing Site'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(fixture.repoConfig.config).toBeUndefined();
+    expect(fixture.stdout()).toContain('EDGE_STORE_ACCESS_KEY=access_test');
+    expect(fixture.stdout()).toContain(
+      'You will not be able to view it again.',
+    );
+  });
+
+  it('requires explicit confirmation for non-interactive deletion', async () => {
+    fixture.runtime.io.inputIsTty = false;
+
+    const exitCode = await runCli(
+      ['project', 'delete', project.basePath],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(2);
+    expect(fixture.stderr()).toContain('--yes');
+  });
+
+  it('deletes the canonical project after typed confirmation', async () => {
+    await runCli(['project', 'delete', project.id], fixture.runtime, '0.0.0');
+
+    expect(fixture.confirmTyped).toHaveBeenCalledWith(
+      expect.stringContaining(project.basePath),
+      project.basePath,
+    );
+    expect(fixture.stdout()).toContain('Deleted project');
+  });
+
   it('validates a token before saving it', async () => {
     await runCli(['login', '--token'], fixture.runtime, '0.0.0');
 
@@ -162,6 +199,7 @@ function createFixture() {
   const setCredential = vi.fn(async (token: string) => {
     credentialValue.value = token;
   });
+  const confirmTyped = vi.fn(async () => undefined);
   const credentials: CredentialStore = {
     get: vi.fn(async () => credentialValue.value),
     set: setCredential,
@@ -202,6 +240,23 @@ function createFixture() {
       projects: {
         list: vi.fn(async () => ({ projects: [project] })),
         get: vi.fn(async () => ({ project })),
+        create: vi.fn(async () => ({
+          project,
+          projectKey: {
+            key: {
+              id: 'key_123',
+              name: 'default',
+              accessKey: 'access_test',
+              projectId: project.id,
+              accountId: account.id,
+              createdAt: project.createdAt,
+              updatedAt: project.updatedAt,
+              revokedAt: null,
+            },
+            secretKey: 'secret_test',
+          },
+        })),
+        delete: vi.fn(async () => ({})),
       },
     },
   } as unknown as ManagementEdgeStoreSdk;
@@ -249,6 +304,7 @@ function createFixture() {
     credentials,
     prompts: {
       readToken,
+      confirmTyped,
     },
     sdkFactory: vi.fn(() => sdk),
   };
@@ -260,6 +316,7 @@ function createFixture() {
     credentials,
     setCredential,
     readToken,
+    confirmTyped,
     stdout: () => Buffer.concat(stdoutChunks).toString('utf8'),
     stderr: () => Buffer.concat(stderrChunks).toString('utf8'),
   };
