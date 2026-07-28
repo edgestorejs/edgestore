@@ -6441,11 +6441,11 @@
         ]
       }
     },
-    "/management/projects/{projectRef}/files/download-urls": {
+    "/management/projects/{projectRef}/files/access-urls": {
       "post": {
-        "operationId": "v2.management.files.downloadUrls.create",
-        "summary": "Create management file download URLs",
-        "description": "Creates read URLs for one or more files. Protected files receive expiring signed URLs; public files may return their canonical URLs.",
+        "operationId": "v2.management.files.generateAccessUrls",
+        "summary": "Generate management file access URLs",
+        "description": "Generates read-access URLs for one or more files. Protected files receive expiring signed URLs; public files may return their canonical URLs.",
         "tags": [
           "management",
           "files"
@@ -6580,7 +6580,7 @@
                     "data": {
                       "type": "object",
                       "properties": {
-                        "downloadUrls": {
+                        "accessUrls": {
                           "type": "array",
                           "items": {
                             "type": "object",
@@ -6702,7 +6702,7 @@
                         }
                       },
                       "required": [
-                        "downloadUrls"
+                        "accessUrls"
                       ],
                       "description": "Successful response payload."
                     }
@@ -15643,9 +15643,9 @@
     },
     "/runtime/projects/{projectRef}/buckets/{bucketName}/files/signed-urls": {
       "post": {
-        "operationId": "v2.runtime.files.signedUrls.create",
-        "summary": "Create runtime signed read URLs",
-        "description": "Creates expiring read URLs for protected files and optionally their thumbnails.",
+        "operationId": "v2.runtime.files.generateSignedReadUrls",
+        "summary": "Generate runtime signed read URLs",
+        "description": "Generates expiring read URLs for protected files and optionally their thumbnails.",
         "tags": [
           "runtime",
           "files"

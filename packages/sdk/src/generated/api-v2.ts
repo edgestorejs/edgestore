@@ -324,7 +324,7 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
-    "/management/projects/{projectRef}/files/download-urls": {
+    "/management/projects/{projectRef}/files/access-urls": {
         parameters: {
             query?: never;
             header?: never;
@@ -334,10 +334,10 @@ export type paths = {
         get?: never;
         put?: never;
         /**
-         * Create management file download URLs
-         * @description Creates read URLs for one or more files. Protected files receive expiring signed URLs; public files may return their canonical URLs.
+         * Generate management file access URLs
+         * @description Generates read-access URLs for one or more files. Protected files receive expiring signed URLs; public files may return their canonical URLs.
          */
-        post: operations["v2.management.files.downloadUrls.create"];
+        post: operations["v2.management.files.generateAccessUrls"];
         delete?: never;
         options?: never;
         head?: never;
@@ -798,10 +798,10 @@ export type paths = {
         get?: never;
         put?: never;
         /**
-         * Create runtime signed read URLs
-         * @description Creates expiring read URLs for protected files and optionally their thumbnails.
+         * Generate runtime signed read URLs
+         * @description Generates expiring read URLs for protected files and optionally their thumbnails.
          */
-        post: operations["v2.runtime.files.signedUrls.create"];
+        post: operations["v2.runtime.files.generateSignedReadUrls"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4005,7 +4005,7 @@ export interface operations {
             };
         };
     };
-    "v2.management.files.downloadUrls.create": {
+    "v2.management.files.generateAccessUrls": {
         parameters: {
             query?: never;
             header?: never;
@@ -4049,7 +4049,7 @@ export interface operations {
                     "application/json": {
                         /** @description Successful response payload. */
                         data: {
-                            downloadUrls: {
+                            accessUrls: {
                                 /** @description Input reference for this result. */
                                 fileRef: ({
                                     /** @description Unique file ID. */
@@ -7902,7 +7902,7 @@ export interface operations {
             };
         };
     };
-    "v2.runtime.files.signedUrls.create": {
+    "v2.runtime.files.generateSignedReadUrls": {
         parameters: {
             query?: never;
             header?: never;
