@@ -70,7 +70,7 @@ export default function Home({
               <ImageFileBlock
                 fileData={fileData}
                 onDelete={async (fileData) => {
-                  await edgestore.myPublicImages.deleteFile({
+                  await edgestore.myPublicImages.delete({
                     url: fileData.url,
                   });
                   setFiles((files) =>
@@ -190,7 +190,7 @@ type FileRes = {
 export const getServerSideProps: GetServerSideProps<{
   files: FileRes[];
 }> = async () => {
-  const res = await edgestoreClient.myPublicImages.listFiles({
+  const res = await edgestoreClient.myPublicImages.list({
     filter: {
       uploadedAt: {
         gt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7), // 7 days

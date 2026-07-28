@@ -13,9 +13,9 @@ export { EdgeStoreProvider, useEdgeStore };
  * @example
  * ```ts
  * export const getServerSideProps: GetServerSideProps<{
- *   files: ClientOutputs['images']['listFiles']['items'];
+ *   files: ClientOutputs['images']['list']['items'];
  * }> = async () => {
- *   const res = await edgestoreClient.images.listFiles();
+ *   const res = await edgestoreClient.images.list();
  *   return { props: { files: res.items } };
  * };
  * ```

@@ -32,7 +32,7 @@ export type UploadOptions = {
    */
   replaceTargetUrl?: string;
   /**
-   * If true, the file needs to be confirmed by using the `confirmUpload` function.
+   * If true, the file needs to be confirmed by using the `confirm` function.
    * If the file is not confirmed within 24 hours, it will be deleted.
    *
    * This is useful for pages where the file is uploaded as soon as it is selected,

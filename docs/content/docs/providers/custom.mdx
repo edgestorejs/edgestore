@@ -14,7 +14,7 @@ const edgeStore = createEdgeStore({
 });
 
 createEdgeStoreNextHandler({ edgeStore });
-edgeStore.client.files.getFile({ key: 'files/report.pdf' });
+edgeStore.client.files.get({ key: 'files/report.pdf' });
 ```
 
 Method inputs are contextually typed. File references, cursors, returned file
@@ -78,8 +78,8 @@ export const myProvider = defineProvider({
 });
 ```
 
-The resulting backend client exposes `getFile`, but not `upload`, `listFiles`,
-or mutations, because those optional capabilities were not defined.
+The resulting backend client exposes `get`, but not `upload`, `list`, or
+mutations, because those optional capabilities were not defined.
 
 ## Complete provider
 
@@ -209,6 +209,17 @@ Here, callers may pass either a URL or `{ key }`, but every provider operation
 receives `{ key: string }` after runtime validation. The backend client also
 inherits the string cursor, the extra `etag` file field, and any literal
 mutation error codes returned by the storage driver.
+
+The backend client uses bucket-scoped names: `get`, `list`, `listAll`,
+`confirm`, `confirmMany`, `delete`, `deleteMany`, `restore`, `restoreMany`,
+`createSignedUrl`, and `createSignedUrls`. Provider method names remain
+resource operations (`files.get`, `files.list`, `files.getSignedUrls`) and do
+not need to mirror that public client surface.
+
+`get` and `list` preserve the exact file fields inferred from the provider,
+including its `path` and `metadata` shapes. An `upload` result instead exposes
+the path and metadata EdgeStore computed from the router, even if the storage
+driver returns different placeholders.
 
 Every file operation must enforce the logical EdgeStore `bucketName`. Treat
 `bucketName` and the normalized file reference as the complete storage

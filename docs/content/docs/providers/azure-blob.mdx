@@ -5,7 +5,9 @@ description: Learn how to use your own Azure Blob Storage with EdgeStore.
 
 You can also use the EdgeStore package with your own Azure Blob Storage. You might want to do that in case you have strict company policies that require you to have all the data in your own Azure account.
 
-By using this provider, you will be able to use most of the basic features of EdgeStore. However, for some of the more advanced features like access control with protected files, you will have to create your own infrastructure and logic from scratch.
+The provider creates short-lived, blob-scoped SAS URLs for browser uploads and
+private reads. Permanent file URLs never contain credentials. Advanced hosted
+features such as image processing still require separate infrastructure.
 
 ## Installation
 
@@ -52,14 +54,33 @@ export type AzureBlobProviderOptions = {
    */
   storageAccountName?: string;
   /**
-   * SAS token for Azure Blob Storage
-   * Can also be set via the `ES_AZURE_SAS_TOKEN` environment variable.
+   * Account key used for server-side requests and signing short-lived URLs.
+   * Can also be set via the `ES_AZURE_ACCOUNT_KEY` environment variable.
    */
-  sasToken?: string;
+  storageAccountKey?: string;
   /**
    * Azure Blob Storage container name
    * Can also be set via the `ES_AZURE_CONTAINER_NAME` environment variable.
    */
   containerName?: string;
+  /**
+   * Optional base URL for Azurite or another compatible endpoint.
+   * Can also be set via the `ES_AZURE_BASE_URL` environment variable.
+   */
+  customBaseUrl?: string;
+  /**
+   * Lifetime of browser upload URLs in seconds.
+   * @default 3600
+   */
+  uploadUrlExpiresIn?: number;
+  /**
+   * Default lifetime of private read URLs in seconds.
+   * @default 3600
+   */
+  signedUrlExpiresIn?: number;
 };
 ```
+
+The account key stays on the server. Upload URLs receive only create/write
+permissions, while private read URLs receive only read permission and expire
+independently.

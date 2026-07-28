@@ -56,8 +56,17 @@ framework-neutral dispatcher. Framework adapters only translate their native
 request and response primitives, and handler logging no longer depends on
 process-global state.
 
-The React client now exposes `confirmUpload`, `confirmUploads`, `deleteFile`,
-and `deleteFiles`. Plural mutations use one request and preserve per-file
-storage failures. Frontend deletion authorizes every file through
+The React client now exposes `confirm`, `confirmMany`, `delete`, and
+`deleteMany`. The router-derived backend client uses the same resource-scoped
+pattern with `get`, `list`, `listAll`, lifecycle methods with `Many` suffixes,
+and `createSignedUrl` / `createSignedUrls`. Batch mutations use one request and
+preserve per-file storage failures. Frontend deletion authorizes every file through
 `beforeDelete` before issuing one provider batch mutation; if any file is
 unauthorized, none are deleted.
+
+Frontend route bodies and bucket inputs are validated before hooks or providers
+run, and the encrypted context cookie namespaces application values under
+`ctx`. Azure Blob Storage now uses a server-side account key to generate
+short-lived blob-scoped upload/read SAS URLs instead of exposing a reusable SAS
+credential. Provider read results preserve their actual path and metadata
+types; uploads expose the values computed by the router.

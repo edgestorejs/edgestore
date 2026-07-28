@@ -92,7 +92,7 @@ export default function Home() {
         onClick={async () => {
           if (uploadedUrl) {
             try {
-              await edgestore.publicFiles.deleteFile({
+              await edgestore.publicFiles.delete({
                 url: uploadedUrl,
               });
               console.log('File deleted');

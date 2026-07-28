@@ -71,7 +71,7 @@ await edgestore.publicFiles.upload({
 ### Delete File
 
 ```ts
-await edgestore.publicFiles.deleteFile({ url: urlToDelete });
+await edgestore.publicFiles.delete({ url: urlToDelete });
 ```
 
 ### Temporary Files
@@ -82,7 +82,7 @@ await edgestore.publicFiles.upload({
   options: { temporary: true },
 });
 
-await edgestore.publicFiles.confirmUpload({ url });
+await edgestore.publicFiles.confirm({ url });
 ```
 
 ### Cancel Upload
@@ -121,13 +121,13 @@ await backendClient.publicFiles.upload({
 });
 
 // Confirm temp upload
-await backendClient.publicFiles.confirmUpload({ url });
+await backendClient.publicFiles.confirm({ url });
 
 // Delete
-await backendClient.publicFiles.deleteFile({ url });
+await backendClient.publicFiles.delete({ url });
 
 // List files
-await backendClient.publicFiles.listFiles({
+await backendClient.publicFiles.list({
   filter: {
     metadata: { role: 'admin' },
     path: { type: 'post' },
