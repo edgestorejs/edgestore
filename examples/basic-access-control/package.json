@@ -11,10 +11,10 @@
   "dependencies": {
     "@edgestore/react": "^0.7.0",
     "@edgestore/server": "^0.7.0",
-    "next": "16.1.1",
-    "react": "19.2.3",
-    "react-dom": "19.2.3",
-    "zod": "3.25.42"
+    "next": "16.2.10",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
+    "zod": "3.25.76"
   },
   "devDependencies": {
     "@types/node": "25.0.3",
