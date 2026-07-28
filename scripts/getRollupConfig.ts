@@ -2,7 +2,7 @@ import { rm } from 'node:fs/promises';
 import path from 'path';
 import nodeResolve from '@rollup/plugin-node-resolve';
 import typescript from '@rollup/plugin-typescript';
-import { type RollupOptions } from 'rollup';
+import { type Plugin, type RollupOptions } from 'rollup';
 import externals from 'rollup-plugin-node-externals';
 import { swc } from 'rollup-plugin-swc3';
 
@@ -53,7 +53,55 @@ function types({ input, packageDir }: Options): RollupOptions {
         tsconfig: path.resolve(packageDir, 'tsconfig.build.json'),
         outDir: path.resolve(packageDir, 'dist'),
       }),
+      addDeclarationImportExtensions(),
     ],
+  };
+}
+
+function addDeclarationImportExtensions(): Plugin {
+  return {
+    name: 'add-declaration-import-extensions',
+    generateBundle(_options, bundle) {
+      const declarationFiles = new Set(
+        Object.values(bundle)
+          .filter(
+            (output) =>
+              output.type === 'asset' && output.fileName.endsWith('.d.ts'),
+          )
+          .map((output) => output.fileName),
+      );
+
+      for (const output of Object.values(bundle)) {
+        if (output.type !== 'asset' || !output.fileName.endsWith('.d.ts')) {
+          continue;
+        }
+
+        const source =
+          typeof output.source === 'string'
+            ? output.source
+            : Buffer.from(output.source).toString('utf8');
+
+        output.source = source.replace(
+          /(\b(?:from\s+|import\s*(?:\(\s*)?)['"])(\.\.?\/[^'"]+)(['"])/g,
+          (_match, prefix: string, specifier: string, suffix: string) => {
+            if (/\.(?:[cm]?[jt]sx?|json)$/.test(specifier)) {
+              return `${prefix}${specifier}${suffix}`;
+            }
+
+            const resolvedSpecifier = path.posix.normalize(
+              path.posix.join(path.posix.dirname(output.fileName), specifier),
+            );
+            const extension = declarationFiles.has(
+              `${resolvedSpecifier}/index.d.ts`,
+            )
+              ? '/index.js'
+              : '.js';
+
+            return `${prefix}${specifier}${extension}${suffix}`;
+          },
+        );
+      }
+    },
   };
 }
 
