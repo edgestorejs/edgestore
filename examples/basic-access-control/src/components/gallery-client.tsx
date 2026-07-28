@@ -5,7 +5,7 @@ import { useEdgeStore, type ClientResponse } from '@/lib/edgestore';
 export function GalleryClient({
   files,
 }: {
-  files: ClientResponse['privateImages']['listFiles']['items'];
+  files: ClientResponse['privateImages']['list']['items'];
 }) {
   const { state } = useEdgeStore();
 
