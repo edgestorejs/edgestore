@@ -157,15 +157,15 @@ describe('management resource request mappings', () => {
         body: { file: { id: 'file-id' } },
       },
       {
-        name: 'files.createDownloadUrls',
+        name: 'files.generateAccessUrls',
         invoke: () =>
-          sdk.management.files.createDownloadUrls({
+          sdk.management.files.generateAccessUrls({
             project,
             files: [{ id: 'file-id' }],
             expiresIn: 60,
           }),
         method: 'POST',
-        path: `/v2/management/projects/${project}/files/download-urls`,
+        path: `/v2/management/projects/${project}/files/access-urls`,
         body: { files: [{ id: 'file-id' }], expiresIn: 60 },
       },
       {

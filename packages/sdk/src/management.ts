@@ -78,11 +78,11 @@ export type ManagementClient = {
         OperationBody<'v2.management.files.lookup'> &
         CallOptions,
     ): Promise<Result<'v2.management.files.lookup'>>;
-    createDownloadUrls(
+    generateAccessUrls(
       input: ProjectInput &
-        OperationBody<'v2.management.files.downloadUrls.create'> &
+        OperationBody<'v2.management.files.generateAccessUrls'> &
         CallOptions,
-    ): Promise<Result<'v2.management.files.downloadUrls.create'>>;
+    ): Promise<Result<'v2.management.files.generateAccessUrls'>>;
     delete(
       input: ProjectInput &
         OperationBody<'v2.management.files.delete'> &
@@ -262,9 +262,9 @@ export function createManagementClient(transport: Transport): ManagementClient {
             signal,
           }),
         ),
-      createDownloadUrls: ({ project, signal, ...body }) =>
+      generateAccessUrls: ({ project, signal, ...body }) =>
         transport.execute((client) =>
-          client.POST('/management/projects/{projectRef}/files/download-urls', {
+          client.POST('/management/projects/{projectRef}/files/access-urls', {
             params: { path: { projectRef: project } },
             body,
             signal,
