@@ -6,24 +6,25 @@ import {
   type MaybePromise,
 } from '@edgestore/shared';
 import { parse } from 'cookie';
+import { type z } from 'zod';
 import type { LoggerLike } from '../libs/logger';
 import { matchPath } from '../libs/utils';
 import {
   completeMultipartUpload,
+  completeMultipartUploadBodySchema,
   confirmUploads,
+  confirmUploadsBodySchema,
   deleteFiles,
+  deleteFilesBodySchema,
   fetchProxyFile,
   getCookieConfig,
   init,
   requestUpload,
+  requestUploadBodySchema,
   requestUploadParts,
-  type CompleteMultipartUploadBody,
-  type ConfirmUploadsBody,
+  requestUploadPartsBodySchema,
   type CookieConfig,
-  type DeleteFilesBody,
   type HandlerEdgeStore,
-  type RequestUploadBody,
-  type RequestUploadPartsParams,
 } from './shared';
 
 export type EdgeStoreDispatchRequest<TCtx extends AnyContext> = {
@@ -119,7 +120,7 @@ export async function dispatchEdgeStoreRequest<
         await requestUpload({
           provider,
           router,
-          body: (await request.readJson()) as RequestUploadBody,
+          body: await parseRequestBody(request, requestUploadBodySchema),
           ctxToken,
           logger,
         }),
@@ -131,7 +132,7 @@ export async function dispatchEdgeStoreRequest<
         await requestUploadParts({
           provider,
           router,
-          body: (await request.readJson()) as RequestUploadPartsParams,
+          body: await parseRequestBody(request, requestUploadPartsBodySchema),
           ctxToken,
           logger,
         }),
@@ -142,7 +143,10 @@ export async function dispatchEdgeStoreRequest<
       await completeMultipartUpload({
         provider,
         router,
-        body: (await request.readJson()) as CompleteMultipartUploadBody,
+        body: await parseRequestBody(
+          request,
+          completeMultipartUploadBodySchema,
+        ),
         ctxToken,
         logger,
       });
@@ -154,7 +158,7 @@ export async function dispatchEdgeStoreRequest<
         await confirmUploads({
           provider,
           router,
-          body: (await request.readJson()) as ConfirmUploadsBody,
+          body: await parseRequestBody(request, confirmUploadsBodySchema),
           ctxToken,
           logger,
         }),
@@ -166,7 +170,7 @@ export async function dispatchEdgeStoreRequest<
         await deleteFiles({
           provider,
           router,
-          body: (await request.readJson()) as DeleteFilesBody,
+          body: await parseRequestBody(request, deleteFilesBodySchema),
           ctxToken,
           logger,
         }),
@@ -239,4 +243,19 @@ function jsonResponse(body: unknown, status = 200) {
     status,
     headers: { 'Content-Type': 'application/json' },
   });
+}
+
+async function parseRequestBody<TSchema extends z.ZodTypeAny>(
+  request: EdgeStoreDispatchRequest<AnyContext>,
+  schema: TSchema,
+): Promise<z.output<TSchema>> {
+  try {
+    return await schema.parseAsync(await request.readJson());
+  } catch (error) {
+    throw new EdgeStoreError({
+      message: 'Invalid request body',
+      code: 'BAD_REQUEST',
+      cause: error instanceof Error ? error : undefined,
+    });
+  }
 }

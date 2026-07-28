@@ -48,15 +48,15 @@ describe('EdgeStore backend client live smoke test', () => {
         return { url: file.url, size: file.sizeBytes };
       },
       confirmUpload: async (url) => {
-        await bucketClient.confirmUpload({ url });
+        await bucketClient.confirm({ url });
         return { success: true };
       },
       getFile: async (url) => {
-        const file = await bucketClient.getFile({ url });
+        const file = await bucketClient.get({ url });
         return { url: file.url, size: file.sizeBytes };
       },
       deleteFile: async (url) => {
-        await bucketClient.deleteFile({ url });
+        await bucketClient.delete({ url });
         return { success: true };
       },
     });

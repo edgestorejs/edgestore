@@ -3,21 +3,44 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { azureBlob } from './index';
 
 const mocks = vi.hoisted(() => ({
+  blobServiceClient: vi.fn(),
+  blobSasPermissionsParse: vi.fn((value: string) => ({ value })),
   deleteBlob: vi.fn(),
+  generateBlobSASQueryParameters: vi.fn(
+    (options: { permissions: { value: string } }) => ({
+      toString: () => `sig=${options.permissions.value}`,
+    }),
+  ),
   getBlobClient: vi.fn(),
   getContainerClient: vi.fn(),
   getProperties: vi.fn(),
   randomUUID: vi.fn(
     () => 'generated-id' as ReturnType<typeof crypto.randomUUID>,
   ),
+  storageSharedKeyCredential: vi.fn(),
 }));
 
 vi.mock('@azure/storage-blob', () => ({
-  BlobServiceClient: vi.fn(
-    class {
-      getContainerClient = mocks.getContainerClient;
-    },
-  ),
+  BlobSASPermissions: {
+    parse: mocks.blobSasPermissionsParse,
+  },
+  BlobServiceClient: class {
+    getContainerClient = mocks.getContainerClient;
+
+    constructor(...args: unknown[]) {
+      mocks.blobServiceClient(...args);
+    }
+  },
+  generateBlobSASQueryParameters: mocks.generateBlobSASQueryParameters,
+  SASProtocol: {
+    Https: 'https',
+    HttpsAndHttp: 'https,http',
+  },
+  StorageSharedKeyCredential: class {
+    constructor(...args: unknown[]) {
+      mocks.storageSharedKeyCredential(...args);
+    }
+  },
 }));
 
 function encodeBlobName(blobName: string) {
@@ -69,18 +92,26 @@ describe('azureBlob', () => {
   it('constructs a base URL from the storage account', () => {
     const provider = azureBlob({
       storageAccountName: 'storageacct',
-      sasToken: 'sig=token',
+      storageAccountKey: 'account-key',
       containerName: 'documents',
     });
 
     expect(provider.baseUrl).toBe('https://storageacct.blob.core.windows.net');
+    expect(mocks.storageSharedKeyCredential).toHaveBeenCalledWith(
+      'storageacct',
+      'account-key',
+    );
+    expect(mocks.blobServiceClient).toHaveBeenCalledWith(
+      'https://storageacct.blob.core.windows.net',
+      expect.anything(),
+    );
     expect(mocks.getContainerClient).toHaveBeenCalledWith('documents');
   });
 
   it('uses a customBaseUrl when provided', () => {
     const provider = azureBlob({
       storageAccountName: 'storageacct',
-      sasToken: 'sig=token',
+      storageAccountKey: 'account-key',
       containerName: 'documents',
       customBaseUrl: 'http://localhost:10000/devstoreaccount1',
     });
@@ -129,7 +160,7 @@ describe('azureBlob', () => {
       const provider = azureBlob({
         containerName: 'files',
         customBaseUrl: 'http://localhost:10000/devstoreaccount1',
-        sasToken: 'token',
+        storageAccountKey: 'account-key',
         storageAccountName: 'devstoreaccount1',
       });
 
@@ -139,16 +170,66 @@ describe('azureBlob', () => {
       expect(mocks.randomUUID).toHaveBeenCalledTimes(expectedUuidCalls);
       expect(res).toEqual({
         accessUrl: `${containerUrl}/${encodeBlobName(expectedBlobName)}`,
-        uploadUrl: `${containerUrl}/${encodeBlobName(expectedBlobName)}`,
+        accessSignedUrl: fileInfo.isPublic
+          ? undefined
+          : expect.stringContaining('?sig=r'),
+        accessSignedUrlExpiresAt: fileInfo.isPublic
+          ? undefined
+          : expect.any(Date),
+        accessSignedUrlExpiresIn: fileInfo.isPublic ? undefined : 60 * 60,
+        uploadUrl: `${containerUrl}/${encodeBlobName(expectedBlobName)}?sig=cw`,
       });
+      expect(mocks.blobSasPermissionsParse).toHaveBeenCalledWith('cw');
+      if (fileInfo.isPublic) {
+        expect(mocks.blobSasPermissionsParse).not.toHaveBeenCalledWith('r');
+      } else {
+        expect(mocks.blobSasPermissionsParse).toHaveBeenCalledWith('r');
+      }
     },
   );
+
+  it('uses write-only upload credentials and canonical public URLs', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-01-02T03:04:05.000Z'));
+    const provider = azureBlob({
+      containerName: 'files',
+      customBaseUrl: 'https://storage.example.com',
+      storageAccountKey: 'account-key',
+      storageAccountName: 'storageacct',
+      uploadUrlExpiresIn: 900,
+    });
+
+    const res = await provider.uploads.request(
+      createUploadParams({ fileName: 'public.txt', isPublic: true }),
+    );
+
+    expect(res).toEqual({
+      accessUrl: `${containerUrl}/documents/_public/public.txt`,
+      accessSignedUrl: undefined,
+      accessSignedUrlExpiresAt: undefined,
+      accessSignedUrlExpiresIn: undefined,
+      uploadUrl: `${containerUrl}/documents/_public/public.txt?sig=cw`,
+    });
+    expect(mocks.generateBlobSASQueryParameters).toHaveBeenCalledWith(
+      {
+        blobName: 'documents/_public/public.txt',
+        containerName: 'files',
+        expiresOn: new Date('2026-01-02T03:19:05.000Z'),
+        permissions: { value: 'cw' },
+        protocol: 'https',
+        startsOn: new Date('2026-01-02T02:59:05.000Z'),
+      },
+      expect.anything(),
+    );
+    expect(mocks.blobSasPermissionsParse).not.toHaveBeenCalledWith('r');
+    vi.useRealTimers();
+  });
 
   it('normalizes an Azure access URL to a blob name for getFile', async () => {
     const provider = azureBlob({
       containerName: 'files',
       customBaseUrl: 'http://localhost:10000/devstoreaccount1',
-      sasToken: 'token',
+      storageAccountKey: 'account-key',
       storageAccountName: 'devstoreaccount1',
     });
 
@@ -168,15 +249,52 @@ describe('azureBlob', () => {
       sizeBytes: 123,
       uploadedAt: new Date('2026-01-02T03:04:05.000Z'),
       updatedAt: new Date('2026-01-02T03:04:05.000Z'),
-      url: `${containerUrl}/documents/_public/a%20b/file.txt?sv=token`,
+      url: `${containerUrl}/documents/_public/a%20b/file.txt`,
     });
+  });
+
+  it('creates separate blob-scoped read URLs with the requested expiry', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-01-02T03:04:05.000Z'));
+    const provider = azureBlob({
+      containerName: 'files',
+      customBaseUrl: 'http://localhost:10000/devstoreaccount1',
+      storageAccountKey: 'account-key',
+      storageAccountName: 'devstoreaccount1',
+    });
+
+    await expect(
+      provider.files.getSignedUrls?.({
+        bucketName: 'documents',
+        files: [
+          { url: `${containerUrl}/documents/private.txt?old=credential` },
+        ],
+        expiresIn: 120,
+      }),
+    ).resolves.toEqual([
+      {
+        url: `${containerUrl}/documents/private.txt`,
+        signedUrl: `${containerUrl}/documents/private.txt?sig=r`,
+        expiresAt: new Date('2026-01-02T03:06:05.000Z'),
+        expiresIn: 120,
+      },
+    ]);
+    expect(mocks.generateBlobSASQueryParameters).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        blobName: 'documents/private.txt',
+        permissions: { value: 'r' },
+        expiresOn: new Date('2026-01-02T03:06:05.000Z'),
+      }),
+      expect.anything(),
+    );
+    vi.useRealTimers();
   });
 
   it('normalizes an Azure access URL to a blob name for deleteFile', async () => {
     const provider = azureBlob({
       containerName: 'files',
       customBaseUrl: 'http://localhost:10000/devstoreaccount1',
-      sasToken: 'token',
+      storageAccountKey: 'account-key',
       storageAccountName: 'devstoreaccount1',
     });
 
@@ -195,7 +313,7 @@ describe('azureBlob', () => {
     const provider = azureBlob({
       containerName: 'files',
       customBaseUrl: 'http://localhost:10000/devstoreaccount1',
-      sasToken: 'token',
+      storageAccountKey: 'account-key',
       storageAccountName: 'devstoreaccount1',
     });
 
@@ -212,7 +330,7 @@ describe('azureBlob', () => {
     const provider = azureBlob({
       containerName: 'files',
       customBaseUrl: 'http://localhost:10000/devstoreaccount1',
-      sasToken: 'token',
+      storageAccountKey: 'account-key',
       storageAccountName: 'devstoreaccount1',
     });
 

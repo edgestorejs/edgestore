@@ -4,6 +4,26 @@ import {
   type InferBucketPathObject,
   type InferBucketPathOrder,
 } from '@edgestore/shared';
+import { ZodNever, type z } from 'zod';
+
+export async function parseBucketInput<TBucket extends AnyBuilder>(
+  bucket: TBucket,
+  input: unknown,
+): Promise<z.infer<TBucket['_def']['input']>> {
+  if (bucket._def.input instanceof ZodNever) {
+    return {} as z.infer<TBucket['_def']['input']>;
+  }
+
+  try {
+    return await bucket._def.input.parseAsync(input);
+  } catch (error) {
+    throw new EdgeStoreError({
+      message: 'Invalid bucket input',
+      code: 'BAD_REQUEST',
+      cause: error instanceof Error ? error : undefined,
+    });
+  }
+}
 
 export function buildPath(params: {
   bucket: AnyBuilder;

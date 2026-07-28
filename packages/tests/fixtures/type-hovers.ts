@@ -76,16 +76,17 @@ async function inspectOperationResults() {
     ctx: { userId: 'user-1', role: 'admin' },
     input: { category: 'invoice' },
   });
-  const backendGetFile = await backendClient.privateFiles.getFile({
+  const backendGetFile = await backendClient.privateFiles.get({
     url: 'https://example.com/file',
   });
-  const backendListFiles = await backendClient.privateFiles.listFiles();
-  const backendGetSignedUrl = await backendClient.privateFiles.getSignedUrl({
+  const backendListFiles = await backendClient.privateFiles.list();
+  const backendGetSignedUrl = await backendClient.privateFiles.createSignedUrl({
     url: 'https://example.com/file',
   });
-  const backendGetSignedUrls = await backendClient.privateImages.getSignedUrls({
-    urls: ['https://example.com/image'],
-  });
+  const backendGetSignedUrls =
+    await backendClient.privateImages.createSignedUrls({
+      urls: ['https://example.com/image'],
+    });
 
   const reactUnsignedUpload = await edgestore.publicFiles.upload({
     file: null! as File,

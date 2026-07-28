@@ -15,7 +15,7 @@ type Edgestore = ReturnType<typeof useEdgeStore>['edgestore'];
 type FileUploadResponse = Awaited<ReturnType<Edgestore['files']['upload']>>;
 type ImageUploadResponse = Awaited<ReturnType<Edgestore['images']['upload']>>;
 type FileMutationResponse = Awaited<
-  ReturnType<Edgestore['files']['deleteFiles']>
+  ReturnType<Edgestore['files']['deleteMany']>
 >;
 
 expectType<[]>({} as FileUploadResponse['pathOrder']);

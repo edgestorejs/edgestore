@@ -70,10 +70,10 @@ const s3EdgeStore = createEdgeStore({
   router: publicRouter,
   provider: s3(),
 });
-void s3EdgeStore.client.files.getFile({ url: 'https://s3.example/file' });
+void s3EdgeStore.client.files.get({ url: 'https://s3.example/file' });
 expectError(s3EdgeStore.client.files.upload);
-expectError(s3EdgeStore.client.files.listFiles);
-expectError(s3EdgeStore.client.files.confirmUpload);
+expectError(s3EdgeStore.client.files.list);
+expectError(s3EdgeStore.client.files.confirm);
 
 const syntheticProvider = defineProvider({
   name: 'synthetic',
@@ -104,8 +104,8 @@ const syntheticProvider = defineProvider({
     get: async ({ file }) => ({
       url: `https://s3.example/${file.objectKey}`,
       sizeBytes: 5,
-      path: {},
-      metadata: {},
+      path: { storageRegion: 'us-east-1' as const },
+      metadata: { storageClass: 'archive' as const },
       uploadedAt: new Date(),
       updatedAt: new Date(),
       eTag: 'etag',
@@ -115,8 +115,8 @@ const syntheticProvider = defineProvider({
         {
           url: 'https://s3.example/files/file.txt',
           sizeBytes: 5,
-          path: {},
-          metadata: {},
+          path: { storageRegion: 'us-east-1' as const },
+          metadata: { storageClass: 'archive' as const },
           uploadedAt: new Date(),
           updatedAt: new Date(),
           eTag: 'etag',
@@ -196,38 +196,40 @@ const syntheticProtectedClient = createEdgeStore({
   provider: syntheticProvider,
 }).client;
 
-expectError(syntheticClient.files.restoreFile);
-expectError(syntheticClient.files.getFile({ id: 'file-id' }));
-void syntheticClient.files
-  .getFile({ objectKey: 'files/file.txt' })
-  .then((file) => {
-    expectType<string>(file.eTag);
-    expectError(file.accountId);
-  });
-expectError(syntheticClient.files.listFiles({ cursor: 'next' }));
-void syntheticClient.files.listFiles({ cursor: 1 }).then((page) => {
+expectError(syntheticClient.files.restore);
+expectError(syntheticClient.files.get({ id: 'file-id' }));
+void syntheticClient.files.get({ objectKey: 'files/file.txt' }).then((file) => {
+  expectType<string>(file.eTag);
+  expectType<'us-east-1'>(file.path.storageRegion);
+  expectType<'archive'>(file.metadata.storageClass);
+  expectError(file.accountId);
+});
+expectError(syntheticClient.files.list({ cursor: 'next' }));
+void syntheticClient.files.list({ cursor: 1 }).then((page) => {
   expectType<number | null>(page.nextCursor);
   expectType<string>(page.items[0]!.eTag);
+  expectType<'us-east-1'>(page.items[0]!.path.storageRegion);
+  expectType<'archive'>(page.items[0]!.metadata.storageClass);
   expectError(page.items[0]!.accountId);
 });
 void syntheticClient.files.upload({ content: 'hello' }).then((file) => {
   expectType<string>(file.eTag);
   expectError(file.accountId);
 });
-expectError(syntheticClient.files.deleteFile({ id: 'file-id' }));
+expectError(syntheticClient.files.delete({ id: 'file-id' }));
 void syntheticClient.files
-  .deleteFiles({ refs: [{ objectKey: 'files/file.txt' }] })
+  .deleteMany({ refs: [{ objectKey: 'files/file.txt' }] })
   .then(({ failed }) => {
     expectType<'OBJECT_LOCKED'>(failed[0]!.error.code);
     expectType<string>(failed[0]!.ref.objectKey);
   });
 expectError(
-  syntheticProtectedClient.files.getSignedUrl({
+  syntheticProtectedClient.files.createSignedUrl({
     url: 'https://s3.example/files/file.txt',
   }),
 );
 void syntheticProtectedClient.files
-  .getSignedUrl({
+  .createSignedUrl({
     url: { objectKey: 'files/file.txt' },
   })
   .then((signedUrl) => {
@@ -274,7 +276,9 @@ void client.documents.upload({
 });
 void publicClient.files.upload({ content: 'hello' });
 
-expectError(publicClient.files.getSignedUrl({ url: 'https://example.com/a' }));
+expectError(
+  publicClient.files.createSignedUrl({ url: 'https://example.com/a' }),
+);
 expectType<
   Promise<{
     url: string;
@@ -283,7 +287,7 @@ expectType<
     expiresIn: number;
   }>
 >(
-  protectedClient.privateFiles.getSignedUrl({
+  protectedClient.privateFiles.createSignedUrl({
     url: 'https://files.edgestore.dev/project/privateFiles/file.txt',
   }),
 );
@@ -299,7 +303,7 @@ expectAssignable<
     }[]
   >
 >(
-  protectedClient.privateImages.getSignedUrls({
+  protectedClient.privateImages.createSignedUrls({
     urls: ['https://files.edgestore.dev/project/privateImages/image.png'],
     includeThumbnails: true,
   }),
@@ -330,7 +334,7 @@ void client.avatars
     expectType<('author' | 'type')[]>(file.pathOrder);
   });
 
-void client.avatars.getFile({ id: 'file-id' }).then((file) => {
+void client.avatars.get({ id: 'file-id' }).then((file) => {
   expectType<string>(file.id);
   expectType<number>(file.sizeBytes);
   expectType<{ role: 'admin' | 'visitor'; type: 'profile' | 'post' }>(
@@ -346,16 +350,16 @@ void client.broadMetadata
   .then((file) => {
     expectType<Record<string, string>>(file.metadata);
   });
-void client.broadMetadata.getFile({ id: 'file-id' }).then((file) => {
+void client.broadMetadata.get({ id: 'file-id' }).then((file) => {
   expectType<Record<string, string>>(file.metadata);
 });
-void client.broadMetadata.listFiles().then((page) => {
+void client.broadMetadata.list().then((page) => {
   expectType<Record<string, string>>(page.items[0]!.metadata);
 });
-void client.documents.getFile({ key: 'files/document.pdf' });
-void client.documents.getFile({ url: 'https://files.example/document.pdf' });
+void client.documents.get({ key: 'files/document.pdf' });
+void client.documents.get({ url: 'https://files.example/document.pdf' });
 
-void client.avatars.listFiles({ cursor: 'next', limit: 20 }).then((page) => {
+void client.avatars.list({ cursor: 'next', limit: 20 }).then((page) => {
   expectType<number>(page.limit);
   expectType<string | null>(page.nextCursor);
   expectType<boolean>(page.hasMore);
@@ -363,10 +367,10 @@ void client.avatars.listFiles({ cursor: 'next', limit: 20 }).then((page) => {
     page.items[0]!.metadata,
   );
 });
-expectError(client.avatars.listFiles({ pagination: { limit: 20 } }));
-expectNotAssignable<
-  NonNullable<Parameters<typeof client.documents.listFiles>[0]>
->({ filter: { path: { unknown: { eq: 'value' } } } });
+expectError(client.avatars.list({ pagination: { limit: 20 } }));
+expectNotAssignable<NonNullable<Parameters<typeof client.documents.list>[0]>>({
+  filter: { path: { unknown: { eq: 'value' } } },
+});
 
 expectAssignable<
   AsyncIterable<{
@@ -374,19 +378,19 @@ expectAssignable<
     metadata: { role: 'admin' | 'visitor'; type: 'profile' | 'post' };
     path: { author: string; type: string };
   }>
->(client.avatars.listAllFiles({ limit: 50 }));
+>(client.avatars.listAll({ limit: 50 }));
 
 expectType<Promise<{ ref: EdgeStoreFileReference }>>(
-  client.documents.confirmUpload({ id: 'file-id' }),
+  client.documents.confirm({ id: 'file-id' }),
 );
 expectType<Promise<{ ref: EdgeStoreFileReference }>>(
-  client.documents.deleteFile({ key: 'files/document.pdf' }),
+  client.documents.delete({ key: 'files/document.pdf' }),
 );
 expectType<Promise<{ ref: EdgeStoreFileReference }>>(
-  client.documents.restoreFile({ url: 'https://files.example/document.pdf' }),
+  client.documents.restore({ url: 'https://files.example/document.pdf' }),
 );
 void client.documents
-  .deleteFiles({ refs: [{ id: 'one' }, { key: 'files/two' }] })
+  .deleteMany({ refs: [{ id: 'one' }, { key: 'files/two' }] })
   .then((result) => {
     expectType<EdgeStoreFileReference[]>(result.succeeded);
     expectType<EdgeStoreFileReference>(result.failed[0]!.ref);
@@ -411,15 +415,15 @@ expectNotAssignable<ClientInputs['avatars']['upload']>({
   ctx: { userId: 'user-1', role: 'admin' },
 });
 expectType<string>({} as ClientOutputs['avatars']['upload']['id']);
-expectType<number>({} as ClientOutputs['documents']['getFile']['sizeBytes']);
+expectType<number>({} as ClientOutputs['documents']['get']['sizeBytes']);
 expectType<{ role: 'admin' | 'visitor'; type: 'profile' | 'post' }>(
-  {} as ClientOutputs['avatars']['listFiles']['items'][number]['metadata'],
+  {} as ClientOutputs['avatars']['list']['items'][number]['metadata'],
 );
 expectType<{ author: string; type: string }>(
   {} as ClientOutputs['avatars']['upload']['path'],
 );
 expectType<EdgeStoreFileReference>(
-  {} as ClientOutputs['documents']['deleteFile']['ref'],
+  {} as ClientOutputs['documents']['delete']['ref'],
 );
 expectAssignable<ClientOutputs>({} as DeprecatedClientResponses);
 expectAssignable<DeprecatedClientResponses>({} as ClientOutputs);
@@ -441,26 +445,26 @@ type SyntheticProtectedOutputs = InferClientOutputs<
   typeof syntheticProvider
 >;
 
-expectType<{ objectKey: string }>({} as SyntheticInputs['files']['getFile']);
+expectType<{ objectKey: string }>({} as SyntheticInputs['files']['get']);
 expectType<number | undefined>(
-  {} as NonNullable<SyntheticInputs['files']['listFiles']>['cursor'],
+  {} as NonNullable<SyntheticInputs['files']['list']>['cursor'],
 );
 expectType<{ objectKey: string }[]>(
-  {} as SyntheticInputs['files']['deleteFiles']['refs'],
+  {} as SyntheticInputs['files']['deleteMany']['refs'],
 );
 expectType<{ objectKey: string }>(
-  {} as SyntheticProtectedInputs['files']['getSignedUrl']['url'],
+  {} as SyntheticProtectedInputs['files']['createSignedUrl']['url'],
 );
-expectError(({} as SyntheticInputs['files']).restoreFile);
+expectError(({} as SyntheticInputs['files']).restore);
 
 expectType<string>({} as SyntheticOutputs['files']['upload']['eTag']);
 expectType<number | null>(
-  {} as SyntheticOutputs['files']['listFiles']['nextCursor'],
+  {} as SyntheticOutputs['files']['list']['nextCursor'],
 );
 expectType<'OBJECT_LOCKED'>(
-  {} as SyntheticOutputs['files']['deleteFiles']['failed'][number]['error']['code'],
+  {} as SyntheticOutputs['files']['deleteMany']['failed'][number]['error']['code'],
 );
 expectType<'us-east-1'>(
-  {} as SyntheticProtectedOutputs['files']['getSignedUrl']['providerRegion'],
+  {} as SyntheticProtectedOutputs['files']['createSignedUrl']['providerRegion'],
 );
-expectError(({} as SyntheticOutputs['files']).restoreFile);
+expectError(({} as SyntheticOutputs['files']).restore);

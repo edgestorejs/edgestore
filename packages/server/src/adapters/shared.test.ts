@@ -518,4 +518,51 @@ describe('requestUpload', () => {
       },
     });
   });
+
+  it('preserves application context keys that match registered JWT claims', async () => {
+    const beforeUpload = vi.fn(() => true);
+    const ctx = {
+      iat: 'application-iat',
+      exp: 'application-exp',
+      jti: 'application-jti',
+    };
+    const es = initEdgeStore.context<typeof ctx>().create();
+    const router = es.router({
+      documents: es.fileBucket().beforeUpload(beforeUpload),
+    });
+
+    await uploadWithContext({ router, ctx });
+
+    expect(beforeUpload).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ctx,
+      }),
+    );
+  });
+
+  it('rejects non-flat application context from the encrypted cookie', async () => {
+    const es = initEdgeStore.create();
+    const router = es.router({
+      documents: es.fileBucket(),
+    });
+    const ctxToken = await createContextToken({
+      router,
+      ctx: { nested: { value: 'not-flat' } } as never,
+    });
+    const provider = createProvider();
+
+    await expect(
+      requestUpload({
+        provider,
+        router,
+        ctxToken,
+        body: uploadBody(),
+        logger,
+      }),
+    ).rejects.toMatchObject({
+      code: 'UNAUTHORIZED',
+      message: 'Invalid edgestore-ctx cookie',
+    });
+    expect(provider.uploads.request).not.toHaveBeenCalled();
+  });
 });

@@ -76,12 +76,10 @@ export type BucketFunctions<TRouter extends AnyRouter> = {
             options?: UploadOptions;
           },
     ) => Promise<Prettify<UploadResponse<TRouter['buckets'][K]>>>;
-    confirmUpload: (params: { url: string }) => Promise<void>;
-    confirmUploads: (params: {
-      urls: string[];
-    }) => Promise<SharedFileMutationRes>;
-    deleteFile: (params: { url: string }) => Promise<void>;
-    deleteFiles: (params: { urls: string[] }) => Promise<SharedFileMutationRes>;
+    confirm: (params: { url: string }) => Promise<void>;
+    confirmMany: (params: { urls: string[] }) => Promise<SharedFileMutationRes>;
+    delete: (params: { url: string }) => Promise<void>;
+    deleteMany: (params: { urls: string[] }) => Promise<SharedFileMutationRes>;
   };
 };
 
@@ -144,7 +142,7 @@ export function createNextProxy<TRouter extends AnyRouter>({
             uploadingCountRef.current--;
           }
         },
-        confirmUpload: async (params: { url: string }) => {
+        confirm: async (params: { url: string }) => {
           const result = await mutateFiles('confirm', [params.url], {
             bucketName: bucketName as string,
             apiPath,
@@ -154,12 +152,12 @@ export function createNextProxy<TRouter extends AnyRouter>({
             throw new EdgeStoreClientError(failure.error.message);
           }
         },
-        confirmUploads: async (params: { urls: string[] }) =>
+        confirmMany: async (params: { urls: string[] }) =>
           await mutateFiles('confirm', params.urls, {
             bucketName: bucketName as string,
             apiPath,
           }),
-        deleteFile: async (params: { url: string }) => {
+        delete: async (params: { url: string }) => {
           const result = await mutateFiles('delete', [params.url], {
             bucketName: bucketName as string,
             apiPath,
@@ -169,7 +167,7 @@ export function createNextProxy<TRouter extends AnyRouter>({
             throw new EdgeStoreClientError(failure.error.message);
           }
         },
-        deleteFiles: async (params: { urls: string[] }) =>
+        deleteMany: async (params: { urls: string[] }) =>
           await mutateFiles('delete', params.urls, {
             bucketName: bucketName as string,
             apiPath,

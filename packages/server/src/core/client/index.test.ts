@@ -136,6 +136,23 @@ describe('createEdgeStore', () => {
     const client = createClient();
 
     expect(Object.keys(client)).toEqual(['documents', 'publicFiles']);
+    expect(Object.keys(client.publicFiles)).toEqual([
+      'upload',
+      'get',
+      'confirm',
+      'confirmMany',
+      'delete',
+      'deleteMany',
+      'restore',
+      'restoreMany',
+      'list',
+      'listAll',
+    ]);
+    expect(Object.keys(client.documents)).toEqual([
+      ...Object.keys(client.publicFiles),
+      'createSignedUrl',
+      'createSignedUrls',
+    ]);
     expect(client.documents).toBe(client.documents);
     expect('then' in client).toBe(false);
     await expect(Promise.resolve(client)).resolves.toBe(client);
@@ -156,11 +173,11 @@ describe('createEdgeStore', () => {
       provider: getOnlyProvider,
     }).client;
 
-    expect(Object.keys(client.documents)).toEqual(['getFile']);
+    expect(Object.keys(client.documents)).toEqual(['get']);
     backend.getFile.mockResolvedValue(createFile());
 
     await expect(
-      client.documents.getFile({ id: 'file-id' }),
+      client.documents.get({ id: 'file-id' }),
     ).resolves.toMatchObject({ id: 'file-id' });
     expect(backend.getFile).toHaveBeenCalledWith({
       bucketName: 'documents',
@@ -314,8 +331,8 @@ describe('createEdgeStore', () => {
       file: createFile({
         bucketName: 'documents',
         sizeBytes: 7,
-        path: { author: 'user-1', type: 'invoice' },
-        metadata: { userId: 'user-1', type: 'invoice' },
+        path: { providerPath: 'not-exposed' },
+        metadata: { providerMetadata: 'not-exposed' },
       }),
     });
 
@@ -425,7 +442,7 @@ describe('createEdgeStore', () => {
     backend.deleteFiles.mockResolvedValueOnce({
       results: [{ success: true }],
     });
-    await client.documents.deleteFile({ url: 'https://files.example/file' });
+    await client.documents.delete({ url: 'https://files.example/file' });
     expect(beforeDelete).not.toHaveBeenCalled();
   });
 
@@ -492,10 +509,10 @@ describe('createEdgeStore', () => {
       hasMore: false,
     });
 
-    const file = await client.documents.getFile({
+    const file = await client.documents.get({
       url: 'https://files.example.com/_protected/file.txt',
     });
-    const files = await client.documents.listFiles();
+    const files = await client.documents.list();
 
     expect(file.uploadedAt).toEqual(new Date('2024-01-02T03:04:05.000Z'));
     expect(file.url).toBe(
@@ -545,16 +562,16 @@ describe('createEdgeStore', () => {
       ],
     });
 
-    await client.publicFiles.getFile({ key: 'files/file.txt' });
+    await client.publicFiles.get({ key: 'files/file.txt' });
     expect(EdgeStoreFileMutationError).toBe(SdkFileMutationError);
     await expect(
-      client.publicFiles.confirmUpload({ id: 'file-id' }),
+      client.publicFiles.confirm({ id: 'file-id' }),
     ).rejects.toMatchObject({
       name: 'EdgeStoreFileMutationError',
       fileRef: { id: 'file-id' },
     });
     await expect(
-      client.publicFiles.deleteFiles({
+      client.publicFiles.deleteMany({
         refs: [{ key: 'files/one' }, { url: 'https://files.example/missing' }],
       }),
     ).resolves.toEqual({
@@ -578,7 +595,7 @@ describe('createEdgeStore', () => {
     });
 
     await expect(
-      client.publicFiles.deleteFiles({
+      client.publicFiles.deleteMany({
         refs: [{ key: 'files/one' }, { key: 'files/two' }],
       }),
     ).rejects.toThrow('The provider returned 1 mutation results for 2 files.');
@@ -601,7 +618,7 @@ describe('createEdgeStore', () => {
     const client = createClient();
 
     const ids = [];
-    for await (const file of client.publicFiles.listAllFiles({ limit: 1 })) {
+    for await (const file of client.publicFiles.listAll({ limit: 1 })) {
       ids.push(file.id);
     }
 
@@ -624,7 +641,7 @@ describe('createEdgeStore', () => {
     );
 
     await expect(
-      client.documents.getFile({
+      client.documents.get({
         url: 'https://files.example.com/_protected/file.txt',
       }),
     ).rejects.toThrow(

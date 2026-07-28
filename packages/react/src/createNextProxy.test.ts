@@ -477,7 +477,7 @@ describe('createNextProxy file mutations', () => {
     const { assets } = createProxy();
 
     await expect(
-      assets.confirmUpload({ url: 'https://files.example/file.txt' }),
+      assets.confirm({ url: 'https://files.example/file.txt' }),
     ).rejects.toBeInstanceOf(EdgeStoreClientError);
   });
 
@@ -496,7 +496,7 @@ describe('createNextProxy file mutations', () => {
     const { assets } = createProxy();
 
     await expect(
-      assets.deleteFile({ url: 'https://files.example/file.txt' }),
+      assets.delete({ url: 'https://files.example/file.txt' }),
     ).rejects.toBeInstanceOf(EdgeStoreClientError);
   });
 
@@ -514,7 +514,7 @@ describe('createNextProxy file mutations', () => {
     const { assets } = createProxy();
 
     await expect(
-      assets.deleteFiles({
+      assets.deleteMany({
         urls: [
           'https://files.example/one.txt',
           'https://files.example/two.txt',

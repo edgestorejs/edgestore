@@ -1,4 +1,6 @@
+import { initEdgeStore, type EdgeStoreRouter } from '@edgestore/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { z } from 'zod';
 import Logger, { type LoggerLike } from '../libs/logger';
 import {
   completeMultipartUploadBody,
@@ -20,11 +22,14 @@ describe('adapter dispatcher', () => {
     vi.unstubAllGlobals();
   });
 
-  function createDispatcher(logger: LoggerLike = new Logger()) {
+  function createDispatcher(
+    logger: LoggerLike = new Logger(),
+    router: EdgeStoreRouter<typeof testCtx> = createConformanceRouter(),
+  ) {
     const provider = createConformanceProvider();
     const edgeStore = {
       provider,
-      router: createConformanceRouter(),
+      router,
     };
     const dispatch = (
       pathname: string,
@@ -49,6 +54,15 @@ describe('adapter dispatcher', () => {
       });
 
     return { dispatch, provider };
+  }
+
+  function createSilentLogger(): LoggerLike {
+    return {
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    };
   }
 
   it('handles health and unknown routes centrally', async () => {
@@ -100,6 +114,62 @@ describe('adapter dispatcher', () => {
       code: 'CREATE_CONTEXT_ERROR',
       message: 'Error creating context',
     });
+  });
+
+  it.each([
+    '/api/edgestore/request-upload',
+    '/api/edgestore/request-upload-parts',
+    '/api/edgestore/complete-multipart-upload',
+    '/api/edgestore/confirm-uploads',
+    '/api/edgestore/delete-files',
+  ])('rejects malformed bodies for %s', async (pathname) => {
+    const { dispatch, provider } = createDispatcher(createSilentLogger());
+
+    const response = await dispatch(pathname, { body: {} });
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toMatchObject({
+      code: 'BAD_REQUEST',
+      message: 'Invalid request body',
+    });
+    expect(provider.uploads.request).not.toHaveBeenCalled();
+    expect(provider.uploads.multipart?.requestParts).not.toHaveBeenCalled();
+    expect(provider.uploads.multipart?.complete).not.toHaveBeenCalled();
+    expect(provider.files.confirm).not.toHaveBeenCalled();
+    expect(provider.files.delete).not.toHaveBeenCalled();
+  });
+
+  it('rejects invalid bucket input before hooks or providers run', async () => {
+    const beforeUpload = vi.fn(() => true);
+    const es = initEdgeStore.context<typeof testCtx>().create();
+    const router = es.router({
+      documents: es
+        .fileBucket()
+        .input(z.object({ label: z.string() }))
+        .beforeUpload(beforeUpload),
+    });
+    const { dispatch, provider } = createDispatcher(
+      createSilentLogger(),
+      router,
+    );
+    const init = await dispatch('/api/edgestore/init');
+    const token = extractCookieValue(init.headers.getSetCookie());
+
+    const response = await dispatch('/api/edgestore/request-upload', {
+      body: {
+        ...requestUploadBody,
+        input: { label: 123 },
+      },
+      cookieHeader: `${testCookieConfig.ctx.name}=${token}`,
+    });
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toMatchObject({
+      code: 'BAD_REQUEST',
+      message: 'Invalid bucket input',
+    });
+    expect(beforeUpload).not.toHaveBeenCalled();
+    expect(provider.uploads.request).not.toHaveBeenCalled();
   });
 
   it('keeps operation logging scoped to the selected handler', async () => {
