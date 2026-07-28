@@ -1,3 +1,6 @@
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 import { PassThrough, Readable } from 'node:stream';
 import type { ManagementEdgeStoreSdk } from '@edgestore/sdk';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -134,6 +137,116 @@ describe('runCli', () => {
       signal: fixture.runtime.signal,
     });
     expect(fixture.stdout()).toContain('invited');
+  });
+
+  it('links an existing project through non-interactive init', async () => {
+    fixture.runtime.io.inputIsTty = false;
+
+    await runCli(
+      ['init', '--link', project.basePath, '--without-key'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(fixture.repoConfig.config).toEqual({
+      account: account.id,
+      project: project.basePath,
+    });
+    expect(fixture.stdout()).toContain(`Linked ${project.name}`);
+  });
+
+  it('validates non-interactive bucket options before creating a project', async () => {
+    fixture.runtime.io.inputIsTty = false;
+
+    const exitCode = await runCli(
+      ['init', '--new', '--name', 'Marketing Site', '--bucket', 'publicFiles'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(2);
+    expect(fixture.projectCreate).not.toHaveBeenCalled();
+    expect(fixture.stderr()).toContain('--bucket-type');
+  });
+
+  it('delivers new-project keys to an ignored env file during init', async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), 'edgestore-cli-'));
+    fixture.runtime.cwd = directory;
+    fixture.runtime.io.inputIsTty = false;
+
+    try {
+      await runCli(
+        ['init', '--new', '--name', 'Marketing Site'],
+        fixture.runtime,
+        '0.0.0',
+      );
+
+      expect(await readFile(path.join(directory, '.env.local'), 'utf8')).toBe(
+        'EDGE_STORE_ACCESS_KEY=access_test\nEDGE_STORE_SECRET_KEY=secret_test\n',
+      );
+      expect(await readFile(path.join(directory, '.gitignore'), 'utf8')).toBe(
+        '.env.local\n',
+      );
+      expect(fixture.repoConfig.config).toEqual({
+        account: account.id,
+        project: project.basePath,
+      });
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
+  it('opens the linked project in the dashboard', async () => {
+    fixture.repoConfig.config = {
+      account: account.id,
+      project: project.basePath,
+    };
+
+    await runCli(['open', 'project'], fixture.runtime, '0.0.0');
+
+    expect(fixture.openUrl).toHaveBeenCalledWith(
+      `https://dashboard.edgestore.dev/projects/${project.basePath}`,
+    );
+  });
+
+  it('prints dashboard URLs without opening them in plain mode', async () => {
+    await runCli(['open', 'billing', '--plain'], fixture.runtime, '0.0.0');
+
+    expect(fixture.openUrl).not.toHaveBeenCalled();
+    expect(fixture.stdout()).toBe(
+      'https://dashboard.edgestore.dev/settings/billing\n',
+    );
+  });
+
+  it('prints shell completion scripts', async () => {
+    await runCli(['completion', 'fish', '--plain'], fixture.runtime, '0.0.0');
+
+    expect(fixture.stdout()).toContain('complete -c edgestore');
+    expect(fixture.stdout()).toContain("-a 'project'");
+  });
+
+  it('checks linked project keys without exposing env secrets', async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), 'edgestore-doctor-'));
+    fixture.runtime.cwd = directory;
+    fixture.repoConfig.config = {
+      account: account.id,
+      project: project.basePath,
+    };
+    await writeFile(
+      path.join(directory, '.env.local'),
+      'EDGE_STORE_ACCESS_KEY=access_test\nEDGE_STORE_SECRET_KEY=do-not-print\n',
+    );
+
+    try {
+      await runCli(['doctor'], fixture.runtime, '1.2.3');
+
+      expect(fixture.stdout()).toContain('CLI');
+      expect(fixture.stdout()).toContain('1.2.3');
+      expect(fixture.stdout()).toContain('Linked project');
+      expect(fixture.stdout()).not.toContain('do-not-print');
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
   });
 
   it('links by project ID but stores the canonical base path', async () => {
@@ -491,6 +604,24 @@ function createFixture() {
       updatedAt: project.updatedAt,
     },
   }));
+  const openUrl = vi.fn(async () => undefined);
+  const runCommand = vi.fn(async () => undefined);
+  const projectCreate = vi.fn(async () => ({
+    project,
+    projectKey: {
+      key: {
+        id: 'key_123',
+        name: 'default',
+        accessKey: 'access_test',
+        projectId: project.id,
+        accountId: account.id,
+        createdAt: project.createdAt,
+        updatedAt: project.updatedAt,
+        revokedAt: null,
+      },
+      secretKey: 'secret_test',
+    },
+  }));
   const credentials: CredentialStore = {
     get: vi.fn(async () => credentialValue.value),
     set: setCredential,
@@ -587,22 +718,7 @@ function createFixture() {
       projects: {
         list: vi.fn(async () => ({ projects: [project] })),
         get: vi.fn(async () => ({ project })),
-        create: vi.fn(async () => ({
-          project,
-          projectKey: {
-            key: {
-              id: 'key_123',
-              name: 'default',
-              accessKey: 'access_test',
-              projectId: project.id,
-              accountId: account.id,
-              createdAt: project.createdAt,
-              updatedAt: project.updatedAt,
-              revokedAt: null,
-            },
-            secretKey: 'secret_test',
-          },
-        })),
+        create: projectCreate,
         delete: vi.fn(async () => ({})),
       },
       projectKeys: {
@@ -769,8 +885,17 @@ function createFixture() {
     prompts: {
       readToken,
       confirmTyped,
+      confirm: vi.fn(async () => false),
+      select: vi.fn(async () => {
+        throw new Error('Unexpected select prompt');
+      }),
+      text: vi.fn(async () => {
+        throw new Error('Unexpected text prompt');
+      }),
     },
     sdkFactory: vi.fn(() => sdk),
+    openUrl,
+    runCommand,
   };
 
   return {
@@ -787,6 +912,9 @@ function createFixture() {
     accountLeave,
     memberList,
     invitationCreate,
+    projectCreate,
+    openUrl,
+    runCommand,
     stdout: () => Buffer.concat(stdoutChunks).toString('utf8'),
     stderr: () => Buffer.concat(stderrChunks).toString('utf8'),
   };

@@ -1,3 +1,4 @@
+import { spawn } from 'node:child_process';
 import path from 'node:path';
 import {
   createEdgeStoreSdk,
@@ -62,6 +63,8 @@ export type CliRuntime = {
   credentials: CredentialStore;
   prompts: CliPrompts;
   sdkFactory: SdkFactory;
+  openUrl(url: string): Promise<void>;
+  runCommand(command: string, args: string[]): Promise<void>;
 };
 
 export function createDefaultRuntime(signal: AbortSignal): CliRuntime {
@@ -85,6 +88,8 @@ export function createDefaultRuntime(signal: AbortSignal): CliRuntime {
     prompts: new DefaultCliPrompts(),
     sdkFactory: ({ token, baseUrl }) =>
       createEdgeStoreSdk({ credentials: { token }, apiUrl: baseUrl }),
+    openUrl,
+    runCommand,
   };
 }
 
@@ -146,4 +151,34 @@ function getOutputMode(flags: GlobalFlags): OutputMode {
     return 'plain';
   }
   return 'human';
+}
+
+function openUrl(url: string): Promise<void> {
+  if (process.platform === 'darwin') {
+    return runCommand('open', [url]);
+  }
+  if (process.platform === 'win32') {
+    return runCommand('cmd', ['/c', 'start', '', url]);
+  }
+  return runCommand('xdg-open', [url]);
+}
+
+function runCommand(command: string, args: string[]): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, args, { stdio: 'inherit' });
+    child.once('error', reject);
+    child.once('exit', (code, signal) => {
+      if (code === 0) {
+        resolve();
+        return;
+      }
+      reject(
+        new Error(
+          signal
+            ? `${command} was terminated by ${signal}.`
+            : `${command} exited with code ${code ?? 'unknown'}.`,
+        ),
+      );
+    });
+  });
 }

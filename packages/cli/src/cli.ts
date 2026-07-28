@@ -16,6 +16,7 @@ import {
   bucketListCommand,
   bucketShowCommand,
 } from './commands/bucket';
+import { completionCommand } from './commands/completion';
 import { doctorCommand } from './commands/doctor';
 import {
   fileDeleteCommand,
@@ -23,6 +24,7 @@ import {
   fileInfoCommand,
   fileListCommand,
 } from './commands/file';
+import { initCommand } from './commands/init';
 import {
   invitationActionCommand,
   invitationListCommand,
@@ -31,6 +33,7 @@ import {
   memberRemoveCommand,
   memberRoleCommand,
 } from './commands/member';
+import { openCommand } from './commands/open';
 import {
   projectCreateCommand,
   projectCurrentCommand,
@@ -103,7 +106,18 @@ function createProgram(runtime: CliRuntime, version: string): Command {
     .configureOutput({
       writeOut: (value) => runtime.io.stdout.write(value),
       writeErr: (value) => runtime.io.stderr.write(value),
-    });
+    })
+    .addHelpText(
+      'after',
+      `
+Common workflows:
+  edgestore login --token
+  edgestore init
+  edgestore project list
+  edgestore file upload ./logo.png --bucket publicImages
+  edgestore project key rotate x36t1ejdlz key_123 --output .env.local --update
+`,
+    );
 
   program.hook('preAction', () => {
     outputFor(runtime, globalFlags(program));
@@ -135,7 +149,61 @@ function createProgram(runtime: CliRuntime, version: string): Command {
     .command('doctor')
     .description('Check local configuration and API connectivity')
     .action(async () => {
-      await doctorCommand(runtime, globalFlags(program));
+      await doctorCommand(runtime, globalFlags(program), version);
+    });
+
+  program
+    .command('init')
+    .description('Configure EdgeStore for the current project')
+    .option('--new', 'create a new project')
+    .option('--link <project>', 'link an existing project')
+    .option('--name <name>', 'new project name')
+    .option('--account <account-id>', 'override the active account')
+    .option('--create-key', 'create a new local project key')
+    .option('--without-key', 'do not create a project key')
+    .option('--output <file>', 'write project keys to an env file')
+    .option('--update', 'replace existing values in the output file')
+    .option('--bucket <bucket>', 'create a bucket')
+    .option('--bucket-type <type>', 'bucket type: file or image')
+    .option('--public', 'make the new bucket public')
+    .option('--protected', 'make the new bucket protected')
+    .option('--install', 'install detected EdgeStore packages')
+    .option('--allow-overage', 'allow billable project overage')
+    .addHelpText(
+      'after',
+      `
+Examples:
+  edgestore init --new --name "Marketing Site" --output .env.local
+  edgestore init --link x36t1ejdlz
+  edgestore init --link x36t1ejdlz --create-key --output .env.local
+`,
+    )
+    .action(async (options) => {
+      await initCommand(runtime, globalFlags(program), options);
+    });
+
+  program
+    .command('open [target] [project]')
+    .description('Open the EdgeStore dashboard')
+    .addHelpText(
+      'after',
+      `
+Targets:
+  account
+  billing
+  project [basePath]
+  keys [basePath]
+`,
+    )
+    .action(async (target?: string, project?: string) => {
+      await openCommand(runtime, globalFlags(program), { target, project });
+    });
+
+  program
+    .command('completion <shell>')
+    .description('Print shell completion for bash, zsh, or fish')
+    .action(async (shell: string) => {
+      await completionCommand(runtime, globalFlags(program), shell);
     });
 
   const account = program
@@ -355,6 +423,17 @@ function createProgram(runtime: CliRuntime, version: string): Command {
     .option('--copy', 'copy the key pair to the clipboard')
     .option('--output <file>', 'write the key pair to an env file')
     .option('--update', 'replace existing key values in the output file')
+    .addHelpText(
+      'after',
+      `
+The secret is shown only once.
+
+Examples:
+  edgestore project key create x36t1ejdlz --name production
+  edgestore project key create x36t1ejdlz --name ci --copy
+  edgestore project key create x36t1ejdlz --name local --output .env.local
+`,
+    )
     .action(async (projectRef: string, options) => {
       await projectKeyCreateCommand(runtime, globalFlags(program), {
         project: projectRef,

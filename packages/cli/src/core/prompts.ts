@@ -1,9 +1,21 @@
-import { isCancel, password, text } from '@clack/prompts';
+import { confirm, isCancel, password, select, text } from '@clack/prompts';
 import { CliError, usageError } from './errors';
+
+export type PromptOption<TValue extends string> = {
+  value: TValue;
+  label: string;
+  hint?: string;
+};
 
 export interface CliPrompts {
   readToken(input: NodeJS.ReadableStream, inputIsTty: boolean): Promise<string>;
   confirmTyped(message: string, expected: string): Promise<void>;
+  confirm(message: string, initialValue?: boolean): Promise<boolean>;
+  select<TValue extends string>(
+    message: string,
+    options: PromptOption<TValue>[],
+  ): Promise<TValue>;
+  text(message: string, placeholder?: string): Promise<string>;
 }
 
 export class DefaultCliPrompts implements CliPrompts {
@@ -44,6 +56,38 @@ export class DefaultCliPrompts implements CliPrompts {
       });
     }
   }
+
+  async confirm(message: string, initialValue = false): Promise<boolean> {
+    return unwrapPrompt(
+      await confirm({
+        message,
+        initialValue,
+      }),
+    );
+  }
+
+  async select<TValue extends string>(
+    message: string,
+    options: PromptOption<TValue>[],
+  ): Promise<TValue> {
+    return unwrapPrompt(
+      await select<string>({
+        message,
+        options,
+      }),
+    ) as TValue;
+  }
+
+  async text(message: string, placeholder?: string): Promise<string> {
+    const result = unwrapPrompt(
+      await text({
+        message,
+        placeholder,
+        validate: (value) => (value?.trim() ? undefined : 'Value is required.'),
+      }),
+    );
+    return result.trim();
+  }
 }
 
 function validateToken(value: string): string {
@@ -52,4 +96,11 @@ function validateToken(value: string): string {
     throw usageError('missing_token', 'No management token was provided.');
   }
   return token;
+}
+
+function unwrapPrompt<TValue>(value: TValue | symbol): TValue {
+  if (isCancel(value)) {
+    throw new CliError('interrupted', 'Operation canceled.', { exitCode: 130 });
+  }
+  return value;
 }
