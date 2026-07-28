@@ -123,6 +123,30 @@ describe('runCli', () => {
     expect(fixture.stdout()).toContain('Deleted project');
   });
 
+  it('creates a project key and exposes its secret once', async () => {
+    await runCli(
+      ['project', 'key', 'create', project.basePath, '--name', 'production'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(fixture.stdout()).toContain('EDGE_STORE_ACCESS_KEY=access_test');
+    expect(fixture.stdout()).toContain('EDGE_STORE_SECRET_KEY=secret_test');
+  });
+
+  it('requires typed confirmation before revoking a project key', async () => {
+    await runCli(
+      ['project', 'key', 'revoke', project.basePath, 'key_123'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(fixture.confirmTyped).toHaveBeenCalledWith(
+      expect.stringContaining('last active key'),
+      'key_123',
+    );
+  });
+
   it('validates a token before saving it', async () => {
     await runCli(['login', '--token'], fixture.runtime, '0.0.0');
 
@@ -257,6 +281,36 @@ function createFixture() {
           },
         })),
         delete: vi.fn(async () => ({})),
+      },
+      projectKeys: {
+        list: vi.fn(async () => ({
+          keys: [
+            {
+              id: 'key_123',
+              name: 'production',
+              accessKey: 'access_test',
+              projectId: project.id,
+              accountId: account.id,
+              createdAt: project.createdAt,
+              updatedAt: project.updatedAt,
+              revokedAt: null,
+            },
+          ],
+        })),
+        create: vi.fn(async () => ({
+          key: {
+            id: 'key_123',
+            name: 'production',
+            accessKey: 'access_test',
+            projectId: project.id,
+            accountId: account.id,
+            createdAt: project.createdAt,
+            updatedAt: project.updatedAt,
+            revokedAt: null,
+          },
+          secretKey: 'secret_test',
+        })),
+        revoke: vi.fn(async () => ({})),
       },
     },
   } as unknown as ManagementEdgeStoreSdk;

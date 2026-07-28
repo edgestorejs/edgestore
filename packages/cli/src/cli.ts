@@ -15,6 +15,12 @@ import {
   projectShowCommand,
   projectUnlinkCommand,
 } from './commands/project';
+import {
+  projectKeyCreateCommand,
+  projectKeyListCommand,
+  projectKeyRevokeCommand,
+  projectKeyRotateCommand,
+} from './commands/projectKey';
 import { normalizeError } from './core/errors';
 import { outputFor, type CliRuntime, type GlobalFlags } from './core/runtime';
 
@@ -193,6 +199,58 @@ function createProgram(runtime: CliRuntime, version: string): Command {
     .description('Remove the local project link')
     .action(async () => {
       await projectUnlinkCommand(runtime, globalFlags(program));
+    });
+
+  const projectKey = project.command('key').description('Manage project keys');
+
+  projectKey
+    .command('list <project>')
+    .alias('ls')
+    .description('List project key metadata')
+    .action(async (projectRef: string) => {
+      await projectKeyListCommand(runtime, globalFlags(program), projectRef);
+    });
+
+  projectKey
+    .command('create <project>')
+    .description('Create a named project key')
+    .requiredOption('--name <name>', 'key name')
+    .option('--copy', 'copy the key pair to the clipboard')
+    .option('--output <file>', 'write the key pair to an env file')
+    .option('--update', 'replace existing key values in the output file')
+    .action(async (projectRef: string, options) => {
+      await projectKeyCreateCommand(runtime, globalFlags(program), {
+        project: projectRef,
+        ...options,
+      });
+    });
+
+  projectKey
+    .command('revoke <project> <key-id>')
+    .description('Revoke a project key')
+    .option('--yes', 'skip interactive confirmation')
+    .action(async (projectRef: string, keyId: string, options) => {
+      await projectKeyRevokeCommand(runtime, globalFlags(program), {
+        project: projectRef,
+        keyId,
+        ...options,
+      });
+    });
+
+  projectKey
+    .command('rotate <project> <key-id>')
+    .description('Create a replacement key and revoke the old key')
+    .requiredOption('--name <name>', 'replacement key name')
+    .option('--copy', 'copy the replacement key pair to the clipboard')
+    .option('--output <file>', 'write the replacement key pair to an env file')
+    .option('--update', 'replace existing key values in the output file')
+    .option('--yes', 'confirm non-interactive rotation')
+    .action(async (projectRef: string, keyId: string, options) => {
+      await projectKeyRotateCommand(runtime, globalFlags(program), {
+        project: projectRef,
+        keyId,
+        ...options,
+      });
     });
 
   return program;
