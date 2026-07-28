@@ -147,6 +147,19 @@ describe('runCli', () => {
     );
   });
 
+  it('creates an account management token with one-time output', async () => {
+    await runCli(
+      ['token', 'create', '--name', 'deploy', '--preset', 'deploy'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(fixture.stdout()).toContain('EDGESTORE_TOKEN=mgmt_created');
+    expect(fixture.stdout()).toContain(
+      'You will not be able to view it again.',
+    );
+  });
+
   it('validates a token before saving it', async () => {
     await runCli(['login', '--token'], fixture.runtime, '0.0.0');
 
@@ -310,6 +323,31 @@ function createFixture() {
           },
           secretKey: 'secret_test',
         })),
+        revoke: vi.fn(async () => ({})),
+      },
+      tokens: {
+        listAccount: vi.fn(async () => ({ tokens: [] })),
+        listUser: vi.fn(async () => ({ tokens: [] })),
+        createAccount: vi.fn(async () => ({
+          token: {
+            id: 'tok_created',
+            name: 'deploy',
+            kind: 'ACCOUNT',
+            tokenPrefix: 'edge_',
+            scopes: ['project:read'],
+            createdAt: project.createdAt,
+            updatedAt: project.updatedAt,
+            lastUsedAt: null,
+            revokedAt: null,
+            expiresAt: null,
+            accountId: account.id,
+            userId: null,
+          },
+          secret: 'mgmt_created',
+        })),
+        createUser: vi.fn(async () => {
+          throw new Error('not used');
+        }),
         revoke: vi.fn(async () => ({})),
       },
     },

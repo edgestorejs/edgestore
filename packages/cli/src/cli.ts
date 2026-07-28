@@ -21,6 +21,11 @@ import {
   projectKeyRevokeCommand,
   projectKeyRotateCommand,
 } from './commands/projectKey';
+import {
+  tokenCreateCommand,
+  tokenListCommand,
+  tokenRevokeCommand,
+} from './commands/token';
 import { normalizeError } from './core/errors';
 import { outputFor, type CliRuntime, type GlobalFlags } from './core/runtime';
 
@@ -253,7 +258,70 @@ function createProgram(runtime: CliRuntime, version: string): Command {
       });
     });
 
+  const token = program
+    .command('token')
+    .description('Manage account and user management tokens');
+
+  token
+    .command('list')
+    .alias('ls')
+    .description('List management token metadata')
+    .option('--user', 'list user-owned tokens')
+    .option('--account <account-id>', 'override the active account')
+    .option('--page <number>', 'page number', parsePositiveInteger)
+    .option('--limit <number>', 'page size', parsePositiveInteger)
+    .option('--all', 'fetch every page')
+    .action(async (options) => {
+      await tokenListCommand(runtime, globalFlags(program), options);
+    });
+
+  token
+    .command('create')
+    .description('Create a management token')
+    .requiredOption('--name <name>', 'token name')
+    .option('--user', 'create a user-owned token')
+    .option('--account <account-id>', 'override the active account')
+    .option(
+      '--preset <preset>',
+      'permission preset: deploy, read-only, or full-access',
+    )
+    .option('--scope <scope>', 'explicit permission scope', collectValue, [])
+    .option('--expires-at <timestamp>', 'ISO 8601 expiration timestamp')
+    .option('--copy', 'copy the token to the clipboard')
+    .option('--output <file>', 'write the token to an env file')
+    .option('--update', 'replace an existing token in the output file')
+    .action(async (options) => {
+      await tokenCreateCommand(runtime, globalFlags(program), options);
+    });
+
+  token
+    .command('revoke <token-id>')
+    .description('Revoke a management token')
+    .option('--yes', 'skip interactive confirmation')
+    .action(async (tokenId: string, options) => {
+      await tokenRevokeCommand(runtime, globalFlags(program), {
+        tokenId,
+        ...options,
+      });
+    });
+
   return program;
+}
+
+function collectValue(value: string, previous: string[]): string[] {
+  return [...previous, value];
+}
+
+function parsePositiveInteger(value: string): number {
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 1) {
+    throw new CommanderError(
+      2,
+      'invalid_number',
+      'Expected a positive integer.',
+    );
+  }
+  return parsed;
 }
 
 function globalFlags(program: Command): GlobalFlags {
