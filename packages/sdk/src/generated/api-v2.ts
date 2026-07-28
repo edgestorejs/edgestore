@@ -324,7 +324,7 @@ export type paths = {
         readonly patch?: never;
         readonly trace?: never;
     };
-    readonly "/management/projects/{projectRef}/files/download-urls": {
+    readonly "/management/projects/{projectRef}/files/access-urls": {
         readonly parameters: {
             readonly query?: never;
             readonly header?: never;
@@ -334,10 +334,10 @@ export type paths = {
         readonly get?: never;
         readonly put?: never;
         /**
-         * Create management file download URLs
-         * @description Creates read URLs for one or more files. Protected files receive expiring signed URLs; public files may return their canonical URLs.
+         * Generate management file access URLs
+         * @description Generates read-access URLs for one or more files. Protected files receive expiring signed URLs; public files may return their canonical URLs.
          */
-        readonly post: operations["v2.management.files.downloadUrls.create"];
+        readonly post: operations["v2.management.files.generateAccessUrls"];
         readonly delete?: never;
         readonly options?: never;
         readonly head?: never;
@@ -798,10 +798,10 @@ export type paths = {
         readonly get?: never;
         readonly put?: never;
         /**
-         * Create runtime signed read URLs
-         * @description Creates expiring read URLs for protected files and optionally their thumbnails.
+         * Generate runtime signed read URLs
+         * @description Generates expiring read URLs for protected files and optionally their thumbnails.
          */
-        readonly post: operations["v2.runtime.files.signedUrls.create"];
+        readonly post: operations["v2.runtime.files.generateSignedReadUrls"];
         readonly delete?: never;
         readonly options?: never;
         readonly head?: never;
@@ -4005,7 +4005,7 @@ export interface operations {
             };
         };
     };
-    readonly "v2.management.files.downloadUrls.create": {
+    readonly "v2.management.files.generateAccessUrls": {
         readonly parameters: {
             readonly query?: never;
             readonly header?: never;
@@ -4049,7 +4049,7 @@ export interface operations {
                     readonly "application/json": {
                         /** @description Successful response payload. */
                         readonly data: {
-                            readonly downloadUrls: readonly {
+                            readonly accessUrls: readonly {
                                 /** @description Input reference for this result. */
                                 readonly fileRef: ({
                                     /** @description Unique file ID. */
@@ -7902,7 +7902,7 @@ export interface operations {
             };
         };
     };
-    readonly "v2.runtime.files.signedUrls.create": {
+    readonly "v2.runtime.files.generateSignedReadUrls": {
         readonly parameters: {
             readonly query?: never;
             readonly header?: never;
