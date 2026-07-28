@@ -25,8 +25,8 @@ describe('resolveApiUrl', () => {
   });
 
   it('rejects credentials embedded in the URL', () => {
-    expect(() =>
-      resolveApiUrl('https://token@example.com', undefined),
-    ).toThrow('must not contain credentials');
+    expect(() => resolveApiUrl('https://token@example.com', undefined)).toThrow(
+      'must not contain credentials',
+    );
   });
 });
