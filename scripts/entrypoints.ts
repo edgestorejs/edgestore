@@ -99,7 +99,7 @@ export async function generateEntrypoints(rawInputs: string[]) {
 
       // index.d.ts
       const typeFile = path.resolve(importPath, 'index.d.ts');
-      const typeFileContent = `export * from '${resolvedImport}';\n`;
+      const typeFileContent = `export * from '${resolvedImport}/index.js';\n`;
       writeFileSyncRecursive(typeFile, typeFileContent);
     });
 
