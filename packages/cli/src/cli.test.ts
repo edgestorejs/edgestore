@@ -270,6 +270,22 @@ describe('runCli', () => {
     );
   });
 
+  it('starts an empty-bucket job and prints its status command', async () => {
+    fixture.repoConfig.config = {
+      account: account.id,
+      project: project.basePath,
+    };
+
+    await runCli(
+      ['bucket', 'empty', 'publicFiles', '--yes'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(fixture.stdout()).toContain('Job: job_123');
+    expect(fixture.stdout()).toContain('empty-status publicFiles');
+  });
+
   it('validates a token before saving it', async () => {
     await runCli(['login', '--token'], fixture.runtime, '0.0.0');
 
@@ -506,6 +522,16 @@ function createFixture() {
           },
         })),
         delete: vi.fn(async () => ({})),
+        empty: vi.fn(async () => ({
+          jobId: 'job_123',
+          bucketId: 'bucket_123',
+          status: 'QUEUED',
+        })),
+        emptyJobs: {
+          latest: vi.fn(),
+          get: vi.fn(),
+          retry: vi.fn(),
+        },
       },
     },
   } as unknown as ManagementEdgeStoreSdk;

@@ -8,6 +8,8 @@ import { loginCommand, logoutCommand, whoamiCommand } from './commands/auth';
 import {
   bucketCreateCommand,
   bucketDeleteCommand,
+  bucketEmptyCommand,
+  bucketEmptyStatusCommand,
   bucketListCommand,
   bucketShowCommand,
 } from './commands/bucket';
@@ -357,6 +359,32 @@ function createProgram(runtime: CliRuntime, version: string): Command {
     .option('--yes', 'skip interactive confirmation')
     .action(async (bucketName: string, options) => {
       await bucketDeleteCommand(runtime, globalFlags(program), {
+        bucket: bucketName,
+        ...options,
+      });
+    });
+
+  bucket
+    .command('empty <bucket>')
+    .description('Asynchronously delete every file in a bucket')
+    .option('--project <project>', 'override the linked project')
+    .option('--retry <job-id>', 'retry the latest failed job')
+    .option('--wait', 'wait for the job to finish')
+    .option('--yes', 'skip interactive confirmation')
+    .action(async (bucketName: string, options) => {
+      await bucketEmptyCommand(runtime, globalFlags(program), {
+        bucket: bucketName,
+        ...options,
+      });
+    });
+
+  bucket
+    .command('empty-status <bucket>')
+    .description('Show empty-bucket job status')
+    .option('--project <project>', 'override the linked project')
+    .option('--job <job-id>', 'inspect a specific job')
+    .action(async (bucketName: string, options) => {
+      await bucketEmptyStatusCommand(runtime, globalFlags(program), {
         bucket: bucketName,
         ...options,
       });
