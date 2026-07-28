@@ -308,6 +308,22 @@ describe('runCli', () => {
     });
   });
 
+  it('lists files only within the required bucket', async () => {
+    fixture.repoConfig.config = {
+      account: account.id,
+      project: project.basePath,
+    };
+
+    await runCli(
+      ['file', 'list', '--bucket', 'publicFiles'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(fixture.stdout()).toContain('file_123');
+    expect(fixture.stdout()).toContain('logo.png');
+  });
+
   it('validates a token before saving it', async () => {
     await runCli(['login', '--token'], fixture.runtime, '0.0.0');
 
@@ -554,6 +570,36 @@ function createFixture() {
           get: vi.fn(),
           retry: vi.fn(),
         },
+      },
+      files: {
+        list: vi.fn(async () => ({
+          files: [
+            {
+              id: 'file_123',
+              url: 'https://files.example/logo.png',
+              key: 'publicFiles/_public/logo.png',
+              thumbnailUrl: null,
+              thumbnailKey: null,
+              bucketId: 'bucket_123',
+              bucketName: 'publicFiles',
+              projectId: project.id,
+              accountId: account.id,
+              name: 'logo.png',
+              path: {},
+              metadata: {},
+              sizeBytes: 10,
+              mimeType: 'image/png',
+              state: 'uploaded',
+              temporary: false,
+              uploadedAt: project.createdAt,
+              updatedAt: project.updatedAt,
+            },
+          ],
+          pagination: { limit: 50, nextCursor: null, hasMore: false },
+        })),
+        lookup: vi.fn(),
+        createDownloadUrls: vi.fn(),
+        delete: vi.fn(),
       },
     },
   } as unknown as ManagementEdgeStoreSdk;

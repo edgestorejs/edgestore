@@ -15,6 +15,12 @@ import {
 } from './commands/bucket';
 import { doctorCommand } from './commands/doctor';
 import {
+  fileDeleteCommand,
+  fileDownloadCommand,
+  fileInfoCommand,
+  fileListCommand,
+} from './commands/file';
+import {
   projectCreateCommand,
   projectCurrentCommand,
   projectDeleteCommand,
@@ -324,6 +330,60 @@ function createProgram(runtime: CliRuntime, version: string): Command {
     .option('--project <project>', 'override the linked project')
     .action(async (options: { project?: string }) => {
       await bucketListCommand(runtime, globalFlags(program), options.project);
+    });
+
+  const file = program.command('file').description('Manage project files');
+
+  file
+    .command('list')
+    .alias('ls')
+    .description('List files in one bucket')
+    .requiredOption('--bucket <bucket>', 'bucket name')
+    .option('--project <project>', 'override the linked project')
+    .option('--limit <number>', 'page size', parsePositiveInteger)
+    .option('--cursor <cursor>', 'opaque continuation cursor')
+    .option('--all', 'fetch every page')
+    .action(async (options) => {
+      await fileListCommand(runtime, globalFlags(program), options);
+    });
+
+  file
+    .command('info <file>')
+    .description('Show file metadata')
+    .option('--project <project>', 'override the linked project')
+    .option('--bucket <bucket>', 'treat the file argument as a bucket path')
+    .action(async (reference: string, options) => {
+      await fileInfoCommand(runtime, globalFlags(program), {
+        reference,
+        ...options,
+      });
+    });
+
+  file
+    .command('download <file>')
+    .description('Download a file')
+    .requiredOption('--output <path>', 'local output path')
+    .option('--project <project>', 'override the linked project')
+    .option('--bucket <bucket>', 'treat the file argument as a bucket path')
+    .action(async (reference: string, options) => {
+      await fileDownloadCommand(runtime, globalFlags(program), {
+        reference,
+        ...options,
+      });
+    });
+
+  file
+    .command('delete <file...>')
+    .alias('rm')
+    .description('Delete one or more files')
+    .option('--project <project>', 'override the linked project')
+    .option('--bucket <bucket>', 'treat file arguments as bucket paths')
+    .option('--yes', 'skip interactive confirmation')
+    .action(async (references: string[], options) => {
+      await fileDeleteCommand(runtime, globalFlags(program), {
+        references,
+        ...options,
+      });
     });
 
   bucket
