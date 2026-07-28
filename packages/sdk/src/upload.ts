@@ -4,19 +4,24 @@ import {
   EdgeStoreUploadCanceledError,
   EdgeStoreUploadProcessingTimeoutError,
 } from './errors';
+import { uploadParts, uploadStreamParts } from './internal/multipartUpload';
+import {
+  createGetUploadRequest,
+  type RuntimeOperations,
+} from './internal/runtimeOperations';
 import type { Transport } from './internal/transport';
 import {
-  assertNonNegative,
-  getPositiveInteger,
   getRetryAfterMs,
-  putWithRetry,
+  isAbortError,
   retryOperation,
   sleep,
   throwIfAborted,
-  uploadParts,
-  uploadStreamParts,
-} from './internal/uploadTransfer';
-import type { RuntimeUploadRequestInput } from './runtime';
+} from './internal/uploadRetry';
+import { putWithRetry } from './internal/uploadTransfer';
+import {
+  assertNonNegative,
+  getPositiveInteger,
+} from './internal/uploadValidation';
 import {
   DEFAULT_MULTIPART_CONCURRENCY,
   DEFAULT_MULTIPART_PART_SIZE_BYTES,
@@ -38,19 +43,28 @@ type ExplicitUploadFromUrlInput = RuntimeUploadFromUrlInput & {
   project: string;
 };
 
-type PreparedUploadSource = {
+type PreparedUploadDetails = {
   sizeBytes: number;
-  body?: Blob;
-  stream?: ReadableStream<Uint8Array>;
   fileName?: string;
   mimeType?: string;
 };
+type PreparedUploadSource =
+  | (PreparedUploadDetails & { kind: 'body'; body: Blob })
+  | (PreparedUploadDetails & {
+      kind: 'stream';
+      stream: ReadableStream<Uint8Array>;
+    });
+type UploadContext = {
+  transport: Transport;
+  operations: RuntimeOperations;
+};
 
 export async function uploadRuntimeFile(
-  transport: Transport,
+  context: UploadContext,
   input: ExplicitUploadInput,
   defaults: UploadDefaults = {},
 ): Promise<RuntimeUploadResult> {
+  const { transport, operations } = context;
   const {
     project,
     bucket,
@@ -61,9 +75,13 @@ export async function uploadRuntimeFile(
     multipart,
     fileName,
     mimeType,
+    temporary,
+    path,
+    extension,
+    replaceTarget,
+    signedReadUrl,
     processingTimeoutMs = defaults.processingTimeoutMs ??
       DEFAULT_PROCESSING_TIMEOUT_MS,
-    ...requestOptions
   } = input;
   const prepared = prepareSource(source);
   const totalBytes = prepared.sizeBytes;
@@ -79,7 +97,7 @@ export async function uploadRuntimeFile(
     phase: 'preparing',
   });
 
-  const bucketResult = await getBucket(transport, {
+  const bucketResult = await operations.buckets.get({
     project,
     bucket,
     signal,
@@ -96,7 +114,7 @@ export async function uploadRuntimeFile(
     Math.ceil(totalBytes / MAX_MULTIPART_PARTS),
   );
   const useMultipart =
-    prepared.stream !== undefined ||
+    prepared.kind === 'stream' ||
     multipart === true ||
     typeof multipart === 'object' ||
     totalBytes > multipartThresholdBytes;
@@ -107,7 +125,7 @@ export async function uploadRuntimeFile(
       )
     : undefined;
 
-  const requested = await requestUpload(transport, {
+  const requested = await operations.uploads.request({
     project,
     bucket,
     bucketType: bucketResult.bucket.type,
@@ -115,10 +133,14 @@ export async function uploadRuntimeFile(
     sizeBytes: totalBytes,
     fileName: fileName ?? prepared.fileName,
     mimeType: mimeType ?? prepared.mimeType,
+    temporary,
+    path,
+    extension,
     metadata: normalizeMetadata(metadata),
+    replaceTarget,
     multipart: partNumbers ? { partNumbers } : undefined,
+    signedReadUrl,
     signal,
-    ...requestOptions,
   });
   const uploadId = requested.upload.id;
 
@@ -129,10 +151,7 @@ export async function uploadRuntimeFile(
       phase: 'uploading',
     });
 
-    if (requested.upload.kind === 'single') {
-      if (!prepared.body) {
-        throw new TypeError('Stream uploads require multipart upload URLs.');
-      }
+    if (prepared.kind === 'body' && requested.upload.kind === 'single') {
       await putWithRetry(transport, {
         uploadId,
         url: requested.upload.signedUrl,
@@ -145,6 +164,11 @@ export async function uploadRuntimeFile(
         phase: 'uploading',
       });
     } else {
+      if (requested.upload.kind !== 'multipart') {
+        throw new TypeError(
+          'The API returned a single upload URL for a stream source.',
+        );
+      }
       const concurrency = getPositiveInteger(
         typeof multipart === 'object'
           ? multipart.concurrency
@@ -159,18 +183,19 @@ export async function uploadRuntimeFile(
         signal,
         onProgress,
       };
-      const completedParts = prepared.stream
-        ? await uploadStreamParts(transport, {
-            ...transferOptions,
-            stream: prepared.stream,
-            totalBytes,
-          })
-        : await uploadParts(transport, {
-            ...transferOptions,
-            body: prepared.body!,
-            concurrency,
-          });
-      await completeMultipart(transport, {
+      const completedParts =
+        prepared.kind === 'stream'
+          ? await uploadStreamParts(transport, {
+              ...transferOptions,
+              stream: prepared.stream,
+              totalBytes,
+            })
+          : await uploadParts(transport, {
+              ...transferOptions,
+              body: prepared.body,
+              concurrency,
+            });
+      await operations.uploads.completeMultipart({
         project,
         uploadId,
         parts: completedParts,
@@ -184,7 +209,7 @@ export async function uploadRuntimeFile(
       phase: 'processing',
     });
 
-    const completed = await waitForUpload(transport, {
+    const completed = await waitForUpload(context, {
       project,
       uploadId,
       signal,
@@ -197,17 +222,18 @@ export async function uploadRuntimeFile(
     };
   } catch (error) {
     if (!(error instanceof EdgeStoreUploadProcessingTimeoutError)) {
-      await cancelUpload(transport, project, uploadId);
+      await cancelUpload(operations, project, uploadId);
     }
     throw error;
   }
 }
 
 export async function uploadRuntimeFileFromUrl(
-  transport: Transport,
+  context: UploadContext,
   input: ExplicitUploadFromUrlInput,
   defaults: UploadDefaults = {},
 ): Promise<RuntimeUploadResult> {
+  const { transport } = context;
   const { url, signal, fileName, mimeType, ...uploadInput } = input;
   let response: Response;
 
@@ -272,73 +298,8 @@ async function cancelResponseBody(
   await body.cancel().catch(() => undefined);
 }
 
-async function getBucket(
-  transport: Transport,
-  options: { project: string; bucket: string; signal?: AbortSignal },
-) {
-  return transport.execute(() =>
-    transport.client.GET(
-      '/runtime/projects/{projectRef}/buckets/{bucketName}',
-      {
-        params: {
-          path: {
-            projectRef: options.project,
-            bucketName: options.bucket,
-          },
-        },
-        signal: options.signal,
-      },
-    ),
-  );
-}
-
-async function requestUpload(
-  transport: Transport,
-  input: RuntimeUploadRequestInput & { project: string },
-) {
-  const { project, bucket, signal, ...body } = input;
-  return transport.execute(() =>
-    transport.client.POST(
-      '/runtime/projects/{projectRef}/buckets/{bucketName}/uploads',
-      {
-        params: {
-          path: { projectRef: project, bucketName: bucket },
-        },
-        body,
-        signal,
-      },
-    ),
-  );
-}
-
-async function completeMultipart(
-  transport: Transport,
-  options: {
-    project: string;
-    uploadId: string;
-    parts: { partNumber: number; eTag: string }[];
-    signal?: AbortSignal;
-  },
-) {
-  await transport.execute(() =>
-    transport.client.POST(
-      '/runtime/projects/{projectRef}/uploads/{uploadId}/complete',
-      {
-        params: {
-          path: {
-            projectRef: options.project,
-            uploadId: options.uploadId,
-          },
-        },
-        body: { parts: options.parts },
-        signal: options.signal,
-      },
-    ),
-  );
-}
-
 async function waitForUpload(
-  transport: Transport,
+  context: UploadContext,
   options: {
     project: string;
     uploadId: string;
@@ -347,25 +308,27 @@ async function waitForUpload(
   },
 ): Promise<CompletedUpload> {
   const deadline = Date.now() + options.timeoutMs;
+  const timeoutError = () =>
+    new EdgeStoreUploadProcessingTimeoutError(
+      'Timed out while EdgeStore was processing the upload.',
+      options.uploadId,
+    );
 
   while (true) {
     const { data, response } = await retryOperation(
-      () =>
-        transport.executeWithResponse(() =>
-          transport.client.GET(
-            '/runtime/projects/{projectRef}/uploads/{uploadId}',
-            {
-              params: {
-                path: {
-                  projectRef: options.project,
-                  uploadId: options.uploadId,
-                },
-              },
-              signal: options.signal,
-            },
-          ),
+      (signal) =>
+        context.transport.executeWithResponse(
+          createGetUploadRequest({
+            project: options.project,
+            uploadId: options.uploadId,
+            signal,
+          }),
         ),
-      options.signal,
+      {
+        signal: options.signal,
+        deadline,
+        timeoutError,
+      },
     );
 
     if (data.upload.status === 'completed' && 'file' in data) return data;
@@ -378,27 +341,19 @@ async function waitForUpload(
 
     const delayMs = getRetryAfterMs(response) ?? 1000;
     if (Date.now() + delayMs > deadline) {
-      throw new EdgeStoreUploadProcessingTimeoutError(
-        'Timed out while EdgeStore was processing the upload.',
-        options.uploadId,
-      );
+      throw timeoutError();
     }
     await sleep(delayMs, options.signal);
   }
 }
 
 async function cancelUpload(
-  transport: Transport,
+  operations: RuntimeOperations,
   project: string,
   uploadId: string,
 ) {
   try {
-    await transport.execute(() =>
-      transport.client.DELETE(
-        '/runtime/projects/{projectRef}/uploads/{uploadId}',
-        { params: { path: { projectRef: project, uploadId } } },
-      ),
-    );
+    await operations.uploads.cancel({ project, uploadId });
   } catch {
     // Preserve the original upload failure.
   }
@@ -417,16 +372,26 @@ function normalizeMetadata(
 function prepareSource(source: UploadSource): PreparedUploadSource {
   if (typeof source === 'string') {
     const body = new Blob([source], { type: 'text/plain' });
-    return { body, sizeBytes: body.size, mimeType: body.type };
+    return {
+      kind: 'body',
+      body,
+      sizeBytes: body.size,
+      mimeType: body.type,
+    };
   }
   if (isStreamSource(source)) {
     if (!Number.isSafeInteger(source.sizeBytes) || source.sizeBytes < 0) {
       throw new RangeError('source.sizeBytes must be a non-negative integer.');
     }
-    return { stream: source.stream, sizeBytes: source.sizeBytes };
+    return {
+      kind: 'stream',
+      stream: source.stream,
+      sizeBytes: source.sizeBytes,
+    };
   }
   if (source instanceof Blob) {
     return {
+      kind: 'body',
       body: source,
       sizeBytes: source.size,
       fileName:
@@ -438,14 +403,14 @@ function prepareSource(source: UploadSource): PreparedUploadSource {
   }
   if (source instanceof ArrayBuffer) {
     const body = new Blob([source]);
-    return { body, sizeBytes: body.size };
+    return { kind: 'body', body, sizeBytes: body.size };
   }
   const body = new Blob([
     Uint8Array.from(
       new Uint8Array(source.buffer, source.byteOffset, source.byteLength),
     ),
   ]);
-  return { body, sizeBytes: body.size };
+  return { kind: 'body', body, sizeBytes: body.size };
 }
 
 function isStreamSource(source: UploadSource): source is UploadStreamSource {
@@ -486,8 +451,4 @@ function reportProgress(
 function getFileNameFromUrl(url: string): string | undefined {
   const name = new URL(url).pathname.split('/').filter(Boolean).at(-1);
   return name ? decodeURIComponent(name) : undefined;
-}
-
-function isAbortError(error: unknown): boolean {
-  return error instanceof Error && error.name === 'AbortError';
 }
