@@ -126,7 +126,7 @@
     "!**/__tests__"
   ],
   "dependencies": {
-    "@edgestore/shared": "workspace:^",
+    "@edgestore/shared": "0.7.0",
     "@panva/hkdf": "^1.2.1",
     "cookie": "^2.0.1",
     "jose": "^6.2.3"
