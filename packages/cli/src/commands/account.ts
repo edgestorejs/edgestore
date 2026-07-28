@@ -97,6 +97,103 @@ export async function activeAccount(
   return config.activeAccount;
 }
 
+export async function accountUsageCommand(
+  runtime: CliRuntime,
+  flags: GlobalFlags,
+): Promise<void> {
+  const sdk = await sdkFor(runtime, flags);
+  const result = await sdk.management.accounts.get({
+    account: await activeAccount(runtime),
+    signal: runtime.signal,
+  });
+  const account = result.account;
+  outputFor(runtime, flags).result(
+    result,
+    [
+      `Account: ${account.displayName} (${account.id})`,
+      `Storage: ${account.usageBytes}/${account.storageLimitBytes} bytes`,
+      `Projects: ${account.projectCount}/${account.projectLimit}`,
+      `Plan: ${account.planType}`,
+    ].join('\n'),
+    String(account.usageBytes),
+  );
+}
+
+export async function accountBillingCommand(
+  runtime: CliRuntime,
+  flags: GlobalFlags,
+): Promise<void> {
+  const sdk = await sdkFor(runtime, flags);
+  const result = await sdk.management.accounts.get({
+    account: await activeAccount(runtime),
+    signal: runtime.signal,
+  });
+  const account = result.account;
+  outputFor(runtime, flags).result(
+    result,
+    [
+      `Plan: ${account.planType}`,
+      `Storage limit: ${account.storageLimitBytes} bytes`,
+      `Project limit: ${account.projectLimit}`,
+      `Member limit: ${account.memberLimit}`,
+      '',
+      'Open billing:',
+      '  edgestore open billing',
+    ].join('\n'),
+    account.planType,
+  );
+}
+
+export async function accountLeaveCommand(
+  runtime: CliRuntime,
+  flags: GlobalFlags,
+  options: { yes?: boolean },
+): Promise<void> {
+  const accountId = await activeAccount(runtime);
+  const sdk = await sdkFor(runtime, flags);
+  const current = await sdk.management.accounts.get({
+    account: accountId,
+    signal: runtime.signal,
+  });
+  if (current.account.type === 'PERSONAL') {
+    throw usageError(
+      'personal_account',
+      'You cannot leave a personal account.',
+    );
+  }
+  if (!options.yes) {
+    if (!runtime.io.inputIsTty || flags.json) {
+      throw usageError(
+        'confirmation_required',
+        'Leaving an account requires confirmation.',
+        ['edgestore account leave --yes'],
+      );
+    }
+    await runtime.prompts.confirmTyped(
+      `Type ${accountId} to leave ${current.account.displayName}`,
+      accountId,
+    );
+  }
+  await sdk.management.accounts.leave({
+    account: accountId,
+    signal: runtime.signal,
+  });
+  const listed = await sdk.management.accounts.list({ signal: runtime.signal });
+  const personal = listed.accounts.find(
+    (account) => account.type === 'PERSONAL',
+  );
+  const config = await runtime.globalConfig.read();
+  await runtime.globalConfig.write({
+    ...config,
+    activeAccount: personal?.id,
+  });
+  outputFor(runtime, flags).result(
+    { left: accountId, activeAccount: personal?.id },
+    `Left ${current.account.displayName}.${personal ? ` Switched to ${personal.displayName}.` : ''}`,
+    personal?.id ?? accountId,
+  );
+}
+
 function findAccount(
   accounts: Account[],
   selector: string,

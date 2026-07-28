@@ -1,8 +1,11 @@
 import { Command, CommanderError } from 'commander';
 import {
+  accountBillingCommand,
   accountCurrentCommand,
+  accountLeaveCommand,
   accountListCommand,
   accountSwitchCommand,
+  accountUsageCommand,
 } from './commands/account';
 import { loginCommand, logoutCommand, whoamiCommand } from './commands/auth';
 import {
@@ -20,6 +23,14 @@ import {
   fileInfoCommand,
   fileListCommand,
 } from './commands/file';
+import {
+  invitationActionCommand,
+  invitationListCommand,
+  memberInviteCommand,
+  memberListCommand,
+  memberRemoveCommand,
+  memberRoleCommand,
+} from './commands/member';
 import {
   projectCreateCommand,
   projectCurrentCommand,
@@ -140,6 +151,28 @@ function createProgram(runtime: CliRuntime, version: string): Command {
     });
 
   account
+    .command('usage')
+    .description('Show account usage and limits')
+    .action(async () => {
+      await accountUsageCommand(runtime, globalFlags(program));
+    });
+
+  account
+    .command('billing')
+    .description('Show billing plan and limits')
+    .action(async () => {
+      await accountBillingCommand(runtime, globalFlags(program));
+    });
+
+  account
+    .command('leave')
+    .description('Leave the active team account')
+    .option('--yes', 'skip interactive confirmation')
+    .action(async (options) => {
+      await accountLeaveCommand(runtime, globalFlags(program), options);
+    });
+
+  account
     .command('current')
     .description('Show the active account')
     .action(async () => {
@@ -157,6 +190,86 @@ function createProgram(runtime: CliRuntime, version: string): Command {
   const project = program
     .command('project')
     .description('Inspect and link projects');
+
+  const member = program.command('member').description('Manage team members');
+
+  member
+    .command('list')
+    .alias('ls')
+    .description('List team members')
+    .option('--page <number>', 'page number', parsePositiveInteger)
+    .option('--limit <number>', 'page size', parsePositiveInteger)
+    .option('--all', 'fetch every page')
+    .action(async (options) => {
+      await memberListCommand(runtime, globalFlags(program), options);
+    });
+
+  member
+    .command('invite <email...>')
+    .description('Invite one or more team members')
+    .option('--role <role>', 'owner, member, or viewer', 'member')
+    .option('--allow-overage', 'allow billable member overage')
+    .action(async (emails: string[], options) => {
+      await memberInviteCommand(runtime, globalFlags(program), {
+        emails,
+        ...options,
+      });
+    });
+
+  member
+    .command('role <user-id> <role>')
+    .description('Change a team member role')
+    .action(async (userId: string, role: string) => {
+      await memberRoleCommand(runtime, globalFlags(program), { userId, role });
+    });
+
+  member
+    .command('remove <user-id>')
+    .description('Remove a team member')
+    .option('--yes', 'skip interactive confirmation')
+    .action(async (userId: string, options) => {
+      await memberRemoveCommand(runtime, globalFlags(program), {
+        userId,
+        ...options,
+      });
+    });
+
+  const invitation = member
+    .command('invitation')
+    .description('Manage pending invitations');
+
+  invitation
+    .command('list')
+    .alias('ls')
+    .description('List pending invitations')
+    .option('--page <number>', 'page number', parsePositiveInteger)
+    .option('--limit <number>', 'page size', parsePositiveInteger)
+    .option('--all', 'fetch every page')
+    .action(async (options) => {
+      await invitationListCommand(runtime, globalFlags(program), options);
+    });
+
+  invitation
+    .command('revoke <invite-id>')
+    .description('Revoke a pending invitation')
+    .option('--yes', 'skip interactive confirmation')
+    .action(async (invitationId: string, options) => {
+      await invitationActionCommand(runtime, globalFlags(program), {
+        invitationId,
+        action: 'revoke',
+        ...options,
+      });
+    });
+
+  invitation
+    .command('resend <invite-id>')
+    .description('Resend a pending invitation')
+    .action(async (invitationId: string) => {
+      await invitationActionCommand(runtime, globalFlags(program), {
+        invitationId,
+        action: 'resend',
+      });
+    });
 
   project
     .command('list')

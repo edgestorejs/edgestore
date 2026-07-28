@@ -26,6 +26,14 @@ const account = {
   updatedAt: '2026-01-01T00:00:00.000Z',
 } as const;
 
+const teamAccount = {
+  ...account,
+  id: 'acc_team',
+  type: 'TEAM',
+  displayName: 'EdgeStore',
+  memberLimit: 5,
+} as const;
+
 const project = {
   id: 'proj_123',
   basePath: 'x36t1ejdlz',
@@ -74,6 +82,58 @@ describe('runCli', () => {
 
     expect(fixture.globalConfig.activeAccount).toBe('acc_123');
     expect(fixture.stdout()).toBe('acc_123\n');
+  });
+
+  it('shows usage for the active account', async () => {
+    await runCli(['account', 'usage'], fixture.runtime, '0.0.0');
+
+    expect(fixture.stdout()).toContain('Storage: 0/1000 bytes');
+    expect(fixture.stdout()).toContain('Projects: 1/3');
+  });
+
+  it('leaves a team and switches back to the personal account', async () => {
+    fixture.availableAccounts.push(teamAccount);
+    fixture.globalConfig.activeAccount = teamAccount.id;
+
+    await runCli(
+      ['account', 'leave', '--yes', '--plain'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(fixture.accountLeave).toHaveBeenCalledWith({
+      account: teamAccount.id,
+      signal: fixture.runtime.signal,
+    });
+    expect(fixture.globalConfig.activeAccount).toBe(account.id);
+    expect(fixture.stdout()).toBe(`${account.id}\n`);
+  });
+
+  it('explains that personal accounts do not have members', async () => {
+    await runCli(['member', 'list'], fixture.runtime, '0.0.0');
+
+    expect(fixture.stdout()).toContain('Current account is personal.');
+    expect(fixture.memberList).not.toHaveBeenCalled();
+  });
+
+  it('invites a member to the active team', async () => {
+    fixture.availableAccounts.push(teamAccount);
+    fixture.globalConfig.activeAccount = teamAccount.id;
+
+    await runCli(
+      ['member', 'invite', 'friend@example.com', '--role', 'viewer'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(fixture.invitationCreate).toHaveBeenCalledWith({
+      account: teamAccount.id,
+      email: 'friend@example.com',
+      role: 'VIEWER',
+      allowOverage: false,
+      signal: fixture.runtime.signal,
+    });
+    expect(fixture.stdout()).toContain('invited');
   });
 
   it('links by project ID but stores the canonical base path', async () => {
@@ -417,6 +477,20 @@ function createFixture() {
     credentialValue.value = token;
   });
   const confirmTyped = vi.fn(async () => undefined);
+  const availableAccounts: (typeof account | typeof teamAccount)[] = [account];
+  const accountLeave = vi.fn(async () => ({}));
+  const memberList = vi.fn(async () => ({ members: [] }));
+  const invitationCreate = vi.fn(async (input: { email: string }) => ({
+    invitation: {
+      id: 'inv_123',
+      accountId: teamAccount.id,
+      email: input.email,
+      role: 'VIEWER' as const,
+      status: 'INITIAL' as const,
+      createdAt: project.createdAt,
+      updatedAt: project.updatedAt,
+    },
+  }));
   const credentials: CredentialStore = {
     get: vi.fn(async () => credentialValue.value),
     set: setCredential,
@@ -491,8 +565,24 @@ function createFixture() {
         },
       })),
       accounts: {
-        list: vi.fn(async () => ({ accounts: [account] })),
-        get: vi.fn(async () => ({ account })),
+        list: vi.fn(async () => ({ accounts: [...availableAccounts] })),
+        get: vi.fn(async ({ account: accountId }: { account: string }) => ({
+          account:
+            availableAccounts.find((candidate) => candidate.id === accountId) ??
+            account,
+        })),
+        leave: accountLeave,
+      },
+      members: {
+        list: memberList,
+        update: vi.fn(),
+        remove: vi.fn(),
+      },
+      invitations: {
+        list: vi.fn(async () => ({ invitations: [] })),
+        create: invitationCreate,
+        revoke: vi.fn(async () => ({})),
+        resend: vi.fn(async () => ({})),
       },
       projects: {
         list: vi.fn(async () => ({ projects: [project] })),
@@ -693,6 +783,10 @@ function createFixture() {
     confirmTyped,
     createAccountToken,
     createUserToken,
+    availableAccounts,
+    accountLeave,
+    memberList,
+    invitationCreate,
     stdout: () => Buffer.concat(stdoutChunks).toString('utf8'),
     stderr: () => Buffer.concat(stderrChunks).toString('utf8'),
   };
