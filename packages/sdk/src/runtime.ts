@@ -38,12 +38,12 @@ export type RuntimeFileLookupInput = OperationBody<'v2.runtime.files.lookup'> &
   RuntimeCallOptions;
 export type RuntimeFileLookupResult =
   OperationResult<'v2.runtime.files.lookup'>;
-export type RuntimeSignedUrlsCreateInput = {
+export type RuntimeSignedReadUrlsGenerateInput = {
   bucket: string;
-} & OperationBody<'v2.runtime.files.signedUrls.create'> &
+} & OperationBody<'v2.runtime.files.generateSignedReadUrls'> &
   RuntimeCallOptions;
-export type RuntimeSignedUrlsCreateResult =
-  OperationResult<'v2.runtime.files.signedUrls.create'>;
+export type RuntimeSignedReadUrlsGenerateResult =
+  OperationResult<'v2.runtime.files.generateSignedReadUrls'>;
 export type RuntimeFileConfirmInput =
   OperationBody<'v2.runtime.files.confirm'> & RuntimeCallOptions;
 export type RuntimeFileConfirmResult =
@@ -103,9 +103,9 @@ export type RuntimeClient<TMode extends ProjectMode> = {
     lookup(
       input: ScopedInput<TMode, RuntimeFileLookupInput>,
     ): Promise<RuntimeFileLookupResult>;
-    createSignedUrls(
-      input: ScopedInput<TMode, RuntimeSignedUrlsCreateInput>,
-    ): Promise<RuntimeSignedUrlsCreateResult>;
+    generateSignedReadUrls(
+      input: ScopedInput<TMode, RuntimeSignedReadUrlsGenerateInput>,
+    ): Promise<RuntimeSignedReadUrlsGenerateResult>;
     confirm(
       input: ScopedInput<TMode, RuntimeFileConfirmInput>,
     ): Promise<RuntimeFileConfirmResult>;

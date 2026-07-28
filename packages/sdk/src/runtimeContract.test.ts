@@ -68,9 +68,9 @@ describe('runtime request mappings', () => {
         path: '/v2/runtime/projects/_current/files/lookup',
         body: { file: { id: 'file-id' }, bucketName: 'documents' },
       },
-      'v2.runtime.files.signedUrls.create': {
+      'v2.runtime.files.generateSignedReadUrls': {
         invoke: () =>
-          sdk.runtime.files.createSignedUrls({
+          sdk.runtime.files.generateSignedReadUrls({
             bucket: 'documents',
             urls: ['https://files.example/file'],
             expiresIn: 60,

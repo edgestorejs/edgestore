@@ -73,7 +73,7 @@ export function createRuntimeOperations(
             signal,
           }),
         ),
-      createSignedUrls: ({ project, bucket, signal, ...body }) =>
+      generateSignedReadUrls: ({ project, bucket, signal, ...body }) =>
         transport.execute((client) =>
           client.POST(
             '/runtime/projects/{projectRef}/buckets/{bucketName}/files/signed-urls',
