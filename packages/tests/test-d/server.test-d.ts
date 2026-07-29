@@ -3,7 +3,12 @@ import {
   initEdgeStoreClient,
   type InferClientResponse,
 } from '@edgestore/server/core';
-import { expectNotAssignable, expectType } from 'tsd';
+import {
+  expectAssignable,
+  expectError,
+  expectNotAssignable,
+  expectType,
+} from 'tsd';
 import { z } from 'zod';
 
 type Context = {
@@ -39,6 +44,16 @@ const publicRouter = publicEs.router({
 });
 const publicClient = initEdgeStoreClient({
   router: publicRouter,
+});
+const privateRouter = publicEs.router({
+  privateFiles: publicEs.fileBucket().accessControl('private'),
+  privateImages: publicEs
+    .imageBucket()
+    .accessControl('private')
+    .autoSignedUrls({ expiresIn: 300 }),
+});
+const privateClient = initEdgeStoreClient({
+  router: privateRouter,
 });
 
 void client.avatars.upload({
@@ -82,6 +97,57 @@ expectNotAssignable<Parameters<typeof client.documents.upload>[0]>({
 void publicClient.files.upload({
   content: 'hello',
 });
+expectError(publicClient.files.getSignedUrl({ url: 'https://example.com/a' }));
+
+expectType<
+  Promise<{
+    url: string;
+    signedUrl: string;
+    expiresAt: Date;
+    expiresIn: number;
+  }>
+>(
+  privateClient.privateFiles.getSignedUrl({
+    url: 'https://files.edgestore.dev/project/privateFiles/file.txt',
+  }),
+);
+
+expectAssignable<
+  Promise<
+    {
+      url: string;
+      signedUrl: string;
+      expiresAt: Date;
+      expiresIn: number;
+      thumbnailUrl?: string | null;
+      signedThumbnailUrl?: string | null;
+    }[]
+  >
+>(
+  privateClient.privateImages.getSignedUrls({
+    urls: ['https://files.edgestore.dev/project/privateImages/image.png'],
+    includeThumbnails: true,
+  }),
+);
+
+expectType<
+  Promise<{
+    url: string;
+    thumbnailUrl: string | null;
+    size: number;
+    metadata: Record<string, never>;
+    path: Record<string, never>;
+    pathOrder: [];
+    signedUrl: string;
+    expiresAt: Date;
+    expiresIn: number;
+    signedThumbnailUrl?: string | null;
+  }>
+>(
+  privateClient.privateImages.upload({
+    content: 'hello',
+  }),
+);
 
 expectType<
   Promise<{

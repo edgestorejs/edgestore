@@ -133,7 +133,7 @@ describe('Hono adapter conformance', () => {
         cookie: 'session=abc; theme=dark',
       },
     });
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(202);
     expect(res.headers.get('content-type')).toBe('text/custom');
     await expect(res.text()).resolves.toBe('proxied body');
   });

@@ -22,6 +22,33 @@ declare const globalThis: {
   _EDGE_STORE_LOGGER: Logger;
 };
 
+const NO_BODY_STATUSES = new Set([204, 205, 304]);
+
+export async function fetchProxyFile({
+  cookieHeader,
+  url,
+}: {
+  cookieHeader?: string;
+  url: string;
+}) {
+  const proxyRes = await fetch(url, {
+    headers: {
+      cookie: cookieHeader ?? '',
+    },
+  });
+
+  const body = NO_BODY_STATUSES.has(proxyRes.status)
+    ? null
+    : await proxyRes.arrayBuffer();
+
+  return {
+    body,
+    contentType:
+      proxyRes.headers.get('Content-Type') ?? 'application/octet-stream',
+    status: proxyRes.status,
+  };
+}
+
 export type CookieOptions = {
   /**
    * Cookie path
@@ -148,7 +175,9 @@ export async function init<TCtx>(params: {
   const requiresFileAccessCookie =
     provider.name === 'edgestore' &&
     Object.values(router.buckets).some(
-      (bucket) => bucket._def.accessControl !== undefined,
+      (bucket) =>
+        bucket._def.accessControl !== undefined &&
+        bucket._def.accessControl !== 'private',
     );
   const shouldRunProviderInit =
     provider.name !== 'edgestore' || requiresFileAccessCookie;
@@ -327,6 +356,7 @@ export async function requestUpload<TCtx>(params: {
   });
   const metadata = await bucket._def.metadata?.({ ctx, input });
   const isPublic = bucket._def.accessControl === undefined;
+  const autoSignedUrls = bucket._def.autoSignedUrls;
 
   log.debug('upload info', {
     path,
@@ -344,6 +374,7 @@ export async function requestUpload<TCtx>(params: {
       isPublic,
       metadata,
     },
+    autoSignedUrls,
   });
   const { parsedPath, pathOrder } = parsePath(path);
 

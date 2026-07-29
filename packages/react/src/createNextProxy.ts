@@ -4,6 +4,7 @@ import {
   type InferBucketPathObject,
   type InferBucketPathOrder,
   type InferMetadataObject,
+  type Prettify,
   type SharedRequestUploadRes,
   type UploadOptions,
 } from '@edgestore/shared';
@@ -13,7 +14,7 @@ import { handleError } from './libs/errors/handleError';
 import { UploadAbortedError } from './libs/errors/uploadAbortedError';
 
 type UploadResponse<TBucket extends AnyBuilder> =
-  TBucket['_def']['type'] extends 'IMAGE'
+  (TBucket['_def']['type'] extends 'IMAGE'
     ? {
         url: string;
         thumbnailUrl: string | null;
@@ -30,7 +31,15 @@ type UploadResponse<TBucket extends AnyBuilder> =
         metadata: InferMetadataObject<TBucket>;
         path: InferBucketPathObject<TBucket>;
         pathOrder: InferBucketPathOrder<TBucket>;
-      };
+      }) &
+    (undefined extends TBucket['_def']['autoSignedUrls']
+      ? unknown
+      : {
+          signedUrl: string;
+          expiresAt: Date;
+          expiresIn: number;
+          signedThumbnailUrl?: string | null;
+        });
 
 export type BucketFunctions<TRouter extends AnyRouter> = {
   [K in keyof TRouter['buckets']]: {
@@ -55,17 +64,17 @@ export type BucketFunctions<TRouter extends AnyRouter> = {
         ? {
             file: File;
             signal?: AbortSignal;
-            onProgressChange?: OnProgressChangeHandler;
+            onProgressChange?: (progress: number) => void;
             options?: UploadOptions;
           }
         : {
             file: File;
             signal?: AbortSignal;
             input: z.infer<TRouter['buckets'][K]['_def']['input']>;
-            onProgressChange?: OnProgressChangeHandler;
+            onProgressChange?: (progress: number) => void;
             options?: UploadOptions;
           },
-    ) => Promise<UploadResponse<TRouter['buckets'][K]>>;
+    ) => Promise<Prettify<UploadResponse<TRouter['buckets'][K]>>>;
     confirmUpload: (params: { url: string }) => Promise<void>;
     delete: (params: { url: string }) => Promise<void>;
   };
@@ -87,7 +96,7 @@ export function createNextProxy<TRouter extends AnyRouter>({
   return new Proxy<BucketFunctions<TRouter>>({} as BucketFunctions<TRouter>, {
     get(_, prop) {
       const bucketName = prop as keyof TRouter['buckets'];
-      const bucketFunctions: BucketFunctions<TRouter>[string] = {
+      const bucketFunctions = {
         upload: async (params) => {
           try {
             params.onProgressChange?.(0);
@@ -148,7 +157,7 @@ export function createNextProxy<TRouter extends AnyRouter>({
             throw new EdgeStoreClientError('Failed to delete file');
           }
         },
-      };
+      } as BucketFunctions<TRouter>[string];
       return bucketFunctions;
     },
   });
@@ -241,6 +250,7 @@ async function uploadFile(
       thumbnailUrl: json.thumbnailUrl
         ? getUrl(json.thumbnailUrl, apiPath, disableDevProxy)
         : null,
+      ...mapSignedUploadAccess(json),
       size: json.size,
       uploadedAt: new Date(json.uploadedAt),
       path: json.path as any,
@@ -312,6 +322,19 @@ function getFileNameExtension(fileName?: string) {
   return fileName.slice(extensionIndex + 1);
 }
 
+function mapSignedUploadAccess(res: SharedRequestUploadRes) {
+  if (!res.accessSignedUrl) {
+    return {};
+  }
+  return {
+    signedUrl: res.accessSignedUrl,
+    expiresAt: res.accessSignedUrlExpiresAt
+      ? new Date(res.accessSignedUrlExpiresAt)
+      : new Date(),
+    expiresIn: res.accessSignedUrlExpiresIn ?? 0,
+    signedThumbnailUrl: res.accessSignedThumbnailUrl ?? null,
+  };
+}
 /**
  * Protected files need third-party cookies to work.
  * Since third party cookies don't work on localhost,

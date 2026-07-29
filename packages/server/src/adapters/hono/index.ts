@@ -6,7 +6,7 @@ import {
   type MaybePromise,
   type Provider,
 } from '@edgestore/shared';
-import { type Context } from 'hono';
+import { type Context as HonoContext } from 'hono';
 import Logger, { type LogLevel } from '../../libs/logger';
 import { matchPath } from '../../libs/utils';
 import { EdgeStoreProvider } from '../../providers/edgestore';
@@ -14,6 +14,7 @@ import {
   completeMultipartUpload,
   confirmUpload,
   deleteFile,
+  fetchProxyFile,
   getCookieConfig,
   init,
   requestUpload,
@@ -27,7 +28,7 @@ import {
 } from '../shared';
 
 export type CreateContextOptions = {
-  c: Context;
+  c: HonoContext;
 };
 
 export type Config<TCtx> = {
@@ -49,7 +50,7 @@ declare const globalThis: {
 };
 
 // Helper to get a cookie value from Hono Context
-function getCookie(c: Context, name: string): string | undefined {
+function getCookie(c: HonoContext, name: string): string | undefined {
   const cookies = c.req.header('cookie');
   if (!cookies) return undefined;
 
@@ -65,7 +66,7 @@ export function createEdgeStoreHonoHandler<TCtx>(config: Config<TCtx>) {
 
   const resolvedCookieConfig = getCookieConfig(cookieConfig);
 
-  return async (c: Context) => {
+  return async (c: HonoContext): Promise<Response> => {
     try {
       const pathname = new URL(c.req.url).pathname;
 
@@ -155,21 +156,20 @@ export function createEdgeStoreHonoHandler<TCtx>(config: Config<TCtx>) {
         const url = c.req.query('url');
 
         if (typeof url === 'string') {
-          const cookieHeader = c.req.header('cookie') ?? '';
-
-          const proxyRes = await fetch(url, {
-            headers: {
-              cookie: cookieHeader,
-            },
+          const proxyRes = await fetchProxyFile({
+            cookieHeader: c.req.header('cookie'),
+            url,
           });
 
-          const data = await proxyRes.arrayBuffer();
-          c.header(
-            'Content-Type',
-            proxyRes.headers.get('Content-Type') ?? 'application/octet-stream',
+          return new Response(
+            proxyRes.body === null ? null : Buffer.from(proxyRes.body),
+            {
+              status: proxyRes.status,
+              headers: {
+                'Content-Type': proxyRes.contentType,
+              },
+            },
           );
-
-          return c.body(Buffer.from(data));
         } else {
           return c.body(null, 400);
         }

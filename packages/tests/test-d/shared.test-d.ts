@@ -50,6 +50,7 @@ const imageBucket = es
   });
 
 const fileBucket = es.fileBucket().path(({ ctx }) => [{ author: ctx.userId }]);
+const privateFileBucket = es.fileBucket().accessControl('private');
 const emptyBucket = es.fileBucket();
 
 expectType<{ author: string; type: string }>(
@@ -81,6 +82,7 @@ expectNotAssignable<AccessControlSchema<Context, typeof imageBucket._def>>({
 const router = es.router({
   imageBucket,
   fileBucket,
+  privateFileBucket,
 });
 
 expectType<typeof imageBucket>(router.buckets.imageBucket);

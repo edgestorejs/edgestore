@@ -14,6 +14,7 @@ import {
   completeMultipartUpload,
   confirmUpload,
   deleteFile,
+  fetchProxyFile,
   getCookieConfig,
   init,
   requestUpload,
@@ -80,7 +81,7 @@ export function createEdgeStoreFastifyHandler<TCtx>(config: Config<TCtx>) {
 
   const resolvedCookieConfig = getCookieConfig(cookieConfig);
 
-  return async (req: FastifyRequest, reply: FastifyReply) => {
+  return async (req: FastifyRequest, reply: FastifyReply): Promise<void> => {
     try {
       // Get the URL from the request - simplified approach
       const pathname = req.url;
@@ -171,21 +172,18 @@ export function createEdgeStoreFastifyHandler<TCtx>(config: Config<TCtx>) {
           : undefined;
 
         if (typeof url === 'string') {
-          const cookieHeader = req.headers.cookie ?? '';
-
-          const proxyRes = await fetch(url, {
-            headers: {
-              cookie: cookieHeader,
-            },
+          const proxyRes = await fetchProxyFile({
+            cookieHeader: req.headers.cookie,
+            url,
           });
 
-          const data = await proxyRes.arrayBuffer();
-          void reply.header(
-            'Content-Type',
-            proxyRes.headers.get('Content-Type') ?? 'application/octet-stream',
-          );
+          void reply.header('Content-Type', proxyRes.contentType);
 
-          return reply.send(Buffer.from(data));
+          return reply
+            .status(proxyRes.status)
+            .send(
+              proxyRes.body === null ? undefined : Buffer.from(proxyRes.body),
+            );
         } else {
           return reply.status(400).send();
         }

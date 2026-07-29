@@ -14,6 +14,7 @@ import {
   completeMultipartUpload,
   confirmUpload,
   deleteFile,
+  fetchProxyFile,
   getCookieConfig,
   init,
   requestUpload,
@@ -166,19 +167,15 @@ export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
       } else if (matchPath(pathname, '/proxy-file')) {
         const url = req.nextUrl.searchParams.get('url');
         if (typeof url === 'string') {
-          const proxyRes = await fetch(url, {
-            headers: {
-              cookie: req.cookies.toString() ?? '',
-            },
+          const proxyRes = await fetchProxyFile({
+            cookieHeader: req.cookies.toString(),
+            url,
           });
 
-          const data = await proxyRes.arrayBuffer();
-          return new Response(data, {
+          return new Response(proxyRes.body, {
             status: proxyRes.status,
             headers: {
-              'Content-Type':
-                proxyRes.headers.get('Content-Type') ??
-                'application/octet-stream',
+              'Content-Type': proxyRes.contentType,
             },
           });
         } else {
