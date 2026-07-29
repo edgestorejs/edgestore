@@ -52,8 +52,8 @@ app.get('/', (req, res) => {
 });
 
 // set the get and post routes for the edgestore router
-app.get('/edgestore/*', handler);
-app.post('/edgestore/*', handler);
+app.get('/edgestore/*splat', handler);
+app.post('/edgestore/*splat', handler);
 
 app.listen(PORT, () => {
   console.log(`⚡Server is running here 👉 http://localhost:${PORT}`);
