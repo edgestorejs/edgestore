@@ -102,7 +102,7 @@ export default tseslint.config(
       '@eslint-react/dom-no-find-dom-node': 'error',
       '@eslint-react/dom-no-render-return-value': 'error',
       '@eslint-react/dom-no-unknown-property': 'error',
-      '@eslint-react/dom-no-unsafe-target-blank': 'warn',
+      '@eslint-react/dom-no-unsafe-target-blank': 'error',
       '@eslint-react/dom-no-void-elements-with-children': 'error',
       'turbo/no-undeclared-env-vars': 'warn',
       'unicorn/filename-case': [
