@@ -15,7 +15,7 @@ on:
           - maintenance
           - canary
       npm-tag:
-        description: Required for maintenance; must match the branch (for example, v1)
+        description: Required for maintenance; must match the branch (for example, legacy-v1)
         required: false
         type: string
 
@@ -106,8 +106,8 @@ jobs:
             echo 'Maintenance releases must run from a <major>.x branch.'
             exit 1
           fi
-          if [[ "$NPM_TAG" != "v${BASH_REMATCH[1]}" ]]; then
-            echo "Expected npm tag v${BASH_REMATCH[1]} for $GITHUB_REF_NAME."
+          if [[ "$NPM_TAG" != "legacy-v${BASH_REMATCH[1]}" ]]; then
+            echo "Expected npm tag legacy-v${BASH_REMATCH[1]} for $GITHUB_REF_NAME."
             exit 1
           fi
           if [[ -f .changeset/pre.json ]]; then

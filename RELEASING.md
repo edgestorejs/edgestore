@@ -10,7 +10,7 @@ package publication does not change the documentation deployment model.
 | -------------------------------------- | ------------- | ---------- |
 | Stable fix or release infrastructure   | `main`        | `latest`   |
 | Work for the upcoming breaking release | `next`        | `next`     |
-| Backport for a supported major         | `<major>.x`   | `v<major>` |
+| Backport for a supported major         | `<major>.x`   | `legacy-v<major>` |
 | Temporary snapshot from a PR branch    | PR branch     | `canary`   |
 
 Forward-merge stable fixes from `main` into `next`. Do not routinely merge
@@ -20,6 +20,9 @@ later Changeset release can include it.
 All published `@edgestore/*` behavior and public API changes require a
 Changeset. Use `patch` for fixes, `minor` for backward-compatible features, and
 `major` for breaking changes.
+
+Version and promotion PRs opened by GitHub Actions may require a maintainer to
+select **Approve workflows to run** before CI starts.
 
 ## Stable releases
 
@@ -109,12 +112,12 @@ git push -u origin 1.x
 
 Backport the fix through a PR and add a Changeset. Then run the **Release**
 workflow on `1.x`, select the `maintenance` operation, and provide the explicit
-npm tag `v1`.
+npm tag `legacy-v1`.
 
 - With pending Changesets, the workflow creates or updates a version PR.
 - After that PR is merged, run the workflow again with the same tag to publish.
-- The workflow requires a matching `<major>.x` branch and explicit `v<major>`
-  tag.
+- The workflow requires a matching `<major>.x` branch and explicit
+  `legacy-v<major>` tag.
 - It records npm's `latest` tags before publishing and fails if any of them
   move.
 
@@ -122,7 +125,7 @@ The local equivalent is:
 
 ```sh
 pnpm version
-pnpm release -- --tag v1
+pnpm release -- --tag legacy-v1
 git push --follow-tags
 ```
 
@@ -153,8 +156,8 @@ pnpm view @edgestore/react dist-tags --json
 pnpm view @edgestore/shared dist-tags --json
 ```
 
-Expected tags are `latest` for stable, `next` for prereleases, `v<major>` for
-maintenance, and `canary` for snapshots.
+Expected tags are `latest` for stable, `next` for prereleases,
+`legacy-v<major>` for maintenance, and `canary` for snapshots.
 
 ## Recover from a wrong dist-tag
 
