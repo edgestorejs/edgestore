@@ -1,0 +1,93 @@
+name: Promote next
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: promote-next
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  prepare:
+    name: Prepare stable promotion PR
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout next
+        uses: actions/checkout@v7
+        with:
+          ref: next
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate next
+        id: source
+        run: |
+          git fetch origin main
+          git merge-base --is-ancestor origin/main HEAD
+          jq -e '.mode == "pre" and .tag == "next"' .changeset/pre.json
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Generate stable versions
+        run: |
+          pnpm changeset pre exit
+          pnpm -s run version
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Open promotion PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NEXT_SHA: ${{ steps.source.outputs.sha }}
+          PR_BODY: |
+            Promotes `next` to a stable release.
+
+            - Exits Changesets prerelease mode.
+            - Generates stable package versions and changelogs.
+            - Publishes to npm `latest` after this PR is merged.
+
+            Merge this PR with a merge commit so `next` can be synchronized cleanly afterward.
+
+            Changes merged into `next` after this workflow ran remain available for a future promotion.
+        run: |
+          branch="release/promote-next-$NEXT_SHA"
+          existing_url="$(gh pr list \
+            --base main \
+            --head "$branch" \
+            --state open \
+            --json url \
+            --jq '.[0].url // ""')"
+
+          if [[ -n "$existing_url" ]]; then
+            echo "Promotion PR already exists: $existing_url"
+            exit 0
+          fi
+
+          git switch -c "$branch"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'chore: promote next to stable'
+          git push -u origin "$branch"
+
+          gh pr create \
+            --base main \
+            --head "$branch" \
+            --title 'chore: promote next to stable' \
+            --body "$PR_BODY"
