@@ -31,11 +31,10 @@ jobs:
       contents: write
       pull-requests: write
       id-token: write
+
     steps:
       - name: Checkout
         uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
@@ -52,6 +51,16 @@ jobs:
       - name: Install
         run: pnpm install --frozen-lockfile
 
+      - name: Validate release mode
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF_NAME" == "next" ]]; then
+            jq -e '.mode == "pre" and .tag == "next"' .changeset/pre.json
+          elif [[ -f .changeset/pre.json ]]; then
+            echo 'main must not contain a Changesets prerelease state'
+            exit 1
+          fi
+
       - name: Create Version PR or Publish
         id: changesets
         uses: changesets/action@v1
@@ -60,7 +69,6 @@ jobs:
           publish: pnpm run release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE_BRANCH: ${{ github.ref_name }}
           # Use OIDC for npm authentication instead of NPM_TOKEN
           # See: https://github.com/changesets/changesets/issues/1152#issuecomment-3190884868
           NPM_TOKEN: ''
@@ -75,12 +83,6 @@ jobs:
               jq -r '.[] | "- `\(.name)@\(.version)`"'
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Start the next prerelease cycle
-        if: github.ref_name == 'main' && steps.changesets.outputs.published == 'true'
-        run: pnpm exec tsx scripts/release/startNextCycle.ts
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
   maintenance:
     if: github.event_name == 'workflow_dispatch' && inputs.operation == 'maintenance'
     name: Prepare or publish maintenance release
@@ -94,8 +96,24 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
+
+      - name: Validate branch and npm tag
+        shell: bash
+        env:
+          NPM_TAG: ${{ inputs.npm-tag }}
+        run: |
+          if [[ ! "$GITHUB_REF_NAME" =~ ^([0-9]+)\.x$ ]]; then
+            echo 'Maintenance releases must run from a <major>.x branch.'
+            exit 1
+          fi
+          if [[ "$NPM_TAG" != "v${BASH_REMATCH[1]}" ]]; then
+            echo "Expected npm tag v${BASH_REMATCH[1]} for $GITHUB_REF_NAME."
+            exit 1
+          fi
+          if [[ -f .changeset/pre.json ]]; then
+            echo 'Maintenance branches must not be in prerelease mode.'
+            exit 1
+          fi
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
@@ -112,23 +130,38 @@ jobs:
       - name: Install
         run: pnpm install --frozen-lockfile
 
-      - name: Check maintenance lane
-        run: pnpm release:check -- --require-explicit-tag
-        env:
-          NPM_TAG: ${{ inputs.npm-tag }}
-          RELEASE_BRANCH: ${{ github.ref_name }}
+      - name: Record latest dist-tags
+        id: latest
+        run: |
+          echo "server=$(pnpm view @edgestore/server dist-tags.latest)" >> "$GITHUB_OUTPUT"
+          echo "react=$(pnpm view @edgestore/react dist-tags.latest)" >> "$GITHUB_OUTPUT"
+          echo "shared=$(pnpm view @edgestore/shared dist-tags.latest)" >> "$GITHUB_OUTPUT"
 
       - name: Create Version PR or Publish
         id: changesets
         uses: changesets/action@v1
         with:
           version: pnpm -s run version
-          publish: pnpm run release
+          publish: pnpm run release -- --tag ${{ inputs.npm-tag }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TAG: ${{ inputs.npm-tag }}
           NPM_TOKEN: ''
-          RELEASE_BRANCH: ${{ github.ref_name }}
+
+      - name: Verify maintenance dist-tags
+        if: steps.changesets.outputs.published == 'true'
+        env:
+          NPM_TAG: ${{ inputs.npm-tag }}
+        run: |
+          test "$(pnpm view @edgestore/server dist-tags.latest)" = '${{ steps.latest.outputs.server }}'
+          test "$(pnpm view @edgestore/react dist-tags.latest)" = '${{ steps.latest.outputs.react }}'
+          test "$(pnpm view @edgestore/shared dist-tags.latest)" = '${{ steps.latest.outputs.shared }}'
+
+          for package_dir in server react shared; do
+            package_name="@edgestore/$package_dir"
+            expected_version="$(node -p "require('./packages/$package_dir/package.json').version")"
+            actual_version="$(pnpm view "$package_name" "dist-tags.$NPM_TAG")"
+            test "$actual_version" = "$expected_version"
+          done
 
       - name: Report published packages
         if: steps.changesets.outputs.published == 'true'
@@ -152,8 +185,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
+
+      - name: Validate branch
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF_NAME" == "main" ||
+                "$GITHUB_REF_NAME" == "next" ||
+                "$GITHUB_REF_NAME" =~ ^([0-9]+)\.x$ ]]; then
+            echo 'Canary releases must run from a PR branch.'
+            exit 1
+          fi
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
@@ -177,13 +218,23 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Build
+        run: pnpm build
+
       - name: Publish canary
-        run: >-
-          pnpm release --
-          --branch '${{ github.ref_name }}'
-          --lane canary
-          --tag canary
-          --no-git-tag
+        run: pnpm changeset publish --tag canary --no-git-tag
+
+      - name: Report snapshot versions
+        run: |
+          {
+            echo '## Published canary packages'
+            echo
+            for package_dir in server react shared; do
+              package_name="@edgestore/$package_dir"
+              version="$(node -p "require('./packages/$package_dir/package.json').version")"
+              echo "- \`$package_name@$version\`"
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Show discarded snapshot changes
         if: always()

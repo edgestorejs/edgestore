@@ -28,12 +28,11 @@ Changes merged to `main` keep the existing Changesets release-PR flow:
 1. Merge changes containing Changesets into `main`.
 2. Review and merge the generated **Version Packages** PR.
 3. The release workflow publishes stable versions to npm's `latest` tag.
-4. The workflow verifies the published dist-tags.
 
-The guarded local equivalent is:
+The local equivalent is:
 
 ```sh
-pnpm release:check -- --branch main --tag latest
+pnpm version
 pnpm release
 ```
 
@@ -48,19 +47,21 @@ Create `next` from `main` after the release-lane infrastructure is available:
 git switch main
 git pull --ff-only
 git switch -c next
+pnpm changeset pre enter next
+git add .changeset/pre.json
+git commit -m "chore: enter next prerelease mode"
 git push -u origin next
 ```
 
 Feature PRs for the upcoming breaking release target `next` and include normal
 Changesets. The release workflow creates a **Version Packages (next)** PR.
-When it creates the first version PR, the version command automatically enters
-Changesets prerelease mode and includes `.changeset/pre.json` in that PR.
 Merging it publishes versions such as `2.0.0-next.0` to npm's `next` tag.
 
-The guarded local equivalent is:
+The local equivalent for the first prerelease is:
 
 ```sh
-pnpm release:check -- --branch next --tag next
+pnpm changeset pre enter next
+pnpm version
 pnpm release
 ```
 
@@ -70,19 +71,32 @@ Do not run `changeset pre exit` directly on `next`.
 
 Run the **Promote next** workflow from GitHub Actions. The workflow:
 
-1. Checks out and validates the current `next` commit.
-2. Verifies that `main` is contained in `next`.
-3. Runs `changeset pre exit` and the repository version command.
-4. Runs the release guards, formatting, lint, build, typecheck, and tests.
-5. Opens a promotion PR into `main`.
+1. Verifies that `main` is contained in `next`.
+2. Runs `changeset pre exit` and the repository version command.
+3. Opens a promotion PR into `main`.
 
-Merge the promotion PR with a **merge commit**. If `next` advances after the
-workflow starts, those later changes remain on `next` for a future promotion.
+The promotion PR runs the normal CI checks. Merge it with a **merge commit**
+when those checks pass. If `next` advances after the workflow starts, those
+later changes remain on `next`.
 
-Merging the promotion PR publishes to `latest`. After publication, automation
-synchronizes `next` to the released `main` and enters prerelease mode again. If
-branch protection blocks the direct update, automation opens a **Start next
-prerelease cycle** PR instead.
+Merging the promotion PR publishes to `latest`. When work on the following
+release begins, merge `main` back into `next` and enter prerelease mode again.
+This is intentionally manual because it happens only when starting a new major
+release cycle:
+
+```sh
+git switch next
+git pull --ff-only
+git fetch origin main
+git merge origin/main
+pnpm changeset pre enter next
+git add .changeset/pre.json
+git commit -m "chore: start next prerelease cycle"
+git push
+```
+
+If `next` advanced after the promotion PR was created, resolve the merge and
+prerelease-state conflict while preserving those later changes.
 
 ## Maintenance releases
 
@@ -99,15 +113,15 @@ npm tag `v1`.
 
 - With pending Changesets, the workflow creates or updates a version PR.
 - After that PR is merged, run the workflow again with the same tag to publish.
-- Guards require stable versions, matching branch/version majors, and the exact
-  `v<major>` tag.
-- The workflow records npm's `latest` tags before publishing and fails if any
-  of them move.
+- The workflow requires a matching `<major>.x` branch and explicit `v<major>`
+  tag.
+- It records npm's `latest` tags before publishing and fails if any of them
+  move.
 
-The guarded local equivalent is:
+The local equivalent is:
 
 ```sh
-pnpm release:check -- --branch 1.x --tag v1
+pnpm version
 pnpm release -- --tag v1
 git push --follow-tags
 ```
@@ -120,7 +134,8 @@ Changeset and select the `canary` operation. It runs the equivalent of:
 ```sh
 pnpm changeset version --snapshot canary
 pnpm -s sync-versions
-pnpm release -- --branch "$BRANCH" --lane canary --tag canary --no-git-tag
+pnpm build
+pnpm changeset publish --tag canary --no-git-tag
 ```
 
 Canary versions use the `0.0.0-canary-YYYYMMDDHHMMSS` shape. The workflow has
