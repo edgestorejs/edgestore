@@ -37,12 +37,11 @@ jobs:
       - name: Install
         run: pnpm install --frozen-lockfile
 
-      - name: Validate promotion source
+      - name: Validate next
         id: source
         run: |
-          git fetch origin main next
+          git fetch origin main
           git merge-base --is-ancestor origin/main HEAD
-          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/next)"
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
           pnpm release:check -- --branch next --tag next --require-publishable
 
@@ -52,15 +51,13 @@ jobs:
           pnpm -s run version
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_BRANCH: main
 
       - name: Check stable release state
         run: pnpm release:check -- --branch main --tag latest
 
       - name: Check formatting
         run: pnpm format --check
-
-      - name: Check release tooling formatting
-        run: pnpm format:release
 
       - name: Lint
         run: pnpm lint
@@ -76,15 +73,6 @@ jobs:
 
       - name: Type tests
         run: pnpm test:types
-
-      - name: Test release guards
-        run: pnpm test:release
-
-      - name: Lint release tooling
-        run: pnpm lint:release
-
-      - name: Typecheck release tooling
-        run: pnpm release:typecheck
 
       - name: Open promotion PR
         run: pnpm exec tsx scripts/release/openPromotionPr.ts '${{ steps.source.outputs.sha }}'

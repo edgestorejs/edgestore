@@ -134,8 +134,13 @@ function validateBranch(lane: ReleaseLane, branch: string): void {
   }
 }
 
-function validatePreState(lane: ReleaseLane, preState?: PreState): void {
+function validatePreState(
+  lane: ReleaseLane,
+  preState: PreState | undefined,
+  publishable: boolean,
+): void {
   if (lane === 'next') {
+    if (!publishable && preState === undefined) return;
     if (preState?.mode !== 'pre' || preState.tag !== 'next') {
       throw new Error(
         'The next branch must remain in Changesets prerelease mode with tag "next".',
@@ -255,8 +260,8 @@ export function validateRelease({
     throw new Error(`Only canary releases may pass --no-git-tag.`);
   }
 
-  validatePreState(lane, preState);
   const { publishable, version } = validateVersions(lane, branch, packages);
+  validatePreState(lane, preState, publishable);
 
   return {
     branch,

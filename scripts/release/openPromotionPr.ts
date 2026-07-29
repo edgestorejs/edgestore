@@ -29,7 +29,7 @@ async function main() {
   const branch = `release/promote-next-${nextSha}`;
   const title = 'chore: promote next to stable';
   const body = [
-    `Promotes the exact \`next\` commit \`${nextSha}\` to a stable release.`,
+    `Promotes \`next\` commit \`${nextSha}\` to a stable release.`,
     '',
     '- Exits Changesets prerelease mode.',
     '- Generates stable package versions and changelogs.',
@@ -37,7 +37,7 @@ async function main() {
     '- Publishes to npm `latest` after this PR is merged.',
     '- Synchronizes `next` and re-enters prerelease mode after publication.',
     '',
-    '**Merge this PR with a merge commit.** If `next` advances, CI will require this PR to be regenerated.',
+    '**Merge this PR with a merge commit.** If `next` advances, its later changes remain available for a future promotion.',
   ].join('\n');
 
   const existingUrl = capture(

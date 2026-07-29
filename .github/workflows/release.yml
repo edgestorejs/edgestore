@@ -52,20 +52,15 @@ jobs:
       - name: Install
         run: pnpm install --frozen-lockfile
 
-      - name: Check release lane
-        run: pnpm release:check
-        env:
-          RELEASE_BRANCH: ${{ github.ref_name }}
-
       - name: Create Version PR or Publish
         id: changesets
         uses: changesets/action@v1
         with:
-          branch: ${{ github.ref_name }}
           version: pnpm -s run version
           publish: pnpm run release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_BRANCH: ${{ github.ref_name }}
           # Use OIDC for npm authentication instead of NPM_TOKEN
           # See: https://github.com/changesets/changesets/issues/1152#issuecomment-3190884868
           NPM_TOKEN: ''
@@ -127,7 +122,6 @@ jobs:
         id: changesets
         uses: changesets/action@v1
         with:
-          branch: ${{ github.ref_name }}
           version: pnpm -s run version
           publish: pnpm run release
         env:

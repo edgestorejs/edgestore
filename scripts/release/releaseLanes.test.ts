@@ -79,7 +79,12 @@ describe('release lane guards', () => {
     });
   });
 
-  it('treats a newly entered next cycle as a safe no-op', () => {
+  it('treats an uninitialized or newly entered next cycle as a safe no-op', () => {
+    expect(request({ branch: 'next' })).toMatchObject({
+      lane: 'next',
+      publishable: false,
+    });
+
     expect(
       request({
         branch: 'next',

@@ -42,7 +42,7 @@
     "clean": "find . -name node_modules -o -name .turbo -o -name .next -o -name dist -type d -prune | xargs rm -rf",
     "registry:build": "shadcn build --output=docs/public/r",
     "changeset": "changeset",
-    "version": "changeset version && pnpm -s sync-versions",
+    "version": "tsx scripts/release/version.ts",
     "release": "tsx scripts/release/release.ts",
     "release:check": "tsx scripts/release/checkRelease.ts",
     "release:typecheck": "tsc -p scripts/release/tsconfig.json",

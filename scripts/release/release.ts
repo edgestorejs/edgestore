@@ -166,7 +166,7 @@ async function main() {
       );
     }
     console.log(
-      'The next branch is in prerelease mode but has no prerelease version yet; nothing will be published.',
+      'The next branch has no prerelease version yet; nothing will be published.',
     );
     return;
   }

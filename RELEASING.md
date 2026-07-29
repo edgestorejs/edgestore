@@ -42,21 +42,19 @@ commands locally.
 
 ## The `next` prerelease lane
 
-`next` must always contain `.changeset/pre.json` in prerelease mode with tag
-`next`. Bootstrap it once, after the release-lane infrastructure is on `main`:
+Create `next` from `main` after the release-lane infrastructure is available:
 
 ```sh
 git switch main
 git pull --ff-only
 git switch -c next
-pnpm changeset pre enter next
-git add .changeset/pre.json
-git commit -m "chore: enter next prerelease mode"
 git push -u origin next
 ```
 
 Feature PRs for the upcoming breaking release target `next` and include normal
 Changesets. The release workflow creates a **Version Packages (next)** PR.
+When it creates the first version PR, the version command automatically enters
+Changesets prerelease mode and includes `.changeset/pre.json` in that PR.
 Merging it publishes versions such as `2.0.0-next.0` to npm's `next` tag.
 
 The guarded local equivalent is:
@@ -72,15 +70,14 @@ Do not run `changeset pre exit` directly on `next`.
 
 Run the **Promote next** workflow from GitHub Actions. The workflow:
 
-1. Pins and validates the current `next` commit.
+1. Checks out and validates the current `next` commit.
 2. Verifies that `main` is contained in `next`.
 3. Runs `changeset pre exit` and the repository version command.
 4. Runs the release guards, formatting, lint, build, typecheck, and tests.
 5. Opens a promotion PR into `main`.
 
 Merge the promotion PR with a **merge commit**. If `next` advances after the
-workflow starts, CI rejects the stale promotion PR and the workflow must be run
-again.
+workflow starts, those later changes remain on `next` for a future promotion.
 
 Merging the promotion PR publishes to `latest`. After publication, automation
 synchronizes `next` to the released `main` and enters prerelease mode again. If
