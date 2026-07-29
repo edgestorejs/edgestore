@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - next
   workflow_dispatch:
 
 concurrency:
@@ -29,6 +30,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
@@ -43,8 +46,34 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Check release lane state
+        if: github.event_name != 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'next' || endsWith(github.ref_name, '.x')
+        run: pnpm release:check
+        env:
+          RELEASE_BRANCH: ${{ github.base_ref || github.ref_name }}
+
+      - name: Test release guards
+        run: pnpm test:release
+
+      - name: Lint release tooling
+        run: pnpm lint:release
+
+      - name: Typecheck release tooling
+        run: pnpm release:typecheck
+
+      - name: Verify promotion source
+        if: startsWith(github.head_ref, 'release/promote-next-') && github.base_ref == 'main'
+        run: |
+          expected_sha="${GITHUB_HEAD_REF#release/promote-next-}"
+          git fetch origin main next
+          test "$expected_sha" = "$(git rev-parse origin/next)"
+          git merge-base --is-ancestor origin/main "$expected_sha"
+
       - name: Check formatting
         run: pnpm format --check
+
+      - name: Check release tooling formatting
+        run: pnpm format:release
 
       - name: Lint
         run: pnpm lint

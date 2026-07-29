@@ -4,13 +4,28 @@ on:
   push:
     branches:
       - main
+      - next
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: Manual release operation
+        required: true
+        type: choice
+        options:
+          - maintenance
+          - canary
+      npm-tag:
+        description: Required for maintenance; must match the branch (for example, v1)
+        required: false
+        type: string
 
 concurrency:
-  group: release-${{ github.ref }}
+  group: npm-publish
   cancel-in-progress: false
 
 jobs:
   release:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -19,6 +34,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
@@ -35,9 +52,16 @@ jobs:
       - name: Install
         run: pnpm install --frozen-lockfile
 
+      - name: Check release lane
+        run: pnpm release:check
+        env:
+          RELEASE_BRANCH: ${{ github.ref_name }}
+
       - name: Create Version PR or Publish
+        id: changesets
         uses: changesets/action@v1
         with:
+          branch: ${{ github.ref_name }}
           version: pnpm -s run version
           publish: pnpm run release
         env:
@@ -45,3 +69,128 @@ jobs:
           # Use OIDC for npm authentication instead of NPM_TOKEN
           # See: https://github.com/changesets/changesets/issues/1152#issuecomment-3190884868
           NPM_TOKEN: ''
+
+      - name: Report published packages
+        if: steps.changesets.outputs.published == 'true'
+        run: |
+          {
+            echo '## Published packages'
+            echo
+            echo '${{ steps.changesets.outputs.publishedPackages }}' |
+              jq -r '.[] | "- `\(.name)@\(.version)`"'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Start the next prerelease cycle
+        if: github.ref_name == 'main' && steps.changesets.outputs.published == 'true'
+        run: pnpm exec tsx scripts/release/startNextCycle.ts
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  maintenance:
+    if: github.event_name == 'workflow_dispatch' && inputs.operation == 'maintenance'
+    name: Prepare or publish maintenance release
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+      pull-requests: write
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10.26.2
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Check maintenance lane
+        run: pnpm release:check -- --require-explicit-tag
+        env:
+          NPM_TAG: ${{ inputs.npm-tag }}
+          RELEASE_BRANCH: ${{ github.ref_name }}
+
+      - name: Create Version PR or Publish
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          branch: ${{ github.ref_name }}
+          version: pnpm -s run version
+          publish: pnpm run release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TAG: ${{ inputs.npm-tag }}
+          NPM_TOKEN: ''
+          RELEASE_BRANCH: ${{ github.ref_name }}
+
+      - name: Report published packages
+        if: steps.changesets.outputs.published == 'true'
+        run: |
+          {
+            echo '## Published maintenance packages'
+            echo
+            echo '${{ steps.changesets.outputs.publishedPackages }}' |
+              jq -r '.[] | "- `\(.name)@\(.version)`"'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  canary:
+    if: github.event_name == 'workflow_dispatch' && inputs.operation == 'canary'
+    name: Publish canary snapshot
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10.26.2
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Create snapshot versions
+        run: |
+          pnpm changeset version --snapshot canary
+          pnpm -s sync-versions
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish canary
+        run: >-
+          pnpm release --
+          --branch '${{ github.ref_name }}'
+          --lane canary
+          --tag canary
+          --no-git-tag
+
+      - name: Show discarded snapshot changes
+        if: always()
+        run: git status --short

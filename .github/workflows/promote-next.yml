@@ -1,0 +1,92 @@
+name: Promote next
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: promote-next
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  prepare:
+    name: Prepare stable promotion PR
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout next
+        uses: actions/checkout@v7
+        with:
+          ref: next
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate promotion source
+        id: source
+        run: |
+          git fetch origin main next
+          git merge-base --is-ancestor origin/main HEAD
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/next)"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          pnpm release:check -- --branch next --tag next --require-publishable
+
+      - name: Generate stable versions
+        run: |
+          pnpm changeset pre exit
+          pnpm -s run version
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check stable release state
+        run: pnpm release:check -- --branch main --tag latest
+
+      - name: Check formatting
+        run: pnpm format --check
+
+      - name: Check release tooling formatting
+        run: pnpm format:release
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck packages
+        run: pnpm typecheck
+
+      - name: Build packages
+        run: pnpm build
+
+      - name: Runtime tests
+        run: pnpm test
+
+      - name: Type tests
+        run: pnpm test:types
+
+      - name: Test release guards
+        run: pnpm test:release
+
+      - name: Lint release tooling
+        run: pnpm lint:release
+
+      - name: Typecheck release tooling
+        run: pnpm release:typecheck
+
+      - name: Open promotion PR
+        run: pnpm exec tsx scripts/release/openPromotionPr.ts '${{ steps.source.outputs.sha }}'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
