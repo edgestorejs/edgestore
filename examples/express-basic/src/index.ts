@@ -48,12 +48,12 @@ const handler = createEdgeStoreExpressHandler({
 // --- EXPRESS ROUTES ---
 
 app.get('/', (req, res) => {
-  console.log(req), res.send('Hello from server!');
+  (console.log(req), res.send('Hello from server!'));
 });
 
 // set the get and post routes for the edgestore router
-app.get('/edgestore/*', handler);
-app.post('/edgestore/*', handler);
+app.get('/edgestore/*splat', handler);
+app.post('/edgestore/*splat', handler);
 
 app.listen(PORT, () => {
   console.log(`⚡Server is running here 👉 http://localhost:${PORT}`);
