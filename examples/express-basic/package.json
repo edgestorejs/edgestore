@@ -6,7 +6,7 @@
     "dev": "dotenv -e .env.local -- tsx src/index.ts"
   },
   "dependencies": {
-    "@edgestore/server": "^0.7.0",
+    "@edgestore/server": "^0.8.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "express": "^5.2.1"
