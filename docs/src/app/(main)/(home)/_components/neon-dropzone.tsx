@@ -91,7 +91,7 @@ export function NeonDropzone() {
           {/* Dropzone */}
           <div
             className={cn(
-              'border-3 @min-[500px]:h-[190px] dark:border-primary-200/80 border-primary m-6 flex h-[160px] grow flex-col items-center justify-center rounded-xl border-dashed transition-all duration-300',
+              'border-3 border-primary @min-[500px]:h-[190px] dark:border-primary-200/80 m-6 flex h-[160px] grow flex-col items-center justify-center rounded-xl border-dashed transition-all duration-300',
               'group-data-[error=true]:border-red-500 group-data-[error=true]:text-red-500',
               'dark:group-data-[error=true]:border-red-300 dark:group-data-[error=true]:text-red-300',
             )}
@@ -115,11 +115,11 @@ export function NeonDropzone() {
                     <div className="@min-[500px]:mt-4 mt-2 w-full">
                       <div className="rounded-xs border-primary-800/50 h-4 w-full overflow-hidden border">
                         <div
-                          className="rounded-xs dark:border-primary-300/80 border-primary-400/80 dark:bg-primary-400 bg-primary h-full border transition-all duration-300"
+                          className="rounded-xs border-primary-400/80 bg-primary dark:border-primary-300/80 dark:bg-primary-400 h-full border transition-all duration-300"
                           style={{ width: `${selectedFile.progress}%` }}
                         />
                       </div>
-                      <div className="@min-[500px]:mt-4 dark:text-primary-300 text-primary-400 mt-1 text-center font-mono text-sm font-bold">
+                      <div className="text-primary-400 @min-[500px]:mt-4 dark:text-primary-300 mt-1 text-center font-mono text-sm font-bold">
                         {Math.round(selectedFile.progress)}%
                       </div>
                     </div>

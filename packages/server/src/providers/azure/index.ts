@@ -1,6 +1,5 @@
 import { BlobServiceClient } from '@azure/storage-blob';
 import { type Provider } from '@edgestore/shared';
-import { v4 as uuidv4 } from 'uuid';
 import { getEnv } from '../../adapters/shared';
 
 /**
@@ -81,7 +80,7 @@ export function AzureProvider(options?: AzureProviderOptions): Provider {
     const extension = fileInfo.extension
       ? `.${fileInfo.extension.replace('.', '')}`
       : '';
-    const fileName = fileInfo.fileName ?? `${uuidv4()}${extension}`;
+    const fileName = fileInfo.fileName ?? `${crypto.randomUUID()}${extension}`;
 
     return [
       esBucketName,

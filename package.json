@@ -2,8 +2,9 @@
   "name": "root",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "license": "MIT",
-  "packageManager": "pnpm@10.26.2",
+  "packageManager": "pnpm@11.15.1",
   "engines": {
     "node": ">=24"
   },
@@ -31,6 +32,7 @@
     "test": "turbo run test --filter=@edgestore/*",
     "test:types": "turbo run test:types --filter=edgestore-tests",
     "test:smoke": "turbo run test:smoke --filter=@edgestore/server",
+    "check:dependencies": "node scripts/checkDependencyVersions.ts",
     "lint": "turbo lint",
     "typecheck": "turbo run typecheck --filter=@edgestore/*",
     "lint-fix": "turbo lint -- --fix && manypkg fix && pnpm format:write",
@@ -43,47 +45,32 @@
     "release": "pnpm build && changeset publish",
     "sync-versions": "tsx scripts/syncVersions.ts"
   },
-  "dependencies": {
-    "@changesets/changelog-github": "0.5.2",
-    "@changesets/cli": "2.29.8",
-    "@ianvs/prettier-plugin-sort-imports": "^4.4.1",
-    "@manypkg/cli": "^0.21.0",
+  "devDependencies": {
+    "@changesets/changelog-github": "0.7.0",
+    "@changesets/cli": "2.31.1",
+    "@eslint-react/eslint-plugin": "5.17.3",
+    "@ianvs/prettier-plugin-sort-imports": "4.7.1",
+    "@manypkg/cli": "0.25.1",
     "@rollup/plugin-node-resolve": "16.0.3",
     "@rollup/plugin-typescript": "12.3.0",
-    "@types/prettier": "^3.0.0",
-    "@typescript-eslint/eslint-plugin": "6.0.0-alpha.158",
-    "@typescript-eslint/parser": "6.0.0-alpha.158",
-    "eslint": "^8.40.0",
-    "eslint-config-prettier": "^8.8.0",
-    "eslint-plugin-no-only-tests": "^3.1.0",
-    "eslint-plugin-react": "^7.32.2",
-    "eslint-plugin-react-hooks": "^4.6.0",
-    "eslint-plugin-turbo": "2.7.2",
-    "eslint-plugin-unicorn": "47.0.0",
-    "npm-run-all": "^4.1.5",
-    "prettier": "^3.5.3",
-    "prettier-plugin-tailwindcss": "^0.6.11",
-    "rollup": "4.54.0",
-    "rollup-plugin-delete": "2.2.0",
-    "rollup-plugin-multi-input": "1.6.0",
-    "rollup-plugin-node-externals": "8.1.2",
+    "eslint": "10.7.0",
+    "eslint-config-prettier": "10.1.8",
+    "eslint-plugin-no-only-tests": "3.4.0",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "eslint-plugin-turbo": "2.10.5",
+    "eslint-plugin-unicorn": "72.0.0",
+    "prettier": "3.9.6",
+    "prettier-plugin-tailwindcss": "0.8.1",
+    "rollup": "4.62.2",
+    "rollup-plugin-node-externals": "9.0.1",
     "rollup-plugin-swc3": "0.12.1",
-    "rollup-plugin-typescript2": "0.36.0",
-    "shadcn": "2.4.0-canary.20",
-    "tsx": "4.21.0",
-    "turbo": "2.7.2",
-    "typescript": "5.9.3"
-  },
-  "pnpm": {
-    "overrides": {
-      "@edgestore/server": "workspace:*",
-      "@edgestore/sdk": "workspace:*",
-      "@edgestore/shared": "workspace:*",
-      "@edgestore/react": "workspace:*"
-    }
-  },
-  "devDependencies": {
-    "tsd": "^0.33.0",
-    "vitest": "^4.1.8"
+    "shadcn": "4.13.1",
+    "tsd": "0.33.0",
+    "tsx": "catalog:",
+    "turbo": "2.10.5",
+    "typescript": "catalog:",
+    "typescript-eslint": "8.65.0",
+    "vitest": "4.1.10",
+    "yaml": "2.9.0"
   }
 }
