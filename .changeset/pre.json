@@ -21,5 +21,8 @@
     "@edgestore/server": "0.8.0",
     "@edgestore/shared": "0.8.0"
   },
-  "changesets": []
+  "changesets": [
+    "clean-production-dependencies",
+    "esm-only-packages"
+  ]
 }
