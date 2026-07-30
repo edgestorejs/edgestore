@@ -2,3 +2,23 @@ packages:
   - 'docs'
   - 'examples/*'
   - 'packages/*'
+
+publicHoistPattern:
+  - '@types/*'
+strictPeerDependencies: false
+linkWorkspacePackages: true
+preferWorkspacePackages: true
+
+overrides:
+  '@edgestore/server': 'workspace:*'
+  '@edgestore/shared': 'workspace:*'
+  '@edgestore/react': 'workspace:*'
+
+minimumReleaseAgeStrict: true
+
+allowBuilds:
+  '@parcel/watcher': false
+  '@swc/core': false
+  core-js: false
+  esbuild: false
+  sharp: false
