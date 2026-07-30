@@ -9,7 +9,7 @@ import {
   type SharedRequestUploadRes,
 } from '@edgestore/shared';
 import { hkdf } from '@panva/hkdf';
-import { serialize } from 'cookie';
+import { stringifySetCookie } from 'cookie';
 import { EncryptJWT, jwtDecrypt } from 'jose';
 import type Logger from '../libs/logger';
 import { IMAGE_MIME_TYPES } from './imageTypes';
@@ -190,19 +190,19 @@ export async function init<TCtx>(params: {
     token = initRes.token;
   }
   const newCookies = [
-    serialize(
-      resolvedCookieConfig.ctx.name,
-      ctxToken,
-      resolvedCookieConfig.ctx.options,
-    ),
+    stringifySetCookie({
+      name: resolvedCookieConfig.ctx.name,
+      value: ctxToken,
+      ...resolvedCookieConfig.ctx.options,
+    }),
   ];
   if (token) {
     newCookies.push(
-      serialize(
-        resolvedCookieConfig.token.name,
-        token,
-        resolvedCookieConfig.token.options,
-      ),
+      stringifySetCookie({
+        name: resolvedCookieConfig.token.name,
+        value: token,
+        ...resolvedCookieConfig.token.options,
+      }),
     );
   }
   const baseUrl = await provider.getBaseUrl();
