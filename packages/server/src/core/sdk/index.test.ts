@@ -118,9 +118,8 @@ describe('initEdgeStoreSdk', () => {
 
   it('throws EdgeStoreCredentialsError when credentials are missing', async () => {
     const { initEdgeStoreSdk } = await importSdk();
-    const { default: EdgeStoreCredentialsError } = await import(
-      '../../libs/errors/EdgeStoreCredentialsError'
-    );
+    const { default: EdgeStoreCredentialsError } =
+      await import('../../libs/errors/EdgeStoreCredentialsError');
 
     expect(() =>
       initEdgeStoreSdk({
