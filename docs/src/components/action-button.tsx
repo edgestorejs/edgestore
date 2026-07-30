@@ -14,11 +14,32 @@ export function ActionButton({
   size = 'lg',
   ...props
 }: ActionButtonProps) {
-  const LinkComp = href ? (href.startsWith('/') ? Link : 'a') : 'div';
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  const linkProps = href
-    ? { href, target: '_blank', rel: 'noreferrer' }
-    : ({} as any);
+  const content = (
+    <>
+      {/* Animated background gradient */}
+      <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary/80 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+
+      {/* Shimmer effect */}
+      <div className="absolute inset-0 -translate-x-full skew-x-12 bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+
+      <span className="relative flex items-center gap-2 dark:text-shadow-[0_1px_4px_rgba(0,0,0,0.8)]">
+        {children}
+      </span>
+    </>
+  );
+
+  let action = <div>{content}</div>;
+  if (href) {
+    action = href.startsWith('/') ? (
+      <Link href={href} target="_blank" rel="noreferrer">
+        {content}
+      </Link>
+    ) : (
+      <a href={href} target="_blank" rel="noreferrer">
+        {content}
+      </a>
+    );
+  }
 
   return (
     <Button
@@ -30,17 +51,7 @@ export function ActionButton({
       )}
       {...props}
     >
-      <LinkComp {...linkProps}>
-        {/* Animated background gradient */}
-        <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary/80 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-
-        {/* Shimmer effect */}
-        <div className="absolute inset-0 -translate-x-full skew-x-12 bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
-
-        <span className="relative flex items-center gap-2 dark:text-shadow-[0_1px_4px_rgba(0,0,0,0.8)]">
-          {children}
-        </span>
-      </LinkComp>
+      {action}
     </Button>
   );
 }

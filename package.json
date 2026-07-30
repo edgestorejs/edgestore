@@ -32,6 +32,7 @@
     "test": "turbo run test --filter=@edgestore/*",
     "test:types": "turbo run test:types --filter=edgestore-tests",
     "test:smoke": "turbo run test:smoke --filter=@edgestore/server",
+    "check:dependencies": "node scripts/checkDependencyVersions.ts",
     "lint": "turbo lint",
     "typecheck": "turbo run typecheck --filter=@edgestore/*",
     "lint-fix": "turbo lint -- --fix && manypkg fix && pnpm format:write",
@@ -49,7 +50,7 @@
     "@changesets/cli": "2.31.1",
     "@eslint-react/eslint-plugin": "5.17.3",
     "@ianvs/prettier-plugin-sort-imports": "4.7.1",
-    "@manypkg/cli": "^0.25.1",
+    "@manypkg/cli": "0.25.1",
     "@rollup/plugin-node-resolve": "16.0.3",
     "@rollup/plugin-typescript": "12.3.0",
     "eslint": "10.7.0",
@@ -64,11 +65,12 @@
     "rollup-plugin-node-externals": "9.0.1",
     "rollup-plugin-swc3": "0.12.1",
     "shadcn": "4.13.1",
-    "tsd": "^0.33.0",
-    "tsx": "4.23.1",
+    "tsd": "0.33.0",
+    "tsx": "catalog:",
     "turbo": "2.10.5",
-    "typescript": "6.0.3",
+    "typescript": "catalog:",
     "typescript-eslint": "8.65.0",
-    "vitest": "^4.1.10"
+    "vitest": "4.1.10",
+    "yaml": "2.9.0"
   }
 }
