@@ -11,7 +11,6 @@ import {
 import { hkdf } from '@panva/hkdf';
 import { serialize } from 'cookie';
 import { EncryptJWT, jwtDecrypt } from 'jose';
-import { v4 as uuidv4 } from 'uuid';
 import type Logger from '../libs/logger';
 import { IMAGE_MIME_TYPES } from './imageTypes';
 
@@ -614,7 +613,7 @@ async function encryptJWT(ctx: any) {
     .setProtectedHeader({ alg: 'dir', enc: 'A256GCM' })
     .setIssuedAt()
     .setExpirationTime(Date.now() / 1000 + DEFAULT_MAX_AGE)
-    .setJti(uuidv4())
+    .setJti(crypto.randomUUID())
     .encrypt(encryptionSecret);
 }
 
