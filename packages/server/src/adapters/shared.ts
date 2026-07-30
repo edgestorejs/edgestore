@@ -10,9 +10,8 @@ import {
   type SharedRequestUploadRes,
 } from '@edgestore/shared';
 import { hkdf } from '@panva/hkdf';
-import { serialize } from 'cookie';
+import { stringifySetCookie } from 'cookie';
 import { EncryptJWT, jwtDecrypt } from 'jose';
-import { v4 as uuidv4 } from 'uuid';
 import type Logger from '../libs/logger';
 import { IMAGE_MIME_TYPES } from './imageTypes';
 
@@ -192,19 +191,19 @@ export async function init<TCtx>(params: {
     token = initRes.token;
   }
   const newCookies = [
-    serialize(
-      resolvedCookieConfig.ctx.name,
-      ctxToken,
-      resolvedCookieConfig.ctx.options,
-    ),
+    stringifySetCookie({
+      name: resolvedCookieConfig.ctx.name,
+      value: ctxToken,
+      ...resolvedCookieConfig.ctx.options,
+    }),
   ];
   if (token) {
     newCookies.push(
-      serialize(
-        resolvedCookieConfig.token.name,
-        token,
-        resolvedCookieConfig.token.options,
-      ),
+      stringifySetCookie({
+        name: resolvedCookieConfig.token.name,
+        value: token,
+        ...resolvedCookieConfig.token.options,
+      }),
     );
   }
   const baseUrl = await provider.getBaseUrl();
@@ -621,7 +620,7 @@ async function encryptJWT(ctx: any) {
     .setProtectedHeader({ alg: 'dir', enc: 'A256GCM' })
     .setIssuedAt()
     .setExpirationTime(Date.now() / 1000 + DEFAULT_MAX_AGE)
-    .setJti(uuidv4())
+    .setJti(crypto.randomUUID())
     .encrypt(encryptionSecret);
 }
 

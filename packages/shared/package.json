@@ -1,10 +1,14 @@
 {
   "name": "@edgestore/shared",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "Upload files with ease from React/Next.js",
   "homepage": "https://edgestore.dev",
   "license": "MIT",
   "sideEffects": false,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/edgestorejs/edgestore.git",
@@ -15,7 +19,6 @@
   },
   "author": "Ravi <me@ravi.com>",
   "main": "dist/index.js",
-  "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "keywords": [
     "react",
@@ -34,13 +37,13 @@
     "codegen:entrypoints": "tsx entrypoints.script.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "lint": "eslint --cache --ext \".js,.ts,.tsx\" --ignore-path ../../.gitignore --report-unused-disable-directives src"
+    "lint": "eslint --cache --report-unused-disable-directives src"
   },
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
       "default": "./dist/index.js"
     }
   },
@@ -61,13 +64,14 @@
     "react-dom": ">=16.8.0"
   },
   "devDependencies": {
-    "@types/node": "25.0.3",
+    "@types/node": "catalog:",
     "arktype": "2.2.3",
-    "react": "19.2.3",
-    "react-dom": "19.2.3",
-    "typescript": "5.9.3",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "tsx": "catalog:",
+    "typescript": "catalog:",
     "valibot": "1.4.2",
-    "zod": "3.25.42"
+    "zod": "3.25.76"
   },
   "gitHead": "a223c4cb8df50e6b64f9db5dc2daf93848748da9"
 }

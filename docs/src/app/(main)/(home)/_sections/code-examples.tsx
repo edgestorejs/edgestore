@@ -139,16 +139,16 @@ export function CodeExamples() {
         <div className="space-y-2 text-center">
           <h2 className="text-2xl font-bold sm:text-3xl md:text-4xl">
             As{' '}
-            <span className="from-primary to-primary/60 bg-gradient-to-b bg-clip-text text-transparent">
+            <span className="bg-gradient-to-b from-primary to-primary/60 bg-clip-text text-transparent">
               Simple
             </span>{' '}
             as it Gets
           </h2>
-          <p className="text-muted-foreground text-base sm:text-lg">
+          <p className="text-base text-muted-foreground sm:text-lg">
             Just define your storage structure and start uploading.
           </p>
         </div>
-        <div className="border-border/50 bg-muted/20 rounded-lg border p-4">
+        <div className="rounded-lg border border-border/50 bg-muted/20 p-4">
           <div className="flex flex-col gap-4 overflow-hidden lg:grid lg:grid-cols-2 [&>figure]:m-0">
             <div>
               <h3 className="mb-2 text-lg font-semibold">Server</h3>
