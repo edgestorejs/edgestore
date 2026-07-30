@@ -34,7 +34,7 @@
     "codegen:entrypoints": "tsx entrypoints.script.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "lint": "eslint --cache --ext \".js,.ts,.tsx\" --ignore-path ../../.gitignore --report-unused-disable-directives src"
+    "lint": "eslint --cache --report-unused-disable-directives src"
   },
   "exports": {
     "./package.json": "./package.json",

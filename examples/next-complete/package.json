@@ -6,7 +6,7 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint --cache --ext \".js,.ts,.tsx\" --report-unused-disable-directives --report-unused-disable-directives src",
+    "lint": "eslint --cache --report-unused-disable-directives src",
     "lint-fix": "pnpm lint --fix"
   },
   "dependencies": {
