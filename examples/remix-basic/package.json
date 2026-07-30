@@ -10,22 +10,21 @@
     "typecheck": "react-router typegen && tsc"
   },
   "dependencies": {
-    "@edgestore/react": "^0.7.0",
-    "@edgestore/server": "^0.7.0",
-    "@react-router/node": "^7.5.3",
-    "@react-router/serve": "^7.5.3",
-    "isbot": "^5.1.27",
-    "react": "19.2.3",
-    "react-dom": "19.2.3",
-    "react-router": "^7.5.3"
+    "@edgestore/react": "^1.0.0-next.0",
+    "@edgestore/server": "^1.0.0-next.0",
+    "@react-router/node": "8.2.0",
+    "@react-router/serve": "8.2.0",
+    "isbot": "5.2.1",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
+    "react-router": "8.2.0"
   },
   "devDependencies": {
-    "@react-router/dev": "^7.5.3",
+    "@react-router/dev": "8.2.0",
     "@types/node": "25.0.3",
-    "@types/react": "19.2.7",
+    "@types/react": "19.2.17",
     "@types/react-dom": "19.2.3",
-    "typescript": "5.9.3",
-    "vite": "^6.3.3",
-    "vite-tsconfig-paths": "^5.1.4"
+    "typescript": "6.0.3",
+    "vite": "8.1.5"
   }
 }

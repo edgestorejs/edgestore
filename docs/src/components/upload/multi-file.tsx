@@ -41,7 +41,7 @@ const FileList = React.forwardRef<
         return (
           <div
             key={key}
-            className="shadow-xs border-border flex flex-col justify-center rounded border px-4 py-3"
+            className="border-border shadow-xs flex flex-col justify-center rounded border px-4 py-3"
           >
             <div className="text-foreground flex items-center gap-3">
               <FileIcon className="text-muted-foreground h-8 w-8 shrink-0" />

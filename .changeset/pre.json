@@ -1,6 +1,6 @@
 {
   "mode": "pre",
-  "tag": "canary",
+  "tag": "next",
   "initialVersions": {
     "docs": "0.1.0",
     "astro-basic": "0.1.0",
@@ -17,9 +17,12 @@
     "remix-basic": "0.1.0",
     "start-basic": "0.1.0",
     "vite-basic": "0.1.0",
-    "@edgestore/react": "0.7.0",
-    "@edgestore/server": "0.7.0",
-    "@edgestore/shared": "0.7.0"
+    "@edgestore/react": "0.8.0",
+    "@edgestore/server": "0.8.0",
+    "@edgestore/shared": "0.8.0"
   },
-  "changesets": []
+  "changesets": [
+    "clean-production-dependencies",
+    "esm-only-packages"
+  ]
 }

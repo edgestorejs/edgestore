@@ -358,7 +358,6 @@ export function AISearchPanel() {
     return () => {
       window.removeEventListener('keydown', onKeyPress);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -385,7 +384,7 @@ export function AISearchPanel() {
       <Presence present={open}>
         <div
           data-state={open ? 'open' : 'closed'}
-          className="backdrop-blur-xs bg-fd-overlay data-[state=open]:animate-fd-fade-in data-[state=closed]:animate-fd-fade-out fixed inset-0 z-30 lg:hidden"
+          className="bg-fd-overlay backdrop-blur-xs data-[state=closed]:animate-fd-fade-out data-[state=open]:animate-fd-fade-in fixed inset-0 z-30 lg:hidden"
           onClick={() => {
             setOpen(false);
           }}
@@ -396,7 +395,7 @@ export function AISearchPanel() {
           className={cn(
             'bg-fd-popover text-fd-popover-foreground z-30 overflow-hidden [--ai-chat-width:400px] xl:[--ai-chat-width:460px]',
             'max-lg:fixed max-lg:inset-x-2 max-lg:top-4 max-lg:rounded-2xl max-lg:border max-lg:shadow-xl',
-            'lg:in-[#nd-docs-layout]:[grid-area:toc] lg:in-[#nd-notebook-layout]:row-span-full lg:in-[#nd-notebook-layout]:col-start-5 lg:sticky lg:top-0 lg:ms-auto lg:h-dvh lg:border-s',
+            'lg:in-[#nd-docs-layout]:[grid-area:toc] lg:in-[#nd-notebook-layout]:col-start-5 lg:in-[#nd-notebook-layout]:row-span-full lg:sticky lg:top-0 lg:ms-auto lg:h-dvh lg:border-s',
             open
               ? 'animate-fd-dialog-in lg:animate-[ask-ai-open_200ms]'
               : 'animate-fd-dialog-out lg:animate-[ask-ai-close_200ms]',

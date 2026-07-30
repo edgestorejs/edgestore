@@ -1,22 +1,14 @@
 {
   "extends": "./tsconfig.build.json",
-  "include": [
-    "packages",
-    "types",
-    "scripts",
-    "examples",
-    "rollup.config.ts",
-    ".eslintrc.js"
-  ],
+  "include": ["packages", "types", "scripts", "examples", "rollup.config.ts"],
   "exclude": [],
   "compilerOptions": {
     "allowJs": false,
-    "baseUrl": ".",
     "paths": {
-      "@edgestore/react": ["packages/react/src"],
-      "@edgestore/react/*": ["packages/react/src/*"],
-      "@edgestore/sdk": ["packages/sdk/src"],
-      "@edgestore/shared": ["packages/shared/src"]
+      "@edgestore/react": ["./packages/react/src"],
+      "@edgestore/react/*": ["./packages/react/src/*"],
+      "@edgestore/sdk": ["./packages/sdk/src"],
+      "@edgestore/shared": ["./packages/shared/src"]
     },
     "types": ["node"]
   }
