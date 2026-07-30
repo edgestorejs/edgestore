@@ -7,11 +7,7 @@ export type RuntimeOperationId = Extract<OperationId, `v2.runtime.${string}`>;
 type ManagementOperationId = Extract<OperationId, `v2.management.${string}`>;
 
 type ManagementAccessResource =
-  | 'accounts'
-  | 'projectKeys'
-  | 'members'
-  | 'invitations'
-  | 'tokens';
+  'accounts' | 'projectKeys' | 'members' | 'invitations' | 'tokens';
 
 export type ManagementAccessOperationId = Extract<
   ManagementOperationId,
