@@ -5,17 +5,15 @@
     "types",
     "scripts",
     "examples",
-    "rollup.config.ts",
-    ".eslintrc.js"
+    "rollup.config.ts"
   ],
   "exclude": [],
   "compilerOptions": {
     "allowJs": false,
-    "baseUrl": ".",
     "paths": {
-      "@edgestore/react": ["packages/react/src"],
-      "@edgestore/react/*": ["packages/react/src/*"],
-      "@edgestore/shared": ["packages/shared/src"]
+      "@edgestore/react": ["./packages/react/src"],
+      "@edgestore/react/*": ["./packages/react/src/*"],
+      "@edgestore/shared": ["./packages/shared/src"]
     },
     "types": ["node"]
   }
