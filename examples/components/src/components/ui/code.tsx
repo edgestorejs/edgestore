@@ -8,7 +8,7 @@ const CodeBlock = React.forwardRef<
   <pre
     ref={ref}
     className={cn(
-      'bg-muted overflow-x-scroll rounded-sm p-2 text-xs',
+      'overflow-x-scroll rounded-sm bg-muted p-2 text-xs',
       className,
     )}
     {...props}

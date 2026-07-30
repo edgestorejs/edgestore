@@ -136,7 +136,7 @@ function ImageFileBlock(params: {
       />
       <div
         className={cn(
-          'absolute left-0 top-0 flex h-full w-full flex-col items-center justify-center gap-2 bg-black bg-opacity-50 opacity-0 transition-all duration-300 group-hover:opacity-100',
+          'bg-opacity-50 absolute top-0 left-0 flex h-full w-full flex-col items-center justify-center gap-2 bg-black opacity-0 transition-all duration-300 group-hover:opacity-100',
           loading && 'opacity-100',
         )}
       >
