@@ -5,6 +5,7 @@
   "homepage": "https://edgestore.dev",
   "license": "MIT",
   "sideEffects": false,
+  "type": "module",
   "repository": {
     "type": "git",
     "url": "https://github.com/edgestorejs/edgestore.git",
@@ -15,7 +16,6 @@
   },
   "author": "Ravi <me@ravi.com>",
   "main": "dist/index.js",
-  "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "engines": {
     "node": ">=24"
@@ -39,26 +39,29 @@
     "schema:sync": "node ./sync-openapi.mjs",
     "test": "vitest run",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "lint": "eslint --cache --ext \".js,.ts\" --ignore-path ../../.gitignore --ignore-pattern src/generated --report-unused-disable-directives src"
+    "lint": "eslint --cache --ignore-pattern src/generated --report-unused-disable-directives src"
   },
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
       "default": "./dist/index.js"
     }
   },
   "files": [
     "dist",
+    "src",
     "README.md",
     "LICENSE",
-    "package.json"
+    "package.json",
+    "!**/*.test.*",
+    "!**/__tests__"
   ],
   "devDependencies": {
-    "@types/node": "25.0.3",
+    "@types/node": "catalog:",
     "openapi-typescript": "7.6.1",
-    "typescript": "5.9.3"
+    "typescript": "catalog:"
   },
   "dependencies": {
     "openapi-fetch": "0.17.0",
