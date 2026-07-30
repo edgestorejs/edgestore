@@ -19,14 +19,6 @@ const config = {
   plugins: [sortImportsPlugin, tailwindPlugin],
   overrides: [
     {
-      // Tailwind 3 cannot load the Tailwind 4 stylesheet used by the docs.
-      files: ['examples/start-basic/**/*'],
-      options: {
-        tailwindConfig: './examples/start-basic/tailwind.config.cjs',
-        tailwindStylesheet: undefined,
-      },
-    },
-    {
       // Keep markdown format-on-save focused on markdown itself.
       files: ['**/*.md', '**/*.mdx'],
       options: {
