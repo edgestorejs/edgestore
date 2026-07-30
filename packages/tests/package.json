@@ -11,6 +11,6 @@
     "@edgestore/react": "workspace:*",
     "@edgestore/server": "workspace:*",
     "@edgestore/shared": "workspace:*",
-    "zod": "3.25.42"
+    "zod": "3.25.76"
   }
 }
