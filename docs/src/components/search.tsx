@@ -38,7 +38,7 @@ function Header() {
 
   return (
     <div className="sticky top-0 flex items-start gap-2">
-      <div className="bg-fd-card text-fd-card-foreground flex-1 rounded-xl border p-3">
+      <div className="flex-1 rounded-xl border bg-fd-card p-3 text-fd-card-foreground">
         <p className="text-sm font-medium">Ask AI</p>
       </div>
       <button
@@ -160,7 +160,7 @@ function SearchAIInput(props: ComponentProps<'form'>) {
             void stop();
           }}
         >
-          <Loader2 className="text-fd-muted-foreground size-4 animate-spin" />
+          <Loader2 className="size-4 animate-spin text-fd-muted-foreground" />
           Abort Answer
         </button>
       ) : (
@@ -235,7 +235,7 @@ function Input(props: ComponentProps<'textarea'>) {
         id="nd-ai-input"
         {...props}
         className={cn(
-          'placeholder:text-fd-muted-foreground resize-none bg-transparent focus-visible:outline-none',
+          'resize-none bg-transparent placeholder:text-fd-muted-foreground focus-visible:outline-none',
           shared,
         )}
       />
@@ -273,7 +273,7 @@ function Message({
     <div {...props}>
       <p
         className={cn(
-          'text-fd-muted-foreground mb-1 text-sm font-medium',
+          'mb-1 text-sm font-medium text-fd-muted-foreground',
           message.role === 'assistant' && 'text-fd-primary',
         )}
       >
@@ -288,7 +288,7 @@ function Message({
             <Link
               key={i}
               href={item.url}
-              className="hover:bg-fd-accent hover:text-fd-accent-foreground block rounded-lg border p-3 text-xs"
+              className="block rounded-lg border p-3 text-xs hover:bg-fd-accent hover:text-fd-accent-foreground"
             >
               <p className="font-medium">{item.title}</p>
               <p className="text-fd-muted-foreground">Reference {item.label}</p>
@@ -324,7 +324,7 @@ export function AISearchTrigger() {
         buttonVariants({
           variant: 'secondary',
         }),
-        'text-fd-muted-foreground fixed bottom-4 end-[calc(--spacing(4)+var(--removed-body-scroll-bar-size,0px))] z-20 w-24 gap-3 rounded-2xl shadow-lg transition-[translate,opacity]',
+        'fixed end-[calc(--spacing(4)+var(--removed-body-scroll-bar-size,0px))] bottom-4 z-20 w-24 gap-3 rounded-2xl text-fd-muted-foreground shadow-lg transition-[translate,opacity]',
         open && 'translate-y-10 opacity-0',
       )}
       onClick={() => {
@@ -384,7 +384,7 @@ export function AISearchPanel() {
       <Presence present={open}>
         <div
           data-state={open ? 'open' : 'closed'}
-          className="backdrop-blur-xs bg-fd-overlay data-[state=open]:animate-fd-fade-in data-[state=closed]:animate-fd-fade-out fixed inset-0 z-30 lg:hidden"
+          className="fixed inset-0 z-30 bg-fd-overlay backdrop-blur-xs data-[state=closed]:animate-fd-fade-out data-[state=open]:animate-fd-fade-in lg:hidden"
           onClick={() => {
             setOpen(false);
           }}
@@ -393,15 +393,15 @@ export function AISearchPanel() {
       <Presence present={open}>
         <div
           className={cn(
-            'bg-fd-popover text-fd-popover-foreground z-30 overflow-hidden [--ai-chat-width:400px] xl:[--ai-chat-width:460px]',
+            'z-30 overflow-hidden bg-fd-popover text-fd-popover-foreground [--ai-chat-width:400px] xl:[--ai-chat-width:460px]',
             'max-lg:fixed max-lg:inset-x-2 max-lg:top-4 max-lg:rounded-2xl max-lg:border max-lg:shadow-xl',
-            'lg:in-[#nd-docs-layout]:[grid-area:toc] lg:in-[#nd-notebook-layout]:row-span-full lg:in-[#nd-notebook-layout]:col-start-5 lg:sticky lg:top-0 lg:ms-auto lg:h-dvh lg:border-s',
+            'lg:sticky lg:top-0 lg:ms-auto lg:h-dvh lg:border-s lg:in-[#nd-docs-layout]:[grid-area:toc] lg:in-[#nd-notebook-layout]:col-start-5 lg:in-[#nd-notebook-layout]:row-span-full',
             open
               ? 'animate-fd-dialog-in lg:animate-[ask-ai-open_200ms]'
               : 'animate-fd-dialog-out lg:animate-[ask-ai-close_200ms]',
           )}
         >
-          <div className="lg:w-(--ai-chat-width) flex size-full flex-col p-2 max-lg:max-h-[80dvh] xl:p-4">
+          <div className="flex size-full flex-col p-2 max-lg:max-h-[80dvh] lg:w-(--ai-chat-width) xl:p-4">
             <Header />
             <List
               className="flex-1 overscroll-contain px-3 py-4"
@@ -418,7 +418,7 @@ export function AISearchPanel() {
                   ))}
               </div>
             </List>
-            <div className="bg-fd-card text-fd-card-foreground has-focus-visible:ring-2 has-focus-visible:ring-fd-ring rounded-xl border">
+            <div className="rounded-xl border bg-fd-card text-fd-card-foreground has-focus-visible:ring-2 has-focus-visible:ring-fd-ring">
               <SearchAIInput />
               <div className="flex items-center gap-1.5 p-1 empty:hidden">
                 <SearchAIActions />
