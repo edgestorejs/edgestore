@@ -207,6 +207,11 @@ jobs:
 
       - name: Create snapshot versions
         run: |
+          if [[ -f .changeset/pre.json ]] &&
+             jq -e '.mode == "pre"' .changeset/pre.json >/dev/null; then
+            pnpm changeset pre exit
+          fi
+
           pnpm changeset version --snapshot canary
           pnpm -s sync-versions
         env:
