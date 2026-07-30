@@ -1,5 +1,21 @@
 # @edgestore/react
 
+## 1.0.0-next.0
+
+### Major Changes
+
+- [#159](https://github.com/edgestorejs/edgestore/pull/159) [`cb42a68`](https://github.com/edgestorejs/edgestore/commit/cb42a684d2a194bf77de9a2af8cdec1f4ac72f1f) Thanks [@perfectbase](https://github.com/perfectbase)! - Publish the EdgeStore packages as ESM-only packages and require Node.js 24 or
+  newer. Emit NodeNext-compatible declaration imports, and upgrade the server
+  runtime dependencies to `cookie` 2 and `jose` 6.
+
+### Patch Changes
+
+- [#148](https://github.com/edgestorejs/edgestore/pull/148) [`29ff3f5`](https://github.com/edgestorejs/edgestore/commit/29ff3f5394a513bc1c5b6c2aa7b8944e74d9f453) Thanks [@perfectbase](https://github.com/perfectbase)! - Remove unused server-side dependencies from the React client and refresh the
+  server's cookie and token dependencies. UUID generation now uses the platform
+  crypto API.
+- Updated dependencies [[`cb42a68`](https://github.com/edgestorejs/edgestore/commit/cb42a684d2a194bf77de9a2af8cdec1f4ac72f1f)]:
+  - @edgestore/shared@1.0.0-next.0
+
 ## 0.8.0
 
 ### Minor Changes
