@@ -6,6 +6,7 @@ docs/.source/
 .test/
 **/.next/
 **/.astro/
+**/.react-router/
 **/docs/build/
 dist/
 pnpm-lock.yaml
