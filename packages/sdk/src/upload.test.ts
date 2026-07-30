@@ -618,6 +618,69 @@ describe('runtime upload orchestration', () => {
     expect(methods).not.toContain('DELETE');
   });
 
+  it('aborts an in-flight processing check at the processing deadline', async () => {
+    let processingCheckAborted = false;
+    const methods: string[] = [];
+    const fetch = vi.fn<typeof globalThis.fetch>(async (input, init) => {
+      const request = toRequest(input, init);
+      methods.push(request.method);
+      if (request.url.endsWith('/buckets/documents')) {
+        return Response.json({
+          data: { bucket: { type: 'file', visibility: 'protected' } },
+        });
+      }
+      if (request.url.endsWith('/buckets/documents/uploads')) {
+        return Response.json({
+          data: {
+            file: { id: 'stalled-id' },
+            upload: {
+              kind: 'single',
+              id: 'stalled-id',
+              signedUrl: 'https://storage.example/stalled',
+            },
+          },
+        });
+      }
+      if (request.url === 'https://storage.example/stalled') {
+        return new Response(null, { status: 200 });
+      }
+      if (request.url.endsWith('/uploads/stalled-id')) {
+        return await new Promise<Response>((_resolve, reject) => {
+          request.signal.addEventListener(
+            'abort',
+            () => {
+              processingCheckAborted = true;
+              reject(
+                request.signal.reason instanceof Error
+                  ? request.signal.reason
+                  : new Error('Processing check aborted', {
+                      cause: request.signal.reason,
+                    }),
+              );
+            },
+            { once: true },
+          );
+        });
+      }
+      throw new Error(`Unexpected request: ${request.method} ${request.url}`);
+    });
+    const sdk = createSdk(fetch);
+
+    await expect(
+      sdk.runtime.uploads.upload({
+        bucket: 'documents',
+        source: new Blob(['content']),
+        processingTimeoutMs: 20,
+      }),
+    ).rejects.toMatchObject({
+      name: 'EdgeStoreUploadProcessingTimeoutError',
+      uploadId: 'stalled-id',
+    } satisfies Partial<EdgeStoreUploadProcessingTimeoutError>);
+
+    expect(processingCheckAborted).toBe(true);
+    expect(methods).not.toContain('DELETE');
+  });
+
   it('does not retry upload creation', async () => {
     let requestAttempts = 0;
     const fetch = vi.fn<typeof globalThis.fetch>(async (input, init) => {

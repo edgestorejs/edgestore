@@ -416,13 +416,13 @@ function prepareSource(source: UploadSource): PreparedUploadSource {
 function isStreamSource(source: UploadSource): source is UploadStreamSource {
   const stream =
     typeof source === 'object' && source !== null && 'stream' in source
-      ? source.stream
+      ? Reflect.get(source, 'stream')
       : undefined;
   return (
     typeof stream === 'object' &&
     stream !== null &&
     'getReader' in stream &&
-    typeof stream.getReader === 'function'
+    typeof Reflect.get(stream, 'getReader') === 'function'
   );
 }
 
