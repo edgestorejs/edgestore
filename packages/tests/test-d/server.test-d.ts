@@ -37,12 +37,12 @@ const router = es.router({
       type: input.type,
     })),
   documents: es.fileBucket().path(({ ctx }) => [{ author: ctx.userId }]),
-  broadMetadata: es.fileBucket().metadata(
-    (): Record<string, string | null | undefined> => ({
+  broadMetadata: es
+    .fileBucket()
+    .metadata((): Record<string, string | null | undefined> => ({
       present: 'value',
       absent: undefined,
-    }),
-  ),
+    })),
 });
 
 const client = createEdgeStore({
