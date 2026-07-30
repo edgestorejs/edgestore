@@ -14,6 +14,6 @@
     "@standard-schema/spec": "1.1.0",
     "arktype": "2.2.3",
     "valibot": "1.4.2",
-    "zod": "3.25.42"
+    "zod": "3.25.76"
   }
 }

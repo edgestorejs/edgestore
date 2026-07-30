@@ -3,6 +3,7 @@ import { env } from '@/env';
 import { formatFileSize, formatNumber } from '@/lib/formatter';
 import { cn } from '@/lib/utils';
 import { CheckCircleIcon, HeartIcon } from 'lucide-react';
+import { Fragment } from 'react';
 import { CampaignCountdown } from './campaign-countdown';
 
 export async function Pricing() {
@@ -14,8 +15,8 @@ export async function Pricing() {
   return (
     <div className="px-4">
       <div className="mt-10 text-center">
-        <div className="text-foreground mb-4 text-5xl font-medium">Pricing</div>
-        <div className="text-muted-foreground mb-6">
+        <div className="mb-4 text-5xl font-medium text-foreground">Pricing</div>
+        <div className="mb-6 text-muted-foreground">
           {"Choose the plan that's right for you."}
         </div>
       </div>
@@ -58,9 +59,9 @@ function PricingBlock(props: {
         className,
       )}
     >
-      <div className="text-primary text-xl font-bold">{title}</div>
+      <div className="text-xl font-bold text-primary">{title}</div>
       <div>{description}</div>
-      <div className="mb-4 mt-4 flex items-baseline gap-1">
+      <div className="mt-4 mb-4 flex items-baseline gap-1">
         {price === undefined ? (
           <>
             <div>
@@ -75,7 +76,7 @@ function PricingBlock(props: {
           </>
         ) : price > 0 ? (
           <>
-            <div className="text-primary text-3xl font-bold">${price}</div>
+            <div className="text-3xl font-bold text-primary">${price}</div>
             <div className="text-muted-foreground">/month</div>
           </>
         ) : (
@@ -87,7 +88,7 @@ function PricingBlock(props: {
       <div className="flex flex-col gap-2">
         {features.map((feature, i) => (
           <div key={i} className="flex items-center gap-2">
-            <CheckCircleIcon size={22} className="text-primary shrink-0" />
+            <CheckCircleIcon size={22} className="shrink-0 text-primary" />
             <div>{feature}</div>
           </div>
         ))}
@@ -128,11 +129,11 @@ function Strikethrough(props: {
 }) {
   const { children, size = 'sm' } = props;
   return (
-    <div className="text-muted-foreground relative inline-block text-nowrap">
+    <div className="relative inline-block text-nowrap text-muted-foreground">
       <div className="h-full w-full">
         <div
           className={cn(
-            'border-primary/80 absolute bottom-[40%] left-0 right-0 -rotate-[10deg]',
+            'absolute right-0 bottom-[40%] left-0 -rotate-[10deg] border-primary/80',
             size === 'sm' && 'border-t-2',
             size === 'lg' && 'border-t-4',
           )}
@@ -162,22 +163,22 @@ function buildPricingBlocks(
       description: 'Best for individuals and non-commercial projects.',
       price: 0,
       features: [
-        <>
+        <Fragment key="free-storage">
           <PlanLimitItem
             defaultValue={defaultPricing.FREE.storageLimit}
             campaignValue={campaignPricing?.FREE.storageLimit}
             formatter={formatFileSize}
           />{' '}
           storage
-        </>,
-        <>
+        </Fragment>,
+        <Fragment key="free-projects">
           <PlanLimitItem
             defaultValue={defaultPricing.FREE.projectLimit}
             campaignValue={campaignPricing?.FREE.projectLimit}
           />{' '}
           projects
-        </>,
-        <>
+        </Fragment>,
+        <Fragment key="free-bandwidth">
           Up to{' '}
           <PlanLimitItem
             defaultValue={defaultPricing.FREE.monthlyBandwidthLimit}
@@ -185,8 +186,8 @@ function buildPricingBlocks(
             formatter={formatFileSize}
           />{' '}
           of bandwidth per month
-        </>,
-        <>
+        </Fragment>,
+        <Fragment key="free-uploads">
           Up to{' '}
           <PlanLimitItem
             defaultValue={defaultPricing.FREE.monthlyUploadSizeLimit}
@@ -194,15 +195,15 @@ function buildPricingBlocks(
             formatter={formatFileSize}
           />{' '}
           of uploads per month
-        </>,
-        <>
+        </Fragment>,
+        <Fragment key="free-metrics">
           <PlanLimitItem
             defaultValue={defaultPricing.FREE.aggRangeLimit}
             campaignValue={campaignPricing?.FREE.aggRangeLimit}
             formatter={formatNumber}
           />{' '}
           day of usage metrics
-        </>,
+        </Fragment>,
         'Discord/Github standard support',
         'Personal use',
       ],
@@ -215,29 +216,29 @@ function buildPricingBlocks(
       price: 5,
       features: [
         'Everything in Free',
-        <>
+        <Fragment key="starter-storage">
           <PlanLimitItem
             defaultValue={defaultPricing.STARTER.storageLimit}
             campaignValue={campaignPricing?.STARTER.storageLimit}
             formatter={formatFileSize}
           />{' '}
           storage
-        </>,
-        <>
+        </Fragment>,
+        <Fragment key="starter-members">
           <PlanLimitItem
             defaultValue={defaultPricing.STARTER.memberLimit}
             campaignValue={campaignPricing?.STARTER.memberLimit}
           />{' '}
           team members
-        </>,
-        <>
+        </Fragment>,
+        <Fragment key="starter-projects">
           <PlanLimitItem
             defaultValue={defaultPricing.STARTER.projectLimit}
             campaignValue={campaignPricing?.STARTER.projectLimit}
           />{' '}
           projects
-        </>,
-        <>
+        </Fragment>,
+        <Fragment key="starter-bandwidth">
           Up to{' '}
           <PlanLimitItem
             defaultValue={defaultPricing.STARTER.monthlyBandwidthLimit}
@@ -245,8 +246,8 @@ function buildPricingBlocks(
             formatter={formatFileSize}
           />{' '}
           of bandwidth per month
-        </>,
-        <>
+        </Fragment>,
+        <Fragment key="starter-uploads">
           Up to{' '}
           <PlanLimitItem
             defaultValue={defaultPricing.STARTER.monthlyUploadSizeLimit}
@@ -254,15 +255,15 @@ function buildPricingBlocks(
             formatter={formatFileSize}
           />{' '}
           of uploads per month
-        </>,
-        <>
+        </Fragment>,
+        <Fragment key="starter-metrics">
           <PlanLimitItem
             defaultValue={defaultPricing.STARTER.aggRangeLimit}
             campaignValue={campaignPricing?.STARTER.aggRangeLimit}
             formatter={formatNumber}
           />{' '}
           day of usage metrics
-        </>,
+        </Fragment>,
         'Discord/Github priority support',
         'Email support',
         'Commercial use',
@@ -276,31 +277,31 @@ function buildPricingBlocks(
       price: 35,
       features: [
         'Everything in Starter',
-        <>
+        <Fragment key="pro-storage">
           <PlanLimitItem
             defaultValue={defaultPricing.PRO.storageLimit}
             campaignValue={campaignPricing?.PRO.storageLimit}
             formatter={formatFileSize}
           />{' '}
           storage
-        </>,
-        <>
+        </Fragment>,
+        <Fragment key="pro-members">
           <PlanLimitItem
             defaultValue={defaultPricing.PRO.memberLimit}
             campaignValue={campaignPricing?.PRO.memberLimit}
           />{' '}
           team members
-        </>,
+        </Fragment>,
         'more members for $5/month each',
-        <>
+        <Fragment key="pro-projects">
           <PlanLimitItem
             defaultValue={defaultPricing.PRO.projectLimit}
             campaignValue={campaignPricing?.PRO.projectLimit}
           />{' '}
           projects
-        </>,
+        </Fragment>,
         'more projects for $5/month each',
-        <>
+        <Fragment key="pro-bandwidth">
           Up to{' '}
           <PlanLimitItem
             defaultValue={defaultPricing.PRO.monthlyBandwidthLimit}
@@ -308,8 +309,8 @@ function buildPricingBlocks(
             formatter={formatFileSize}
           />{' '}
           of bandwidth per month
-        </>,
-        <>
+        </Fragment>,
+        <Fragment key="pro-uploads">
           Up to{' '}
           <PlanLimitItem
             defaultValue={defaultPricing.PRO.monthlyUploadSizeLimit}
@@ -317,15 +318,15 @@ function buildPricingBlocks(
             formatter={formatFileSize}
           />{' '}
           of uploads per month
-        </>,
-        <>
+        </Fragment>,
+        <Fragment key="pro-metrics">
           <PlanLimitItem
             defaultValue={defaultPricing.PRO.aggRangeLimit}
             campaignValue={campaignPricing?.PRO.aggRangeLimit}
             formatter={formatNumber}
           />{' '}
           day of usage metrics
-        </>,
+        </Fragment>,
         'one-time 30min optional project consultation',
       ],
     },
@@ -369,7 +370,7 @@ function PlanLimitItem(props: {
         <Strikethrough size="sm">
           <>{formatter?.(defaultValue) ?? defaultValue}</>
         </Strikethrough>{' '}
-        <span className="text-primary text-nowrap font-bold">
+        <span className="font-bold text-nowrap text-primary">
           {formatter?.(campaignValue) ?? campaignValue}
         </span>
       </>

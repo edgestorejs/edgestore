@@ -12,11 +12,11 @@ export function DemoVideo() {
         <div className="mb-12 space-y-4 text-center">
           <h2 className="text-2xl font-bold sm:text-3xl md:text-4xl">
             See EdgeStore in{' '}
-            <span className="from-primary to-primary/60 bg-gradient-to-b bg-clip-text text-transparent">
+            <span className="bg-gradient-to-b from-primary to-primary/60 bg-clip-text text-transparent">
               Action
             </span>
           </h2>
-          <p className="text-muted-foreground mx-auto max-w-2xl text-base sm:text-lg">
+          <p className="mx-auto max-w-2xl text-base text-muted-foreground sm:text-lg">
             Watch how easy it is to integrate file uploads into your application
             with EdgeStore&apos;s powerful features and intuitive API.
           </p>
@@ -35,7 +35,7 @@ export function DemoVideo() {
 
         {/* Additional CTA below video */}
         <div className="mt-8 text-center">
-          <p className="text-muted-foreground text-sm">
+          <p className="text-sm text-muted-foreground">
             Ready to get started? It takes less than 5 minutes to set up.
           </p>
         </div>
@@ -55,7 +55,7 @@ function FeatureHighlights() {
   ];
 
   return (
-    <div className="pointer-events-none absolute right-6 top-6 hidden space-y-2 sm:block">
+    <div className="pointer-events-none absolute top-6 right-6 hidden space-y-2 sm:block">
       {features.map((feature) => (
         <div
           key={feature}
