@@ -2,9 +2,8 @@
 /** @typedef  {import("prettier").Config} PrettierConfig*/
 /** @typedef  {{ tailwindConfig: string }} TailwindConfig*/
 
-const sortImportsPlugin = require.resolve(
-  '@ianvs/prettier-plugin-sort-imports',
-);
+const sortImportsPlugin =
+  require.resolve('@ianvs/prettier-plugin-sort-imports');
 const tailwindPlugin = require.resolve('prettier-plugin-tailwindcss');
 
 /** @type { PrettierConfig | SortImportsConfig | TailwindConfig } */
