@@ -5,6 +5,11 @@ docs/.source/
 .docusaurus/
 .test/
 **/.next/
+**/.astro/
+**/.react-router/
+**/.output/
+**/.vinxi/
+**/next-env.d.ts
 **/docs/build/
 dist/
 pnpm-lock.yaml
