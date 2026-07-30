@@ -11,7 +11,7 @@ export const linkItems: LinkItemType[] = [
     children: (
       <div className="flex w-full flex-col items-end sm:flex-row sm:items-center sm:gap-2">
         <Link
-          className="text-fd-muted-foreground hover:text-fd-accent-foreground data-[active=true]:text-fd-primary inline-flex items-center gap-1 p-2 text-sm transition-colors [&_svg]:size-4"
+          className="inline-flex items-center gap-1 p-2 text-sm text-fd-muted-foreground transition-colors hover:text-fd-accent-foreground data-[active=true]:text-fd-primary [&_svg]:size-4"
           href="/docs/quick-start"
           aria-label="Go to documentation"
         >
@@ -19,14 +19,14 @@ export const linkItems: LinkItemType[] = [
         </Link>
         <div className="grow max-sm:hidden" />
         <Link
-          className="text-fd-muted-foreground hover:text-fd-accent-foreground data-[active=true]:text-fd-primary inline-flex items-center gap-1 p-2 text-sm transition-colors [&_svg]:size-4"
+          className="inline-flex items-center gap-1 p-2 text-sm text-fd-muted-foreground transition-colors hover:text-fd-accent-foreground data-[active=true]:text-fd-primary [&_svg]:size-4"
           href="/pricing"
           aria-label="Go to pricing"
         >
           Pricing
         </Link>
         <Link
-          className="text-fd-muted-foreground hover:text-fd-accent-foreground data-[active=true]:text-fd-primary inline-flex items-center gap-1 p-2 text-sm transition-colors [&_svg]:size-4"
+          className="inline-flex items-center gap-1 p-2 text-sm text-fd-muted-foreground transition-colors hover:text-fd-accent-foreground data-[active=true]:text-fd-primary [&_svg]:size-4"
           href={env.NEXT_PUBLIC_DASHBOARD_URL}
           target="_blank"
           aria-label="Go to dashboard"
@@ -34,7 +34,7 @@ export const linkItems: LinkItemType[] = [
           Dashboard
         </Link>
         <Link
-          className="text-fd-muted-foreground hover:text-fd-accent-foreground data-[active=true]:text-fd-primary inline-flex items-center gap-1 p-2 text-sm transition-colors duration-200 [&_svg]:size-4"
+          className="inline-flex items-center gap-1 p-2 text-sm text-fd-muted-foreground transition-colors duration-200 hover:text-fd-accent-foreground data-[active=true]:text-fd-primary [&_svg]:size-4"
           href="https://discord.gg/HvrnhRTfgQ"
           target="_blank"
           aria-label="Go to Discord"

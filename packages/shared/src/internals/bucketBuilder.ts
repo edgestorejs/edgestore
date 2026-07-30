@@ -87,9 +87,7 @@ type Conditions<TPath extends AnyPath> = {
 export type AccessControlSchema<TCtx, TDef extends AnyDef> = Merge<
   {
     [TKey in keyof TCtx]?:
-      | string
-      | PathParam<TDef['path']>
-      | Conditions<TDef['path']>;
+      string | PathParam<TDef['path']> | Conditions<TDef['path']>;
   },
   {
     OR?: AccessControlSchema<TCtx, TDef>[];
@@ -99,8 +97,7 @@ export type AccessControlSchema<TCtx, TDef extends AnyDef> = Merge<
 >;
 
 export type AccessControl<TCtx, TDef extends AnyDef> =
-  | 'private'
-  | AccessControlSchema<TCtx, TDef>;
+  'private' | AccessControlSchema<TCtx, TDef>;
 
 export type AutoSignedUrlsConfig = {
   expiresIn?: number;
