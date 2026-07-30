@@ -5,7 +5,7 @@ import {
   type EdgeStoreErrorCodeKey,
   type MaybePromise,
 } from '@edgestore/shared';
-import { parse } from 'cookie';
+import { parseCookie } from 'cookie';
 import { type z } from 'zod';
 import type { LoggerLike } from '../libs/logger';
 import { matchPath } from '../libs/utils';
@@ -84,7 +84,7 @@ export async function dispatchEdgeStoreRequest<
   const ctxToken =
     request.cookies?.[resolvedCookieConfig.ctx.name] ??
     (cookieHeader
-      ? parse(cookieHeader)[resolvedCookieConfig.ctx.name]
+      ? parseCookie(cookieHeader)[resolvedCookieConfig.ctx.name]
       : undefined);
 
   try {
