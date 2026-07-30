@@ -7,8 +7,7 @@ import * as React from 'react';
  * @interface ProgressCircleProps
  * @extends {React.HTMLAttributes<HTMLDivElement>}
  */
-export interface ProgressCircleProps
-  extends React.HTMLAttributes<HTMLDivElement> {
+export interface ProgressCircleProps extends React.HTMLAttributes<HTMLDivElement> {
   /**
    * The progress value as a percentage (0-100).
    */
