@@ -6,12 +6,12 @@ package publication does not change the documentation deployment model.
 
 ## Choose the target branch
 
-| Change                                 | Target branch | npm tag    |
-| -------------------------------------- | ------------- | ---------- |
-| Stable fix or release infrastructure   | `main`        | `latest`   |
-| Work for the upcoming breaking release | `next`        | `next`     |
+| Change                                 | Target branch | npm tag          |
+| -------------------------------------- | ------------- | ---------------- |
+| Stable fix or release infrastructure   | `main`        | `latest`         |
+| Work for the upcoming breaking release | `next`        | `next` or `rc`   |
 | Backport for a supported major         | `<major>.x`   | `legacy-v<major>` |
-| Temporary snapshot from a PR branch    | PR branch     | `canary`   |
+| Temporary snapshot from a PR branch    | PR branch     | `canary`         |
 
 Forward-merge stable fixes from `main` into `next`. Do not routinely merge
 `next` into `main`. A forward merge does not need an immediate prerelease; a
@@ -21,8 +21,8 @@ All published `@edgestore/*` behavior and public API changes require a
 Changeset. Use `patch` for fixes, `minor` for backward-compatible features, and
 `major` for breaking changes.
 
-Version and promotion PRs opened by GitHub Actions may require a maintainer to
-select **Approve workflows to run** before CI starts.
+Version, RC handoff, and promotion PRs opened by GitHub Actions may require a
+maintainer to select **Approve workflows to run** before CI starts.
 
 ## Stable releases
 
@@ -70,11 +70,46 @@ pnpm release
 
 Do not run `changeset pre exit` directly on `next`.
 
+## Start the RC phase
+
+RC releases stay on `next`; they are the final prerelease phase, not a stable
+promotion. Run the **Start RC cycle** workflow from GitHub Actions. It opens a
+PR into `next` that changes only `.changeset/pre.json`:
+
+```diff
+-  "tag": "next",
++  "tag": "rc",
+```
+
+The PR keeps `"mode": "pre"`. Do not run `changeset pre exit` when starting
+RC. After the PR is merged, pending Changesets produce a **Version Packages
+(rc)** PR. If no Changesets are pending, the release PR is created after the
+next Changeset reaches `next`.
+
+Changesets preserves the numeric prerelease counter when the tag changes. For
+example, `1.0.0-next.0` is followed by `1.0.0-rc.1`; subsequent releases use
+`rc.2`, `rc.3`, and so on. Merging the version PR publishes the generated
+version to npm's `rc` tag.
+
+Optionally move npm's `next` tag to the published RC so existing `@next`
+consumers follow the RC phase:
+
+```sh
+for package_dir in server react shared; do
+  package_name="@edgestore/$package_dir"
+  rc_version="$(pnpm view "$package_name" dist-tags.rc)"
+  npm dist-tag add "$package_name@$rc_version" next
+done
+```
+
+Run the dist-tag verification commands below after moving the aliases.
+
 ## Promote `next` to stable
 
 Run the **Promote next** workflow from GitHub Actions. The workflow:
 
-1. Verifies that `main` is contained in `next`.
+1. Verifies that `main` is contained in `next` and that `next` is in the
+   `next` or `rc` prerelease phase.
 2. Runs `changeset pre exit` and the repository version command.
 3. Opens a promotion PR into `main`.
 
@@ -156,8 +191,9 @@ pnpm view @edgestore/react dist-tags --json
 pnpm view @edgestore/shared dist-tags --json
 ```
 
-Expected tags are `latest` for stable, `next` for prereleases,
-`legacy-v<major>` for maintenance, and `canary` for snapshots.
+Expected tags are `latest` for stable, `next` or `rc` for prereleases,
+`legacy-v<major>` for maintenance, and `canary` for snapshots. During the RC
+phase, `next` may intentionally point to the same version as `rc`.
 
 ## Recover from a wrong dist-tag
 
