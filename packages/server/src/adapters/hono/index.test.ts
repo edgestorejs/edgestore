@@ -30,8 +30,7 @@ describe('Hono adapter conformance', () => {
     const provider = createConformanceProvider();
     const router = createConformanceRouter();
     const handler = createEdgeStoreHonoHandler({
-      provider,
-      router,
+      edgestore: { provider, router },
       cookieConfig: testCookieConfig,
       createContext,
     });
@@ -64,7 +63,6 @@ describe('Hono adapter conformance', () => {
     await expect(res.json()).resolves.toMatchObject({
       baseUrl: 'https://files.example.com',
       providerName: 'test-provider',
-      token: 'provider-token',
     });
     expect(extractCookieValue(res.headers.get('set-cookie'))).toBeTruthy();
   });
@@ -108,7 +106,7 @@ describe('Hono adapter conformance', () => {
     });
 
     expect(res.status).toBe(200);
-    expect(provider.completeMultipartUpload).toHaveBeenCalledWith({
+    expect(provider.uploads.multipart?.complete).toHaveBeenCalledWith({
       uploadId: 'upload-id',
       key: 'uploads/file.txt',
       parts: completeMultipartUploadBody.parts,

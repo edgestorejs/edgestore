@@ -1,9 +1,10 @@
 import {
   type AnyContext,
+  type AnyEdgeStoreProvider,
   type EdgeStoreRouter,
-  type Provider,
 } from '@edgestore/shared';
 import { vi } from 'vitest';
+import { z } from 'zod';
 import { init } from './shared';
 
 type TestLogger = Record<'debug' | 'info' | 'warn' | 'error', () => void>;
@@ -15,33 +16,57 @@ export const logger: TestLogger = {
   error: vi.fn(),
 };
 
-export function createProvider(overrides: Partial<Provider> = {}): Provider {
-  return {
+export function createProvider(
+  overrides: Partial<AnyEdgeStoreProvider> = {},
+): AnyEdgeStoreProvider {
+  const provider: AnyEdgeStoreProvider = {
     name: 'test-provider',
+    baseUrl: 'https://files.example.com',
     init: vi.fn(() => ({ token: 'provider-token' })),
-    getBaseUrl: vi.fn(() => 'https://files.example.com'),
-    getFile: vi.fn(() => ({
-      url: 'https://files.example.com/file.txt',
-      size: 10,
-      uploadedAt: new Date(),
-      path: {},
-      metadata: {},
-    })),
-    requestUpload: vi.fn(() => ({
-      uploadUrl: 'https://upload.example.com/file.txt',
-      accessUrl: 'https://files.example.com/file.txt',
-      thumbnailUrl: null,
-    })),
-    requestUploadParts: vi.fn(() => ({
+    reference: {
+      schema: z.object({ url: z.string() }),
+      fromUrl: (url) => ({ url }),
+    },
+    uploads: {
+      request: vi.fn(() => ({
+        uploadUrl: 'https://upload.example.com/file.txt',
+        accessUrl: 'https://files.example.com/file.txt',
+        thumbnailUrl: null,
+      })),
       multipart: {
-        uploadId: 'upload-id',
-        parts: [],
+        requestParts: vi.fn(() => ({
+          multipart: {
+            uploadId: 'upload-id',
+            parts: [],
+          },
+        })),
+        complete: vi.fn(),
       },
-    })),
-    completeMultipartUpload: vi.fn(() => ({ success: true })),
-    confirmUpload: vi.fn(() => ({ success: true })),
-    deleteFile: vi.fn(() => ({ success: true })),
+    },
+    files: {
+      get: vi.fn(({ file }) => ({
+        url: file.url,
+        sizeBytes: 10,
+        uploadedAt: new Date(),
+        updatedAt: new Date(),
+        path: {},
+        metadata: {},
+      })),
+      confirm: vi.fn(({ files }) => successfulMutation(files)),
+      delete: vi.fn(({ files }) => successfulMutation(files)),
+    },
+  };
+  return {
+    ...provider,
     ...overrides,
+    uploads: overrides.uploads ?? provider.uploads,
+    files: { ...provider.files, ...overrides.files },
+  };
+}
+
+function successfulMutation(files: unknown[]) {
+  return {
+    results: files.map(() => ({ success: true as const })),
   };
 }
 
@@ -51,13 +76,14 @@ export async function createContextToken<TCtx extends AnyContext>({
   router,
 }: {
   ctx: TCtx;
-  provider?: Provider;
+  provider?: AnyEdgeStoreProvider;
   router: EdgeStoreRouter<TCtx>;
 }) {
   const res = await init({
     provider,
     router,
     ctx,
+    logger,
   });
   const cookie = res.newCookies.find((value) =>
     value.startsWith('edgestore-ctx='),

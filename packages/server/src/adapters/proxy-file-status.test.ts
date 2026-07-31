@@ -1,5 +1,5 @@
 import { createServer, request as httpRequest, type Server } from 'node:http';
-import { type EdgeStoreRouter, type Provider } from '@edgestore/shared';
+import { type EdgeStoreRouter } from '@edgestore/shared';
 import express from 'express';
 import fastify from 'fastify';
 import { Hono } from 'hono';
@@ -12,24 +12,15 @@ import { createEdgeStoreHonoHandler } from './hono';
 import { createEdgeStoreNextHandler as createEdgeStoreNextAppHandler } from './next/app';
 import { createEdgeStoreNextHandler as createEdgeStoreNextPagesHandler } from './next/pages';
 import { createEdgeStoreRemixHandler } from './remix';
+import { createProvider } from './shared.test.utils';
 import { createEdgeStoreStartHandler } from './start';
-
-function createProvider(): Provider {
-  return {
-    name: 'test-provider',
-    init: vi.fn(() => ({ token: 'provider-token' })),
-    getBaseUrl: vi.fn(() => 'https://files.example.com'),
-    getFile: vi.fn(),
-    requestUpload: vi.fn(),
-    requestUploadParts: vi.fn(),
-    completeMultipartUpload: vi.fn(),
-    confirmUpload: vi.fn(),
-    deleteFile: vi.fn(),
-  };
-}
 
 function createRouter() {
   return {} as EdgeStoreRouter<Record<string, never>>;
+}
+
+function createTestEdgeStore() {
+  return { provider: createProvider(), router: createRouter() };
 }
 
 function mockProxyFetch({
@@ -53,8 +44,7 @@ function mockProxyFetch({
 
 async function createExpressServer() {
   const handler = createEdgeStoreExpressHandler({
-    provider: createProvider(),
-    router: createRouter(),
+    edgestore: createTestEdgeStore(),
   });
   const app = express();
   app.use('/edgestore', handler);
@@ -77,8 +67,7 @@ async function createExpressServer() {
 
 async function createFastifyServer() {
   const handler = createEdgeStoreFastifyHandler({
-    provider: createProvider(),
-    router: createRouter(),
+    edgestore: createTestEdgeStore(),
   });
   const app = fastify();
   app.all('/edgestore/*', handler);
@@ -284,8 +273,7 @@ describe('Hono proxy-file', () => {
       status: 429,
     });
     const handler = createEdgeStoreHonoHandler({
-      provider: createProvider(),
-      router: createRouter(),
+      edgestore: createTestEdgeStore(),
     });
     const app = new Hono();
     app.all('/edgestore/*', handler);
@@ -321,8 +309,7 @@ describe('Remix proxy-file', () => {
       status: 401,
     });
     const handler = createEdgeStoreRemixHandler({
-      provider: createProvider(),
-      router: createRouter(),
+      edgestore: createTestEdgeStore(),
     });
 
     const res = await handler({
@@ -358,8 +345,7 @@ describe('Astro proxy-file', () => {
       status: 503,
     });
     const handler = createEdgeStoreAstroHandler({
-      provider: createProvider(),
-      router: createRouter(),
+      edgestore: createTestEdgeStore(),
     });
 
     const res = await handler({
@@ -395,8 +381,7 @@ describe('Next Pages proxy-file', () => {
       status: 410,
     });
     const handler = createEdgeStoreNextPagesHandler({
-      provider: createProvider(),
-      router: createRouter(),
+      edgestore: createTestEdgeStore(),
     });
     const response = createNextPagesResponse();
 
@@ -436,8 +421,7 @@ describe('Next App proxy-file', () => {
       status: 451,
     });
     const handler = createEdgeStoreNextAppHandler({
-      provider: createProvider(),
-      router: createRouter(),
+      edgestore: createTestEdgeStore(),
     });
     const nextUrl = new URL(
       'https://app.example.com/edgestore/proxy-file?url=https%3A%2F%2Ffiles.example.com%2Fnext-app.txt',
@@ -469,8 +453,7 @@ describe('Next App proxy-file', () => {
       status: 204,
     });
     const handler = createEdgeStoreNextAppHandler({
-      provider: createProvider(),
-      router: createRouter(),
+      edgestore: createTestEdgeStore(),
     });
     const nextUrl = new URL(
       'https://app.example.com/edgestore/proxy-file?url=https%3A%2F%2Ffiles.example.com%2Fnext-app-empty.txt',
@@ -504,8 +487,7 @@ describe('Start proxy-file', () => {
       status: 502,
     });
     const handler = createEdgeStoreStartHandler({
-      provider: createProvider(),
-      router: createRouter(),
+      edgestore: createTestEdgeStore(),
     });
 
     const res = await handler({

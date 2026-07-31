@@ -1,17 +1,20 @@
-import { initEdgeStore } from '@edgestore/server';
+import { createEdgeStore, initEdgeStore } from '@edgestore/server';
 import { createEdgeStoreStartHandler } from '@edgestore/server/adapters/start';
+import { edgestore } from '@edgestore/server/providers/edgestore';
 import { createFileRoute } from '@tanstack/react-router';
 
 const es = initEdgeStore.create();
-const edgeStoreRouter = es.router({
+const router = es.router({
   publicFiles: es.fileBucket(),
 });
 
-export type EdgeStoreRouter = typeof edgeStoreRouter;
+export type EdgeStoreRouter = typeof router;
 
-const handler = createEdgeStoreStartHandler({
-  router: edgeStoreRouter,
+const configuredEdgeStore = createEdgeStore({
+  router,
+  provider: edgestore(),
 });
+const handler = createEdgeStoreStartHandler({ edgestore: configuredEdgeStore });
 
 export const Route = createFileRoute('/api/edgestore/$')({
   server: {

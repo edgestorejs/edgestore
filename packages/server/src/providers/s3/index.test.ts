@@ -1,6 +1,6 @@
 import type { RequestUploadParams } from '@edgestore/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { AWSProvider } from './index';
+import { s3 } from './index';
 
 const awsMocks = vi.hoisted(() => {
   const send = vi.fn();
@@ -81,7 +81,7 @@ function uploadParams(
   };
 }
 
-describe('AWSProvider', () => {
+describe('s3', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     vi.clearAllMocks();
@@ -92,12 +92,12 @@ describe('AWSProvider', () => {
   });
 
   it('uses the default S3 key format for private files', async () => {
-    const provider = AWSProvider({
+    const provider = s3({
       bucketName: 'storage-bucket',
       region: 'us-east-1',
     });
 
-    const result = await provider.requestUpload(uploadParams());
+    const result = await provider.uploads.request(uploadParams());
 
     expect(result).toEqual({
       uploadUrl: 'https://signed-upload.example.com',
@@ -117,12 +117,12 @@ describe('AWSProvider', () => {
   });
 
   it('uses the default S3 key format for public files', async () => {
-    const provider = AWSProvider({
+    const provider = s3({
       bucketName: 'storage-bucket',
       region: 'eu-west-1',
     });
 
-    const result = await provider.requestUpload(
+    const result = await provider.uploads.request(
       uploadParams({ isPublic: true }),
     );
 
@@ -142,12 +142,12 @@ describe('AWSProvider', () => {
   });
 
   it('includes path segments in the generated key', async () => {
-    const provider = AWSProvider({
+    const provider = s3({
       bucketName: 'storage-bucket',
       region: 'us-east-1',
     });
 
-    await provider.requestUpload(
+    await provider.uploads.request(
       uploadParams({
         path: [
           { key: 'org', value: 'acme' },
@@ -169,12 +169,12 @@ describe('AWSProvider', () => {
   });
 
   it('uses manual file names instead of generated UUID names', async () => {
-    const provider = AWSProvider({
+    const provider = s3({
       bucketName: 'storage-bucket',
       region: 'us-east-1',
     });
 
-    const result = await provider.requestUpload(
+    const result = await provider.uploads.request(
       uploadParams({ fileName: 'manual-name.pdf', extension: 'txt' }),
     );
 
@@ -195,12 +195,12 @@ describe('AWSProvider', () => {
   });
 
   it('normalizes extensions by stripping leading dots', async () => {
-    const provider = AWSProvider({
+    const provider = s3({
       bucketName: 'storage-bucket',
       region: 'us-east-1',
     });
 
-    await provider.requestUpload(uploadParams({ extension: '.png' }));
+    await provider.uploads.request(uploadParams({ extension: '.png' }));
 
     expect(awsMocks.getSignedUrl).toHaveBeenCalledWith(
       expect.any(awsMocks.S3Client),
@@ -214,37 +214,40 @@ describe('AWSProvider', () => {
     );
   });
 
-  it('allows overwritePath to control the final URL and key', async () => {
-    const overwritePath = vi.fn(() => '/custom/key.bin');
+  it('customizes the path beneath the logical bucket prefix', async () => {
+    const path = vi.fn(({ defaultPath }: { defaultPath: string }) =>
+      defaultPath.replace(/^_public\//, 'custom/'),
+    );
     const fileInfo = uploadParams({
+      isPublic: true,
       path: [{ key: 'tenant', value: 'tenant-1' }],
     }).fileInfo;
-    const provider = AWSProvider({
+    const provider = s3({
       bucketName: 'storage-bucket',
       region: 'us-east-1',
-      overwritePath,
+      path,
     });
 
-    const result = await provider.requestUpload({
+    const result = await provider.uploads.request({
       bucketName: 'documents',
       bucketType: 'FILE',
       fileInfo,
     });
 
-    expect(overwritePath).toHaveBeenCalledWith({
-      esBucketName: 'documents',
+    expect(path).toHaveBeenCalledWith({
+      edgestoreBucketName: 'documents',
       fileInfo,
-      defaultAccessPath: 'documents/tenant-1/generated-uuid.txt',
+      defaultPath: '_public/tenant-1/generated-uuid.txt',
     });
     expect(result.accessUrl).toBe(
-      'https://storage-bucket.s3.us-east-1.amazonaws.com/custom/key.bin',
+      'https://storage-bucket.s3.us-east-1.amazonaws.com/documents/custom/tenant-1/generated-uuid.txt',
     );
     expect(awsMocks.getSignedUrl).toHaveBeenCalledWith(
       expect.any(awsMocks.S3Client),
       expect.objectContaining({
         input: {
           Bucket: 'storage-bucket',
-          Key: 'custom/key.bin',
+          Key: 'documents/custom/tenant-1/generated-uuid.txt',
         },
       }),
       { expiresIn: 60 * 60 },
@@ -252,7 +255,7 @@ describe('AWSProvider', () => {
   });
 
   it('uses custom endpoint and baseUrl settings', async () => {
-    const provider = AWSProvider({
+    const provider = s3({
       bucketName: 'storage-bucket',
       region: 'us-east-1',
       endpoint: 'http://localhost:9000',
@@ -260,9 +263,9 @@ describe('AWSProvider', () => {
       baseUrl: 'https://cdn.example.com/assets',
     });
 
-    const result = await provider.requestUpload(uploadParams());
+    const result = await provider.uploads.request(uploadParams());
 
-    expect(provider.getBaseUrl()).toBe('https://cdn.example.com/assets');
+    expect(provider.baseUrl).toBe('https://cdn.example.com/assets');
     expect(result.accessUrl).toBe(
       'https://cdn.example.com/assets/documents/generated-uuid.txt',
     );
@@ -284,28 +287,102 @@ describe('AWSProvider', () => {
     );
   });
 
+  it.each([
+    ['spaces', 'quarter 1.pdf', 'quarter%201.pdf'],
+    ['URL delimiters', 'quarter #1?.pdf', 'quarter%20%231%3F.pdf'],
+    ['percent signs', '100%.txt', '100%25.txt'],
+    [
+      'Unicode',
+      'こんにちは 世界.txt',
+      '%E3%81%93%E3%82%93%E3%81%AB%E3%81%A1%E3%81%AF%20%E4%B8%96%E7%95%8C.txt',
+    ],
+  ])(
+    'round-trips S3 keys containing %s through access URLs',
+    async (_label, fileName, encodedFileName) => {
+      const provider = s3({
+        bucketName: 'storage-bucket',
+        region: 'us-east-1',
+        baseUrl: 'https://cdn.example.com/assets',
+      });
+      const result = await provider.uploads.request(
+        uploadParams({ fileName, extension: '' }),
+      );
+      const objectKey = `documents/${fileName}`;
+
+      expect(result.accessUrl).toBe(
+        `https://cdn.example.com/assets/documents/${encodedFileName}`,
+      );
+      expect(awsMocks.getSignedUrl).toHaveBeenCalledWith(
+        expect.any(awsMocks.S3Client),
+        expect.objectContaining({
+          input: {
+            Bucket: 'storage-bucket',
+            Key: objectKey,
+          },
+        }),
+        { expiresIn: 60 * 60 },
+      );
+
+      const lastModified = new Date('2026-01-01T00:00:00.000Z');
+      awsMocks.send
+        .mockResolvedValueOnce({
+          ContentLength: 10,
+          LastModified: lastModified,
+        })
+        .mockResolvedValueOnce({});
+
+      await provider.files.get({
+        bucketName: 'documents',
+        file: { url: result.accessUrl },
+      });
+      await provider.files.delete?.({
+        bucketName: 'documents',
+        files: [{ url: result.accessUrl }],
+      });
+
+      expect(awsMocks.send).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({
+          input: {
+            Bucket: 'storage-bucket',
+            Key: objectKey,
+          },
+        }),
+      );
+      expect(awsMocks.send).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({
+          input: {
+            Bucket: 'storage-bucket',
+            Key: objectKey,
+          },
+        }),
+      );
+    },
+  );
+
   it('uses endpoint-derived baseUrl when no custom baseUrl is provided', () => {
-    const provider = AWSProvider({
+    const provider = s3({
       bucketName: 'storage-bucket',
       endpoint: 'http://localhost:9000',
     });
 
-    expect(provider.getBaseUrl()).toBe('http://localhost:9000/storage-bucket');
+    expect(provider.baseUrl).toBe('http://localhost:9000/storage-bucket');
   });
 
   it('maps access URLs back to S3 keys on delete', async () => {
-    const provider = AWSProvider({
+    const provider = s3({
       bucketName: 'storage-bucket',
       region: 'us-east-1',
       baseUrl: 'https://cdn.example.com',
     });
 
     await expect(
-      provider.deleteFile({
-        bucket: {} as Parameters<typeof provider.deleteFile>[0]['bucket'],
-        url: 'https://cdn.example.com/documents/path/file.txt',
+      provider.files.delete?.({
+        bucketName: 'documents',
+        files: [{ url: 'https://cdn.example.com/documents/path/file.txt' }],
       }),
-    ).resolves.toEqual({ success: true });
+    ).resolves.toEqual({ results: [{ success: true }] });
 
     expect(awsMocks.send).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -317,24 +394,56 @@ describe('AWSProvider', () => {
     );
   });
 
-  it('throws a clear error when bucketName is missing for requestUpload', async () => {
-    const provider = AWSProvider({ region: 'us-east-1' });
+  it('rejects cross-bucket deletion before contacting S3', async () => {
+    const provider = s3({
+      bucketName: 'storage-bucket',
+      region: 'us-east-1',
+      baseUrl: 'https://cdn.example.com',
+    });
 
-    await expect(provider.requestUpload(uploadParams())).rejects.toThrow(
-      'S3 bucketName is not configured in AWSProviderOptions.',
+    await expect(
+      provider.files.delete?.({
+        bucketName: 'documents',
+        files: [{ url: 'https://cdn.example.com/avatars/file.txt' }],
+      }),
+    ).rejects.toThrow('File does not belong to EdgeStore bucket "documents".');
+    expect(awsMocks.send).not.toHaveBeenCalled();
+  });
+
+  it('rejects cross-bucket lookup before contacting S3', async () => {
+    const provider = s3({
+      bucketName: 'storage-bucket',
+      region: 'us-east-1',
+      baseUrl: 'https://cdn.example.com',
+    });
+
+    await expect(
+      provider.files.get({
+        bucketName: 'documents',
+        file: { url: 'https://cdn.example.com/avatars/file.txt' },
+      }),
+    ).rejects.toThrow('File does not belong to EdgeStore bucket "documents".');
+    expect(awsMocks.send).not.toHaveBeenCalled();
+  });
+
+  it('throws a clear error when bucketName is missing for requestUpload', async () => {
+    const provider = s3({ region: 'us-east-1' });
+
+    await expect(provider.uploads.request(uploadParams())).rejects.toThrow(
+      'S3 bucketName is not configured in S3ProviderOptions.',
     );
   });
 
   it('throws a clear error when bucketName is missing for deleteFile', async () => {
-    const provider = AWSProvider({ region: 'us-east-1' });
+    const provider = s3({ region: 'us-east-1' });
 
     await expect(
-      provider.deleteFile({
-        bucket: {} as Parameters<typeof provider.deleteFile>[0]['bucket'],
-        url: 'https://example.com/documents/file.txt',
+      provider.files.delete?.({
+        bucketName: 'documents',
+        files: [{ url: 'https://example.com/documents/file.txt' }],
       }),
     ).rejects.toThrow(
-      'S3 bucketName is not configured in AWSProviderOptions for deleteFile.',
+      'S3 bucketName is not configured in S3ProviderOptions for deleteFile.',
     );
   });
 });

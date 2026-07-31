@@ -3,4 +3,5 @@ export * from './types';
 export * from './internals/bucketBuilder';
 export * from './internals/types';
 export * from './internals/providerTypes';
+export * from './internals/providerCapabilities';
 export * from './internals/sharedFuncTypes';

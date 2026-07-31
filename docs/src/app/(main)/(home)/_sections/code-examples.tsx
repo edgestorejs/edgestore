@@ -9,7 +9,7 @@ import {
 const SERVER_BASIC_CODE = `
 const es = initEdgeStore.create();
 
-const edgeStoreRouter = es.router({
+const router = es.router({
   myFiles: es.fileBucket(),
 });
 `.trim();
@@ -17,7 +17,7 @@ const edgeStoreRouter = es.router({
 const SERVER_CONFIG_CODE = `
 const es = initEdgeStore.create();
 
-const edgeStoreRouter = es.router({
+const router = es.router({
   myFiles: es
     .fileBucket({
       accept: ['application/pdf'],
@@ -45,7 +45,7 @@ async function createContext({ req }: CreateContextOptions): Promise<Context> {
 
 const es = initEdgeStore.context<Context>().create();
 
-const edgeStoreRouter = es.router({
+const router = es.router({
   myFiles: es
     .fileBucket()
     .path(({ ctx }) => [{ author: ctx.personalFolder }])

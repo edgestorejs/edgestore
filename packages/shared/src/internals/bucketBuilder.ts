@@ -49,18 +49,49 @@ export type InferBucketPathObjectFromDef<TDef extends AnyDef> =
         [TKey in InferBucketPathKeysFromDef<TDef>]: string;
       };
 
+type NormalizeMetadata<TMetadata> = string extends keyof TMetadata
+  ? Record<string, Exclude<TMetadata[string], null | undefined>>
+  : Simplify<
+      {
+        [
+          TKey in keyof TMetadata as Extract<
+            TMetadata[TKey],
+            null | undefined
+          > extends never
+            ? TKey
+            : never
+        ]: Exclude<TMetadata[TKey], null | undefined>;
+      } & {
+        [
+          TKey in keyof TMetadata as Extract<
+            TMetadata[TKey],
+            null | undefined
+          > extends never
+            ? never
+            : TKey
+        ]?: Exclude<TMetadata[TKey], null | undefined>;
+      }
+    >;
+
 export type InferMetadataObject<TBucket extends Builder<any, AnyDef>> =
   TBucket['_def']['metadata'] extends (...args: any) => any
-    ? Awaited<ReturnType<TBucket['_def']['metadata']>>
+    ? NormalizeMetadata<Awaited<ReturnType<TBucket['_def']['metadata']>>>
     : Record<string, never>;
 
 type InferMetadataObjectFromDef<TDef extends AnyDef> =
   TDef['metadata'] extends (...args: any) => any
-    ? Awaited<ReturnType<TDef['metadata']>>
+    ? NormalizeMetadata<Awaited<ReturnType<TDef['metadata']>>>
     : Record<string, never>;
 
-export type AnyContextValue = string | undefined | null | AnyContext;
+export type AnyContextValue = string | undefined;
 
+/**
+ * Context shared by router hooks, path and metadata builders, and providers.
+ *
+ * Values are limited to strings so every supported provider receives the same
+ * context shape. Optional properties may be `undefined`; providers omit them
+ * when serializing the context.
+ */
 export interface AnyContext {
   [key: string]: AnyContextValue;
 }

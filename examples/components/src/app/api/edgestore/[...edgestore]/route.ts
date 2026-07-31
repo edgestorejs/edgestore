@@ -1,12 +1,13 @@
-import { initEdgeStore } from '@edgestore/server';
+import { createEdgeStore, initEdgeStore } from '@edgestore/server';
 import { createEdgeStoreNextHandler } from '@edgestore/server/adapters/next/app';
+import { edgestore } from '@edgestore/server/providers/edgestore';
 
 const es = initEdgeStore.create();
 
 /**
  * This is the main router for the edgestore buckets.
  */
-const edgeStoreRouter = es.router({
+const router = es.router({
   /**
    * A public image bucket with no validation.
    */
@@ -21,13 +22,15 @@ const edgeStoreRouter = es.router({
 /**
  * This is used to create the type-safe client for the frontend.
  */
-export type EdgeStoreRouter = typeof edgeStoreRouter;
+export type EdgeStoreRouter = typeof router;
 
 /**
  * The next handler is used to create the API route.
  */
-const handler = createEdgeStoreNextHandler({
-  router: edgeStoreRouter,
+const configuredEdgeStore = createEdgeStore({
+  router,
+  provider: edgestore(),
 });
+const handler = createEdgeStoreNextHandler({ edgestore: configuredEdgeStore });
 
 export { handler as GET, handler as POST };

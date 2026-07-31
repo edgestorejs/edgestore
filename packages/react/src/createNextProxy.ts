@@ -5,6 +5,7 @@ import {
   type InferBucketPathOrder,
   type InferMetadataObject,
   type Prettify,
+  type SharedFileMutationRes,
   type SharedRequestUploadRes,
   type UploadOptions,
 } from '@edgestore/shared';
@@ -75,8 +76,10 @@ export type BucketFunctions<TRouter extends AnyRouter> = {
             options?: UploadOptions;
           },
     ) => Promise<Prettify<UploadResponse<TRouter['buckets'][K]>>>;
-    confirmUpload: (params: { url: string }) => Promise<void>;
+    confirm: (params: { url: string }) => Promise<void>;
+    confirmMany: (params: { urls: string[] }) => Promise<SharedFileMutationRes>;
     delete: (params: { url: string }) => Promise<void>;
+    deleteMany: (params: { urls: string[] }) => Promise<SharedFileMutationRes>;
   };
 };
 
@@ -139,24 +142,36 @@ export function createNextProxy<TRouter extends AnyRouter>({
             uploadingCountRef.current--;
           }
         },
-        confirmUpload: async (params: { url: string }) => {
-          const { success } = await confirmUpload(params, {
+        confirm: async (params: { url: string }) => {
+          const result = await mutateFiles('confirm', [params.url], {
             bucketName: bucketName as string,
             apiPath,
           });
-          if (!success) {
-            throw new EdgeStoreClientError('Failed to confirm upload');
+          const failure = result.failed[0];
+          if (failure) {
+            throw new EdgeStoreClientError(failure.error.message);
           }
         },
+        confirmMany: async (params: { urls: string[] }) =>
+          await mutateFiles('confirm', params.urls, {
+            bucketName: bucketName as string,
+            apiPath,
+          }),
         delete: async (params: { url: string }) => {
-          const { success } = await deleteFile(params, {
+          const result = await mutateFiles('delete', [params.url], {
             bucketName: bucketName as string,
             apiPath,
           });
-          if (!success) {
-            throw new EdgeStoreClientError('Failed to delete file');
+          const failure = result.failed[0];
+          if (failure) {
+            throw new EdgeStoreClientError(failure.error.message);
           }
         },
+        deleteMany: async (params: { urls: string[] }) =>
+          await mutateFiles('delete', params.urls, {
+            bucketName: bucketName as string,
+            apiPath,
+          }),
       } as BucketFunctions<TRouter>[string];
       return bucketFunctions;
     },
@@ -514,12 +529,9 @@ async function multipartUpload(params: {
   }
 }
 
-async function confirmUpload(
-  {
-    url,
-  }: {
-    url: string;
-  },
+async function mutateFiles(
+  operation: 'confirm' | 'delete',
+  urls: string[],
   {
     apiPath,
     bucketName,
@@ -528,11 +540,12 @@ async function confirmUpload(
     bucketName: string;
   },
 ) {
-  const res = await fetch(`${apiPath}/confirm-upload`, {
+  const path = operation === 'confirm' ? 'confirm-uploads' : 'delete-files';
+  const res = await fetch(`${apiPath}/${path}`, {
     method: 'POST',
     credentials: 'include',
     body: JSON.stringify({
-      url,
+      urls,
       bucketName,
     }),
     headers: {
@@ -542,38 +555,7 @@ async function confirmUpload(
   if (!res.ok) {
     await handleError(res);
   }
-  return res.json();
-}
-
-async function deleteFile(
-  {
-    url,
-  }: {
-    url: string;
-  },
-  {
-    apiPath,
-    bucketName,
-  }: {
-    apiPath: string;
-    bucketName: string;
-  },
-) {
-  const res = await fetch(`${apiPath}/delete-file`, {
-    method: 'POST',
-    credentials: 'include',
-    body: JSON.stringify({
-      url,
-      bucketName,
-    }),
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-  if (!res.ok) {
-    await handleError(res);
-  }
-  return res.json();
+  return (await res.json()) as SharedFileMutationRes;
 }
 
 async function queuedPromises<TType, TRes>({

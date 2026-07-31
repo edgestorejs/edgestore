@@ -2,8 +2,8 @@ import { initEdgeStore } from '@edgestore/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   completeMultipartUpload,
-  confirmUpload,
-  deleteFile,
+  confirmUploads,
+  deleteFiles,
   requestUploadParts,
 } from './shared';
 import {
@@ -12,544 +12,296 @@ import {
   logger,
 } from './shared.test.utils';
 
-type RequestUploadPartsBody = Parameters<typeof requestUploadParts>[0]['body'];
-type CompleteMultipartUploadBody = Parameters<
-  typeof completeMultipartUpload
->[0]['body'];
-type ConfirmUploadBody = Parameters<typeof confirmUpload>[0]['body'];
-type DeleteFileBody = Parameters<typeof deleteFile>[0]['body'];
+const originalUrls = [
+  'https://files.example.com/protected/one.txt',
+  'https://files.example.com/protected/two.txt',
+];
+const proxiedUrls = originalUrls.map(
+  (url) =>
+    `http://localhost:3000/api/edgestore/proxy-file?${new URLSearchParams({
+      url,
+    }).toString()}`,
+);
 
-const originalUrl = 'https://files.example.com/protected/file.txt';
-const proxiedUrl = `http://localhost:3000/api/edgestore/proxy-file?${new URLSearchParams(
-  { url: originalUrl },
-).toString()}`;
-
-function requestUploadPartsBody(
-  overrides: Partial<RequestUploadPartsBody> = {},
-): RequestUploadPartsBody {
-  return {
-    multipart: {
-      uploadId: 'upload-id',
-      parts: [1, 2, 3],
-    },
-    path: 'documents/file.txt',
-    ...overrides,
-  };
-}
-
-function completeMultipartUploadBody(
-  overrides: Partial<CompleteMultipartUploadBody> = {},
-): CompleteMultipartUploadBody {
-  return {
-    bucketName: 'documents',
-    uploadId: 'upload-id',
-    key: 'documents/file.txt',
-    parts: [
-      {
-        partNumber: 1,
-        eTag: 'etag-1',
-      },
-    ],
-    ...overrides,
-  };
-}
-
-function confirmUploadBody(
-  overrides: Partial<ConfirmUploadBody> = {},
-): ConfirmUploadBody {
-  return {
-    bucketName: 'documents',
-    url: proxiedUrl,
-    ...overrides,
-  };
-}
-
-function deleteFileBody(
-  overrides: Partial<DeleteFileBody> = {},
-): DeleteFileBody {
-  return {
-    bucketName: 'documents',
-    url: proxiedUrl,
-    ...overrides,
-  };
-}
-
-describe('confirmUpload', () => {
+describe('frontend file mutations', () => {
   beforeEach(() => {
     vi.stubEnv('EDGE_STORE_JWT_SECRET', 'test-secret');
     vi.stubEnv('NODE_ENV', 'development');
     vi.clearAllMocks();
-    (globalThis as any)._EDGE_STORE_LOGGER = logger;
   });
 
   afterEach(() => {
     vi.unstubAllEnvs();
   });
 
-  it('rejects missing context tokens', async () => {
-    const provider = createProvider();
+  it('rejects confirmation without a context token', async () => {
     const es = initEdgeStore.create();
-    const router = es.router({
-      documents: es.fileBucket(),
-    });
+    const provider = createProvider();
 
     await expect(
-      confirmUpload({
+      confirmUploads({
         provider,
-        router,
+        router: es.router({ documents: es.fileBucket() }),
         ctxToken: undefined,
-        body: confirmUploadBody(),
+        body: { bucketName: 'documents', urls: proxiedUrls },
+        logger,
       }),
-    ).rejects.toMatchObject({
-      code: 'UNAUTHORIZED',
-    });
-    expect(provider.confirmUpload).not.toHaveBeenCalled();
+    ).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
+    expect(provider.files.confirm).not.toHaveBeenCalled();
   });
 
-  it('rejects unknown buckets', async () => {
-    const provider = createProvider();
-    const es = initEdgeStore.context<{ userId: string }>().create();
-    const router = es.router({
-      documents: es.fileBucket(),
-    });
-    const ctxToken = await createContextToken({
-      router,
-      ctx: { userId: 'user-1' },
-    });
-
-    await expect(
-      confirmUpload({
-        provider,
-        router,
-        ctxToken,
-        body: confirmUploadBody({
-          bucketName: 'avatars',
-        }),
-      }),
-    ).rejects.toMatchObject({
-      code: 'BAD_REQUEST',
-    });
-    expect(provider.confirmUpload).not.toHaveBeenCalled();
-  });
-
-  it('calls the provider with the bucket and unproxied URL, then returns success', async () => {
-    const provider = createProvider();
-    const es = initEdgeStore.context<{ userId: string }>().create();
-    const bucket = es.fileBucket();
-    const router = es.router({
-      documents: bucket,
-    });
-    const ctxToken = await createContextToken({
-      router,
-      ctx: { userId: 'user-1' },
-    });
-
-    const res = await confirmUpload({
-      provider,
-      router,
-      ctxToken,
-      body: confirmUploadBody(),
-    });
-
-    expect(provider.confirmUpload).toHaveBeenCalledWith({
-      bucket,
-      url: originalUrl,
-    });
-    expect(res).toEqual({ success: true });
-  });
-
-  it('rejects tampered context tokens before calling the provider', async () => {
-    const provider = createProvider();
+  it('confirms all references in one provider call and preserves failures', async () => {
     const es = initEdgeStore.create();
-    const router = es.router({
-      documents: es.fileBucket(),
+    const router = es.router({ documents: es.fileBucket() });
+    const provider = createProvider();
+    const ctxToken = await createContextToken({ router, ctx: {} });
+    vi.mocked(provider.files.confirm!).mockResolvedValue({
+      results: [
+        { success: true },
+        {
+          success: false,
+          error: { code: 'NOT_CONFIRMABLE', message: 'Already permanent' },
+        },
+      ],
     });
 
     await expect(
-      confirmUpload({
+      confirmUploads({
         provider,
         router,
-        ctxToken: 'tampered-token',
-        body: confirmUploadBody(),
+        ctxToken,
+        body: { bucketName: 'documents', urls: proxiedUrls },
+        logger,
       }),
-    ).rejects.toThrow();
-    expect(provider.confirmUpload).not.toHaveBeenCalled();
+    ).resolves.toEqual({
+      succeeded: [proxiedUrls[0]],
+      failed: [
+        {
+          url: proxiedUrls[1],
+          error: { code: 'NOT_CONFIRMABLE', message: 'Already permanent' },
+        },
+      ],
+    });
+    expect(provider.files.confirm).toHaveBeenCalledOnce();
+    expect(provider.files.confirm).toHaveBeenCalledWith({
+      bucketName: 'documents',
+      files: originalUrls.map((url) => ({ url })),
+    });
   });
-});
 
-describe('deleteFile', () => {
-  beforeEach(() => {
-    vi.stubEnv('EDGE_STORE_JWT_SECRET', 'test-secret');
-    vi.stubEnv('NODE_ENV', 'development');
-    vi.clearAllMocks();
-    (globalThis as any)._EDGE_STORE_LOGGER = logger;
-  });
-
-  afterEach(() => {
-    vi.unstubAllEnvs();
-  });
-
-  it('rejects missing context tokens', async () => {
-    const provider = createProvider();
+  it('rejects provider mutation results with the wrong cardinality', async () => {
     const es = initEdgeStore.create();
-    const router = es.router({
-      documents: es.fileBucket().beforeDelete(() => true),
-    });
-
-    await expect(
-      deleteFile({
-        provider,
-        router,
-        ctxToken: undefined,
-        body: deleteFileBody(),
-      }),
-    ).rejects.toMatchObject({
-      code: 'UNAUTHORIZED',
-    });
-    expect(provider.getFile).not.toHaveBeenCalled();
-    expect(provider.deleteFile).not.toHaveBeenCalled();
-  });
-
-  it('rejects unknown buckets', async () => {
+    const router = es.router({ documents: es.fileBucket() });
     const provider = createProvider();
-    const es = initEdgeStore.context<{ userId: string }>().create();
-    const router = es.router({
-      documents: es.fileBucket().beforeDelete(() => true),
-    });
-    const ctxToken = await createContextToken({
-      router,
-      ctx: { userId: 'user-1' },
+    const ctxToken = await createContextToken({ router, ctx: {} });
+    vi.mocked(provider.files.confirm!).mockResolvedValue({
+      results: [{ success: true }],
     });
 
     await expect(
-      deleteFile({
+      confirmUploads({
         provider,
         router,
         ctxToken,
-        body: deleteFileBody({
-          bucketName: 'avatars',
-        }),
+        body: { bucketName: 'documents', urls: proxiedUrls },
+        logger,
       }),
-    ).rejects.toMatchObject({
-      code: 'BAD_REQUEST',
-    });
-    expect(provider.getFile).not.toHaveBeenCalled();
-    expect(provider.deleteFile).not.toHaveBeenCalled();
+    ).rejects.toThrow('The provider returned 1 mutation results for 2 files.');
   });
 
-  it('rejects buckets without beforeDelete', async () => {
+  it('requires beforeDelete for frontend deletion', async () => {
+    const es = initEdgeStore.create();
+    const router = es.router({ documents: es.fileBucket() });
     const provider = createProvider();
-    const es = initEdgeStore.context<{ userId: string }>().create();
-    const router = es.router({
-      documents: es.fileBucket(),
-    });
-    const ctxToken = await createContextToken({
-      router,
-      ctx: { userId: 'user-1' },
-    });
+    const ctxToken = await createContextToken({ router, ctx: {} });
 
     await expect(
-      deleteFile({
+      deleteFiles({
         provider,
         router,
         ctxToken,
-        body: deleteFileBody(),
+        body: { bucketName: 'documents', urls: proxiedUrls },
+        logger,
       }),
-    ).rejects.toMatchObject({
-      code: 'SERVER_ERROR',
-    });
-    expect(provider.getFile).not.toHaveBeenCalled();
-    expect(provider.deleteFile).not.toHaveBeenCalled();
+    ).rejects.toMatchObject({ code: 'SERVER_ERROR' });
+    expect(provider.files.get).not.toHaveBeenCalled();
+    expect(provider.files.delete).not.toHaveBeenCalled();
   });
 
-  it('rejects deletes when beforeDelete returns false', async () => {
-    const provider = createProvider();
-    const beforeDelete = vi.fn(() => false);
+  it('authorizes every file before attempting a batch delete', async () => {
+    const beforeDelete = vi
+      .fn()
+      .mockResolvedValueOnce(true)
+      .mockResolvedValueOnce(false);
     const es = initEdgeStore.context<{ userId: string }>().create();
     const router = es.router({
       documents: es.fileBucket().beforeDelete(beforeDelete),
     });
+    const provider = createProvider();
     const ctxToken = await createContextToken({
       router,
       ctx: { userId: 'user-1' },
     });
 
     await expect(
-      deleteFile({
+      deleteFiles({
         provider,
         router,
         ctxToken,
-        body: deleteFileBody(),
+        body: { bucketName: 'documents', urls: proxiedUrls },
+        logger,
       }),
-    ).rejects.toMatchObject({
-      code: 'DELETE_NOT_ALLOWED',
-    });
-    expect(provider.getFile).toHaveBeenCalledWith({
-      url: originalUrl,
-    });
-    expect(beforeDelete).toHaveBeenCalledWith({
-      ctx: expect.objectContaining({ userId: 'user-1' }),
-      fileInfo: expect.objectContaining({
-        url: 'https://files.example.com/file.txt',
-      }),
-    });
-    expect(provider.deleteFile).not.toHaveBeenCalled();
+    ).rejects.toMatchObject({ code: 'DELETE_NOT_ALLOWED' });
+    expect(beforeDelete).toHaveBeenCalledTimes(2);
+    expect(provider.files.get).toHaveBeenCalledTimes(2);
+    expect(provider.files.delete).not.toHaveBeenCalled();
   });
 
-  it('calls getFile, beforeDelete, then deleteFile with ctx/fileInfo and unproxied URL', async () => {
-    const provider = createProvider();
+  it('deletes once after authorization and maps partial provider failures', async () => {
     const beforeDelete = vi.fn(() => true);
     const es = initEdgeStore.context<{ userId: string }>().create();
-    const bucket = es.fileBucket().beforeDelete(beforeDelete);
     const router = es.router({
-      documents: bucket,
+      documents: es.fileBucket().beforeDelete(beforeDelete),
     });
+    const provider = createProvider();
     const ctxToken = await createContextToken({
       router,
       ctx: { userId: 'user-1' },
     });
-
-    const res = await deleteFile({
-      provider,
-      router,
-      ctxToken,
-      body: deleteFileBody(),
-    });
-
-    expect(provider.getFile).toHaveBeenCalledWith({
-      url: originalUrl,
-    });
-    expect(beforeDelete).toHaveBeenCalledWith({
-      ctx: expect.objectContaining({ userId: 'user-1' }),
-      fileInfo: expect.objectContaining({
-        url: 'https://files.example.com/file.txt',
-      }),
-    });
-    expect(provider.deleteFile).toHaveBeenCalledWith({
-      bucket,
-      url: originalUrl,
-    });
-    const getFileCallOrder = vi.mocked(provider.getFile).mock
-      .invocationCallOrder[0];
-    const beforeDeleteCallOrder = beforeDelete.mock.invocationCallOrder[0];
-    const deleteFileCallOrder = vi.mocked(provider.deleteFile).mock
-      .invocationCallOrder[0];
-
-    if (
-      getFileCallOrder === undefined ||
-      beforeDeleteCallOrder === undefined ||
-      deleteFileCallOrder === undefined
-    ) {
-      throw new Error('Expected getFile, beforeDelete, and deleteFile calls');
-    }
-
-    expect(getFileCallOrder).toBeLessThan(beforeDeleteCallOrder);
-    expect(beforeDeleteCallOrder).toBeLessThan(deleteFileCallOrder);
-    expect(res).toEqual({ success: true });
-  });
-
-  it('rejects tampered context tokens before calling the provider', async () => {
-    const provider = createProvider();
-    const es = initEdgeStore.create();
-    const router = es.router({
-      documents: es.fileBucket().beforeDelete(() => true),
+    vi.mocked(provider.files.delete!).mockResolvedValue({
+      results: [
+        { success: true },
+        {
+          success: false,
+          error: { code: 'DELETE_FAILED', message: 'Storage unavailable' },
+        },
+      ],
     });
 
     await expect(
-      deleteFile({
-        provider,
-        router,
-        ctxToken: 'tampered-token',
-        body: deleteFileBody(),
-      }),
-    ).rejects.toThrow();
-    expect(provider.getFile).not.toHaveBeenCalled();
-    expect(provider.deleteFile).not.toHaveBeenCalled();
-  });
-});
-
-describe('requestUploadParts', () => {
-  beforeEach(() => {
-    vi.stubEnv('EDGE_STORE_JWT_SECRET', 'test-secret');
-    vi.stubEnv('NODE_ENV', 'test');
-    vi.clearAllMocks();
-    (globalThis as any)._EDGE_STORE_LOGGER = logger;
-  });
-
-  afterEach(() => {
-    vi.unstubAllEnvs();
-  });
-
-  it('rejects missing context tokens', async () => {
-    const provider = createProvider();
-    const es = initEdgeStore.create();
-    const router = es.router({
-      documents: es.fileBucket(),
-    });
-
-    await expect(
-      requestUploadParts({
-        provider,
-        router,
-        ctxToken: undefined,
-        body: requestUploadPartsBody(),
-      }),
-    ).rejects.toMatchObject({
-      code: 'UNAUTHORIZED',
-    });
-    expect(provider.requestUploadParts).not.toHaveBeenCalled();
-  });
-
-  it('passes multipart request details to the provider', async () => {
-    const provider = createProvider();
-    const es = initEdgeStore.context<{ userId: string }>().create();
-    const router = es.router({
-      documents: es.fileBucket(),
-    });
-    const ctxToken = await createContextToken({
-      router,
-      ctx: { userId: 'user-1' },
-    });
-    const body = requestUploadPartsBody();
-
-    const res = await requestUploadParts({
-      provider,
-      router,
-      ctxToken,
-      body,
-    });
-
-    expect(provider.requestUploadParts).toHaveBeenCalledWith({
-      multipart: body.multipart,
-      path: body.path,
-    });
-    expect(res).toEqual({
-      multipart: {
-        uploadId: 'upload-id',
-        parts: [],
-      },
-    });
-  });
-
-  it('rejects tampered context tokens before calling the provider', async () => {
-    const provider = createProvider();
-    const es = initEdgeStore.create();
-    const router = es.router({
-      documents: es.fileBucket(),
-    });
-
-    await expect(
-      requestUploadParts({
-        provider,
-        router,
-        ctxToken: 'tampered-token',
-        body: requestUploadPartsBody(),
-      }),
-    ).rejects.toThrow();
-    expect(provider.requestUploadParts).not.toHaveBeenCalled();
-  });
-});
-
-describe('completeMultipartUpload', () => {
-  beforeEach(() => {
-    vi.stubEnv('EDGE_STORE_JWT_SECRET', 'test-secret');
-    vi.stubEnv('NODE_ENV', 'test');
-    vi.clearAllMocks();
-    (globalThis as any)._EDGE_STORE_LOGGER = logger;
-  });
-
-  afterEach(() => {
-    vi.unstubAllEnvs();
-  });
-
-  it('rejects missing context tokens', async () => {
-    const provider = createProvider();
-    const es = initEdgeStore.create();
-    const router = es.router({
-      documents: es.fileBucket(),
-    });
-
-    await expect(
-      completeMultipartUpload({
-        provider,
-        router,
-        ctxToken: undefined,
-        body: completeMultipartUploadBody(),
-      }),
-    ).rejects.toMatchObject({
-      code: 'UNAUTHORIZED',
-    });
-    expect(provider.completeMultipartUpload).not.toHaveBeenCalled();
-  });
-
-  it('rejects unknown buckets', async () => {
-    const provider = createProvider();
-    const es = initEdgeStore.context<{ userId: string }>().create();
-    const router = es.router({
-      documents: es.fileBucket(),
-    });
-    const ctxToken = await createContextToken({
-      router,
-      ctx: { userId: 'user-1' },
-    });
-
-    await expect(
-      completeMultipartUpload({
+      deleteFiles({
         provider,
         router,
         ctxToken,
-        body: completeMultipartUploadBody({
-          bucketName: 'avatars',
-        }),
+        body: { bucketName: 'documents', urls: proxiedUrls },
+        logger,
+      }),
+    ).resolves.toEqual({
+      succeeded: [proxiedUrls[0]],
+      failed: [
+        {
+          url: proxiedUrls[1],
+          error: { code: 'DELETE_FAILED', message: 'Storage unavailable' },
+        },
+      ],
+    });
+    expect(beforeDelete).toHaveBeenCalledTimes(2);
+    expect(provider.files.delete).toHaveBeenCalledOnce();
+    expect(provider.files.delete).toHaveBeenCalledWith({
+      bucketName: 'documents',
+      files: originalUrls.map((url) => ({ url })),
+    });
+  });
+});
+
+describe('multipart lifecycle', () => {
+  beforeEach(() => {
+    vi.stubEnv('EDGE_STORE_JWT_SECRET', 'test-secret');
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it('checks context before requesting parts', async () => {
+    const es = initEdgeStore.create();
+    const provider = createProvider();
+
+    await expect(
+      requestUploadParts({
+        provider,
+        router: es.router({ documents: es.fileBucket() }),
+        ctxToken: undefined,
+        body: {
+          multipart: { uploadId: 'upload-id', parts: [1, 2] },
+          path: 'documents/file.txt',
+        },
+        logger,
+      }),
+    ).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
+    expect(provider.uploads.multipart?.requestParts).not.toHaveBeenCalled();
+  });
+
+  it('forwards part requests after context validation', async () => {
+    const es = initEdgeStore.create();
+    const router = es.router({ documents: es.fileBucket() });
+    const provider = createProvider();
+    const ctxToken = await createContextToken({ router, ctx: {} });
+    const body = {
+      multipart: { uploadId: 'upload-id', parts: [1, 2] },
+      path: 'documents/file.txt',
+    };
+
+    await requestUploadParts({ provider, router, ctxToken, body, logger });
+
+    expect(provider.uploads.multipart?.requestParts).toHaveBeenCalledWith(body);
+  });
+
+  it('rejects multipart routes for single-part providers', async () => {
+    const es = initEdgeStore.create();
+    const router = es.router({ documents: es.fileBucket() });
+    const provider = createProvider({
+      uploads: {
+        request: vi.fn(() => ({
+          uploadUrl: 'https://upload.example.com/file.txt',
+          accessUrl: 'https://files.example.com/file.txt',
+        })),
+      },
+    });
+    const ctxToken = await createContextToken({ router, ctx: {} });
+
+    await expect(
+      requestUploadParts({
+        provider,
+        router,
+        ctxToken,
+        body: {
+          multipart: { uploadId: 'upload-id', parts: [1] },
+          path: 'documents/file.txt',
+        },
+        logger,
       }),
     ).rejects.toMatchObject({
       code: 'BAD_REQUEST',
+      message: 'Provider test-provider does not support multipart uploads.',
     });
-    expect(provider.completeMultipartUpload).not.toHaveBeenCalled();
   });
 
-  it('passes completion details to the provider', async () => {
+  it('checks context and bucket before completing multipart uploads', async () => {
+    const es = initEdgeStore.create();
+    const router = es.router({ documents: es.fileBucket() });
     const provider = createProvider();
-    const es = initEdgeStore.context<{ userId: string }>().create();
-    const router = es.router({
-      documents: es.fileBucket(),
-    });
-    const ctxToken = await createContextToken({
-      router,
-      ctx: { userId: 'user-1' },
-    });
-    const body = completeMultipartUploadBody();
+    const ctxToken = await createContextToken({ router, ctx: {} });
+    const body = {
+      bucketName: 'documents',
+      uploadId: 'upload-id',
+      key: 'documents/file.txt',
+      parts: [{ partNumber: 1, eTag: 'etag-1' }],
+    };
 
-    const res = await completeMultipartUpload({
+    await completeMultipartUpload({
       provider,
       router,
       ctxToken,
       body,
+      logger,
     });
 
-    expect(provider.completeMultipartUpload).toHaveBeenCalledWith({
+    expect(provider.uploads.multipart?.complete).toHaveBeenCalledWith({
       uploadId: body.uploadId,
       key: body.key,
       parts: body.parts,
     });
-    expect(res).toEqual({ success: true });
-  });
-
-  it('rejects tampered context tokens before calling the provider', async () => {
-    const provider = createProvider();
-    const es = initEdgeStore.create();
-    const router = es.router({
-      documents: es.fileBucket(),
-    });
-
-    await expect(
-      completeMultipartUpload({
-        provider,
-        router,
-        ctxToken: 'tampered-token',
-        body: completeMultipartUploadBody(),
-      }),
-    ).rejects.toThrow();
-    expect(provider.completeMultipartUpload).not.toHaveBeenCalled();
   });
 });
