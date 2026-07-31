@@ -1,3 +1,4 @@
+import { createEdgeStoreSdk } from '@edgestore/sdk';
 import { initEdgeStore } from '@edgestore/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { edgestore } from '.';
@@ -23,8 +24,15 @@ const runtime = vi.hoisted(() => ({
   },
 }));
 
+const forProject = vi.hoisted(() => vi.fn(() => runtime));
+
 vi.mock('@edgestore/sdk', () => ({
-  createEdgeStoreSdk: vi.fn(() => ({ runtime })),
+  createEdgeStoreSdk: vi.fn(
+    (options: { credentials: Record<string, string> }) =>
+      'token' in options.credentials
+        ? { runtime: { forProject } }
+        : { runtime },
+  ),
   DEFAULT_MULTIPART_PART_SIZE_BYTES: 16 * 1024 * 1024,
   DEFAULT_MULTIPART_THRESHOLD_BYTES: 100 * 1024 * 1024,
 }));
@@ -42,6 +50,54 @@ const fileInfo = {
 describe('edgestore provider', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it('uses project credentials without changing their configuration shape', () => {
+    edgestore({
+      accessKey: 'access',
+      secretKey: 'secret',
+      apiUrl: 'https://api.example/v2',
+    });
+
+    expect(createEdgeStoreSdk).toHaveBeenCalledWith({
+      credentials: { accessKey: 'access', secretKey: 'secret' },
+      apiUrl: 'https://api.example/v2',
+    });
+    expect(forProject).not.toHaveBeenCalled();
+  });
+
+  it('scopes a Bearer-authenticated SDK once at provider creation', () => {
+    edgestore({
+      token: 'management-token',
+      project: 'project-id',
+      apiUrl: 'https://api.example/v2',
+    });
+
+    expect(createEdgeStoreSdk).toHaveBeenCalledWith({
+      credentials: { token: 'management-token' },
+      apiUrl: 'https://api.example/v2',
+    });
+    expect(forProject).toHaveBeenCalledOnce();
+    expect(forProject).toHaveBeenCalledWith('project-id');
+  });
+
+  it('rejects incomplete or mixed Bearer provider options', () => {
+    expect(() => edgestore({ token: 'management-token' } as never)).toThrow(
+      'EdgeStore provider option `project` must not be empty.',
+    );
+    expect(() => edgestore({ project: 'project-id' } as never)).toThrow(
+      'EdgeStore provider option `project` requires a Bearer token.',
+    );
+    expect(() =>
+      edgestore({
+        token: 'management-token',
+        project: 'project-id',
+        accessKey: 'access',
+        secretKey: 'secret',
+      } as never),
+    ).toThrow(
+      'EdgeStore provider credentials cannot contain both a Bearer token and project keys.',
+    );
   });
 
   it('creates a client-init instruction for buckets with file access control', async () => {
@@ -177,6 +233,41 @@ describe('edgestore provider', () => {
         totalParts: 7,
         parts: [{ partNumber: 1, uploadUrl: 'https://upload.example/1' }],
       },
+    });
+  });
+
+  it('delegates multipart part requests and completion to the SDK', async () => {
+    runtime.uploads.createParts.mockResolvedValue({
+      parts: [{ partNumber: 2, signedUrl: 'https://upload.example/2' }],
+    });
+    const provider = edgestore({ accessKey: 'access', secretKey: 'secret' });
+
+    await expect(
+      provider.uploads.multipart.requestParts({
+        multipart: { uploadId: 'upload-1', parts: [2] },
+        path: 'files/file.txt',
+      }),
+    ).resolves.toEqual({
+      multipart: {
+        uploadId: 'upload-1',
+        parts: [{ partNumber: 2, uploadUrl: 'https://upload.example/2' }],
+      },
+    });
+    await expect(
+      provider.uploads.multipart.complete({
+        uploadId: 'upload-1',
+        key: 'files/file.txt',
+        parts: [{ partNumber: 2, eTag: 'etag-2' }],
+      }),
+    ).resolves.toBeUndefined();
+
+    expect(runtime.uploads.createParts).toHaveBeenCalledWith({
+      uploadId: 'upload-1',
+      partNumbers: [2],
+    });
+    expect(runtime.uploads.completeMultipart).toHaveBeenCalledWith({
+      uploadId: 'upload-1',
+      parts: [{ partNumber: 2, eTag: 'etag-2' }],
     });
   });
 

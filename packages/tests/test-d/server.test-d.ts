@@ -27,6 +27,19 @@ type Context = {
 
 const es = initEdgeStore.context<Context>().create();
 
+edgestore({ accessKey: 'project-key', secretKey: 'project-secret' });
+edgestore({ token: 'management-token', project: 'project-id' });
+expectError(edgestore({ token: 'management-token' }));
+expectError(edgestore({ project: 'project-id' }));
+expectError(
+  edgestore({
+    token: 'management-token',
+    project: 'project-id',
+    accessKey: 'project-key',
+    secretKey: 'project-secret',
+  }),
+);
+
 const router = es.router({
   avatars: es
     .imageBucket()

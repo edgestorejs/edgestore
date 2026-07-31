@@ -2,6 +2,7 @@ import {
   createEdgeStoreSdk,
   DEFAULT_MULTIPART_PART_SIZE_BYTES,
   DEFAULT_MULTIPART_THRESHOLD_BYTES,
+  type ProjectRuntimeClient,
 } from '@edgestore/sdk';
 import {
   EdgeStoreError,
@@ -29,7 +30,12 @@ const fileReferenceSchema = z
     typeof reference === 'string' ? { url: reference } : reference,
   );
 
-export type EdgeStoreProviderOptions = {
+type EdgeStoreProviderCommonOptions = {
+  /** Override the complete API v2 URL. */
+  apiUrl?: string;
+};
+
+type EdgeStoreProjectProviderOptions = {
   /**
    * Access key for your EdgeStore project.
    * Can be found in the EdgeStore dashboard.
@@ -44,30 +50,25 @@ export type EdgeStoreProviderOptions = {
    * This can be omitted if the `EDGE_STORE_SECRET_KEY` environment variable is set.
    */
   secretKey?: string;
-  /** Override the API v2 base URL. */
-  apiUrl?: string;
+  token?: never;
+  project?: never;
 };
 
+type EdgeStoreBearerProviderOptions = {
+  /** Bearer token used to authenticate API v2 requests. */
+  token: string;
+  /** Project ID or slug used by runtime operations. */
+  project: string;
+  accessKey?: never;
+  secretKey?: never;
+};
+
+export type EdgeStoreProviderOptions = EdgeStoreProviderCommonOptions &
+  (EdgeStoreProjectProviderOptions | EdgeStoreBearerProviderOptions);
+
 export function edgestore(options?: EdgeStoreProviderOptions) {
-  const {
-    accessKey = getEnv('EDGE_STORE_ACCESS_KEY') ??
-      // @ts-expect-error - In Vite/Astro, the env variables are available on `import.meta`.
-      import.meta.env?.EDGE_STORE_ACCESS_KEY,
-    secretKey = getEnv('EDGE_STORE_SECRET_KEY') ??
-      // @ts-expect-error - In Vite/Astro, the env variables are available on `import.meta`.
-      import.meta.env?.EDGE_STORE_SECRET_KEY,
-  } = options ?? {};
-
   const baseUrl = getEnv('EDGE_STORE_BASE_URL') ?? DEFAULT_BASE_URL;
-
-  if (!accessKey || !secretKey) {
-    throw new EdgeStoreCredentialsError();
-  }
-
-  const sdk = createEdgeStoreSdk({
-    credentials: { accessKey, secretKey },
-    apiUrl: options?.apiUrl ?? getApiUrl(),
-  });
+  const runtime = createProviderRuntime(options);
 
   const provider = defineProvider({
     name: 'edgestore',
@@ -84,7 +85,7 @@ export function edgestore(options?: EdgeStoreProviderOptions) {
       );
       if (!requiresFileAccessCookie) return {};
 
-      const { token } = await sdk.runtime.accessTokens.create({
+      const { token } = await runtime.accessTokens.create({
         context: Object.fromEntries(
           Object.entries(ctx).filter(
             (entry): entry is [string, string] => entry[1] !== undefined,
@@ -135,7 +136,7 @@ export function edgestore(options?: EdgeStoreProviderOptions) {
             partSize = Math.ceil(fileInfo.size / totalParts);
           }
           return mapUploadResponse(
-            await sdk.runtime.uploads.request({
+            await runtime.uploads.request({
               bucket: bucketName,
               ...mapRawUploadRequest(bucketType, fileInfo, autoSignedUrls),
               multipart: {
@@ -149,7 +150,7 @@ export function edgestore(options?: EdgeStoreProviderOptions) {
           );
         }
         return mapUploadResponse(
-          await sdk.runtime.uploads.request({
+          await runtime.uploads.request({
             bucket: bucketName,
             ...mapRawUploadRequest(bucketType, fileInfo, autoSignedUrls),
           }),
@@ -157,7 +158,7 @@ export function edgestore(options?: EdgeStoreProviderOptions) {
       },
       multipart: {
         requestParts: async ({ multipart }) => {
-          const res = await sdk.runtime.uploads.createParts({
+          const res = await runtime.uploads.createParts({
             uploadId: multipart.uploadId,
             partNumbers: multipart.parts,
           });
@@ -172,7 +173,7 @@ export function edgestore(options?: EdgeStoreProviderOptions) {
           };
         },
         complete: async ({ uploadId, parts }) => {
-          await sdk.runtime.uploads.completeMultipart({
+          await runtime.uploads.completeMultipart({
             uploadId,
             parts,
           });
@@ -186,7 +187,7 @@ export function edgestore(options?: EdgeStoreProviderOptions) {
         signal,
         onProgress,
       }) => {
-        const result = await sdk.runtime.uploads.upload({
+        const result = await runtime.uploads.upload({
           bucket: bucketName,
           source,
           ...mapHighLevelUploadOptions(fileInfo, autoSignedUrls),
@@ -207,14 +208,14 @@ export function edgestore(options?: EdgeStoreProviderOptions) {
     files: {
       cursorSchema: z.string(),
       get: async ({ bucketName, file: fileRef }) => {
-        const { file } = await sdk.runtime.files.lookup({
+        const { file } = await runtime.files.lookup({
           bucketName,
           file: fileRef,
         });
         return mapFile(file);
       },
       list: async ({ bucketName, filter, cursor, limit }) => {
-        const { files, pagination } = await sdk.runtime.files.search({
+        const { files, pagination } = await runtime.files.search({
           bucket: bucketName,
           filter,
           pagination: { cursor, limit },
@@ -226,15 +227,15 @@ export function edgestore(options?: EdgeStoreProviderOptions) {
       },
       confirm: async ({ bucketName, files }) =>
         mapMutationResult(
-          await sdk.runtime.files.confirmMany({ bucketName, files }),
+          await runtime.files.confirmMany({ bucketName, files }),
         ),
       delete: async ({ bucketName, files }) =>
         mapMutationResult(
-          await sdk.runtime.files.deleteMany({ bucketName, files }),
+          await runtime.files.deleteMany({ bucketName, files }),
         ),
       restore: async ({ bucketName, files }) =>
         mapMutationResult(
-          await sdk.runtime.files.restoreMany({ bucketName, files }),
+          await runtime.files.restoreMany({ bucketName, files }),
         ),
       getSignedUrls: async (params) => {
         const urls = await Promise.all(
@@ -242,14 +243,14 @@ export function edgestore(options?: EdgeStoreProviderOptions) {
             'url' in fileRef
               ? fileRef.url
               : (
-                  await sdk.runtime.files.lookup({
+                  await runtime.files.lookup({
                     bucketName: params.bucketName,
                     file: fileRef,
                   })
                 ).file.url,
           ),
         );
-        const { signedUrls } = await sdk.runtime.files.generateSignedReadUrls({
+        const { signedUrls } = await runtime.files.generateSignedReadUrls({
           bucket: params.bucketName,
           urls,
           expiresIn: params.expiresIn,
@@ -267,6 +268,105 @@ export function edgestore(options?: EdgeStoreProviderOptions) {
 }
 
 export type EdgeStoreBackendProvider = ReturnType<typeof edgestore>;
+
+type ResolvedProviderAuthentication =
+  | {
+      kind: 'project';
+      accessKey: string;
+      secretKey: string;
+    }
+  | {
+      kind: 'bearer';
+      token: string;
+      project: string;
+    };
+
+function createProviderRuntime(
+  options?: EdgeStoreProviderOptions,
+): ProjectRuntimeClient {
+  const authentication = resolveProviderAuthentication(options);
+  const apiUrl = options?.apiUrl ?? getApiUrl();
+
+  if (authentication.kind === 'bearer') {
+    const sdk = createEdgeStoreSdk({
+      credentials: { token: authentication.token },
+      apiUrl,
+    });
+    return sdk.runtime.forProject(authentication.project);
+  }
+
+  const sdk = createEdgeStoreSdk({
+    credentials: {
+      accessKey: authentication.accessKey,
+      secretKey: authentication.secretKey,
+    },
+    apiUrl,
+  });
+  return sdk.runtime;
+}
+
+function resolveProviderAuthentication(
+  options?: EdgeStoreProviderOptions,
+): ResolvedProviderAuthentication {
+  const values = (options ?? {}) as Record<string, unknown>;
+  const token = values.token;
+  const project = values.project;
+  const configuredAccessKey = values.accessKey;
+  const configuredSecretKey = values.secretKey;
+
+  if (token !== undefined) {
+    if (
+      configuredAccessKey !== undefined ||
+      configuredSecretKey !== undefined
+    ) {
+      throw new TypeError(
+        'EdgeStore provider credentials cannot contain both a Bearer token and project keys.',
+      );
+    }
+    assertNonEmptyProviderOption(token, 'token');
+    assertNonEmptyProviderOption(project, 'project');
+    return { kind: 'bearer', token, project };
+  }
+
+  if (project !== undefined) {
+    throw new TypeError(
+      'EdgeStore provider option `project` requires a Bearer token.',
+    );
+  }
+
+  const accessKey =
+    configuredAccessKey ??
+    getEnv('EDGE_STORE_ACCESS_KEY') ??
+    // @ts-expect-error - In Vite/Astro, the env variables are available on `import.meta`.
+    import.meta.env?.EDGE_STORE_ACCESS_KEY;
+  const secretKey =
+    configuredSecretKey ??
+    getEnv('EDGE_STORE_SECRET_KEY') ??
+    // @ts-expect-error - In Vite/Astro, the env variables are available on `import.meta`.
+    import.meta.env?.EDGE_STORE_SECRET_KEY;
+
+  if (
+    typeof accessKey !== 'string' ||
+    !accessKey.trim() ||
+    typeof secretKey !== 'string' ||
+    !secretKey.trim()
+  ) {
+    throw new EdgeStoreCredentialsError();
+  }
+
+  return { kind: 'project', accessKey, secretKey };
+}
+
+function assertNonEmptyProviderOption(
+  value: unknown,
+  name: string,
+): asserts value is string {
+  if (typeof value !== 'string' || !value.trim()) {
+    throw new TypeError(
+      `EdgeStore provider option \`${name}\` must not be empty.`,
+    );
+  }
+}
 
 function mapMutationResult<TErrorCode extends string>(result: {
   results: (
@@ -340,11 +440,7 @@ function mapRawUploadRequest(
 }
 
 function mapUploadResponse(
-  res: Awaited<
-    ReturnType<
-      ReturnType<typeof createEdgeStoreSdk>['runtime']['uploads']['request']
-    >
-  >,
+  res: Awaited<ReturnType<ProjectRuntimeClient['uploads']['request']>>,
   multipartConfig?: { partSize: number; totalParts: number },
 ): RequestUploadRes {
   const signed = res.signedReadUrl;
@@ -380,11 +476,7 @@ function mapUploadResponse(
 }
 
 function mapFile(
-  file: Awaited<
-    ReturnType<
-      ReturnType<typeof createEdgeStoreSdk>['runtime']['files']['lookup']
-    >
-  >['file'],
+  file: Awaited<ReturnType<ProjectRuntimeClient['files']['lookup']>>['file'],
 ): ProviderFile {
   return {
     ...file,
