@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, expectTypeOf, it } from 'vitest';
 import {
   classifyCredentials,
   getAuthorizationHeader,
@@ -42,13 +42,23 @@ describe('getAuthorizationHeader', () => {
     });
   });
 
+  it('keeps project and management credential types mutually exclusive', () => {
+    const ambiguous = {
+      token: 'management-token',
+      accessKey: 'project',
+      secretKey: 'secret',
+    };
+
+    expectTypeOf(ambiguous).not.toMatchTypeOf<EdgeStoreCredentials>();
+  });
+
   it('rejects ambiguous and incomplete credentials', () => {
     expect(() =>
       classifyCredentials({
         token: 'management-token',
         accessKey: 'project',
         secretKey: 'secret',
-      } as EdgeStoreCredentials),
+      } as unknown as EdgeStoreCredentials),
     ).toThrow('both');
     expect(() =>
       classifyCredentials({ accessKey: 'project' } as EdgeStoreCredentials),

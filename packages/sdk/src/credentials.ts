@@ -1,10 +1,13 @@
 export type ProjectCredentials = {
   accessKey: string;
   secretKey: string;
+  token?: never;
 };
 
 export type ManagementCredentials = {
   token: string;
+  accessKey?: never;
+  secretKey?: never;
 };
 
 export type EdgeStoreCredentials = ProjectCredentials | ManagementCredentials;
