@@ -83,19 +83,19 @@ describe('runtime request mappings', () => {
         },
       },
       'v2.runtime.files.confirm': {
-        invoke: () => sdk.runtime.files.confirm(mutationBody),
+        invoke: () => sdk.runtime.files.confirmMany(mutationBody),
         method: 'POST',
         path: '/v2/runtime/projects/_current/files/confirm',
         body: mutationBody,
       },
       'v2.runtime.files.delete': {
-        invoke: () => sdk.runtime.files.delete(mutationBody),
+        invoke: () => sdk.runtime.files.deleteMany(mutationBody),
         method: 'POST',
         path: '/v2/runtime/projects/_current/files/delete',
         body: mutationBody,
       },
       'v2.runtime.files.restore': {
-        invoke: () => sdk.runtime.files.restore(mutationBody),
+        invoke: () => sdk.runtime.files.restoreMany(mutationBody),
         method: 'POST',
         path: '/v2/runtime/projects/_current/files/restore',
         body: mutationBody,
