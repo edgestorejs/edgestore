@@ -59,6 +59,7 @@ export {
   DEFAULT_MULTIPART_THRESHOLD_BYTES,
   DEFAULT_PROCESSING_TIMEOUT_MS,
   MAX_MULTIPART_PARTS,
+  MIN_MULTIPART_PART_SIZE_BYTES,
   type RuntimeUploadFromUrlInput,
   type RuntimeUploadInput,
   type RuntimeUploadResult,

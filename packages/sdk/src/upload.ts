@@ -28,6 +28,7 @@ import {
   DEFAULT_MULTIPART_THRESHOLD_BYTES,
   DEFAULT_PROCESSING_TIMEOUT_MS,
   MAX_MULTIPART_PARTS,
+  MIN_MULTIPART_PART_SIZE_BYTES,
   type CompletedUpload,
   type RuntimeUploadFromUrlInput,
   type RuntimeUploadInput,
@@ -97,11 +98,6 @@ export async function uploadRuntimeFile(
     phase: 'preparing',
   });
 
-  const bucketResult = await operations.buckets.get({
-    project,
-    bucket,
-    signal,
-  });
   const requestedPartSizeBytes = getPositiveInteger(
     typeof multipart === 'object'
       ? multipart.partSizeBytes
@@ -109,6 +105,11 @@ export async function uploadRuntimeFile(
     defaults.multipartPartSizeBytes ?? DEFAULT_MULTIPART_PART_SIZE_BYTES,
     'multipart.partSizeBytes',
   );
+  if (requestedPartSizeBytes < MIN_MULTIPART_PART_SIZE_BYTES) {
+    throw new RangeError(
+      `multipart.partSizeBytes must be at least ${MIN_MULTIPART_PART_SIZE_BYTES} bytes (5 MiB).`,
+    );
+  }
   const partSizeBytes = Math.max(
     requestedPartSizeBytes,
     Math.ceil(totalBytes / MAX_MULTIPART_PARTS),
@@ -118,6 +119,12 @@ export async function uploadRuntimeFile(
     multipart === true ||
     typeof multipart === 'object' ||
     totalBytes > multipartThresholdBytes;
+
+  const bucketResult = await operations.buckets.get({
+    project,
+    bucket,
+    signal,
+  });
   const partNumbers = useMultipart
     ? Array.from(
         { length: Math.max(1, Math.ceil(totalBytes / partSizeBytes)) },
@@ -238,7 +245,10 @@ export async function uploadRuntimeFileFromUrl(
   let response: Response;
 
   try {
-    response = await transport.fetch(url, { signal });
+    response = await transport.fetch(url, {
+      signal,
+      headers: { 'accept-encoding': 'identity' },
+    });
   } catch (error) {
     if (isAbortError(error)) {
       throw new EdgeStoreAbortError(undefined, { cause: error });
@@ -255,6 +265,16 @@ export async function uploadRuntimeFileFromUrl(
     if (!response.ok) {
       throw new EdgeStoreNetworkError(
         `The remote upload source returned HTTP ${response.status}.`,
+      );
+    }
+
+    const contentEncoding = response.headers.get('content-encoding');
+    if (
+      contentEncoding !== null &&
+      contentEncoding.trim().toLowerCase() !== 'identity'
+    ) {
+      throw new TypeError(
+        'Remote uploads require an identity Content-Encoding response.',
       );
     }
 

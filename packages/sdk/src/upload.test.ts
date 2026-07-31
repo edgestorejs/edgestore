@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { EdgeStoreUploadProcessingTimeoutError } from './errors';
+import {
+  EdgeStoreAbortError,
+  type EdgeStoreUploadProcessingTimeoutError,
+} from './errors';
 import { createEdgeStoreSdk } from './sdk';
+import { MIN_MULTIPART_PART_SIZE_BYTES } from './uploadTypes';
 
 function createSdk(fetch: typeof globalThis.fetch) {
   return createEdgeStoreSdk({
@@ -167,7 +171,7 @@ describe('runtime upload orchestration', () => {
   });
 
   it('uploads multipart chunks concurrently and completes with ETags', async () => {
-    const uploadedParts: string[] = [];
+    const uploadedPartSizes: number[] = [];
     let completionBody: unknown;
     const fetch = vi.fn<typeof globalThis.fetch>(async (input, init) => {
       const request = toRequest(input, init);
@@ -192,7 +196,7 @@ describe('runtime upload orchestration', () => {
         });
       }
       if (request.url.includes('storage.example/part-')) {
-        uploadedParts.push(await request.text());
+        uploadedPartSizes.push((await request.arrayBuffer()).byteLength);
         const partNumber = request.url.endsWith('1') ? 1 : 2;
         return new Response(null, {
           status: 200,
@@ -222,17 +226,23 @@ describe('runtime upload orchestration', () => {
       source: {
         stream: new ReadableStream({
           start(controller) {
-            controller.enqueue(new TextEncoder().encode('ab'));
-            controller.enqueue(new TextEncoder().encode('cdef'));
+            controller.enqueue(new Uint8Array(MIN_MULTIPART_PART_SIZE_BYTES));
+            controller.enqueue(new Uint8Array(1));
             controller.close();
           },
         }),
-        sizeBytes: 6,
+        sizeBytes: MIN_MULTIPART_PART_SIZE_BYTES + 1,
       },
-      multipart: { partSizeBytes: 3, concurrency: 2 },
+      multipart: {
+        partSizeBytes: MIN_MULTIPART_PART_SIZE_BYTES,
+        concurrency: 2,
+      },
     });
 
-    expect(uploadedParts.sort()).toEqual(['abc', 'def']);
+    expect(uploadedPartSizes.sort((left, right) => left - right)).toEqual([
+      1,
+      MIN_MULTIPART_PART_SIZE_BYTES,
+    ]);
     expect(completionBody).toEqual({
       parts: [
         { partNumber: 1, eTag: 'etag-1' },
@@ -296,9 +306,9 @@ describe('runtime upload orchestration', () => {
             return new Promise<void>(() => undefined);
           },
         }),
-        sizeBytes: 3,
+        sizeBytes: MIN_MULTIPART_PART_SIZE_BYTES,
       },
-      multipart: { partSizeBytes: 3 },
+      multipart: { partSizeBytes: MIN_MULTIPART_PART_SIZE_BYTES },
       signal: controller.signal,
     });
 
@@ -372,8 +382,11 @@ describe('runtime upload orchestration', () => {
     await expect(
       sdk.runtime.uploads.upload({
         bucket: 'videos',
-        source: new Blob(['abcdef']),
-        multipart: { partSizeBytes: 3, concurrency: 2 },
+        source: new Blob([new Uint8Array(MIN_MULTIPART_PART_SIZE_BYTES + 1)]),
+        multipart: {
+          partSizeBytes: MIN_MULTIPART_PART_SIZE_BYTES,
+          concurrency: 2,
+        },
       }),
     ).rejects.toMatchObject({ name: 'EdgeStoreUploadError' });
 
@@ -384,8 +397,13 @@ describe('runtime upload orchestration', () => {
     const fetch = vi.fn<typeof globalThis.fetch>(async (input, init) => {
       const request = toRequest(input, init);
       if (request.url === 'https://source.example/report.txt') {
+        expect(request.headers.get('accept-encoding')).toBe('identity');
         return new Response('remote', {
-          headers: { 'content-length': '6', 'content-type': 'text/plain' },
+          headers: {
+            'content-encoding': 'identity',
+            'content-length': '6',
+            'content-type': 'text/plain',
+          },
         });
       }
       if (request.url.endsWith('/buckets/documents')) {
@@ -440,6 +458,71 @@ describe('runtime upload orchestration', () => {
     });
 
     expect(result.file.id).toBe('remote-file');
+  });
+
+  it('rejects an encoded remote response before calling EdgeStore', async () => {
+    let canceled = false;
+    const fetch = vi.fn<typeof globalThis.fetch>(async (input, init) => {
+      const request = toRequest(input, init);
+      expect(request.headers.get('accept-encoding')).toBe('identity');
+      return new Response(
+        new ReadableStream({
+          cancel() {
+            canceled = true;
+          },
+        }),
+        {
+          headers: {
+            'content-encoding': 'gzip',
+            'content-length': '6',
+          },
+        },
+      );
+    });
+    const sdk = createSdk(fetch);
+
+    await expect(
+      sdk.runtime.uploads.uploadFromUrl({
+        bucket: 'documents',
+        url: 'https://source.example/encoded.txt',
+      }),
+    ).rejects.toThrow(
+      'Remote uploads require an identity Content-Encoding response.',
+    );
+    expect(fetch).toHaveBeenCalledOnce();
+    expect(canceled).toBe(true);
+  });
+
+  it('rejects multipart part sizes below 5 MiB before calling EdgeStore', async () => {
+    const fetch = vi.fn<typeof globalThis.fetch>();
+    const sdk = createSdk(fetch);
+
+    await expect(
+      sdk.runtime.uploads.upload({
+        bucket: 'documents',
+        source: new Blob([]),
+        multipart: { partSizeBytes: MIN_MULTIPART_PART_SIZE_BYTES - 1 },
+      }),
+    ).rejects.toThrow(
+      `multipart.partSizeBytes must be at least ${MIN_MULTIPART_PART_SIZE_BYTES} bytes (5 MiB).`,
+    );
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('accepts a multipart part size of exactly 5 MiB', async () => {
+    const fetch = vi.fn<typeof globalThis.fetch>(async () => {
+      throw new Error('Bucket lookup reached.');
+    });
+    const sdk = createSdk(fetch);
+
+    await expect(
+      sdk.runtime.uploads.upload({
+        bucket: 'documents',
+        source: new Blob([]),
+        multipart: { partSizeBytes: MIN_MULTIPART_PART_SIZE_BYTES },
+      }),
+    ).rejects.toMatchObject({ name: 'EdgeStoreNetworkError' });
+    expect(fetch).toHaveBeenCalledOnce();
   });
 
   it('cancels a rejected remote response body', async () => {

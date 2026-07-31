@@ -1,16 +1,25 @@
+import type { Client } from 'openapi-fetch';
+import type { paths } from '../generated/api-v2';
 import type {
   ExplicitProjectRuntimeClient,
   RuntimeFileConfirmInput,
   RuntimeFileDeleteInput,
   RuntimeFileRestoreInput,
+  RuntimeUploadGetInput,
 } from '../runtime';
 import type { ProjectOperationTree } from './projectOperation';
 import type { Transport } from './transport';
 
 type Explicit<TInput> = TInput & { project: string };
+type ExplicitUploadGetInput = Explicit<RuntimeUploadGetInput>;
 
-export type RuntimeOperations =
-  ProjectOperationTree<ExplicitProjectRuntimeClient>;
+type RuntimeOperationClient = Omit<ExplicitProjectRuntimeClient, 'uploads'> & {
+  uploads: Omit<
+    ExplicitProjectRuntimeClient['uploads'],
+    'upload' | 'uploadFromUrl'
+  >;
+};
+export type RuntimeOperations = ProjectOperationTree<RuntimeOperationClient>;
 
 export function createRuntimeOperations(
   transport: Transport,
@@ -121,13 +130,7 @@ export function createRuntimeOperations(
             },
           ),
         ),
-      get: ({ project, uploadId, signal }) =>
-        transport.execute((client) =>
-          client.GET('/runtime/projects/{projectRef}/uploads/{uploadId}', {
-            params: { path: { projectRef: project, uploadId } },
-            signal,
-          }),
-        ),
+      get: (input) => transport.execute(createGetUploadRequest(input)),
       cancel: ({ project, uploadId, signal }) =>
         transport.execute((client) =>
           client.DELETE('/runtime/projects/{projectRef}/uploads/{uploadId}', {
@@ -159,6 +162,18 @@ export function createRuntimeOperations(
         ),
     },
   };
+}
+
+export function createGetUploadRequest({
+  project,
+  uploadId,
+  signal,
+}: ExplicitUploadGetInput) {
+  return (client: Client<paths>) =>
+    client.GET('/runtime/projects/{projectRef}/uploads/{uploadId}', {
+      params: { path: { projectRef: project, uploadId } },
+      signal,
+    });
 }
 
 type FileMutationInput =

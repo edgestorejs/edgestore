@@ -6,6 +6,7 @@ import type {
 
 export const DEFAULT_MULTIPART_THRESHOLD_BYTES = 100 * 1024 * 1024;
 export const DEFAULT_MULTIPART_PART_SIZE_BYTES = 16 * 1024 * 1024;
+export const MIN_MULTIPART_PART_SIZE_BYTES = 5 * 1024 * 1024;
 export const DEFAULT_MULTIPART_CONCURRENCY = 4;
 export const DEFAULT_PROCESSING_TIMEOUT_MS = 60 * 1000;
 export const MAX_MULTIPART_PARTS = 10_000;
@@ -27,6 +28,7 @@ export type UploadProgress = {
 
 export type UploadDefaults = {
   multipartThresholdBytes?: number;
+  /** Multipart part size in bytes. Must be at least 5 MiB. */
   multipartPartSizeBytes?: number;
   multipartConcurrency?: number;
   processingTimeoutMs?: number;
@@ -48,6 +50,7 @@ export type RuntimeUploadInput = Omit<
   multipart?:
     | boolean
     | {
+        /** Multipart part size in bytes. Must be at least 5 MiB. */
         partSizeBytes?: number;
         concurrency?: number;
       };
