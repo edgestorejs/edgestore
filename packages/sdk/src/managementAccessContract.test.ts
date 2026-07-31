@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { ManagementAccessOperationId } from './internal/operationTypes';
+import type { ManagementAccessOperationId } from './operationGroups.test.helper';
 import { createEdgeStoreSdk } from './sdk';
 
 type MappingCase = {
