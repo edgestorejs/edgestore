@@ -29,8 +29,20 @@ const result = await sdk.runtime.uploads.upload({
 ```
 
 Project credentials expose runtime resources for their current project.
-Management tokens expose management resources and runtime calls with an
-explicit `project` selector.
+Management tokens expose management resources and runtime calls that can use
+an explicit `project` selector or an eagerly scoped client:
+
+```ts
+const management = createEdgeStoreSdk({
+  credentials: { token: process.env.EDGE_STORE_MANAGEMENT_TOKEN! },
+});
+
+const project = management.runtime.forProject('project-id');
+const files = await project.files.search({ bucket: 'documents' });
+```
+
+Use `apiUrl` when targeting a compatible API v2 deployment. Its value is the
+complete v2 URL, such as `https://api.example.com/v2`.
 
 Use `runtime.files.generateSignedReadUrls` for protected runtime reads and
 `management.files.generateAccessUrls` when management code needs readable URLs

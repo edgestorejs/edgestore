@@ -113,8 +113,9 @@ an item failure; plural mutations return the complete partial result.
 
 ## Management client
 
-Management credentials require an explicit project selector for runtime calls
-and also expose account, project, credential, token, and membership resources.
+A management token uses Bearer authentication and exposes account, project,
+credential, token, and membership resources. Runtime calls can select a
+project per operation or create an eagerly scoped runtime client once.
 
 ```ts
 const management = createEdgeStoreSdk({
@@ -127,8 +128,12 @@ const projects = await management.management.projects.list({
   account: 'account-id',
 });
 
-const buckets = await management.runtime.buckets.list({
-  project: projects.projects[0]!.id,
+const project = management.runtime.forProject(projects.projects[0]!.id);
+const buckets = await project.buckets.list();
+
+// An explicit selector remains useful for one-off calls.
+const anotherProject = await management.runtime.projects.get({
+  project: 'another-project-id',
 });
 
 const { accessUrls } =
@@ -202,13 +207,16 @@ timeout errors have dedicated classes.
 
 ## Custom environments
 
-Use `baseUrl` for a compatible API v2 deployment and `fetch` to provide a
+Use `apiUrl` for a compatible API v2 deployment and `fetch` to provide a
 custom server-side transport implementation.
 
 ```ts
 const sdk = createEdgeStoreSdk({
   credentials: { accessKey, secretKey },
-  baseUrl: 'https://api.example.com/v2',
+  apiUrl: 'https://api.example.com/v2',
   fetch: instrumentedFetch,
 });
 ```
+
+`apiUrl` is the complete v2 URL. The SDK does not append `/v2` to an explicit
+value.
