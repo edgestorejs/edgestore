@@ -1,7 +1,7 @@
 import { describe, expect, expectTypeOf, it, vi } from 'vitest';
 import type { EdgeStoreCredentials } from './credentials';
 import { EdgeStoreFileMutationError } from './errors';
-import type { RuntimeCallOptions } from './runtime';
+import type { RuntimeBucketGetInput, RuntimeCallOptions } from './runtime';
 import {
   createEdgeStoreSdk,
   type ManagementEdgeStoreSdk,
@@ -75,6 +75,43 @@ describe('createEdgeStoreSdk', () => {
     expectTypeOf<ProjectGet>().parameter(0).toMatchTypeOf<{
       project: string;
     }>();
+  });
+
+  it('scopes Bearer runtime operations to one project', async () => {
+    const fetch = vi.fn<typeof globalThis.fetch>(async (input) => {
+      const request = input instanceof Request ? input : new Request(input);
+      expect(request.url).toBe(
+        'https://example.com/v2/runtime/projects/project-id/buckets/documents',
+      );
+      expect(request.headers.get('authorization')).toBe(
+        'Bearer management-token',
+      );
+      return Response.json({ data: { bucket: { name: 'documents' } } });
+    });
+    const sdk = createEdgeStoreSdk({
+      credentials: { token: 'management-token' },
+      apiUrl: 'https://example.com/v2',
+      fetch,
+    });
+
+    const runtime = sdk.runtime.forProject('project-id');
+    const result = await runtime.buckets.get({ bucket: 'documents' });
+
+    expect(result.bucket.name).toBe('documents');
+    expectTypeOf(runtime).toEqualTypeOf<ProjectEdgeStoreSdk['runtime']>();
+    expectTypeOf<typeof runtime.buckets.get>()
+      .parameter(0)
+      .toEqualTypeOf<RuntimeBucketGetInput & { project?: never }>();
+  });
+
+  it('rejects an empty project when scoping Bearer runtime operations', () => {
+    const sdk = createEdgeStoreSdk({
+      credentials: { token: 'management-token' },
+    });
+
+    expect(() => sdk.runtime.forProject('  ')).toThrow(
+      'EdgeStore project must not be empty.',
+    );
   });
 
   it('maps upload request fields to the API contract', async () => {

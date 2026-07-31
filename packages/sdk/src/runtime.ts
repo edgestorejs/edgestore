@@ -245,13 +245,39 @@ export type RuntimeClient<TMode extends ProjectMode> = {
 
 /** Runtime client scoped to the project credential's current project. */
 export type ProjectRuntimeClient = RuntimeClient<'current'>;
-/** Runtime client whose calls require an explicit project ID or slug. */
-export type ExplicitProjectRuntimeClient = RuntimeClient<'explicit'>;
+/**
+ * Runtime client whose calls either require a project or can be scoped once
+ * with {@link ExplicitProjectRuntimeClient.forProject}.
+ */
+export type ExplicitProjectRuntimeClient = ProjectOperationTree<
+  RuntimeClient<'explicit'>
+> & {
+  /** Creates an eagerly built runtime client scoped to one project. */
+  forProject(project: string): ProjectRuntimeClient;
+};
 
 export function createExplicitProjectRuntimeClient(
   transport: Transport,
   uploadDefaults?: UploadDefaults,
-): ProjectOperationTree<ExplicitProjectRuntimeClient> {
+): ExplicitProjectRuntimeClient {
+  const operations = createExplicitProjectRuntimeOperations(
+    transport,
+    uploadDefaults,
+  );
+
+  return {
+    ...operations,
+    forProject: (project) => {
+      assertProject(project);
+      return scopeProjectOperations(operations, project);
+    },
+  };
+}
+
+function createExplicitProjectRuntimeOperations(
+  transport: Transport,
+  uploadDefaults?: UploadDefaults,
+): ProjectOperationTree<RuntimeClient<'explicit'>> {
   const operations = createRuntimeOperations(transport);
   const uploadContext = { transport, operations };
 
@@ -272,9 +298,15 @@ export function createProjectRuntimeClient(
   uploadDefaults?: UploadDefaults,
 ): ProjectRuntimeClient {
   return scopeProjectOperations(
-    createExplicitProjectRuntimeClient(transport, uploadDefaults),
+    createExplicitProjectRuntimeOperations(transport, uploadDefaults),
     '_current',
   );
+}
+
+function assertProject(project: string): void {
+  if (typeof project !== 'string' || !project.trim()) {
+    throw new TypeError('EdgeStore project must not be empty.');
+  }
 }
 
 export type { RuntimeOperations };
