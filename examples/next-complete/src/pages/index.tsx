@@ -11,7 +11,7 @@ import { UploadCloudIcon } from 'lucide-react';
 import type { GetServerSideProps, InferGetServerSidePropsType } from 'next';
 import Image from 'next/image';
 import { useCallback, useEffect, useState } from 'react';
-import { edgeStoreClient } from './api/edgestore/[...edgestore]';
+import { edgestoreClient } from './api/edgestore/[...edgestore]';
 
 const MAX_SIZE = 1024 * 1024 * 5; // 5MB
 
@@ -188,7 +188,7 @@ type FileRes = {
 export const getServerSideProps: GetServerSideProps<{
   files: FileRes[];
 }> = async () => {
-  const res = await edgeStoreClient.myPublicImages.listFiles({
+  const res = await edgestoreClient.myPublicImages.listFiles({
     filter: {
       uploadedAt: {
         gt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7), // 7 days

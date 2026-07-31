@@ -36,17 +36,19 @@ app.use(express.json());
 
 const es = initEdgeStore.create();
 
-const edgeStoreRouter = es.router({
+const router = es.router({
   publicFiles: es.fileBucket(),
 });
 
-export type EdgeStoreRouter = typeof edgeStoreRouter;
+export type EdgeStoreRouter = typeof router;
 
-const edgeStore = createEdgeStore({
-  router: edgeStoreRouter,
+const configuredEdgeStore = createEdgeStore({
+  router,
   provider: edgestore(),
 });
-const handler = createEdgeStoreExpressHandler({ edgeStore });
+const handler = createEdgeStoreExpressHandler({
+  edgestore: configuredEdgeStore,
+});
 
 // --- EXPRESS ROUTES ---
 

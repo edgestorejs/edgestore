@@ -1,10 +1,14 @@
 import type { Client } from 'openapi-fetch';
+import { EdgeStoreFileMutationError } from '../errors';
 import type { paths } from '../generated/api-v2';
 import type {
-  ExplicitProjectRuntimeClient,
+  RuntimeClient,
   RuntimeFileConfirmInput,
+  RuntimeFileConfirmResult,
   RuntimeFileDeleteInput,
+  RuntimeFileDeleteResult,
   RuntimeFileRestoreInput,
+  RuntimeFileRestoreResult,
   RuntimeUploadGetInput,
 } from '../runtime';
 import type { ProjectOperationTree } from './projectOperation';
@@ -13,11 +17,9 @@ import type { Transport } from './transport';
 type Explicit<TInput> = TInput & { project: string };
 type ExplicitUploadGetInput = Explicit<RuntimeUploadGetInput>;
 
-type RuntimeOperationClient = Omit<ExplicitProjectRuntimeClient, 'uploads'> & {
-  uploads: Omit<
-    ExplicitProjectRuntimeClient['uploads'],
-    'upload' | 'uploadFromUrl'
-  >;
+type ExplicitRuntimeClient = RuntimeClient<'explicit'>;
+type RuntimeOperationClient = Omit<ExplicitRuntimeClient, 'uploads'> & {
+  uploads: Omit<ExplicitRuntimeClient['uploads'], 'upload' | 'uploadFromUrl'>;
 };
 export type RuntimeOperations = ProjectOperationTree<RuntimeOperationClient>;
 
@@ -97,24 +99,36 @@ export function createRuntimeOperations(
             },
           ),
         ),
-      confirm: ({ project, signal, ...body }) =>
-        executeFileMutation(transport, 'confirm', {
-          project,
-          signal,
-          ...body,
-        }),
-      delete: ({ project, signal, ...body }) =>
-        executeFileMutation(transport, 'delete', {
-          project,
-          signal,
-          ...body,
-        }),
-      restore: ({ project, signal, ...body }) =>
-        executeFileMutation(transport, 'restore', {
-          project,
-          signal,
-          ...body,
-        }),
+      confirm: async ({ project, file, signal, ...body }) =>
+        unwrapFileMutationResult(
+          await executeFileMutation(transport, 'confirm', {
+            project,
+            ...body,
+            files: [file],
+            signal,
+          }),
+        ),
+      confirmMany: (input) => executeFileMutation(transport, 'confirm', input),
+      delete: async ({ project, file, signal, ...body }) =>
+        unwrapFileMutationResult(
+          await executeFileMutation(transport, 'delete', {
+            project,
+            ...body,
+            files: [file],
+            signal,
+          }),
+        ),
+      deleteMany: (input) => executeFileMutation(transport, 'delete', input),
+      restore: async ({ project, file, signal, ...body }) =>
+        unwrapFileMutationResult(
+          await executeFileMutation(transport, 'restore', {
+            project,
+            ...body,
+            files: [file],
+            signal,
+          }),
+        ),
+      restoreMany: (input) => executeFileMutation(transport, 'restore', input),
     },
     uploads: {
       request: ({ project, bucket, signal, ...body }) =>
@@ -183,6 +197,21 @@ type FileMutationInput =
 
 function executeFileMutation(
   transport: Transport,
+  operation: 'confirm',
+  input: Explicit<RuntimeFileConfirmInput>,
+): Promise<RuntimeFileConfirmResult>;
+function executeFileMutation(
+  transport: Transport,
+  operation: 'delete',
+  input: Explicit<RuntimeFileDeleteInput>,
+): Promise<RuntimeFileDeleteResult>;
+function executeFileMutation(
+  transport: Transport,
+  operation: 'restore',
+  input: Explicit<RuntimeFileRestoreInput>,
+): Promise<RuntimeFileRestoreResult>;
+function executeFileMutation(
+  transport: Transport,
   operation: 'confirm' | 'delete' | 'restore',
   input: FileMutationInput,
 ) {
@@ -195,4 +224,24 @@ function executeFileMutation(
       signal,
     }),
   );
+}
+
+function unwrapFileMutationResult<
+  TResult extends
+    | RuntimeFileConfirmResult
+    | RuntimeFileDeleteResult
+    | RuntimeFileRestoreResult,
+>(result: TResult) {
+  const item = result.results[0];
+  if (!item) {
+    throw new Error('EdgeStore returned no file mutation result.');
+  }
+  if (!item.success) {
+    throw new EdgeStoreFileMutationError(
+      item.error.code,
+      item.error.message,
+      item.fileRef,
+    );
+  }
+  return { fileRef: item.fileRef };
 }

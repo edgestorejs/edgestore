@@ -27,7 +27,7 @@ describe('adapter dispatcher', () => {
     router: EdgeStoreRouter<typeof testCtx> = createConformanceRouter(),
   ) {
     const provider = createConformanceProvider();
-    const edgeStore = {
+    const edgestore = {
       provider,
       router,
     };
@@ -41,7 +41,7 @@ describe('adapter dispatcher', () => {
       } = {},
     ) =>
       dispatchEdgeStoreRequest({
-        edgeStore,
+        edgestore,
         logger,
         cookieConfig: testCookieConfig,
         request: {

@@ -32,17 +32,19 @@ async function configureApp() {
 
 const es = initEdgeStore.create();
 
-const edgeStoreRouter = es.router({
+const router = es.router({
   publicFiles: es.fileBucket(),
 });
 
-export type EdgeStoreRouter = typeof edgeStoreRouter;
+export type EdgeStoreRouter = typeof router;
 
-const edgeStore = createEdgeStore({
-  router: edgeStoreRouter,
+const configuredEdgeStore = createEdgeStore({
+  router,
   provider: edgestore(),
 });
-const handler = createEdgeStoreFastifyHandler({ edgeStore });
+const handler = createEdgeStoreFastifyHandler({
+  edgestore: configuredEdgeStore,
+});
 
 // --- FASTIFY ROUTES ---
 

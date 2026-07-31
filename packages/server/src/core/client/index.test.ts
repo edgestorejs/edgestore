@@ -146,7 +146,6 @@ describe('createEdgeStore', () => {
       'restore',
       'restoreMany',
       'list',
-      'listAll',
     ]);
     expect(Object.keys(client.documents)).toEqual([
       ...Object.keys(client.publicFiles),
@@ -584,6 +583,7 @@ describe('createEdgeStore', () => {
       ],
     });
     expect(backend.getFile).toHaveBeenCalledWith({
+      bucketName: 'publicFiles',
       file: { key: 'files/file.txt' },
     });
   });
@@ -599,36 +599,6 @@ describe('createEdgeStore', () => {
         refs: [{ key: 'files/one' }, { key: 'files/two' }],
       }),
     ).rejects.toThrow('The provider returned 1 mutation results for 2 files.');
-  });
-
-  it('iterates through cursor pages with flat pagination inputs', async () => {
-    backend.listFiles
-      .mockResolvedValueOnce({
-        items: [createFile({ id: 'first' })],
-        limit: 1,
-        nextCursor: 'next',
-        hasMore: true,
-      })
-      .mockResolvedValueOnce({
-        items: [createFile({ id: 'second' })],
-        limit: 1,
-        nextCursor: null,
-        hasMore: false,
-      });
-    const client = createClient();
-
-    const ids = [];
-    for await (const file of client.publicFiles.listAll({ limit: 1 })) {
-      ids.push(file.id);
-    }
-
-    expect(ids).toEqual(['first', 'second']);
-    expect(backend.listFiles).toHaveBeenNthCalledWith(2, {
-      bucketName: 'publicFiles',
-      filter: undefined,
-      cursor: 'next',
-      limit: 1,
-    });
   });
 
   it('throws for protected dev file URLs when baseUrl is missing', async () => {

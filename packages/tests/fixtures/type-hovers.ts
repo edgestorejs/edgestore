@@ -46,23 +46,23 @@ const router = es.router({
     .autoSignedUrls({ includeThumbnails: true }),
 });
 
-const edgeStore = createEdgeStore({
+const configuredEdgeStore = createEdgeStore({
   router,
   provider: createHostedProvider(),
 });
-const backendClient = edgeStore.client;
+const backendClient = configuredEdgeStore.client;
 const { useEdgeStore } = createEdgeStoreProvider<typeof router>();
 const { edgestore, state: providerState } = useEdgeStore();
 const backendSignedUploadMethod = backendClient.privateFiles.upload;
 const reactSignedUploadMethod = edgestore.privateFiles.upload;
 
 const honoHandler = createEdgeStoreHonoHandler({
-  edgeStore,
+  edgestore: configuredEdgeStore,
   createContext: () => ({ userId: 'user-1', role: 'admin' }),
 });
 
 const fastifyHandler = createEdgeStoreFastifyHandler({
-  edgeStore,
+  edgestore: configuredEdgeStore,
   createContext: () => ({ userId: 'user-1', role: 'admin' }),
 });
 

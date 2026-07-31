@@ -67,13 +67,13 @@ function hasCreateContext<TCtx extends AnyContext, TOptions>(
 export async function dispatchEdgeStoreRequest<
   TCtx extends AnyContext,
 >(params: {
-  edgeStore: HandlerEdgeStore<TCtx>;
+  edgestore: HandlerEdgeStore<TCtx>;
   request: EdgeStoreDispatchRequest<TCtx>;
   logger: LoggerLike;
   cookieConfig?: CookieConfig;
 }): Promise<Response> {
-  const { edgeStore, request, logger, cookieConfig } = params;
-  const { provider, router } = edgeStore;
+  const { edgestore, request, logger, cookieConfig } = params;
+  const { provider, router } = edgestore;
   const resolvedCookieConfig = getCookieConfig(cookieConfig);
   const cookieHeader =
     request.cookieHeader ??

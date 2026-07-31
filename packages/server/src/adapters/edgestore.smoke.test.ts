@@ -68,7 +68,7 @@ async function createSmokeServer() {
     [smokeImageBucketName]: es.imageBucket(),
   });
   const handler = createEdgeStoreExpressHandler({
-    edgeStore: createEdgeStore({ router, provider: edgestore() }),
+    edgestore: createEdgeStore({ router, provider: edgestore() }),
   });
   const app = express();
   app.use(express.json());

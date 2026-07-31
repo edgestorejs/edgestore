@@ -9,7 +9,7 @@ import {
 import type { CookieConfig, HandlerEdgeStore } from '../shared';
 
 export type Config<TCtx extends AnyContext> = {
-  edgeStore: HandlerEdgeStore<TCtx>;
+  edgestore: HandlerEdgeStore<TCtx>;
   logLevel?: LogLevel;
   cookieConfig?: CookieConfig;
 } & CreateContextConfig<TCtx, APIContext>;
@@ -24,7 +24,7 @@ export function createEdgeStoreAstroHandler<TCtx extends AnyContext>(
     const { request } = context;
     const url = new URL(request.url);
     return await dispatchEdgeStoreRequest<TCtx>({
-      edgeStore: config.edgeStore,
+      edgestore: config.edgestore,
       logger: log,
       cookieConfig: config.cookieConfig,
       request: {

@@ -20,7 +20,6 @@ import type {
   FileMutationFailure,
   FileMutationResult,
   FileMutationSuccess,
-  ListAllFilesRequest,
   ListFilesRequest,
   UploadContent,
   UploadFileRequest,
@@ -248,19 +247,6 @@ function createListMethods<
 
   return {
     list: listBucketFiles,
-    listAll: async function* (params?: ListAllFilesRequest<TBucket>) {
-      let cursor: ProviderCursor<TProvider> | undefined;
-      while (true) {
-        const page = await listBucketFiles({
-          filter: params?.filter,
-          cursor,
-          limit: params?.limit,
-        });
-        for (const file of page.items) yield file;
-        if (!page.hasMore || page.nextCursor === null) return;
-        cursor = page.nextCursor;
-      }
-    },
   };
 }
 

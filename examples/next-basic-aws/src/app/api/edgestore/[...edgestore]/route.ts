@@ -20,12 +20,12 @@ function createContext(opts: CreateContextOptions) {
 /**
  * This is the main router for the EdgeStore buckets.
  */
-const edgeStoreRouter = es.router({
+const router = es.router({
   publicFiles: es.fileBucket().path(({ ctx }) => [{ author: ctx.userId }]),
 });
 
-const edgeStore = createEdgeStore({
-  router: edgeStoreRouter,
+const configuredEdgeStore = createEdgeStore({
+  router,
   provider: s3({
     overwritePath: ({ defaultAccessPath }) => {
       // `publicFiles/_public/123/test.png` -> `123/test.png`
@@ -35,7 +35,7 @@ const edgeStore = createEdgeStore({
 });
 
 const handler = createEdgeStoreNextHandler({
-  edgeStore,
+  edgestore: configuredEdgeStore,
   createContext,
 });
 
@@ -44,4 +44,4 @@ export { handler as GET, handler as POST };
 /**
  * This type is used to create the type-safe client for the frontend.
  */
-export type EdgeStoreRouter = typeof edgeStoreRouter;
+export type EdgeStoreRouter = typeof router;

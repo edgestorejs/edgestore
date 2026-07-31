@@ -44,7 +44,7 @@ function mockProxyFetch({
 
 async function createExpressServer() {
   const handler = createEdgeStoreExpressHandler({
-    edgeStore: createTestEdgeStore(),
+    edgestore: createTestEdgeStore(),
   });
   const app = express();
   app.use('/edgestore', handler);
@@ -67,7 +67,7 @@ async function createExpressServer() {
 
 async function createFastifyServer() {
   const handler = createEdgeStoreFastifyHandler({
-    edgeStore: createTestEdgeStore(),
+    edgestore: createTestEdgeStore(),
   });
   const app = fastify();
   app.all('/edgestore/*', handler);
@@ -273,7 +273,7 @@ describe('Hono proxy-file', () => {
       status: 429,
     });
     const handler = createEdgeStoreHonoHandler({
-      edgeStore: createTestEdgeStore(),
+      edgestore: createTestEdgeStore(),
     });
     const app = new Hono();
     app.all('/edgestore/*', handler);
@@ -309,7 +309,7 @@ describe('Remix proxy-file', () => {
       status: 401,
     });
     const handler = createEdgeStoreRemixHandler({
-      edgeStore: createTestEdgeStore(),
+      edgestore: createTestEdgeStore(),
     });
 
     const res = await handler({
@@ -345,7 +345,7 @@ describe('Astro proxy-file', () => {
       status: 503,
     });
     const handler = createEdgeStoreAstroHandler({
-      edgeStore: createTestEdgeStore(),
+      edgestore: createTestEdgeStore(),
     });
 
     const res = await handler({
@@ -381,7 +381,7 @@ describe('Next Pages proxy-file', () => {
       status: 410,
     });
     const handler = createEdgeStoreNextPagesHandler({
-      edgeStore: createTestEdgeStore(),
+      edgestore: createTestEdgeStore(),
     });
     const response = createNextPagesResponse();
 
@@ -421,7 +421,7 @@ describe('Next App proxy-file', () => {
       status: 451,
     });
     const handler = createEdgeStoreNextAppHandler({
-      edgeStore: createTestEdgeStore(),
+      edgestore: createTestEdgeStore(),
     });
     const nextUrl = new URL(
       'https://app.example.com/edgestore/proxy-file?url=https%3A%2F%2Ffiles.example.com%2Fnext-app.txt',
@@ -453,7 +453,7 @@ describe('Next App proxy-file', () => {
       status: 204,
     });
     const handler = createEdgeStoreNextAppHandler({
-      edgeStore: createTestEdgeStore(),
+      edgestore: createTestEdgeStore(),
     });
     const nextUrl = new URL(
       'https://app.example.com/edgestore/proxy-file?url=https%3A%2F%2Ffiles.example.com%2Fnext-app-empty.txt',
@@ -487,7 +487,7 @@ describe('Start proxy-file', () => {
       status: 502,
     });
     const handler = createEdgeStoreStartHandler({
-      edgeStore: createTestEdgeStore(),
+      edgestore: createTestEdgeStore(),
     });
 
     const res = await handler({

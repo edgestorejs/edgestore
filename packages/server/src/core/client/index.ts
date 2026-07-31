@@ -218,12 +218,6 @@ export type ListFilesResponse<
   hasMore: boolean;
 };
 
-export type ListAllFilesRequest<TBucket extends AnyBuilder> = {
-  filter?: Filter<TBucket>;
-  /** Number of files fetched per API request. */
-  limit?: number;
-};
-
 export type FileMutationFailure<
   TFileReference = FileReference,
   TError = Extract<
@@ -337,17 +331,6 @@ type ListBucketClient<TBucket extends AnyBuilder, TProvider> = [
         nextCursor: ProviderCursor<TProvider> | null;
         hasMore: boolean;
       }>;
-      listAll: (
-        params?: ListAllFilesRequest<TBucket>,
-      ) => AsyncIterable<
-        Prettify<
-          ReadFileRecord<
-            TBucket,
-            TProvider,
-            ProviderCapabilityFile<TProvider, 'list'>
-          >
-        >
-      >;
     };
 
 type SignedUrlBucketClient<TBucket extends AnyBuilder, TProvider> = [

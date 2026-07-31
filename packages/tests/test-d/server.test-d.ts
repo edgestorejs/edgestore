@@ -372,14 +372,6 @@ expectNotAssignable<NonNullable<Parameters<typeof client.documents.list>[0]>>({
   filter: { path: { unknown: { eq: 'value' } } },
 });
 
-expectAssignable<
-  AsyncIterable<{
-    id: string;
-    metadata: { role: 'admin' | 'visitor'; type: 'profile' | 'post' };
-    path: { author: string; type: string };
-  }>
->(client.avatars.listAll({ limit: 50 }));
-
 expectType<Promise<{ ref: EdgeStoreFileReference }>>(
   client.documents.confirm({ id: 'file-id' }),
 );
