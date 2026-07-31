@@ -5,9 +5,6 @@ export type SystemClient = {
   health(options?: {
     signal?: AbortSignal;
   }): Promise<OperationResult<'v2.health'>>;
-  whoami(options?: {
-    signal?: AbortSignal;
-  }): Promise<OperationResult<'v2.whoami'>>;
 };
 
 export function createSystemClient(transport: Transport): SystemClient {
@@ -15,10 +12,6 @@ export function createSystemClient(transport: Transport): SystemClient {
     health: (options) =>
       transport.execute((client) =>
         client.GET('/health', { signal: options?.signal }),
-      ),
-    whoami: (options) =>
-      transport.execute((client) =>
-        client.GET('/whoami', { signal: options?.signal }),
       ),
   };
 }

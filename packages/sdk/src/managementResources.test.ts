@@ -11,6 +11,23 @@ function createManagementSdk(fetch: typeof globalThis.fetch) {
 }
 
 describe('management resources', () => {
+  it('maps identity lookup to the API contract', async () => {
+    const fetch = vi.fn<typeof globalThis.fetch>(async (input) => {
+      const request = input instanceof Request ? input : new Request(input);
+      expect(request.method).toBe('GET');
+      expect(request.url).toBe('https://example.com/v2/whoami');
+      return Response.json({
+        data: { actor: { kind: 'management_token', userId: 'user-id' } },
+      });
+    });
+    const sdk = createManagementSdk(fetch);
+
+    await expect(sdk.management.whoami()).resolves.toEqual({
+      actor: { kind: 'management_token', userId: 'user-id' },
+    });
+    expectTypeOf(sdk.system).not.toHaveProperty('whoami');
+  });
+
   it('maps project creation to the API contract', async () => {
     const fetch = vi.fn<typeof globalThis.fetch>(async (input) => {
       const request = input instanceof Request ? input : new Request(input);
