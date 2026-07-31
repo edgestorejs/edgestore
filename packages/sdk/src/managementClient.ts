@@ -12,7 +12,9 @@ import {
 /** Complete administrative client available to management credentials. */
 export type ManagementClient = ManagementResourceClient &
   ManagementAccessClient & {
+    /** Describes the identity represented by the management credential. */
     whoami(options?: {
+      /** Cancels the request. */
       signal?: AbortSignal;
     }): Promise<OperationResult<'v2.whoami'>>;
   };

@@ -16,14 +16,14 @@ import {
 import { edgestore } from '@edgestore/server/providers/edgestore';
 import { z } from 'zod';
 
-const edgeStore = createEdgeStore({
-  router: edgeStoreRouter,
+const configuredEdgeStore = createEdgeStore({
+  router,
   // [!code ++]
   provider: edgestore(),
 });
 
 export default createEdgeStoreNextHandler<Context>({
-  edgeStore,
+  edgestore: configuredEdgeStore,
   createContext,
 });
 ```

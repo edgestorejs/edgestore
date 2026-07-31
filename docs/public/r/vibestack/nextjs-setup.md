@@ -62,17 +62,17 @@ const es = initEdgeStore.create();
 /**
  * This is the main router for the EdgeStore buckets.
  */
-const edgeStoreRouter = es.router({
+const router = es.router({
   publicFiles: es.fileBucket(),
 });
 
-const edgeStore = createEdgeStore({
-  router: edgeStoreRouter,
+const configuredEdgeStore = createEdgeStore({
+  router,
   provider: edgestore(),
 });
 
 const handler = createEdgeStoreNextHandler({
-  edgeStore,
+  edgestore: configuredEdgeStore,
 });
 
 export { handler as GET, handler as POST };
@@ -80,7 +80,7 @@ export { handler as GET, handler as POST };
 /**
  * This type is used to create the type-safe client for the frontend.
  */
-export type EdgeStoreRouter = typeof edgeStoreRouter;
+export type EdgeStoreRouter = typeof router;
 ```
 
 ### Pages Router
@@ -99,23 +99,23 @@ const es = initEdgeStore.create();
 /**
  * This is the main router for the edgestore buckets.
  */
-const edgeStoreRouter = es.router({
+const router = es.router({
   publicFiles: es.fileBucket(),
 });
 
-const edgeStore = createEdgeStore({
-  router: edgeStoreRouter,
+const configuredEdgeStore = createEdgeStore({
+  router,
   provider: edgestore(),
 });
 
 export default createEdgeStoreNextHandler({
-  edgeStore,
+  edgestore: configuredEdgeStore,
 });
 
 /**
  * This type is used to create the type-safe client for the frontend.
  */
-export type EdgeStoreRouter = typeof edgeStoreRouter;
+export type EdgeStoreRouter = typeof router;
 ```
 
 ## Frontend

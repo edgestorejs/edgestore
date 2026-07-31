@@ -8,7 +8,7 @@ The EdgeStore package outputs some logs on the server-side. You can configure th
 ```ts
 const handler = createEdgeStoreNextHandler({
   logLevel: 'debug', // optional. defaults to 'error' in production and 'info' in development
-  edgeStore,
+  edgestore: configuredEdgeStore,
 });
 ```
 

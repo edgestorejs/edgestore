@@ -99,7 +99,7 @@ controller.abort();
 ## Backend Client
 
 ```ts
-const backendClient = edgeStore.client;
+const backendClient = configuredEdgeStore.client;
 
 // Upload text
 await backendClient.publicFiles.upload({ content: 'text' });
@@ -189,7 +189,10 @@ try {
 - `debug`, `info`, `warn`, `error`, `none`
 
 ```ts
-createEdgeStoreNextHandler({ edgeStore, logLevel: 'debug' });
+createEdgeStoreNextHandler({
+  edgestore: configuredEdgeStore,
+  logLevel: 'debug',
+});
 ```
 
 ## Provider Options

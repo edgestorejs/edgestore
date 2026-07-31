@@ -18,7 +18,7 @@ You need to install some peer dependencies to use this provider.
 ```
 
 Then configure the provider together with the router and pass the resulting
-`edgeStore` instance to the adapter.
+`configuredEdgeStore` instance to the adapter.
 
 ```ts
 import { createEdgeStore, initEdgeStore } from '@edgestore/server';
@@ -32,14 +32,14 @@ import { z } from 'zod';
 
 // ...
 
-const edgeStore = createEdgeStore({
-  router: edgeStoreRouter,
+const configuredEdgeStore = createEdgeStore({
+  router,
   // [!code ++]
   provider: s3(),
 });
 
 export default createEdgeStoreNextHandler<Context>({
-  edgeStore,
+  edgestore: configuredEdgeStore,
   createContext,
 });
 ```
@@ -119,8 +119,8 @@ Use `path` to customize everything beneath that protected prefix. For example,
 this removes `_public` while keeping the remaining generated path:
 
 ```ts title="src/server/edgestore.ts"
-const edgeStore = createEdgeStore({
-  router: edgeStoreRouter,
+const configuredEdgeStore = createEdgeStore({
+  router,
   provider: s3({
     path: ({ defaultPath }) => {
       // `documents/_public/acme/invoice.pdf`
@@ -131,7 +131,7 @@ const edgeStore = createEdgeStore({
 });
 
 const handler = createEdgeStoreNextHandler({
-  edgeStore,
+  edgestore: configuredEdgeStore,
   createContext,
 });
 ```

@@ -7,7 +7,7 @@ Sometimes you might want to use the EdgeStore functionality directly from your b
 
 ## Setup
 
-Configure the router and hosted provider once. The resulting `edgeStore`
+Configure the router and hosted provider once. The resulting `configuredEdgeStore`
 instance is used by the HTTP handler and exposes the type-safe backend client.
 
 Since Next.js doesn't allow exports in the api route, you will need to move your router to an external file.
@@ -19,20 +19,20 @@ import { edgestore } from '@edgestore/server/providers/edgestore';
 
 const es = initEdgeStore.create();
 
-export const edgeStoreRouter = es.router({
+export const router = es.router({
   publicFiles: es.fileBucket(),
 });
 
-export const edgeStore = createEdgeStore({
-  router: edgeStoreRouter,
+export const configuredEdgeStore = createEdgeStore({
+  router,
   provider: edgestore(),
 });
 
 export const handler = createEdgeStoreNextHandler({
-  edgeStore,
+  edgestore: configuredEdgeStore,
 });
 
-export const backendClient = edgeStore.client;
+export const backendClient = configuredEdgeStore.client;
 ```
 
 Then you will need to update your api route to use the exported handler.
@@ -224,18 +224,6 @@ if (res.hasMore) {
 }
 ```
 
-Use `listAll` when you want to iterate through all matching pages without
-managing cursors yourself:
-
-```ts
-for await (const file of backendClient.publicFiles.listAll({
-  filter: { metadata: { role: 'admin' } },
-  limit: 50,
-})) {
-  console.log(file.url);
-}
-```
-
 ## Private read URLs
 
 Providers with signed-read support expose `createSignedUrl` on protected
@@ -259,11 +247,11 @@ client:
 
 ```ts
 type UploadInput = Parameters<
-  typeof edgeStore.client.publicFiles.upload
+  typeof configuredEdgeStore.client.publicFiles.upload
 >[0];
 
 type UploadOutput = Awaited<
-  ReturnType<typeof edgeStore.client.publicFiles.upload>
+  ReturnType<typeof configuredEdgeStore.client.publicFiles.upload>
 >;
 ```
 
@@ -279,8 +267,8 @@ import type {
   InferClientOutputs,
 } from '@edgestore/server';
 
-export type BackendInputs = InferClientInputs<typeof edgeStoreRouter>;
-export type BackendOutputs = InferClientOutputs<typeof edgeStoreRouter>;
+export type BackendInputs = InferClientInputs<typeof router>;
+export type BackendOutputs = InferClientOutputs<typeof router>;
 
 type UploadInput = BackendInputs['publicFiles']['upload'];
 type UploadOutput = BackendOutputs['publicFiles']['upload'];
@@ -291,7 +279,7 @@ second generic when its capabilities or associated types differ:
 
 ```ts
 type BackendOutputs = InferClientOutputs<
-  typeof edgeStoreRouter,
+  typeof router,
   typeof customProvider
 >;
 ```

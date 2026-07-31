@@ -18,7 +18,7 @@ You need to install some peer dependencies to use this provider.
 ```
 
 Then configure the provider together with the router and pass the resulting
-`edgeStore` instance to the adapter.
+`configuredEdgeStore` instance to the adapter.
 
 ```ts
 import { createEdgeStore, initEdgeStore } from '@edgestore/server';
@@ -32,14 +32,14 @@ import { z } from 'zod';
 
 // ...
 
-const edgeStore = createEdgeStore({
-  router: edgeStoreRouter,
+const configuredEdgeStore = createEdgeStore({
+  router,
   // [!code ++]
   provider: azureBlob(),
 });
 
 export default createEdgeStoreNextHandler<Context>({
-  edgeStore,
+  edgestore: configuredEdgeStore,
   createContext,
 });
 ```

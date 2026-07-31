@@ -8,13 +8,13 @@ implementation. The same provider instance powers the EdgeStore HTTP handler
 and the router-derived backend client:
 
 ```ts
-const edgeStore = createEdgeStore({
+const configuredEdgeStore = createEdgeStore({
   router,
   provider: myProvider,
 });
 
-createEdgeStoreNextHandler({ edgeStore });
-edgeStore.client.files.get({ key: 'files/report.pdf' });
+createEdgeStoreNextHandler({ edgestore: configuredEdgeStore });
+configuredEdgeStore.client.files.get({ key: 'files/report.pdf' });
 ```
 
 Method inputs are contextually typed. File references, cursors, returned file
@@ -210,8 +210,8 @@ receives `{ key: string }` after runtime validation. The backend client also
 inherits the string cursor, the extra `etag` file field, and any literal
 mutation error codes returned by the storage driver.
 
-The backend client uses bucket-scoped names: `get`, `list`, `listAll`,
-`confirm`, `confirmMany`, `delete`, `deleteMany`, `restore`, `restoreMany`,
+The backend client uses bucket-scoped names: `get`, `list`, `confirm`,
+`confirmMany`, `delete`, `deleteMany`, `restore`, `restoreMany`,
 `createSignedUrl`, and `createSignedUrls`. Provider method names remain
 resource operations (`files.get`, `files.list`, `files.getSignedUrls`) and do
 not need to mirror that public client surface.

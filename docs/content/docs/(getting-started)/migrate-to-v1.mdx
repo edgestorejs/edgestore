@@ -18,16 +18,16 @@ import { createEdgeStoreNextHandler } from '@edgestore/server/adapters/next/app'
 import { initEdgeStoreClient } from '@edgestore/server/core';
 
 const es = initEdgeStore.create();
-const edgeStoreRouter = es.router({
+const router = es.router({
   documents: es.fileBucket(),
 });
 
 export const handler = createEdgeStoreNextHandler({
-  router: edgeStoreRouter,
+  router,
 });
 
 export const backendClient = initEdgeStoreClient({
-  router: edgeStoreRouter,
+  router,
 });
 ```
 
@@ -37,48 +37,70 @@ import { createEdgeStoreNextHandler } from '@edgestore/server/adapters/next/app'
 import { edgestore } from '@edgestore/server/providers/edgestore';
 
 const es = initEdgeStore.create();
-const edgeStoreRouter = es.router({
+const router = es.router({
   documents: es.fileBucket(),
 });
 
-export const edgeStore = createEdgeStore({
-  router: edgeStoreRouter,
+export const configuredEdgeStore = createEdgeStore({
+  router,
   provider: edgestore(),
 });
 
 export const handler = createEdgeStoreNextHandler({
-  edgeStore,
+  edgestore: configuredEdgeStore,
 });
 
-export const backendClient = edgeStore.client;
+export const backendClient = configuredEdgeStore.client;
 ```
 
 ## Breaking changes
 
-| v0.7                                | v1                                | Required change                                            |
-| ----------------------------------- | --------------------------------- | ---------------------------------------------------------- |
-| Separate handler and client config  | `createEdgeStore`                 | Configure the router and provider once.                    |
-| `initEdgeStoreClient`               | `edgeStore.client`                | Read the client from the configured hosted provider.       |
-| URL-only identity                   | `{ id }`, `{ key }`, or `{ url }` | Prefer stable IDs in new code.                             |
-| Predicted upload result             | Canonical processed file          | Use `sizeBytes`, `id`, `key`, and the returned timestamps. |
-| `{ pagination: { cursor, limit } }` | `{ cursor, limit }`               | Move cursor fields to the top level.                       |
-| `result.data`                       | `result.items`                    | Read canonical file records from `items`.                  |
-| `{ success: boolean }`              | Singular result or partial batch  | Catch singular errors or inspect `failed`.                 |
-| React `confirmUpload`               | React `confirm`                   | Use the resource-scoped lifecycle name.                    |
-| React `confirmUploads`              | React `confirmMany`               | Use the `Many` suffix for batches.                         |
-| Backend `getFile`                   | Backend `get`                     | Use the bucket-scoped read name.                           |
-| Backend `listFiles`                 | Backend `list`                    | Use the bucket-scoped list name.                           |
-| Backend `listAllFiles`              | Backend `listAll`                 | Use the bucket-scoped iterator name.                       |
-| Backend `confirmUpload`             | Backend `confirm`                 | Use the singular lifecycle name.                           |
-| Backend `confirmUploads`            | Backend `confirmMany`             | Use the `Many` suffix for batches.                         |
-| Backend `deleteFile`                | Backend `delete`                  | Use the singular lifecycle name.                           |
-| Backend `deleteFiles`               | Backend `deleteMany`              | Use the `Many` suffix for batches.                         |
-| Backend `restoreFile(s)`            | Backend `restore` / `restoreMany` | Use singular and `Many` lifecycle names.                   |
-| Backend `getSignedUrl`              | Backend `createSignedUrl`         | Make signed-URL creation explicit.                         |
-| Backend `getSignedUrls`             | Backend `createSignedUrls`        | Make batch signed-URL creation explicit.                   |
-| Nullable metadata values            | Nullish values omitted            | Treat those inferred keys as optional strings.             |
-| Handcrafted server raw client       | `@edgestore/sdk`                  | Migrate direct API consumers to the public SDK.            |
-| `ES_AZURE_SAS_TOKEN`                | `ES_AZURE_ACCOUNT_KEY`            | Give Azure signing authority only to the server.           |
+| v0.7                                        | v1                                | Required change                                            |
+| ------------------------------------------- | --------------------------------- | ---------------------------------------------------------- |
+| Separate handler and client config          | `createEdgeStore`                 | Configure the router and provider once.                    |
+| `initEdgeStoreClient`                       | `configuredEdgeStore.client`      | Read the client from the configured hosted provider.       |
+| URL-only identity                           | `{ id }`, `{ key }`, or `{ url }` | Prefer stable IDs in new code.                             |
+| Predicted upload result                     | Canonical processed file          | Use `sizeBytes`, `id`, `key`, and the returned timestamps. |
+| `{ pagination: { currentPage, pageSize } }` | `{ cursor, limit }`               | Replace page numbers with explicit cursor continuation.    |
+| `result.data`                               | `result.items`                    | Read canonical file records from `items`.                  |
+| `{ success: boolean }`                      | Singular result or partial batch  | Catch singular errors or inspect `failed`.                 |
+| React `confirmUpload`                       | React `confirm`                   | Use the resource-scoped lifecycle name.                    |
+| React `confirmUploads`                      | React `confirmMany`               | Use the `Many` suffix for batches.                         |
+| Backend `getFile`                           | Backend `get`                     | Use the bucket-scoped read name.                           |
+| Backend `listFiles`                         | Backend `list`                    | Use the bucket-scoped list name.                           |
+| Backend `confirmUpload`                     | Backend `confirm`                 | Use the singular lifecycle name.                           |
+| Backend `confirmUploads`                    | Backend `confirmMany`             | Use the `Many` suffix for batches.                         |
+| Backend `deleteFile`                        | Backend `delete`                  | Use the singular lifecycle name.                           |
+| Backend `deleteFiles`                       | Backend `deleteMany`              | Use the `Many` suffix for batches.                         |
+| Backend `restoreFile(s)`                    | Backend `restore` / `restoreMany` | Use singular and `Many` lifecycle names.                   |
+| Backend `getSignedUrl`                      | Backend `createSignedUrl`         | Make signed-URL creation explicit.                         |
+| Backend `getSignedUrls`                     | Backend `createSignedUrls`        | Make batch signed-URL creation explicit.                   |
+| Nullable metadata values                    | Nullish values omitted            | Treat those inferred keys as optional strings.             |
+| Handcrafted server raw client               | `@edgestore/sdk`                  | Migrate direct API consumers to the public SDK.            |
+| `ES_AZURE_SAS_TOKEN`                        | `ES_AZURE_ACCOUNT_KEY`            | Give Azure signing authority only to the server.           |
+
+Pagination is no longer page-number based. Continue only when your application
+intentionally needs another page:
+
+```ts title="Before (v0.7)"
+const page = await backendClient.documents.listFiles({
+  pagination: {
+    currentPage: 1,
+    pageSize: 50,
+  },
+});
+```
+
+```ts title="After (v1)"
+const firstPage = await backendClient.documents.list({ limit: 50 });
+
+const secondPage = firstPage.hasMore
+  ? await backendClient.documents.list({
+      cursor: firstPage.nextCursor ?? undefined,
+      limit: 50,
+    })
+  : undefined;
+```
 
 ```ts
 const page = await backendClient.documents.list({ limit: 50 });

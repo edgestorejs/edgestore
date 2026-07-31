@@ -10,7 +10,7 @@ There are two types of file buckets: `IMAGE` and `FILE`. Both types of buckets w
 IMAGE buckets automatically generate a thumbnail version of the image file if the file is bigger than 200px in width or height. In case a thumbnail was generated, the url will be included in the response of the upload request.
 
 ```ts
-const edgeStoreRouter = es.router({
+const router = es.router({
   publicFiles: es.fileBucket(),
   publicImages: es.imageBucket(),
 });
@@ -21,7 +21,7 @@ const edgeStoreRouter = es.router({
 You can set the maximum file size and the accepted mime types for every file bucket.
 
 ```ts
-const edgeStoreRouter = es.router({
+const router = es.router({
   publicFiles: es.fileBucket({
     maxSize: 1024 * 1024 * 10, // 10MB
     accept: ['image/jpeg', 'image/png'], // wildcard also works: ['image/*']
@@ -60,13 +60,13 @@ const es = initEdgeStore.context<Context>().create();
 
 // ...
 
-const edgeStore = createEdgeStore({
-  router: edgeStoreRouter,
+const configuredEdgeStore = createEdgeStore({
+  router,
   provider: edgestore(),
 });
 
 export default createEdgeStoreNextHandler({
-  edgeStore,
+  edgestore: configuredEdgeStore,
   /**
    * The context is generated and saved to a cookie
    * in the first load of the page.
@@ -113,7 +113,7 @@ async function createContext({ req }: CreateContextOptions): Promise<Context> {
 
 const es = initEdgeStore.context<Context>().create();
 
-const edgeStoreRouter = es.router({
+const router = es.router({
   publicFiles: es
     .fileBucket()
     // this input will be required for every upload request
@@ -162,7 +162,7 @@ async function createContext({ req }: CreateContextOptions): Promise<Context> {
 
 const es = initEdgeStore.context<Context>().create();
 
-const edgeStoreRouter = es.router({
+const router = es.router({
   publicFiles: es
     .fileBucket()
     /**

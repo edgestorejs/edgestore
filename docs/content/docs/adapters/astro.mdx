@@ -42,22 +42,22 @@ export const prerender = false;
 
 const es = initEdgeStore.create();
 
-const edgeStoreRouter = es.router({
+const router = es.router({
   publicFiles: es.fileBucket(),
 });
 
-const edgeStore = createEdgeStore({
-  router: edgeStoreRouter,
+const configuredEdgeStore = createEdgeStore({
+  router,
   provider: edgestore(),
 });
 
 const handler = createEdgeStoreAstroHandler({
-  edgeStore,
+  edgestore: configuredEdgeStore,
 });
 
 export { handler as GET, handler as POST };
 
-export type EdgeStoreRouter = typeof edgeStoreRouter;
+export type EdgeStoreRouter = typeof router;
 ```
 
 The example above is the simplest bucket you can create with EdgeStore. Just a simple file bucket with no validation that will be accessible by anyone with the link.
