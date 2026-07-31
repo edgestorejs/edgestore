@@ -9,7 +9,7 @@ import {
   type ManagementResourceClient,
 } from './managementResources';
 
-/** Complete administrative client available to management credentials. */
+/** Complete administrative client available to Bearer credentials. */
 export type ManagementClient = ManagementResourceClient &
   ManagementAccessClient & {
     /** Describes the identity represented by the management credential. */

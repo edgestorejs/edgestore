@@ -1,6 +1,6 @@
 export type {
+  BearerCredentials,
   EdgeStoreCredentials,
-  ManagementCredentials,
   ProjectCredentials,
 } from './credentials';
 export {

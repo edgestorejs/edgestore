@@ -20,7 +20,7 @@ export const DEFAULT_CONTROL_TIMEOUT_MS = 30_000;
 
 export type TransportOptions = {
   credentials: ClassifiedCredentials;
-  baseUrl?: string;
+  apiUrl?: string;
   fetch?: typeof globalThis.fetch;
   controlTimeoutMs?: number;
 };
@@ -54,7 +54,7 @@ export function createTransport(options: TransportOptions): Transport {
     throw new RangeError('controlTimeoutMs must be a non-negative number.');
   }
   const client = createClient<paths>({
-    baseUrl: normalizeBaseUrl(options.baseUrl ?? DEFAULT_API_URL),
+    baseUrl: normalizeApiUrl(options.apiUrl ?? DEFAULT_API_URL),
     fetch: (request) =>
       fetch(
         new Request(request, {
@@ -115,8 +115,8 @@ function unwrapData<TBody>(body: TBody | undefined): ApiData<TBody> {
   return body as ApiData<TBody>;
 }
 
-function normalizeBaseUrl(baseUrl: string): string {
-  return baseUrl.replace(/\/+$/, '');
+function normalizeApiUrl(apiUrl: string): string {
+  return apiUrl.replace(/\/+$/, '');
 }
 
 function createApiError(response: Response, body: unknown): EdgeStoreApiError {

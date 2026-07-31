@@ -18,7 +18,7 @@ describe('management access resources', () => {
     });
     const sdk = createEdgeStoreSdk({
       credentials: { token: 'management-token' },
-      baseUrl: 'https://example.com/v2',
+      apiUrl: 'https://example.com/v2',
       fetch,
     });
 
@@ -41,7 +41,7 @@ describe('management access resources', () => {
     });
     const sdk = createEdgeStoreSdk({
       credentials: { token: 'management-token' },
-      baseUrl: 'https://example.com/v2',
+      apiUrl: 'https://example.com/v2',
       fetch,
     });
 

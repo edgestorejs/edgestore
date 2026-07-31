@@ -14,7 +14,7 @@ describe('getAuthorizationHeader', () => {
     ).toBe('Basic cHJvamVjdDpzZWNyZXQ=');
   });
 
-  it('encodes management credentials as Bearer authentication', () => {
+  it('encodes Bearer credentials as Bearer authentication', () => {
     expect(
       getAuthorizationHeader(
         classifyCredentials({ token: 'management-token' }),

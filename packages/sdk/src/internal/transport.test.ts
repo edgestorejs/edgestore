@@ -20,7 +20,7 @@ describe('createTransport', () => {
         accessKey: 'project',
         secretKey: 'secret',
       }),
-      baseUrl: 'https://example.com/v2/',
+      apiUrl: 'https://example.com/v2/',
       fetch,
     });
 

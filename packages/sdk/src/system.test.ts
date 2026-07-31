@@ -11,7 +11,7 @@ describe('system resources', () => {
     });
     const sdk = createEdgeStoreSdk({
       credentials: { accessKey: 'project', secretKey: 'secret' },
-      baseUrl: 'https://example.com/v2',
+      apiUrl: 'https://example.com/v2',
       fetch,
     });
     await expect(sdk.system.health()).resolves.toEqual({

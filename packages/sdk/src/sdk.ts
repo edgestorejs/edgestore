@@ -1,6 +1,6 @@
 import type {
+  BearerCredentials,
   EdgeStoreCredentials,
-  ManagementCredentials,
   ProjectCredentials,
 } from './credentials';
 import { classifyCredentials } from './credentials';
@@ -18,14 +18,14 @@ import {
 import { createSystemClient, type SystemClient } from './system';
 import type { UploadDefaults } from './uploadTypes';
 
-/** Configuration shared by project- and management-credential SDK clients. */
+/** Configuration shared by project- and Bearer-credential SDK clients. */
 export type EdgeStoreSdkOptions<
   TCredentials extends EdgeStoreCredentials = EdgeStoreCredentials,
 > = {
   /** Credentials that determine which SDK resources are available. */
   credentials: TCredentials;
-  /** EdgeStore API base URL. Defaults to the hosted API v2 endpoint. */
-  baseUrl?: string;
+  /** Complete EdgeStore API v2 URL. Defaults to the hosted API endpoint. */
+  apiUrl?: string;
   /** Fetch implementation used for API requests and upload transfers. */
   fetch?: typeof globalThis.fetch;
   /** Defaults used by the high-level upload helpers. */
@@ -65,7 +65,7 @@ export function createEdgeStoreSdk(
   options: EdgeStoreSdkOptions<ProjectCredentials>,
 ): ProjectEdgeStoreSdk;
 export function createEdgeStoreSdk(
-  options: EdgeStoreSdkOptions<ManagementCredentials>,
+  options: EdgeStoreSdkOptions<BearerCredentials>,
 ): ManagementEdgeStoreSdk;
 export function createEdgeStoreSdk(
   options: EdgeStoreSdkOptions<EdgeStoreCredentials>,
@@ -77,7 +77,7 @@ export function createEdgeStoreSdk(
   const transport = createTransport({ ...options, credentials });
   const system = createSystemClient(transport);
 
-  return credentials.kind === 'management'
+  return credentials.kind === 'bearer'
     ? {
         runtime: createExplicitProjectRuntimeClient(transport, options.upload),
         management: createManagementClient(transport),

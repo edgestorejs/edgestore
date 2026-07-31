@@ -34,7 +34,7 @@ describe('createEdgeStoreSdk', () => {
     });
     const sdk = createEdgeStoreSdk({
       credentials: { accessKey: 'project', secretKey: 'secret' },
-      baseUrl: 'https://example.com/v2',
+      apiUrl: 'https://example.com/v2',
       fetch,
     });
 
@@ -48,7 +48,7 @@ describe('createEdgeStoreSdk', () => {
       .toEqualTypeOf<RuntimeCallOptions | undefined>();
   });
 
-  it('requires an explicit project for management credentials', async () => {
+  it('requires an explicit project for Bearer credentials', async () => {
     const fetch = vi.fn<typeof globalThis.fetch>(async (input) => {
       const request = input instanceof Request ? input : new Request(input);
       expect(request.url).toBe(
@@ -61,7 +61,7 @@ describe('createEdgeStoreSdk', () => {
     });
     const sdk = createEdgeStoreSdk({
       credentials: { token: 'management-token' },
-      baseUrl: 'https://example.com/v2',
+      apiUrl: 'https://example.com/v2',
       fetch,
     });
 
@@ -99,7 +99,7 @@ describe('createEdgeStoreSdk', () => {
     });
     const sdk = createEdgeStoreSdk({
       credentials: { accessKey: 'project', secretKey: 'secret' },
-      baseUrl: 'https://example.com/v2',
+      apiUrl: 'https://example.com/v2',
       fetch,
     });
 
@@ -155,7 +155,7 @@ describe('createEdgeStoreSdk', () => {
     });
     const sdk = createEdgeStoreSdk({
       credentials: { accessKey: 'project', secretKey: 'secret' },
-      baseUrl: 'https://example.com/v2',
+      apiUrl: 'https://example.com/v2',
       fetch,
     });
 

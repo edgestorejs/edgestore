@@ -5,7 +5,7 @@ import { createEdgeStoreSdk } from './sdk';
 function createManagementSdk(fetch: typeof globalThis.fetch) {
   return createEdgeStoreSdk({
     credentials: { token: 'management-token' },
-    baseUrl: 'https://example.com/v2',
+    apiUrl: 'https://example.com/v2',
     fetch,
   });
 }

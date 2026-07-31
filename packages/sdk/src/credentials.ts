@@ -7,20 +7,20 @@ export type ProjectCredentials = {
   token?: never;
 };
 
-/** Management token used by administrative API clients. */
-export type ManagementCredentials = {
-  /** Account- or user-owned management token. */
+/** Bearer token used by management API clients. */
+export type BearerCredentials = {
+  /** Account- or user-owned EdgeStore management token. */
   token: string;
   accessKey?: never;
   secretKey?: never;
 };
 
 /** Credentials accepted by {@link createEdgeStoreSdk}. */
-export type EdgeStoreCredentials = ProjectCredentials | ManagementCredentials;
+export type EdgeStoreCredentials = ProjectCredentials | BearerCredentials;
 
 export type ClassifiedCredentials =
   | ({ kind: 'project' } & ProjectCredentials)
-  | ({ kind: 'management' } & ManagementCredentials);
+  | ({ kind: 'bearer' } & BearerCredentials);
 
 export function classifyCredentials(
   credentials: EdgeStoreCredentials,
@@ -33,11 +33,11 @@ export function classifyCredentials(
   if (token !== undefined) {
     if (accessKey !== undefined || secretKey !== undefined) {
       throw new TypeError(
-        'EdgeStore credentials cannot contain both a management token and project keys.',
+        'EdgeStore credentials cannot contain both a Bearer token and project keys.',
       );
     }
     assertCredential(token, 'token');
-    return { kind: 'management', token };
+    return { kind: 'bearer', token };
   }
 
   assertCredential(accessKey, 'accessKey');
@@ -48,7 +48,7 @@ export function classifyCredentials(
 export function getAuthorizationHeader(
   credentials: ClassifiedCredentials,
 ): string {
-  if (credentials.kind === 'management') {
+  if (credentials.kind === 'bearer') {
     return `Bearer ${credentials.token}`;
   }
 

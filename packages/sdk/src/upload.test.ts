@@ -9,7 +9,7 @@ import { MIN_MULTIPART_PART_SIZE_BYTES } from './uploadTypes';
 function createSdk(fetch: typeof globalThis.fetch) {
   return createEdgeStoreSdk({
     credentials: { accessKey: 'project', secretKey: 'secret' },
-    baseUrl: 'https://api.example/v2',
+    apiUrl: 'https://api.example/v2',
     fetch,
   });
 }
