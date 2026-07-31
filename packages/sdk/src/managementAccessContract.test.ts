@@ -130,11 +130,14 @@ describe('management access request mappings', () => {
           sdk.management.tokens.createAccount({
             account,
             name: 'CI token',
-            scopes: ['project:read'],
+            scopes: ['bucket:delete', 'bucket:empty'],
           }),
         method: 'POST',
         path: `/v2/management/accounts/${account}/tokens`,
-        body: { name: 'CI token', scopes: ['project:read'] },
+        body: {
+          name: 'CI token',
+          scopes: ['bucket:delete', 'bucket:empty'],
+        },
       },
       'v2.management.tokens.listUser': {
         invoke: () => sdk.management.tokens.listUser({ page: 2, pageSize: 10 }),

@@ -1844,6 +1844,8 @@
                                       "project:delete",
                                       "bucket:read",
                                       "bucket:write",
+                                      "bucket:delete",
+                                      "bucket:empty",
                                       "file:read",
                                       "file:write",
                                       "project-key:read",
@@ -1888,6 +1890,8 @@
                                       "project:delete",
                                       "bucket:read",
                                       "bucket:write",
+                                      "bucket:delete",
+                                      "bucket:empty",
                                       "file:read",
                                       "file:write",
                                       "project-key:read",
@@ -4948,7 +4952,7 @@
       "get": {
         "operationId": "v2.management.buckets.emptyJobs.latest",
         "summary": "Get the latest empty-bucket job",
-        "description": "Returns the most recently created empty-bucket job for the selected bucket.",
+        "description": "Returns the most recently created empty-bucket job for the selected bucket, or null when no job exists.",
         "tags": [
           "management",
           "buckets"
@@ -4990,180 +4994,187 @@
                       "type": "object",
                       "properties": {
                         "job": {
-                          "type": "object",
-                          "properties": {
-                            "id": {
-                              "type": "string",
-                              "description": "Unique empty-bucket job ID."
-                            },
-                            "bucketId": {
-                              "type": "string",
-                              "description": "ID of the bucket being emptied."
-                            },
-                            "projectId": {
-                              "type": "string",
-                              "description": "ID of the bucket's project."
-                            },
-                            "accountId": {
-                              "type": "string",
-                              "description": "ID of the project's account."
-                            },
-                            "status": {
-                              "enum": [
-                                "QUEUED",
-                                "RUNNING",
-                                "SUCCEEDED",
-                                "FAILED"
-                              ],
-                              "type": "string",
-                              "description": "Current job lifecycle state."
-                            },
-                            "phase": {
-                              "enum": [
-                                "DELETING_FILES",
-                                "ABORTING_UPLOADS",
-                                "RECONCILING_STORAGE",
-                                "INVALIDATING_CACHE"
-                              ],
-                              "type": "string",
-                              "description": "Current cleanup phase."
-                            },
-                            "totalCount": {
-                              "type": "integer",
-                              "minimum": 0,
-                              "maximum": 9007199254740991,
-                              "description": "Number of file records selected for cleanup."
-                            },
-                            "totalBytes": {
-                              "type": "integer",
-                              "minimum": 0,
-                              "maximum": 9007199254740991,
-                              "description": "Total bytes represented by selected file records."
-                            },
-                            "processedCount": {
-                              "type": "integer",
-                              "minimum": 0,
-                              "maximum": 9007199254740991,
-                              "description": "Number of file records processed so far."
-                            },
-                            "freedBytes": {
-                              "type": "integer",
-                              "minimum": 0,
-                              "maximum": 9007199254740991,
-                              "description": "Storage bytes accounted as freed so far."
-                            },
-                            "pendingS3CleanupCount": {
-                              "type": "integer",
-                              "minimum": 0,
-                              "maximum": 9007199254740991,
-                              "description": "Stored objects still pending deletion."
-                            },
-                            "canceledUploadCount": {
-                              "type": "integer",
-                              "minimum": 0,
-                              "maximum": 9007199254740991,
-                              "description": "Incomplete uploads canceled by the job."
-                            },
-                            "orphanObjectCount": {
-                              "type": "integer",
-                              "minimum": 0,
-                              "maximum": 9007199254740991,
-                              "description": "Stored objects found without matching active file records."
-                            },
-                            "orphanBytes": {
-                              "type": "integer",
-                              "minimum": 0,
-                              "maximum": 9007199254740991,
-                              "description": "Total bytes of orphaned stored objects found."
-                            },
-                            "cloudFrontInvalidationId": {
-                              "anyOf": [
-                                {
-                                  "type": "string"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "description": "Unique empty-bucket job ID."
                                 },
-                                {
-                                  "type": "null"
-                                }
-                              ],
-                              "description": "Cache invalidation ID, or null until one is created."
-                            },
-                            "error": {
-                              "anyOf": [
-                                {
-                                  "type": "string"
+                                "bucketId": {
+                                  "type": "string",
+                                  "description": "ID of the bucket being emptied."
                                 },
-                                {
-                                  "type": "null"
-                                }
-                              ],
-                              "description": "Failure message, or null when the job has not failed."
-                            },
-                            "heartbeatAt": {
-                              "anyOf": [
-                                {
-                                  "type": "string"
+                                "projectId": {
+                                  "type": "string",
+                                  "description": "ID of the bucket's project."
                                 },
-                                {
-                                  "type": "null"
-                                }
-                              ],
-                              "description": "ISO 8601 timestamp of the latest worker heartbeat."
-                            },
-                            "startedAt": {
-                              "anyOf": [
-                                {
-                                  "type": "string"
+                                "accountId": {
+                                  "type": "string",
+                                  "description": "ID of the project's account."
                                 },
-                                {
-                                  "type": "null"
-                                }
-                              ],
-                              "description": "ISO 8601 timestamp when processing started."
-                            },
-                            "completedAt": {
-                              "anyOf": [
-                                {
-                                  "type": "string"
+                                "status": {
+                                  "enum": [
+                                    "QUEUED",
+                                    "RUNNING",
+                                    "SUCCEEDED",
+                                    "FAILED"
+                                  ],
+                                  "type": "string",
+                                  "description": "Current job lifecycle state."
                                 },
-                                {
-                                  "type": "null"
+                                "phase": {
+                                  "enum": [
+                                    "DELETING_FILES",
+                                    "ABORTING_UPLOADS",
+                                    "RECONCILING_STORAGE",
+                                    "INVALIDATING_CACHE"
+                                  ],
+                                  "type": "string",
+                                  "description": "Current cleanup phase."
+                                },
+                                "totalCount": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991,
+                                  "description": "Number of file records selected for cleanup."
+                                },
+                                "totalBytes": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991,
+                                  "description": "Total bytes represented by selected file records."
+                                },
+                                "processedCount": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991,
+                                  "description": "Number of file records processed so far."
+                                },
+                                "freedBytes": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991,
+                                  "description": "Storage bytes accounted as freed so far."
+                                },
+                                "pendingS3CleanupCount": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991,
+                                  "description": "Stored objects still pending deletion."
+                                },
+                                "canceledUploadCount": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991,
+                                  "description": "Incomplete uploads canceled by the job."
+                                },
+                                "orphanObjectCount": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991,
+                                  "description": "Stored objects found without matching active file records."
+                                },
+                                "orphanBytes": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991,
+                                  "description": "Total bytes of orphaned stored objects found."
+                                },
+                                "cloudFrontInvalidationId": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Cache invalidation ID, or null until one is created."
+                                },
+                                "error": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Failure message, or null when the job has not failed."
+                                },
+                                "heartbeatAt": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "ISO 8601 timestamp of the latest worker heartbeat."
+                                },
+                                "startedAt": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "ISO 8601 timestamp when processing started."
+                                },
+                                "completedAt": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "ISO 8601 timestamp when processing finished."
+                                },
+                                "createdAt": {
+                                  "type": "string",
+                                  "description": "ISO 8601 creation timestamp."
+                                },
+                                "updatedAt": {
+                                  "type": "string",
+                                  "description": "ISO 8601 last-update timestamp."
                                 }
+                              },
+                              "required": [
+                                "id",
+                                "bucketId",
+                                "projectId",
+                                "accountId",
+                                "status",
+                                "phase",
+                                "totalCount",
+                                "totalBytes",
+                                "processedCount",
+                                "freedBytes",
+                                "pendingS3CleanupCount",
+                                "canceledUploadCount",
+                                "orphanObjectCount",
+                                "orphanBytes",
+                                "cloudFrontInvalidationId",
+                                "error",
+                                "heartbeatAt",
+                                "startedAt",
+                                "completedAt",
+                                "createdAt",
+                                "updatedAt"
                               ],
-                              "description": "ISO 8601 timestamp when processing finished."
+                              "description": "Progress and results for an asynchronous bucket cleanup."
                             },
-                            "createdAt": {
-                              "type": "string",
-                              "description": "ISO 8601 creation timestamp."
-                            },
-                            "updatedAt": {
-                              "type": "string",
-                              "description": "ISO 8601 last-update timestamp."
+                            {
+                              "type": "null"
                             }
-                          },
-                          "required": [
-                            "id",
-                            "bucketId",
-                            "projectId",
-                            "accountId",
-                            "status",
-                            "phase",
-                            "totalCount",
-                            "totalBytes",
-                            "processedCount",
-                            "freedBytes",
-                            "pendingS3CleanupCount",
-                            "canceledUploadCount",
-                            "orphanObjectCount",
-                            "orphanBytes",
-                            "cloudFrontInvalidationId",
-                            "error",
-                            "heartbeatAt",
-                            "startedAt",
-                            "completedAt",
-                            "createdAt",
-                            "updatedAt"
-                          ],
-                          "description": "Progress and results for an asynchronous bucket cleanup."
+                          ]
                         }
                       },
                       "required": [
@@ -5254,9 +5265,6 @@
                     },
                     {
                       "$ref": "#/components/schemas/BucketNotFoundError"
-                    },
-                    {
-                      "$ref": "#/components/schemas/EmptyBucketJobNotFoundError"
                     }
                   ]
                 }
@@ -11361,6 +11369,8 @@
                                     "project:delete",
                                     "bucket:read",
                                     "bucket:write",
+                                    "bucket:delete",
+                                    "bucket:empty",
                                     "file:read",
                                     "file:write",
                                     "project-key:read",
@@ -11642,6 +11652,8 @@
                         "project:delete",
                         "bucket:read",
                         "bucket:write",
+                        "bucket:delete",
+                        "bucket:empty",
                         "file:read",
                         "file:write",
                         "project-key:read",
@@ -11723,6 +11735,8 @@
                                   "project:delete",
                                   "bucket:read",
                                   "bucket:write",
+                                  "bucket:delete",
+                                  "bucket:empty",
                                   "file:read",
                                   "file:write",
                                   "project-key:read",
@@ -12038,6 +12052,8 @@
                                     "project:delete",
                                     "bucket:read",
                                     "bucket:write",
+                                    "bucket:delete",
+                                    "bucket:empty",
                                     "file:read",
                                     "file:write",
                                     "project-key:read",
@@ -12291,6 +12307,8 @@
                         "project:delete",
                         "bucket:read",
                         "bucket:write",
+                        "bucket:delete",
+                        "bucket:empty",
                         "file:read",
                         "file:write",
                         "project-key:read",
@@ -12372,6 +12390,8 @@
                                   "project:delete",
                                   "bucket:read",
                                   "bucket:write",
+                                  "bucket:delete",
+                                  "bucket:empty",
                                   "file:read",
                                   "file:write",
                                   "project-key:read",

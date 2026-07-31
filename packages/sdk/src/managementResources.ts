@@ -85,7 +85,7 @@ export type ManagementResourceClient = {
       input: BucketInput & CallOptions,
     ): Promise<Result<'v2.management.buckets.empty'>>;
     emptyJobs: {
-      /** Gets the latest empty-bucket job. */
+      /** Gets the latest empty-bucket job, or `null` when no job exists. */
       latest(
         input: BucketInput & CallOptions,
       ): Promise<Result<'v2.management.buckets.emptyJobs.latest'>>;

@@ -233,7 +233,7 @@ export type paths = {
         };
         /**
          * Get the latest empty-bucket job
-         * @description Returns the most recently created empty-bucket job for the selected bucket.
+         * @description Returns the most recently created empty-bucket job for the selected bucket, or null when no job exists.
          */
         get: operations["v2.management.buckets.emptyJobs.latest"];
         put?: never;
@@ -1941,7 +1941,7 @@ export interface operations {
                                 /** @description Owning account ID. */
                                 accountId: string;
                                 /** @description Effective management permissions. */
-                                scopes: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "file:read" | "file:write" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
+                                scopes: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "bucket:delete" | "bucket:empty" | "file:read" | "file:write" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
                             } | {
                                 /**
                                  * @description User-owned management-token principal.
@@ -1951,7 +1951,7 @@ export interface operations {
                                 /** @description Authenticated token ID. */
                                 tokenId: string;
                                 /** @description Effective management permissions. */
-                                scopes: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "file:read" | "file:write" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
+                                scopes: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "bucket:delete" | "bucket:empty" | "file:read" | "file:write" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
                                 /** @description Authenticated user identity. */
                                 user: {
                                     /** @description Unique EdgeStore user ID. */
@@ -3428,7 +3428,6 @@ export interface operations {
                     "application/json": {
                         /** @description Successful response payload. */
                         data: {
-                            /** @description Progress and results for an asynchronous bucket cleanup. */
                             job: {
                                 /** @description Unique empty-bucket job ID. */
                                 id: string;
@@ -3478,7 +3477,7 @@ export interface operations {
                                 createdAt: string;
                                 /** @description ISO 8601 last-update timestamp. */
                                 updatedAt: string;
-                            };
+                            } | null;
                         };
                     };
                 };
@@ -3520,7 +3519,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProjectNotFoundError"] | components["schemas"]["BucketNotFoundError"] | components["schemas"]["EmptyBucketJobNotFoundError"];
+                    "application/json": components["schemas"]["ProjectNotFoundError"] | components["schemas"]["BucketNotFoundError"];
                 };
             };
             /** @description 413 */
@@ -6162,7 +6161,7 @@ export interface operations {
                                 /** @description Non-secret token prefix used to identify the credential. */
                                 tokenPrefix: string;
                                 /** @description Granted permissions. */
-                                scopes: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "file:read" | "file:write" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
+                                scopes: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "bucket:delete" | "bucket:empty" | "file:read" | "file:write" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
                                 /** @description ISO 8601 creation timestamp. */
                                 createdAt: string;
                                 /** @description ISO 8601 last-update timestamp. */
@@ -6264,7 +6263,7 @@ export interface operations {
                      */
                     preset?: "deploy" | "read-only" | "full-access";
                     /** @description Explicit permissions. Mutually exclusive with preset. */
-                    scopes?: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "file:read" | "file:write" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
+                    scopes?: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "bucket:delete" | "bucket:empty" | "file:read" | "file:write" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
                     /** @description ISO 8601 expiration timestamp, or null for no expiration. */
                     expiresAt?: string | null;
                 };
@@ -6295,7 +6294,7 @@ export interface operations {
                                 /** @description Non-secret token prefix used to identify the credential. */
                                 tokenPrefix: string;
                                 /** @description Granted permissions. */
-                                scopes: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "file:read" | "file:write" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
+                                scopes: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "bucket:delete" | "bucket:empty" | "file:read" | "file:write" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
                                 /** @description ISO 8601 creation timestamp. */
                                 createdAt: string;
                                 /** @description ISO 8601 last-update timestamp. */
@@ -6414,7 +6413,7 @@ export interface operations {
                                 /** @description Non-secret token prefix used to identify the credential. */
                                 tokenPrefix: string;
                                 /** @description Granted permissions. */
-                                scopes: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "file:read" | "file:write" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
+                                scopes: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "bucket:delete" | "bucket:empty" | "file:read" | "file:write" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
                                 /** @description ISO 8601 creation timestamp. */
                                 createdAt: string;
                                 /** @description ISO 8601 last-update timestamp. */
@@ -6504,7 +6503,7 @@ export interface operations {
                      */
                     preset?: "deploy" | "read-only" | "full-access";
                     /** @description Explicit permissions. Mutually exclusive with preset. */
-                    scopes?: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "file:read" | "file:write" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
+                    scopes?: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "bucket:delete" | "bucket:empty" | "file:read" | "file:write" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
                     /** @description ISO 8601 expiration timestamp, or null for no expiration. */
                     expiresAt?: string | null;
                 };
@@ -6535,7 +6534,7 @@ export interface operations {
                                 /** @description Non-secret token prefix used to identify the credential. */
                                 tokenPrefix: string;
                                 /** @description Granted permissions. */
-                                scopes: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "file:read" | "file:write" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
+                                scopes: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "bucket:delete" | "bucket:empty" | "file:read" | "file:write" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
                                 /** @description ISO 8601 creation timestamp. */
                                 createdAt: string;
                                 /** @description ISO 8601 last-update timestamp. */

@@ -84,4 +84,23 @@ describe('management resources', () => {
       sdk.management.projects.delete({ project: 'project-id' }),
     ).resolves.toEqual({});
   });
+
+  it('returns null when a bucket has no empty-bucket job', async () => {
+    const fetch = vi.fn<typeof globalThis.fetch>(async (input) => {
+      const request = input instanceof Request ? input : new Request(input);
+      expect(request.url).toBe(
+        'https://example.com/v2/management/projects/project-id/buckets/documents/empty-job',
+      );
+      return Response.json({ data: { job: null } });
+    });
+    const sdk = createManagementSdk(fetch);
+
+    const result = await sdk.management.buckets.emptyJobs.latest({
+      project: 'project-id',
+      bucket: 'documents',
+    });
+
+    expect(result).toEqual({ job: null });
+    expectTypeOf<null>().toMatchTypeOf<typeof result.job>();
+  });
 });
