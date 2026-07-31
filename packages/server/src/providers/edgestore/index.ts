@@ -66,7 +66,7 @@ export function edgestore(options?: EdgeStoreProviderOptions) {
 
   const sdk = createEdgeStoreSdk({
     credentials: { accessKey, secretKey },
-    baseUrl: options?.apiUrl ?? getApiUrl(),
+    apiUrl: options?.apiUrl ?? getApiUrl(),
   });
 
   const provider = defineProvider({
