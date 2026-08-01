@@ -36,7 +36,7 @@ export async function loginCommand(
     token,
     baseUrl: apiUrl.sdkBaseUrl,
   });
-  const identity = await sdk.system.whoami({ signal: runtime.signal });
+  const identity = await sdk.management.whoami({ signal: runtime.signal });
 
   await runtime.credentials.set(token);
   const accountId = accountIdFromActor(identity.actor);
@@ -85,7 +85,7 @@ export async function whoamiCommand(
     token: credential.token,
     baseUrl: apiUrl.sdkBaseUrl,
   });
-  const identity = await sdk.system.whoami({ signal: runtime.signal });
+  const identity = await sdk.management.whoami({ signal: runtime.signal });
   const globalConfig = await runtime.globalConfig.read();
   const localConfig = await runtime.repoConfig.read();
 
@@ -118,7 +118,7 @@ export async function whoamiCommand(
 
 function actorLabel(
   actor: Awaited<
-    ReturnType<ManagementEdgeStoreSdk['system']['whoami']>
+    ReturnType<ManagementEdgeStoreSdk['management']['whoami']>
   >['actor'],
 ): string {
   if (actor.kind === 'account_token') {
@@ -132,7 +132,7 @@ function actorLabel(
 
 function accountIdFromActor(
   actor: Awaited<
-    ReturnType<ManagementEdgeStoreSdk['system']['whoami']>
+    ReturnType<ManagementEdgeStoreSdk['management']['whoami']>
   >['actor'],
 ): string | undefined {
   return actor.kind === 'account_token'

@@ -63,7 +63,7 @@ export async function doctorCommand(
 
   if (credential) {
     try {
-      const identity = await sdk.system.whoami({ signal: runtime.signal });
+      const identity = await sdk.management.whoami({ signal: runtime.signal });
       checks.push({
         name: 'Authentication',
         status: 'pass',

@@ -89,7 +89,7 @@ describe('runCli', () => {
   it('validates a token before saving it', async () => {
     await runCli(['login', '--token'], fixture.runtime, '0.0.0');
 
-    expect(fixture.credentials.set).toHaveBeenCalledWith('mgmt_test');
+    expect(fixture.setCredential).toHaveBeenCalledWith('mgmt_test');
     expect(fixture.stdout()).toContain('Logged in as ravi@example.com.');
   });
 
@@ -159,13 +159,12 @@ function createFixture() {
   const repoConfig: { config?: RepoConfig } = {};
   const credentialValue = { value: 'stored_token' };
   const readToken = vi.fn(async () => 'mgmt_test');
-  const credentials: CredentialStore & {
-    set: ReturnType<typeof vi.fn>;
-  } = {
+  const setCredential = vi.fn(async (token: string) => {
+    credentialValue.value = token;
+  });
+  const credentials: CredentialStore = {
     get: vi.fn(async () => credentialValue.value),
-    set: vi.fn(async (token: string) => {
-      credentialValue.value = token;
-    }),
+    set: setCredential,
     delete: vi.fn(async () => {
       const existed = Boolean(credentialValue.value);
       credentialValue.value = '';
@@ -177,6 +176,8 @@ function createFixture() {
   const sdk = {
     system: {
       health: vi.fn(async () => ({ status: 'ok' })),
+    },
+    management: {
       whoami: vi.fn(async () => ({
         actor: {
           kind: 'user_token',
@@ -194,8 +195,6 @@ function createFixture() {
           },
         },
       })),
-    },
-    management: {
       accounts: {
         list: vi.fn(async () => ({ accounts: [account] })),
         get: vi.fn(async () => ({ account })),
@@ -227,14 +226,13 @@ function createFixture() {
       }),
     },
     repoConfig: {
-      read: vi.fn(
-        async (): Promise<LocatedRepoConfig | undefined> =>
-          repoConfig.config
-            ? {
-                config: { ...repoConfig.config },
-                path: '/repo/.edgestore/config.json',
-              }
-            : undefined,
+      read: vi.fn(async (): Promise<LocatedRepoConfig | undefined> =>
+        repoConfig.config
+          ? {
+              config: { ...repoConfig.config },
+              path: '/repo/.edgestore/config.json',
+            }
+          : undefined,
       ),
       write: vi.fn(async (config: RepoConfig) => {
         repoConfig.config = config;
@@ -260,6 +258,7 @@ function createFixture() {
     globalConfig,
     repoConfig,
     credentials,
+    setCredential,
     readToken,
     stdout: () => Buffer.concat(stdoutChunks).toString('utf8'),
     stderr: () => Buffer.concat(stderrChunks).toString('utf8'),

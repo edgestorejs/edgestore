@@ -84,7 +84,7 @@ export function createDefaultRuntime(signal: AbortSignal): CliRuntime {
     credentials: new KeyringCredentialStore(),
     prompts: new DefaultCliPrompts(),
     sdkFactory: ({ token, baseUrl }) =>
-      createEdgeStoreSdk({ credentials: { token }, baseUrl }),
+      createEdgeStoreSdk({ credentials: { token }, apiUrl: baseUrl }),
   };
 }
 

@@ -22,7 +22,7 @@ describe('resolveCredential', () => {
   });
 });
 
-function credentialStore(token: string): CredentialStore & {
+function credentialStore(token: string): Omit<CredentialStore, 'get'> & {
   get: ReturnType<typeof vi.fn>;
 } {
   return {
