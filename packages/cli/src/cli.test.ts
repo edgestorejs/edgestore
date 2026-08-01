@@ -158,6 +158,99 @@ describe('runCli', () => {
     expect(fixture.stdout()).toContain(
       'You will not be able to view it again.',
     );
+    const input = fixture.createAccountToken.mock.calls[0]?.[0];
+    expect(input).toMatchObject({
+      account: account.id,
+      name: 'deploy',
+      preset: 'deploy',
+    });
+    expect(input).not.toHaveProperty('scopes');
+  });
+
+  it('creates user-owned management tokens from presets', async () => {
+    await runCli(
+      [
+        'token',
+        'create',
+        '--name',
+        'read access',
+        '--user',
+        '--preset',
+        'read-only',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    const input = fixture.createUserToken.mock.calls[0]?.[0];
+    expect(input).toMatchObject({
+      name: 'read access',
+      preset: 'read-only',
+    });
+    expect(input).not.toHaveProperty('account');
+    expect(input).not.toHaveProperty('scopes');
+  });
+
+  it('forwards repeated explicit token scopes unchanged', async () => {
+    await runCli(
+      [
+        'token',
+        'create',
+        '--name',
+        'custom access',
+        '--scope',
+        'account:read',
+        '--scope',
+        'project:read',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    const input = fixture.createAccountToken.mock.calls[0]?.[0];
+    expect(input).toMatchObject({
+      account: account.id,
+      name: 'custom access',
+      scopes: ['account:read', 'project:read'],
+    });
+    expect(input).not.toHaveProperty('preset');
+  });
+
+  it('rejects conflicting token permission options', async () => {
+    const exitCode = await runCli(
+      [
+        'token',
+        'create',
+        '--name',
+        'conflicting',
+        '--preset',
+        'deploy',
+        '--scope',
+        'project:read',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(2);
+    expect(fixture.stderr()).toContain(
+      '--preset and --scope cannot be used together.',
+    );
+    expect(fixture.createAccountToken).not.toHaveBeenCalled();
+  });
+
+  it('requires token permissions', async () => {
+    const exitCode = await runCli(
+      ['token', 'create', '--name', 'missing permissions'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(2);
+    expect(fixture.stderr()).toContain(
+      'Token creation requires --preset or at least one --scope.',
+    );
+    expect(fixture.createAccountToken).not.toHaveBeenCalled();
   });
 
   it('validates a token before saving it', async () => {
@@ -248,6 +341,41 @@ function createFixture() {
     available: vi.fn(async () => true),
   };
 
+  const createAccountToken = vi.fn(async (_input: unknown) => ({
+    token: {
+      id: 'tok_created',
+      name: 'deploy',
+      kind: 'ACCOUNT' as const,
+      tokenPrefix: 'edge_',
+      scopes: ['project:read'],
+      createdAt: project.createdAt,
+      updatedAt: project.updatedAt,
+      lastUsedAt: null,
+      revokedAt: null,
+      expiresAt: null,
+      accountId: account.id,
+      userId: null,
+    },
+    secret: 'mgmt_created',
+  }));
+  const createUserToken = vi.fn(async (_input: unknown) => ({
+    token: {
+      id: 'tok_user_created',
+      name: 'read access',
+      kind: 'USER' as const,
+      tokenPrefix: 'edge_',
+      scopes: ['account:read'],
+      createdAt: project.createdAt,
+      updatedAt: project.updatedAt,
+      lastUsedAt: null,
+      revokedAt: null,
+      expiresAt: null,
+      accountId: null,
+      userId: 'user_123',
+    },
+    secret: 'mgmt_user_created',
+  }));
+
   const sdk = {
     system: {
       health: vi.fn(async () => ({ status: 'ok' })),
@@ -328,26 +456,8 @@ function createFixture() {
       tokens: {
         listAccount: vi.fn(async () => ({ tokens: [] })),
         listUser: vi.fn(async () => ({ tokens: [] })),
-        createAccount: vi.fn(async () => ({
-          token: {
-            id: 'tok_created',
-            name: 'deploy',
-            kind: 'ACCOUNT',
-            tokenPrefix: 'edge_',
-            scopes: ['project:read'],
-            createdAt: project.createdAt,
-            updatedAt: project.updatedAt,
-            lastUsedAt: null,
-            revokedAt: null,
-            expiresAt: null,
-            accountId: account.id,
-            userId: null,
-          },
-          secret: 'mgmt_created',
-        })),
-        createUser: vi.fn(async () => {
-          throw new Error('not used');
-        }),
+        createAccount: createAccountToken,
+        createUser: createUserToken,
         revoke: vi.fn(async () => ({})),
       },
     },
@@ -409,6 +519,8 @@ function createFixture() {
     setCredential,
     readToken,
     confirmTyped,
+    createAccountToken,
+    createUserToken,
     stdout: () => Buffer.concat(stdoutChunks).toString('utf8'),
     stderr: () => Buffer.concat(stderrChunks).toString('utf8'),
   };

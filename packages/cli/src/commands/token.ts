@@ -1,3 +1,4 @@
+import type { ManagementEdgeStoreSdk } from '@edgestore/sdk';
 import { usageError } from '../core/errors';
 import { renderTable } from '../core/output';
 import type { CliRuntime, GlobalFlags } from '../core/runtime';
@@ -8,25 +9,11 @@ import {
 } from '../core/secretDelivery';
 import { activeAccount } from './account';
 
-const tokenScopes = [
-  'account:read',
-  'project:read',
-  'project:create',
-  'project:delete',
-  'bucket:read',
-  'bucket:write',
-  'file:read',
-  'file:write',
-  'project-key:read',
-  'project-key:create',
-  'project-key:revoke',
-  'member:read',
-  'member:write',
-  'token:read',
-  'token:create',
-  'token:revoke',
-] as const;
-type TokenScope = (typeof tokenScopes)[number];
+type TokenScope = NonNullable<
+  Parameters<
+    ManagementEdgeStoreSdk['management']['tokens']['createUser']
+  >[0]['scopes']
+>[number];
 
 export async function tokenListCommand(
   runtime: CliRuntime,
@@ -108,13 +95,14 @@ export async function tokenCreateCommand(
       'Token creation requires --preset or at least one --scope.',
     );
   }
-  const scopes = options.scope?.map(validateScope);
   const sdk = await sdkFor(runtime, flags);
+  const permissions = options.preset
+    ? { preset: options.preset }
+    : { scopes: options.scope as TokenScope[] };
   const body = {
     name: options.name,
-    preset: options.preset,
-    scopes,
-    expiresAt: options.expiresAt,
+    ...permissions,
+    ...(options.expiresAt ? { expiresAt: options.expiresAt } : {}),
     signal: runtime.signal,
   };
   const result = options.user
@@ -170,11 +158,4 @@ export async function tokenRevokeCommand(
     `Revoked management token ${input.tokenId}.`,
     input.tokenId,
   );
-}
-
-function validateScope(value: string): TokenScope {
-  if ((tokenScopes as readonly string[]).includes(value)) {
-    return value as TokenScope;
-  }
-  throw usageError('invalid_token_scope', `Unsupported token scope: ${value}.`);
 }
