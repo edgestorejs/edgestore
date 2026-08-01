@@ -209,6 +209,13 @@ export async function bucketEmptyStatusCommand(
         bucket: input.bucket,
         signal: runtime.signal,
       });
+  if (!result.job) {
+    throw new CliError(
+      'bucket_empty_job_not_found',
+      `No empty-bucket job found for ${input.bucket}.`,
+      { suggestions: [`edgestore bucket empty ${input.bucket}`] },
+    );
+  }
   renderEmptyJob(runtime, flags, result.job);
 }
 

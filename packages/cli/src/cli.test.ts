@@ -286,6 +286,28 @@ describe('runCli', () => {
     expect(fixture.stdout()).toContain('empty-status publicFiles');
   });
 
+  it('reports when a bucket has no empty-bucket job', async () => {
+    fixture.repoConfig.config = {
+      account: account.id,
+      project: project.basePath,
+    };
+
+    const exitCode = await runCli(
+      ['--json', 'bucket', 'empty-status', 'publicFiles'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(1);
+    expect(JSON.parse(fixture.stderr())).toEqual({
+      error: {
+        code: 'bucket_empty_job_not_found',
+        message: 'No empty-bucket job found for publicFiles.',
+        suggestions: ['edgestore bucket empty publicFiles'],
+      },
+    });
+  });
+
   it('validates a token before saving it', async () => {
     await runCli(['login', '--token'], fixture.runtime, '0.0.0');
 
@@ -528,7 +550,7 @@ function createFixture() {
           status: 'QUEUED',
         })),
         emptyJobs: {
-          latest: vi.fn(),
+          latest: vi.fn(async () => ({ job: null })),
           get: vi.fn(),
           retry: vi.fn(),
         },
