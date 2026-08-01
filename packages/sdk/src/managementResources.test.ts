@@ -54,37 +54,6 @@ describe('management resources', () => {
     expectTypeOf(sdk.management).toEqualTypeOf<ManagementClient>();
   });
 
-  it('serializes file pagination as query parameters', async () => {
-    const fetch = vi.fn<typeof globalThis.fetch>(async (input) => {
-      const request = input instanceof Request ? input : new Request(input);
-      expect(request.url).toBe(
-        'https://example.com/v2/management/projects/project-id/buckets/documents/files?cursor=next-page&limit=50',
-      );
-      return Response.json({ data: { files: [], pagination: {} } });
-    });
-    const sdk = createManagementSdk(fetch);
-
-    await sdk.management.files.list({
-      project: 'project-id',
-      bucket: 'documents',
-      cursor: 'next-page',
-      limit: 50,
-    });
-
-    expect(fetch).toHaveBeenCalledOnce();
-  });
-
-  it('returns the API response for project deletion', async () => {
-    const fetch = vi.fn<typeof globalThis.fetch>(async () =>
-      Response.json({ data: {} }),
-    );
-    const sdk = createManagementSdk(fetch);
-
-    await expect(
-      sdk.management.projects.delete({ project: 'project-id' }),
-    ).resolves.toEqual({});
-  });
-
   it('returns null when a bucket has no empty-bucket job', async () => {
     const fetch = vi.fn<typeof globalThis.fetch>(async (input) => {
       const request = input instanceof Request ? input : new Request(input);

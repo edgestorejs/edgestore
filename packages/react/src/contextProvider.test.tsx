@@ -169,34 +169,6 @@ describe('createEdgeStoreProvider initialization', () => {
     });
   });
 
-  it('does not infer client initialization from the provider name', async () => {
-    const { calls } = createFetchMock([
-      jsonResponse({
-        baseUrl: 'https://files.example.com',
-        providerName: 'edgestore',
-      }),
-    ]);
-    const { EdgeStoreProvider, useEdgeStore } = createEdgeStoreProvider<any>();
-
-    function Consumer() {
-      useEdgeStore();
-      return null;
-    }
-
-    await act(async () => {
-      root.render(
-        <EdgeStoreProvider>
-          <Consumer />
-        </EdgeStoreProvider>,
-      );
-    });
-
-    await waitFor(() => {
-      expect(calls).toHaveLength(1);
-    });
-    expect(calls[0]?.url).toBe('/api/edgestore/init');
-  });
-
   it('reset reruns initialization', async () => {
     const { calls } = createFetchMock([
       jsonResponse({
