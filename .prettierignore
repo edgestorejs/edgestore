@@ -2,6 +2,7 @@ __generated__/
 docs/.source/
 **/*.gen.ts
 **/*.gen.tsx
+packages/sdk/src/generated/api-v2.ts
 .docusaurus/
 .test/
 **/.next/

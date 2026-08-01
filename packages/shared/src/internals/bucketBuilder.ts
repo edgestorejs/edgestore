@@ -49,18 +49,53 @@ export type InferBucketPathObjectFromDef<TDef extends AnyDef> =
         [TKey in InferBucketPathKeysFromDef<TDef>]: string;
       };
 
-export type InferMetadataObject<TBucket extends Builder<any, AnyDef>> =
-  TBucket['_def']['metadata'] extends (...args: any) => any
-    ? Awaited<ReturnType<TBucket['_def']['metadata']>>
+type NormalizeMetadata<TMetadata> = string extends keyof TMetadata
+  ? Record<string, Exclude<TMetadata[string], null | undefined>>
+  : Simplify<
+      {
+        [
+          TKey in keyof TMetadata as Extract<
+            TMetadata[TKey],
+            null | undefined
+          > extends never
+            ? TKey
+            : never
+        ]: Exclude<TMetadata[TKey], null | undefined>;
+      } & {
+        [
+          TKey in keyof TMetadata as Extract<
+            TMetadata[TKey],
+            null | undefined
+          > extends never
+            ? never
+            : TKey
+        ]?: Exclude<TMetadata[TKey], null | undefined>;
+      }
+    >;
+
+type InferMetadataObjectFromFn<TMetadata> = [
+  Exclude<TMetadata, undefined>,
+] extends [never]
+  ? Record<string, never>
+  : Exclude<TMetadata, undefined> extends (...args: any) => any
+    ? NormalizeMetadata<Awaited<ReturnType<Exclude<TMetadata, undefined>>>>
     : Record<string, never>;
+
+export type InferMetadataObject<TBucket extends Builder<any, AnyDef>> =
+  InferMetadataObjectFromFn<TBucket['_def']['metadata']>;
 
 type InferMetadataObjectFromDef<TDef extends AnyDef> =
-  TDef['metadata'] extends (...args: any) => any
-    ? Awaited<ReturnType<TDef['metadata']>>
-    : Record<string, never>;
+  InferMetadataObjectFromFn<TDef['metadata']>;
 
-export type AnyContextValue = string | undefined | null | AnyContext;
+export type AnyContextValue = string | undefined;
 
+/**
+ * Context shared by router hooks, path and metadata builders, and providers.
+ *
+ * Values are limited to strings so every supported provider receives the same
+ * context shape. Optional properties may be `undefined`; providers omit them
+ * when serializing the context.
+ */
 export interface AnyContext {
   [key: string]: AnyContextValue;
 }
@@ -162,7 +197,7 @@ type BucketType = 'IMAGE' | 'FILE';
 type Def<
   TInput extends AnyInput,
   TPath extends AnyPath,
-  TMetadata extends AnyMetadataFn,
+  TMetadata extends AnyMetadataFn | undefined,
 > = {
   type: BucketType;
   input: TInput;
@@ -175,7 +210,7 @@ type Def<
   beforeDelete?: BeforeDeleteFn<any, any>;
 };
 
-type AnyDef = Def<AnyInput, AnyPath, AnyMetadataFn>;
+type AnyDef = Def<AnyInput, AnyPath, AnyMetadataFn | undefined>;
 
 type Builder<TCtx, TDef extends AnyDef> = {
   /** only used for types */
@@ -358,7 +393,7 @@ function createBuilder<
   TType extends BucketType,
   TInput extends AnyInput = z.ZodNever,
   TPath extends AnyPath = [],
-  TMetadata extends AnyMetadataFn = () => Record<string, never>,
+  TMetadata extends AnyMetadataFn | undefined = undefined,
 >(
   opts: { type: TType },
   initDef?: Partial<AnyDef>,
@@ -380,7 +415,7 @@ function createBuilder<
     type: opts.type,
     input: z.never(),
     path: [],
-    metadata: () => ({}),
+    metadata: undefined,
     ...initDef,
   };
 

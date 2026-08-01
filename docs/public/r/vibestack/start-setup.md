@@ -15,6 +15,7 @@ or
 ```bash
 pnpm add @edgestore/server @edgestore/react zod
 ```
+
 or
 
 ```bash
@@ -48,19 +49,25 @@ In your TanStack Start application, create an API route for EdgeStore with the f
 ```ts
 app/routes/api/edgestore.$.ts
 
-import { initEdgeStore } from '@edgestore/server';
+import { createEdgeStore, initEdgeStore } from '@edgestore/server';
 import { createEdgeStoreStartHandler } from '@edgestore/server/adapters/start';
+import { edgestore } from '@edgestore/server/providers/edgestore';
 import { createAPIFileRoute } from '@tanstack/start/api';
 
 const es = initEdgeStore.create();
-const edgeStoreRouter = es.router({
+const router = es.router({
   publicFiles: es.fileBucket(),
 });
 
-export type EdgeStoreRouter = typeof edgeStoreRouter;
+export type EdgeStoreRouter = typeof router;
+
+const configuredEdgeStore = createEdgeStore({
+  router,
+  provider: edgestore(),
+});
 
 const handler = createEdgeStoreStartHandler({
-  router: edgeStoreRouter,
+  edgestore: configuredEdgeStore,
 });
 
 export const APIRoute = createAPIFileRoute('/api/edgestore/$')({

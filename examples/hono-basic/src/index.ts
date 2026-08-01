@@ -1,5 +1,6 @@
-import { initEdgeStore } from '@edgestore/server';
+import { createEdgeStore, initEdgeStore } from '@edgestore/server';
 import { createEdgeStoreHonoHandler } from '@edgestore/server/adapters/hono';
+import { edgestore } from '@edgestore/server/providers/edgestore';
 import { serve } from '@hono/node-server';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
@@ -26,15 +27,17 @@ app.use(
 
 const es = initEdgeStore.create();
 
-const edgeStoreRouter = es.router({
+const router = es.router({
   publicFiles: es.fileBucket(),
 });
 
-export type EdgeStoreRouter = typeof edgeStoreRouter;
+export type EdgeStoreRouter = typeof router;
 
-const handler = createEdgeStoreHonoHandler({
-  router: edgeStoreRouter,
+const configuredEdgeStore = createEdgeStore({
+  router,
+  provider: edgestore(),
 });
+const handler = createEdgeStoreHonoHandler({ edgestore: configuredEdgeStore });
 
 // --- HONO ROUTES ---
 

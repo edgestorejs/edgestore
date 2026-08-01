@@ -1,0 +1,70 @@
+{
+  "name": "@edgestore/sdk",
+  "version": "0.7.0",
+  "description": "Official low-level TypeScript SDK for the EdgeStore API",
+  "homepage": "https://edgestore.dev",
+  "license": "MIT",
+  "sideEffects": false,
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/edgestorejs/edgestore.git",
+    "directory": "packages/sdk"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "author": "Ravi <me@ravi.com>",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "engines": {
+    "node": ">=24"
+  },
+  "keywords": [
+    "nodejs",
+    "typescript",
+    "upload",
+    "file",
+    "image",
+    "cdn",
+    "edgestore",
+    "edge-store"
+  ],
+  "scripts": {
+    "build": "pnpm codegen:check && rollup --config rollup.config.ts --configPlugin rollup-plugin-swc3",
+    "dev": "pnpm build --watch",
+    "codegen:api": "openapi-typescript ./src/generated/openapi-v2.json -o ./src/generated/api-v2.ts --export-type",
+    "codegen:check": "pnpm codegen:api --check",
+    "codegen:entrypoints": "tsx entrypoints.script.ts",
+    "schema:sync": "node ./sync-openapi.mjs",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint --cache --ignore-pattern src/generated --report-unused-disable-directives src"
+  },
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src",
+    "README.md",
+    "LICENSE",
+    "package.json",
+    "!**/*.test.*",
+    "!**/__tests__"
+  ],
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "openapi-typescript": "7.6.1",
+    "typescript": "catalog:"
+  },
+  "dependencies": {
+    "openapi-fetch": "0.17.0",
+    "openapi-typescript-helpers": "0.1.0"
+  }
+}
