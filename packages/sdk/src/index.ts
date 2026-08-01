@@ -15,6 +15,11 @@ export {
 } from './errors';
 export type { ManagementClient } from './managementClient';
 export {
+  planMultipartUpload,
+  type MultipartUploadPlan,
+  type MultipartUploadPlanOptions,
+} from './multipartPlan';
+export {
   createEdgeStoreSdk,
   type EdgeStoreSdkOptions,
   type ManagementEdgeStoreSdk,

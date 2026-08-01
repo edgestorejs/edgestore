@@ -1,7 +1,6 @@
 import {
   createEdgeStoreSdk,
-  DEFAULT_MULTIPART_PART_SIZE_BYTES,
-  DEFAULT_MULTIPART_THRESHOLD_BYTES,
+  planMultipartUpload,
   type ProjectRuntimeClient,
 } from '@edgestore/sdk';
 import {
@@ -10,7 +9,6 @@ import {
   type ProviderFileMutationResult,
   type RequestUploadParams,
   type RequestUploadRes,
-  type RouterFileFieldsProvider,
 } from '@edgestore/shared';
 import { z } from 'zod';
 import { defineProvider } from '../../core/provider';
@@ -128,25 +126,22 @@ export function edgestore(options?: EdgeStoreProviderOptions) {
         fileInfo,
         autoSignedUrls,
       }): Promise<RequestUploadRes> {
-        let partSize = DEFAULT_MULTIPART_PART_SIZE_BYTES;
-        if (fileInfo.size > DEFAULT_MULTIPART_THRESHOLD_BYTES) {
-          let totalParts = Math.ceil(fileInfo.size / partSize);
-          if (totalParts > 10_000) {
-            totalParts = 10_000;
-            partSize = Math.ceil(fileInfo.size / totalParts);
-          }
+        const multipartPlan = planMultipartUpload({
+          sizeBytes: fileInfo.size,
+        });
+        if (multipartPlan) {
           return mapUploadResponse(
             await runtime.uploads.request({
               bucket: bucketName,
               ...mapRawUploadRequest(bucketType, fileInfo, autoSignedUrls),
               multipart: {
-                partNumbers: Array.from(
-                  { length: totalParts },
-                  (_, index) => index + 1,
-                ),
+                partNumbers: multipartPlan.partNumbers,
               },
             }),
-            { partSize, totalParts },
+            {
+              partSize: multipartPlan.partSizeBytes,
+              totalParts: multipartPlan.totalParts,
+            },
           );
         }
         return mapUploadResponse(
@@ -264,7 +259,7 @@ export function edgestore(options?: EdgeStoreProviderOptions) {
     },
   });
 
-  return provider as typeof provider & RouterFileFieldsProvider;
+  return provider;
 }
 
 export type EdgeStoreBackendProvider = ReturnType<typeof edgestore>;

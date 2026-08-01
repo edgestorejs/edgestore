@@ -20,7 +20,6 @@ import {
   type ProviderMutationError,
   type ProviderReference,
   type ProviderReferenceInput,
-  type RouterFileFieldsProvider,
   type Simplify,
 } from '@edgestore/shared';
 import type { z, ZodNever } from 'zod';
@@ -36,35 +35,51 @@ export type Comparison<TType = string> =
 
 export type EdgeStoreFileReference = FileReference;
 
-type ProviderFileFields<TFile extends BackendFile> = TFile extends ProviderFile
+type RouterFieldValue<TValue, TRouterValue> =
+  TValue extends Record<string, string> ? TRouterValue : TValue;
+
+type ProviderRouterField<
+  TBucket extends AnyBuilder,
+  TFile extends BackendFile,
+  TKey extends 'metadata' | 'path',
+> = TKey extends keyof TFile
+  ? {
+      [TField in keyof Pick<TFile, TKey>]: RouterFieldValue<
+        Pick<TFile, TKey>[TField],
+        TKey extends 'metadata'
+          ? InferMetadataObject<TBucket>
+          : InferBucketPathObject<TBucket>
+      >;
+    }
+  : object;
+
+type ProviderRouterFields<
+  TBucket extends AnyBuilder,
+  TFile extends BackendFile,
+> = ProviderRouterField<TBucket, TFile, 'metadata'> &
+  ProviderRouterField<TBucket, TFile, 'path'>;
+
+type ProviderFileFields<
+  TBucket extends AnyBuilder,
+  TFile extends BackendFile,
+> = TFile extends ProviderFile
   ? Omit<ProviderFile, 'metadata' | 'path'> &
       Omit<TFile, keyof ProviderFile> &
-      Pick<TFile, 'metadata' | 'path'>
+      ProviderRouterFields<TBucket, TFile>
   : Omit<TFile, 'metadata' | 'path' | 'uploadedAt' | 'updatedAt'> & {
       uploadedAt: Date;
       updatedAt: Date;
-      metadata: TFile['metadata'];
-      path: TFile['path'];
-    };
+    } & ProviderRouterFields<TBucket, TFile>;
 
 export type FileRecord<
-  _TBucket extends AnyBuilder,
+  TBucket extends AnyBuilder,
   TFile extends BackendFile = ProviderFile,
-> = ProviderFileFields<TFile>;
+> = ProviderFileFields<TBucket, TFile>;
 
 type RouterFileFields<TBucket extends AnyBuilder> = {
   metadata: InferMetadataObject<TBucket>;
   path: InferBucketPathObject<TBucket>;
 };
-
-type ReadFileRecord<
-  TBucket extends AnyBuilder,
-  TProvider,
-  TFile extends BackendFile,
-> = TProvider extends RouterFileFieldsProvider
-  ? Omit<FileRecord<TBucket, TFile>, 'metadata' | 'path'> &
-      RouterFileFields<TBucket>
-  : FileRecord<TBucket, TFile>;
 
 export type GetFileRes<
   TBucket extends AnyBuilder,
@@ -280,13 +295,7 @@ type GetFileBucketClient<TBucket extends AnyBuilder, TProvider> = [
       get: (
         ref: ProviderReferenceInput<TProvider>,
       ) => Promise<
-        Prettify<
-          ReadFileRecord<
-            TBucket,
-            TProvider,
-            ProviderCapabilityFile<TProvider, 'get'>
-          >
-        >
+        Prettify<FileRecord<TBucket, ProviderCapabilityFile<TProvider, 'get'>>>
       >;
     };
 
@@ -321,11 +330,7 @@ type ListBucketClient<TBucket extends AnyBuilder, TProvider> = [
         params?: ListFilesRequest<TBucket, ProviderCursor<TProvider>>,
       ) => Promise<{
         items: Prettify<
-          ReadFileRecord<
-            TBucket,
-            TProvider,
-            ProviderCapabilityFile<TProvider, 'list'>
-          >
+          FileRecord<TBucket, ProviderCapabilityFile<TProvider, 'list'>>
         >[];
         limit: number;
         nextCursor: ProviderCursor<TProvider> | null;

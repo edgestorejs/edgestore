@@ -128,6 +128,36 @@ describe('frontend file mutations', () => {
     expect(provider.files.delete).not.toHaveBeenCalled();
   });
 
+  it('requires stored router fields for frontend deletion authorization', async () => {
+    const beforeDelete = vi.fn(() => true);
+    const es = initEdgeStore.create();
+    const router = es.router({
+      documents: es.fileBucket().beforeDelete(beforeDelete),
+    });
+    const provider = createProvider();
+    const ctxToken = await createContextToken({ router, ctx: {} });
+    vi.mocked(provider.files.get!).mockResolvedValue({
+      url: originalUrls[0]!,
+      sizeBytes: 10,
+      uploadedAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    await expect(
+      deleteFiles({
+        provider,
+        router,
+        ctxToken,
+        body: { bucketName: 'documents', urls: [proxiedUrls[0]!] },
+        logger,
+      }),
+    ).rejects.toThrow(
+      'Provider test-provider must return path and metadata from files.get to authorize frontend deletion.',
+    );
+    expect(beforeDelete).not.toHaveBeenCalled();
+    expect(provider.files.delete).not.toHaveBeenCalled();
+  });
+
   it('authorizes every file before attempting a batch delete', async () => {
     const beforeDelete = vi
       .fn()

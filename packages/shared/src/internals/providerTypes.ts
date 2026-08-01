@@ -96,8 +96,10 @@ export type ProviderFile = {
 export type BackendFile = {
   url: string;
   sizeBytes: number;
-  path: Record<string, string>;
-  metadata: Record<string, string>;
+  /** Router-derived path values, when this operation retrieves them. */
+  path?: Record<string, string>;
+  /** Router-derived metadata values, when this operation retrieves them. */
+  metadata?: Record<string, string>;
   uploadedAt: Date | string;
   updatedAt: Date | string;
 };
@@ -359,30 +361,19 @@ export type AnyEdgeStoreProvider = EdgeStoreProvider<
   ProviderFiles<any, any>
 >;
 
-declare const routerFileFieldsProviderBrand: unique symbol;
-
-/**
- * @internal Marks providers whose read contract persists the router-derived
- * path and metadata fields.
- */
-export type RouterFileFieldsProvider = {
-  readonly [routerFileFieldsProviderBrand]: true;
-};
-
 export type DefaultEdgeStoreProvider = EdgeStoreProvider<
   StandardSchemaV1<unknown, FileReference>,
   string
-> &
-  RouterFileFieldsProvider & {
-    uploads: ProviderUploads<BackendUploadOperation> & {
-      upload: BackendUploadOperation;
-    };
-    files: ProviderFiles<FileReference, string> & {
-      get: BackendGetFileOperation;
-      list: BackendListFilesOperation;
-      confirm: BackendFileMutationOperation;
-      delete: BackendFileMutationOperation;
-      restore: BackendFileMutationOperation;
-      getSignedUrls: BackendGetSignedUrlsOperation;
-    };
+> & {
+  uploads: ProviderUploads<BackendUploadOperation> & {
+    upload: BackendUploadOperation;
   };
+  files: ProviderFiles<FileReference, string> & {
+    get: BackendGetFileOperation;
+    list: BackendListFilesOperation;
+    confirm: BackendFileMutationOperation;
+    delete: BackendFileMutationOperation;
+    restore: BackendFileMutationOperation;
+    getSignedUrls: BackendGetSignedUrlsOperation;
+  };
+};

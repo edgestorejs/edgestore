@@ -1,4 +1,5 @@
 import { createEdgeStoreSdk } from '@edgestore/sdk';
+import type * as EdgeStoreSdkModule from '@edgestore/sdk';
 import { initEdgeStore } from '@edgestore/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { edgestore } from '.';
@@ -26,16 +27,18 @@ const runtime = vi.hoisted(() => ({
 
 const forProject = vi.hoisted(() => vi.fn(() => runtime));
 
-vi.mock('@edgestore/sdk', () => ({
-  createEdgeStoreSdk: vi.fn(
-    (options: { credentials: Record<string, string> }) =>
-      'token' in options.credentials
-        ? { runtime: { forProject } }
-        : { runtime },
-  ),
-  DEFAULT_MULTIPART_PART_SIZE_BYTES: 16 * 1024 * 1024,
-  DEFAULT_MULTIPART_THRESHOLD_BYTES: 100 * 1024 * 1024,
-}));
+vi.mock('@edgestore/sdk', async (importOriginal) => {
+  const sdk = await importOriginal<typeof EdgeStoreSdkModule>();
+  return {
+    ...sdk,
+    createEdgeStoreSdk: vi.fn(
+      (options: { credentials: Record<string, string> }) =>
+        'token' in options.credentials
+          ? { runtime: { forProject } }
+          : { runtime },
+    ),
+  };
+});
 
 const fileInfo = {
   type: 'text/plain',

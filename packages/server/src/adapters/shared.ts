@@ -572,8 +572,14 @@ export async function deleteFiles<TCtx extends AnyContext>(params: {
     ),
   );
   const authorizations = await Promise.all(
-    fileRecords.map((file) =>
-      Promise.resolve(
+    fileRecords.map((file) => {
+      if (file.path === undefined || file.metadata === undefined) {
+        throw new EdgeStoreError({
+          message: `Provider ${provider.name} must return path and metadata from files.get to authorize frontend deletion.`,
+          code: 'SERVER_ERROR',
+        });
+      }
+      return Promise.resolve(
         bucket._def.beforeDelete!({
           ctx,
           fileInfo: {
@@ -584,8 +590,8 @@ export async function deleteFiles<TCtx extends AnyContext>(params: {
             metadata: file.metadata,
           },
         }),
-      ),
-    ),
+      );
+    }),
   );
   if (authorizations.some((allowed) => !allowed)) {
     throw new EdgeStoreError({
