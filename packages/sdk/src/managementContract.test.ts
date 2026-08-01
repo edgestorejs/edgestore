@@ -1,8 +1,16 @@
 import { describe, expect, it, vi } from 'vitest';
+import type { ManagementResourceOperationId } from './operationGroups.test.helper';
 import { createEdgeStoreSdk } from './sdk';
 
+type MappingCase = {
+  invoke: () => Promise<unknown>;
+  method: string;
+  path: string;
+  body?: unknown;
+};
+
 describe('management resource request mappings', () => {
-  it('maps every resource operation to its HTTP contract', async () => {
+  it('maps every supported resource method to its expected request', async () => {
     const requests: Request[] = [];
     const fetch = vi.fn<typeof globalThis.fetch>(async (input) => {
       requests.push(input instanceof Request ? input : new Request(input));
@@ -16,21 +24,13 @@ describe('management resource request mappings', () => {
     const project = 'project-id';
     const bucket = 'documents';
     const uploadId = 'upload-id';
-    const cases: {
-      name: string;
-      invoke: () => Promise<unknown>;
-      method: string;
-      path: string;
-      body?: unknown;
-    }[] = [
-      {
-        name: 'projects.list',
+    const cases = {
+      'v2.management.projects.list': {
         invoke: () => sdk.management.projects.list({ account: 'account-id' }),
         method: 'GET',
         path: '/v2/management/accounts/account-id/projects',
       },
-      {
-        name: 'projects.create',
+      'v2.management.projects.create': {
         invoke: () =>
           sdk.management.projects.create({
             account: 'account-id',
@@ -41,26 +41,22 @@ describe('management resource request mappings', () => {
         path: '/v2/management/accounts/account-id/projects',
         body: { name: 'Website', createKey: true },
       },
-      {
-        name: 'projects.get',
+      'v2.management.projects.get': {
         invoke: () => sdk.management.projects.get({ project }),
         method: 'GET',
         path: `/v2/management/projects/${project}`,
       },
-      {
-        name: 'projects.delete',
+      'v2.management.projects.delete': {
         invoke: () => sdk.management.projects.delete({ project }),
         method: 'DELETE',
         path: `/v2/management/projects/${project}`,
       },
-      {
-        name: 'buckets.list',
+      'v2.management.buckets.list': {
         invoke: () => sdk.management.buckets.list({ project }),
         method: 'GET',
         path: `/v2/management/projects/${project}/buckets`,
       },
-      {
-        name: 'buckets.create',
+      'v2.management.buckets.create': {
         invoke: () =>
           sdk.management.buckets.create({
             project,
@@ -72,14 +68,12 @@ describe('management resource request mappings', () => {
         path: `/v2/management/projects/${project}/buckets`,
         body: { name: bucket, type: 'file', visibility: 'protected' },
       },
-      {
-        name: 'buckets.get',
+      'v2.management.buckets.get': {
         invoke: () => sdk.management.buckets.get({ project, bucket }),
         method: 'GET',
         path: `/v2/management/projects/${project}/buckets/${bucket}`,
       },
-      {
-        name: 'buckets.update',
+      'v2.management.buckets.update': {
         invoke: () =>
           sdk.management.buckets.update({
             project,
@@ -90,28 +84,24 @@ describe('management resource request mappings', () => {
         path: `/v2/management/projects/${project}/buckets/${bucket}`,
         body: { metadata: { custom: ['category'] } },
       },
-      {
-        name: 'buckets.delete',
+      'v2.management.buckets.delete': {
         invoke: () => sdk.management.buckets.delete({ project, bucket }),
         method: 'DELETE',
         path: `/v2/management/projects/${project}/buckets/${bucket}`,
       },
-      {
-        name: 'buckets.empty',
+      'v2.management.buckets.empty': {
         invoke: () => sdk.management.buckets.empty({ project, bucket }),
         method: 'POST',
         path: `/v2/management/projects/${project}/buckets/${bucket}/empty`,
         body: {},
       },
-      {
-        name: 'buckets.emptyJobs.latest',
+      'v2.management.buckets.emptyJobs.latest': {
         invoke: () =>
           sdk.management.buckets.emptyJobs.latest({ project, bucket }),
         method: 'GET',
         path: `/v2/management/projects/${project}/buckets/${bucket}/empty-job`,
       },
-      {
-        name: 'buckets.emptyJobs.get',
+      'v2.management.buckets.emptyJobs.get': {
         invoke: () =>
           sdk.management.buckets.emptyJobs.get({
             project,
@@ -121,8 +111,7 @@ describe('management resource request mappings', () => {
         method: 'GET',
         path: `/v2/management/projects/${project}/buckets/${bucket}/empty-jobs/job-id`,
       },
-      {
-        name: 'buckets.emptyJobs.retry',
+      'v2.management.buckets.emptyJobs.retry': {
         invoke: () =>
           sdk.management.buckets.emptyJobs.retry({
             project,
@@ -133,8 +122,7 @@ describe('management resource request mappings', () => {
         path: `/v2/management/projects/${project}/buckets/${bucket}/empty-jobs/job-id/retry`,
         body: {},
       },
-      {
-        name: 'files.list',
+      'v2.management.files.list': {
         invoke: () =>
           sdk.management.files.list({
             project,
@@ -145,8 +133,7 @@ describe('management resource request mappings', () => {
         method: 'GET',
         path: `/v2/management/projects/${project}/buckets/${bucket}/files?cursor=next&limit=10`,
       },
-      {
-        name: 'files.lookup',
+      'v2.management.files.lookup': {
         invoke: () =>
           sdk.management.files.lookup({
             project,
@@ -156,8 +143,7 @@ describe('management resource request mappings', () => {
         path: `/v2/management/projects/${project}/files/lookup`,
         body: { file: { id: 'file-id' } },
       },
-      {
-        name: 'files.generateAccessUrls',
+      'v2.management.files.generateAccessUrls': {
         invoke: () =>
           sdk.management.files.generateAccessUrls({
             project,
@@ -168,8 +154,7 @@ describe('management resource request mappings', () => {
         path: `/v2/management/projects/${project}/files/access-urls`,
         body: { files: [{ id: 'file-id' }], expiresIn: 60 },
       },
-      {
-        name: 'files.delete',
+      'v2.management.files.delete': {
         invoke: () =>
           sdk.management.files.delete({
             project,
@@ -179,8 +164,7 @@ describe('management resource request mappings', () => {
         path: `/v2/management/projects/${project}/files/delete`,
         body: { files: [{ id: 'file-id' }] },
       },
-      {
-        name: 'uploads.request',
+      'v2.management.uploads.request': {
         invoke: () =>
           sdk.management.uploads.request({
             project,
@@ -191,20 +175,17 @@ describe('management resource request mappings', () => {
         path: `/v2/management/projects/${project}/buckets/${bucket}/uploads`,
         body: { sizeBytes: 42 },
       },
-      {
-        name: 'uploads.get',
+      'v2.management.uploads.get': {
         invoke: () => sdk.management.uploads.get({ project, uploadId }),
         method: 'GET',
         path: `/v2/management/projects/${project}/uploads/${uploadId}`,
       },
-      {
-        name: 'uploads.cancel',
+      'v2.management.uploads.cancel': {
         invoke: () => sdk.management.uploads.cancel({ project, uploadId }),
         method: 'DELETE',
         path: `/v2/management/projects/${project}/uploads/${uploadId}`,
       },
-      {
-        name: 'uploads.createParts',
+      'v2.management.uploads.parts.create': {
         invoke: () =>
           sdk.management.uploads.createParts({
             project,
@@ -215,8 +196,7 @@ describe('management resource request mappings', () => {
         path: `/v2/management/projects/${project}/uploads/${uploadId}/parts`,
         body: { partNumbers: [1] },
       },
-      {
-        name: 'uploads.completeMultipart',
+      'v2.management.uploads.multipart.complete': {
         invoke: () =>
           sdk.management.uploads.completeMultipart({
             project,
@@ -227,18 +207,18 @@ describe('management resource request mappings', () => {
         path: `/v2/management/projects/${project}/uploads/${uploadId}/complete`,
         body: { parts: [{ partNumber: 1, eTag: 'etag-1' }] },
       },
-    ];
+    } satisfies Record<ManagementResourceOperationId, MappingCase>;
 
-    for (const testCase of cases) {
+    for (const [operationId, testCase] of Object.entries(cases)) {
       requests.length = 0;
       await testCase.invoke();
-      expect(requests, testCase.name).toHaveLength(1);
+      expect(requests, operationId).toHaveLength(1);
       const request = requests[0]!;
-      expect(request.method, testCase.name).toBe(testCase.method);
+      expect(request.method, operationId).toBe(testCase.method);
       const url = new URL(request.url);
-      expect(`${url.pathname}${url.search}`, testCase.name).toBe(testCase.path);
-      if (testCase.body !== undefined) {
-        await expect(request.json(), testCase.name).resolves.toEqual(
+      expect(`${url.pathname}${url.search}`, operationId).toBe(testCase.path);
+      if ('body' in testCase) {
+        await expect(request.json(), operationId).resolves.toEqual(
           testCase.body,
         );
       }

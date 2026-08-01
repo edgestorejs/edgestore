@@ -321,15 +321,20 @@ describe('runtime upload orchestration', () => {
     await pullStarted;
     controller.abort();
 
+    let timeout: ReturnType<typeof setTimeout> | undefined;
     const result = Promise.race([
       upload,
       new Promise<never>((_resolve, reject) => {
-        setTimeout(() => {
+        timeout = setTimeout(() => {
           reject(new Error('Upload did not abort promptly.'));
         }, 100);
       }),
     ]);
-    await expect(result).rejects.toBeInstanceOf(EdgeStoreAbortError);
+    try {
+      await expect(result).rejects.toBeInstanceOf(EdgeStoreAbortError);
+    } finally {
+      clearTimeout(timeout);
+    }
     expect(uploadCanceled).toBe(true);
   });
 
