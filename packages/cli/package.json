@@ -15,7 +15,7 @@
   "author": "Ravi <me@ravi.com>",
   "type": "module",
   "bin": {
-    "edgestore": "./dist/bin.mjs"
+    "edgestore": "dist/bin.mjs"
   },
   "engines": {
     "node": ">=24"
