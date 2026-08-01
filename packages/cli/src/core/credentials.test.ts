@@ -3,17 +3,17 @@ import { resolveCredential, type CredentialStore } from './credentials';
 
 describe('resolveCredential', () => {
   it('prefers EDGESTORE_TOKEN without reading the keychain', async () => {
-    const store = credentialStore('stored');
+    const { store, getCredential } = credentialStore('stored');
 
     await expect(resolveCredential(' environment ', store)).resolves.toEqual({
       token: 'environment',
       source: 'environment',
     });
-    expect(store.get).not.toHaveBeenCalled();
+    expect(getCredential).not.toHaveBeenCalled();
   });
 
   it('uses the keychain when the environment token is absent', async () => {
-    const store = credentialStore(' stored ');
+    const { store } = credentialStore(' stored ');
 
     await expect(resolveCredential(undefined, store)).resolves.toEqual({
       token: 'stored',
@@ -22,13 +22,16 @@ describe('resolveCredential', () => {
   });
 });
 
-function credentialStore(token: string): Omit<CredentialStore, 'get'> & {
-  get: ReturnType<typeof vi.fn>;
+function credentialStore(token: string): {
+  store: CredentialStore;
+  getCredential: ReturnType<typeof vi.fn<CredentialStore['get']>>;
 } {
-  return {
-    get: vi.fn(async () => token),
+  const getCredential = vi.fn<CredentialStore['get']>(async () => token);
+  const store: CredentialStore = {
+    get: getCredential,
     set: vi.fn(async () => undefined),
     delete: vi.fn(async () => true),
     available: vi.fn(async () => true),
   };
+  return { store, getCredential };
 }
