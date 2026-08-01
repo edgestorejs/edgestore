@@ -246,8 +246,6 @@ export function s3(options?: S3ProviderOptions) {
 
         return {
           url: file.url,
-          metadata: {},
-          path: {},
           sizeBytes: ContentLength,
           uploadedAt: LastModified,
           updatedAt: LastModified,

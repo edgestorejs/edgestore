@@ -22,13 +22,10 @@ import {
   assertNonNegative,
   getPositiveInteger,
 } from './internal/uploadValidation';
+import { planMultipartUpload } from './multipartPlan';
 import {
   DEFAULT_MULTIPART_CONCURRENCY,
-  DEFAULT_MULTIPART_PART_SIZE_BYTES,
-  DEFAULT_MULTIPART_THRESHOLD_BYTES,
   DEFAULT_PROCESSING_TIMEOUT_MS,
-  MAX_MULTIPART_PARTS,
-  MIN_MULTIPART_PART_SIZE_BYTES,
   type CompletedUpload,
   type RuntimeUploadFromUrlInput,
   type RuntimeUploadInput,
@@ -87,9 +84,6 @@ export async function uploadRuntimeFile(
   const prepared = prepareSource(source);
   const totalBytes = prepared.sizeBytes;
   assertNonNegative(processingTimeoutMs, 'processingTimeoutMs');
-  const multipartThresholdBytes =
-    defaults.multipartThresholdBytes ?? DEFAULT_MULTIPART_THRESHOLD_BYTES;
-  assertNonNegative(multipartThresholdBytes, 'upload.multipartThresholdBytes');
 
   throwIfAborted(signal);
   reportProgress(onProgress, {
@@ -98,39 +92,25 @@ export async function uploadRuntimeFile(
     phase: 'preparing',
   });
 
-  const requestedPartSizeBytes = getPositiveInteger(
-    typeof multipart === 'object'
-      ? multipart.partSizeBytes
-      : defaults.multipartPartSizeBytes,
-    defaults.multipartPartSizeBytes ?? DEFAULT_MULTIPART_PART_SIZE_BYTES,
-    'multipart.partSizeBytes',
-  );
-  if (requestedPartSizeBytes < MIN_MULTIPART_PART_SIZE_BYTES) {
-    throw new RangeError(
-      `multipart.partSizeBytes must be at least ${MIN_MULTIPART_PART_SIZE_BYTES} bytes (5 MiB).`,
-    );
-  }
-  const partSizeBytes = Math.max(
-    requestedPartSizeBytes,
-    Math.ceil(totalBytes / MAX_MULTIPART_PARTS),
-  );
-  const useMultipart =
-    prepared.kind === 'stream' ||
-    multipart === true ||
-    typeof multipart === 'object' ||
-    totalBytes > multipartThresholdBytes;
+  const multipartPlan = planMultipartUpload({
+    sizeBytes: totalBytes,
+    thresholdBytes: defaults.multipartThresholdBytes,
+    preferredPartSizeBytes:
+      typeof multipart === 'object'
+        ? (multipart.partSizeBytes ?? defaults.multipartPartSizeBytes)
+        : defaults.multipartPartSizeBytes,
+    forceMultipart:
+      prepared.kind === 'stream' ||
+      multipart === true ||
+      typeof multipart === 'object',
+  });
 
   const bucketResult = await operations.buckets.get({
     project,
     bucket,
     signal,
   });
-  const partNumbers = useMultipart
-    ? Array.from(
-        { length: Math.max(1, Math.ceil(totalBytes / partSizeBytes)) },
-        (_, index) => index + 1,
-      )
-    : undefined;
+  const partNumbers = multipartPlan?.partNumbers;
 
   const requested = await operations.uploads.request({
     project,
@@ -176,6 +156,11 @@ export async function uploadRuntimeFile(
           'The API returned a single upload URL for a stream source.',
         );
       }
+      if (!multipartPlan) {
+        throw new TypeError(
+          'The API returned a multipart upload for a single-upload request.',
+        );
+      }
       const concurrency = getPositiveInteger(
         typeof multipart === 'object'
           ? multipart.concurrency
@@ -186,7 +171,7 @@ export async function uploadRuntimeFile(
       const transferOptions = {
         uploadId,
         parts: requested.upload.parts,
-        partSizeBytes,
+        partSizeBytes: multipartPlan.partSizeBytes,
         signal,
         onProgress,
       };

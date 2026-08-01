@@ -12,9 +12,12 @@ eagerly created, type-safe backend client through `.client`.
 Providers now use the resource-oriented `EdgeStoreProvider` contract and the
 public `defineProvider` helper. File references, cursors, capabilities, inputs,
 and results are inferred from each provider definition, and unsupported
-backend methods remain absent. The hosted `edgestore()` provider uses the new
-API v2 SDK and supports project credentials or a Bearer token with an explicit
-project. Direct storage providers are exposed as `s3()` and `azureBlob()`.
+backend methods remain absent. Provider `get` and `list` operations can return
+router path and metadata fields independently; their presence and optionality
+are reflected in the generated backend client. The hosted `edgestore()`
+provider uses the new API v2 SDK and supports project credentials or a Bearer
+token with an explicit project. Direct storage providers are exposed as `s3()`
+and `azureBlob()`.
 
 Backend and React lifecycle methods use singular names with `Many` batch
 variants. Batch mutations preserve per-file failures, frontend deletion

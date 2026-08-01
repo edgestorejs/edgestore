@@ -83,7 +83,12 @@ const s3EdgeStore = createEdgeStore({
   router: publicRouter,
   provider: s3(),
 });
-void s3EdgeStore.client.files.get({ url: 'https://s3.example/file' });
+void s3EdgeStore.client.files
+  .get({ url: 'https://s3.example/file' })
+  .then((file) => {
+    expectError(file.path);
+    expectError(file.metadata);
+  });
 expectError(s3EdgeStore.client.files.upload);
 expectError(s3EdgeStore.client.files.list);
 expectError(s3EdgeStore.client.files.confirm);
@@ -117,8 +122,8 @@ const syntheticProvider = defineProvider({
     get: async ({ file }) => ({
       url: `https://s3.example/${file.objectKey}`,
       sizeBytes: 5,
-      path: { storageRegion: 'us-east-1' as const },
-      metadata: { storageClass: 'archive' as const },
+      path: {},
+      metadata: {},
       uploadedAt: new Date(),
       updatedAt: new Date(),
       eTag: 'etag',
@@ -128,8 +133,6 @@ const syntheticProvider = defineProvider({
         {
           url: 'https://s3.example/files/file.txt',
           sizeBytes: 5,
-          path: { storageRegion: 'us-east-1' as const },
-          metadata: { storageClass: 'archive' as const },
           uploadedAt: new Date(),
           updatedAt: new Date(),
           eTag: 'etag',
@@ -213,16 +216,16 @@ expectError(syntheticClient.files.restore);
 expectError(syntheticClient.files.get({ id: 'file-id' }));
 void syntheticClient.files.get({ objectKey: 'files/file.txt' }).then((file) => {
   expectType<string>(file.eTag);
-  expectType<'us-east-1'>(file.path.storageRegion);
-  expectType<'archive'>(file.metadata.storageClass);
+  expectType<Record<string, never>>(file.path);
+  expectType<Record<string, never>>(file.metadata);
   expectError(file.accountId);
 });
 expectError(syntheticClient.files.list({ cursor: 'next' }));
 void syntheticClient.files.list({ cursor: 1 }).then((page) => {
   expectType<number | null>(page.nextCursor);
   expectType<string>(page.items[0]!.eTag);
-  expectType<'us-east-1'>(page.items[0]!.path.storageRegion);
-  expectType<'archive'>(page.items[0]!.metadata.storageClass);
+  expectError(page.items[0]!.path);
+  expectError(page.items[0]!.metadata);
   expectError(page.items[0]!.accountId);
 });
 void syntheticClient.files.upload({ content: 'hello' }).then((file) => {

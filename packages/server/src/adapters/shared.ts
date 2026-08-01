@@ -293,10 +293,11 @@ export async function requestUpload<TCtx extends AnyContext>(params: {
     bucket,
     pathAttrs: { ctx, input: parsedInput },
   });
-  const metadata = await bucket._def.metadata?.({
-    ctx,
-    input: parsedInput,
-  });
+  const metadata =
+    (await bucket._def.metadata?.({
+      ctx,
+      input: parsedInput,
+    })) ?? {};
   const isPublic = bucket._def.accessControl === undefined;
   const autoSignedUrls = bucket._def.autoSignedUrls;
 
@@ -572,20 +573,32 @@ export async function deleteFiles<TCtx extends AnyContext>(params: {
     ),
   );
   const authorizations = await Promise.all(
-    fileRecords.map((file) =>
-      Promise.resolve(
+    fileRecords.map((file) => {
+      if (file.path === undefined && bucket._def.path.length > 0) {
+        throw new EdgeStoreError({
+          message: `Provider ${provider.name} must return path from files.get to authorize frontend deletion for a bucket with configured path fields.`,
+          code: 'SERVER_ERROR',
+        });
+      }
+      if (file.metadata === undefined && bucket._def.metadata !== undefined) {
+        throw new EdgeStoreError({
+          message: `Provider ${provider.name} must return metadata from files.get to authorize frontend deletion for a bucket with configured metadata fields.`,
+          code: 'SERVER_ERROR',
+        });
+      }
+      return Promise.resolve(
         bucket._def.beforeDelete!({
           ctx,
           fileInfo: {
             url: file.url,
             size: file.sizeBytes,
             uploadedAt: new Date(file.uploadedAt),
-            path: file.path,
-            metadata: file.metadata,
+            path: file.path ?? {},
+            metadata: file.metadata ?? {},
           },
         }),
-      ),
-    ),
+      );
+    }),
   );
   if (authorizations.some((allowed) => !allowed)) {
     throw new EdgeStoreError({

@@ -515,7 +515,7 @@ describe('runtime upload orchestration', () => {
         multipart: { partSizeBytes: MIN_MULTIPART_PART_SIZE_BYTES - 1 },
       }),
     ).rejects.toThrow(
-      `multipart.partSizeBytes must be at least ${MIN_MULTIPART_PART_SIZE_BYTES} bytes (5 MiB).`,
+      `preferredPartSizeBytes must be at least ${MIN_MULTIPART_PART_SIZE_BYTES} bytes (5 MiB).`,
     );
     expect(fetch).not.toHaveBeenCalled();
   });
