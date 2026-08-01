@@ -128,7 +128,7 @@ describe('frontend file mutations', () => {
     expect(provider.files.delete).not.toHaveBeenCalled();
   });
 
-  it('requires stored router fields for frontend deletion authorization', async () => {
+  it('uses empty router fields when none are configured', async () => {
     const beforeDelete = vi.fn(() => true);
     const es = initEdgeStore.create();
     const router = es.router({
@@ -151,8 +151,87 @@ describe('frontend file mutations', () => {
         body: { bucketName: 'documents', urls: [proxiedUrls[0]!] },
         logger,
       }),
+    ).resolves.toEqual({ succeeded: [proxiedUrls[0]], failed: [] });
+    expect(beforeDelete).toHaveBeenCalledWith({
+      ctx: {},
+      fileInfo: {
+        url: originalUrls[0],
+        size: 10,
+        uploadedAt: expect.any(Date),
+        path: {},
+        metadata: {},
+      },
+    });
+    expect(provider.files.delete).toHaveBeenCalledOnce();
+  });
+
+  it('requires stored path when the router configures path fields', async () => {
+    const beforeDelete = vi.fn(() => true);
+    const es = initEdgeStore.context<{ userId: string }>().create();
+    const router = es.router({
+      documents: es
+        .fileBucket()
+        .path(({ ctx }) => [{ author: ctx.userId }])
+        .beforeDelete(beforeDelete),
+    });
+    const provider = createProvider();
+    const ctxToken = await createContextToken({
+      router,
+      ctx: { userId: 'user-1' },
+    });
+    vi.mocked(provider.files.get!).mockResolvedValue({
+      url: originalUrls[0]!,
+      sizeBytes: 10,
+      uploadedAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    await expect(
+      deleteFiles({
+        provider,
+        router,
+        ctxToken,
+        body: { bucketName: 'documents', urls: [proxiedUrls[0]!] },
+        logger,
+      }),
     ).rejects.toThrow(
-      'Provider test-provider must return path and metadata from files.get to authorize frontend deletion.',
+      'Provider test-provider must return path from files.get to authorize frontend deletion for a bucket with configured path fields.',
+    );
+    expect(beforeDelete).not.toHaveBeenCalled();
+    expect(provider.files.delete).not.toHaveBeenCalled();
+  });
+
+  it('requires stored metadata when the router configures metadata fields', async () => {
+    const beforeDelete = vi.fn(() => true);
+    const es = initEdgeStore.context<{ userId: string }>().create();
+    const router = es.router({
+      documents: es
+        .fileBucket()
+        .metadata(({ ctx }) => ({ author: ctx.userId }))
+        .beforeDelete(beforeDelete),
+    });
+    const provider = createProvider();
+    const ctxToken = await createContextToken({
+      router,
+      ctx: { userId: 'user-1' },
+    });
+    vi.mocked(provider.files.get!).mockResolvedValue({
+      url: originalUrls[0]!,
+      sizeBytes: 10,
+      uploadedAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    await expect(
+      deleteFiles({
+        provider,
+        router,
+        ctxToken,
+        body: { bucketName: 'documents', urls: [proxiedUrls[0]!] },
+        logger,
+      }),
+    ).rejects.toThrow(
+      'Provider test-provider must return metadata from files.get to authorize frontend deletion for a bucket with configured metadata fields.',
     );
     expect(beforeDelete).not.toHaveBeenCalled();
     expect(provider.files.delete).not.toHaveBeenCalled();

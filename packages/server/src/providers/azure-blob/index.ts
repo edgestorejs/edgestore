@@ -216,8 +216,6 @@ export function azureBlob(options?: AzureBlobProviderOptions) {
         const timestamp = lastModified ?? new Date();
         return {
           url: blobClient.url.split('?')[0]!,
-          metadata: {},
-          path: {},
           sizeBytes: contentLength ?? 0,
           uploadedAt: timestamp,
           updatedAt: timestamp,

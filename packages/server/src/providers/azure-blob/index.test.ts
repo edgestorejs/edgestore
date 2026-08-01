@@ -244,8 +244,6 @@ describe('azureBlob', () => {
       'documents/_public/a b/file.txt',
     );
     expect(res).toEqual({
-      metadata: {},
-      path: {},
       sizeBytes: 123,
       uploadedAt: new Date('2026-01-02T03:04:05.000Z'),
       updatedAt: new Date('2026-01-02T03:04:05.000Z'),

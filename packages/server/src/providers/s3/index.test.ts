@@ -394,6 +394,31 @@ describe('s3', () => {
     );
   });
 
+  it('does not claim to retrieve router fields', async () => {
+    const provider = s3({
+      bucketName: 'storage-bucket',
+      region: 'us-east-1',
+      baseUrl: 'https://cdn.example.com',
+    });
+    const lastModified = new Date('2026-01-01T00:00:00.000Z');
+    awsMocks.send.mockResolvedValueOnce({
+      ContentLength: 10,
+      LastModified: lastModified,
+    });
+
+    await expect(
+      provider.files.get({
+        bucketName: 'documents',
+        file: { url: 'https://cdn.example.com/documents/path/file.txt' },
+      }),
+    ).resolves.toEqual({
+      url: 'https://cdn.example.com/documents/path/file.txt',
+      sizeBytes: 10,
+      uploadedAt: lastModified,
+      updatedAt: lastModified,
+    });
+  });
+
   it('rejects cross-bucket deletion before contacting S3', async () => {
     const provider = s3({
       bucketName: 'storage-bucket',

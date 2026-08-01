@@ -83,7 +83,12 @@ const s3EdgeStore = createEdgeStore({
   router: publicRouter,
   provider: s3(),
 });
-void s3EdgeStore.client.files.get({ url: 'https://s3.example/file' });
+void s3EdgeStore.client.files
+  .get({ url: 'https://s3.example/file' })
+  .then((file) => {
+    expectError(file.path);
+    expectError(file.metadata);
+  });
 expectError(s3EdgeStore.client.files.upload);
 expectError(s3EdgeStore.client.files.list);
 expectError(s3EdgeStore.client.files.confirm);

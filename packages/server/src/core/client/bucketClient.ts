@@ -123,10 +123,11 @@ function createUploadMethods<
         bucket: context.bucket,
         pathAttrs: { ctx, input: parsedInput },
       });
-      const metadata = await context.bucket._def.metadata({
-        ctx,
-        input: parsedInput,
-      });
+      const metadata =
+        (await context.bucket._def.metadata?.({
+          ctx,
+          input: parsedInput,
+        })) ?? {};
       const uploadResult = await upload({
         bucketName: context.bucketName,
         bucketType: context.bucket._def.type,
