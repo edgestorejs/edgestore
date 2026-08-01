@@ -272,7 +272,7 @@ async function checkLinkedProject(
 }
 
 function envValue(contents: string, name: string): string | undefined {
-  const match = contents.match(new RegExp(`^${name}=(.+)$`, 'm'));
+  const match = new RegExp(`^${name}=(.+)$`, 'm').exec(contents);
   const value = match?.[1]?.trim();
   return value ? value : undefined;
 }
