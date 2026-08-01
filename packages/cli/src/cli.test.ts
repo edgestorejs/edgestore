@@ -598,7 +598,7 @@ function createFixture() {
           pagination: { limit: 50, nextCursor: null, hasMore: false },
         })),
         lookup: vi.fn(),
-        createDownloadUrls: vi.fn(),
+        generateAccessUrls: vi.fn(),
         delete: vi.fn(),
       },
     },

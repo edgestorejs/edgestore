@@ -103,12 +103,12 @@ export async function fileDownloadCommand(
   },
 ): Promise<void> {
   const sdk = await sdkFor(runtime, flags);
-  const result = await sdk.management.files.createDownloadUrls({
+  const result = await sdk.management.files.generateAccessUrls({
     project: await resolvedProjectRef(runtime, input.project),
     files: [fileReference(input.reference, input.bucket)],
     signal: runtime.signal,
   });
-  const download = result.downloadUrls[0];
+  const download = result.accessUrls[0];
   if (!download) {
     throw usageError('download_url_missing', 'No download URL was returned.');
   }
