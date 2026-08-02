@@ -253,6 +253,37 @@ describe('runCli', () => {
     ).resolves.toContain('EDGE_STORE_SECRET_KEY=secret_test');
   });
 
+  it('keeps only the replacement key ID on plain rotation stdout', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-key-'),
+    );
+    fixture.runtime.cwd = temporaryDirectory;
+
+    const exitCode = await runCli(
+      [
+        '--plain',
+        'project',
+        'key',
+        'rotate',
+        project.basePath,
+        projectKey.id,
+        '--name',
+        'replacement',
+        '--output',
+        '.env.local',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(0);
+    expect(fixture.confirmTyped).toHaveBeenCalledWith(
+      expect.stringContaining(projectKey.id),
+      'saved',
+    );
+    expect(fixture.stdout()).toBe(`${projectKey.id}\n`);
+  });
+
   it('validates a rotation target before creating its replacement', async () => {
     temporaryDirectory = await mkdtemp(
       path.join(tmpdir(), 'edgestore-cli-key-'),
