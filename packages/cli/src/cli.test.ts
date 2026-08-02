@@ -227,6 +227,20 @@ describe('runCli', () => {
     expect(fixture.stdout()).toContain('Deleted project');
   });
 
+  it('deletes the supplied project reference when forced', async () => {
+    await runCli(
+      ['--plain', 'project', 'delete', project.id, '--yes'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(fixture.deleteProject).toHaveBeenCalledWith({
+      project: project.id,
+      signal: fixture.runtime.signal,
+    });
+    expect(fixture.stdout()).toBe(`${project.id}\n`);
+  });
+
   it('creates a project key and exposes its secret once', async () => {
     await runCli(
       ['project', 'key', 'create', project.basePath, '--name', 'production'],
@@ -285,6 +299,37 @@ describe('runCli', () => {
     await expect(
       readFile(path.join(temporaryDirectory, '.env.local'), 'utf8'),
     ).resolves.toContain('EDGE_STORE_SECRET_KEY=secret_test');
+  });
+
+  it('keeps only the replacement key ID on plain rotation stdout', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-key-'),
+    );
+    fixture.runtime.cwd = temporaryDirectory;
+
+    const exitCode = await runCli(
+      [
+        '--plain',
+        'project',
+        'key',
+        'rotate',
+        project.basePath,
+        projectKey.id,
+        '--name',
+        'replacement',
+        '--output',
+        '.env.local',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(0);
+    expect(fixture.confirmTyped).toHaveBeenCalledWith(
+      expect.stringContaining(projectKey.id),
+      'saved',
+    );
+    expect(fixture.stdout()).toBe(`${projectKey.id}\n`);
   });
 
   it('validates a rotation target before creating its replacement', async () => {
@@ -1242,6 +1287,7 @@ function createFixture() {
       failureCount: 0,
     }),
   );
+  const deleteProject = vi.fn(async () => ({}));
   const sdk = {
     system: {
       health: vi.fn(async () => ({ status: 'ok' })),
@@ -1272,7 +1318,7 @@ function createFixture() {
         list: vi.fn(async () => ({ projects: [project] })),
         get: vi.fn(async () => ({ project })),
         create: createProject,
-        delete: vi.fn(async () => ({})),
+        delete: deleteProject,
       },
       projectKeys: {
         list: listProjectKeys,
@@ -1416,6 +1462,7 @@ function createFixture() {
     listProjectKeys,
     createProjectKey,
     revokeProjectKey,
+    deleteProject,
     stdout: () => Buffer.concat(stdoutChunks).toString('utf8'),
     stderr: () => Buffer.concat(stderrChunks).toString('utf8'),
   };
