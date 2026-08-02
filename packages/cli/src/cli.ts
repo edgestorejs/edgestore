@@ -59,7 +59,7 @@ import {
   fileUploadCommand,
   fileUploadStatusCommand,
 } from './commands/upload';
-import { normalizeError } from './core/errors';
+import { CliError, normalizeError } from './core/errors';
 import { outputFor, type CliRuntime, type GlobalFlags } from './core/runtime';
 
 export async function runCli(
@@ -67,22 +67,48 @@ export async function runCli(
   runtime: CliRuntime,
   version: string,
 ): Promise<number> {
-  const program = createProgram(runtime, version);
+  const commanderOutput = new CommanderOutput(runtime);
+  const program = createProgram(runtime, version, commanderOutput);
 
   if (argv.length === 0) {
     program.outputHelp();
+    commanderOutput.flush();
     return 0;
   }
 
   try {
     await program.parseAsync(argv, { from: 'user' });
+    commanderOutput.flush();
     return runtime.signal.aborted ? 130 : runtime.exitCode;
   } catch (error) {
     if (error instanceof CommanderError) {
-      return error.code === 'commander.helpDisplayed' ||
+      if (
+        error.code === 'commander.helpDisplayed' ||
         error.code === 'commander.version'
-        ? 0
-        : 2;
+      ) {
+        commanderOutput.flush();
+        return 0;
+      }
+
+      if (requestsJson(argv)) {
+        outputFor(runtime, {
+          color: false,
+          progress: false,
+          json: true,
+        }).error(
+          new CliError(
+            'invalid_cli_syntax',
+            error.message.replace(/^error: /, ''),
+            {
+              details: { commanderCode: error.code },
+              exitCode: 2,
+            },
+          ),
+        );
+      } else {
+        commanderOutput.flush();
+      }
+      return 2;
     }
 
     const normalized = normalizeError(error);
@@ -91,7 +117,11 @@ export async function runCli(
   }
 }
 
-function createProgram(runtime: CliRuntime, version: string): Command {
+function createProgram(
+  runtime: CliRuntime,
+  version: string,
+  commanderOutput: CommanderOutput,
+): Command {
   const program = new Command()
     .name('edgestore')
     .description('Manage EdgeStore accounts and projects')
@@ -104,8 +134,8 @@ function createProgram(runtime: CliRuntime, version: string): Command {
     .showHelpAfterError()
     .exitOverride()
     .configureOutput({
-      writeOut: (value) => runtime.io.stdout.write(value),
-      writeErr: (value) => runtime.io.stderr.write(value),
+      writeOut: (value) => commanderOutput.writeOut(value),
+      writeErr: (value) => commanderOutput.writeErr(value),
     })
     .addHelpText(
       'after',
@@ -277,6 +307,7 @@ Targets:
     .description('Invite one or more team members')
     .option('--role <role>', 'owner, member, or viewer', 'member')
     .option('--allow-overage', 'allow billable member overage')
+    .option('--yes', 'skip owner-role confirmation')
     .action(async (emails: string[], options) => {
       await memberInviteCommand(runtime, globalFlags(program), {
         emails,
@@ -287,8 +318,13 @@ Targets:
   member
     .command('role <user-id> <role>')
     .description('Change a team member role')
-    .action(async (userId: string, role: string) => {
-      await memberRoleCommand(runtime, globalFlags(program), { userId, role });
+    .option('--yes', 'skip owner-role confirmation')
+    .action(async (userId: string, role: string, options) => {
+      await memberRoleCommand(runtime, globalFlags(program), {
+        userId,
+        role,
+        ...options,
+      });
     });
 
   member
@@ -701,6 +737,36 @@ function parsePositiveInteger(value: string): number {
     );
   }
   return parsed;
+}
+
+class CommanderOutput {
+  private readonly stdout: string[] = [];
+  private readonly stderr: string[] = [];
+
+  constructor(private readonly runtime: CliRuntime) {}
+
+  writeOut(value: string): void {
+    this.stdout.push(value);
+  }
+
+  writeErr(value: string): void {
+    this.stderr.push(value);
+  }
+
+  flush(): void {
+    for (const value of this.stdout.splice(0)) {
+      this.runtime.io.stdout.write(value);
+    }
+    for (const value of this.stderr.splice(0)) {
+      this.runtime.io.stderr.write(value);
+    }
+  }
+}
+
+function requestsJson(argv: string[]): boolean {
+  const endOfOptions = argv.indexOf('--');
+  const options = endOfOptions === -1 ? argv : argv.slice(0, endOfOptions);
+  return options.includes('--json');
 }
 
 function globalFlags(program: Command): GlobalFlags {

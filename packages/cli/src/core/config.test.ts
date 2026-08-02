@@ -74,6 +74,41 @@ describe('RepoConfigStore', () => {
       readFile(path.join(root, '.edgestore', 'keep.txt'), 'utf8'),
     ).resolves.toBe('keep');
   });
+
+  it('does not discover or remove config outside the nearest Git root', async () => {
+    const outer = await temporaryDirectory();
+    await writeFile(path.join(outer, '.git'), 'gitdir: outer\n');
+    const outerStore = new RepoConfigStore(outer);
+    const outerConfigPath = await outerStore.write({
+      account: 'acc_outer',
+      project: 'outer-project',
+    });
+
+    const nested = path.join(outer, 'nested');
+    const child = path.join(nested, 'apps', 'web');
+    await mkdir(child, { recursive: true });
+    await writeFile(path.join(nested, '.git'), 'gitdir: nested\n');
+    const nestedStore = new RepoConfigStore(child);
+
+    await expect(nestedStore.read()).resolves.toBeUndefined();
+    await expect(nestedStore.remove()).resolves.toBeUndefined();
+    await expect(readFile(outerConfigPath, 'utf8')).resolves.toContain(
+      'outer-project',
+    );
+  });
+
+  it('does not search parent directories outside a Git repository', async () => {
+    const parent = await temporaryDirectory();
+    const parentStore = new RepoConfigStore(parent);
+    await parentStore.write({
+      account: 'acc_parent',
+      project: 'parent-project',
+    });
+    const child = path.join(parent, 'child');
+    await mkdir(child);
+
+    await expect(new RepoConfigStore(child).read()).resolves.toBeUndefined();
+  });
 });
 
 async function temporaryDirectory(): Promise<string> {

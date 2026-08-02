@@ -1,9 +1,17 @@
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import {
+  mkdtemp,
+  readdir,
+  readFile,
+  rm,
+  stat,
+  truncate,
+  writeFile,
+} from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { PassThrough, Readable } from 'node:stream';
 import type { ManagementEdgeStoreSdk } from '@edgestore/sdk';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { runCli } from './cli';
 import type {
   GlobalConfig,
@@ -47,11 +55,80 @@ const project = {
   updatedAt: '2026-01-01T00:00:00.000Z',
 };
 
+const projectKey = {
+  id: 'key_123',
+  name: 'production',
+  accessKey: 'access_test',
+  projectId: project.id,
+  accountId: account.id,
+  createdAt: project.createdAt,
+  updatedAt: project.updatedAt,
+  revokedAt: null as string | null,
+};
+
+const accountToken = {
+  id: 'tok_created',
+  name: 'deploy',
+  kind: 'ACCOUNT' as const,
+  tokenPrefix: 'edge_',
+  scopes: ['project:read'],
+  createdAt: project.createdAt,
+  updatedAt: project.updatedAt,
+  lastUsedAt: null,
+  revokedAt: null as string | null,
+  expiresAt: null as string | null,
+  accountId: account.id,
+  userId: null,
+};
+
+const failedEmptyJob = {
+  id: 'job_123',
+  bucketId: 'bucket_123',
+  projectId: project.id,
+  accountId: account.id,
+  status: 'FAILED' as const,
+  phase: 'DELETING_FILES' as const,
+  totalCount: 5,
+  totalBytes: 500,
+  processedCount: 2,
+  freedBytes: 200,
+  pendingS3CleanupCount: 1,
+  canceledUploadCount: 0,
+  orphanObjectCount: 1,
+  orphanBytes: 20,
+  cloudFrontInvalidationId: null,
+  error: 'storage unavailable',
+  heartbeatAt: project.updatedAt,
+  startedAt: project.createdAt,
+  completedAt: project.updatedAt,
+  createdAt: project.createdAt,
+  updatedAt: project.updatedAt,
+};
+
+const singleUploadRequest = {
+  file: { id: 'upload_123' },
+  upload: {
+    kind: 'single' as const,
+    id: 'upload_123',
+    signedUrl: 'https://storage.example/upload',
+  },
+};
+
 describe('runCli', () => {
   let fixture: ReturnType<typeof createFixture>;
+  let temporaryDirectory: string | undefined;
 
   beforeEach(() => {
     fixture = createFixture();
+  });
+
+  afterEach(async () => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+    if (temporaryDirectory) {
+      await rm(temporaryDirectory, { recursive: true, force: true });
+      temporaryDirectory = undefined;
+    }
   });
 
   it('renders account lists and marks the active account', async () => {
@@ -119,6 +196,72 @@ describe('runCli', () => {
     expect(fixture.memberList).not.toHaveBeenCalled();
   });
 
+  it('returns command-specific unavailable results for a personal account', async () => {
+    await runCli(['--json', 'member', 'list'], fixture.runtime, '0.0.0');
+    expect(JSON.parse(fixture.stdout())).toEqual({
+      members: [],
+      available: false,
+      account,
+    });
+
+    fixture = createFixture();
+    await runCli(
+      ['--json', 'member', 'invitation', 'list'],
+      fixture.runtime,
+      '0.0.0',
+    );
+    expect(JSON.parse(fixture.stdout())).toEqual({
+      invitations: [],
+      available: false,
+      account,
+    });
+    expect(fixture.invitationList).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    {
+      name: 'invite',
+      argv: ['member', 'invite', 'friend@example.com'],
+      mutation: 'invitationCreate' as const,
+    },
+    {
+      name: 'role',
+      argv: ['member', 'role', 'user_123', 'member'],
+      mutation: 'memberUpdate' as const,
+    },
+    {
+      name: 'remove',
+      argv: ['member', 'remove', 'user_123', '--yes'],
+      mutation: 'memberRemove' as const,
+    },
+    {
+      name: 'invitation revoke',
+      argv: ['member', 'invitation', 'revoke', 'inv_123', '--yes'],
+      mutation: 'invitationRevoke' as const,
+    },
+    {
+      name: 'invitation resend',
+      argv: ['member', 'invitation', 'resend', 'inv_123'],
+      mutation: 'invitationResend' as const,
+    },
+  ])(
+    'rejects personal-account $name without output or mutation',
+    async (test) => {
+      const exitCode = await runCli(
+        ['--json', ...test.argv],
+        fixture.runtime,
+        '0.0.0',
+      );
+
+      expect(exitCode).toBe(2);
+      expect(fixture.stdout()).toBe('');
+      expect(JSON.parse(fixture.stderr()).error).toMatchObject({
+        code: 'team_account_required',
+      });
+      expect(fixture[test.mutation]).not.toHaveBeenCalled();
+    },
+  );
+
   it('invites a member to the active team', async () => {
     fixture.availableAccounts.push(teamAccount);
     fixture.globalConfig.activeAccount = teamAccount.id;
@@ -137,6 +280,75 @@ describe('runCli', () => {
       signal: fixture.runtime.signal,
     });
     expect(fixture.stdout()).toContain('invited');
+    expect(fixture.confirmTyped).not.toHaveBeenCalled();
+  });
+
+  it('requires --yes for noninteractive owner invitations', async () => {
+    fixture.availableAccounts.push(teamAccount);
+    fixture.globalConfig.activeAccount = teamAccount.id;
+
+    const exitCode = await runCli(
+      [
+        '--json',
+        '--api-url',
+        'https://api-dev.edgestore.dev',
+        'member',
+        'invite',
+        'one@example.com',
+        'two@example.com',
+        '--role',
+        'owner',
+        '--allow-overage',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(2);
+    expect(fixture.invitationCreate).not.toHaveBeenCalled();
+    expect(JSON.parse(fixture.stderr()).error.suggestions).toEqual([
+      'edgestore --json --api-url https://api-dev.edgestore.dev member invite one@example.com two@example.com --role owner --allow-overage --yes',
+    ]);
+  });
+
+  it('uses one --yes to confirm a multi-email owner invitation', async () => {
+    fixture.availableAccounts.push(teamAccount);
+    fixture.globalConfig.activeAccount = teamAccount.id;
+
+    const exitCode = await runCli(
+      [
+        'member',
+        'invite',
+        'one@example.com',
+        'two@example.com',
+        '--role',
+        'owner',
+        '--yes',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(0);
+    expect(fixture.invitationCreate).toHaveBeenCalledTimes(2);
+    expect(fixture.confirmTyped).not.toHaveBeenCalled();
+  });
+
+  it('requires --yes for a noninteractive owner role change', async () => {
+    fixture.availableAccounts.push(teamAccount);
+    fixture.globalConfig.activeAccount = teamAccount.id;
+
+    const exitCode = await runCli(
+      ['--json', 'member', 'role', 'user_123', 'owner'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(2);
+    expect(fixture.memberUpdate).not.toHaveBeenCalled();
+    expect(JSON.parse(fixture.stderr()).error.suggestions).toEqual([
+      'edgestore --json member role user_123 owner --yes',
+    ]);
   });
 
   it('links an existing project through non-interactive init', async () => {
@@ -273,6 +485,40 @@ describe('runCli', () => {
     );
   });
 
+  it('rejects plain project creation before creating a one-time key', async () => {
+    const exitCode = await runCli(
+      ['--plain', 'project', 'create', '--name', 'Marketing Site'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(2);
+    expect(fixture.createProject).not.toHaveBeenCalled();
+    expect(fixture.stdout()).toBe('');
+    expect(fixture.stderr()).toContain('--without-key');
+  });
+
+  it('supports plain project creation without an initial key', async () => {
+    const exitCode = await runCli(
+      [
+        '--plain',
+        'project',
+        'create',
+        '--name',
+        'Marketing Site',
+        '--without-key',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(0);
+    expect(fixture.createProject).toHaveBeenCalledWith(
+      expect.objectContaining({ createKey: false }),
+    );
+    expect(fixture.stdout()).toBe(`${project.basePath}\n`);
+  });
+
   it('requires explicit confirmation for non-interactive deletion', async () => {
     fixture.runtime.io.inputIsTty = false;
 
@@ -307,6 +553,200 @@ describe('runCli', () => {
     expect(fixture.stdout()).toContain('EDGE_STORE_SECRET_KEY=secret_test');
   });
 
+  it('requires a destination for plain project-key creation', async () => {
+    const exitCode = await runCli(
+      [
+        '--plain',
+        'project',
+        'key',
+        'create',
+        project.basePath,
+        '--name',
+        'production',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(2);
+    expect(fixture.createProjectKey).not.toHaveBeenCalled();
+    expect(fixture.stderr()).toContain('--copy or --output');
+  });
+
+  it('keeps the key ID on plain stdout when the secret is delivered', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-key-'),
+    );
+    fixture.runtime.cwd = temporaryDirectory;
+
+    const exitCode = await runCli(
+      [
+        '--plain',
+        'project',
+        'key',
+        'create',
+        project.basePath,
+        '--name',
+        'production',
+        '--output',
+        '.env.local',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(0);
+    expect(fixture.stdout()).toBe(`${projectKey.id}\n`);
+    await expect(
+      readFile(path.join(temporaryDirectory, '.env.local'), 'utf8'),
+    ).resolves.toContain('EDGE_STORE_SECRET_KEY=secret_test');
+  });
+
+  it('validates a rotation target before creating its replacement', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-key-'),
+    );
+    fixture.runtime.cwd = temporaryDirectory;
+    fixture.listProjectKeys.mockResolvedValueOnce({ keys: [] });
+
+    const exitCode = await runCli(
+      [
+        'project',
+        'key',
+        'rotate',
+        project.basePath,
+        'missing',
+        '--name',
+        'replacement',
+        '--output',
+        '.env.local',
+        '--yes',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(1);
+    expect(fixture.createProjectKey).not.toHaveBeenCalled();
+    expect(fixture.stderr()).toContain('was not found');
+  });
+
+  it('does not rotate an already revoked project key', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-key-'),
+    );
+    fixture.runtime.cwd = temporaryDirectory;
+    fixture.listProjectKeys.mockResolvedValueOnce({
+      keys: [{ ...projectKey, revokedAt: '2026-02-01T00:00:00.000Z' }],
+    });
+
+    const exitCode = await runCli(
+      [
+        'project',
+        'key',
+        'rotate',
+        project.basePath,
+        projectKey.id,
+        '--name',
+        'replacement',
+        '--output',
+        '.env.local',
+        '--yes',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(1);
+    expect(fixture.createProjectKey).not.toHaveBeenCalled();
+    expect(fixture.stderr()).toContain('already revoked');
+  });
+
+  it('revokes a key when delivery fails after preflight', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-key-'),
+    );
+    fixture.runtime.cwd = temporaryDirectory;
+    fixture.createProjectKey.mockImplementationOnce(async () => {
+      await writeFile(
+        path.join(temporaryDirectory!, '.env.local'),
+        'EDGE_STORE_ACCESS_KEY=raced\n',
+      );
+      return { key: projectKey, secretKey: 'secret_test' };
+    });
+
+    const exitCode = await runCli(
+      [
+        '--json',
+        'project',
+        'key',
+        'create',
+        project.basePath,
+        '--name',
+        'production',
+        '--output',
+        '.env.local',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(2);
+    expect(fixture.stdout()).toBe('');
+    expect(fixture.revokeProjectKey).toHaveBeenCalledWith(
+      expect.objectContaining({
+        project: project.basePath,
+        keyId: projectKey.id,
+        signal: expect.objectContaining({ aborted: false }),
+      }),
+    );
+    expect(JSON.parse(fixture.stderr()).error.details.rollback).toEqual({
+      status: 'succeeded',
+      credentialId: projectKey.id,
+    });
+  });
+
+  it('reports the recovery command when delivery rollback fails', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-key-'),
+    );
+    fixture.runtime.cwd = temporaryDirectory;
+    fixture.createProjectKey.mockImplementationOnce(async () => {
+      await writeFile(
+        path.join(temporaryDirectory!, '.env.local'),
+        'EDGE_STORE_ACCESS_KEY=raced\n',
+      );
+      return { key: projectKey, secretKey: 'secret_test' };
+    });
+    fixture.revokeProjectKey.mockRejectedValueOnce(new Error('denied'));
+
+    const exitCode = await runCli(
+      [
+        '--json',
+        'project',
+        'key',
+        'create',
+        project.basePath,
+        '--name',
+        'production',
+        '--output',
+        '.env.local',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(2);
+    const error = JSON.parse(fixture.stderr()).error;
+    expect(error.details.rollback).toMatchObject({
+      status: 'failed',
+      credentialId: projectKey.id,
+    });
+    expect(error.suggestions).toContain(
+      `edgestore project key revoke ${project.basePath} ${projectKey.id} --yes`,
+    );
+  });
+
   it('requires typed confirmation before revoking a project key', async () => {
     await runCli(
       ['project', 'key', 'revoke', project.basePath, 'key_123'],
@@ -338,6 +778,119 @@ describe('runCli', () => {
       preset: 'deploy',
     });
     expect(input).not.toHaveProperty('scopes');
+  });
+
+  it('requires a destination for plain token creation', async () => {
+    const exitCode = await runCli(
+      ['--plain', 'token', 'create', '--name', 'deploy', '--preset', 'deploy'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(2);
+    expect(fixture.createAccountToken).not.toHaveBeenCalled();
+    expect(fixture.stderr()).toContain('--copy or --output');
+  });
+
+  it('preflights token output before creating the token', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-token-'),
+    );
+    fixture.runtime.cwd = temporaryDirectory;
+    await writeFile(
+      path.join(temporaryDirectory, '.env.local'),
+      'EDGESTORE_TOKEN=existing\n',
+    );
+
+    const exitCode = await runCli(
+      [
+        'token',
+        'create',
+        '--name',
+        'deploy',
+        '--preset',
+        'deploy',
+        '--output',
+        '.env.local',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(2);
+    expect(fixture.createAccountToken).not.toHaveBeenCalled();
+  });
+
+  it('reports a privileged recovery path when token rollback fails', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-token-'),
+    );
+    fixture.runtime.cwd = temporaryDirectory;
+    fixture.createAccountToken.mockImplementationOnce(async () => {
+      await writeFile(
+        path.join(temporaryDirectory!, '.env.local'),
+        'EDGESTORE_TOKEN=raced\n',
+      );
+      return { token: accountToken, secret: 'mgmt_created' };
+    });
+    fixture.revokeToken.mockRejectedValueOnce(new Error('forbidden'));
+
+    const exitCode = await runCli(
+      [
+        '--json',
+        'token',
+        'create',
+        '--name',
+        'deploy',
+        '--preset',
+        'deploy',
+        '--output',
+        '.env.local',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(2);
+    const error = JSON.parse(fixture.stderr()).error;
+    expect(error.details.rollback).toMatchObject({
+      status: 'failed',
+      credentialId: accountToken.id,
+    });
+    expect(error.suggestions).toEqual(
+      expect.arrayContaining([
+        `edgestore token revoke ${accountToken.id} --yes`,
+        expect.stringContaining('token:revoke'),
+      ]),
+    );
+  });
+
+  it('renders revoked, expired, and active token status deterministically', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-02T00:00:00.000Z'));
+    fixture.listAccountTokens.mockResolvedValueOnce({
+      tokens: [
+        {
+          ...accountToken,
+          id: 'tok_revoked',
+          revokedAt: '2026-07-01T00:00:00.000Z',
+          expiresAt: '2026-06-01T00:00:00.000Z',
+        },
+        {
+          ...accountToken,
+          id: 'tok_expired',
+          expiresAt: '2026-08-01T00:00:00.000Z',
+        },
+        { ...accountToken, id: 'tok_active' },
+      ],
+    });
+
+    await runCli(['token', 'list'], fixture.runtime, '0.0.0');
+
+    expect(fixture.stdout()).toContain('tok_revoked');
+    expect(fixture.stdout()).toMatch(/tok_revoked.*revoked/);
+    expect(fixture.stdout()).toMatch(/tok_expired.*expired/);
+    expect(fixture.stdout()).toMatch(/tok_active.*active/);
   });
 
   it('creates user-owned management tokens from presets', async () => {
@@ -450,13 +1003,87 @@ describe('runCli', () => {
     };
 
     await runCli(
-      ['bucket', 'empty', 'publicFiles', '--yes'],
+      [
+        '--api-url',
+        'https://api-dev.edgestore.dev',
+        'bucket',
+        'empty',
+        'publicFiles',
+        '--project',
+        project.basePath,
+        '--yes',
+      ],
       fixture.runtime,
       '0.0.0',
     );
 
     expect(fixture.stdout()).toContain('Job: job_123');
-    expect(fixture.stdout()).toContain('empty-status publicFiles');
+    expect(fixture.stdout()).toContain(
+      `edgestore --api-url https://api-dev.edgestore.dev bucket empty-status publicFiles --job job_123 --project ${project.basePath}`,
+    );
+  });
+
+  it('preserves applicable options in confirmation follow-ups', async () => {
+    fixture.runtime.io.inputIsTty = false;
+
+    const exitCode = await runCli(
+      [
+        '--json',
+        '--api-url',
+        'https://api-dev.edgestore.dev',
+        'bucket',
+        'empty',
+        'publicFiles',
+        '--project',
+        project.basePath,
+        '--retry',
+        'job_old',
+        '--wait',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(2);
+    expect(JSON.parse(fixture.stderr()).error.suggestions).toEqual([
+      `edgestore --json --api-url https://api-dev.edgestore.dev bucket empty publicFiles --retry job_old --wait --yes --project ${project.basePath}`,
+    ]);
+    expect(fixture.emptyBucket).not.toHaveBeenCalled();
+  });
+
+  it('emits one structured error when a waited empty job fails', async () => {
+    fixture.getEmptyJob.mockResolvedValueOnce({ job: failedEmptyJob });
+
+    const exitCode = await runCli(
+      [
+        '--json',
+        '--api-url',
+        'https://api-dev.edgestore.dev',
+        'bucket',
+        'empty',
+        'publicFiles',
+        '--project',
+        project.basePath,
+        '--wait',
+        '--yes',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(1);
+    expect(fixture.stdout()).toBe('');
+    expect(JSON.parse(fixture.stderr())).toEqual({
+      error: {
+        code: 'bucket_empty_failed',
+        message:
+          'Bucket empty job job_123 failed after 2/5 files: storage unavailable.',
+        details: { job: failedEmptyJob },
+        suggestions: [
+          `edgestore --json --api-url https://api-dev.edgestore.dev bucket empty publicFiles --retry job_123 --wait --yes --project ${project.basePath}`,
+        ],
+      },
+    });
   });
 
   it('reports when a bucket has no empty-bucket job', async () => {
@@ -476,7 +1103,9 @@ describe('runCli', () => {
       error: {
         code: 'bucket_empty_job_not_found',
         message: 'No empty-bucket job found for publicFiles.',
-        suggestions: ['edgestore bucket empty publicFiles'],
+        suggestions: [
+          `edgestore bucket empty publicFiles --project ${project.basePath}`,
+        ],
       },
     });
   });
@@ -511,6 +1140,328 @@ describe('runCli', () => {
 
     expect(fixture.stdout()).toContain('completed');
     expect(fixture.stdout()).toContain('https://files.example/logo.png');
+  });
+
+  it('treats an existing upload path with glob characters literally', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-upload-'),
+    );
+    fixture.runtime.cwd = temporaryDirectory;
+    await writeFile(path.join(temporaryDirectory, 'report[1].txt'), 'literal');
+    await writeFile(path.join(temporaryDirectory, 'report1.txt'), 'glob');
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(null, { status: 200 })),
+    );
+
+    const exitCode = await runCli(
+      [
+        'file',
+        'upload',
+        'report[1].txt',
+        '--bucket',
+        'publicFiles',
+        '--project',
+        project.basePath,
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(0);
+    expect(fixture.uploadRequest).toHaveBeenCalledTimes(1);
+    expect(fixture.uploadRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ sizeBytes: 7 }),
+    );
+  });
+
+  it('cancels without uploading bytes when the source is truncated', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-upload-'),
+    );
+    fixture.runtime.cwd = temporaryDirectory;
+    const sourcePath = path.join(temporaryDirectory, 'source.txt');
+    await writeFile(sourcePath, 'upload me');
+    fixture.uploadRequest.mockImplementationOnce(async () => {
+      await truncate(sourcePath, 0);
+      return singleUploadRequest;
+    });
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    const exitCode = await runCli(
+      [
+        '--json',
+        'file',
+        'upload',
+        'source.txt',
+        '--bucket',
+        'publicFiles',
+        '--project',
+        project.basePath,
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(1);
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(fixture.uploadCancel).toHaveBeenCalledWith(
+      expect.objectContaining({ uploadId: 'upload_123' }),
+    );
+    expect(JSON.parse(fixture.stderr()).error.code).toBe(
+      'upload_source_changed',
+    );
+  });
+
+  it('reports failed upload cleanup with an independent signal', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-upload-'),
+    );
+    fixture.runtime.cwd = temporaryDirectory;
+    await writeFile(path.join(temporaryDirectory, 'source.txt'), 'upload me');
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => {
+        fixture.abortController.abort();
+        throw new DOMException('aborted', 'AbortError');
+      }),
+    );
+    fixture.uploadCancel.mockRejectedValueOnce(
+      new Error('cleanup unavailable'),
+    );
+
+    const exitCode = await runCli(
+      [
+        '--json',
+        '--api-url',
+        'https://api-dev.edgestore.dev',
+        'file',
+        'upload',
+        'source.txt',
+        '--bucket',
+        'publicFiles',
+        '--project',
+        project.basePath,
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    const cleanupSignal = fixture.uploadCancel.mock.calls[0]?.[0].signal;
+    expect(exitCode).toBe(130);
+    expect(cleanupSignal).toBeDefined();
+    expect(cleanupSignal).not.toBe(fixture.runtime.signal);
+    expect(cleanupSignal?.aborted).toBe(false);
+    expect(JSON.parse(fixture.stderr()).error).toMatchObject({
+      code: 'upload_cleanup_failed',
+      details: {
+        cause: { code: 'interrupted' },
+        cleanup: { status: 'failed', uploadId: 'upload_123' },
+      },
+      suggestions: [
+        `edgestore --json --api-url https://api-dev.edgestore.dev file upload-cancel upload_123 --yes --project ${project.basePath}`,
+      ],
+    });
+  });
+
+  it('streams downloads through a restrictive temporary file', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-download-'),
+    );
+    fixture.runtime.cwd = temporaryDirectory;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        async () =>
+          new Response(
+            new ReadableStream({
+              start(controller) {
+                controller.enqueue(new TextEncoder().encode('first '));
+                controller.enqueue(new TextEncoder().encode('second'));
+                controller.close();
+              },
+            }),
+          ),
+      ),
+    );
+
+    const exitCode = await runCli(
+      [
+        'file',
+        'download',
+        'file_123',
+        '--output',
+        'download.txt',
+        '--project',
+        project.basePath,
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    const outputPath = path.join(temporaryDirectory, 'download.txt');
+    expect(exitCode).toBe(0);
+    await expect(readFile(outputPath, 'utf8')).resolves.toBe('first second');
+    expect((await stat(outputPath)).mode & 0o777).toBe(0o600);
+    await expect(readdir(temporaryDirectory)).resolves.toEqual([
+      'download.txt',
+    ]);
+  });
+
+  it('preserves an existing download after a mid-stream failure', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-download-'),
+    );
+    fixture.runtime.cwd = temporaryDirectory;
+    const outputPath = path.join(temporaryDirectory, 'download.txt');
+    await writeFile(outputPath, 'original');
+    let pullCount = 0;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        async () =>
+          new Response(
+            new ReadableStream({
+              pull(controller) {
+                pullCount += 1;
+                if (pullCount === 1) {
+                  controller.enqueue(new TextEncoder().encode('partial'));
+                } else {
+                  controller.error(new Error('stream failed'));
+                }
+              },
+            }),
+          ),
+      ),
+    );
+
+    const exitCode = await runCli(
+      [
+        'file',
+        'download',
+        'file_123',
+        '--output',
+        'download.txt',
+        '--project',
+        project.basePath,
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(1);
+    await expect(readFile(outputPath, 'utf8')).resolves.toBe('original');
+    await expect(readdir(temporaryDirectory)).resolves.toEqual([
+      'download.txt',
+    ]);
+  });
+
+  it('removes a partial download after cancellation', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-download-'),
+    );
+    fixture.runtime.cwd = temporaryDirectory;
+    const outputPath = path.join(temporaryDirectory, 'download.txt');
+    await writeFile(outputPath, 'original');
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        async () =>
+          new Response(
+            new ReadableStream({
+              start(controller) {
+                controller.enqueue(new TextEncoder().encode('partial'));
+                fixture.abortController.abort();
+              },
+            }),
+          ),
+      ),
+    );
+
+    const exitCode = await runCli(
+      [
+        'file',
+        'download',
+        'file_123',
+        '--output',
+        'download.txt',
+        '--project',
+        project.basePath,
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(130);
+    await expect(readFile(outputPath, 'utf8')).resolves.toBe('original');
+    await expect(readdir(temporaryDirectory)).resolves.toEqual([
+      'download.txt',
+    ]);
+  });
+
+  it('reports exact partial state when a later delete batch fails', async () => {
+    const references = Array.from(
+      { length: 201 },
+      (_, index) => `file_${index + 1}`,
+    );
+    let requestCount = 0;
+    fixture.deleteFiles.mockImplementation(async (input) => {
+      requestCount += 1;
+      if (requestCount === 2) throw new Error('second batch failed');
+      return {
+        results: input.files.map((fileRef) => ({
+          fileRef,
+          success: true as const,
+        })),
+        successCount: input.files.length,
+        failureCount: 0,
+      };
+    });
+
+    const exitCode = await runCli(
+      [
+        '--json',
+        'file',
+        'delete',
+        ...references,
+        '--project',
+        project.basePath,
+        '--yes',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(1);
+    expect(fixture.stdout()).toBe('');
+    expect(fixture.deleteFiles).toHaveBeenCalledTimes(2);
+    const details = JSON.parse(fixture.stderr()).error.details;
+    expect(details.completed.successCount).toBe(100);
+    expect(details.completed.results).toHaveLength(100);
+    expect(details.uncertainReferences).toEqual(references.slice(100, 200));
+    expect(details.notAttemptedReferences).toEqual(references.slice(200));
+    expect(details.cause).toMatchObject({
+      code: 'unexpected_error',
+      message: 'second batch failed',
+    });
+  });
+
+  it('rejects unsupported bucket types before calling the SDK', async () => {
+    fixture.repoConfig.config = {
+      account: account.id,
+      project: project.basePath,
+    };
+
+    const exitCode = await runCli(
+      ['bucket', 'create', 'archives', '--type', 'video', '--protected'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(2);
+    expect(fixture.createBucket).not.toHaveBeenCalled();
+    expect(fixture.stderr()).toContain('file or image');
   });
 
   it('validates a token before saving it', async () => {
@@ -569,6 +1520,59 @@ describe('runCli', () => {
       '--json and --plain cannot be used together.',
     );
   });
+
+  it.each([
+    {
+      name: 'unknown option',
+      argv: ['--json', 'account', 'list', '--wat'],
+      commanderCode: 'commander.unknownOption',
+    },
+    {
+      name: 'missing argument with a trailing global option',
+      argv: ['project', 'link', '--json'],
+      commanderCode: 'commander.missingArgument',
+    },
+  ])(
+    'emits one JSON syntax error for $name',
+    async ({ argv, commanderCode }) => {
+      const exitCode = await runCli(argv, fixture.runtime, '0.0.0');
+
+      expect(exitCode).toBe(2);
+      expect(fixture.stdout()).toBe('');
+      expect(JSON.parse(fixture.stderr())).toMatchObject({
+        error: {
+          code: 'invalid_cli_syntax',
+          details: { commanderCode },
+        },
+      });
+    },
+  );
+
+  it('preserves Commander diagnostics in human mode', async () => {
+    const exitCode = await runCli(
+      ['account', 'list', '--wat'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(2);
+    expect(fixture.stdout()).toBe('');
+    expect(fixture.stderr()).toContain("unknown option '--wat'");
+  });
+
+  it.each([
+    { argv: ['--help'], expected: 'Usage: edgestore' },
+    { argv: ['--version'], expected: '0.0.0' },
+  ])(
+    'keeps $argv successful and human-readable',
+    async ({ argv, expected }) => {
+      const exitCode = await runCli(argv, fixture.runtime, '0.0.0');
+
+      expect(exitCode).toBe(0);
+      expect(fixture.stdout()).toContain(expected);
+      expect(fixture.stderr()).toBe('');
+    },
+  );
 });
 
 function createFixture() {
@@ -593,6 +1597,17 @@ function createFixture() {
   const availableAccounts: (typeof account | typeof teamAccount)[] = [account];
   const accountLeave = vi.fn(async () => ({}));
   const memberList = vi.fn(async () => ({ members: [] }));
+  const memberUpdate = vi.fn(
+    async (input: { userId: string; role: string }) => ({
+      member: {
+        userId: input.userId,
+        email: 'member@example.com',
+        role: input.role,
+      },
+    }),
+  );
+  const memberRemove = vi.fn(async () => ({}));
+  const invitationList = vi.fn(async () => ({ invitations: [] }));
   const invitationCreate = vi.fn(async (input: { email: string }) => ({
     invitation: {
       id: 'inv_123',
@@ -606,22 +1621,8 @@ function createFixture() {
   }));
   const openUrl = vi.fn(async () => undefined);
   const runCommand = vi.fn(async () => undefined);
-  const projectCreate = vi.fn(async () => ({
-    project,
-    projectKey: {
-      key: {
-        id: 'key_123',
-        name: 'default',
-        accessKey: 'access_test',
-        projectId: project.id,
-        accountId: account.id,
-        createdAt: project.createdAt,
-        updatedAt: project.updatedAt,
-        revokedAt: null,
-      },
-      secretKey: 'secret_test',
-    },
-  }));
+  const invitationRevoke = vi.fn(async () => ({}));
+  const invitationResend = vi.fn(async () => ({}));
   const credentials: CredentialStore = {
     get: vi.fn(async () => credentialValue.value),
     set: setCredential,
@@ -634,20 +1635,7 @@ function createFixture() {
   };
 
   const createAccountToken = vi.fn(async (_input: unknown) => ({
-    token: {
-      id: 'tok_created',
-      name: 'deploy',
-      kind: 'ACCOUNT' as const,
-      tokenPrefix: 'edge_',
-      scopes: ['project:read'],
-      createdAt: project.createdAt,
-      updatedAt: project.updatedAt,
-      lastUsedAt: null,
-      revokedAt: null,
-      expiresAt: null,
-      accountId: account.id,
-      userId: null,
-    },
+    token: accountToken,
     secret: 'mgmt_created',
   }));
   const createUserToken = vi.fn(async (_input: unknown) => ({
@@ -667,7 +1655,99 @@ function createFixture() {
     },
     secret: 'mgmt_user_created',
   }));
-
+  const createProject = vi.fn(async () => ({
+    project,
+    projectKey: {
+      key: {
+        id: 'key_123',
+        name: 'default',
+        accessKey: 'access_test',
+        projectId: project.id,
+        accountId: account.id,
+        createdAt: project.createdAt,
+        updatedAt: project.updatedAt,
+        revokedAt: null,
+      },
+      secretKey: 'secret_test',
+    },
+  }));
+  const listProjectKeys = vi.fn(async () => ({ keys: [projectKey] }));
+  const createProjectKey = vi.fn(async () => ({
+    key: projectKey,
+    secretKey: 'secret_test',
+  }));
+  const revokeProjectKey = vi.fn(async () => ({}));
+  const listAccountTokens = vi.fn(async () => ({
+    tokens: [] as (typeof accountToken)[],
+  }));
+  const revokeToken = vi.fn(async () => ({}));
+  const createBucket = vi.fn(async () => ({
+    bucket: {
+      id: 'bucket_123',
+      name: 'publicFiles',
+      projectId: project.id,
+      accountId: account.id,
+      type: 'file' as const,
+      visibility: 'public' as const,
+      usageBytes: 0,
+      createdAt: project.createdAt,
+      updatedAt: project.updatedAt,
+    },
+  }));
+  const emptyBucket = vi.fn(async () => ({
+    jobId: 'job_123',
+    bucketId: 'bucket_123',
+    status: 'QUEUED' as const,
+  }));
+  const latestEmptyJob = vi.fn(async () => ({ job: null }));
+  const getEmptyJob = vi.fn();
+  const retryEmptyJob = vi.fn();
+  const generateAccessUrls = vi.fn(async () => ({
+    accessUrls: [
+      {
+        fileRef: { id: 'file_123' },
+        url: 'https://files.example/download',
+        expiresAt: null,
+        expiresIn: null,
+      },
+    ],
+  }));
+  type DeleteFilesInput = Parameters<
+    ManagementEdgeStoreSdk['management']['files']['delete']
+  >[0];
+  type DeleteFilesResult = Awaited<
+    ReturnType<ManagementEdgeStoreSdk['management']['files']['delete']>
+  >;
+  type UploadRequestInput = Parameters<
+    ManagementEdgeStoreSdk['management']['uploads']['request']
+  >[0];
+  type UploadInput = Parameters<
+    ManagementEdgeStoreSdk['management']['uploads']['get']
+  >[0];
+  const deleteFiles = vi.fn(
+    async (_input: DeleteFilesInput): Promise<DeleteFilesResult> => ({
+      results: [],
+      successCount: 0,
+      failureCount: 0,
+    }),
+  );
+  const uploadRequest = vi.fn(
+    async (_input: UploadRequestInput) => singleUploadRequest,
+  );
+  const uploadCancel = vi.fn(async (_input: UploadInput) => ({
+    upload: { id: 'upload_123', status: 'canceled' as const },
+  }));
+  const uploadGet = vi.fn(async (input: UploadInput) => ({
+    upload: { id: input.uploadId, status: 'completed' as const },
+    file: {
+      id: input.uploadId,
+      url:
+        input.uploadId === 'file_123'
+          ? 'https://files.example/logo.png'
+          : 'https://files.example/upload.txt',
+    },
+  }));
+  const completeMultipart = vi.fn(async (_input: UploadInput) => ({}));
   const sdk = {
     runtime: {
       uploads: {
@@ -706,57 +1786,32 @@ function createFixture() {
       },
       members: {
         list: memberList,
-        update: vi.fn(),
-        remove: vi.fn(),
+        update: memberUpdate,
+        remove: memberRemove,
       },
       invitations: {
-        list: vi.fn(async () => ({ invitations: [] })),
+        list: invitationList,
         create: invitationCreate,
-        revoke: vi.fn(async () => ({})),
-        resend: vi.fn(async () => ({})),
+        revoke: invitationRevoke,
+        resend: invitationResend,
       },
       projects: {
         list: vi.fn(async () => ({ projects: [project] })),
         get: vi.fn(async () => ({ project })),
-        create: projectCreate,
+        create: createProject,
         delete: vi.fn(async () => ({})),
       },
       projectKeys: {
-        list: vi.fn(async () => ({
-          keys: [
-            {
-              id: 'key_123',
-              name: 'production',
-              accessKey: 'access_test',
-              projectId: project.id,
-              accountId: account.id,
-              createdAt: project.createdAt,
-              updatedAt: project.updatedAt,
-              revokedAt: null,
-            },
-          ],
-        })),
-        create: vi.fn(async () => ({
-          key: {
-            id: 'key_123',
-            name: 'production',
-            accessKey: 'access_test',
-            projectId: project.id,
-            accountId: account.id,
-            createdAt: project.createdAt,
-            updatedAt: project.updatedAt,
-            revokedAt: null,
-          },
-          secretKey: 'secret_test',
-        })),
-        revoke: vi.fn(async () => ({})),
+        list: listProjectKeys,
+        create: createProjectKey,
+        revoke: revokeProjectKey,
       },
       tokens: {
-        listAccount: vi.fn(async () => ({ tokens: [] })),
+        listAccount: listAccountTokens,
         listUser: vi.fn(async () => ({ tokens: [] })),
         createAccount: createAccountToken,
         createUser: createUserToken,
-        revoke: vi.fn(async () => ({})),
+        revoke: revokeToken,
       },
       buckets: {
         list: vi.fn(async () => ({ buckets: [] })),
@@ -773,29 +1828,13 @@ function createFixture() {
             updatedAt: project.updatedAt,
           },
         })),
-        create: vi.fn(async () => ({
-          bucket: {
-            id: 'bucket_123',
-            name: 'publicFiles',
-            projectId: project.id,
-            accountId: account.id,
-            type: 'file',
-            visibility: 'public',
-            usageBytes: 0,
-            createdAt: project.createdAt,
-            updatedAt: project.updatedAt,
-          },
-        })),
+        create: createBucket,
         delete: vi.fn(async () => ({})),
-        empty: vi.fn(async () => ({
-          jobId: 'job_123',
-          bucketId: 'bucket_123',
-          status: 'QUEUED',
-        })),
+        empty: emptyBucket,
         emptyJobs: {
-          latest: vi.fn(async () => ({ job: null })),
-          get: vi.fn(),
-          retry: vi.fn(),
+          latest: latestEmptyJob,
+          get: getEmptyJob,
+          retry: retryEmptyJob,
         },
       },
       files: {
@@ -825,22 +1864,19 @@ function createFixture() {
           pagination: { limit: 50, nextCursor: null, hasMore: false },
         })),
         lookup: vi.fn(),
-        generateAccessUrls: vi.fn(),
-        delete: vi.fn(),
+        generateAccessUrls,
+        delete: deleteFiles,
       },
       uploads: {
-        get: vi.fn(async () => ({
-          upload: { id: 'file_123', status: 'completed' },
-          file: {
-            id: 'file_123',
-            url: 'https://files.example/logo.png',
-          },
-        })),
-        cancel: vi.fn(),
+        request: uploadRequest,
+        get: uploadGet,
+        cancel: uploadCancel,
+        completeMultipart,
       },
     },
   } as unknown as ManagementEdgeStoreSdk;
 
+  const abortController = new AbortController();
   const runtime: CliRuntime = {
     exitCode: 0,
     cwd: '/repo',
@@ -852,7 +1888,7 @@ function createFixture() {
       inputIsTty: true,
       outputIsTty: false,
     },
-    signal: new AbortController().signal,
+    signal: abortController.signal,
     globalConfig: {
       path: '/config/edgestore/config.json',
       read: vi.fn(async () => ({ ...globalConfig })),
@@ -900,6 +1936,7 @@ function createFixture() {
 
   return {
     runtime,
+    abortController,
     globalConfig,
     repoConfig,
     credentials,
@@ -911,10 +1948,32 @@ function createFixture() {
     availableAccounts,
     accountLeave,
     memberList,
+    memberUpdate,
+    memberRemove,
+    invitationList,
     invitationCreate,
-    projectCreate,
     openUrl,
     runCommand,
+    invitationRevoke,
+    invitationResend,
+    listAccountTokens,
+    revokeToken,
+    createBucket,
+    emptyBucket,
+    latestEmptyJob,
+    getEmptyJob,
+    retryEmptyJob,
+    generateAccessUrls,
+    deleteFiles,
+    uploadRequest,
+    uploadCancel,
+    uploadGet,
+    completeMultipart,
+    projectCreate: createProject,
+    createProject,
+    listProjectKeys,
+    createProjectKey,
+    revokeProjectKey,
     stdout: () => Buffer.concat(stdoutChunks).toString('utf8'),
     stderr: () => Buffer.concat(stderrChunks).toString('utf8'),
   };

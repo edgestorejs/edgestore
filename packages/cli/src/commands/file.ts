@@ -1,13 +1,21 @@
-import { writeFile } from 'node:fs/promises';
+import { randomUUID } from 'node:crypto';
+import { createWriteStream } from 'node:fs';
+import { rename, rm } from 'node:fs/promises';
 import path from 'node:path';
-import { usageError } from '../core/errors';
+import { Readable } from 'node:stream';
+import { pipeline } from 'node:stream/promises';
+import type { ReadableStream } from 'node:stream/web';
+import { CliError, normalizeError, usageError } from '../core/errors';
 import { renderTable } from '../core/output';
 import type { CliRuntime, GlobalFlags } from '../core/runtime';
 import { outputFor, sdkFor } from '../core/runtime';
 import { resolvedProjectRef } from './project';
 
 type FileRef =
-  { id: string } | { url: string } | { bucketName: string; path: string };
+  | { id: string }
+  | { key: string }
+  | { url: string }
+  | { bucketName: string; path: string };
 
 export async function fileListCommand(
   runtime: CliRuntime,
@@ -114,12 +122,30 @@ export async function fileDownloadCommand(
   }
   const response = await fetch(download.url, { signal: runtime.signal });
   if (!response.ok) {
-    throw new Error(`Download failed with HTTP ${response.status}.`);
+    throw new CliError(
+      'download_failed',
+      `Download failed with HTTP ${response.status}.`,
+    );
+  }
+  if (!response.body) {
+    throw new CliError(
+      'download_body_missing',
+      'The download response did not contain a body.',
+    );
   }
   const outputPath = path.resolve(runtime.cwd, input.output);
-  await writeFile(outputPath, Buffer.from(await response.arrayBuffer()), {
-    mode: 0o600,
-  });
+  const temporaryPath = `${outputPath}.${randomUUID()}.tmp`;
+  try {
+    await pipeline(
+      Readable.fromWeb(response.body as ReadableStream<Uint8Array>),
+      createWriteStream(temporaryPath, { flags: 'wx', mode: 0o600 }),
+      { signal: runtime.signal },
+    );
+    await rename(temporaryPath, outputPath);
+  } catch (error) {
+    await rm(temporaryPath, { force: true }).catch(() => undefined);
+    throw error;
+  }
   outputFor(runtime, flags).result(
     { output: outputPath, download },
     `Downloaded file to ${outputPath}.`,
@@ -157,12 +183,47 @@ export async function fileDeleteCommand(
   );
   const results = [];
   for (let index = 0; index < refs.length; index += 100) {
-    const result = await sdk.management.files.delete({
-      project,
-      files: refs.slice(index, index + 100),
-      signal: runtime.signal,
-    });
-    results.push(...result.results);
+    try {
+      const result = await sdk.management.files.delete({
+        project,
+        files: refs.slice(index, index + 100),
+        signal: runtime.signal,
+      });
+      results.push(...result.results);
+    } catch (error) {
+      const cause = normalizeError(error);
+      const successCount = results.filter((result) => result.success).length;
+      const failureCount = results.length - successCount;
+      const uncertainReferences = input.references.slice(index, index + 100);
+      const notAttemptedReferences = input.references.slice(index + 100);
+      throw new CliError(
+        'file_delete_incomplete',
+        renderIncompleteDeletion({
+          results,
+          successCount,
+          failureCount,
+          uncertainReferences,
+          notAttemptedReferences,
+          cause,
+        }),
+        {
+          details: {
+            completed: { results, successCount, failureCount },
+            uncertainReferences,
+            notAttemptedReferences,
+            cause: {
+              code: cause.code,
+              message: cause.message,
+              ...(cause.options.details === undefined
+                ? {}
+                : { details: cause.options.details }),
+            },
+          },
+          requestId: cause.options.requestId,
+          exitCode: cause.exitCode,
+        },
+      );
+    }
   }
   const successCount = results.filter((result) => result.success).length;
   const failureCount = results.length - successCount;
@@ -171,6 +232,32 @@ export async function fileDeleteCommand(
     `Deleted ${successCount} file(s); ${failureCount} failed.`,
   );
   if (failureCount) runtime.exitCode = 1;
+}
+
+function renderIncompleteDeletion(input: {
+  results: {
+    fileRef: FileRef;
+    success: boolean;
+    error?: { message: string };
+  }[];
+  successCount: number;
+  failureCount: number;
+  uncertainReferences: string[];
+  notAttemptedReferences: string[];
+  cause: CliError;
+}): string {
+  return [
+    `File deletion stopped: ${input.cause.message}`,
+    `Completed: ${input.successCount} succeeded, ${input.failureCount} failed.`,
+    ...input.results.map(
+      (result) =>
+        `  ${JSON.stringify(result.fileRef)}: ${result.success ? 'deleted' : `failed: ${result.error?.message ?? 'unknown failure'}`}`,
+    ),
+    `Uncertain (${input.uncertainReferences.length}):`,
+    ...input.uncertainReferences.map((reference) => `  ${reference}`),
+    `Not attempted (${input.notAttemptedReferences.length}):`,
+    ...input.notAttemptedReferences.map((reference) => `  ${reference}`),
+  ].join('\n');
 }
 
 function fileReference(value: string, bucket?: string): FileRef {

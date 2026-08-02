@@ -1,3 +1,4 @@
+import { renderCliCommand } from '../core/command';
 import { usageError } from '../core/errors';
 import { renderTable } from '../core/output';
 import type { CliRuntime, GlobalFlags } from '../core/runtime';
@@ -11,8 +12,14 @@ export async function memberListCommand(
   flags: GlobalFlags,
   options: { page?: number; limit?: number; all?: boolean },
 ): Promise<void> {
-  const account = await teamAccount(runtime, flags);
-  if (!account) return;
+  const account = await selectedAccount(runtime, flags);
+  if (account.type === 'PERSONAL') {
+    outputFor(runtime, flags).result(
+      { members: [], available: false, account },
+      'Current account is personal. Team members are not available.',
+    );
+    return;
+  }
   const sdk = await sdkFor(runtime, flags);
   const members = [];
   const pageSize = options.limit ?? 50;
@@ -51,16 +58,24 @@ export async function memberInviteCommand(
     emails: string[];
     role: string;
     allowOverage?: boolean;
+    yes?: boolean;
   },
 ): Promise<void> {
   const account = await requireTeamAccount(runtime, flags);
   const role = parseRole(input.role);
-  if (role === 'OWNER') {
-    await runtime.prompts.confirmTyped(
-      'Owners can manage billing, projects, keys, and members. Type owner to confirm',
-      'owner',
-    );
-  }
+  await confirmOwnerRole(runtime, flags, {
+    role,
+    yes: input.yes,
+    command: [
+      'member',
+      'invite',
+      ...input.emails,
+      '--role',
+      role.toLowerCase(),
+      ...(input.allowOverage ? ['--allow-overage'] : []),
+      '--yes',
+    ],
+  });
   const sdk = await sdkFor(runtime, flags);
   const results = [];
   for (const email of input.emails) {
@@ -101,16 +116,15 @@ export async function memberInviteCommand(
 export async function memberRoleCommand(
   runtime: CliRuntime,
   flags: GlobalFlags,
-  input: { userId: string; role: string },
+  input: { userId: string; role: string; yes?: boolean },
 ): Promise<void> {
   const account = await requireTeamAccount(runtime, flags);
   const role = parseRole(input.role);
-  if (role === 'OWNER') {
-    await runtime.prompts.confirmTyped(
-      'Owners can manage billing, projects, keys, and members. Type owner to confirm',
-      'owner',
-    );
-  }
+  await confirmOwnerRole(runtime, flags, {
+    role,
+    yes: input.yes,
+    command: ['member', 'role', input.userId, role.toLowerCase(), '--yes'],
+  });
   const sdk = await sdkFor(runtime, flags);
   const result = await sdk.management.members.update({
     account: account.id,
@@ -153,8 +167,14 @@ export async function invitationListCommand(
   flags: GlobalFlags,
   options: { page?: number; limit?: number; all?: boolean },
 ): Promise<void> {
-  const account = await teamAccount(runtime, flags);
-  if (!account) return;
+  const account = await selectedAccount(runtime, flags);
+  if (account.type === 'PERSONAL') {
+    outputFor(runtime, flags).result(
+      { invitations: [], available: false, account },
+      'Current account is personal. Team invitations are not available.',
+    );
+    return;
+  }
   const sdk = await sdkFor(runtime, flags);
   const invitations = [];
   const pageSize = options.limit ?? 50;
@@ -218,31 +238,43 @@ export async function invitationActionCommand(
   );
 }
 
-async function teamAccount(runtime: CliRuntime, flags: GlobalFlags) {
+async function selectedAccount(runtime: CliRuntime, flags: GlobalFlags) {
   const sdk = await sdkFor(runtime, flags);
   const result = await sdk.management.accounts.get({
     account: await activeAccount(runtime),
     signal: runtime.signal,
   });
-  if (result.account.type === 'PERSONAL') {
-    outputFor(runtime, flags).result(
-      { membersAvailable: false, account: result.account },
-      'Current account is personal.\nMembers are only available for team accounts.',
-    );
-    return undefined;
-  }
   return result.account;
 }
 
 async function requireTeamAccount(runtime: CliRuntime, flags: GlobalFlags) {
-  const account = await teamAccount(runtime, flags);
-  if (!account) {
+  const account = await selectedAccount(runtime, flags);
+  if (account.type === 'PERSONAL') {
     throw usageError(
       'team_account_required',
       'This command requires a team account.',
     );
   }
   return account;
+}
+
+async function confirmOwnerRole(
+  runtime: CliRuntime,
+  flags: GlobalFlags,
+  input: { role: Role; yes?: boolean; command: string[] },
+): Promise<void> {
+  if (input.role !== 'OWNER' || input.yes) return;
+  if (!runtime.io.inputIsTty || flags.json) {
+    throw usageError(
+      'confirmation_required',
+      'Assigning the owner role requires confirmation.',
+      [renderCliCommand(flags, input.command)],
+    );
+  }
+  await runtime.prompts.confirmTyped(
+    'Owners can manage billing, projects, keys, and members. Type owner to confirm',
+    'owner',
+  );
 }
 
 function parseRole(value: string): Role {
