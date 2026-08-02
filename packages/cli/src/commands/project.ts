@@ -108,7 +108,7 @@ export async function projectDeleteCommand(
 ): Promise<void> {
   let project;
   if (!options.yes) {
-    if (!runtime.io.inputIsTty || flags.json) {
+    if (!runtime.io.inputIsTty || flags.json || flags.plain) {
       throw usageError(
         'confirmation_required',
         'Project deletion requires confirmation.',
