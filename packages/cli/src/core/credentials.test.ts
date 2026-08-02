@@ -12,12 +12,12 @@ describe('resolveCredential', () => {
   });
 
   it('uses the keychain when the environment token is absent', async () => {
-    const { store } = credentialStore(' stored ');
+    const { store, getCredential } = credentialStore(' stored ');
 
     await expect(
       resolveCredential(undefined, store, 'https://api-dev.edgestore.dev'),
     ).resolves.toEqual({ token: 'stored', source: 'keychain' });
-    expect(store.get).toHaveBeenCalledWith('https://api-dev.edgestore.dev');
+    expect(getCredential).toHaveBeenCalledWith('https://api-dev.edgestore.dev');
   });
 });
 
