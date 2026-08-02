@@ -4,13 +4,15 @@ import {
   readFile,
   rm,
   stat,
-  truncate,
   writeFile,
 } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { PassThrough, Readable } from 'node:stream';
-import type { ManagementEdgeStoreSdk } from '@edgestore/sdk';
+import {
+  EdgeStoreUploadCleanupError,
+  type ManagementEdgeStoreSdk,
+} from '@edgestore/sdk';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { runCli } from './cli';
 import type {
@@ -916,7 +918,7 @@ describe('runCli', () => {
     );
 
     expect(exitCode).toBe(2);
-    expect(fixture.uploadRequest).not.toHaveBeenCalled();
+    expect(fixture.uploadFile).not.toHaveBeenCalled();
     expect(fixture.stderr()).toContain('--json');
   });
 
@@ -931,18 +933,16 @@ describe('runCli', () => {
         writeFile(path.join(temporaryDirectory!, file), file),
       ),
     );
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async () => new Response(null, { status: 200 })),
-    );
     let requestCount = 0;
-    fixture.uploadRequest.mockImplementation(async () => {
+    fixture.uploadFile.mockImplementation(async () => {
       requestCount += 1;
       if (requestCount === 2) throw new Error('second upload request failed');
       return {
-        ...singleUploadRequest,
-        file: { id: 'upload_first' },
-        upload: { ...singleUploadRequest.upload, id: 'upload_first' },
+        upload: { id: 'upload_first', status: 'completed' as const },
+        file: {
+          id: 'upload_first',
+          url: 'https://files.example/first.txt',
+        },
       };
     });
 
@@ -963,7 +963,7 @@ describe('runCli', () => {
 
     expect(exitCode).toBe(1);
     expect(fixture.stdout()).toBe('');
-    expect(fixture.uploadRequest).toHaveBeenCalledTimes(2);
+    expect(fixture.uploadFile).toHaveBeenCalledTimes(2);
     expect(JSON.parse(fixture.stderr()).error).toMatchObject({
       code: 'file_upload_incomplete',
       details: {
@@ -982,11 +982,6 @@ describe('runCli', () => {
     fixture.runtime.cwd = temporaryDirectory;
     await writeFile(path.join(temporaryDirectory, 'report[1].txt'), 'literal');
     await writeFile(path.join(temporaryDirectory, 'report1.txt'), 'glob');
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async () => new Response(null, { status: 200 })),
-    );
-
     const exitCode = await runCli(
       [
         'file',
@@ -1002,25 +997,24 @@ describe('runCli', () => {
     );
 
     expect(exitCode).toBe(0);
-    expect(fixture.uploadRequest).toHaveBeenCalledTimes(1);
-    expect(fixture.uploadRequest).toHaveBeenCalledWith(
-      expect.objectContaining({ sizeBytes: 7 }),
-    );
+    expect(fixture.uploadFile).toHaveBeenCalledTimes(1);
+    const source = fixture.uploadFile.mock.calls[0]?.[0].source;
+    expect(source).toBeInstanceOf(Blob);
+    expect((source as Blob).size).toBe(7);
   });
 
-  it('cancels without uploading bytes when the source is truncated', async () => {
+  it('rejects same-size source mutations during upload', async () => {
     temporaryDirectory = await mkdtemp(
       path.join(tmpdir(), 'edgestore-cli-upload-'),
     );
     fixture.runtime.cwd = temporaryDirectory;
     const sourcePath = path.join(temporaryDirectory, 'source.txt');
     await writeFile(sourcePath, 'upload me');
-    fixture.uploadRequest.mockImplementationOnce(async () => {
-      await truncate(sourcePath, 0);
-      return singleUploadRequest;
+    fixture.uploadFile.mockImplementationOnce(async (input) => {
+      await writeFile(sourcePath, 'UPLOAD ME');
+      await (input.source as Blob).arrayBuffer();
+      throw new Error('Expected the file-backed Blob read to fail.');
     });
-    const fetchMock = vi.fn();
-    vi.stubGlobal('fetch', fetchMock);
 
     const exitCode = await runCli(
       [
@@ -1038,30 +1032,25 @@ describe('runCli', () => {
     );
 
     expect(exitCode).toBe(1);
-    expect(fetchMock).not.toHaveBeenCalled();
-    expect(fixture.uploadCancel).toHaveBeenCalledWith(
-      expect.objectContaining({ uploadId: 'upload_123' }),
-    );
     expect(JSON.parse(fixture.stderr()).error.code).toBe(
       'upload_source_changed',
     );
   });
 
-  it('reports failed upload cleanup with an independent signal', async () => {
+  it('reports failed automatic upload cleanup', async () => {
     temporaryDirectory = await mkdtemp(
       path.join(tmpdir(), 'edgestore-cli-upload-'),
     );
     fixture.runtime.cwd = temporaryDirectory;
     await writeFile(path.join(temporaryDirectory, 'source.txt'), 'upload me');
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async () => {
-        fixture.abortController.abort();
-        throw new DOMException('aborted', 'AbortError');
+    fixture.abortController.abort();
+    fixture.uploadFile.mockRejectedValueOnce(
+      new EdgeStoreUploadCleanupError({
+        message: 'Automatic cancellation failed.',
+        uploadId: 'upload_123',
+        uploadCause: new DOMException('aborted', 'AbortError'),
+        cleanupCause: new Error('cleanup unavailable'),
       }),
-    );
-    fixture.uploadCancel.mockRejectedValueOnce(
-      new Error('cleanup unavailable'),
     );
 
     const exitCode = await runCli(
@@ -1081,11 +1070,7 @@ describe('runCli', () => {
       '0.0.0',
     );
 
-    const cleanupSignal = fixture.uploadCancel.mock.calls[0]?.[0].signal;
     expect(exitCode).toBe(130);
-    expect(cleanupSignal).toBeDefined();
-    expect(cleanupSignal).not.toBe(fixture.runtime.signal);
-    expect(cleanupSignal?.aborted).toBe(false);
     expect(JSON.parse(fixture.stderr()).error).toMatchObject({
       code: 'upload_cleanup_failed',
       details: {
@@ -1633,6 +1618,9 @@ function createFixture() {
   type UploadRequestInput = Parameters<
     ManagementEdgeStoreSdk['management']['uploads']['request']
   >[0];
+  type UploadFileInput = Parameters<
+    ManagementEdgeStoreSdk['management']['uploads']['upload']
+  >[0];
   type UploadInput = Parameters<
     ManagementEdgeStoreSdk['management']['uploads']['get']
   >[0];
@@ -1646,6 +1634,13 @@ function createFixture() {
   const uploadRequest = vi.fn(
     async (_input: UploadRequestInput) => singleUploadRequest,
   );
+  const uploadFile = vi.fn(async (_input: UploadFileInput) => ({
+    upload: { id: 'upload_123', status: 'completed' as const },
+    file: {
+      id: 'upload_123',
+      url: 'https://files.example/upload.txt',
+    },
+  }));
   const uploadCancel = vi.fn(async (_input: UploadInput) => ({
     upload: { id: 'upload_123', status: 'canceled' as const },
   }));
@@ -1753,6 +1748,7 @@ function createFixture() {
         delete: deleteFiles,
       },
       uploads: {
+        upload: uploadFile,
         request: uploadRequest,
         get: uploadGet,
         cancel: uploadCancel,
@@ -1832,6 +1828,7 @@ function createFixture() {
     retryEmptyJob,
     generateAccessUrls,
     deleteFiles,
+    uploadFile,
     uploadRequest,
     uploadCancel,
     uploadGet,

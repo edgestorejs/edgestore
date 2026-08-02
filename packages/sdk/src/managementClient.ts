@@ -8,6 +8,7 @@ import {
   createManagementResourceClient,
   type ManagementResourceClient,
 } from './managementResources';
+import type { UploadDefaults } from './uploadTypes';
 
 /** Complete administrative client available to Bearer credentials. */
 export type ManagementClient = ManagementResourceClient &
@@ -19,9 +20,12 @@ export type ManagementClient = ManagementResourceClient &
     }): Promise<OperationResult<'v2.whoami'>>;
   };
 
-export function createManagementClient(transport: Transport): ManagementClient {
+export function createManagementClient(
+  transport: Transport,
+  uploadDefaults?: UploadDefaults,
+): ManagementClient {
   return {
-    ...createManagementResourceClient(transport),
+    ...createManagementResourceClient(transport, uploadDefaults),
     ...createManagementAccessClient(transport),
     whoami: (options) =>
       transport.execute((client) =>
