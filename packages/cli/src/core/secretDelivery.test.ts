@@ -2,7 +2,7 @@ import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { deliverEnvSecret } from './secretDelivery';
+import { deliverEnvSecret, preflightEnvSecret } from './secretDelivery';
 
 describe('deliverEnvSecret', () => {
   let directory: string | undefined;
@@ -44,6 +44,54 @@ describe('deliverEnvSecret', () => {
 
     expect(await readFile(file, 'utf8')).toBe(
       'OTHER=value\nEDGE_STORE_ACCESS_KEY=next\n',
+    );
+  });
+
+  it('replaces every exact duplicate assignment with --update', async () => {
+    directory = await mkdtemp(path.join(tmpdir(), 'edgestore-secret-'));
+    const file = path.join(directory, '.env.local');
+    await writeFile(
+      file,
+      [
+        '# keys',
+        'EDGE_STORE_ACCESS_KEY=old-one',
+        'OTHER=value',
+        'EDGE_STORE_ACCESS_KEY=old-two',
+        'EDGE_STORE_ACCESS_KEY_SUFFIX=untouched',
+        '',
+      ].join('\n'),
+    );
+
+    await deliverEnvSecret(
+      directory,
+      { EDGE_STORE_ACCESS_KEY: 'next' },
+      { output: '.env.local', update: true },
+    );
+
+    expect(await readFile(file, 'utf8')).toBe(
+      [
+        '# keys',
+        'EDGE_STORE_ACCESS_KEY=next',
+        'OTHER=value',
+        'EDGE_STORE_ACCESS_KEY=next',
+        'EDGE_STORE_ACCESS_KEY_SUFFIX=untouched',
+        '',
+      ].join('\n'),
+    );
+  });
+
+  it('preflights existing assignments without changing the file', async () => {
+    directory = await mkdtemp(path.join(tmpdir(), 'edgestore-secret-'));
+    const file = path.join(directory, '.env.local');
+    await writeFile(file, 'EDGE_STORE_ACCESS_KEY=old\n');
+
+    await expect(
+      preflightEnvSecret(directory, ['EDGE_STORE_ACCESS_KEY'], {
+        output: '.env.local',
+      }),
+    ).rejects.toMatchObject({ code: 'secret_output_exists' });
+    await expect(readFile(file, 'utf8')).resolves.toBe(
+      'EDGE_STORE_ACCESS_KEY=old\n',
     );
   });
 });

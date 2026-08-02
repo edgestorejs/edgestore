@@ -1,3 +1,4 @@
+import { renderCliCommand } from '../core/command';
 import { CliError, usageError } from '../core/errors';
 import { renderTable } from '../core/output';
 import type { CliRuntime, GlobalFlags } from '../core/runtime';
@@ -55,12 +56,13 @@ export async function bucketCreateCommand(
   input: {
     bucket: string;
     project?: string;
-    type: 'file' | 'image';
+    type: string;
     public?: boolean;
     protected?: boolean;
   },
 ): Promise<void> {
   validateBucketName(input.bucket);
+  const type = parseBucketType(input.type);
   if (Boolean(input.public) === Boolean(input.protected)) {
     throw usageError(
       'bucket_visibility_required',
@@ -71,7 +73,7 @@ export async function bucketCreateCommand(
   const result = await sdk.management.buckets.create({
     project: await resolvedProjectRef(runtime, input.project),
     name: input.bucket,
-    type: input.type,
+    type,
     visibility: input.public ? 'public' : 'protected',
     signal: runtime.signal,
   });
@@ -80,6 +82,11 @@ export async function bucketCreateCommand(
     `Created ${result.bucket.visibility} ${result.bucket.type} bucket ${result.bucket.name}.`,
     result.bucket.name,
   );
+}
+
+export function parseBucketType(value: string | undefined): 'file' | 'image' {
+  if (value === 'file' || value === 'image') return value;
+  throw usageError('invalid_bucket_type', 'Bucket type must be file or image.');
 }
 
 export async function bucketDeleteCommand(
@@ -135,7 +142,20 @@ export async function bucketEmptyCommand(
       throw usageError(
         'confirmation_required',
         'Emptying a bucket requires confirmation.',
-        [`edgestore bucket empty ${input.bucket} --yes`],
+        [
+          renderCliCommand(
+            flags,
+            [
+              'bucket',
+              'empty',
+              input.bucket,
+              ...(input.retry ? ['--retry', input.retry] : []),
+              ...(input.wait ? ['--wait'] : []),
+              '--yes',
+            ],
+            { project },
+          ),
+        ],
       );
     }
     await runtime.prompts.confirmTyped(
@@ -162,19 +182,31 @@ export async function bucketEmptyCommand(
       bucket: input.bucket,
       jobId: started.jobId,
     });
-    renderEmptyJob(runtime, flags, job);
     if (job.status === 'FAILED') {
       throw new CliError(
         'bucket_empty_failed',
-        'The bucket empty job failed.',
+        `Bucket empty job ${job.id} failed after ${job.processedCount}/${job.totalCount} files: ${job.error ?? 'unknown failure'}.`,
         {
-          details: { jobId: job.id, error: job.error },
+          details: { job },
           suggestions: [
-            `edgestore bucket empty ${input.bucket} --retry ${job.id}`,
+            renderCliCommand(
+              flags,
+              [
+                'bucket',
+                'empty',
+                input.bucket,
+                '--retry',
+                job.id,
+                '--wait',
+                ...(input.yes ? ['--yes'] : []),
+              ],
+              { project },
+            ),
           ],
         },
       );
     }
+    renderEmptyJob(runtime, flags, job);
     return;
   }
   outputFor(runtime, flags).result(
@@ -184,7 +216,11 @@ export async function bucketEmptyCommand(
       `Job: ${started.jobId}`,
       '',
       'Check status:',
-      `  edgestore bucket empty-status ${input.bucket} --job ${started.jobId}`,
+      `  ${renderCliCommand(
+        flags,
+        ['bucket', 'empty-status', input.bucket, '--job', started.jobId],
+        { project },
+      )}`,
     ].join('\n'),
     started.jobId,
   );
@@ -213,7 +249,14 @@ export async function bucketEmptyStatusCommand(
     throw new CliError(
       'bucket_empty_job_not_found',
       `No empty-bucket job found for ${input.bucket}.`,
-      { suggestions: [`edgestore bucket empty ${input.bucket}`] },
+      {
+        suggestions: [
+          renderCliCommand(flags, ['bucket', 'empty', input.bucket], {
+            project,
+            preserveOutputMode: false,
+          }),
+        ],
+      },
     );
   }
   renderEmptyJob(runtime, flags, result.job);
@@ -273,7 +316,11 @@ async function waitForEmptyJob(
     {
       details: { jobId: target.jobId },
       suggestions: [
-        `edgestore bucket empty-status ${target.bucket} --job ${target.jobId}`,
+        renderCliCommand(
+          flags,
+          ['bucket', 'empty-status', target.bucket, '--job', target.jobId],
+          { project: target.project },
+        ),
       ],
     },
   );
