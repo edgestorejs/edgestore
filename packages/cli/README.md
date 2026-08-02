@@ -3,7 +3,7 @@
 The official command-line interface for EdgeStore accounts and projects.
 
 ```sh
-pnpm add --global @edgestore/cli
+npm install --global @edgestore/cli
 edgestore --help
 ```
 
