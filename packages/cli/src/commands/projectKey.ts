@@ -1,9 +1,10 @@
-import { usageError } from '../core/errors';
+import { CliError, usageError } from '../core/errors';
 import { renderTable } from '../core/output';
 import type { CliRuntime, GlobalFlags } from '../core/runtime';
 import { outputFor, sdkFor } from '../core/runtime';
 import {
-  deliverEnvSecret,
+  deliverEnvSecretWithRollback,
+  preflightEnvSecret,
   type SecretDeliveryOptions,
 } from '../core/secretDelivery';
 
@@ -41,9 +42,11 @@ export async function projectKeyCreateCommand(
   flags: GlobalFlags,
   input: KeyOptions & { project: string },
 ): Promise<void> {
-  const result = await createKey(runtime, flags, input);
+  requirePlainSecretDelivery(flags, input);
+  await preflightKeyDelivery(runtime, input);
+  const sdk = await sdkFor(runtime, flags);
+  const { result, delivered } = await createAndDeliverKey(runtime, sdk, input);
   const values = keyValues(result.key.accessKey, result.secretKey);
-  const delivered = await deliverEnvSecret(runtime.cwd, values, input);
   outputFor(runtime, flags).result(
     result,
     [
@@ -113,9 +116,29 @@ export async function projectKeyRotateCommand(
     );
   }
 
-  const result = await createKey(runtime, flags, input);
+  requirePlainSecretDelivery(flags, input);
+  const sdk = await sdkFor(runtime, flags);
+  const listed = await sdk.management.projectKeys.list({
+    project: input.project,
+    signal: runtime.signal,
+  });
+  const target = listed.keys.find((key) => key.id === input.keyId);
+  if (!target) {
+    throw new CliError(
+      'project_key_not_found',
+      `Project key ${input.keyId} was not found in ${input.project}.`,
+    );
+  }
+  if (target.revokedAt) {
+    throw new CliError(
+      'project_key_revoked',
+      `Project key ${input.keyId} is already revoked.`,
+    );
+  }
+  await preflightKeyDelivery(runtime, input);
+
+  const { result, delivered } = await createAndDeliverKey(runtime, sdk, input);
   const values = keyValues(result.key.accessKey, result.secretKey);
-  const delivered = await deliverEnvSecret(runtime.cwd, values, input);
   const output = outputFor(runtime, flags);
   const secretMessage = [
     `Created replacement key "${result.key.name}".`,
@@ -131,7 +154,6 @@ export async function projectKeyRotateCommand(
       'saved',
     );
   }
-  const sdk = await sdkFor(runtime, flags);
   await sdk.management.projectKeys.revoke({
     project: input.project,
     keyId: input.keyId,
@@ -148,17 +170,54 @@ export async function projectKeyRotateCommand(
   );
 }
 
-async function createKey(
+async function createAndDeliverKey(
   runtime: CliRuntime,
-  flags: GlobalFlags,
-  input: { project: string; name: string },
+  sdk: Awaited<ReturnType<typeof sdkFor>>,
+  input: { project: string; name: string } & SecretDeliveryOptions,
 ) {
-  const sdk = await sdkFor(runtime, flags);
-  return sdk.management.projectKeys.create({
+  const result = await sdk.management.projectKeys.create({
     project: input.project,
     name: input.name,
     signal: runtime.signal,
   });
+  const delivered = await deliverEnvSecretWithRollback({
+    cwd: runtime.cwd,
+    values: keyValues(result.key.accessKey, result.secretKey),
+    options: input,
+    credential: { label: 'project key', id: result.key.id },
+    rollback: async (signal) => {
+      await sdk.management.projectKeys.revoke({
+        project: input.project,
+        keyId: result.key.id,
+        signal,
+      });
+    },
+    manualRollbackCommand: `edgestore project key revoke ${input.project} ${result.key.id} --yes`,
+  });
+  return { result, delivered };
+}
+
+async function preflightKeyDelivery(
+  runtime: CliRuntime,
+  options: SecretDeliveryOptions,
+): Promise<void> {
+  await preflightEnvSecret(
+    runtime.cwd,
+    ['EDGE_STORE_ACCESS_KEY', 'EDGE_STORE_SECRET_KEY'],
+    options,
+  );
+}
+
+function requirePlainSecretDelivery(
+  flags: GlobalFlags,
+  options: SecretDeliveryOptions,
+): void {
+  if (flags.plain && !options.copy && !options.output) {
+    throw usageError(
+      'secret_delivery_required',
+      'Plain output requires --copy or --output for the one-time key.',
+    );
+  }
 }
 
 function keyValues(accessKey: string, secretKey: string) {

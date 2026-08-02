@@ -59,6 +59,16 @@ export async function projectCreateCommand(
     allowOverage?: boolean;
   },
 ): Promise<void> {
+  if (flags.plain && !options.withoutKey) {
+    throw usageError(
+      'one_time_secret_delivery_required',
+      'Plain output cannot deliver the initial project key.',
+      [
+        'Use --without-key with --plain.',
+        'Use human or --json output to receive the one-time key.',
+      ],
+    );
+  }
   const account = await activeAccount(runtime, options.account);
   const sdk = await sdkFor(runtime, flags);
   const result = await sdk.management.projects.create({
