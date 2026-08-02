@@ -5,20 +5,19 @@ describe('resolveCredential', () => {
   it('prefers EDGESTORE_TOKEN without reading the keychain', async () => {
     const { store, getCredential } = credentialStore('stored');
 
-    await expect(resolveCredential(' environment ', store)).resolves.toEqual({
-      token: 'environment',
-      source: 'environment',
-    });
+    await expect(
+      resolveCredential(' environment ', store, 'https://api.edgestore.dev'),
+    ).resolves.toEqual({ token: 'environment', source: 'environment' });
     expect(getCredential).not.toHaveBeenCalled();
   });
 
   it('uses the keychain when the environment token is absent', async () => {
-    const { store } = credentialStore(' stored ');
+    const { store, getCredential } = credentialStore(' stored ');
 
-    await expect(resolveCredential(undefined, store)).resolves.toEqual({
-      token: 'stored',
-      source: 'keychain',
-    });
+    await expect(
+      resolveCredential(undefined, store, 'https://api-dev.edgestore.dev'),
+    ).resolves.toEqual({ token: 'stored', source: 'keychain' });
+    expect(getCredential).toHaveBeenCalledWith('https://api-dev.edgestore.dev');
   });
 });
 

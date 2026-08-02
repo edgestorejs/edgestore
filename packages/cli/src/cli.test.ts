@@ -4,13 +4,15 @@ import {
   readFile,
   rm,
   stat,
-  truncate,
   writeFile,
 } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { PassThrough, Readable } from 'node:stream';
-import type { ManagementEdgeStoreSdk } from '@edgestore/sdk';
+import {
+  EdgeStoreUploadCleanupError,
+  type ManagementEdgeStoreSdk,
+} from '@edgestore/sdk';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { runCli } from './cli';
 import type {
@@ -737,6 +739,23 @@ describe('runCli', () => {
     );
   });
 
+  it('revokes a project key with revoke-only access when forced', async () => {
+    fixture.listProjectKeys.mockRejectedValueOnce(new Error('read denied'));
+
+    const exitCode = await runCli(
+      ['project', 'key', 'revoke', project.basePath, projectKey.id, '--yes'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(0);
+    expect(fixture.revokeProjectKey).toHaveBeenCalledWith({
+      project: project.basePath,
+      keyId: projectKey.id,
+      signal: fixture.runtime.signal,
+    });
+  });
+
   it('creates an account management token with one-time output', async () => {
     await runCli(
       ['token', 'create', '--name', 'deploy', '--preset', 'deploy'],
@@ -1136,7 +1155,7 @@ describe('runCli', () => {
     );
 
     expect(exitCode).toBe(2);
-    expect(fixture.uploadRequest).not.toHaveBeenCalled();
+    expect(fixture.uploadFile).not.toHaveBeenCalled();
     expect(fixture.stderr()).toContain('--json');
   });
 
@@ -1151,18 +1170,16 @@ describe('runCli', () => {
         writeFile(path.join(temporaryDirectory!, file), file),
       ),
     );
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async () => new Response(null, { status: 200 })),
-    );
     let requestCount = 0;
-    fixture.uploadRequest.mockImplementation(async () => {
+    fixture.uploadFile.mockImplementation(async () => {
       requestCount += 1;
       if (requestCount === 2) throw new Error('second upload request failed');
       return {
-        ...singleUploadRequest,
-        file: { id: 'upload_first' },
-        upload: { ...singleUploadRequest.upload, id: 'upload_first' },
+        upload: { id: 'upload_first', status: 'completed' as const },
+        file: {
+          id: 'upload_first',
+          url: 'https://files.example/first.txt',
+        },
       };
     });
 
@@ -1183,7 +1200,7 @@ describe('runCli', () => {
 
     expect(exitCode).toBe(1);
     expect(fixture.stdout()).toBe('');
-    expect(fixture.uploadRequest).toHaveBeenCalledTimes(2);
+    expect(fixture.uploadFile).toHaveBeenCalledTimes(2);
     expect(JSON.parse(fixture.stderr()).error).toMatchObject({
       code: 'file_upload_incomplete',
       details: {
@@ -1202,11 +1219,6 @@ describe('runCli', () => {
     fixture.runtime.cwd = temporaryDirectory;
     await writeFile(path.join(temporaryDirectory, 'report[1].txt'), 'literal');
     await writeFile(path.join(temporaryDirectory, 'report1.txt'), 'glob');
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async () => new Response(null, { status: 200 })),
-    );
-
     const exitCode = await runCli(
       [
         'file',
@@ -1222,25 +1234,24 @@ describe('runCli', () => {
     );
 
     expect(exitCode).toBe(0);
-    expect(fixture.uploadRequest).toHaveBeenCalledTimes(1);
-    expect(fixture.uploadRequest).toHaveBeenCalledWith(
-      expect.objectContaining({ sizeBytes: 7 }),
-    );
+    expect(fixture.uploadFile).toHaveBeenCalledTimes(1);
+    const source = fixture.uploadFile.mock.calls[0]?.[0].source;
+    expect(source).toBeInstanceOf(Blob);
+    expect((source as Blob).size).toBe(7);
   });
 
-  it('cancels without uploading bytes when the source is truncated', async () => {
+  it('rejects same-size source mutations during upload', async () => {
     temporaryDirectory = await mkdtemp(
       path.join(tmpdir(), 'edgestore-cli-upload-'),
     );
     fixture.runtime.cwd = temporaryDirectory;
     const sourcePath = path.join(temporaryDirectory, 'source.txt');
     await writeFile(sourcePath, 'upload me');
-    fixture.uploadRequest.mockImplementationOnce(async () => {
-      await truncate(sourcePath, 0);
-      return singleUploadRequest;
+    fixture.uploadFile.mockImplementationOnce(async (input) => {
+      await writeFile(sourcePath, 'UPLOAD ME');
+      await (input.source as Blob).arrayBuffer();
+      throw new Error('Expected the file-backed Blob read to fail.');
     });
-    const fetchMock = vi.fn();
-    vi.stubGlobal('fetch', fetchMock);
 
     const exitCode = await runCli(
       [
@@ -1258,30 +1269,25 @@ describe('runCli', () => {
     );
 
     expect(exitCode).toBe(1);
-    expect(fetchMock).not.toHaveBeenCalled();
-    expect(fixture.uploadCancel).toHaveBeenCalledWith(
-      expect.objectContaining({ uploadId: 'upload_123' }),
-    );
     expect(JSON.parse(fixture.stderr()).error.code).toBe(
       'upload_source_changed',
     );
   });
 
-  it('reports failed upload cleanup with an independent signal', async () => {
+  it('reports failed automatic upload cleanup', async () => {
     temporaryDirectory = await mkdtemp(
       path.join(tmpdir(), 'edgestore-cli-upload-'),
     );
     fixture.runtime.cwd = temporaryDirectory;
     await writeFile(path.join(temporaryDirectory, 'source.txt'), 'upload me');
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async () => {
-        fixture.abortController.abort();
-        throw new DOMException('aborted', 'AbortError');
+    fixture.abortController.abort();
+    fixture.uploadFile.mockRejectedValueOnce(
+      new EdgeStoreUploadCleanupError({
+        message: 'Automatic cancellation failed.',
+        uploadId: 'upload_123',
+        uploadCause: new DOMException('aborted', 'AbortError'),
+        cleanupCause: new Error('cleanup unavailable'),
       }),
-    );
-    fixture.uploadCancel.mockRejectedValueOnce(
-      new Error('cleanup unavailable'),
     );
 
     const exitCode = await runCli(
@@ -1301,11 +1307,7 @@ describe('runCli', () => {
       '0.0.0',
     );
 
-    const cleanupSignal = fixture.uploadCancel.mock.calls[0]?.[0].signal;
     expect(exitCode).toBe(130);
-    expect(cleanupSignal).toBeDefined();
-    expect(cleanupSignal).not.toBe(fixture.runtime.signal);
-    expect(cleanupSignal?.aborted).toBe(false);
     expect(JSON.parse(fixture.stderr()).error).toMatchObject({
       code: 'upload_cleanup_failed',
       details: {
@@ -1520,6 +1522,42 @@ describe('runCli', () => {
     });
   });
 
+  it('identifies per-file deletion failures in human output', async () => {
+    fixture.deleteFiles.mockResolvedValueOnce({
+      results: [
+        { fileRef: { id: 'file_ok' }, success: true },
+        {
+          fileRef: { id: 'file_failed' },
+          success: false,
+          error: {
+            code: 'FILE_NOT_DELETABLE',
+            message: 'File is already deleted.',
+          },
+        },
+      ],
+      successCount: 1,
+      failureCount: 1,
+    });
+
+    const exitCode = await runCli(
+      [
+        'file',
+        'delete',
+        'file_ok',
+        'file_failed',
+        '--project',
+        project.basePath,
+        '--yes',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(1);
+    expect(fixture.stdout()).toContain('Deleted 1 file(s); 1 failed.');
+    expect(fixture.stdout()).toContain('file_failed: File is already deleted.');
+  });
+
   it('rejects unsupported bucket types before calling the SDK', async () => {
     fixture.repoConfig.config = {
       account: account.id,
@@ -1537,11 +1575,48 @@ describe('runCli', () => {
     expect(fixture.stderr()).toContain('file or image');
   });
 
+  it('deletes a bucket with delete-only access when forced', async () => {
+    fixture.repoConfig.config = {
+      account: account.id,
+      project: project.basePath,
+    };
+    fixture.getBucket.mockRejectedValueOnce(new Error('read denied'));
+
+    const exitCode = await runCli(
+      ['bucket', 'delete', 'publicFiles', '--yes'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(0);
+    expect(fixture.deleteBucket).toHaveBeenCalledWith({
+      project: project.basePath,
+      bucket: 'publicFiles',
+      signal: fixture.runtime.signal,
+    });
+  });
+
   it('validates a token before saving it', async () => {
     await runCli(['login', '--token'], fixture.runtime, '0.0.0');
 
-    expect(fixture.setCredential).toHaveBeenCalledWith('mgmt_test');
+    expect(fixture.setCredential).toHaveBeenCalledWith(
+      'https://api.edgestore.dev',
+      'mgmt_test',
+    );
     expect(fixture.stdout()).toContain('Logged in as ravi@example.com.');
+  });
+
+  it('stores a login for the selected API origin', async () => {
+    await runCli(
+      ['--api-url', 'https://api-dev.edgestore.dev/v2/', 'login', '--token'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(fixture.setCredential).toHaveBeenCalledWith(
+      'https://api-dev.edgestore.dev',
+      'mgmt_test',
+    );
   });
 
   it('does not prompt for a token in JSON mode', async () => {
@@ -1661,10 +1736,13 @@ function createFixture() {
     activeAccount: account.id,
   };
   const repoConfig: { config?: RepoConfig } = {};
-  const credentialValue = { value: 'stored_token' };
+  const credentialValues = new Map([
+    ['https://api.edgestore.dev', 'stored_token'],
+    ['https://api-dev.edgestore.dev', 'stored_dev_token'],
+  ]);
   const readToken = vi.fn(async () => 'mgmt_test');
-  const setCredential = vi.fn(async (token: string) => {
-    credentialValue.value = token;
+  const setCredential = vi.fn(async (apiOrigin: string, token: string) => {
+    credentialValues.set(apiOrigin, token);
   });
   const confirmTyped = vi.fn(async () => undefined);
   const availableAccounts: (typeof account | typeof teamAccount)[] = [account];
@@ -1698,12 +1776,10 @@ function createFixture() {
   const invitationRevoke = vi.fn(async () => ({}));
   const invitationResend = vi.fn(async () => ({}));
   const credentials: CredentialStore = {
-    get: vi.fn(async () => credentialValue.value),
+    get: vi.fn(async (apiOrigin) => credentialValues.get(apiOrigin)),
     set: setCredential,
-    delete: vi.fn(async () => {
-      const existed = Boolean(credentialValue.value);
-      credentialValue.value = '';
-      return existed;
+    delete: vi.fn(async (apiOrigin) => {
+      return credentialValues.delete(apiOrigin);
     }),
     available: vi.fn(async () => true),
   };
@@ -1768,6 +1844,20 @@ function createFixture() {
       updatedAt: project.updatedAt,
     },
   }));
+  const getBucket = vi.fn(async () => ({
+    bucket: {
+      id: 'bucket_123',
+      name: 'publicFiles',
+      projectId: project.id,
+      accountId: account.id,
+      type: 'file' as const,
+      visibility: 'public' as const,
+      usageBytes: 0,
+      createdAt: project.createdAt,
+      updatedAt: project.updatedAt,
+    },
+  }));
+  const deleteBucket = vi.fn(async () => ({}));
   const emptyBucket = vi.fn(async () => ({
     jobId: 'job_123',
     bucketId: 'bucket_123',
@@ -1795,6 +1885,9 @@ function createFixture() {
   type UploadRequestInput = Parameters<
     ManagementEdgeStoreSdk['management']['uploads']['request']
   >[0];
+  type UploadFileInput = Parameters<
+    ManagementEdgeStoreSdk['management']['uploads']['upload']
+  >[0];
   type UploadInput = Parameters<
     ManagementEdgeStoreSdk['management']['uploads']['get']
   >[0];
@@ -1808,6 +1901,13 @@ function createFixture() {
   const uploadRequest = vi.fn(
     async (_input: UploadRequestInput) => singleUploadRequest,
   );
+  const uploadFile = vi.fn(async (_input: UploadFileInput) => ({
+    upload: { id: 'upload_123', status: 'completed' as const },
+    file: {
+      id: 'upload_123',
+      url: 'https://files.example/upload.txt',
+    },
+  }));
   const uploadCancel = vi.fn(async (_input: UploadInput) => ({
     upload: { id: 'upload_123', status: 'canceled' as const },
   }));
@@ -1890,21 +1990,9 @@ function createFixture() {
       },
       buckets: {
         list: vi.fn(async () => ({ buckets: [] })),
-        get: vi.fn(async () => ({
-          bucket: {
-            id: 'bucket_123',
-            name: 'publicFiles',
-            projectId: project.id,
-            accountId: account.id,
-            type: 'file',
-            visibility: 'public',
-            usageBytes: 0,
-            createdAt: project.createdAt,
-            updatedAt: project.updatedAt,
-          },
-        })),
+        get: getBucket,
         create: createBucket,
-        delete: vi.fn(async () => ({})),
+        delete: deleteBucket,
         empty: emptyBucket,
         emptyJobs: {
           latest: latestEmptyJob,
@@ -1943,6 +2031,7 @@ function createFixture() {
         delete: deleteFiles,
       },
       uploads: {
+        upload: uploadFile,
         request: uploadRequest,
         get: uploadGet,
         cancel: uploadCancel,
@@ -2024,12 +2113,15 @@ function createFixture() {
     listAccountTokens,
     revokeToken,
     createBucket,
+    getBucket,
+    deleteBucket,
     emptyBucket,
     latestEmptyJob,
     getEmptyJob,
     retryEmptyJob,
     generateAccessUrls,
     deleteFiles,
+    uploadFile,
     uploadRequest,
     uploadCancel,
     uploadGet,

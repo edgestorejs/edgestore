@@ -1,7 +1,7 @@
-import { glob, open, stat } from 'node:fs/promises';
-import type { FileHandle } from 'node:fs/promises';
+import { openAsBlob } from 'node:fs';
+import { glob, stat } from 'node:fs/promises';
 import path from 'node:path';
-import { planMultipartUpload } from '@edgestore/sdk';
+import { EdgeStoreUploadCleanupError } from '@edgestore/sdk';
 import { renderCliCommand } from '../core/command';
 import { CliError, normalizeError, usageError } from '../core/errors';
 import type { CliRuntime, GlobalFlags } from '../core/runtime';
@@ -43,133 +43,34 @@ export async function fileUploadCommand(
   const results = [];
   for (const [index, localFile] of localFiles.entries()) {
     try {
-      const handle = await open(localFile, 'r');
+      const fileName = path.basename(localFile);
+      const mimeType = mimeTypeFor(fileName);
+      const destination =
+        input.path && localFiles.length > 1
+          ? `${input.path}${fileName}`
+          : input.path;
+      const source = await openAsBlob(
+        localFile,
+        mimeType ? { type: mimeType } : undefined,
+      );
       try {
-        const fileStat = await handle.stat();
-        const multipartPlan = planMultipartUpload({ sizeBytes: fileStat.size });
-        const fileName = path.basename(localFile);
-        const destination =
-          input.path && localFiles.length > 1
-            ? `${input.path}${fileName}`
-            : input.path;
-        const requested = await sdk.management.uploads.request({
+        const completed = await sdk.management.uploads.upload({
           project,
           bucket: input.bucket,
+          source,
           ...(input.keepName ? { fileName } : {}),
           ...(destination ? { path: destination } : {}),
-          mimeType: mimeTypeFor(fileName),
-          sizeBytes: fileStat.size,
-          ...(multipartPlan
-            ? { multipart: { partNumbers: multipartPlan.partNumbers } }
-            : {}),
+          mimeType,
           signal: runtime.signal,
+          onProgress: (progress) =>
+            reportProgress(runtime, flags, {
+              fileName,
+              percentage: progress.percentage,
+            }),
         });
-        let transferring = true;
-        try {
-          if (requested.upload.kind === 'single') {
-            if (multipartPlan) {
-              throw new CliError(
-                'upload_plan_mismatch',
-                'The API returned a single upload for a multipart request.',
-              );
-            }
-            const buffer = Buffer.allocUnsafe(fileStat.size);
-            await readExactly(handle, buffer, 0);
-            await assertSourceSize(handle, fileStat.size);
-            await putPart(requested.upload.signedUrl, buffer, runtime.signal);
-            transferring = false;
-          } else {
-            if (!multipartPlan) {
-              throw new CliError(
-                'upload_plan_mismatch',
-                'The API returned a multipart upload for a single upload request.',
-              );
-            }
-            const completedParts = [];
-            for (const part of requested.upload.parts) {
-              const offset =
-                (part.partNumber - 1) * multipartPlan.partSizeBytes;
-              const size = Math.min(
-                multipartPlan.partSizeBytes,
-                fileStat.size - offset,
-              );
-              const buffer = Buffer.allocUnsafe(size);
-              await readExactly(handle, buffer, offset);
-              const etag = await putPart(
-                part.signedUrl,
-                buffer,
-                runtime.signal,
-              );
-              completedParts.push({ partNumber: part.partNumber, eTag: etag });
-              reportProgress(runtime, flags, {
-                fileName,
-                percentage: Math.round(
-                  (completedParts.length / multipartPlan.totalParts) * 100,
-                ),
-              });
-            }
-            await assertSourceSize(handle, fileStat.size);
-            await sdk.management.uploads.completeMultipart({
-              project,
-              uploadId: requested.upload.id,
-              parts: completedParts,
-              signal: runtime.signal,
-            });
-            transferring = false;
-          }
-          const completed = await waitForUpload(runtime, flags, {
-            project,
-            uploadId: requested.upload.id,
-          });
-          results.push({
-            localPath: localFile,
-            ...completed,
-            signedReadUrl: requested.signedReadUrl,
-          });
-        } catch (error) {
-          const cause = runtime.signal.aborted
-            ? new CliError('interrupted', 'Operation canceled.', {
-                exitCode: 130,
-              })
-            : normalizeError(error);
-          if (!transferring) throw cause;
-          try {
-            await sdk.management.uploads.cancel({
-              project,
-              uploadId: requested.upload.id,
-              signal: AbortSignal.timeout(10_000),
-            });
-          } catch (cleanupError) {
-            const cleanup = normalizeError(cleanupError);
-            throw new CliError(
-              'upload_cleanup_failed',
-              `${cause.message} Automatic cancellation of upload ${requested.upload.id} failed.`,
-              {
-                details: {
-                  cause: errorDetails(cause),
-                  cleanup: {
-                    status: 'failed',
-                    uploadId: requested.upload.id,
-                    error: errorDetails(cleanup),
-                  },
-                },
-                requestId: cause.options.requestId,
-                suggestions: [
-                  ...(cause.options.suggestions ?? []),
-                  renderCliCommand(
-                    flags,
-                    ['file', 'upload-cancel', requested.upload.id, '--yes'],
-                    { project },
-                  ),
-                ],
-                exitCode: cause.exitCode,
-              },
-            );
-          }
-          throw cause;
-        }
-      } finally {
-        await handle.close();
+        results.push({ localPath: localFile, ...completed });
+      } catch (error) {
+        throw normalizeUploadError(error, { runtime, flags, project });
       }
     } catch (error) {
       if (localFiles.length === 1) throw error;
@@ -211,57 +112,61 @@ export async function fileUploadCommand(
   outputFor(runtime, flags).result({ uploads: results }, human);
 }
 
-async function putPart(
-  url: string,
-  body: Buffer,
-  signal: AbortSignal,
-): Promise<string> {
-  const response = await fetch(url, {
-    method: 'PUT',
-    body: new Uint8Array(body),
-    signal,
-  });
-  if (!response.ok) {
-    throw new CliError(
-      'upload_transfer_failed',
-      `Storage upload failed with HTTP ${response.status}.`,
+function normalizeUploadError(
+  error: unknown,
+  context: {
+    runtime: CliRuntime;
+    flags: GlobalFlags;
+    project: string;
+  },
+): CliError {
+  const { runtime, flags, project } = context;
+  if (error instanceof EdgeStoreUploadCleanupError) {
+    const cause = runtime.signal.aborted
+      ? interruptedError()
+      : normalizeError(error.uploadCause);
+    const cleanup = normalizeError(error.cleanupCause);
+    return new CliError(
+      'upload_cleanup_failed',
+      `${cause.message} Automatic cancellation of upload ${error.uploadId} failed.`,
+      {
+        details: {
+          cause: errorDetails(cause),
+          cleanup: {
+            status: 'failed',
+            uploadId: error.uploadId,
+            error: errorDetails(cleanup),
+          },
+        },
+        requestId: cause.options.requestId,
+        suggestions: [
+          ...(cause.options.suggestions ?? []),
+          renderCliCommand(
+            flags,
+            ['file', 'upload-cancel', error.uploadId, '--yes'],
+            { project },
+          ),
+        ],
+        exitCode: cause.exitCode,
+      },
     );
   }
-  return response.headers.get('etag') ?? '';
+  if (runtime.signal.aborted) return interruptedError();
+  if (isFileBlobMutation(error)) {
+    return new CliError(
+      'upload_source_changed',
+      'The upload source changed while it was being read.',
+    );
+  }
+  return normalizeError(error);
 }
 
-async function waitForUpload(
-  runtime: CliRuntime,
-  flags: GlobalFlags,
-  target: { project: string; uploadId: string },
-) {
-  const sdk = await sdkFor(runtime, flags);
-  for (let attempt = 0; attempt < 60; attempt += 1) {
-    const result = await sdk.management.uploads.get({
-      project: target.project,
-      uploadId: target.uploadId,
-      signal: runtime.signal,
-    });
-    if (result.upload.status === 'completed' && 'file' in result) return result;
-    if (result.upload.status === 'canceled') {
-      throw new CliError(
-        'upload_canceled',
-        `Upload ${target.uploadId} was canceled.`,
-      );
-    }
-    await new Promise((resolve) => setTimeout(resolve, 1_000));
-  }
-  throw new CliError(
-    'upload_processing_timeout',
-    `Timed out waiting for upload ${target.uploadId}.`,
-    {
-      suggestions: [
-        renderCliCommand(flags, ['file', 'upload-status', target.uploadId], {
-          project: target.project,
-        }),
-      ],
-    },
-  );
+function interruptedError(): CliError {
+  return new CliError('interrupted', 'Operation canceled.', { exitCode: 130 });
+}
+
+function isFileBlobMutation(error: unknown): boolean {
+  return error instanceof DOMException && error.name === 'NotReadableError';
 }
 
 function reportProgress(
@@ -353,48 +258,6 @@ async function expandFiles(cwd: string, patterns: string[]): Promise<string[]> {
     }
   }
   return [...files];
-}
-
-export async function readExactly(
-  handle: {
-    read(
-      buffer: Buffer,
-      offset: number,
-      length: number,
-      position: number,
-    ): Promise<{ bytesRead: number }>;
-  },
-  buffer: Buffer,
-  position: number,
-): Promise<void> {
-  let bytesRead = 0;
-  while (bytesRead < buffer.length) {
-    const result = await handle.read(
-      buffer,
-      bytesRead,
-      buffer.length - bytesRead,
-      position + bytesRead,
-    );
-    if (result.bytesRead === 0) {
-      throw new CliError(
-        'upload_source_changed',
-        'The upload source changed while it was being read.',
-      );
-    }
-    bytesRead += result.bytesRead;
-  }
-}
-
-async function assertSourceSize(
-  handle: Pick<FileHandle, 'stat'>,
-  expectedSize: number,
-): Promise<void> {
-  if ((await handle.stat()).size !== expectedSize) {
-    throw new CliError(
-      'upload_source_changed',
-      'The upload source changed while it was being read.',
-    );
-  }
 }
 
 function errorDetails(error: CliError): Record<string, unknown> {
