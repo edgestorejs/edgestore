@@ -64,7 +64,11 @@ export type CliRuntime = {
   prompts: CliPrompts;
   sdkFactory: SdkFactory;
   openUrl(url: string): Promise<void>;
-  runCommand(command: string, args: string[]): Promise<void>;
+  runCommand(
+    command: string,
+    args: string[],
+    options?: { cwd?: string },
+  ): Promise<void>;
 };
 
 export function createDefaultRuntime(signal: AbortSignal): CliRuntime {
@@ -163,9 +167,13 @@ function openUrl(url: string): Promise<void> {
   return runCommand('xdg-open', [url]);
 }
 
-function runCommand(command: string, args: string[]): Promise<void> {
+function runCommand(
+  command: string,
+  args: string[],
+  options?: { cwd?: string },
+): Promise<void> {
   return new Promise((resolve, reject) => {
-    const child = spawn(command, args, { stdio: 'inherit' });
+    const child = spawn(command, args, { cwd: options?.cwd, stdio: 'inherit' });
     child.once('error', reject);
     child.once('exit', (code, signal) => {
       if (code === 0) {

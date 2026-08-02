@@ -3,7 +3,9 @@ import type { CliRuntime, GlobalFlags } from '../core/runtime';
 import { outputFor } from '../core/runtime';
 import { resolvedProjectRef } from './project';
 
-type OpenTarget = 'account' | 'billing' | 'keys' | 'project';
+type OpenTarget = 'account' | 'billing' | 'project';
+
+// TODO: Restore `keys` when the dashboard exposes a stable key-management URL.
 
 export async function openCommand(
   runtime: CliRuntime,
@@ -12,7 +14,7 @@ export async function openCommand(
 ): Promise<void> {
   const target = parseTarget(input.target);
   const project =
-    target === 'project' || target === 'keys'
+    target === 'project'
       ? await resolvedProjectRef(runtime, input.project)
       : undefined;
   const url = dashboardUrl(runtime, target, project);
@@ -29,18 +31,13 @@ export async function openCommand(
 
 function parseTarget(value?: string): OpenTarget | undefined {
   if (!value) return undefined;
-  if (
-    value === 'account' ||
-    value === 'billing' ||
-    value === 'keys' ||
-    value === 'project'
-  ) {
+  if (value === 'account' || value === 'billing' || value === 'project') {
     return value;
   }
   throw usageError(
     'invalid_open_target',
     `Unsupported dashboard target: ${value}.`,
-    ['Choose account, billing, project, or keys.'],
+    ['Choose account, billing, or project.'],
   );
 }
 

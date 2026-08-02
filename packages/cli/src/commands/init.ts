@@ -1,11 +1,18 @@
-import { access, readFile, writeFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { ManagementEdgeStoreSdk } from '@edgestore/sdk';
-import { CliError, usageError } from '../core/errors';
+import { detect } from 'package-manager-detector/detect';
+import { renderCliCommand } from '../core/command';
+import { findGitRoot } from '../core/config';
+import { CliError, normalizeError, usageError } from '../core/errors';
 import type { CliRuntime, GlobalFlags } from '../core/runtime';
 import { outputFor, sdkFor } from '../core/runtime';
-import { deliverEnvSecret } from '../core/secretDelivery';
+import {
+  deliverEnvSecretWithRollback,
+  preflightEnvSecret,
+} from '../core/secretDelivery';
 import { activeAccount } from './account';
+import { parseBucketType } from './bucket';
 
 type InitOptions = {
   new?: boolean;
@@ -49,12 +56,20 @@ export async function initCommand(
   const account = await resolveAccount({ runtime, sdk, options, interactive });
   const context = { runtime, sdk, options, interactive, account };
   const mode = await resolveMode(runtime, options, interactive);
+  const createKey = await shouldCreateKey(context, mode);
+  const secretOutput = createKey ? (options.output ?? '.env.local') : undefined;
+  if (secretOutput) {
+    await preflightEnvSecret(
+      runtime.cwd,
+      ['EDGE_STORE_ACCESS_KEY', 'EDGE_STORE_SECRET_KEY'],
+      { output: secretOutput, update: options.update },
+    );
+  }
 
   const projectResult =
     mode === 'new'
-      ? await createProject(context)
+      ? await createProject(context, createKey)
       : await selectProject(context);
-  const createKey = await shouldCreateKey(context, mode);
   const keyResult =
     projectResult.projectKey ??
     (createKey
@@ -65,17 +80,55 @@ export async function initCommand(
         })
       : undefined);
 
-  const output = keyResult ? (options.output ?? '.env.local') : undefined;
-  if (keyResult && output) {
-    await deliverEnvSecret(
-      runtime.cwd,
-      {
-        EDGE_STORE_ACCESS_KEY: keyResult.key.accessKey,
-        EDGE_STORE_SECRET_KEY: keyResult.secretKey,
-      },
-      { output, update: options.update },
+  if (keyResult && secretOutput) {
+    const recoveryCommand = renderCliCommand(
+      flags,
+      initRecoveryArgs(options, projectResult.project.basePath, secretOutput),
     );
-    await ignoreSecretFile(runtime.cwd, output);
+    try {
+      await deliverEnvSecretWithRollback({
+        cwd: runtime.cwd,
+        values: {
+          EDGE_STORE_ACCESS_KEY: keyResult.key.accessKey,
+          EDGE_STORE_SECRET_KEY: keyResult.secretKey,
+        },
+        options: { output: secretOutput, update: options.update },
+        credential: { label: 'project key', id: keyResult.key.id },
+        rollback: async (signal) => {
+          await sdk.management.projectKeys.revoke({
+            project: projectResult.project.basePath,
+            keyId: keyResult.key.id,
+            signal,
+          });
+        },
+        manualRollbackCommand: renderCliCommand(flags, [
+          'project',
+          'key',
+          'revoke',
+          projectResult.project.basePath,
+          keyResult.key.id,
+          '--yes',
+        ]),
+        recoverySuggestions: [recoveryCommand],
+      });
+    } catch (error) {
+      const failure = normalizeError(error);
+      if (mode !== 'new') throw failure;
+      throw new CliError(
+        failure.code,
+        `${failure.message} Project ${projectResult.project.basePath} was preserved.`,
+        {
+          details: {
+            delivery: failure.options.details,
+            project: projectResult.project,
+          },
+          requestId: failure.options.requestId,
+          suggestions: failure.options.suggestions,
+          exitCode: failure.exitCode,
+        },
+      );
+    }
+    await ignoreSecretFile(runtime.cwd, secretOutput);
   }
 
   const bucketChoice = await resolveBucket(runtime, options, interactive);
@@ -105,7 +158,9 @@ export async function initCommand(
   const human = [
     `Linked ${projectResult.project.name} (${projectResult.project.basePath}).`,
     `Config: ${configPath}`,
-    ...(output ? [`Secrets: ${path.resolve(runtime.cwd, output)}`] : []),
+    ...(secretOutput
+      ? [`Secrets: ${path.resolve(runtime.cwd, secretOutput)}`]
+      : []),
     ...(bucket ? [`Bucket: ${bucket.name}`] : []),
     ...(install.command && !install.ran
       ? ['', 'Install packages:', `  ${install.command}`]
@@ -119,7 +174,7 @@ export async function initCommand(
       key: keyResult?.key,
       bucket,
       configPath,
-      output,
+      output: secretOutput,
       install,
       framework: packages.framework,
     },
@@ -214,7 +269,7 @@ async function resolveMode(
   ]);
 }
 
-async function createProject(context: InitContext) {
+async function createProject(context: InitContext, createKey: boolean) {
   const { runtime, sdk, options, interactive, account } = context;
   const name =
     options.name ??
@@ -226,7 +281,7 @@ async function createProject(context: InitContext) {
   return sdk.management.projects.create({
     account,
     name,
-    createKey: !options.withoutKey,
+    createKey,
     allowOverage: Boolean(options.allowOverage),
     signal: runtime.signal,
   });
@@ -284,6 +339,28 @@ async function shouldCreateKey(
     : false;
 }
 
+function initRecoveryArgs(
+  options: InitOptions,
+  project: string,
+  output: string,
+): string[] {
+  return [
+    'init',
+    '--link',
+    project,
+    '--create-key',
+    '--output',
+    output,
+    ...(options.update ? ['--update'] : []),
+    ...(options.account ? ['--account', options.account] : []),
+    ...(options.bucket ? ['--bucket', options.bucket] : []),
+    ...(options.bucketType ? ['--bucket-type', options.bucketType] : []),
+    ...(options.public ? ['--public'] : []),
+    ...(options.protected ? ['--protected'] : []),
+    ...(options.install ? ['--install'] : []),
+  ];
+}
+
 async function resolveBucket(
   runtime: CliRuntime,
   options: InitOptions,
@@ -328,13 +405,13 @@ async function resolveBucket(
   return { name, type, visibility };
 }
 
-type PackagePlan = {
+export type PackagePlan = {
   framework: 'next' | 'react' | 'node' | 'unknown';
   manager?: 'pnpm' | 'npm' | 'yarn' | 'bun';
   missing: string[];
 };
 
-async function detectPackages(cwd: string): Promise<PackagePlan> {
+export async function detectPackages(cwd: string): Promise<PackagePlan> {
   const packagePath = path.join(cwd, 'package.json');
   let manifest: {
     packageManager?: string;
@@ -346,7 +423,11 @@ async function detectPackages(cwd: string): Promise<PackagePlan> {
       await readFile(packagePath, 'utf8'),
     ) as typeof manifest;
   } catch {
-    return { framework: 'unknown', missing: [] };
+    return {
+      framework: 'unknown',
+      manager: await detectPackageManager(cwd),
+      missing: [],
+    };
   }
   const dependencies = {
     ...manifest.dependencies,
@@ -363,8 +444,7 @@ async function detectPackages(cwd: string): Promise<PackagePlan> {
       : ['@edgestore/server', 'zod'];
   return {
     framework,
-    manager:
-      managerFromField(manifest.packageManager) ?? (await detectManager(cwd)),
+    manager: await detectPackageManager(cwd),
     missing: wanted.filter((name) => !dependencies[name]),
   };
 }
@@ -391,7 +471,7 @@ async function installPackages(
       : false);
   if (!shouldInstall) return { command, ran: false };
   try {
-    await runtime.runCommand(plan.manager, args);
+    await runtime.runCommand(plan.manager, args, { cwd: runtime.cwd });
   } catch (error) {
     throw new CliError(
       'package_install_failed',
@@ -433,14 +513,6 @@ async function ignoreSecretFile(cwd: string, output: string): Promise<void> {
   );
 }
 
-function parseBucketType(value?: string): 'file' | 'image' {
-  if (value === 'file' || value === 'image') return value;
-  throw usageError(
-    'bucket_type_required',
-    'Choose --bucket-type file or --bucket-type image.',
-  );
-}
-
 function validateBucketName(name: string): void {
   if (!/^[A-Za-z0-9][A-Za-z0-9_-]{0,254}$/.test(name)) {
     throw usageError(
@@ -450,36 +522,48 @@ function validateBucketName(name: string): void {
   }
 }
 
-function managerFromField(
-  value?: string,
-): 'pnpm' | 'npm' | 'yarn' | 'bun' | undefined {
-  const manager = value?.split('@')[0];
-  return manager === 'pnpm' ||
-    manager === 'npm' ||
-    manager === 'yarn' ||
-    manager === 'bun'
-    ? manager
-    : undefined;
-}
-
-async function detectManager(
+async function detectPackageManager(
   cwd: string,
 ): Promise<'pnpm' | 'npm' | 'yarn' | 'bun'> {
-  for (const [file, manager] of [
-    ['pnpm-lock.yaml', 'pnpm'],
-    ['yarn.lock', 'yarn'],
-    ['bun.lock', 'bun'],
-    ['bun.lockb', 'bun'],
-    ['package-lock.json', 'npm'],
-  ] as const) {
-    try {
-      await access(path.join(cwd, file));
-      return manager;
-    } catch {
-      // Keep checking known lockfiles.
+  const start = path.resolve(cwd);
+  const boundary = (await findGitRoot(start)) ?? start;
+  let directory = start;
+  while (true) {
+    for (const strategy of [
+      'packageManager-field',
+      'lockfile',
+      'devEngines-field',
+    ] as const) {
+      const result = await detect({
+        cwd: directory,
+        stopDir: directory,
+        strategies: [strategy],
+        packageJsonParser: (contents) =>
+          packageJsonForStrategy(contents, strategy),
+      });
+      if (
+        result?.name === 'pnpm' ||
+        result?.name === 'npm' ||
+        result?.name === 'yarn' ||
+        result?.name === 'bun'
+      ) {
+        return result.name;
+      }
     }
+    if (directory === boundary) break;
+    directory = path.dirname(directory);
   }
   return 'npm';
+}
+
+function packageJsonForStrategy(
+  contents: string,
+  strategy: 'packageManager-field' | 'lockfile' | 'devEngines-field',
+): Record<string, unknown> {
+  const manifest = JSON.parse(contents) as Record<string, unknown>;
+  if (strategy !== 'packageManager-field') delete manifest.packageManager;
+  if (strategy !== 'devEngines-field') delete manifest.devEngines;
+  return manifest;
 }
 
 function installArgs(

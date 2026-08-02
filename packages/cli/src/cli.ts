@@ -222,7 +222,6 @@ Targets:
   account
   billing
   project [basePath]
-  keys [basePath]
 `,
     )
     .action(async (target?: string, project?: string) => {

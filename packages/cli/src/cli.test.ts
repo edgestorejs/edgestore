@@ -1,4 +1,5 @@
 import {
+  mkdir,
   mkdtemp,
   readdir,
   readFile,
@@ -111,6 +112,23 @@ const singleUploadRequest = {
     kind: 'single' as const,
     id: 'upload_123',
     signedUrl: 'https://storage.example/upload',
+  },
+};
+
+const projectCreateResult = {
+  project,
+  projectKey: {
+    key: {
+      id: 'key_123',
+      name: 'default',
+      accessKey: 'access_test',
+      projectId: project.id,
+      accountId: account.id,
+      createdAt: project.createdAt,
+      updatedAt: project.updatedAt,
+      revokedAt: null,
+    },
+    secretKey: 'secret_test',
   },
 };
 
@@ -378,7 +396,7 @@ describe('runCli', () => {
 
     expect(exitCode).toBe(2);
     expect(fixture.projectCreate).not.toHaveBeenCalled();
-    expect(fixture.stderr()).toContain('--bucket-type');
+    expect(fixture.stderr()).toContain('Bucket type must be file or image.');
   });
 
   it('delivers new-project keys to an ignored env file during init', async () => {
@@ -408,6 +426,149 @@ describe('runCli', () => {
     }
   });
 
+  it('preflights init secret output before creating a project', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-init-'),
+    );
+    fixture.runtime.cwd = temporaryDirectory;
+    fixture.runtime.io.inputIsTty = false;
+    const outputPath = path.join(temporaryDirectory, '.env.local');
+    await writeFile(outputPath, 'EDGE_STORE_ACCESS_KEY=existing\n');
+
+    const exitCode = await runCli(
+      ['init', '--new', '--name', 'Marketing Site'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(2);
+    expect(fixture.createProject).not.toHaveBeenCalled();
+    await expect(readFile(outputPath, 'utf8')).resolves.toBe(
+      'EDGE_STORE_ACCESS_KEY=existing\n',
+    );
+  });
+
+  it('revokes a raced init key and preserves the new project', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-init-'),
+    );
+    fixture.runtime.cwd = temporaryDirectory;
+    fixture.runtime.io.inputIsTty = false;
+    const outputPath = path.join(temporaryDirectory, '.env.local');
+    fixture.createProject.mockImplementationOnce(async () => {
+      await writeFile(outputPath, 'EDGE_STORE_ACCESS_KEY=raced\n');
+      return projectCreateResult;
+    });
+
+    const exitCode = await runCli(
+      [
+        '--json',
+        '--api-url',
+        'https://api-dev.edgestore.dev',
+        'init',
+        '--new',
+        '--name',
+        'Marketing Site',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    const rollbackSignal = fixture.revokeProjectKey.mock.calls[0]?.[0].signal;
+    const error = JSON.parse(fixture.stderr()).error;
+    expect(exitCode).toBe(2);
+    expect(fixture.stdout()).toBe('');
+    expect(rollbackSignal).toBeDefined();
+    expect(rollbackSignal).not.toBe(fixture.runtime.signal);
+    expect(error).toMatchObject({
+      code: 'secret_delivery_failed',
+      details: {
+        delivery: {
+          rollback: { status: 'succeeded', credentialId: 'key_123' },
+        },
+        project: { basePath: project.basePath },
+      },
+      suggestions: [
+        'Pass --update to replace the existing values.',
+        `edgestore --json --api-url https://api-dev.edgestore.dev init --link ${project.basePath} --create-key --output .env.local`,
+      ],
+    });
+    expect(error.message).toContain(
+      `Project ${project.basePath} was preserved.`,
+    );
+    await expect(readFile(outputPath, 'utf8')).resolves.toBe(
+      'EDGE_STORE_ACCESS_KEY=raced\n',
+    );
+  });
+
+  it('reports exact recovery when init key rollback also fails', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-init-'),
+    );
+    fixture.runtime.cwd = temporaryDirectory;
+    fixture.runtime.io.inputIsTty = false;
+    const outputPath = path.join(temporaryDirectory, '.env.local');
+    fixture.createProject.mockImplementationOnce(async () => {
+      await writeFile(outputPath, 'EDGE_STORE_ACCESS_KEY=raced\n');
+      return projectCreateResult;
+    });
+    fixture.revokeProjectKey.mockRejectedValueOnce(
+      new Error('revocation unavailable'),
+    );
+
+    const exitCode = await runCli(
+      ['--json', 'init', '--new', '--name', 'Marketing Site'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    const error = JSON.parse(fixture.stderr()).error;
+    expect(exitCode).toBe(2);
+    expect(error).toMatchObject({
+      code: 'secret_delivery_failed',
+      details: {
+        delivery: {
+          rollback: { status: 'failed', credentialId: 'key_123' },
+        },
+        project: { basePath: project.basePath },
+      },
+      suggestions: [
+        'Pass --update to replace the existing values.',
+        `edgestore --json project key revoke ${project.basePath} key_123 --yes`,
+        `edgestore --json init --link ${project.basePath} --create-key --output .env.local`,
+      ],
+    });
+  });
+
+  it('installs packages from the original package directory', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-init-'),
+    );
+    fixture.runtime.cwd = temporaryDirectory;
+    fixture.runtime.io.inputIsTty = false;
+    await mkdir(path.join(temporaryDirectory, '.git'));
+    await writeFile(
+      path.join(temporaryDirectory, 'package.json'),
+      JSON.stringify({
+        packageManager: 'pnpm@11.15.1',
+        dependencies: { next: '16' },
+      }),
+    );
+
+    const exitCode = await runCli(
+      ['init', '--link', project.basePath, '--without-key', '--install'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(0);
+    expect(fixture.runCommand).toHaveBeenCalledWith(
+      'pnpm',
+      ['add', '@edgestore/server', '@edgestore/react', 'zod'],
+      { cwd: temporaryDirectory },
+    );
+  });
+
   it('opens the linked project in the dashboard', async () => {
     fixture.repoConfig.config = {
       account: account.id,
@@ -428,6 +589,21 @@ describe('runCli', () => {
     expect(fixture.stdout()).toBe(
       'https://dashboard.edgestore.dev/settings/billing\n',
     );
+  });
+
+  it('keeps the future keys dashboard target out of the live grammar', async () => {
+    const exitCode = await runCli(
+      ['--json', 'open', 'keys'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(2);
+    expect(fixture.openUrl).not.toHaveBeenCalled();
+    expect(JSON.parse(fixture.stderr()).error).toMatchObject({
+      code: 'invalid_open_target',
+      suggestions: ['Choose account, billing, or project.'],
+    });
   });
 
   it('prints shell completion scripts', async () => {
@@ -1655,28 +1831,16 @@ function createFixture() {
     },
     secret: 'mgmt_user_created',
   }));
-  const createProject = vi.fn(async () => ({
-    project,
-    projectKey: {
-      key: {
-        id: 'key_123',
-        name: 'default',
-        accessKey: 'access_test',
-        projectId: project.id,
-        accountId: account.id,
-        createdAt: project.createdAt,
-        updatedAt: project.updatedAt,
-        revokedAt: null,
-      },
-      secretKey: 'secret_test',
-    },
-  }));
+  const createProject = vi.fn(async () => projectCreateResult);
   const listProjectKeys = vi.fn(async () => ({ keys: [projectKey] }));
   const createProjectKey = vi.fn(async () => ({
     key: projectKey,
     secretKey: 'secret_test',
   }));
-  const revokeProjectKey = vi.fn(async () => ({}));
+  type ProjectKeyRevokeInput = Parameters<
+    ManagementEdgeStoreSdk['management']['projectKeys']['revoke']
+  >[0];
+  const revokeProjectKey = vi.fn(async (_input: ProjectKeyRevokeInput) => ({}));
   const listAccountTokens = vi.fn(async () => ({
     tokens: [] as (typeof accountToken)[],
   }));

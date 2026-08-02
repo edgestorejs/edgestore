@@ -147,7 +147,7 @@ async function findRepoConfig(start: string): Promise<string | undefined> {
   }
 }
 
-async function findGitRoot(start: string): Promise<string | undefined> {
+export async function findGitRoot(start: string): Promise<string | undefined> {
   let current = path.resolve(start);
 
   while (true) {
