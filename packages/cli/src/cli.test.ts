@@ -649,6 +649,23 @@ describe('runCli', () => {
     );
   });
 
+  it('rejects unsupported bucket types before calling the SDK', async () => {
+    fixture.repoConfig.config = {
+      account: account.id,
+      project: project.basePath,
+    };
+
+    const exitCode = await runCli(
+      ['bucket', 'create', 'archives', '--type', 'video', '--protected'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(2);
+    expect(fixture.createBucket).not.toHaveBeenCalled();
+    expect(fixture.stderr()).toContain('file or image');
+  });
+
   it('validates a token before saving it', async () => {
     await runCli(['login', '--token'], fixture.runtime, '0.0.0');
 
@@ -837,6 +854,19 @@ function createFixture() {
     tokens: [] as (typeof accountToken)[],
   }));
   const revokeToken = vi.fn(async () => ({}));
+  const createBucket = vi.fn(async () => ({
+    bucket: {
+      id: 'bucket_123',
+      name: 'publicFiles',
+      projectId: project.id,
+      accountId: account.id,
+      type: 'file' as const,
+      visibility: 'public' as const,
+      usageBytes: 0,
+      createdAt: project.createdAt,
+      updatedAt: project.updatedAt,
+    },
+  }));
   const sdk = {
     system: {
       health: vi.fn(async () => ({ status: 'ok' })),
@@ -896,19 +926,7 @@ function createFixture() {
             updatedAt: project.updatedAt,
           },
         })),
-        create: vi.fn(async () => ({
-          bucket: {
-            id: 'bucket_123',
-            name: 'publicFiles',
-            projectId: project.id,
-            accountId: account.id,
-            type: 'file',
-            visibility: 'public',
-            usageBytes: 0,
-            createdAt: project.createdAt,
-            updatedAt: project.updatedAt,
-          },
-        })),
+        create: createBucket,
         delete: vi.fn(async () => ({})),
       },
     },
@@ -974,6 +992,7 @@ function createFixture() {
     createUserToken,
     listAccountTokens,
     revokeToken,
+    createBucket,
     createProject,
     listProjectKeys,
     createProjectKey,
