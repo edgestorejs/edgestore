@@ -22,7 +22,7 @@ export async function doctorCommand(
 
   const globalConfig = await checkGlobalConfig(runtime, checks);
   const localConfig = await checkLocalConfig(runtime, checks);
-  const envKeys = await checkEnvFile(runtime, checks);
+  const envKeys = await checkEnvFile(runtime, localConfig, checks);
   const keychainAvailable = await runtime.credentials.available();
   checks.push({
     name: 'Credential store',
@@ -196,36 +196,43 @@ async function checkLocalConfig(
 type EnvKeys = {
   accessKey?: string;
   hasSecretKey: boolean;
+  label: string;
 };
 
 async function checkEnvFile(
   runtime: CliRuntime,
+  localConfig: LocatedRepoConfig | undefined,
   checks: Check[],
 ): Promise<EnvKeys> {
+  const label = localConfig?.config.envFile ?? '.env.local';
+  const configRoot = localConfig?.config.envFile
+    ? path.dirname(path.dirname(localConfig.path))
+    : runtime.cwd;
+  const envPath = path.resolve(configRoot, label);
   let contents = '';
   try {
-    contents = await readFile(path.join(runtime.cwd, '.env.local'), 'utf8');
+    contents = await readFile(envPath, 'utf8');
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
       checks.push({
-        name: '.env.local',
+        name: label,
         status: 'fail',
         detail: 'Could not read file',
       });
     }
-    return { hasSecretKey: false };
+    return { hasSecretKey: false, label };
   }
   const accessKey = envValue(contents, 'EDGE_STORE_ACCESS_KEY');
   const hasSecretKey = Boolean(envValue(contents, 'EDGE_STORE_SECRET_KEY'));
   checks.push({
-    name: '.env.local',
+    name: label,
     status: accessKey && hasSecretKey ? 'pass' : 'warn',
     detail: [
       `EDGE_STORE_ACCESS_KEY ${accessKey ? 'present' : 'missing'}`,
       `EDGE_STORE_SECRET_KEY ${hasSecretKey ? 'present' : 'missing'}`,
     ].join(', '),
   });
-  return { accessKey, hasSecretKey };
+  return { accessKey, hasSecretKey, label };
 }
 
 async function checkLinkedProject(
@@ -265,14 +272,14 @@ async function checkLinkedProject(
       name: 'Environment project',
       status: 'warn',
       detail: matchingKey
-        ? '.env.local access key has been revoked'
-        : '.env.local access key is not for the linked project',
+        ? `${envKeys.label} access key has been revoked`
+        : `${envKeys.label} access key is not for the linked project`,
     });
   } catch {
     checks.push({
       name: 'Environment project',
       status: 'warn',
-      detail: 'Could not compare .env.local with project key metadata',
+      detail: `Could not compare ${envKeys.label} with project key metadata`,
     });
   }
 }

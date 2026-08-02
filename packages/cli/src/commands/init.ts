@@ -1,6 +1,9 @@
-import { readFile, writeFile } from 'node:fs/promises';
+import { execFile } from 'node:child_process';
+import { readdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { promisify } from 'node:util';
 import type { ManagementEdgeStoreSdk } from '@edgestore/sdk';
+import ignore from 'ignore';
 import { detect } from 'package-manager-detector/detect';
 import { renderCliCommand } from '../core/command';
 import { findGitRoot } from '../core/config';
@@ -45,6 +48,8 @@ type InitContext = {
   account: string;
 };
 
+const execFileAsync = promisify(execFile);
+
 export async function initCommand(
   runtime: CliRuntime,
   flags: GlobalFlags,
@@ -52,18 +57,23 @@ export async function initCommand(
 ): Promise<void> {
   const interactive = runtime.io.inputIsTty && !flags.json && !flags.plain;
   validateOptions(options, interactive);
+  const packages = await detectPackages(runtime.cwd);
   const sdk = await sdkFor(runtime, flags);
   const account = await resolveAccount({ runtime, sdk, options, interactive });
   const context = { runtime, sdk, options, interactive, account };
   const mode = await resolveMode(runtime, options, interactive);
   const createKey = await shouldCreateKey(context, mode);
-  const secretOutput = createKey ? (options.output ?? '.env.local') : undefined;
+  const secretOutput = createKey
+    ? await resolveSecretOutput(runtime, options.output, interactive)
+    : undefined;
+  let envFile: string | undefined;
   if (secretOutput) {
     await preflightEnvSecret(
       runtime.cwd,
       ['EDGE_STORE_ACCESS_KEY', 'EDGE_STORE_SECRET_KEY'],
       { output: secretOutput, update: options.update },
     );
+    envFile = await protectSecretFile(runtime.cwd, secretOutput);
   }
 
   const projectResult =
@@ -75,7 +85,7 @@ export async function initCommand(
     (createKey
       ? await sdk.management.projectKeys.create({
           project: projectResult.project.basePath,
-          name: 'local',
+          name: projectKeyName(secretOutput),
           signal: runtime.signal,
         })
       : undefined);
@@ -133,10 +143,8 @@ export async function initCommand(
   const configPath = await runtime.repoConfig.write({
     account: projectResult.project.accountId,
     project: projectResult.project.basePath,
+    ...(envFile ? { envFile } : {}),
   });
-  if (keyResult && secretOutput) {
-    await ignoreSecretFile(runtime.cwd, secretOutput);
-  }
 
   const bucketChoice = await resolveBucket(runtime, options, interactive);
   const bucket = bucketChoice
@@ -151,7 +159,6 @@ export async function initCommand(
       ).bucket
     : undefined;
 
-  const packages = await detectPackages(runtime.cwd);
   const install = await installPackages(runtime, packages, {
     requested: options.install,
     interactive,
@@ -524,30 +531,121 @@ function isMissingPathError(error: unknown): error is NodeJS.ErrnoException {
   );
 }
 
-async function ignoreSecretFile(cwd: string, output: string): Promise<void> {
+async function resolveSecretOutput(
+  runtime: CliRuntime,
+  explicitOutput: string | undefined,
+  interactive: boolean,
+): Promise<string> {
+  if (explicitOutput) return explicitOutput;
+  if (!interactive) return '.env.local';
+
+  const discovered = (await readdir(runtime.cwd, { withFileTypes: true }))
+    .filter(
+      (entry) =>
+        entry.isFile() &&
+        entry.name.startsWith('.env') &&
+        !/\.(?:example|sample|template)$/i.test(entry.name),
+    )
+    .map((entry) => entry.name)
+    .sort();
+  if (!discovered.length || discovered.every((name) => name === '.env.local')) {
+    return '.env.local';
+  }
+  const choices = Array.from(new Set([...discovered, '.env.local']));
+  return runtime.prompts.select(
+    'Where should EdgeStore save the project key?',
+    choices.map((value) => ({ value, label: value })),
+  );
+}
+
+function projectKeyName(output: string | undefined): string {
+  const match = /^\.env\.([^.]+)(?:\.local)?$/i.exec(
+    path.basename(output ?? ''),
+  );
+  return match?.[1] && match[1].toLowerCase() !== 'local' ? match[1] : 'local';
+}
+
+async function protectSecretFile(cwd: string, output: string): Promise<string> {
   const absolute = path.resolve(cwd, output);
-  const relative = path.relative(cwd, absolute);
-  if (relative.startsWith('..') || path.isAbsolute(relative)) return;
-  const gitignorePath = path.join(cwd, '.gitignore');
+  const gitRoot = await findGitRoot(cwd);
+  const root = gitRoot ?? path.resolve(cwd);
+  const relative = path.relative(root, absolute);
+  if (!relative || relative.startsWith('..') || path.isAbsolute(relative)) {
+    throw usageError(
+      'secret_output_unprotected',
+      `Secret output ${absolute} must be inside ${root}.`,
+      ['Choose an env file inside the current repository.'],
+    );
+  }
+  const normalized = relative.replaceAll(path.sep, '/');
+  if (gitRoot && (await isTrackedFile(gitRoot, normalized))) {
+    throw usageError(
+      'secret_output_tracked',
+      `Secret output ${absolute} is already tracked by Git.`,
+      ['Remove it from Git before creating a project key.'],
+    );
+  }
+
+  const gitignorePath = path.join(root, '.gitignore');
   let contents = '';
   try {
     contents = await readFile(gitignorePath, 'utf8');
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
   }
-  const entry = relative.replaceAll(path.sep, '/');
-  if (
-    contents
-      .split(/\r?\n/)
-      .map((line) => line.trim())
-      .includes(entry)
-  ) {
-    return;
+  if (ignore().add(contents).ignores(normalized)) return normalized;
+
+  const entry = `/${normalized}`;
+  const next = `${contents}${contents ? (contents.endsWith('\n') ? '' : '\n') : ''}${entry}\n`;
+  try {
+    await writeFile(gitignorePath, next);
+  } catch (error) {
+    throw new CliError(
+      'secret_output_unprotected',
+      `Could not protect secret output ${absolute}.`,
+      {
+        details: {
+          path: gitignorePath,
+          cause: error instanceof Error ? error.message : String(error),
+        },
+      },
+    );
   }
-  await writeFile(
-    gitignorePath,
-    `${contents}${contents ? (contents.endsWith('\n') ? '' : '\n') : ''}${entry}\n`,
-  );
+  if (!ignore().add(next).ignores(normalized)) {
+    throw new CliError(
+      'secret_output_unprotected',
+      `Could not protect secret output ${absolute}.`,
+    );
+  }
+  return normalized;
+}
+
+async function isTrackedFile(root: string, relative: string): Promise<boolean> {
+  try {
+    await execFileAsync('git', [
+      '-C',
+      root,
+      'ls-files',
+      '--error-unmatch',
+      '--',
+      relative,
+    ]);
+    return true;
+  } catch (error) {
+    if ((error as { code?: unknown }).code === 1) {
+      return false;
+    }
+    throw new CliError(
+      'secret_output_unprotected',
+      `Could not verify Git tracking for ${path.join(root, relative)}.`,
+      {
+        details: {
+          path: path.join(root, relative),
+          cause: error instanceof Error ? error.message : String(error),
+        },
+      },
+    );
+  }
 }
 
 function validateBucketName(name: string): void {

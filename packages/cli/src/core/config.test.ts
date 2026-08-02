@@ -51,11 +51,16 @@ describe('RepoConfigStore', () => {
     const configPath = await store.write({
       account: 'acc_123',
       project: 'x36t1ejdlz',
+      envFile: 'apps/web/.env.development.local',
     });
 
     expect(configPath).toBe(path.join(root, '.edgestore', 'config.json'));
     await expect(store.read()).resolves.toEqual({
-      config: { account: 'acc_123', project: 'x36t1ejdlz' },
+      config: {
+        account: 'acc_123',
+        project: 'x36t1ejdlz',
+        envFile: 'apps/web/.env.development.local',
+      },
       path: configPath,
     });
   });

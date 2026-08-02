@@ -23,6 +23,7 @@ const repoConfigSchema = z
   .object({
     account: z.string().min(1),
     project: z.string().min(1),
+    envFile: z.string().min(1).optional(),
   })
   .strict();
 

@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import {
   mkdir,
   mkdtemp,
@@ -543,15 +544,124 @@ describe('runCli', () => {
         'EDGE_STORE_ACCESS_KEY=access_test\nEDGE_STORE_SECRET_KEY=secret_test\n',
       );
       expect(await readFile(path.join(directory, '.gitignore'), 'utf8')).toBe(
-        '.env.local\n',
+        '/.env.local\n',
       );
       expect(fixture.repoConfig.config).toEqual({
         account: account.id,
         project: project.basePath,
+        envFile: '.env.local',
       });
     } finally {
       await rm(directory, { recursive: true, force: true });
     }
+  });
+
+  it('protects the env file before creating a remote project', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-init-'),
+    );
+    fixture.runtime.cwd = temporaryDirectory;
+    fixture.runtime.io.inputIsTty = false;
+    fixture.createProject.mockImplementationOnce(async () => {
+      await expect(
+        readFile(path.join(temporaryDirectory!, '.gitignore'), 'utf8'),
+      ).resolves.toBe('/.env.local\n');
+      return projectCreateResult;
+    });
+
+    const exitCode = await runCli(
+      ['init', '--new', '--name', 'Marketing Site'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(0);
+  });
+
+  it('rejects a tracked env file before creating a project', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-init-'),
+    );
+    fixture.runtime.cwd = temporaryDirectory;
+    fixture.runtime.io.inputIsTty = false;
+    execFileSync('git', ['init', '--quiet'], { cwd: temporaryDirectory });
+    await writeFile(path.join(temporaryDirectory, '.env.local'), 'tracked\n');
+    execFileSync('git', ['add', '.env.local'], { cwd: temporaryDirectory });
+
+    const exitCode = await runCli(
+      ['init', '--new', '--name', 'Marketing Site', '--update'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(2);
+    expect(fixture.createProject).not.toHaveBeenCalled();
+    expect(fixture.stderr()).toContain('already tracked by Git');
+  });
+
+  it('selects and remembers one discovered env file', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-init-'),
+    );
+    fixture.runtime.cwd = temporaryDirectory;
+    await writeFile(
+      path.join(temporaryDirectory, '.env.development.local'),
+      '',
+    );
+    await writeFile(path.join(temporaryDirectory, '.env.example'), '');
+    const selectEnvFile = vi.fn(async () => '.env.development.local');
+    fixture.runtime.prompts.select =
+      selectEnvFile as typeof fixture.runtime.prompts.select;
+
+    const exitCode = await runCli(
+      ['init', '--link', project.basePath, '--create-key'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(0);
+    expect(fixture.createProjectKey).toHaveBeenCalledWith({
+      project: project.basePath,
+      name: 'development',
+      signal: fixture.runtime.signal,
+    });
+    expect(selectEnvFile).toHaveBeenCalledWith(
+      'Where should EdgeStore save the project key?',
+      [
+        {
+          value: '.env.development.local',
+          label: '.env.development.local',
+        },
+        { value: '.env.local', label: '.env.local' },
+      ],
+    );
+    expect(fixture.repoConfig.config).toEqual({
+      account: account.id,
+      project: project.basePath,
+      envFile: '.env.development.local',
+    });
+    await expect(
+      readFile(path.join(temporaryDirectory, '.gitignore'), 'utf8'),
+    ).resolves.toBe('/.env.development.local\n');
+  });
+
+  it('rejects an invalid package manifest before remote mutation', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-init-'),
+    );
+    fixture.runtime.cwd = temporaryDirectory;
+    fixture.runtime.io.inputIsTty = false;
+    await writeFile(path.join(temporaryDirectory, 'package.json'), '{ nope');
+
+    const exitCode = await runCli(
+      ['init', '--new', '--name', 'Marketing Site'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(2);
+    expect(fixture.createProject).not.toHaveBeenCalled();
+    expect(fixture.stderr()).toContain('Invalid package manifest');
   });
 
   it('preflights init secret output before creating a project', async () => {
@@ -786,6 +896,35 @@ describe('runCli', () => {
     expect(fixture.stdout()).toContain("-a 'project'");
   });
 
+  it('completes nested Bash commands and their options', async () => {
+    await runCli(['completion', 'bash', '--plain'], fixture.runtime, '0.0.0');
+
+    const script = fixture.stdout();
+    const nestedCommands = execFileSync(
+      'bash',
+      [
+        '-c',
+        `${script}\nCOMP_WORDS=(edgestore project key ''); COMP_CWORD=3; _edgestore; printf '%s\\n' "\${COMPREPLY[@]}"`,
+      ],
+      { encoding: 'utf8' },
+    );
+    const nestedOptions = execFileSync(
+      'bash',
+      [
+        '-c',
+        `${script}\nCOMP_WORDS=(edgestore project key rotate old replacement ''); COMP_CWORD=6; _edgestore; printf '%s\\n' "\${COMPREPLY[@]}"`,
+      ],
+      { encoding: 'utf8' },
+    );
+
+    expect(nestedCommands.split('\n')).toEqual(
+      expect.arrayContaining(['list', 'create', 'rotate', 'revoke']),
+    );
+    expect(nestedOptions.split('\n')).toEqual(
+      expect.arrayContaining(['--name', '--output', '--yes']),
+    );
+  });
+
   it('checks linked project keys without exposing env secrets', async () => {
     const directory = await mkdtemp(path.join(tmpdir(), 'edgestore-doctor-'));
     fixture.runtime.cwd = directory;
@@ -805,6 +944,32 @@ describe('runCli', () => {
       expect(fixture.stdout()).toContain('1.2.3');
       expect(fixture.stdout()).toContain('Linked project');
       expect(fixture.stdout()).not.toContain('do-not-print');
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
+  it('checks the env file remembered by init', async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), 'edgestore-doctor-'));
+    fixture.runtime.cwd = directory;
+    fixture.readRepoConfig.mockResolvedValueOnce({
+      config: {
+        account: account.id,
+        project: project.basePath,
+        envFile: '.env.development.local',
+      },
+      path: path.join(directory, '.edgestore', 'config.json'),
+    });
+    await writeFile(
+      path.join(directory, '.env.development.local'),
+      'EDGE_STORE_ACCESS_KEY=access_test\nEDGE_STORE_SECRET_KEY=secret\n',
+    );
+
+    try {
+      await runCli(['doctor'], fixture.runtime, '1.2.3');
+
+      expect(fixture.stdout()).toContain('.env.development.local');
+      expect(fixture.stdout()).not.toContain('.env.local ');
     } finally {
       await rm(directory, { recursive: true, force: true });
     }

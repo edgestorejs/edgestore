@@ -890,6 +890,9 @@ importers:
       env-paths:
         specifier: 4.0.0
         version: 4.0.0
+      ignore:
+        specifier: 7.0.6
+        version: 7.0.6
       package-manager-detector:
         specifier: 1.8.0
         version: 1.8.0
