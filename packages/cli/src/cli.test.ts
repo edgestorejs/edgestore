@@ -1075,6 +1075,42 @@ describe('runCli', () => {
     });
   });
 
+  it('identifies per-file deletion failures in human output', async () => {
+    fixture.deleteFiles.mockResolvedValueOnce({
+      results: [
+        { fileRef: { id: 'file_ok' }, success: true },
+        {
+          fileRef: { id: 'file_failed' },
+          success: false,
+          error: {
+            code: 'FILE_NOT_DELETABLE',
+            message: 'File is already deleted.',
+          },
+        },
+      ],
+      successCount: 1,
+      failureCount: 1,
+    });
+
+    const exitCode = await runCli(
+      [
+        'file',
+        'delete',
+        'file_ok',
+        'file_failed',
+        '--project',
+        project.basePath,
+        '--yes',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(1);
+    expect(fixture.stdout()).toContain('Deleted 1 file(s); 1 failed.');
+    expect(fixture.stdout()).toContain('file_failed: File is already deleted.');
+  });
+
   it('rejects unsupported bucket types before calling the SDK', async () => {
     fixture.repoConfig.config = {
       account: account.id,
