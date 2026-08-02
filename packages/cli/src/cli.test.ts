@@ -4,6 +4,7 @@ import {
   readFile,
   rm,
   stat,
+  truncate,
   writeFile,
 } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -94,6 +95,15 @@ const failedEmptyJob = {
   completedAt: project.updatedAt,
   createdAt: project.createdAt,
   updatedAt: project.updatedAt,
+};
+
+const singleUploadRequest = {
+  file: { id: 'upload_123' },
+  upload: {
+    kind: 'single' as const,
+    id: 'upload_123',
+    signedUrl: 'https://storage.example/upload',
+  },
 };
 
 describe('runCli', () => {
@@ -827,6 +837,129 @@ describe('runCli', () => {
     expect(fixture.stdout()).toContain('https://files.example/logo.png');
   });
 
+  it('treats an existing upload path with glob characters literally', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-upload-'),
+    );
+    fixture.runtime.cwd = temporaryDirectory;
+    await writeFile(path.join(temporaryDirectory, 'report[1].txt'), 'literal');
+    await writeFile(path.join(temporaryDirectory, 'report1.txt'), 'glob');
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(null, { status: 200 })),
+    );
+
+    const exitCode = await runCli(
+      [
+        'file',
+        'upload',
+        'report[1].txt',
+        '--bucket',
+        'publicFiles',
+        '--project',
+        project.basePath,
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(0);
+    expect(fixture.uploadRequest).toHaveBeenCalledTimes(1);
+    expect(fixture.uploadRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ sizeBytes: 7 }),
+    );
+  });
+
+  it('cancels without uploading bytes when the source is truncated', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-upload-'),
+    );
+    fixture.runtime.cwd = temporaryDirectory;
+    const sourcePath = path.join(temporaryDirectory, 'source.txt');
+    await writeFile(sourcePath, 'upload me');
+    fixture.uploadRequest.mockImplementationOnce(async () => {
+      await truncate(sourcePath, 0);
+      return singleUploadRequest;
+    });
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    const exitCode = await runCli(
+      [
+        '--json',
+        'file',
+        'upload',
+        'source.txt',
+        '--bucket',
+        'publicFiles',
+        '--project',
+        project.basePath,
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(1);
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(fixture.uploadCancel).toHaveBeenCalledWith(
+      expect.objectContaining({ uploadId: 'upload_123' }),
+    );
+    expect(JSON.parse(fixture.stderr()).error.code).toBe(
+      'upload_source_changed',
+    );
+  });
+
+  it('reports failed upload cleanup with an independent signal', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-upload-'),
+    );
+    fixture.runtime.cwd = temporaryDirectory;
+    await writeFile(path.join(temporaryDirectory, 'source.txt'), 'upload me');
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => {
+        fixture.abortController.abort();
+        throw new DOMException('aborted', 'AbortError');
+      }),
+    );
+    fixture.uploadCancel.mockRejectedValueOnce(
+      new Error('cleanup unavailable'),
+    );
+
+    const exitCode = await runCli(
+      [
+        '--json',
+        '--api-url',
+        'https://api-dev.edgestore.dev',
+        'file',
+        'upload',
+        'source.txt',
+        '--bucket',
+        'publicFiles',
+        '--project',
+        project.basePath,
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    const cleanupSignal = fixture.uploadCancel.mock.calls[0]?.[0].signal;
+    expect(exitCode).toBe(130);
+    expect(cleanupSignal).toBeDefined();
+    expect(cleanupSignal).not.toBe(fixture.runtime.signal);
+    expect(cleanupSignal?.aborted).toBe(false);
+    expect(JSON.parse(fixture.stderr()).error).toMatchObject({
+      code: 'upload_cleanup_failed',
+      details: {
+        cause: { code: 'interrupted' },
+        cleanup: { status: 'failed', uploadId: 'upload_123' },
+      },
+      suggestions: [
+        `edgestore --json --api-url https://api-dev.edgestore.dev file upload-cancel upload_123 --yes --project ${project.basePath}`,
+      ],
+    });
+  });
+
   it('streams downloads through a restrictive temporary file', async () => {
     temporaryDirectory = await mkdtemp(
       path.join(tmpdir(), 'edgestore-cli-download-'),
@@ -976,6 +1109,8 @@ describe('runCli', () => {
           fileRef,
           success: true as const,
         })),
+        successCount: input.files.length,
+        failureCount: 0,
       };
     });
 
@@ -1246,9 +1381,39 @@ function createFixture() {
   type DeleteFilesInput = Parameters<
     ManagementEdgeStoreSdk['management']['files']['delete']
   >[0];
-  const deleteFiles = vi.fn(async (_input: DeleteFilesInput) => ({
-    results: [],
+  type DeleteFilesResult = Awaited<
+    ReturnType<ManagementEdgeStoreSdk['management']['files']['delete']>
+  >;
+  type UploadRequestInput = Parameters<
+    ManagementEdgeStoreSdk['management']['uploads']['request']
+  >[0];
+  type UploadInput = Parameters<
+    ManagementEdgeStoreSdk['management']['uploads']['get']
+  >[0];
+  const deleteFiles = vi.fn(
+    async (_input: DeleteFilesInput): Promise<DeleteFilesResult> => ({
+      results: [],
+      successCount: 0,
+      failureCount: 0,
+    }),
+  );
+  const uploadRequest = vi.fn(
+    async (_input: UploadRequestInput) => singleUploadRequest,
+  );
+  const uploadCancel = vi.fn(async (_input: UploadInput) => ({
+    upload: { id: 'upload_123', status: 'canceled' as const },
   }));
+  const uploadGet = vi.fn(async (input: UploadInput) => ({
+    upload: { id: input.uploadId, status: 'completed' as const },
+    file: {
+      id: input.uploadId,
+      url:
+        input.uploadId === 'file_123'
+          ? 'https://files.example/logo.png'
+          : 'https://files.example/upload.txt',
+    },
+  }));
+  const completeMultipart = vi.fn(async (_input: UploadInput) => ({}));
   const sdk = {
     runtime: {
       uploads: {
@@ -1353,14 +1518,10 @@ function createFixture() {
         delete: deleteFiles,
       },
       uploads: {
-        get: vi.fn(async () => ({
-          upload: { id: 'file_123', status: 'completed' },
-          file: {
-            id: 'file_123',
-            url: 'https://files.example/logo.png',
-          },
-        })),
-        cancel: vi.fn(),
+        request: uploadRequest,
+        get: uploadGet,
+        cancel: uploadCancel,
+        completeMultipart,
       },
     },
   } as unknown as ManagementEdgeStoreSdk;
@@ -1434,6 +1595,10 @@ function createFixture() {
     retryEmptyJob,
     generateAccessUrls,
     deleteFiles,
+    uploadRequest,
+    uploadCancel,
+    uploadGet,
+    completeMultipart,
     createProject,
     listProjectKeys,
     createProjectKey,
