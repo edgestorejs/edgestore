@@ -5,6 +5,12 @@ import type {
   OperationResult,
 } from './internal/operationTypes';
 import type { Transport } from './internal/transport';
+import {
+  uploadManagementFile,
+  type ManagementUploadInput,
+  type ManagementUploadResult,
+} from './managementUpload';
+import type { UploadDefaults } from './uploadTypes';
 
 type CallOptions = {
   /** Cancels the request. */
@@ -126,6 +132,8 @@ export type ManagementResourceClient = {
     ): Promise<Result<'v2.management.files.delete'>>;
   };
   uploads: {
+    /** Transfers a file and waits for server-side processing to complete. */
+    upload(input: ManagementUploadInput): Promise<ManagementUploadResult>;
     /** Requests signed upload destination(s) without transferring data. */
     request(
       input: BucketInput &
@@ -157,6 +165,7 @@ export type ManagementResourceClient = {
 
 export function createManagementResourceClient(
   transport: Transport,
+  uploadDefaults: UploadDefaults = {},
 ): ManagementResourceClient {
   return {
     projects: {
@@ -323,6 +332,7 @@ export function createManagementResourceClient(
         ),
     },
     uploads: {
+      upload: (input) => uploadManagementFile(transport, input, uploadDefaults),
       request: ({ project, bucket, signal, ...body }) =>
         transport.execute((client) =>
           client.POST(

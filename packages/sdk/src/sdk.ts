@@ -80,7 +80,7 @@ export function createEdgeStoreSdk(
   return credentials.kind === 'bearer'
     ? {
         runtime: createExplicitProjectRuntimeClient(transport, options.upload),
-        management: createManagementClient(transport),
+        management: createManagementClient(transport, options.upload),
         system,
       }
     : {

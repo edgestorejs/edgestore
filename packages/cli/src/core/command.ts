@@ -21,5 +21,8 @@ export function renderCliCommand(
 
 function quoteShellArgument(value: string): string {
   if (/^[A-Za-z0-9_./:@%+=,-]+$/.test(value)) return value;
+  if (process.platform === 'win32') {
+    return `"${value.replaceAll('"', '\\"')}"`;
+  }
   return `'${value.replaceAll("'", `'"'"'`)}'`;
 }

@@ -117,10 +117,13 @@ export function apiUrlFor(
 
 export async function credentialFor(
   runtime: CliRuntime,
+  flags: GlobalFlags,
 ): Promise<ResolvedCredential> {
+  const apiUrl = apiUrlFor(runtime, flags);
   const credential = await resolveCredential(
     runtime.env.EDGESTORE_TOKEN,
     runtime.credentials,
+    apiUrl.displayUrl,
   );
   if (!credential) {
     throw usageError('authentication_required', 'Not logged in.', [
@@ -134,7 +137,7 @@ export async function sdkFor(
   runtime: CliRuntime,
   flags: GlobalFlags,
 ): Promise<ManagementEdgeStoreSdk> {
-  const credential = await credentialFor(runtime);
+  const credential = await credentialFor(runtime, flags);
   return runtime.sdkFactory({
     token: credential.token,
     baseUrl: apiUrlFor(runtime, flags).sdkBaseUrl,
