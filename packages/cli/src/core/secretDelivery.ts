@@ -35,10 +35,10 @@ export async function preflightEnvSecret(
       names,
       update: Boolean(options.update),
     });
-    await access(
-      existing.exists ? outputPath : path.dirname(outputPath),
-      constants.W_OK,
-    );
+    const directoryMode =
+      constants.W_OK | (process.platform === 'win32' ? 0 : constants.X_OK);
+    await access(path.dirname(outputPath), directoryMode);
+    if (existing.exists) await access(outputPath, constants.W_OK);
   }
 }
 

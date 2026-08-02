@@ -65,12 +65,12 @@ export async function projectKeyRevokeCommand(
   input: { project: string; keyId: string; yes?: boolean },
 ): Promise<void> {
   const sdk = await sdkFor(runtime, flags);
-  const listed = await sdk.management.projectKeys.list({
-    project: input.project,
-    signal: runtime.signal,
-  });
-  const key = listed.keys.find((item) => item.id === input.keyId);
   if (!input.yes) {
+    const listed = await sdk.management.projectKeys.list({
+      project: input.project,
+      signal: runtime.signal,
+    });
+    const key = listed.keys.find((item) => item.id === input.keyId);
     requireInteractiveConfirmation(runtime, flags, [
       `edgestore project key revoke ${input.project} ${input.keyId} --yes`,
     ]);

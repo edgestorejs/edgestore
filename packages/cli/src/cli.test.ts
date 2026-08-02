@@ -442,6 +442,23 @@ describe('runCli', () => {
     );
   });
 
+  it('revokes a project key with revoke-only access when forced', async () => {
+    fixture.listProjectKeys.mockRejectedValueOnce(new Error('read denied'));
+
+    const exitCode = await runCli(
+      ['project', 'key', 'revoke', project.basePath, projectKey.id, '--yes'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(0);
+    expect(fixture.revokeProjectKey).toHaveBeenCalledWith({
+      project: project.basePath,
+      keyId: projectKey.id,
+      signal: fixture.runtime.signal,
+    });
+  });
+
   it('validates a token before saving it', async () => {
     await runCli(['login', '--token'], fixture.runtime, '0.0.0');
 
