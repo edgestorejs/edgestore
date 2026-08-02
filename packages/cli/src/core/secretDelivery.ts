@@ -10,13 +10,71 @@ import {
   writeFile,
 } from 'node:fs/promises';
 import path from 'node:path';
-import { CliError, usageError } from './errors';
+import { CliError, normalizeError, usageError } from './errors';
 
 export type SecretDeliveryOptions = {
   copy?: boolean;
   output?: string;
   update?: boolean;
 };
+
+export async function deliverEnvSecretWithRollback(input: {
+  cwd: string;
+  values: Record<string, string>;
+  options: SecretDeliveryOptions;
+  credential: { label: string; id: string };
+  rollback(signal: AbortSignal): Promise<void>;
+  manualRollbackCommand: string;
+  recoverySuggestions?: string[];
+}): Promise<string[]> {
+  try {
+    return await deliverEnvSecret(input.cwd, input.values, input.options);
+  } catch (deliveryError) {
+    const cause = normalizeError(deliveryError);
+    try {
+      await input.rollback(AbortSignal.timeout(10_000));
+    } catch (rollbackError) {
+      const rollback = normalizeError(rollbackError);
+      throw new CliError(
+        'secret_delivery_failed',
+        `${cause.message} Automatic revocation of the new ${input.credential.label} failed.`,
+        {
+          details: {
+            cause: errorDetails(cause),
+            rollback: {
+              status: 'failed',
+              credentialId: input.credential.id,
+              error: errorDetails(rollback),
+            },
+          },
+          requestId: cause.options.requestId,
+          suggestions: [
+            ...(cause.options.suggestions ?? []),
+            input.manualRollbackCommand,
+            ...(input.recoverySuggestions ?? []),
+          ],
+          exitCode: cause.exitCode,
+        },
+      );
+    }
+    throw new CliError(
+      'secret_delivery_failed',
+      `${cause.message} The new ${input.credential.label} was revoked.`,
+      {
+        details: {
+          cause: errorDetails(cause),
+          rollback: {
+            status: 'succeeded',
+            credentialId: input.credential.id,
+          },
+        },
+        requestId: cause.options.requestId,
+        suggestions: cause.options.suggestions,
+        exitCode: cause.exitCode,
+      },
+    );
+  }
+}
 
 export async function preflightEnvSecret(
   cwd: string,
@@ -220,4 +278,17 @@ function updateAssignments(
     next += `${name}=${value}\n`;
   }
   return next;
+}
+
+function errorDetails(error: CliError) {
+  return {
+    code: error.code,
+    message: error.message,
+    ...(error.options.details === undefined
+      ? {}
+      : { details: error.options.details }),
+    ...(error.options.requestId === undefined
+      ? {}
+      : { requestId: error.options.requestId }),
+  };
 }

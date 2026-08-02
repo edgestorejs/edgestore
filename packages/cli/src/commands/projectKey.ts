@@ -1,9 +1,9 @@
-import { CliError, normalizeError, usageError } from '../core/errors';
+import { CliError, usageError } from '../core/errors';
 import { renderTable } from '../core/output';
 import type { CliRuntime, GlobalFlags } from '../core/runtime';
 import { outputFor, sdkFor } from '../core/runtime';
 import {
-  deliverEnvSecret,
+  deliverEnvSecretWithRollback,
   preflightEnvSecret,
   type SecretDeliveryOptions,
 } from '../core/secretDelivery';
@@ -180,20 +180,21 @@ async function createAndDeliverKey(
     name: input.name,
     signal: runtime.signal,
   });
-  try {
-    const delivered = await deliverEnvSecret(
-      runtime.cwd,
-      keyValues(result.key.accessKey, result.secretKey),
-      input,
-    );
-    return { result, delivered };
-  } catch (error) {
-    throw await rollbackUndeliveredKey(sdk, {
-      project: input.project,
-      keyId: result.key.id,
-      deliveryError: error,
-    });
-  }
+  const delivered = await deliverEnvSecretWithRollback({
+    cwd: runtime.cwd,
+    values: keyValues(result.key.accessKey, result.secretKey),
+    options: input,
+    credential: { label: 'project key', id: result.key.id },
+    rollback: async (signal) => {
+      await sdk.management.projectKeys.revoke({
+        project: input.project,
+        keyId: result.key.id,
+        signal,
+      });
+    },
+    manualRollbackCommand: `edgestore project key revoke ${input.project} ${result.key.id} --yes`,
+  });
+  return { result, delivered };
 }
 
 async function preflightKeyDelivery(
@@ -205,68 +206,6 @@ async function preflightKeyDelivery(
     ['EDGE_STORE_ACCESS_KEY', 'EDGE_STORE_SECRET_KEY'],
     options,
   );
-}
-
-async function rollbackUndeliveredKey(
-  sdk: Awaited<ReturnType<typeof sdkFor>>,
-  input: { project: string; keyId: string; deliveryError: unknown },
-): Promise<CliError> {
-  const cause = normalizeError(input.deliveryError);
-  try {
-    await sdk.management.projectKeys.revoke({
-      project: input.project,
-      keyId: input.keyId,
-      signal: AbortSignal.timeout(10_000),
-    });
-    return new CliError(
-      'secret_delivery_failed',
-      `${cause.message} The new project key was revoked.`,
-      {
-        details: {
-          cause: errorDetails(cause),
-          rollback: { status: 'succeeded', keyId: input.keyId },
-        },
-        requestId: cause.options.requestId,
-        suggestions: cause.options.suggestions,
-        exitCode: cause.exitCode,
-      },
-    );
-  } catch (rollbackError) {
-    const rollback = normalizeError(rollbackError);
-    return new CliError(
-      'secret_delivery_failed',
-      `${cause.message} Automatic revocation of the new project key failed.`,
-      {
-        details: {
-          cause: errorDetails(cause),
-          rollback: {
-            status: 'failed',
-            keyId: input.keyId,
-            error: errorDetails(rollback),
-          },
-        },
-        requestId: cause.options.requestId,
-        suggestions: [
-          ...(cause.options.suggestions ?? []),
-          `edgestore project key revoke ${input.project} ${input.keyId} --yes`,
-        ],
-        exitCode: cause.exitCode,
-      },
-    );
-  }
-}
-
-function errorDetails(error: CliError) {
-  return {
-    code: error.code,
-    message: error.message,
-    ...(error.options.details === undefined
-      ? {}
-      : { details: error.options.details }),
-    ...(error.options.requestId === undefined
-      ? {}
-      : { requestId: error.options.requestId }),
-  };
 }
 
 function requirePlainSecretDelivery(
