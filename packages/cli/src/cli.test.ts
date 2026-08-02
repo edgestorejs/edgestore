@@ -10,6 +10,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { PassThrough, Readable } from 'node:stream';
 import {
+  EdgeStoreAbortError,
   EdgeStoreUploadCleanupError,
   type ManagementEdgeStoreSdk,
 } from '@edgestore/sdk';
@@ -325,6 +326,51 @@ describe('runCli', () => {
     });
     expect(fixture.stdout()).toContain('invited');
     expect(fixture.confirmTyped).not.toHaveBeenCalled();
+  });
+
+  it('rejects plain member invitations before remote work', async () => {
+    fixture.availableAccounts.push(teamAccount);
+    fixture.globalConfig.activeAccount = teamAccount.id;
+
+    const exitCode = await runCli(
+      ['--plain', 'member', 'invite', 'friend@example.com', '--role', 'viewer'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(2);
+    expect(fixture.listAccounts).not.toHaveBeenCalled();
+    expect(fixture.invitationCreate).not.toHaveBeenCalled();
+    expect(fixture.stderr()).toContain('--json');
+  });
+
+  it('stops a member invitation batch when canceled', async () => {
+    fixture.availableAccounts.push(teamAccount);
+    fixture.globalConfig.activeAccount = teamAccount.id;
+    fixture.invitationCreate.mockImplementationOnce(async () => {
+      fixture.abortController.abort();
+      throw new EdgeStoreAbortError();
+    });
+
+    const exitCode = await runCli(
+      [
+        '--json',
+        'member',
+        'invite',
+        'one@example.com',
+        'two@example.com',
+        'three@example.com',
+        '--role',
+        'viewer',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(130);
+    expect(fixture.invitationCreate).toHaveBeenCalledTimes(1);
+    expect(fixture.stdout()).toBe('');
+    expect(JSON.parse(fixture.stderr()).error.code).toBe('interrupted');
   });
 
   it('requires --yes for noninteractive owner invitations', async () => {

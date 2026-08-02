@@ -61,6 +61,13 @@ export async function memberInviteCommand(
     yes?: boolean;
   },
 ): Promise<void> {
+  if (flags.plain) {
+    throw usageError(
+      'plain_output_unavailable',
+      'Member invitation does not have a single plain-text result.',
+      ['Use --json to inspect every invitation result.'],
+    );
+  }
   const account = await requireTeamAccount(runtime, flags);
   const role = parseRole(input.role);
   await confirmOwnerRole(runtime, flags, {
@@ -93,6 +100,7 @@ export async function memberInviteCommand(
         invitation: result.invitation,
       });
     } catch (error) {
+      if (runtime.signal.aborted) throw error;
       results.push({
         email,
         success: false as const,
