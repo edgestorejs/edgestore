@@ -1,4 +1,5 @@
-import { usageError } from '../core/errors';
+import { renderCliCommand } from '../core/command';
+import { CliError, usageError } from '../core/errors';
 import { renderTable } from '../core/output';
 import type { CliRuntime, GlobalFlags } from '../core/runtime';
 import { outputFor, sdkFor } from '../core/runtime';
@@ -149,7 +150,9 @@ export async function accountLeaveCommand(
   flags: GlobalFlags,
   options: { yes?: boolean },
 ): Promise<void> {
-  const accountId = await activeAccount(runtime);
+  const config = await runtime.globalConfig.read();
+  if (!config.activeAccount) throw missingAccountError();
+  const accountId = config.activeAccount;
   const sdk = await sdkFor(runtime, flags);
   const current = await sdk.management.accounts.get({
     account: accountId,
@@ -161,12 +164,22 @@ export async function accountLeaveCommand(
       'You cannot leave a personal account.',
     );
   }
+  const listed = await sdk.management.accounts.list({ signal: runtime.signal });
+  const personal = listed.accounts.find(
+    (account) => account.type === 'PERSONAL',
+  );
+  if (!personal) {
+    throw new CliError(
+      'personal_account_not_found',
+      'No personal account is available to switch to after leaving.',
+    );
+  }
   if (!options.yes) {
     if (!runtime.io.inputIsTty || flags.json) {
       throw usageError(
         'confirmation_required',
         'Leaving an account requires confirmation.',
-        ['edgestore account leave --yes'],
+        [renderCliCommand(flags, ['account', 'leave', '--yes'])],
       );
     }
     await runtime.prompts.confirmTyped(
@@ -178,19 +191,14 @@ export async function accountLeaveCommand(
     account: accountId,
     signal: runtime.signal,
   });
-  const listed = await sdk.management.accounts.list({ signal: runtime.signal });
-  const personal = listed.accounts.find(
-    (account) => account.type === 'PERSONAL',
-  );
-  const config = await runtime.globalConfig.read();
   await runtime.globalConfig.write({
     ...config,
-    activeAccount: personal?.id,
+    activeAccount: personal.id,
   });
   outputFor(runtime, flags).result(
-    { left: accountId, activeAccount: personal?.id },
-    `Left ${current.account.displayName}.${personal ? ` Switched to ${personal.displayName}.` : ''}`,
-    personal?.id ?? accountId,
+    { left: accountId, activeAccount: personal.id },
+    `Left ${current.account.displayName}. Switched to ${personal.displayName}.`,
+    personal.id,
   );
 }
 
