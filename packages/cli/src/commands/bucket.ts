@@ -55,12 +55,13 @@ export async function bucketCreateCommand(
   input: {
     bucket: string;
     project?: string;
-    type: 'file' | 'image';
+    type: string;
     public?: boolean;
     protected?: boolean;
   },
 ): Promise<void> {
   validateBucketName(input.bucket);
+  const type = parseBucketType(input.type);
   if (Boolean(input.public) === Boolean(input.protected)) {
     throw usageError(
       'bucket_visibility_required',
@@ -71,7 +72,7 @@ export async function bucketCreateCommand(
   const result = await sdk.management.buckets.create({
     project: await resolvedProjectRef(runtime, input.project),
     name: input.bucket,
-    type: input.type,
+    type,
     visibility: input.public ? 'public' : 'protected',
     signal: runtime.signal,
   });
@@ -80,6 +81,11 @@ export async function bucketCreateCommand(
     `Created ${result.bucket.visibility} ${result.bucket.type} bucket ${result.bucket.name}.`,
     result.bucket.name,
   );
+}
+
+export function parseBucketType(value: string | undefined): 'file' | 'image' {
+  if (value === 'file' || value === 'image') return value;
+  throw usageError('invalid_bucket_type', 'Bucket type must be file or image.');
 }
 
 export async function bucketDeleteCommand(
