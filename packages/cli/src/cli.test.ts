@@ -1,6 +1,9 @@
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 import { PassThrough, Readable } from 'node:stream';
 import type { ManagementEdgeStoreSdk } from '@edgestore/sdk';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { runCli } from './cli';
 import type {
   GlobalConfig,
@@ -36,11 +39,30 @@ const project = {
   updatedAt: '2026-01-01T00:00:00.000Z',
 };
 
+const projectKey = {
+  id: 'key_123',
+  name: 'production',
+  accessKey: 'access_test',
+  projectId: project.id,
+  accountId: account.id,
+  createdAt: project.createdAt,
+  updatedAt: project.updatedAt,
+  revokedAt: null as string | null,
+};
+
 describe('runCli', () => {
   let fixture: ReturnType<typeof createFixture>;
+  let temporaryDirectory: string | undefined;
 
   beforeEach(() => {
     fixture = createFixture();
+  });
+
+  afterEach(async () => {
+    if (temporaryDirectory) {
+      await rm(temporaryDirectory, { recursive: true, force: true });
+      temporaryDirectory = undefined;
+    }
   });
 
   it('renders account lists and marks the active account', async () => {
@@ -166,6 +188,200 @@ describe('runCli', () => {
 
     expect(fixture.stdout()).toContain('EDGE_STORE_ACCESS_KEY=access_test');
     expect(fixture.stdout()).toContain('EDGE_STORE_SECRET_KEY=secret_test');
+  });
+
+  it('requires a destination for plain project-key creation', async () => {
+    const exitCode = await runCli(
+      [
+        '--plain',
+        'project',
+        'key',
+        'create',
+        project.basePath,
+        '--name',
+        'production',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(2);
+    expect(fixture.createProjectKey).not.toHaveBeenCalled();
+    expect(fixture.stderr()).toContain('--copy or --output');
+  });
+
+  it('keeps the key ID on plain stdout when the secret is delivered', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-key-'),
+    );
+    fixture.runtime.cwd = temporaryDirectory;
+
+    const exitCode = await runCli(
+      [
+        '--plain',
+        'project',
+        'key',
+        'create',
+        project.basePath,
+        '--name',
+        'production',
+        '--output',
+        '.env.local',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(0);
+    expect(fixture.stdout()).toBe(`${projectKey.id}\n`);
+    await expect(
+      readFile(path.join(temporaryDirectory, '.env.local'), 'utf8'),
+    ).resolves.toContain('EDGE_STORE_SECRET_KEY=secret_test');
+  });
+
+  it('validates a rotation target before creating its replacement', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-key-'),
+    );
+    fixture.runtime.cwd = temporaryDirectory;
+    fixture.listProjectKeys.mockResolvedValueOnce({ keys: [] });
+
+    const exitCode = await runCli(
+      [
+        'project',
+        'key',
+        'rotate',
+        project.basePath,
+        'missing',
+        '--name',
+        'replacement',
+        '--output',
+        '.env.local',
+        '--yes',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(1);
+    expect(fixture.createProjectKey).not.toHaveBeenCalled();
+    expect(fixture.stderr()).toContain('was not found');
+  });
+
+  it('does not rotate an already revoked project key', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-key-'),
+    );
+    fixture.runtime.cwd = temporaryDirectory;
+    fixture.listProjectKeys.mockResolvedValueOnce({
+      keys: [{ ...projectKey, revokedAt: '2026-02-01T00:00:00.000Z' }],
+    });
+
+    const exitCode = await runCli(
+      [
+        'project',
+        'key',
+        'rotate',
+        project.basePath,
+        projectKey.id,
+        '--name',
+        'replacement',
+        '--output',
+        '.env.local',
+        '--yes',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(1);
+    expect(fixture.createProjectKey).not.toHaveBeenCalled();
+    expect(fixture.stderr()).toContain('already revoked');
+  });
+
+  it('revokes a key when delivery fails after preflight', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-key-'),
+    );
+    fixture.runtime.cwd = temporaryDirectory;
+    fixture.createProjectKey.mockImplementationOnce(async () => {
+      await writeFile(
+        path.join(temporaryDirectory!, '.env.local'),
+        'EDGE_STORE_ACCESS_KEY=raced\n',
+      );
+      return { key: projectKey, secretKey: 'secret_test' };
+    });
+
+    const exitCode = await runCli(
+      [
+        '--json',
+        'project',
+        'key',
+        'create',
+        project.basePath,
+        '--name',
+        'production',
+        '--output',
+        '.env.local',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(2);
+    expect(fixture.stdout()).toBe('');
+    expect(fixture.revokeProjectKey).toHaveBeenCalledWith(
+      expect.objectContaining({
+        project: project.basePath,
+        keyId: projectKey.id,
+        signal: expect.objectContaining({ aborted: false }),
+      }),
+    );
+    expect(JSON.parse(fixture.stderr()).error.details.rollback).toEqual({
+      status: 'succeeded',
+      keyId: projectKey.id,
+    });
+  });
+
+  it('reports the recovery command when delivery rollback fails', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-key-'),
+    );
+    fixture.runtime.cwd = temporaryDirectory;
+    fixture.createProjectKey.mockImplementationOnce(async () => {
+      await writeFile(
+        path.join(temporaryDirectory!, '.env.local'),
+        'EDGE_STORE_ACCESS_KEY=raced\n',
+      );
+      return { key: projectKey, secretKey: 'secret_test' };
+    });
+    fixture.revokeProjectKey.mockRejectedValueOnce(new Error('denied'));
+
+    const exitCode = await runCli(
+      [
+        '--json',
+        'project',
+        'key',
+        'create',
+        project.basePath,
+        '--name',
+        'production',
+        '--output',
+        '.env.local',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(2);
+    const error = JSON.parse(fixture.stderr()).error;
+    expect(error.details.rollback).toMatchObject({
+      status: 'failed',
+      keyId: projectKey.id,
+    });
+    expect(error.suggestions).toContain(
+      `edgestore project key revoke ${project.basePath} ${projectKey.id} --yes`,
+    );
   });
 
   it('requires typed confirmation before revoking a project key', async () => {
@@ -338,6 +554,12 @@ function createFixture() {
       secretKey: 'secret_test',
     },
   }));
+  const listProjectKeys = vi.fn(async () => ({ keys: [projectKey] }));
+  const createProjectKey = vi.fn(async () => ({
+    key: projectKey,
+    secretKey: 'secret_test',
+  }));
+  const revokeProjectKey = vi.fn(async () => ({}));
   const sdk = {
     system: {
       health: vi.fn(async () => ({ status: 'ok' })),
@@ -371,34 +593,9 @@ function createFixture() {
         delete: vi.fn(async () => ({})),
       },
       projectKeys: {
-        list: vi.fn(async () => ({
-          keys: [
-            {
-              id: 'key_123',
-              name: 'production',
-              accessKey: 'access_test',
-              projectId: project.id,
-              accountId: account.id,
-              createdAt: project.createdAt,
-              updatedAt: project.updatedAt,
-              revokedAt: null,
-            },
-          ],
-        })),
-        create: vi.fn(async () => ({
-          key: {
-            id: 'key_123',
-            name: 'production',
-            accessKey: 'access_test',
-            projectId: project.id,
-            accountId: account.id,
-            createdAt: project.createdAt,
-            updatedAt: project.updatedAt,
-            revokedAt: null,
-          },
-          secretKey: 'secret_test',
-        })),
-        revoke: vi.fn(async () => ({})),
+        list: listProjectKeys,
+        create: createProjectKey,
+        revoke: revokeProjectKey,
       },
     },
   } as unknown as ManagementEdgeStoreSdk;
@@ -460,6 +657,9 @@ function createFixture() {
     readToken,
     confirmTyped,
     createProject,
+    listProjectKeys,
+    createProjectKey,
+    revokeProjectKey,
     stdout: () => Buffer.concat(stdoutChunks).toString('utf8'),
     stderr: () => Buffer.concat(stderrChunks).toString('utf8'),
   };
