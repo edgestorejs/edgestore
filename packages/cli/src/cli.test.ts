@@ -882,6 +882,82 @@ describe('runCli', () => {
     expect(fixture.stdout()).toContain('https://files.example/logo.png');
   });
 
+  it('rejects plain upload before inspecting or uploading files', async () => {
+    const exitCode = await runCli(
+      [
+        '--plain',
+        'file',
+        'upload',
+        'missing.txt',
+        '--bucket',
+        'publicFiles',
+        '--project',
+        project.basePath,
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(2);
+    expect(fixture.uploadRequest).not.toHaveBeenCalled();
+    expect(fixture.stderr()).toContain('--json');
+  });
+
+  it('reports completed and unattempted files when a later upload fails', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-upload-'),
+    );
+    fixture.runtime.cwd = temporaryDirectory;
+    const paths = ['first.txt', 'second.txt', 'third.txt'];
+    await Promise.all(
+      paths.map((file) =>
+        writeFile(path.join(temporaryDirectory!, file), file),
+      ),
+    );
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(null, { status: 200 })),
+    );
+    let requestCount = 0;
+    fixture.uploadRequest.mockImplementation(async () => {
+      requestCount += 1;
+      if (requestCount === 2) throw new Error('second upload request failed');
+      return {
+        ...singleUploadRequest,
+        file: { id: 'upload_first' },
+        upload: { ...singleUploadRequest.upload, id: 'upload_first' },
+      };
+    });
+
+    const exitCode = await runCli(
+      [
+        '--json',
+        'file',
+        'upload',
+        ...paths,
+        '--bucket',
+        'publicFiles',
+        '--project',
+        project.basePath,
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(1);
+    expect(fixture.stdout()).toBe('');
+    expect(fixture.uploadRequest).toHaveBeenCalledTimes(2);
+    expect(JSON.parse(fixture.stderr()).error).toMatchObject({
+      code: 'file_upload_incomplete',
+      details: {
+        completed: [{ localPath: path.join(temporaryDirectory, 'first.txt') }],
+        interruptedPath: path.join(temporaryDirectory, 'second.txt'),
+        notAttemptedPaths: [path.join(temporaryDirectory, 'third.txt')],
+        cause: { message: 'second upload request failed' },
+      },
+    });
+  });
+
   it('treats an existing upload path with glob characters literally', async () => {
     temporaryDirectory = await mkdtemp(
       path.join(tmpdir(), 'edgestore-cli-upload-'),
