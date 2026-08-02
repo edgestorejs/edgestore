@@ -149,10 +149,21 @@ export async function projectKeyRotateCommand(
 
   if (!input.yes) {
     if (output.options.mode === 'human') output.message(secretMessage);
-    await runtime.prompts.confirmTyped(
-      `Type saved to revoke ${input.keyId}`,
-      'saved',
-    );
+    try {
+      await runtime.prompts.confirmTyped(
+        `Type saved to revoke ${input.keyId}`,
+        'saved',
+      );
+    } catch (error) {
+      throw await rollbackNewProjectKey(sdk, {
+        project: input.project,
+        keyId: result.key.id,
+        cause: error,
+        successMessage: 'The replacement project key was revoked.',
+        failureMessage:
+          'Automatic revocation of the replacement project key failed.',
+      });
+    }
   }
   await sdk.management.projectKeys.revoke({
     project: input.project,
@@ -188,10 +199,13 @@ async function createAndDeliverKey(
     );
     return { result, delivered };
   } catch (error) {
-    throw await rollbackUndeliveredKey(sdk, {
+    throw await rollbackNewProjectKey(sdk, {
       project: input.project,
       keyId: result.key.id,
-      deliveryError: error,
+      cause: error,
+      successMessage: 'The new project key was revoked.',
+      failureMessage: 'Automatic revocation of the new project key failed.',
+      code: 'secret_delivery_failed',
     });
   }
 }
@@ -207,11 +221,18 @@ async function preflightKeyDelivery(
   );
 }
 
-async function rollbackUndeliveredKey(
+async function rollbackNewProjectKey(
   sdk: Awaited<ReturnType<typeof sdkFor>>,
-  input: { project: string; keyId: string; deliveryError: unknown },
+  input: {
+    project: string;
+    keyId: string;
+    cause: unknown;
+    successMessage: string;
+    failureMessage: string;
+    code?: string;
+  },
 ): Promise<CliError> {
-  const cause = normalizeError(input.deliveryError);
+  const cause = normalizeError(input.cause);
   try {
     await sdk.management.projectKeys.revoke({
       project: input.project,
@@ -219,8 +240,8 @@ async function rollbackUndeliveredKey(
       signal: AbortSignal.timeout(10_000),
     });
     return new CliError(
-      'secret_delivery_failed',
-      `${cause.message} The new project key was revoked.`,
+      input.code ?? cause.code,
+      `${cause.message} ${input.successMessage}`,
       {
         details: {
           cause: errorDetails(cause),
@@ -234,8 +255,8 @@ async function rollbackUndeliveredKey(
   } catch (rollbackError) {
     const rollback = normalizeError(rollbackError);
     return new CliError(
-      'secret_delivery_failed',
-      `${cause.message} Automatic revocation of the new project key failed.`,
+      input.code ?? cause.code,
+      `${cause.message} ${input.failureMessage}`,
       {
         details: {
           cause: errorDetails(cause),
