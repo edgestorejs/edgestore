@@ -38,7 +38,7 @@ export async function loginCommand(
   });
   const identity = await sdk.management.whoami({ signal: runtime.signal });
 
-  await runtime.credentials.set(token);
+  await runtime.credentials.set(apiUrl.displayUrl, token);
   const accountId = accountIdFromActor(identity.actor);
   if (accountId) {
     const config = await runtime.globalConfig.read();
@@ -59,7 +59,9 @@ export async function logoutCommand(
   runtime: CliRuntime,
   flags: GlobalFlags,
 ): Promise<void> {
-  const deleted = await runtime.credentials.delete();
+  const deleted = await runtime.credentials.delete(
+    apiUrlFor(runtime, flags).displayUrl,
+  );
   const environmentTokenActive = Boolean(runtime.env.EDGESTORE_TOKEN?.trim());
   const output = outputFor(runtime, flags);
 
@@ -79,7 +81,7 @@ export async function whoamiCommand(
   runtime: CliRuntime,
   flags: GlobalFlags,
 ): Promise<void> {
-  const credential = await credentialFor(runtime);
+  const credential = await credentialFor(runtime, flags);
   const apiUrl = apiUrlFor(runtime, flags);
   const sdk = runtime.sdkFactory({
     token: credential.token,
