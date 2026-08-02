@@ -339,12 +339,12 @@ Targets:
 
   const invitation = member
     .command('invitation')
-    .description('Manage pending invitations');
+    .description('Manage invitations');
 
   invitation
     .command('list')
     .alias('ls')
-    .description('List pending invitations')
+    .description('List invitations')
     .option('--page <number>', 'page number', parsePositiveInteger)
     .option('--limit <number>', 'page size', parsePositiveInteger)
     .option('--all', 'fetch every page')

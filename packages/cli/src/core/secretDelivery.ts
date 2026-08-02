@@ -30,53 +30,75 @@ export async function deliverEnvSecretWithRollback(input: {
   try {
     return await deliverEnvSecret(input.cwd, input.values, input.options);
   } catch (deliveryError) {
-    const cause = normalizeError(deliveryError);
-    try {
-      await input.rollback(AbortSignal.timeout(10_000));
-    } catch (rollbackError) {
-      const rollback = normalizeError(rollbackError);
-      throw new CliError(
-        'secret_delivery_failed',
-        `${cause.message} Automatic revocation of the new ${input.credential.label} failed.`,
-        {
-          details: {
-            cause: errorDetails(cause),
-            rollback: {
-              status: 'failed',
-              credentialId: input.credential.id,
-              error: errorDetails(rollback),
-            },
-          },
-          requestId: cause.options.requestId,
-          suggestions: [
-            ...(cause.options.suggestions ?? []),
-            input.manualRollbackCommand,
-            ...(input.recoverySuggestions ?? []),
-          ],
-          exitCode: cause.exitCode,
-        },
-      );
-    }
+    await rollbackCredentialAfterFailure({
+      cause: deliveryError,
+      code: 'secret_delivery_failed',
+      successMessage: `The new ${input.credential.label} was revoked.`,
+      failureMessage: `Automatic revocation of the new ${input.credential.label} failed.`,
+      credential: input.credential,
+      rollback: input.rollback,
+      manualRollbackCommand: input.manualRollbackCommand,
+      recoverySuggestions: input.recoverySuggestions,
+    });
+  }
+}
+
+export async function rollbackCredentialAfterFailure(input: {
+  cause: unknown;
+  code?: string;
+  successMessage: string;
+  failureMessage: string;
+  credential: { id: string };
+  rollback(signal: AbortSignal): Promise<void>;
+  manualRollbackCommand: string;
+  recoverySuggestions?: string[];
+}): Promise<never> {
+  const cause = normalizeError(input.cause);
+  try {
+    await input.rollback(AbortSignal.timeout(10_000));
+  } catch (rollbackError) {
+    const rollback = normalizeError(rollbackError);
     throw new CliError(
-      'secret_delivery_failed',
-      `${cause.message} The new ${input.credential.label} was revoked.`,
+      input.code ?? cause.code,
+      `${cause.message} ${input.failureMessage}`,
       {
         details: {
           cause: errorDetails(cause),
           rollback: {
-            status: 'succeeded',
+            status: 'failed',
             credentialId: input.credential.id,
+            error: errorDetails(rollback),
           },
         },
         requestId: cause.options.requestId,
         suggestions: [
           ...(cause.options.suggestions ?? []),
+          input.manualRollbackCommand,
           ...(input.recoverySuggestions ?? []),
         ],
         exitCode: cause.exitCode,
       },
     );
   }
+  throw new CliError(
+    input.code ?? cause.code,
+    `${cause.message} ${input.successMessage}`,
+    {
+      details: {
+        cause: errorDetails(cause),
+        rollback: {
+          status: 'succeeded',
+          credentialId: input.credential.id,
+        },
+      },
+      requestId: cause.options.requestId,
+      suggestions: [
+        ...(cause.options.suggestions ?? []),
+        ...(input.recoverySuggestions ?? []),
+      ],
+      exitCode: cause.exitCode,
+    },
+  );
 }
 
 export async function preflightEnvSecret(

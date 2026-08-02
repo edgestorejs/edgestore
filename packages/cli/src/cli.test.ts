@@ -23,6 +23,7 @@ import type {
   RepoConfig,
 } from './core/config';
 import type { CredentialStore } from './core/credentials';
+import { CliError } from './core/errors';
 import type { CliRuntime } from './core/runtime';
 
 const account = {
@@ -279,6 +280,16 @@ describe('runCli', () => {
       account,
     });
     expect(fixture.invitationList).not.toHaveBeenCalled();
+  });
+
+  it('describes an empty invitation history without pending-only wording', async () => {
+    fixture.availableAccounts.push(teamAccount);
+    fixture.globalConfig.activeAccount = teamAccount.id;
+
+    await runCli(['member', 'invitation', 'list'], fixture.runtime, '0.0.0');
+
+    expect(fixture.stdout()).toContain('No invitations found.');
+    expect(fixture.stdout()).not.toContain('pending');
   });
 
   it.each([
@@ -917,6 +928,18 @@ describe('runCli', () => {
     expect(fixture.stderr()).toContain('--yes');
   });
 
+  it('requires --yes for project deletion in plain mode', async () => {
+    const exitCode = await runCli(
+      ['--plain', 'project', 'delete', project.basePath],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(2);
+    expect(fixture.deleteProject).not.toHaveBeenCalled();
+    expect(fixture.stderr()).toContain('--yes');
+  });
+
   it('deletes the canonical project after typed confirmation', async () => {
     await runCli(['project', 'delete', project.id], fixture.runtime, '0.0.0');
 
@@ -1030,6 +1053,88 @@ describe('runCli', () => {
       'saved',
     );
     expect(fixture.stdout()).toBe(`${projectKey.id}\n`);
+  });
+
+  it('revokes the replacement key when interactive rotation is canceled', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-key-'),
+    );
+    fixture.runtime.cwd = temporaryDirectory;
+    fixture.createProjectKey.mockResolvedValueOnce({
+      key: { ...projectKey, id: 'key_replacement' },
+      secretKey: 'secret_test',
+    });
+    fixture.confirmTyped.mockRejectedValueOnce(
+      new CliError('interrupted', 'Operation canceled.', { exitCode: 130 }),
+    );
+
+    const exitCode = await runCli(
+      [
+        '--plain',
+        'project',
+        'key',
+        'rotate',
+        project.basePath,
+        projectKey.id,
+        '--name',
+        'replacement',
+        '--output',
+        '.env.local',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(130);
+    expect(fixture.revokeProjectKey).toHaveBeenCalledWith({
+      project: project.basePath,
+      keyId: 'key_replacement',
+      signal: expect.objectContaining({ aborted: false }),
+    });
+    expect(fixture.stdout()).toBe('');
+    expect(fixture.stderr()).toContain(
+      'Operation canceled. The replacement project key was revoked.',
+    );
+  });
+
+  it('reports manual cleanup when canceled rotation rollback fails', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-key-'),
+    );
+    fixture.runtime.cwd = temporaryDirectory;
+    fixture.createProjectKey.mockResolvedValueOnce({
+      key: { ...projectKey, id: 'key_replacement' },
+      secretKey: 'secret_test',
+    });
+    fixture.confirmTyped.mockRejectedValueOnce(
+      new CliError('interrupted', 'Operation canceled.', { exitCode: 130 }),
+    );
+    fixture.revokeProjectKey.mockRejectedValueOnce(
+      new Error('revocation unavailable'),
+    );
+
+    const exitCode = await runCli(
+      [
+        '--plain',
+        'project',
+        'key',
+        'rotate',
+        project.basePath,
+        projectKey.id,
+        '--name',
+        'replacement',
+        '--output',
+        '.env.local',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(130);
+    expect(fixture.stdout()).toBe('');
+    expect(fixture.stderr()).toContain(
+      `edgestore project key revoke ${project.basePath} key_replacement --yes`,
+    );
   });
 
   it('validates a rotation target before creating its replacement', async () => {
@@ -1571,6 +1676,48 @@ describe('runCli', () => {
 
     expect(fixture.stdout()).toContain('file_123');
     expect(fixture.stdout()).toContain('logo.png');
+  });
+
+  it('treats URL-shaped references as paths when --bucket is supplied', async () => {
+    fixture.lookupFile.mockResolvedValueOnce({
+      file: {
+        id: 'file_123',
+        bucketName: 'publicFiles',
+        key: 'https://example.com/logo.png',
+        path: {},
+        metadata: {},
+        sizeBytes: 10,
+        mimeType: 'image/png',
+        state: 'uploaded',
+        temporary: false,
+        url: 'https://files.example/logo.png',
+        uploadedAt: project.createdAt,
+        updatedAt: project.updatedAt,
+      },
+    });
+
+    await runCli(
+      [
+        'file',
+        'info',
+        'https://example.com/logo.png',
+        '--bucket',
+        'publicFiles',
+        '--project',
+        project.basePath,
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(fixture.lookupFile).toHaveBeenCalledWith({
+      project: project.basePath,
+      file: {
+        bucketName: 'publicFiles',
+        path: 'https://example.com/logo.png',
+      },
+      signal: fixture.runtime.signal,
+    });
   });
 
   it('reports completed upload status with the canonical URL', async () => {
@@ -2326,6 +2473,7 @@ function createFixture() {
       },
     ],
   }));
+  const lookupFile = vi.fn();
   type DeleteFilesInput = Parameters<
     ManagementEdgeStoreSdk['management']['files']['delete']
   >[0];
@@ -2476,7 +2624,7 @@ function createFixture() {
           ],
           pagination: { limit: 50, nextCursor: null, hasMore: false },
         })),
-        lookup: vi.fn(),
+        lookup: lookupFile,
         generateAccessUrls,
         delete: deleteFiles,
       },
@@ -2575,6 +2723,7 @@ function createFixture() {
     getEmptyJob,
     retryEmptyJob,
     generateAccessUrls,
+    lookupFile,
     deleteFiles,
     uploadFile,
     uploadRequest,
