@@ -59,6 +59,16 @@ describe('detectPackages', () => {
       manager: 'npm',
     });
   });
+
+  it('reports an invalid package manifest', async () => {
+    directory = await repository();
+    await writeFile(path.join(directory, 'package.json'), '{ invalid json');
+
+    await expect(detectPackages(directory)).rejects.toMatchObject({
+      code: 'invalid_package_manifest',
+      message: `Invalid package manifest at ${path.join(directory, 'package.json')}.`,
+    });
+  });
 });
 
 async function repository(): Promise<string> {

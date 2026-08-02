@@ -128,6 +128,13 @@ export async function initCommand(
         },
       );
     }
+  }
+
+  const configPath = await runtime.repoConfig.write({
+    account: projectResult.project.accountId,
+    project: projectResult.project.basePath,
+  });
+  if (keyResult && secretOutput) {
     await ignoreSecretFile(runtime.cwd, secretOutput);
   }
 
@@ -148,11 +155,6 @@ export async function initCommand(
   const install = await installPackages(runtime, packages, {
     requested: options.install,
     interactive,
-    recoveryProject: projectResult.project.basePath,
-  });
-  const configPath = await runtime.repoConfig.write({
-    account: projectResult.project.accountId,
-    project: projectResult.project.basePath,
   });
 
   const human = [
@@ -418,16 +420,42 @@ export async function detectPackages(cwd: string): Promise<PackagePlan> {
     dependencies?: Record<string, string>;
     devDependencies?: Record<string, string>;
   };
+  let contents: string;
   try {
-    manifest = JSON.parse(
-      await readFile(packagePath, 'utf8'),
-    ) as typeof manifest;
-  } catch {
+    contents = await readFile(packagePath, 'utf8');
+  } catch (error) {
+    if (!isMissingPathError(error)) {
+      throw new CliError(
+        'package_manifest_unreadable',
+        `Could not read package manifest at ${packagePath}.`,
+        {
+          details: {
+            path: packagePath,
+            cause: error instanceof Error ? error.message : String(error),
+          },
+        },
+      );
+    }
     return {
       framework: 'unknown',
       manager: await detectPackageManager(cwd),
       missing: [],
     };
+  }
+  try {
+    manifest = JSON.parse(contents) as typeof manifest;
+  } catch (error) {
+    throw new CliError(
+      'invalid_package_manifest',
+      `Invalid package manifest at ${packagePath}.`,
+      {
+        details: {
+          path: packagePath,
+          cause: error instanceof Error ? error.message : String(error),
+        },
+        exitCode: 2,
+      },
+    );
   }
   const dependencies = {
     ...manifest.dependencies,
@@ -455,7 +483,6 @@ async function installPackages(
   options: {
     requested?: boolean;
     interactive: boolean;
-    recoveryProject: string;
   },
 ): Promise<{ command?: string; ran: boolean }> {
   if (!plan.manager || !plan.missing.length) return { ran: false };
@@ -477,14 +504,19 @@ async function installPackages(
       'package_install_failed',
       error instanceof Error ? error.message : 'Package installation failed.',
       {
-        suggestions: [
-          command,
-          `edgestore project link ${options.recoveryProject}`,
-        ],
+        suggestions: [command],
       },
     );
   }
   return { command, ran: true };
+}
+
+function isMissingPathError(error: unknown): error is NodeJS.ErrnoException {
+  return (
+    error instanceof Error &&
+    'code' in error &&
+    (error.code === 'ENOENT' || error.code === 'ENOTDIR')
+  );
 }
 
 async function ignoreSecretFile(cwd: string, output: string): Promise<void> {

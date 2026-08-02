@@ -427,6 +427,33 @@ describe('runCli', () => {
     expect(fixture.stdout()).toContain(`Linked ${project.name}`);
   });
 
+  it('keeps the project linked when optional bucket setup fails', async () => {
+    fixture.runtime.io.inputIsTty = false;
+    fixture.createBucket.mockRejectedValueOnce(new Error('bucket unavailable'));
+
+    const exitCode = await runCli(
+      [
+        'init',
+        '--link',
+        project.basePath,
+        '--without-key',
+        '--bucket',
+        'publicFiles',
+        '--bucket-type',
+        'file',
+        '--public',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(1);
+    expect(fixture.repoConfig.config).toEqual({
+      account: account.id,
+      project: project.basePath,
+    });
+  });
+
   it('validates non-interactive bucket options before creating a project', async () => {
     fixture.runtime.io.inputIsTty = false;
 
@@ -677,6 +704,25 @@ describe('runCli', () => {
     } finally {
       await rm(directory, { recursive: true, force: true });
     }
+  });
+
+  it('reports malformed repository config as a failed doctor check', async () => {
+    fixture.readRepoConfig.mockRejectedValueOnce(
+      new Error('Invalid EdgeStore config at /repo/.edgestore/config.json.'),
+    );
+
+    const exitCode = await runCli(
+      ['--json', 'doctor'],
+      fixture.runtime,
+      '1.2.3',
+    );
+
+    expect(exitCode).toBe(1);
+    expect(JSON.parse(fixture.stdout()).checks).toContainEqual({
+      name: 'Local config',
+      status: 'fail',
+      detail: 'Invalid EdgeStore config at /repo/.edgestore/config.json.',
+    });
   });
 
   it('links by project ID but stores the canonical base path', async () => {
@@ -1947,6 +1993,15 @@ function createFixture() {
     activeAccount: account.id,
   };
   const repoConfig: { config?: RepoConfig } = {};
+  const readRepoConfig = vi.fn(
+    async (): Promise<LocatedRepoConfig | undefined> =>
+      repoConfig.config
+        ? {
+            config: { ...repoConfig.config },
+            path: '/repo/.edgestore/config.json',
+          }
+        : undefined,
+  );
   const credentialValue = { value: 'stored_token' };
   const readToken = vi.fn(async () => 'mgmt_test');
   const setCredential = vi.fn(async (token: string) => {
@@ -2248,14 +2303,7 @@ function createFixture() {
       }),
     },
     repoConfig: {
-      read: vi.fn(async (): Promise<LocatedRepoConfig | undefined> =>
-        repoConfig.config
-          ? {
-              config: { ...repoConfig.config },
-              path: '/repo/.edgestore/config.json',
-            }
-          : undefined,
-      ),
+      read: readRepoConfig,
       write: vi.fn(async (config: RepoConfig) => {
         repoConfig.config = config;
         return '/repo/.edgestore/config.json';
@@ -2290,6 +2338,7 @@ function createFixture() {
     abortController,
     globalConfig,
     repoConfig,
+    readRepoConfig,
     credentials,
     setCredential,
     readToken,
