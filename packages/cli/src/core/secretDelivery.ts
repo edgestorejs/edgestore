@@ -97,7 +97,7 @@ async function copyToClipboard(value: string): Promise<void> {
   throw new CliError('clipboard_failed', 'Could not copy to the clipboard.');
 }
 
-async function resolveClipboardCommand(): Promise<string[]> {
+async function resolveClipboardCommand(): Promise<[string, ...string[]]> {
   for (const candidate of clipboardCandidates()) {
     if (await executableExists(candidate[0])) return candidate;
   }
@@ -107,7 +107,7 @@ async function resolveClipboardCommand(): Promise<string[]> {
   );
 }
 
-function clipboardCandidates(): string[][] {
+function clipboardCandidates(): [string, ...string[]][] {
   return process.platform === 'darwin'
     ? [['pbcopy']]
     : process.platform === 'win32'
