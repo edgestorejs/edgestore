@@ -148,7 +148,7 @@ export async function projectKeyRotateCommand(
   ].join('\n');
 
   if (!input.yes) {
-    output.message(secretMessage);
+    if (output.options.mode === 'human') output.message(secretMessage);
     await runtime.prompts.confirmTyped(
       `Type saved to revoke ${input.keyId}`,
       'saved',

@@ -432,6 +432,20 @@ describe('runCli', () => {
     expect(fixture.stdout()).toContain('Deleted project');
   });
 
+  it('deletes the supplied project reference when forced', async () => {
+    await runCli(
+      ['--plain', 'project', 'delete', project.id, '--yes'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(fixture.deleteProject).toHaveBeenCalledWith({
+      project: project.id,
+      signal: fixture.runtime.signal,
+    });
+    expect(fixture.stdout()).toBe(`${project.id}\n`);
+  });
+
   it('creates a project key and exposes its secret once', async () => {
     await runCli(
       ['project', 'key', 'create', project.basePath, '--name', 'production'],
@@ -490,6 +504,37 @@ describe('runCli', () => {
     await expect(
       readFile(path.join(temporaryDirectory, '.env.local'), 'utf8'),
     ).resolves.toContain('EDGE_STORE_SECRET_KEY=secret_test');
+  });
+
+  it('keeps only the replacement key ID on plain rotation stdout', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-key-'),
+    );
+    fixture.runtime.cwd = temporaryDirectory;
+
+    const exitCode = await runCli(
+      [
+        '--plain',
+        'project',
+        'key',
+        'rotate',
+        project.basePath,
+        projectKey.id,
+        '--name',
+        'replacement',
+        '--output',
+        '.env.local',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(0);
+    expect(fixture.confirmTyped).toHaveBeenCalledWith(
+      expect.stringContaining(projectKey.id),
+      'saved',
+    );
+    expect(fixture.stdout()).toBe(`${projectKey.id}\n`);
   });
 
   it('validates a rotation target before creating its replacement', async () => {
@@ -1032,6 +1077,82 @@ describe('runCli', () => {
     expect(fixture.stdout()).toContain('https://files.example/logo.png');
   });
 
+  it('rejects plain upload before inspecting or uploading files', async () => {
+    const exitCode = await runCli(
+      [
+        '--plain',
+        'file',
+        'upload',
+        'missing.txt',
+        '--bucket',
+        'publicFiles',
+        '--project',
+        project.basePath,
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(2);
+    expect(fixture.uploadRequest).not.toHaveBeenCalled();
+    expect(fixture.stderr()).toContain('--json');
+  });
+
+  it('reports completed and unattempted files when a later upload fails', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-upload-'),
+    );
+    fixture.runtime.cwd = temporaryDirectory;
+    const paths = ['first.txt', 'second.txt', 'third.txt'];
+    await Promise.all(
+      paths.map((file) =>
+        writeFile(path.join(temporaryDirectory!, file), file),
+      ),
+    );
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(null, { status: 200 })),
+    );
+    let requestCount = 0;
+    fixture.uploadRequest.mockImplementation(async () => {
+      requestCount += 1;
+      if (requestCount === 2) throw new Error('second upload request failed');
+      return {
+        ...singleUploadRequest,
+        file: { id: 'upload_first' },
+        upload: { ...singleUploadRequest.upload, id: 'upload_first' },
+      };
+    });
+
+    const exitCode = await runCli(
+      [
+        '--json',
+        'file',
+        'upload',
+        ...paths,
+        '--bucket',
+        'publicFiles',
+        '--project',
+        project.basePath,
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(1);
+    expect(fixture.stdout()).toBe('');
+    expect(fixture.uploadRequest).toHaveBeenCalledTimes(2);
+    expect(JSON.parse(fixture.stderr()).error).toMatchObject({
+      code: 'file_upload_incomplete',
+      details: {
+        completed: [{ localPath: path.join(temporaryDirectory, 'first.txt') }],
+        interruptedPath: path.join(temporaryDirectory, 'second.txt'),
+        notAttemptedPaths: [path.join(temporaryDirectory, 'third.txt')],
+        cause: { message: 'second upload request failed' },
+      },
+    });
+  });
+
   it('treats an existing upload path with glob characters literally', async () => {
     temporaryDirectory = await mkdtemp(
       path.join(tmpdir(), 'edgestore-cli-upload-'),
@@ -1288,6 +1409,26 @@ describe('runCli', () => {
     await expect(readdir(temporaryDirectory)).resolves.toEqual([
       'download.txt',
     ]);
+  });
+
+  it('rejects plain file deletion before deleting files', async () => {
+    const exitCode = await runCli(
+      [
+        '--plain',
+        'file',
+        'delete',
+        'file_123',
+        '--project',
+        project.basePath,
+        '--yes',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(2);
+    expect(fixture.deleteFiles).not.toHaveBeenCalled();
+    expect(fixture.stderr()).toContain('--json');
   });
 
   it('reports exact partial state when a later delete batch fails', async () => {
@@ -1636,6 +1777,7 @@ function createFixture() {
     },
   }));
   const completeMultipart = vi.fn(async (_input: UploadInput) => ({}));
+  const deleteProject = vi.fn(async () => ({}));
   const sdk = {
     runtime: {
       uploads: {
@@ -1687,7 +1829,7 @@ function createFixture() {
         list: vi.fn(async () => ({ projects: [project] })),
         get: vi.fn(async () => ({ project })),
         create: createProject,
-        delete: vi.fn(async () => ({})),
+        delete: deleteProject,
       },
       projectKeys: {
         list: listProjectKeys,
@@ -1850,6 +1992,7 @@ function createFixture() {
     listProjectKeys,
     createProjectKey,
     revokeProjectKey,
+    deleteProject,
     stdout: () => Buffer.concat(stdoutChunks).toString('utf8'),
     stderr: () => Buffer.concat(stderrChunks).toString('utf8'),
   };
