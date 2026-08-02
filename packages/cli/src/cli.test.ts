@@ -991,6 +991,26 @@ describe('runCli', () => {
     ]);
   });
 
+  it('rejects plain file deletion before deleting files', async () => {
+    const exitCode = await runCli(
+      [
+        '--plain',
+        'file',
+        'delete',
+        'file_123',
+        '--project',
+        project.basePath,
+        '--yes',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(2);
+    expect(fixture.deleteFiles).not.toHaveBeenCalled();
+    expect(fixture.stderr()).toContain('--json');
+  });
+
   it('reports exact partial state when a later delete batch fails', async () => {
     const references = Array.from(
       { length: 201 },

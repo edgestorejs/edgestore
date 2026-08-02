@@ -163,6 +163,13 @@ export async function fileDeleteCommand(
     yes?: boolean;
   },
 ): Promise<void> {
+  if (flags.plain) {
+    throw usageError(
+      'plain_output_unavailable',
+      'File deletion does not have a single plain-text result.',
+      ['Use --json to inspect every file result.'],
+    );
+  }
   if (!input.yes) {
     if (!runtime.io.inputIsTty || flags.json) {
       throw usageError(
