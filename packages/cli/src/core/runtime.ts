@@ -67,7 +67,7 @@ export type CliRuntime = {
   runCommand(
     command: string,
     args: string[],
-    options?: { cwd?: string },
+    options?: { cwd?: string; stdout?: NodeJS.WritableStream },
   ): Promise<void>;
 };
 
@@ -173,10 +173,14 @@ function openUrl(url: string): Promise<void> {
 function runCommand(
   command: string,
   args: string[],
-  options?: { cwd?: string },
+  options?: { cwd?: string; stdout?: NodeJS.WritableStream },
 ): Promise<void> {
   return new Promise((resolve, reject) => {
-    const child = spawn(command, args, { cwd: options?.cwd, stdio: 'inherit' });
+    const child = spawn(command, args, {
+      cwd: options?.cwd,
+      stdio: options?.stdout ? ['inherit', 'pipe', 'inherit'] : 'inherit',
+    });
+    if (options?.stdout) child.stdout?.pipe(options.stdout, { end: false });
     child.once('error', reject);
     child.once('exit', (code, signal) => {
       if (code === 0) {

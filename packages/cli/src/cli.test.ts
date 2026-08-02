@@ -686,6 +686,51 @@ describe('runCli', () => {
     );
   });
 
+  it('keeps package-manager output off structured stdout', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-init-'),
+    );
+    fixture.runtime.cwd = temporaryDirectory;
+    fixture.runtime.io.inputIsTty = false;
+    await mkdir(path.join(temporaryDirectory, '.git'));
+    await writeFile(
+      path.join(temporaryDirectory, 'package.json'),
+      JSON.stringify({
+        packageManager: 'pnpm@11.15.1',
+        dependencies: { next: '16' },
+      }),
+    );
+    fixture.runCommand.mockImplementationOnce(
+      async (_command, _args, options) => {
+        options?.stdout?.write('package-manager progress\n');
+      },
+    );
+
+    const exitCode = await runCli(
+      [
+        '--json',
+        'init',
+        '--link',
+        project.basePath,
+        '--without-key',
+        '--install',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(0);
+    expect(JSON.parse(fixture.stdout()).project.basePath).toBe(
+      project.basePath,
+    );
+    expect(fixture.stderr()).toContain('package-manager progress');
+    expect(fixture.runCommand).toHaveBeenCalledWith(
+      'pnpm',
+      ['add', '@edgestore/server', '@edgestore/react', 'zod'],
+      { cwd: temporaryDirectory, stdout: fixture.runtime.io.stderr },
+    );
+  });
+
   it('opens the linked project in the dashboard', async () => {
     fixture.repoConfig.config = {
       account: account.id,
@@ -749,6 +794,34 @@ describe('runCli', () => {
       expect(fixture.stdout()).toContain('1.2.3');
       expect(fixture.stdout()).toContain('Linked project');
       expect(fixture.stdout()).not.toContain('do-not-print');
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
+  it('warns when the configured environment key has been revoked', async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), 'edgestore-doctor-'));
+    fixture.runtime.cwd = directory;
+    fixture.repoConfig.config = {
+      account: account.id,
+      project: project.basePath,
+    };
+    fixture.listProjectKeys.mockResolvedValueOnce({
+      keys: [{ ...projectKey, revokedAt: '2026-08-01T00:00:00.000Z' }],
+    });
+    await writeFile(
+      path.join(directory, '.env.local'),
+      'EDGE_STORE_ACCESS_KEY=access_test\nEDGE_STORE_SECRET_KEY=secret\n',
+    );
+
+    try {
+      await runCli(['--json', 'doctor'], fixture.runtime, '1.2.3');
+
+      expect(JSON.parse(fixture.stdout()).checks).toContainEqual({
+        name: 'Environment project',
+        status: 'warn',
+        detail: '.env.local access key has been revoked',
+      });
     } finally {
       await rm(directory, { recursive: true, force: true });
     }
@@ -2161,7 +2234,7 @@ function createFixture() {
     },
   }));
   const openUrl = vi.fn(async () => undefined);
-  const runCommand = vi.fn(async () => undefined);
+  const runCommand = vi.fn<CliRuntime['runCommand']>(async () => undefined);
   const invitationRevoke = vi.fn(async () => ({}));
   const invitationResend = vi.fn(async () => ({}));
   const credentials: CredentialStore = {

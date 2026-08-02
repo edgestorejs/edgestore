@@ -155,6 +155,7 @@ export async function initCommand(
   const install = await installPackages(runtime, packages, {
     requested: options.install,
     interactive,
+    structured: Boolean(flags.json || flags.plain),
   });
 
   const human = [
@@ -483,6 +484,7 @@ async function installPackages(
   options: {
     requested?: boolean;
     interactive: boolean;
+    structured: boolean;
   },
 ): Promise<{ command?: string; ran: boolean }> {
   if (!plan.manager || !plan.missing.length) return { ran: false };
@@ -498,7 +500,10 @@ async function installPackages(
       : false);
   if (!shouldInstall) return { command, ran: false };
   try {
-    await runtime.runCommand(plan.manager, args, { cwd: runtime.cwd });
+    await runtime.runCommand(plan.manager, args, {
+      cwd: runtime.cwd,
+      ...(options.structured ? { stdout: runtime.io.stderr } : {}),
+    });
   } catch (error) {
     throw new CliError(
       'package_install_failed',

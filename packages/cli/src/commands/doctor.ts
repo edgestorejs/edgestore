@@ -257,11 +257,16 @@ async function checkLinkedProject(
       project: result.project.basePath,
       signal: runtime.signal,
     });
-    if (keys.keys.some((key) => key.accessKey === envKeys.accessKey)) return;
+    const matchingKey = keys.keys.find(
+      (key) => key.accessKey === envKeys.accessKey,
+    );
+    if (matchingKey && !matchingKey.revokedAt) return;
     checks.push({
       name: 'Environment project',
       status: 'warn',
-      detail: '.env.local access key is not for the linked project',
+      detail: matchingKey
+        ? '.env.local access key has been revoked'
+        : '.env.local access key is not for the linked project',
     });
   } catch {
     checks.push({
