@@ -106,30 +106,34 @@ export async function projectDeleteCommand(
   flags: GlobalFlags,
   options: { project: string; yes?: boolean },
 ): Promise<void> {
-  const project = await getProject(runtime, flags, options.project);
+  let project;
   if (!options.yes) {
     if (!runtime.io.inputIsTty || flags.json) {
       throw usageError(
         'confirmation_required',
         'Project deletion requires confirmation.',
-        [`edgestore project delete ${project.basePath} --yes`],
+        [`edgestore project delete ${options.project} --yes`],
       );
     }
+    project = await getProject(runtime, flags, options.project);
     await runtime.prompts.confirmTyped(
       `Delete project "${project.name}"? Type ${project.basePath} to confirm`,
       project.basePath,
     );
   }
 
+  const projectRef = project?.basePath ?? options.project;
   const sdk = await sdkFor(runtime, flags);
   await sdk.management.projects.delete({
-    project: project.basePath,
+    project: projectRef,
     signal: runtime.signal,
   });
   outputFor(runtime, flags).result(
-    { deleted: true, project },
-    `Deleted project "${project.name}" (${project.basePath}).`,
-    project.basePath,
+    { deleted: true, project: projectRef },
+    project
+      ? `Deleted project "${project.name}" (${project.basePath}).`
+      : `Deleted project ${projectRef}.`,
+    projectRef,
   );
 }
 

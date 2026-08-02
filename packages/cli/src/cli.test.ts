@@ -157,6 +157,20 @@ describe('runCli', () => {
     expect(fixture.stdout()).toContain('Deleted project');
   });
 
+  it('deletes the supplied project reference when forced', async () => {
+    await runCli(
+      ['--plain', 'project', 'delete', project.id, '--yes'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(fixture.deleteProject).toHaveBeenCalledWith({
+      project: project.id,
+      signal: fixture.runtime.signal,
+    });
+    expect(fixture.stdout()).toBe(`${project.id}\n`);
+  });
+
   it('validates a token before saving it', async () => {
     await runCli(['login', '--token'], fixture.runtime, '0.0.0');
 
@@ -314,6 +328,7 @@ function createFixture() {
       secretKey: 'secret_test',
     },
   }));
+  const deleteProject = vi.fn(async () => ({}));
   const sdk = {
     system: {
       health: vi.fn(async () => ({ status: 'ok' })),
@@ -344,7 +359,7 @@ function createFixture() {
         list: vi.fn(async () => ({ projects: [project] })),
         get: vi.fn(async () => ({ project })),
         create: createProject,
-        delete: vi.fn(async () => ({})),
+        delete: deleteProject,
       },
     },
   } as unknown as ManagementEdgeStoreSdk;
@@ -406,6 +421,7 @@ function createFixture() {
     readToken,
     confirmTyped,
     createProject,
+    deleteProject,
     stdout: () => Buffer.concat(stdoutChunks).toString('utf8'),
     stderr: () => Buffer.concat(stderrChunks).toString('utf8'),
   };
