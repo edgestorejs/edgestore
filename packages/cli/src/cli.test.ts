@@ -189,6 +189,48 @@ describe('runCli', () => {
     expect(fixture.stdout()).toBe(`${account.id}\n`);
   });
 
+  it('preserves API and output context in the account leave confirmation', async () => {
+    fixture.availableAccounts.push(teamAccount);
+    fixture.globalConfig.activeAccount = teamAccount.id;
+    fixture.runtime.io.inputIsTty = false;
+
+    const exitCode = await runCli(
+      [
+        '--json',
+        '--api-url',
+        'https://api-dev.edgestore.dev',
+        'account',
+        'leave',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(2);
+    expect(fixture.accountLeave).not.toHaveBeenCalled();
+    expect(JSON.parse(fixture.stderr()).error.suggestions).toEqual([
+      'edgestore --json --api-url https://api-dev.edgestore.dev account leave --yes',
+    ]);
+  });
+
+  it('does not leave when the personal fallback cannot be resolved', async () => {
+    fixture.availableAccounts.push(teamAccount);
+    fixture.globalConfig.activeAccount = teamAccount.id;
+    fixture.listAccounts.mockRejectedValueOnce(
+      new Error('accounts unavailable'),
+    );
+
+    const exitCode = await runCli(
+      ['account', 'leave', '--yes'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(1);
+    expect(fixture.accountLeave).not.toHaveBeenCalled();
+    expect(fixture.globalConfig.activeAccount).toBe(teamAccount.id);
+  });
+
   it('explains that personal accounts do not have members', async () => {
     await runCli(['member', 'list'], fixture.runtime, '0.0.0');
 
@@ -1626,6 +1668,9 @@ function createFixture() {
   });
   const confirmTyped = vi.fn(async () => undefined);
   const availableAccounts: (typeof account | typeof teamAccount)[] = [account];
+  const listAccounts = vi.fn(async () => ({
+    accounts: [...availableAccounts],
+  }));
   const accountLeave = vi.fn(async () => ({}));
   const memberList = vi.fn(async () => ({ members: [] }));
   const memberUpdate = vi.fn(
@@ -1806,7 +1851,7 @@ function createFixture() {
         },
       })),
       accounts: {
-        list: vi.fn(async () => ({ accounts: [...availableAccounts] })),
+        list: listAccounts,
         get: vi.fn(async ({ account: accountId }: { account: string }) => ({
           account:
             availableAccounts.find((candidate) => candidate.id === accountId) ??
@@ -1967,6 +2012,7 @@ function createFixture() {
     createAccountToken,
     createUserToken,
     availableAccounts,
+    listAccounts,
     accountLeave,
     memberList,
     memberUpdate,
