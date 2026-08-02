@@ -4,25 +4,25 @@ const SERVICE_NAME = 'edgestore-cli';
 const CREDENTIAL_NAME = 'management-credential';
 
 export interface CredentialStore {
-  get(): Promise<string | undefined>;
-  set(token: string): Promise<void>;
-  delete(): Promise<boolean>;
+  get(apiOrigin: string): Promise<string | undefined>;
+  set(apiOrigin: string, token: string): Promise<void>;
+  delete(apiOrigin: string): Promise<boolean>;
   available(): Promise<boolean>;
 }
 
 export class KeyringCredentialStore implements CredentialStore {
-  async get(): Promise<string | undefined> {
-    const entry = await createEntry();
+  async get(apiOrigin: string): Promise<string | undefined> {
+    const entry = await createEntry(apiOrigin);
     return (await entry.getPassword()) ?? undefined;
   }
 
-  async set(token: string): Promise<void> {
-    const entry = await createEntry();
+  async set(apiOrigin: string, token: string): Promise<void> {
+    const entry = await createEntry(apiOrigin);
     await entry.setPassword(token);
   }
 
-  async delete(): Promise<boolean> {
-    const entry = await createEntry();
+  async delete(apiOrigin: string): Promise<boolean> {
+    const entry = await createEntry(apiOrigin);
     return entry.deleteCredential();
   }
 
@@ -36,10 +36,10 @@ export class KeyringCredentialStore implements CredentialStore {
   }
 }
 
-async function createEntry() {
+async function createEntry(apiOrigin: string) {
   try {
     const { AsyncEntry } = await import('@napi-rs/keyring');
-    return new AsyncEntry(SERVICE_NAME, CREDENTIAL_NAME);
+    return new AsyncEntry(SERVICE_NAME, `${CREDENTIAL_NAME}:${apiOrigin}`);
   } catch (error) {
     throw new CliError(
       'keychain_unavailable',
@@ -63,12 +63,13 @@ export type ResolvedCredential = {
 export async function resolveCredential(
   envToken: string | undefined,
   store: CredentialStore,
+  apiOrigin: string,
 ): Promise<ResolvedCredential | undefined> {
   if (envToken?.trim()) {
     return { token: envToken.trim(), source: 'environment' };
   }
 
-  const token = await store.get();
+  const token = await store.get(apiOrigin);
   return token?.trim()
     ? { token: token.trim(), source: 'keychain' }
     : undefined;

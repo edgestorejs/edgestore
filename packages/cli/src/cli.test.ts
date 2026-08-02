@@ -490,6 +490,23 @@ describe('runCli', () => {
     );
   });
 
+  it('revokes a project key with revoke-only access when forced', async () => {
+    fixture.listProjectKeys.mockRejectedValueOnce(new Error('read denied'));
+
+    const exitCode = await runCli(
+      ['project', 'key', 'revoke', project.basePath, projectKey.id, '--yes'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(0);
+    expect(fixture.revokeProjectKey).toHaveBeenCalledWith({
+      project: project.basePath,
+      keyId: projectKey.id,
+      signal: fixture.runtime.signal,
+    });
+  });
+
   it('creates an account management token with one-time output', async () => {
     await runCli(
       ['token', 'create', '--name', 'deploy', '--preset', 'deploy'],
@@ -1075,11 +1092,48 @@ describe('runCli', () => {
     expect(fixture.stderr()).toContain('file or image');
   });
 
+  it('deletes a bucket with delete-only access when forced', async () => {
+    fixture.repoConfig.config = {
+      account: account.id,
+      project: project.basePath,
+    };
+    fixture.getBucket.mockRejectedValueOnce(new Error('read denied'));
+
+    const exitCode = await runCli(
+      ['bucket', 'delete', 'publicFiles', '--yes'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(0);
+    expect(fixture.deleteBucket).toHaveBeenCalledWith({
+      project: project.basePath,
+      bucket: 'publicFiles',
+      signal: fixture.runtime.signal,
+    });
+  });
+
   it('validates a token before saving it', async () => {
     await runCli(['login', '--token'], fixture.runtime, '0.0.0');
 
-    expect(fixture.setCredential).toHaveBeenCalledWith('mgmt_test');
+    expect(fixture.setCredential).toHaveBeenCalledWith(
+      'https://api.edgestore.dev',
+      'mgmt_test',
+    );
     expect(fixture.stdout()).toContain('Logged in as ravi@example.com.');
+  });
+
+  it('stores a login for the selected API origin', async () => {
+    await runCli(
+      ['--api-url', 'https://api-dev.edgestore.dev/v2/', 'login', '--token'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(fixture.setCredential).toHaveBeenCalledWith(
+      'https://api-dev.edgestore.dev',
+      'mgmt_test',
+    );
   });
 
   it('does not prompt for a token in JSON mode', async () => {
@@ -1199,19 +1253,20 @@ function createFixture() {
     activeAccount: account.id,
   };
   const repoConfig: { config?: RepoConfig } = {};
-  const credentialValue = { value: 'stored_token' };
+  const credentialValues = new Map([
+    ['https://api.edgestore.dev', 'stored_token'],
+    ['https://api-dev.edgestore.dev', 'stored_dev_token'],
+  ]);
   const readToken = vi.fn(async () => 'mgmt_test');
-  const setCredential = vi.fn(async (token: string) => {
-    credentialValue.value = token;
+  const setCredential = vi.fn(async (apiOrigin: string, token: string) => {
+    credentialValues.set(apiOrigin, token);
   });
   const confirmTyped = vi.fn(async () => undefined);
   const credentials: CredentialStore = {
-    get: vi.fn(async () => credentialValue.value),
+    get: vi.fn(async (apiOrigin) => credentialValues.get(apiOrigin)),
     set: setCredential,
-    delete: vi.fn(async () => {
-      const existed = Boolean(credentialValue.value);
-      credentialValue.value = '';
-      return existed;
+    delete: vi.fn(async (apiOrigin) => {
+      return credentialValues.delete(apiOrigin);
     }),
     available: vi.fn(async () => true),
   };
@@ -1276,6 +1331,20 @@ function createFixture() {
       updatedAt: project.updatedAt,
     },
   }));
+  const getBucket = vi.fn(async () => ({
+    bucket: {
+      id: 'bucket_123',
+      name: 'publicFiles',
+      projectId: project.id,
+      accountId: account.id,
+      type: 'file' as const,
+      visibility: 'public' as const,
+      usageBytes: 0,
+      createdAt: project.createdAt,
+      updatedAt: project.updatedAt,
+    },
+  }));
+  const deleteBucket = vi.fn(async () => ({}));
   const emptyBucket = vi.fn(async () => ({
     jobId: 'job_123',
     bucketId: 'bucket_123',
@@ -1354,21 +1423,9 @@ function createFixture() {
       },
       buckets: {
         list: vi.fn(async () => ({ buckets: [] })),
-        get: vi.fn(async () => ({
-          bucket: {
-            id: 'bucket_123',
-            name: 'publicFiles',
-            projectId: project.id,
-            accountId: account.id,
-            type: 'file',
-            visibility: 'public',
-            usageBytes: 0,
-            createdAt: project.createdAt,
-            updatedAt: project.updatedAt,
-          },
-        })),
+        get: getBucket,
         create: createBucket,
-        delete: vi.fn(async () => ({})),
+        delete: deleteBucket,
         empty: emptyBucket,
         emptyJobs: {
           latest: latestEmptyJob,
@@ -1472,6 +1529,8 @@ function createFixture() {
     listAccountTokens,
     revokeToken,
     createBucket,
+    getBucket,
+    deleteBucket,
     emptyBucket,
     latestEmptyJob,
     getEmptyJob,

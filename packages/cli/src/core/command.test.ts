@@ -1,7 +1,17 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { renderCliCommand } from './command';
 
+const flags = {
+  apiUrl: 'http://[::1]:3000',
+  color: false,
+  progress: false,
+};
+
 describe('renderCliCommand', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('preserves output, API, and project context', () => {
     expect(
       renderCliCommand(
@@ -27,5 +37,25 @@ describe('renderCliCommand', () => {
         "project's name",
       ]),
     ).toBe(`edgestore project show 'project'"'"'s name'`);
+  });
+
+  it('quotes follow-up arguments for POSIX shells', () => {
+    vi.spyOn(process, 'platform', 'get').mockReturnValue('darwin');
+
+    expect(
+      renderCliCommand(flags, ['bucket', 'empty-status', 'my files']),
+    ).toBe(
+      "edgestore --api-url 'http://[::1]:3000' bucket empty-status 'my files'",
+    );
+  });
+
+  it('quotes follow-up arguments for Windows shells', () => {
+    vi.spyOn(process, 'platform', 'get').mockReturnValue('win32');
+
+    expect(
+      renderCliCommand(flags, ['bucket', 'empty-status', 'my files']),
+    ).toBe(
+      'edgestore --api-url "http://[::1]:3000" bucket empty-status "my files"',
+    );
   });
 });
