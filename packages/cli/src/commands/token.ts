@@ -4,7 +4,8 @@ import { renderTable } from '../core/output';
 import type { CliRuntime, GlobalFlags } from '../core/runtime';
 import { outputFor, sdkFor } from '../core/runtime';
 import {
-  deliverEnvSecret,
+  deliverEnvSecretWithRollback,
+  preflightEnvSecret,
   type SecretDeliveryOptions,
 } from '../core/secretDelivery';
 import { activeAccount } from './account';
@@ -52,13 +53,18 @@ export async function tokenListCommand(
     page += 1;
   } while (true);
 
+  const now = Date.now();
   const rows = tokens.map((token) => [
     token.id,
     token.name,
     token.kind.toLowerCase(),
     token.scopes.join(','),
     token.lastUsedAt ?? 'never',
-    token.revokedAt ? 'revoked' : 'active',
+    token.revokedAt
+      ? 'revoked'
+      : token.expiresAt && Date.parse(token.expiresAt) <= now
+        ? 'expired'
+        : 'active',
   ]);
   outputFor(runtime, flags).result(
     { tokens },
@@ -95,6 +101,13 @@ export async function tokenCreateCommand(
       'Token creation requires --preset or at least one --scope.',
     );
   }
+  if (flags.plain && !options.copy && !options.output) {
+    throw usageError(
+      'secret_delivery_required',
+      'Plain output requires --copy or --output for the one-time token.',
+    );
+  }
+  await preflightEnvSecret(runtime.cwd, ['EDGESTORE_TOKEN'], options);
   const sdk = await sdkFor(runtime, flags);
   const permissions = options.preset
     ? { preset: options.preset }
@@ -111,11 +124,22 @@ export async function tokenCreateCommand(
         account: await activeAccount(runtime, options.account),
         ...body,
       });
-  const delivered = await deliverEnvSecret(
-    runtime.cwd,
-    { EDGESTORE_TOKEN: result.secret },
+  const delivered = await deliverEnvSecretWithRollback({
+    cwd: runtime.cwd,
+    values: { EDGESTORE_TOKEN: result.secret },
     options,
-  );
+    credential: { label: 'management token', id: result.token.id },
+    rollback: async (signal) => {
+      await sdk.management.tokens.revoke({
+        tokenId: result.token.id,
+        signal,
+      });
+    },
+    manualRollbackCommand: `edgestore token revoke ${result.token.id} --yes`,
+    recoverySuggestions: [
+      'Use a credential with token:revoke access or revoke the token in the dashboard.',
+    ],
+  });
   outputFor(runtime, flags).result(
     result,
     [
