@@ -234,9 +234,18 @@ export async function fileDeleteCommand(
   }
   const successCount = results.filter((result) => result.success).length;
   const failureCount = results.length - successCount;
+  const human = [
+    `Deleted ${successCount} file(s); ${failureCount} failed.`,
+    ...results
+      .filter((result) => !result.success)
+      .map(
+        (result) =>
+          `  ${fileReferenceLabel(result.fileRef)}: ${result.error.message}`,
+      ),
+  ].join('\n');
   outputFor(runtime, flags).result(
     { results, successCount, failureCount },
-    `Deleted ${successCount} file(s); ${failureCount} failed.`,
+    human,
   );
   if (failureCount) runtime.exitCode = 1;
 }
@@ -271,4 +280,11 @@ function fileReference(value: string, bucket?: string): FileRef {
   if (/^https?:\/\//i.test(value)) return { url: value };
   if (bucket) return { bucketName: bucket, path: value };
   return { id: value };
+}
+
+function fileReferenceLabel(reference: FileRef): string {
+  if ('id' in reference) return reference.id;
+  if ('key' in reference) return reference.key;
+  if ('url' in reference) return reference.url;
+  return `${reference.bucketName}/${reference.path}`;
 }
