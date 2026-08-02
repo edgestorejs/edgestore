@@ -93,11 +93,9 @@ export async function bucketDeleteCommand(
   flags: GlobalFlags,
   input: { bucket: string; project?: string; yes?: boolean },
 ): Promise<void> {
+  validateBucketName(input.bucket);
   const project = await resolvedProjectRef(runtime, input.project);
-  const current = await getBucket(runtime, flags, {
-    project,
-    bucket: input.bucket,
-  });
+  let bucket = input.bucket;
   if (!input.yes) {
     if (!runtime.io.inputIsTty || flags.json) {
       throw usageError(
@@ -106,22 +104,23 @@ export async function bucketDeleteCommand(
         [`edgestore bucket delete ${input.bucket} --yes`],
       );
     }
+    const current = await getBucket(runtime, flags, {
+      project,
+      bucket: input.bucket,
+    });
+    bucket = current.bucket.name;
     await runtime.prompts.confirmTyped(
-      `Type ${current.bucket.name} to delete this bucket`,
-      current.bucket.name,
+      `Type ${bucket} to delete this bucket`,
+      bucket,
     );
   }
   const sdk = await sdkFor(runtime, flags);
   const result = await sdk.management.buckets.delete({
     project,
-    bucket: current.bucket.name,
+    bucket,
     signal: runtime.signal,
   });
-  outputFor(runtime, flags).result(
-    result,
-    `Deleted bucket ${current.bucket.name}.`,
-    current.bucket.name,
-  );
+  outputFor(runtime, flags).result(result, `Deleted bucket ${bucket}.`, bucket);
 }
 
 async function getBucket(

@@ -728,6 +728,27 @@ describe('runCli', () => {
     expect(fixture.stderr()).toContain('file or image');
   });
 
+  it('deletes a bucket with delete-only access when forced', async () => {
+    fixture.repoConfig.config = {
+      account: account.id,
+      project: project.basePath,
+    };
+    fixture.getBucket.mockRejectedValueOnce(new Error('read denied'));
+
+    const exitCode = await runCli(
+      ['bucket', 'delete', 'publicFiles', '--yes'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(0);
+    expect(fixture.deleteBucket).toHaveBeenCalledWith({
+      project: project.basePath,
+      bucket: 'publicFiles',
+      signal: fixture.runtime.signal,
+    });
+  });
+
   it('validates a token before saving it', async () => {
     await runCli(['login', '--token'], fixture.runtime, '0.0.0');
 
@@ -945,6 +966,20 @@ function createFixture() {
       updatedAt: project.updatedAt,
     },
   }));
+  const getBucket = vi.fn(async () => ({
+    bucket: {
+      id: 'bucket_123',
+      name: 'publicFiles',
+      projectId: project.id,
+      accountId: account.id,
+      type: 'file' as const,
+      visibility: 'public' as const,
+      usageBytes: 0,
+      createdAt: project.createdAt,
+      updatedAt: project.updatedAt,
+    },
+  }));
+  const deleteBucket = vi.fn(async () => ({}));
   const deleteProject = vi.fn(async () => ({}));
   const sdk = {
     system: {
@@ -992,21 +1027,9 @@ function createFixture() {
       },
       buckets: {
         list: vi.fn(async () => ({ buckets: [] })),
-        get: vi.fn(async () => ({
-          bucket: {
-            id: 'bucket_123',
-            name: 'publicFiles',
-            projectId: project.id,
-            accountId: account.id,
-            type: 'file',
-            visibility: 'public',
-            usageBytes: 0,
-            createdAt: project.createdAt,
-            updatedAt: project.updatedAt,
-          },
-        })),
+        get: getBucket,
         create: createBucket,
-        delete: vi.fn(async () => ({})),
+        delete: deleteBucket,
       },
     },
   } as unknown as ManagementEdgeStoreSdk;
@@ -1072,6 +1095,8 @@ function createFixture() {
     listAccountTokens,
     revokeToken,
     createBucket,
+    getBucket,
+    deleteBucket,
     createProject,
     listProjectKeys,
     createProjectKey,
