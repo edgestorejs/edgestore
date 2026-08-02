@@ -196,6 +196,72 @@ describe('runCli', () => {
     expect(fixture.memberList).not.toHaveBeenCalled();
   });
 
+  it('returns command-specific unavailable results for a personal account', async () => {
+    await runCli(['--json', 'member', 'list'], fixture.runtime, '0.0.0');
+    expect(JSON.parse(fixture.stdout())).toEqual({
+      members: [],
+      available: false,
+      account,
+    });
+
+    fixture = createFixture();
+    await runCli(
+      ['--json', 'member', 'invitation', 'list'],
+      fixture.runtime,
+      '0.0.0',
+    );
+    expect(JSON.parse(fixture.stdout())).toEqual({
+      invitations: [],
+      available: false,
+      account,
+    });
+    expect(fixture.invitationList).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    {
+      name: 'invite',
+      argv: ['member', 'invite', 'friend@example.com'],
+      mutation: 'invitationCreate' as const,
+    },
+    {
+      name: 'role',
+      argv: ['member', 'role', 'user_123', 'member'],
+      mutation: 'memberUpdate' as const,
+    },
+    {
+      name: 'remove',
+      argv: ['member', 'remove', 'user_123', '--yes'],
+      mutation: 'memberRemove' as const,
+    },
+    {
+      name: 'invitation revoke',
+      argv: ['member', 'invitation', 'revoke', 'inv_123', '--yes'],
+      mutation: 'invitationRevoke' as const,
+    },
+    {
+      name: 'invitation resend',
+      argv: ['member', 'invitation', 'resend', 'inv_123'],
+      mutation: 'invitationResend' as const,
+    },
+  ])(
+    'rejects personal-account $name without output or mutation',
+    async (test) => {
+      const exitCode = await runCli(
+        ['--json', ...test.argv],
+        fixture.runtime,
+        '0.0.0',
+      );
+
+      expect(exitCode).toBe(2);
+      expect(fixture.stdout()).toBe('');
+      expect(JSON.parse(fixture.stderr()).error).toMatchObject({
+        code: 'team_account_required',
+      });
+      expect(fixture[test.mutation]).not.toHaveBeenCalled();
+    },
+  );
+
   it('invites a member to the active team', async () => {
     fixture.availableAccounts.push(teamAccount);
     fixture.globalConfig.activeAccount = teamAccount.id;
@@ -214,6 +280,75 @@ describe('runCli', () => {
       signal: fixture.runtime.signal,
     });
     expect(fixture.stdout()).toContain('invited');
+    expect(fixture.confirmTyped).not.toHaveBeenCalled();
+  });
+
+  it('requires --yes for noninteractive owner invitations', async () => {
+    fixture.availableAccounts.push(teamAccount);
+    fixture.globalConfig.activeAccount = teamAccount.id;
+
+    const exitCode = await runCli(
+      [
+        '--json',
+        '--api-url',
+        'https://api-dev.edgestore.dev',
+        'member',
+        'invite',
+        'one@example.com',
+        'two@example.com',
+        '--role',
+        'owner',
+        '--allow-overage',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(2);
+    expect(fixture.invitationCreate).not.toHaveBeenCalled();
+    expect(JSON.parse(fixture.stderr()).error.suggestions).toEqual([
+      'edgestore --json --api-url https://api-dev.edgestore.dev member invite one@example.com two@example.com --role owner --allow-overage --yes',
+    ]);
+  });
+
+  it('uses one --yes to confirm a multi-email owner invitation', async () => {
+    fixture.availableAccounts.push(teamAccount);
+    fixture.globalConfig.activeAccount = teamAccount.id;
+
+    const exitCode = await runCli(
+      [
+        'member',
+        'invite',
+        'one@example.com',
+        'two@example.com',
+        '--role',
+        'owner',
+        '--yes',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(0);
+    expect(fixture.invitationCreate).toHaveBeenCalledTimes(2);
+    expect(fixture.confirmTyped).not.toHaveBeenCalled();
+  });
+
+  it('requires --yes for a noninteractive owner role change', async () => {
+    fixture.availableAccounts.push(teamAccount);
+    fixture.globalConfig.activeAccount = teamAccount.id;
+
+    const exitCode = await runCli(
+      ['--json', 'member', 'role', 'user_123', 'owner'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(2);
+    expect(fixture.memberUpdate).not.toHaveBeenCalled();
+    expect(JSON.parse(fixture.stderr()).error.suggestions).toEqual([
+      'edgestore --json member role user_123 owner --yes',
+    ]);
   });
 
   it('links by project ID but stores the canonical base path', async () => {
@@ -1352,6 +1487,17 @@ function createFixture() {
   const availableAccounts: (typeof account | typeof teamAccount)[] = [account];
   const accountLeave = vi.fn(async () => ({}));
   const memberList = vi.fn(async () => ({ members: [] }));
+  const memberUpdate = vi.fn(
+    async (input: { userId: string; role: string }) => ({
+      member: {
+        userId: input.userId,
+        email: 'member@example.com',
+        role: input.role,
+      },
+    }),
+  );
+  const memberRemove = vi.fn(async () => ({}));
+  const invitationList = vi.fn(async () => ({ invitations: [] }));
   const invitationCreate = vi.fn(async (input: { email: string }) => ({
     invitation: {
       id: 'inv_123',
@@ -1363,6 +1509,8 @@ function createFixture() {
       updatedAt: project.updatedAt,
     },
   }));
+  const invitationRevoke = vi.fn(async () => ({}));
+  const invitationResend = vi.fn(async () => ({}));
   const credentials: CredentialStore = {
     get: vi.fn(async () => credentialValue.value),
     set: setCredential,
@@ -1526,14 +1674,14 @@ function createFixture() {
       },
       members: {
         list: memberList,
-        update: vi.fn(),
-        remove: vi.fn(),
+        update: memberUpdate,
+        remove: memberRemove,
       },
       invitations: {
-        list: vi.fn(async () => ({ invitations: [] })),
+        list: invitationList,
         create: invitationCreate,
-        revoke: vi.fn(async () => ({})),
-        resend: vi.fn(async () => ({})),
+        revoke: invitationRevoke,
+        resend: invitationResend,
       },
       projects: {
         list: vi.fn(async () => ({ projects: [project] })),
@@ -1679,7 +1827,12 @@ function createFixture() {
     availableAccounts,
     accountLeave,
     memberList,
+    memberUpdate,
+    memberRemove,
+    invitationList,
     invitationCreate,
+    invitationRevoke,
+    invitationResend,
     listAccountTokens,
     revokeToken,
     createBucket,

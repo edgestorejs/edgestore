@@ -239,6 +239,7 @@ function createProgram(
     .description('Invite one or more team members')
     .option('--role <role>', 'owner, member, or viewer', 'member')
     .option('--allow-overage', 'allow billable member overage')
+    .option('--yes', 'skip owner-role confirmation')
     .action(async (emails: string[], options) => {
       await memberInviteCommand(runtime, globalFlags(program), {
         emails,
@@ -249,8 +250,13 @@ function createProgram(
   member
     .command('role <user-id> <role>')
     .description('Change a team member role')
-    .action(async (userId: string, role: string) => {
-      await memberRoleCommand(runtime, globalFlags(program), { userId, role });
+    .option('--yes', 'skip owner-role confirmation')
+    .action(async (userId: string, role: string, options) => {
+      await memberRoleCommand(runtime, globalFlags(program), {
+        userId,
+        role,
+        ...options,
+      });
     });
 
   member
