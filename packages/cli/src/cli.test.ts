@@ -100,6 +100,40 @@ describe('runCli', () => {
     );
   });
 
+  it('rejects plain project creation before creating a one-time key', async () => {
+    const exitCode = await runCli(
+      ['--plain', 'project', 'create', '--name', 'Marketing Site'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(2);
+    expect(fixture.createProject).not.toHaveBeenCalled();
+    expect(fixture.stdout()).toBe('');
+    expect(fixture.stderr()).toContain('--without-key');
+  });
+
+  it('supports plain project creation without an initial key', async () => {
+    const exitCode = await runCli(
+      [
+        '--plain',
+        'project',
+        'create',
+        '--name',
+        'Marketing Site',
+        '--without-key',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(0);
+    expect(fixture.createProject).toHaveBeenCalledWith(
+      expect.objectContaining({ createKey: false }),
+    );
+    expect(fixture.stdout()).toBe(`${project.basePath}\n`);
+  });
+
   it('requires explicit confirmation for non-interactive deletion', async () => {
     fixture.runtime.io.inputIsTty = false;
 
@@ -264,6 +298,22 @@ function createFixture() {
     available: vi.fn(async () => true),
   };
 
+  const createProject = vi.fn(async () => ({
+    project,
+    projectKey: {
+      key: {
+        id: 'key_123',
+        name: 'default',
+        accessKey: 'access_test',
+        projectId: project.id,
+        accountId: account.id,
+        createdAt: project.createdAt,
+        updatedAt: project.updatedAt,
+        revokedAt: null,
+      },
+      secretKey: 'secret_test',
+    },
+  }));
   const sdk = {
     system: {
       health: vi.fn(async () => ({ status: 'ok' })),
@@ -293,22 +343,7 @@ function createFixture() {
       projects: {
         list: vi.fn(async () => ({ projects: [project] })),
         get: vi.fn(async () => ({ project })),
-        create: vi.fn(async () => ({
-          project,
-          projectKey: {
-            key: {
-              id: 'key_123',
-              name: 'default',
-              accessKey: 'access_test',
-              projectId: project.id,
-              accountId: account.id,
-              createdAt: project.createdAt,
-              updatedAt: project.updatedAt,
-              revokedAt: null,
-            },
-            secretKey: 'secret_test',
-          },
-        })),
+        create: createProject,
         delete: vi.fn(async () => ({})),
       },
     },
@@ -370,6 +405,7 @@ function createFixture() {
     setCredential,
     readToken,
     confirmTyped,
+    createProject,
     stdout: () => Buffer.concat(stdoutChunks).toString('utf8'),
     stderr: () => Buffer.concat(stderrChunks).toString('utf8'),
   };
