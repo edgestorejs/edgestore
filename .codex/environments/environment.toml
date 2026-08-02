@@ -1,0 +1,51 @@
+version = 1
+name = "EdgeStore"
+
+[setup]
+script = '''
+set -eu
+
+git -C "$CODEX_SOURCE_TREE_PATH" \
+  ls-files --others --ignored --exclude-standard -- \
+  ':(glob)**/.env*' \
+  ':(exclude,glob)**/node_modules/**' \
+  ':(exclude,glob)**/.local/**' \
+  ':(exclude,glob)**/.next/**' |
+while IFS= read -r relative_path
+do
+  source_file="$CODEX_SOURCE_TREE_PATH/$relative_path"
+  destination_file="$CODEX_WORKTREE_PATH/$relative_path"
+
+  if [ -e "$destination_file" ] && [ ! -L "$destination_file" ]; then
+    echo "Skipping existing environment file: $relative_path" >&2
+    continue
+  fi
+
+  mkdir -p "$(dirname "$destination_file")"
+  ln -sfn "$source_file" "$destination_file"
+done
+
+node --version
+pnpm --version
+pnpm install --frozen-lockfile --prefer-offline
+'''
+
+[[actions]]
+name = "Docs"
+icon = "run"
+command = "pnpm docs:dev"
+
+[[actions]]
+name = "Example"
+icon = "run"
+command = "pnpm dev"
+
+[[actions]]
+name = "Tests"
+icon = "test"
+command = "pnpm test"
+
+[[actions]]
+name = "Checks"
+icon = "test"
+command = "pnpm typecheck && pnpm lint"
