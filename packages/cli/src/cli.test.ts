@@ -960,6 +960,8 @@ describe('runCli', () => {
           fileRef,
           success: true as const,
         })),
+        successCount: input.files.length,
+        failureCount: 0,
       };
     });
 
@@ -1230,9 +1232,16 @@ function createFixture() {
   type DeleteFilesInput = Parameters<
     ManagementEdgeStoreSdk['management']['files']['delete']
   >[0];
-  const deleteFiles = vi.fn(async (_input: DeleteFilesInput) => ({
-    results: [],
-  }));
+  type DeleteFilesResult = Awaited<
+    ReturnType<ManagementEdgeStoreSdk['management']['files']['delete']>
+  >;
+  const deleteFiles = vi.fn(
+    async (_input: DeleteFilesInput): Promise<DeleteFilesResult> => ({
+      results: [],
+      successCount: 0,
+      failureCount: 0,
+    }),
+  );
   const sdk = {
     system: {
       health: vi.fn(async () => ({ status: 'ok' })),
