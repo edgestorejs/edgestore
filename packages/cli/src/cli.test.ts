@@ -147,6 +147,18 @@ describe('runCli', () => {
     expect(fixture.stderr()).toContain('--yes');
   });
 
+  it('requires --yes for project deletion in plain mode', async () => {
+    const exitCode = await runCli(
+      ['--plain', 'project', 'delete', project.basePath],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(2);
+    expect(fixture.deleteProject).not.toHaveBeenCalled();
+    expect(fixture.stderr()).toContain('--yes');
+  });
+
   it('deletes the canonical project after typed confirmation', async () => {
     await runCli(['project', 'delete', project.id], fixture.runtime, '0.0.0');
 
