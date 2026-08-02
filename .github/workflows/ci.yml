@@ -91,8 +91,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build CLI and SDK
-        run: pnpm turbo run build --filter=@edgestore/cli...
+      - name: Build SDK
+        run: pnpm --filter @edgestore/sdk build
+
+      - name: Build CLI
+        run: pnpm --filter @edgestore/cli build
 
       - name: Load native credential store module
         run: pnpm --filter @edgestore/cli exec node -e "import('@napi-rs/keyring')"
