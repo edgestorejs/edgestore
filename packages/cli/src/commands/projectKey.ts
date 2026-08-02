@@ -5,6 +5,7 @@ import { outputFor, sdkFor } from '../core/runtime';
 import {
   deliverEnvSecretWithRollback,
   preflightEnvSecret,
+  rollbackCredentialAfterFailure,
   type SecretDeliveryOptions,
 } from '../core/secretDelivery';
 
@@ -149,10 +150,28 @@ export async function projectKeyRotateCommand(
 
   if (!input.yes) {
     if (output.options.mode === 'human') output.message(secretMessage);
-    await runtime.prompts.confirmTyped(
-      `Type saved to revoke ${input.keyId}`,
-      'saved',
-    );
+    try {
+      await runtime.prompts.confirmTyped(
+        `Type saved to revoke ${input.keyId}`,
+        'saved',
+      );
+    } catch (error) {
+      await rollbackCredentialAfterFailure({
+        cause: error,
+        successMessage: 'The replacement project key was revoked.',
+        failureMessage:
+          'Automatic revocation of the replacement project key failed.',
+        credential: { id: result.key.id },
+        rollback: async (signal) => {
+          await sdk.management.projectKeys.revoke({
+            project: input.project,
+            keyId: result.key.id,
+            signal,
+          });
+        },
+        manualRollbackCommand: `edgestore project key revoke ${input.project} ${result.key.id} --yes`,
+      });
+    }
   }
   await sdk.management.projectKeys.revoke({
     project: input.project,

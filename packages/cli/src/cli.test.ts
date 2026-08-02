@@ -11,6 +11,7 @@ import type {
   RepoConfig,
 } from './core/config';
 import type { CredentialStore } from './core/credentials';
+import { CliError } from './core/errors';
 import type { CliRuntime } from './core/runtime';
 
 const account = {
@@ -185,6 +186,18 @@ describe('runCli', () => {
     expect(fixture.stderr()).toContain('--yes');
   });
 
+  it('requires --yes for project deletion in plain mode', async () => {
+    const exitCode = await runCli(
+      ['--plain', 'project', 'delete', project.basePath],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(2);
+    expect(fixture.deleteProject).not.toHaveBeenCalled();
+    expect(fixture.stderr()).toContain('--yes');
+  });
+
   it('deletes the canonical project after typed confirmation', async () => {
     await runCli(['project', 'delete', project.id], fixture.runtime, '0.0.0');
 
@@ -298,6 +311,88 @@ describe('runCli', () => {
       'saved',
     );
     expect(fixture.stdout()).toBe(`${projectKey.id}\n`);
+  });
+
+  it('revokes the replacement key when interactive rotation is canceled', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-key-'),
+    );
+    fixture.runtime.cwd = temporaryDirectory;
+    fixture.createProjectKey.mockResolvedValueOnce({
+      key: { ...projectKey, id: 'key_replacement' },
+      secretKey: 'secret_test',
+    });
+    fixture.confirmTyped.mockRejectedValueOnce(
+      new CliError('interrupted', 'Operation canceled.', { exitCode: 130 }),
+    );
+
+    const exitCode = await runCli(
+      [
+        '--plain',
+        'project',
+        'key',
+        'rotate',
+        project.basePath,
+        projectKey.id,
+        '--name',
+        'replacement',
+        '--output',
+        '.env.local',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(130);
+    expect(fixture.revokeProjectKey).toHaveBeenCalledWith({
+      project: project.basePath,
+      keyId: 'key_replacement',
+      signal: expect.objectContaining({ aborted: false }),
+    });
+    expect(fixture.stdout()).toBe('');
+    expect(fixture.stderr()).toContain(
+      'Operation canceled. The replacement project key was revoked.',
+    );
+  });
+
+  it('reports manual cleanup when canceled rotation rollback fails', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-key-'),
+    );
+    fixture.runtime.cwd = temporaryDirectory;
+    fixture.createProjectKey.mockResolvedValueOnce({
+      key: { ...projectKey, id: 'key_replacement' },
+      secretKey: 'secret_test',
+    });
+    fixture.confirmTyped.mockRejectedValueOnce(
+      new CliError('interrupted', 'Operation canceled.', { exitCode: 130 }),
+    );
+    fixture.revokeProjectKey.mockRejectedValueOnce(
+      new Error('revocation unavailable'),
+    );
+
+    const exitCode = await runCli(
+      [
+        '--plain',
+        'project',
+        'key',
+        'rotate',
+        project.basePath,
+        projectKey.id,
+        '--name',
+        'replacement',
+        '--output',
+        '.env.local',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(130);
+    expect(fixture.stdout()).toBe('');
+    expect(fixture.stderr()).toContain(
+      `edgestore project key revoke ${project.basePath} key_replacement --yes`,
+    );
   });
 
   it('validates a rotation target before creating its replacement', async () => {
