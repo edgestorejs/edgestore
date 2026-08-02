@@ -30,13 +30,13 @@ export async function deliverEnvSecretWithRollback(input: {
   try {
     return await deliverEnvSecret(input.cwd, input.values, input.options);
   } catch (deliveryError) {
-    await rollbackCredentialAfterFailure({
+    return rollbackCredentialAfterFailure({
       cause: deliveryError,
       code: 'secret_delivery_failed',
       successMessage: `The new ${input.credential.label} was revoked.`,
       failureMessage: `Automatic revocation of the new ${input.credential.label} failed.`,
       credential: input.credential,
-      rollback: input.rollback,
+      rollback: (signal) => input.rollback(signal),
       manualRollbackCommand: input.manualRollbackCommand,
       recoverySuggestions: input.recoverySuggestions,
     });
