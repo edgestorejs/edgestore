@@ -1,4 +1,11 @@
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import {
+  mkdtemp,
+  readdir,
+  readFile,
+  rm,
+  stat,
+  writeFile,
+} from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { PassThrough, Readable } from 'node:stream';
@@ -99,6 +106,7 @@ describe('runCli', () => {
 
   afterEach(async () => {
     vi.useRealTimers();
+    vi.unstubAllGlobals();
     if (temporaryDirectory) {
       await rm(temporaryDirectory, { recursive: true, force: true });
       temporaryDirectory = undefined;
@@ -803,6 +811,186 @@ describe('runCli', () => {
     expect(fixture.stdout()).toContain('logo.png');
   });
 
+  it('streams downloads through a restrictive temporary file', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-download-'),
+    );
+    fixture.runtime.cwd = temporaryDirectory;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        async () =>
+          new Response(
+            new ReadableStream({
+              start(controller) {
+                controller.enqueue(new TextEncoder().encode('first '));
+                controller.enqueue(new TextEncoder().encode('second'));
+                controller.close();
+              },
+            }),
+          ),
+      ),
+    );
+
+    const exitCode = await runCli(
+      [
+        'file',
+        'download',
+        'file_123',
+        '--output',
+        'download.txt',
+        '--project',
+        project.basePath,
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    const outputPath = path.join(temporaryDirectory, 'download.txt');
+    expect(exitCode).toBe(0);
+    await expect(readFile(outputPath, 'utf8')).resolves.toBe('first second');
+    expect((await stat(outputPath)).mode & 0o777).toBe(0o600);
+    await expect(readdir(temporaryDirectory)).resolves.toEqual([
+      'download.txt',
+    ]);
+  });
+
+  it('preserves an existing download after a mid-stream failure', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-download-'),
+    );
+    fixture.runtime.cwd = temporaryDirectory;
+    const outputPath = path.join(temporaryDirectory, 'download.txt');
+    await writeFile(outputPath, 'original');
+    let pullCount = 0;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        async () =>
+          new Response(
+            new ReadableStream({
+              pull(controller) {
+                pullCount += 1;
+                if (pullCount === 1) {
+                  controller.enqueue(new TextEncoder().encode('partial'));
+                } else {
+                  controller.error(new Error('stream failed'));
+                }
+              },
+            }),
+          ),
+      ),
+    );
+
+    const exitCode = await runCli(
+      [
+        'file',
+        'download',
+        'file_123',
+        '--output',
+        'download.txt',
+        '--project',
+        project.basePath,
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(1);
+    await expect(readFile(outputPath, 'utf8')).resolves.toBe('original');
+    await expect(readdir(temporaryDirectory)).resolves.toEqual([
+      'download.txt',
+    ]);
+  });
+
+  it('removes a partial download after cancellation', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-download-'),
+    );
+    fixture.runtime.cwd = temporaryDirectory;
+    const outputPath = path.join(temporaryDirectory, 'download.txt');
+    await writeFile(outputPath, 'original');
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        async () =>
+          new Response(
+            new ReadableStream({
+              start(controller) {
+                controller.enqueue(new TextEncoder().encode('partial'));
+                fixture.abortController.abort();
+              },
+            }),
+          ),
+      ),
+    );
+
+    const exitCode = await runCli(
+      [
+        'file',
+        'download',
+        'file_123',
+        '--output',
+        'download.txt',
+        '--project',
+        project.basePath,
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(130);
+    await expect(readFile(outputPath, 'utf8')).resolves.toBe('original');
+    await expect(readdir(temporaryDirectory)).resolves.toEqual([
+      'download.txt',
+    ]);
+  });
+
+  it('reports exact partial state when a later delete batch fails', async () => {
+    const references = Array.from(
+      { length: 201 },
+      (_, index) => `file_${index + 1}`,
+    );
+    let requestCount = 0;
+    fixture.deleteFiles.mockImplementation(async (input) => {
+      requestCount += 1;
+      if (requestCount === 2) throw new Error('second batch failed');
+      return {
+        results: input.files.map((fileRef) => ({
+          fileRef,
+          success: true as const,
+        })),
+      };
+    });
+
+    const exitCode = await runCli(
+      [
+        '--json',
+        'file',
+        'delete',
+        ...references,
+        '--project',
+        project.basePath,
+        '--yes',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(1);
+    expect(fixture.stdout()).toBe('');
+    expect(fixture.deleteFiles).toHaveBeenCalledTimes(2);
+    const details = JSON.parse(fixture.stderr()).error.details;
+    expect(details.completed.successCount).toBe(100);
+    expect(details.completed.results).toHaveLength(100);
+    expect(details.uncertainReferences).toEqual(references.slice(100, 200));
+    expect(details.notAttemptedReferences).toEqual(references.slice(200));
+    expect(details.cause).toMatchObject({
+      code: 'unexpected_error',
+      message: 'second batch failed',
+    });
+  });
+
   it('rejects unsupported bucket types before calling the SDK', async () => {
     fixture.repoConfig.config = {
       account: account.id,
@@ -1029,6 +1217,22 @@ function createFixture() {
   const latestEmptyJob = vi.fn(async () => ({ job: null }));
   const getEmptyJob = vi.fn();
   const retryEmptyJob = vi.fn();
+  const generateAccessUrls = vi.fn(async () => ({
+    accessUrls: [
+      {
+        fileRef: { id: 'file_123' },
+        url: 'https://files.example/download',
+        expiresAt: null,
+        expiresIn: null,
+      },
+    ],
+  }));
+  type DeleteFilesInput = Parameters<
+    ManagementEdgeStoreSdk['management']['files']['delete']
+  >[0];
+  const deleteFiles = vi.fn(async (_input: DeleteFilesInput) => ({
+    results: [],
+  }));
   const sdk = {
     system: {
       health: vi.fn(async () => ({ status: 'ok' })),
@@ -1124,12 +1328,13 @@ function createFixture() {
           pagination: { limit: 50, nextCursor: null, hasMore: false },
         })),
         lookup: vi.fn(),
-        generateAccessUrls: vi.fn(),
-        delete: vi.fn(),
+        generateAccessUrls,
+        delete: deleteFiles,
       },
     },
   } as unknown as ManagementEdgeStoreSdk;
 
+  const abortController = new AbortController();
   const runtime: CliRuntime = {
     exitCode: 0,
     cwd: '/repo',
@@ -1141,7 +1346,7 @@ function createFixture() {
       inputIsTty: true,
       outputIsTty: false,
     },
-    signal: new AbortController().signal,
+    signal: abortController.signal,
     globalConfig: {
       path: '/config/edgestore/config.json',
       read: vi.fn(async () => ({ ...globalConfig })),
@@ -1180,6 +1385,7 @@ function createFixture() {
 
   return {
     runtime,
+    abortController,
     globalConfig,
     repoConfig,
     credentials,
@@ -1195,6 +1401,8 @@ function createFixture() {
     latestEmptyJob,
     getEmptyJob,
     retryEmptyJob,
+    generateAccessUrls,
+    deleteFiles,
     createProject,
     listProjectKeys,
     createProjectKey,
