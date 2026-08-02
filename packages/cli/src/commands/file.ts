@@ -277,8 +277,8 @@ function renderIncompleteDeletion(input: {
 }
 
 function fileReference(value: string, bucket?: string): FileRef {
-  if (/^https?:\/\//i.test(value)) return { url: value };
   if (bucket) return { bucketName: bucket, path: value };
+  if (/^https?:\/\//i.test(value)) return { url: value };
   return { id: value };
 }
 

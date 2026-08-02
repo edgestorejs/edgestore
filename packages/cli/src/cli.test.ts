@@ -968,6 +968,48 @@ describe('runCli', () => {
     expect(fixture.stdout()).toContain('logo.png');
   });
 
+  it('treats URL-shaped references as paths when --bucket is supplied', async () => {
+    fixture.lookupFile.mockResolvedValueOnce({
+      file: {
+        id: 'file_123',
+        bucketName: 'publicFiles',
+        key: 'https://example.com/logo.png',
+        path: {},
+        metadata: {},
+        sizeBytes: 10,
+        mimeType: 'image/png',
+        state: 'uploaded',
+        temporary: false,
+        url: 'https://files.example/logo.png',
+        uploadedAt: project.createdAt,
+        updatedAt: project.updatedAt,
+      },
+    });
+
+    await runCli(
+      [
+        'file',
+        'info',
+        'https://example.com/logo.png',
+        '--bucket',
+        'publicFiles',
+        '--project',
+        project.basePath,
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(fixture.lookupFile).toHaveBeenCalledWith({
+      project: project.basePath,
+      file: {
+        bucketName: 'publicFiles',
+        path: 'https://example.com/logo.png',
+      },
+      signal: fixture.runtime.signal,
+    });
+  });
+
   it('streams downloads through a restrictive temporary file', async () => {
     temporaryDirectory = await mkdtemp(
       path.join(tmpdir(), 'edgestore-cli-download-'),
@@ -1494,6 +1536,7 @@ function createFixture() {
       },
     ],
   }));
+  const lookupFile = vi.fn();
   type DeleteFilesInput = Parameters<
     ManagementEdgeStoreSdk['management']['files']['delete']
   >[0];
@@ -1590,7 +1633,7 @@ function createFixture() {
           ],
           pagination: { limit: 50, nextCursor: null, hasMore: false },
         })),
-        lookup: vi.fn(),
+        lookup: lookupFile,
         generateAccessUrls,
         delete: deleteFiles,
       },
@@ -1667,6 +1710,7 @@ function createFixture() {
     getEmptyJob,
     retryEmptyJob,
     generateAccessUrls,
+    lookupFile,
     deleteFiles,
     createProject,
     listProjectKeys,
