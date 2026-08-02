@@ -2,6 +2,10 @@ import { describe, expect, it, vi } from 'vitest';
 import { classifyCredentials } from '../credentials';
 import { EdgeStoreAbortError, EdgeStoreNetworkError } from '../errors';
 import type { EdgeStoreApiError } from '../errors';
+import {
+  EDGE_STORE_PACKAGE_NAME,
+  EDGE_STORE_PACKAGE_VERSION,
+} from '../version';
 import { createTransport } from './transport';
 
 describe('createTransport', () => {
@@ -12,7 +16,9 @@ describe('createTransport', () => {
       expect(request.headers.get('authorization')).toBe(
         'Basic cHJvamVjdDpzZWNyZXQ=',
       );
-      expect(request.headers.get('user-agent')).toBe('@edgestore/sdk/0.7.0');
+      expect(request.headers.get('user-agent')).toBe(
+        `${EDGE_STORE_PACKAGE_NAME}/${EDGE_STORE_PACKAGE_VERSION}`,
+      );
       return Response.json({ data: { ok: true, version: 'v2' } });
     });
     const transport = createTransport({
