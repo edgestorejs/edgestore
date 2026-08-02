@@ -1,8 +1,13 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it, vi } from 'vitest';
 import { classifyCredentials } from '../credentials';
 import { EdgeStoreAbortError, EdgeStoreNetworkError } from '../errors';
 import type { EdgeStoreApiError } from '../errors';
 import { createTransport } from './transport';
+
+const sdkPackage = JSON.parse(
+  readFileSync(new URL('../../package.json', import.meta.url), 'utf8'),
+) as { name: string; version: string };
 
 describe('createTransport', () => {
   it('sends project authentication and normalizes the base URL', async () => {
@@ -12,7 +17,9 @@ describe('createTransport', () => {
       expect(request.headers.get('authorization')).toBe(
         'Basic cHJvamVjdDpzZWNyZXQ=',
       );
-      expect(request.headers.get('user-agent')).toBe('@edgestore/sdk/0.7.0');
+      expect(request.headers.get('user-agent')).toBe(
+        `${sdkPackage.name}/${sdkPackage.version}`,
+      );
       return Response.json({ data: { ok: true, version: 'v2' } });
     });
     const transport = createTransport({
