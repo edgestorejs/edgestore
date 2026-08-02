@@ -65,6 +65,30 @@ const accountToken = {
   userId: null,
 };
 
+const failedEmptyJob = {
+  id: 'job_123',
+  bucketId: 'bucket_123',
+  projectId: project.id,
+  accountId: account.id,
+  status: 'FAILED' as const,
+  phase: 'DELETING_FILES' as const,
+  totalCount: 5,
+  totalBytes: 500,
+  processedCount: 2,
+  freedBytes: 200,
+  pendingS3CleanupCount: 1,
+  canceledUploadCount: 0,
+  orphanObjectCount: 1,
+  orphanBytes: 20,
+  cloudFrontInvalidationId: null,
+  error: 'storage unavailable',
+  heartbeatAt: project.updatedAt,
+  startedAt: project.createdAt,
+  completedAt: project.updatedAt,
+  createdAt: project.createdAt,
+  updatedAt: project.updatedAt,
+};
+
 describe('runCli', () => {
   let fixture: ReturnType<typeof createFixture>;
   let temporaryDirectory: string | undefined;
@@ -656,13 +680,87 @@ describe('runCli', () => {
     };
 
     await runCli(
-      ['bucket', 'empty', 'publicFiles', '--yes'],
+      [
+        '--api-url',
+        'https://api-dev.edgestore.dev',
+        'bucket',
+        'empty',
+        'publicFiles',
+        '--project',
+        project.basePath,
+        '--yes',
+      ],
       fixture.runtime,
       '0.0.0',
     );
 
     expect(fixture.stdout()).toContain('Job: job_123');
-    expect(fixture.stdout()).toContain('empty-status publicFiles');
+    expect(fixture.stdout()).toContain(
+      `edgestore --api-url https://api-dev.edgestore.dev bucket empty-status publicFiles --job job_123 --project ${project.basePath}`,
+    );
+  });
+
+  it('preserves applicable options in confirmation follow-ups', async () => {
+    fixture.runtime.io.inputIsTty = false;
+
+    const exitCode = await runCli(
+      [
+        '--json',
+        '--api-url',
+        'https://api-dev.edgestore.dev',
+        'bucket',
+        'empty',
+        'publicFiles',
+        '--project',
+        project.basePath,
+        '--retry',
+        'job_old',
+        '--wait',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(2);
+    expect(JSON.parse(fixture.stderr()).error.suggestions).toEqual([
+      `edgestore --json --api-url https://api-dev.edgestore.dev bucket empty publicFiles --retry job_old --wait --yes --project ${project.basePath}`,
+    ]);
+    expect(fixture.emptyBucket).not.toHaveBeenCalled();
+  });
+
+  it('emits one structured error when a waited empty job fails', async () => {
+    fixture.getEmptyJob.mockResolvedValueOnce({ job: failedEmptyJob });
+
+    const exitCode = await runCli(
+      [
+        '--json',
+        '--api-url',
+        'https://api-dev.edgestore.dev',
+        'bucket',
+        'empty',
+        'publicFiles',
+        '--project',
+        project.basePath,
+        '--wait',
+        '--yes',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(1);
+    expect(fixture.stdout()).toBe('');
+    expect(JSON.parse(fixture.stderr())).toEqual({
+      error: {
+        code: 'bucket_empty_failed',
+        message:
+          'Bucket empty job job_123 failed after 2/5 files: storage unavailable.',
+        details: { job: failedEmptyJob },
+        suggestions: [
+          `edgestore --json --api-url https://api-dev.edgestore.dev bucket empty publicFiles --retry job_123 --wait --yes --project ${project.basePath}`,
+        ],
+      },
+    });
   });
 
   it('reports when a bucket has no empty-bucket job', async () => {
@@ -682,7 +780,9 @@ describe('runCli', () => {
       error: {
         code: 'bucket_empty_job_not_found',
         message: 'No empty-bucket job found for publicFiles.',
-        suggestions: ['edgestore bucket empty publicFiles'],
+        suggestions: [
+          `edgestore bucket empty publicFiles --project ${project.basePath}`,
+        ],
       },
     });
   });
@@ -905,6 +1005,14 @@ function createFixture() {
       updatedAt: project.updatedAt,
     },
   }));
+  const emptyBucket = vi.fn(async () => ({
+    jobId: 'job_123',
+    bucketId: 'bucket_123',
+    status: 'QUEUED' as const,
+  }));
+  const latestEmptyJob = vi.fn(async () => ({ job: null }));
+  const getEmptyJob = vi.fn();
+  const retryEmptyJob = vi.fn();
   const sdk = {
     system: {
       health: vi.fn(async () => ({ status: 'ok' })),
@@ -966,15 +1074,11 @@ function createFixture() {
         })),
         create: createBucket,
         delete: vi.fn(async () => ({})),
-        empty: vi.fn(async () => ({
-          jobId: 'job_123',
-          bucketId: 'bucket_123',
-          status: 'QUEUED',
-        })),
+        empty: emptyBucket,
         emptyJobs: {
-          latest: vi.fn(async () => ({ job: null })),
-          get: vi.fn(),
-          retry: vi.fn(),
+          latest: latestEmptyJob,
+          get: getEmptyJob,
+          retry: retryEmptyJob,
         },
       },
     },
@@ -1041,6 +1145,10 @@ function createFixture() {
     listAccountTokens,
     revokeToken,
     createBucket,
+    emptyBucket,
+    latestEmptyJob,
+    getEmptyJob,
+    retryEmptyJob,
     createProject,
     listProjectKeys,
     createProjectKey,
