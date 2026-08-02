@@ -127,6 +127,12 @@ async function writeConfig<TConfig>(
 
 async function findRepoConfig(start: string): Promise<string | undefined> {
   let current = path.resolve(start);
+  const gitRoot = await findGitRoot(current);
+
+  if (!gitRoot) {
+    const candidate = path.join(current, '.edgestore', 'config.json');
+    return (await pathExists(candidate)) ? candidate : undefined;
+  }
 
   while (true) {
     const candidate = path.join(current, '.edgestore', 'config.json');
@@ -134,11 +140,10 @@ async function findRepoConfig(start: string): Promise<string | undefined> {
       return candidate;
     }
 
-    const parent = path.dirname(current);
-    if (parent === current) {
+    if (current === gitRoot) {
       return undefined;
     }
-    current = parent;
+    current = path.dirname(current);
   }
 }
 
