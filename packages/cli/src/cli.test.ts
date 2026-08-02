@@ -264,6 +264,16 @@ describe('runCli', () => {
     expect(fixture.invitationList).not.toHaveBeenCalled();
   });
 
+  it('describes an empty invitation history without pending-only wording', async () => {
+    fixture.availableAccounts.push(teamAccount);
+    fixture.globalConfig.activeAccount = teamAccount.id;
+
+    await runCli(['member', 'invitation', 'list'], fixture.runtime, '0.0.0');
+
+    expect(fixture.stdout()).toContain('No invitations found.');
+    expect(fixture.stdout()).not.toContain('pending');
+  });
+
   it.each([
     {
       name: 'invite',

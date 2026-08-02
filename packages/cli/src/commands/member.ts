@@ -210,7 +210,7 @@ export async function invitationListCommand(
             invitation.status.toLowerCase(),
           ]),
         )
-      : 'No pending invitations found.',
+      : 'No invitations found.',
   );
 }
 
