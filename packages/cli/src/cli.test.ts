@@ -179,6 +179,20 @@ describe('runCli', () => {
     expect(fixture.stdout()).toContain('Deleted project');
   });
 
+  it('deletes the supplied project reference when forced', async () => {
+    await runCli(
+      ['--plain', 'project', 'delete', project.id, '--yes'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(fixture.deleteProject).toHaveBeenCalledWith({
+      project: project.id,
+      signal: fixture.runtime.signal,
+    });
+    expect(fixture.stdout()).toBe(`${project.id}\n`);
+  });
+
   it('creates a project key and exposes its secret once', async () => {
     await runCli(
       ['project', 'key', 'create', project.basePath, '--name', 'production'],
@@ -560,6 +574,7 @@ function createFixture() {
     secretKey: 'secret_test',
   }));
   const revokeProjectKey = vi.fn(async () => ({}));
+  const deleteProject = vi.fn(async () => ({}));
   const sdk = {
     system: {
       health: vi.fn(async () => ({ status: 'ok' })),
@@ -590,7 +605,7 @@ function createFixture() {
         list: vi.fn(async () => ({ projects: [project] })),
         get: vi.fn(async () => ({ project })),
         create: createProject,
-        delete: vi.fn(async () => ({})),
+        delete: deleteProject,
       },
       projectKeys: {
         list: listProjectKeys,
@@ -660,6 +675,7 @@ function createFixture() {
     listProjectKeys,
     createProjectKey,
     revokeProjectKey,
+    deleteProject,
     stdout: () => Buffer.concat(stdoutChunks).toString('utf8'),
     stderr: () => Buffer.concat(stderrChunks).toString('utf8'),
   };
