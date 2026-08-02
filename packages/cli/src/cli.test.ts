@@ -100,6 +100,40 @@ describe('runCli', () => {
     );
   });
 
+  it('rejects plain project creation before creating a one-time key', async () => {
+    const exitCode = await runCli(
+      ['--plain', 'project', 'create', '--name', 'Marketing Site'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(2);
+    expect(fixture.createProject).not.toHaveBeenCalled();
+    expect(fixture.stdout()).toBe('');
+    expect(fixture.stderr()).toContain('--without-key');
+  });
+
+  it('supports plain project creation without an initial key', async () => {
+    const exitCode = await runCli(
+      [
+        '--plain',
+        'project',
+        'create',
+        '--name',
+        'Marketing Site',
+        '--without-key',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(0);
+    expect(fixture.createProject).toHaveBeenCalledWith(
+      expect.objectContaining({ createKey: false }),
+    );
+    expect(fixture.stdout()).toBe(`${project.basePath}\n`);
+  });
+
   it('requires explicit confirmation for non-interactive deletion', async () => {
     fixture.runtime.io.inputIsTty = false;
 
@@ -203,6 +237,59 @@ describe('runCli', () => {
       '--json and --plain cannot be used together.',
     );
   });
+
+  it.each([
+    {
+      name: 'unknown option',
+      argv: ['--json', 'account', 'list', '--wat'],
+      commanderCode: 'commander.unknownOption',
+    },
+    {
+      name: 'missing argument with a trailing global option',
+      argv: ['project', 'link', '--json'],
+      commanderCode: 'commander.missingArgument',
+    },
+  ])(
+    'emits one JSON syntax error for $name',
+    async ({ argv, commanderCode }) => {
+      const exitCode = await runCli(argv, fixture.runtime, '0.0.0');
+
+      expect(exitCode).toBe(2);
+      expect(fixture.stdout()).toBe('');
+      expect(JSON.parse(fixture.stderr())).toMatchObject({
+        error: {
+          code: 'invalid_cli_syntax',
+          details: { commanderCode },
+        },
+      });
+    },
+  );
+
+  it('preserves Commander diagnostics in human mode', async () => {
+    const exitCode = await runCli(
+      ['account', 'list', '--wat'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(2);
+    expect(fixture.stdout()).toBe('');
+    expect(fixture.stderr()).toContain("unknown option '--wat'");
+  });
+
+  it.each([
+    { argv: ['--help'], expected: 'Usage: edgestore' },
+    { argv: ['--version'], expected: '0.0.0' },
+  ])(
+    'keeps $argv successful and human-readable',
+    async ({ argv, expected }) => {
+      const exitCode = await runCli(argv, fixture.runtime, '0.0.0');
+
+      expect(exitCode).toBe(0);
+      expect(fixture.stdout()).toContain(expected);
+      expect(fixture.stderr()).toBe('');
+    },
+  );
 });
 
 function createFixture() {
@@ -235,6 +322,22 @@ function createFixture() {
     available: vi.fn(async () => true),
   };
 
+  const createProject = vi.fn(async () => ({
+    project,
+    projectKey: {
+      key: {
+        id: 'key_123',
+        name: 'default',
+        accessKey: 'access_test',
+        projectId: project.id,
+        accountId: account.id,
+        createdAt: project.createdAt,
+        updatedAt: project.updatedAt,
+        revokedAt: null,
+      },
+      secretKey: 'secret_test',
+    },
+  }));
   const sdk = {
     system: {
       health: vi.fn(async () => ({ status: 'ok' })),
@@ -264,22 +367,7 @@ function createFixture() {
       projects: {
         list: vi.fn(async () => ({ projects: [project] })),
         get: vi.fn(async () => ({ project })),
-        create: vi.fn(async () => ({
-          project,
-          projectKey: {
-            key: {
-              id: 'key_123',
-              name: 'default',
-              accessKey: 'access_test',
-              projectId: project.id,
-              accountId: account.id,
-              createdAt: project.createdAt,
-              updatedAt: project.updatedAt,
-              revokedAt: null,
-            },
-            secretKey: 'secret_test',
-          },
-        })),
+        create: createProject,
         delete: vi.fn(async () => ({})),
       },
       projectKeys: {
@@ -371,6 +459,7 @@ function createFixture() {
     setCredential,
     readToken,
     confirmTyped,
+    createProject,
     stdout: () => Buffer.concat(stdoutChunks).toString('utf8'),
     stderr: () => Buffer.concat(stderrChunks).toString('utf8'),
   };
