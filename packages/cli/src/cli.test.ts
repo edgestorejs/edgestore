@@ -556,6 +556,32 @@ describe('runCli', () => {
     }
   });
 
+  it('honors ignore rules from a nested Git directory', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-init-'),
+    );
+    const appDirectory = path.join(temporaryDirectory, 'app');
+    await mkdir(appDirectory);
+    execFileSync('git', ['init', '--quiet'], { cwd: temporaryDirectory });
+    await writeFile(path.join(appDirectory, '.gitignore'), '.env.local\n');
+    fixture.runtime.cwd = appDirectory;
+    fixture.runtime.io.inputIsTty = false;
+
+    const exitCode = await runCli(
+      ['init', '--new', '--name', 'Marketing Site'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(0);
+    await expect(
+      readFile(path.join(temporaryDirectory, '.gitignore'), 'utf8'),
+    ).rejects.toMatchObject({ code: 'ENOENT' });
+    await expect(
+      readFile(path.join(appDirectory, '.gitignore'), 'utf8'),
+    ).resolves.toBe('.env.local\n');
+  });
+
   it('protects the env file before creating a remote project', async () => {
     temporaryDirectory = await mkdtemp(
       path.join(tmpdir(), 'edgestore-cli-init-'),

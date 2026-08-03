@@ -3,7 +3,6 @@ import { readdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { promisify } from 'node:util';
 import type { ManagementEdgeStoreSdk } from '@edgestore/sdk';
-import ignore from 'ignore';
 import { detect } from 'package-manager-detector/detect';
 import { renderCliCommand } from '../core/command';
 import { findGitRoot } from '../core/config';
@@ -578,12 +577,15 @@ async function protectSecretFile(cwd: string, output: string): Promise<string> {
     );
   }
   const normalized = relative.replaceAll(path.sep, '/');
-  if (gitRoot && (await isTrackedFile(gitRoot, normalized))) {
-    throw usageError(
-      'secret_output_tracked',
-      `Secret output ${absolute} is already tracked by Git.`,
-      ['Remove it from Git before creating a project key.'],
-    );
+  if (gitRoot) {
+    if (await isTrackedFile(gitRoot, normalized)) {
+      throw usageError(
+        'secret_output_tracked',
+        `Secret output ${absolute} is already tracked by Git.`,
+        ['Remove it from Git before creating a project key.'],
+      );
+    }
+    if (await isIgnoredFile(gitRoot, normalized)) return normalized;
   }
 
   const gitignorePath = path.join(root, '.gitignore');
@@ -593,8 +595,6 @@ async function protectSecretFile(cwd: string, output: string): Promise<string> {
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
   }
-  if (ignore().add(contents).ignores(normalized)) return normalized;
-
   const entry = `/${normalized}`;
   const next = `${contents}${contents ? (contents.endsWith('\n') ? '' : '\n') : ''}${entry}\n`;
   try {
@@ -611,13 +611,42 @@ async function protectSecretFile(cwd: string, output: string): Promise<string> {
       },
     );
   }
-  if (!ignore().add(next).ignores(normalized)) {
+  if (gitRoot && !(await isIgnoredFile(gitRoot, normalized))) {
     throw new CliError(
       'secret_output_unprotected',
       `Could not protect secret output ${absolute}.`,
     );
   }
   return normalized;
+}
+
+async function isIgnoredFile(root: string, relative: string): Promise<boolean> {
+  try {
+    await execFileAsync('git', [
+      '-C',
+      root,
+      'check-ignore',
+      '--quiet',
+      '--no-index',
+      '--',
+      relative,
+    ]);
+    return true;
+  } catch (error) {
+    if ((error as { code?: unknown }).code === 1) {
+      return false;
+    }
+    throw new CliError(
+      'secret_output_unprotected',
+      `Could not verify Git ignore rules for ${path.join(root, relative)}.`,
+      {
+        details: {
+          path: path.join(root, relative),
+          cause: error instanceof Error ? error.message : String(error),
+        },
+      },
+    );
+  }
 }
 
 async function isTrackedFile(root: string, relative: string): Promise<boolean> {
