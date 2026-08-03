@@ -77,6 +77,25 @@ export class EdgeStoreUploadProcessingTimeoutError extends EdgeStoreUploadError 
   override readonly name = 'EdgeStoreUploadProcessingTimeoutError';
 }
 
+/** An upload failure whose automatic cancellation also failed. */
+export class EdgeStoreUploadCleanupError extends EdgeStoreUploadError {
+  override readonly name = 'EdgeStoreUploadCleanupError';
+
+  readonly uploadCause: unknown;
+  readonly cleanupCause: unknown;
+
+  constructor(options: {
+    message: string;
+    uploadId: string;
+    uploadCause: unknown;
+    cleanupCause: unknown;
+  }) {
+    super(options.message, options.uploadId, { cause: options.uploadCause });
+    this.uploadCause = options.uploadCause;
+    this.cleanupCause = options.cleanupCause;
+  }
+}
+
 /** Failure returned for a singular file mutation. */
 export class EdgeStoreFileMutationError<
   TFileReference = { id: string } | { key: string } | { url: string },
