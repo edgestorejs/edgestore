@@ -60,7 +60,7 @@ export function normalizeError(error: unknown): CliError {
     });
   }
 
-  if (error instanceof EdgeStoreAbortError) {
+  if (error instanceof EdgeStoreAbortError || isNativeAbortError(error)) {
     return new CliError('interrupted', 'Operation canceled.', {
       exitCode: 130,
     });
@@ -71,6 +71,17 @@ export function normalizeError(error: unknown): CliError {
   }
 
   return new CliError('unexpected_error', 'An unexpected error occurred.');
+}
+
+function isNativeAbortError(error: unknown): boolean {
+  if (error instanceof DOMException) {
+    return error.name === 'AbortError';
+  }
+  return (
+    error instanceof Error &&
+    (error.name === 'AbortError' ||
+      ('code' in error && error.code === 'ABORT_ERR'))
+  );
 }
 
 export function usageError(

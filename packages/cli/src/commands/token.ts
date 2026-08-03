@@ -1,4 +1,5 @@
 import type { ManagementEdgeStoreSdk } from '@edgestore/sdk';
+import { renderCliCommand } from '../core/command';
 import { usageError } from '../core/errors';
 import { renderTable } from '../core/output';
 import type { CliRuntime, GlobalFlags } from '../core/runtime';
@@ -135,7 +136,12 @@ export async function tokenCreateCommand(
         signal,
       });
     },
-    manualRollbackCommand: `edgestore token revoke ${result.token.id} --yes`,
+    manualRollbackCommand: renderCliCommand(flags, [
+      'token',
+      'revoke',
+      result.token.id,
+      '--yes',
+    ]),
     recoverySuggestions: [
       'Use a credential with token:revoke access or revoke the token in the dashboard.',
     ],
@@ -164,7 +170,7 @@ export async function tokenRevokeCommand(
       throw usageError(
         'confirmation_required',
         'Token revocation requires confirmation.',
-        [`edgestore token revoke ${input.tokenId} --yes`],
+        [renderCliCommand(flags, ['token', 'revoke', input.tokenId, '--yes'])],
       );
     }
     await runtime.prompts.confirmTyped(

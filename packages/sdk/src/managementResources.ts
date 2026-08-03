@@ -1,3 +1,4 @@
+import { createManagementUploadOperations } from './internal/managementUploadOperations';
 import type {
   OperationBody,
   OperationId,
@@ -167,6 +168,7 @@ export function createManagementResourceClient(
   transport: Transport,
   uploadDefaults: UploadDefaults = {},
 ): ManagementResourceClient {
+  const uploadOperations = createManagementUploadOperations(transport);
   return {
     projects: {
       list: ({ account, signal }) =>
@@ -332,59 +334,17 @@ export function createManagementResourceClient(
         ),
     },
     uploads: {
-      upload: (input) => uploadManagementFile(transport, input, uploadDefaults),
-      request: ({ project, bucket, signal, ...body }) =>
-        transport.execute((client) =>
-          client.POST(
-            '/management/projects/{projectRef}/buckets/{bucketName}/uploads',
-            {
-              params: {
-                path: { projectRef: project, bucketName: bucket },
-              },
-              body,
-              signal,
-            },
-          ),
+      upload: (input) =>
+        uploadManagementFile(
+          { transport, operations: uploadOperations },
+          input,
+          uploadDefaults,
         ),
-      get: ({ project, uploadId, signal }) =>
-        transport.execute((client) =>
-          client.GET('/management/projects/{projectRef}/uploads/{uploadId}', {
-            params: { path: { projectRef: project, uploadId } },
-            signal,
-          }),
-        ),
-      cancel: ({ project, uploadId, signal }) =>
-        transport.execute((client) =>
-          client.DELETE(
-            '/management/projects/{projectRef}/uploads/{uploadId}',
-            {
-              params: { path: { projectRef: project, uploadId } },
-              signal,
-            },
-          ),
-        ),
-      createParts: ({ project, uploadId, signal, ...body }) =>
-        transport.execute((client) =>
-          client.POST(
-            '/management/projects/{projectRef}/uploads/{uploadId}/parts',
-            {
-              params: { path: { projectRef: project, uploadId } },
-              body,
-              signal,
-            },
-          ),
-        ),
-      completeMultipart: ({ project, uploadId, signal, ...body }) =>
-        transport.execute((client) =>
-          client.POST(
-            '/management/projects/{projectRef}/uploads/{uploadId}/complete',
-            {
-              params: { path: { projectRef: project, uploadId } },
-              body,
-              signal,
-            },
-          ),
-        ),
+      request: uploadOperations.request,
+      get: uploadOperations.get,
+      cancel: uploadOperations.cancel,
+      createParts: uploadOperations.createParts,
+      completeMultipart: uploadOperations.completeMultipart,
     },
   };
 }

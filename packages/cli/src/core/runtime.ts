@@ -39,10 +39,49 @@ export type RuntimeIo = {
   outputIsTty: boolean;
 };
 
+type ManagementClient = ManagementEdgeStoreSdk['management'];
+
+export type CliSdk = {
+  system: Pick<ManagementEdgeStoreSdk['system'], 'health'>;
+  management: {
+    whoami: ManagementClient['whoami'];
+    accounts: Pick<ManagementClient['accounts'], 'list' | 'get' | 'leave'>;
+    members: Pick<ManagementClient['members'], 'list' | 'update' | 'remove'>;
+    invitations: Pick<
+      ManagementClient['invitations'],
+      'list' | 'create' | 'revoke' | 'resend'
+    >;
+    projects: Pick<
+      ManagementClient['projects'],
+      'list' | 'get' | 'create' | 'delete'
+    >;
+    projectKeys: Pick<
+      ManagementClient['projectKeys'],
+      'list' | 'create' | 'revoke'
+    >;
+    tokens: Pick<
+      ManagementClient['tokens'],
+      'listAccount' | 'listUser' | 'createAccount' | 'createUser' | 'revoke'
+    >;
+    buckets: Pick<
+      ManagementClient['buckets'],
+      'list' | 'get' | 'create' | 'delete' | 'empty' | 'emptyJobs'
+    >;
+    files: Pick<
+      ManagementClient['files'],
+      'list' | 'lookup' | 'generateAccessUrls' | 'delete'
+    >;
+    uploads: Pick<
+      ManagementClient['uploads'],
+      'upload' | 'get' | 'cancel' | 'request' | 'completeMultipart'
+    >;
+  };
+};
+
 export type SdkFactory = (options: {
   token: string;
   baseUrl: string;
-}) => ManagementEdgeStoreSdk;
+}) => CliSdk;
 
 export type CliRuntime = {
   exitCode: number;
@@ -136,7 +175,7 @@ export async function credentialFor(
 export async function sdkFor(
   runtime: CliRuntime,
   flags: GlobalFlags,
-): Promise<ManagementEdgeStoreSdk> {
+): Promise<CliSdk> {
   const credential = await credentialFor(runtime, flags);
   return runtime.sdkFactory({
     token: credential.token,

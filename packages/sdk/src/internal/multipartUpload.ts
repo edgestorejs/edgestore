@@ -5,8 +5,8 @@ import type { Transport } from './transport';
 import { throwIfAborted } from './uploadRetry';
 import { putWithRetry } from './uploadTransfer';
 
-type CompletedPart = { partNumber: number; eTag: string };
-type UploadPart = { partNumber: number; signedUrl: string };
+export type CompletedUploadPart = { partNumber: number; eTag: string };
+export type SignedUploadPart = { partNumber: number; signedUrl: string };
 type ProgressHandler = RuntimeUploadInput['onProgress'];
 
 export async function uploadParts(
@@ -14,14 +14,14 @@ export async function uploadParts(
   options: {
     body: Blob;
     uploadId: string;
-    parts: UploadPart[];
+    parts: SignedUploadPart[];
     partSizeBytes: number;
     concurrency: number;
     signal?: AbortSignal;
     onProgress?: ProgressHandler;
   },
-): Promise<CompletedPart[]> {
-  const completed: CompletedPart[] = Array(options.parts.length);
+): Promise<CompletedUploadPart[]> {
+  const completed: CompletedUploadPart[] = Array(options.parts.length);
   let nextIndex = 0;
   let transferredBytes = 0;
   const workerCount = Math.min(options.concurrency, options.parts.length);
@@ -70,14 +70,14 @@ export async function uploadStreamParts(
     stream: ReadableStream<Uint8Array>;
     totalBytes: number;
     uploadId: string;
-    parts: UploadPart[];
+    parts: SignedUploadPart[];
     partSizeBytes: number;
     signal?: AbortSignal;
     onProgress?: ProgressHandler;
   },
-): Promise<CompletedPart[]> {
+): Promise<CompletedUploadPart[]> {
   const reader = createSizedStreamReader(options.stream);
-  const completed: CompletedPart[] = [];
+  const completed: CompletedUploadPart[] = [];
   let transferredBytes = 0;
 
   try {

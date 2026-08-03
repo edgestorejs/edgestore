@@ -1,31 +1,20 @@
-import {
-  EdgeStoreAbortError,
-  EdgeStoreNetworkError,
-  EdgeStoreUploadProcessingTimeoutError,
-} from './errors';
-import { uploadParts, uploadStreamParts } from './internal/multipartUpload';
+import { EdgeStoreAbortError, EdgeStoreNetworkError } from './errors';
 import {
   createGetUploadRequest,
   type RuntimeOperations,
 } from './internal/runtimeOperations';
 import type { Transport } from './internal/transport';
-import { waitForUploadProcessing } from './internal/uploadProcessing';
+import { executeUploadLifecycle } from './internal/uploadLifecycle';
 import { isAbortError, throwIfAborted } from './internal/uploadRetry';
 import {
   normalizeUploadMetadata,
   prepareUploadSource,
   reportUploadProgress,
 } from './internal/uploadSource';
-import { putWithRetry } from './internal/uploadTransfer';
-import {
-  assertNonNegative,
-  getPositiveInteger,
-} from './internal/uploadValidation';
+import { assertNonNegative } from './internal/uploadValidation';
 import { planMultipartUpload } from './multipartPlan';
 import {
-  DEFAULT_MULTIPART_CONCURRENCY,
   DEFAULT_PROCESSING_TIMEOUT_MS,
-  type CompletedUpload,
   type RuntimeUploadFromUrlInput,
   type RuntimeUploadInput,
   type RuntimeUploadResult,
@@ -115,95 +104,45 @@ export async function uploadRuntimeFile(
     signedReadUrl,
     signal,
   });
-  const uploadId = requested.upload.id;
+  const completed = await executeUploadLifecycle({
+    transport,
+    requested,
+    prepared,
+    multipartPlan,
+    multipartConcurrency:
+      typeof multipart === 'object'
+        ? multipart.concurrency
+        : defaults.multipartConcurrency,
+    defaultMultipartConcurrency: defaults.multipartConcurrency,
+    processingTimeoutMs,
+    signal,
+    onProgress,
+    operations: {
+      completeMultipart: ({ uploadId, parts, signal: requestSignal }) =>
+        operations.uploads.completeMultipart({
+          project,
+          uploadId,
+          parts,
+          signal: requestSignal,
+        }),
+      get: ({ uploadId, signal: requestSignal }) =>
+        context.transport.executeWithResponse(
+          createGetUploadRequest({
+            project,
+            uploadId,
+            signal: requestSignal,
+          }),
+        ),
+      cancel: ({ uploadId }) =>
+        operations.uploads.cancel({ project, uploadId }),
+    },
+    cleanupPolicy: 'preserve-original',
+  });
 
-  try {
-    reportUploadProgress(onProgress, {
-      transferredBytes: 0,
-      totalBytes,
-      phase: 'uploading',
-    });
-
-    if (prepared.kind === 'body' && requested.upload.kind === 'single') {
-      await putWithRetry(transport, {
-        uploadId,
-        url: requested.upload.signedUrl,
-        body: prepared.body,
-        signal,
-      });
-      reportUploadProgress(onProgress, {
-        transferredBytes: totalBytes,
-        totalBytes,
-        phase: 'uploading',
-      });
-    } else {
-      if (requested.upload.kind !== 'multipart') {
-        throw new TypeError(
-          'The API returned a single upload URL for a stream source.',
-        );
-      }
-      if (!multipartPlan) {
-        throw new TypeError(
-          'The API returned a multipart upload for a single-upload request.',
-        );
-      }
-      const concurrency = getPositiveInteger(
-        typeof multipart === 'object'
-          ? multipart.concurrency
-          : defaults.multipartConcurrency,
-        defaults.multipartConcurrency ?? DEFAULT_MULTIPART_CONCURRENCY,
-        'multipart.concurrency',
-      );
-      const transferOptions = {
-        uploadId,
-        parts: requested.upload.parts,
-        partSizeBytes: multipartPlan.partSizeBytes,
-        signal,
-        onProgress,
-      };
-      const completedParts =
-        prepared.kind === 'stream'
-          ? await uploadStreamParts(transport, {
-              ...transferOptions,
-              stream: prepared.stream,
-              totalBytes,
-            })
-          : await uploadParts(transport, {
-              ...transferOptions,
-              body: prepared.body,
-              concurrency,
-            });
-      await operations.uploads.completeMultipart({
-        project,
-        uploadId,
-        parts: completedParts,
-        signal,
-      });
-    }
-
-    reportUploadProgress(onProgress, {
-      transferredBytes: totalBytes,
-      totalBytes,
-      phase: 'processing',
-    });
-
-    const completed = await waitForUpload(context, {
-      project,
-      uploadId,
-      signal,
-      timeoutMs: processingTimeoutMs,
-    });
-
-    return {
-      ...completed,
-      signedReadUrl: requested.signedReadUrl,
-    };
-  } catch (error) {
-    if (!(error instanceof EdgeStoreUploadProcessingTimeoutError)) {
-      await cancelUpload(operations, project, uploadId);
-    }
-    throw error;
-  }
+  return {
+    ...completed,
+    signedReadUrl: requested.signedReadUrl,
+  };
 }
 
 export async function uploadRuntimeFileFromUrl(
@@ -287,40 +226,6 @@ async function cancelResponseBody(
 ): Promise<void> {
   if (!body) return;
   await body.cancel().catch(() => undefined);
-}
-
-async function waitForUpload(
-  context: UploadContext,
-  options: {
-    project: string;
-    uploadId: string;
-    signal?: AbortSignal;
-    timeoutMs: number;
-  },
-): Promise<CompletedUpload> {
-  return waitForUploadProcessing({
-    ...options,
-    get: (signal) =>
-      context.transport.executeWithResponse(
-        createGetUploadRequest({
-          project: options.project,
-          uploadId: options.uploadId,
-          signal,
-        }),
-      ),
-  });
-}
-
-async function cancelUpload(
-  operations: RuntimeOperations,
-  project: string,
-  uploadId: string,
-) {
-  try {
-    await operations.uploads.cancel({ project, uploadId });
-  } catch {
-    // Preserve the original upload failure.
-  }
 }
 
 function getFileNameFromUrl(url: string): string | undefined {

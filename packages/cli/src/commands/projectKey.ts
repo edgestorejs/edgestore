@@ -1,3 +1,4 @@
+import { renderCliCommand } from '../core/command';
 import { CliError, usageError } from '../core/errors';
 import { renderTable } from '../core/output';
 import type { CliRuntime, GlobalFlags } from '../core/runtime';
@@ -46,7 +47,10 @@ export async function projectKeyCreateCommand(
   requirePlainSecretDelivery(flags, input);
   await preflightKeyDelivery(runtime, input);
   const sdk = await sdkFor(runtime, flags);
-  const { result, delivered } = await createAndDeliverKey(runtime, sdk, input);
+  const { result, delivered } = await createAndDeliverKey(
+    { runtime, flags, sdk },
+    input,
+  );
   const values = keyValues(result.key.accessKey, result.secretKey);
   outputFor(runtime, flags).result(
     result,
@@ -73,7 +77,14 @@ export async function projectKeyRevokeCommand(
     });
     const key = listed.keys.find((item) => item.id === input.keyId);
     requireInteractiveConfirmation(runtime, flags, [
-      `edgestore project key revoke ${input.project} ${input.keyId} --yes`,
+      renderCliCommand(flags, [
+        'project',
+        'key',
+        'revoke',
+        input.project,
+        input.keyId,
+        '--yes',
+      ]),
     ]);
     const activeCount = listed.keys.filter((item) => !item.revokedAt).length;
     const warning =
@@ -108,7 +119,20 @@ export async function projectKeyRotateCommand(
 ): Promise<void> {
   if (!input.yes) {
     requireInteractiveConfirmation(runtime, flags, [
-      `edgestore project key rotate ${input.project} ${input.keyId} --name ${input.name} --output .env.local --yes`,
+      renderCliCommand(flags, [
+        'project',
+        'key',
+        'rotate',
+        input.project,
+        input.keyId,
+        '--name',
+        input.name,
+        ...(input.copy ? ['--copy'] : []),
+        ...(input.output ? ['--output', input.output] : []),
+        ...(input.update ? ['--update'] : []),
+        ...(!input.copy && !input.output ? ['--output', '.env.local'] : []),
+        '--yes',
+      ]),
     ]);
   } else if (!input.copy && !input.output) {
     throw usageError(
@@ -138,7 +162,10 @@ export async function projectKeyRotateCommand(
   }
   await preflightKeyDelivery(runtime, input);
 
-  const { result, delivered } = await createAndDeliverKey(runtime, sdk, input);
+  const { result, delivered } = await createAndDeliverKey(
+    { runtime, flags, sdk },
+    input,
+  );
   const values = keyValues(result.key.accessKey, result.secretKey);
   const output = outputFor(runtime, flags);
   const secretMessage = [
@@ -169,7 +196,14 @@ export async function projectKeyRotateCommand(
             signal,
           });
         },
-        manualRollbackCommand: `edgestore project key revoke ${input.project} ${result.key.id} --yes`,
+        manualRollbackCommand: renderCliCommand(flags, [
+          'project',
+          'key',
+          'revoke',
+          input.project,
+          result.key.id,
+          '--yes',
+        ]),
       });
     }
   }
@@ -190,10 +224,14 @@ export async function projectKeyRotateCommand(
 }
 
 async function createAndDeliverKey(
-  runtime: CliRuntime,
-  sdk: Awaited<ReturnType<typeof sdkFor>>,
+  context: {
+    runtime: CliRuntime;
+    flags: GlobalFlags;
+    sdk: Awaited<ReturnType<typeof sdkFor>>;
+  },
   input: { project: string; name: string } & SecretDeliveryOptions,
 ) {
+  const { runtime, flags, sdk } = context;
   const result = await sdk.management.projectKeys.create({
     project: input.project,
     name: input.name,
@@ -211,7 +249,14 @@ async function createAndDeliverKey(
         signal,
       });
     },
-    manualRollbackCommand: `edgestore project key revoke ${input.project} ${result.key.id} --yes`,
+    manualRollbackCommand: renderCliCommand(flags, [
+      'project',
+      'key',
+      'revoke',
+      input.project,
+      result.key.id,
+      '--yes',
+    ]),
   });
   return { result, delivered };
 }

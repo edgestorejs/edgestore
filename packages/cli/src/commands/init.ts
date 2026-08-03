@@ -7,7 +7,7 @@ import { detect } from 'package-manager-detector/detect';
 import { renderCliCommand } from '../core/command';
 import { findGitRoot } from '../core/config';
 import { CliError, normalizeError, usageError } from '../core/errors';
-import type { CliRuntime, GlobalFlags } from '../core/runtime';
+import type { CliRuntime, CliSdk, GlobalFlags } from '../core/runtime';
 import { outputFor, sdkFor } from '../core/runtime';
 import {
   deliverEnvSecretWithRollback,
@@ -39,9 +39,35 @@ type BucketChoice = {
   visibility: 'public' | 'protected';
 };
 
+type InitProject = Awaited<
+  ReturnType<ManagementEdgeStoreSdk['management']['projects']['get']>
+>['project'];
+type InitProjectKey = Awaited<
+  ReturnType<ManagementEdgeStoreSdk['management']['projectKeys']['create']>
+>['key'];
+type InitBucket = Awaited<
+  ReturnType<ManagementEdgeStoreSdk['management']['buckets']['create']>
+>['bucket'];
+
+type InitCompletedStep =
+  'project' | 'project_key' | 'secret_delivery' | 'repository_link' | 'bucket';
+
+type InitFailedStep = 'bucket_creation' | 'package_install';
+
+type PartialInitState = {
+  project: InitProject;
+  key?: InitProjectKey;
+  bucket?: InitBucket;
+  configPath: string;
+  output?: string;
+  completedSteps: InitCompletedStep[];
+  failedStep: InitFailedStep;
+  continuation?: string;
+};
+
 type InitContext = {
   runtime: CliRuntime;
-  sdk: ManagementEdgeStoreSdk;
+  sdk: CliSdk;
   options: InitOptions;
   interactive: boolean;
   account: string;
@@ -145,9 +171,28 @@ export async function initCommand(
     ...(envFile ? { envFile } : {}),
   });
 
+  const completedSteps: InitCompletedStep[] = ['project'];
+  if (keyResult) completedSteps.push('project_key');
+  if (keyResult && secretOutput) completedSteps.push('secret_delivery');
+  completedSteps.push('repository_link');
+
   const bucketChoice = await resolveBucket(runtime, options, interactive);
-  const bucket = bucketChoice
-    ? (
+  let bucket: InitBucket | undefined;
+  if (bucketChoice) {
+    const continuation = renderCliCommand(
+      flags,
+      [
+        'bucket',
+        'create',
+        bucketChoice.name,
+        '--type',
+        bucketChoice.type,
+        bucketChoice.visibility === 'public' ? '--public' : '--protected',
+      ],
+      { project: projectResult.project.basePath },
+    );
+    try {
+      bucket = (
         await sdk.management.buckets.create({
           project: projectResult.project.basePath,
           name: bucketChoice.name,
@@ -155,14 +200,41 @@ export async function initCommand(
           visibility: bucketChoice.visibility,
           signal: runtime.signal,
         })
-      ).bucket
-    : undefined;
+      ).bucket;
+      completedSteps.push('bucket');
+    } catch (error) {
+      throw partialInitError(error, {
+        project: projectResult.project,
+        key: keyResult?.key,
+        configPath,
+        output: secretOutput,
+        completedSteps,
+        failedStep: 'bucket_creation',
+        continuation,
+      });
+    }
+  }
 
-  const install = await installPackages(runtime, packages, {
-    requested: options.install,
-    interactive,
-    structured: Boolean(flags.json || flags.plain),
-  });
+  let install: Awaited<ReturnType<typeof installPackages>>;
+  try {
+    install = await installPackages(runtime, packages, {
+      requested: options.install,
+      interactive,
+      structured: Boolean(flags.json || flags.plain),
+    });
+  } catch (error) {
+    const failure = normalizeError(error);
+    throw partialInitError(failure, {
+      project: projectResult.project,
+      key: keyResult?.key,
+      bucket,
+      configPath,
+      output: secretOutput,
+      completedSteps,
+      failedStep: 'package_install',
+      continuation: failure.options.suggestions?.[0],
+    });
+  }
 
   const human = [
     `Linked ${projectResult.project.name} (${projectResult.project.basePath}).`,
@@ -189,6 +261,49 @@ export async function initCommand(
     },
     human,
     projectResult.project.basePath,
+  );
+}
+
+function partialInitError(error: unknown, state: PartialInitState): CliError {
+  const failure = normalizeError(error);
+  const label =
+    state.failedStep === 'bucket_creation'
+      ? 'bucket creation'
+      : 'package installation';
+  const completed = state.completedSteps
+    .map((step) => step.replaceAll('_', ' '))
+    .join(', ');
+  const suggestions = Array.from(
+    new Set(
+      [state.continuation, ...(failure.options.suggestions ?? [])].filter(
+        (suggestion): suggestion is string => Boolean(suggestion),
+      ),
+    ),
+  );
+  return new CliError(
+    'init_partial_failure',
+    `The project is linked, but ${label} failed: ${failure.message} Completed: ${completed}.`,
+    {
+      details: {
+        status: 'partial',
+        completedSteps: state.completedSteps,
+        failedStep: state.failedStep,
+        project: state.project,
+        ...(state.key ? { key: state.key } : {}),
+        ...(state.bucket ? { bucket: state.bucket } : {}),
+        configPath: state.configPath,
+        ...(state.output ? { output: state.output } : {}),
+        cause: {
+          code: failure.code,
+          ...(failure.options.details === undefined
+            ? {}
+            : { details: failure.options.details }),
+        },
+      },
+      requestId: failure.options.requestId,
+      ...(suggestions.length ? { suggestions } : {}),
+      exitCode: failure.exitCode,
+    },
   );
 }
 
