@@ -26,14 +26,25 @@ export async function fileUploadCommand(
       ['Use --json to inspect every upload result.'],
     );
   }
+  if (input.path) {
+    validateRemotePath(input.path);
+    if (input.keepName && !input.path.endsWith('/')) {
+      throw usageError(
+        'upload_path_keep_name_conflict',
+        '--keep-name cannot be used with an exact --path.',
+        [
+          'Use a folder path ending in / to preserve the original file name, or omit --keep-name to use the exact destination.',
+        ],
+      );
+    }
+  }
   const localFiles = await expandFiles(runtime.cwd, input.paths);
   if (!localFiles.length) {
     throw usageError('upload_files_missing', 'No matching files were found.');
   }
-  if (input.path) validateRemotePath(input.path);
   if (localFiles.length > 1 && input.path && !input.path.endsWith('/')) {
     throw usageError(
-      'upload_path_not_prefix',
+      'upload_path_not_folder',
       '--path must end in / when uploading multiple files.',
     );
   }
@@ -45,10 +56,10 @@ export async function fileUploadCommand(
     try {
       const fileName = path.basename(localFile);
       const mimeType = mimeTypeFor(fileName);
-      const destination =
-        input.path && localFiles.length > 1
-          ? `${input.path}${fileName}`
-          : input.path;
+      const destination = resolveUploadDestination(input.path, {
+        fileName,
+        keepName: input.keepName,
+      });
       const source = await openAsBlob(
         localFile,
         mimeType ? { type: mimeType } : undefined,
@@ -58,8 +69,8 @@ export async function fileUploadCommand(
           project,
           bucket: input.bucket,
           source,
-          ...(input.keepName ? { fileName } : {}),
-          ...(destination ? { path: destination } : {}),
+          ...(destination.fileName ? { fileName: destination.fileName } : {}),
+          ...(destination.path ? { path: destination.path } : {}),
           mimeType,
           signal: runtime.signal,
           onProgress: (progress) =>
@@ -110,6 +121,27 @@ export async function fileUploadCommand(
     })
     .join('\n');
   outputFor(runtime, flags).result({ uploads: results }, human);
+}
+
+function resolveUploadDestination(
+  destinationPath: string | undefined,
+  input: { fileName: string; keepName?: boolean },
+): { path?: string; fileName?: string } {
+  if (!destinationPath) {
+    return input.keepName ? { fileName: input.fileName } : {};
+  }
+  if (destinationPath.endsWith('/')) {
+    return {
+      path: destinationPath,
+      ...(input.keepName ? { fileName: input.fileName } : {}),
+    };
+  }
+
+  const directory = path.posix.dirname(destinationPath);
+  return {
+    ...(directory === '.' ? {} : { path: directory }),
+    fileName: path.posix.basename(destinationPath),
+  };
 }
 
 function normalizeUploadError(

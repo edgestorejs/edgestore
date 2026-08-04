@@ -125,6 +125,159 @@ describe('file', () => {
     expect(fixture.stderr()).toContain('--json');
   });
 
+  it('maps upload destinations and file naming options', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-upload-'),
+    );
+    fixture.runtime.cwd = temporaryDirectory;
+    await writeFile(path.join(temporaryDirectory, 'source.txt'), 'upload me');
+    const baseArgs = [
+      'file',
+      'upload',
+      'source.txt',
+      '--bucket',
+      'publicFiles',
+      '--project',
+      project.basePath,
+    ];
+
+    await runCli(baseArgs, fixture.runtime, '0.0.0');
+    await runCli([...baseArgs, '--keep-name'], fixture.runtime, '0.0.0');
+    await runCli([...baseArgs, '--path', 'reports/'], fixture.runtime, '0.0.0');
+    await runCli(
+      [...baseArgs, '--path', 'reports/', '--keep-name'],
+      fixture.runtime,
+      '0.0.0',
+    );
+    await runCli(
+      [...baseArgs, '--path', 'reports/renamed.txt'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(fixture.uploadFile).toHaveBeenCalledTimes(5);
+    expect(fixture.uploadFile.mock.calls[0]?.[0]).not.toHaveProperty('path');
+    expect(fixture.uploadFile.mock.calls[0]?.[0]).not.toHaveProperty(
+      'fileName',
+    );
+    expect(fixture.uploadFile.mock.calls[1]?.[0]).toMatchObject({
+      fileName: 'source.txt',
+    });
+    expect(fixture.uploadFile.mock.calls[1]?.[0]).not.toHaveProperty('path');
+    expect(fixture.uploadFile.mock.calls[2]?.[0]).toMatchObject({
+      path: 'reports/',
+    });
+    expect(fixture.uploadFile.mock.calls[2]?.[0]).not.toHaveProperty(
+      'fileName',
+    );
+    expect(fixture.uploadFile.mock.calls[3]?.[0]).toMatchObject({
+      path: 'reports/',
+      fileName: 'source.txt',
+    });
+    expect(fixture.uploadFile.mock.calls[4]?.[0]).toMatchObject({
+      path: 'reports',
+      fileName: 'renamed.txt',
+    });
+  });
+
+  it('rejects --keep-name with an exact upload destination', async () => {
+    const exitCode = await runCli(
+      [
+        '--json',
+        'file',
+        'upload',
+        'source.txt',
+        '--bucket',
+        'publicFiles',
+        '--project',
+        project.basePath,
+        '--path',
+        'reports/renamed.txt',
+        '--keep-name',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(2);
+    expect(fixture.uploadFile).not.toHaveBeenCalled();
+    expect(JSON.parse(fixture.stderr()).error).toMatchObject({
+      code: 'upload_path_keep_name_conflict',
+    });
+  });
+
+  it('uses one destination folder for every file in a batch', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-upload-'),
+    );
+    fixture.runtime.cwd = temporaryDirectory;
+    await Promise.all(
+      ['first.txt', 'second.txt'].map((file) =>
+        writeFile(path.join(temporaryDirectory!, file), file),
+      ),
+    );
+
+    const exitCode = await runCli(
+      [
+        'file',
+        'upload',
+        'first.txt',
+        'second.txt',
+        '--bucket',
+        'publicFiles',
+        '--project',
+        project.basePath,
+        '--path',
+        'reports/',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(0);
+    expect(fixture.uploadFile).toHaveBeenCalledTimes(2);
+    for (const [input] of fixture.uploadFile.mock.calls) {
+      expect(input).toMatchObject({ path: 'reports/' });
+      expect(input).not.toHaveProperty('fileName');
+    }
+  });
+
+  it('rejects an exact destination for multiple files', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-upload-'),
+    );
+    fixture.runtime.cwd = temporaryDirectory;
+    await Promise.all(
+      ['first.txt', 'second.txt'].map((file) =>
+        writeFile(path.join(temporaryDirectory!, file), file),
+      ),
+    );
+
+    const exitCode = await runCli(
+      [
+        '--json',
+        'file',
+        'upload',
+        'first.txt',
+        'second.txt',
+        '--bucket',
+        'publicFiles',
+        '--project',
+        project.basePath,
+        '--path',
+        'reports/report.txt',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(2);
+    expect(fixture.uploadFile).not.toHaveBeenCalled();
+    expect(JSON.parse(fixture.stderr()).error).toMatchObject({
+      code: 'upload_path_not_folder',
+    });
+  });
+
   it('reports completed and unattempted files when a later upload fails', async () => {
     temporaryDirectory = await mkdtemp(
       path.join(tmpdir(), 'edgestore-cli-upload-'),

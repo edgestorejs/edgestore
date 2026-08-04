@@ -623,7 +623,7 @@ Examples:
     .description('Upload one or more local files')
     .requiredOption('--bucket <bucket>', 'existing bucket name')
     .option('--project <project>', 'override the linked project')
-    .option('--path <path>', 'destination path or prefix')
+    .option('--path <path>', 'exact destination or folder ending in /')
     .option('--keep-name', 'preserve original file names')
     .action(async (paths: string[], options) => {
       await fileUploadCommand(runtime, globalFlags(program), {
