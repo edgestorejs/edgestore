@@ -1,6 +1,7 @@
 import { execFile } from 'node:child_process';
 import { readdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { Writable } from 'node:stream';
 import { promisify } from 'node:util';
 import type { ManagementEdgeStoreSdk } from '@edgestore/sdk';
 import { detect } from 'package-manager-detector/detect';
@@ -221,6 +222,7 @@ export async function initCommand(
       requested: options.install,
       interactive,
       structured: Boolean(flags.json || flags.plain),
+      json: Boolean(flags.json),
     });
   } catch (error) {
     const failure = normalizeError(error);
@@ -606,6 +608,7 @@ async function installPackages(
     requested?: boolean;
     interactive: boolean;
     structured: boolean;
+    json: boolean;
   },
 ): Promise<{ command?: string; ran: boolean }> {
   if (!plan.manager || !plan.missing.length) return { ran: false };
@@ -620,21 +623,51 @@ async function installPackages(
         )
       : false);
   if (!shouldInstall) return { command, ran: false };
+  const captured = options.structured ? createOutputCapture() : undefined;
   try {
     await runtime.runCommand(plan.manager, args, {
       cwd: runtime.cwd,
-      ...(options.structured ? { stdout: runtime.io.stderr } : {}),
+      ...(captured ? { stdout: captured.stream, stderr: captured.stream } : {}),
     });
   } catch (error) {
+    const diagnostics = captured?.read().trim();
+    if (diagnostics && !options.json) {
+      runtime.io.stderr.write(`${diagnostics}\n`);
+    }
     throw new CliError(
       'package_install_failed',
       error instanceof Error ? error.message : 'Package installation failed.',
       {
+        ...(diagnostics ? { details: { diagnostics } } : {}),
         suggestions: [command],
       },
     );
   }
+  const diagnostics = captured?.read();
+  if (diagnostics) {
+    runtime.io.stderr.write(
+      diagnostics.endsWith('\n') ? diagnostics : `${diagnostics}\n`,
+    );
+  }
   return { command, ran: true };
+}
+
+function createOutputCapture(limit = 32_768): {
+  stream: NodeJS.WritableStream;
+  read(): string;
+} {
+  let output = '';
+  return {
+    stream: new Writable({
+      write(chunk, _encoding, callback) {
+        output = `${output}${Buffer.from(chunk).toString('utf8')}`.slice(
+          -limit,
+        );
+        callback();
+      },
+    }),
+    read: () => output,
+  };
 }
 
 function isMissingPathError(error: unknown): error is NodeJS.ErrnoException {

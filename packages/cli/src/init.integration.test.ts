@@ -424,6 +424,7 @@ describe('init.integration', () => {
     fixture.runCommand.mockImplementationOnce(
       async (_command, _args, options) => {
         options?.stdout?.write('package-manager progress\n');
+        options?.stderr?.write('package-manager warning\n');
       },
     );
 
@@ -445,11 +446,14 @@ describe('init.integration', () => {
       project.basePath,
     );
     expect(fixture.stderr()).toContain('package-manager progress');
-    expect(fixture.runCommand).toHaveBeenCalledWith(
-      'pnpm',
-      ['add', '@edgestore/server', '@edgestore/react', 'zod'],
-      { cwd: temporaryDirectory, stdout: fixture.runtime.io.stderr },
-    );
+    expect(fixture.stderr()).toContain('package-manager warning');
+    const commandOptions = fixture.runCommand.mock.calls[0]?.[2];
+    expect(commandOptions).toMatchObject({
+      cwd: temporaryDirectory,
+      stdout: expect.anything(),
+      stderr: expect.anything(),
+    });
+    expect(commandOptions?.stdout).toBe(commandOptions?.stderr);
   });
 
   it('reports durable init state when package installation fails', async () => {
@@ -462,7 +466,13 @@ describe('init.integration', () => {
       path.join(temporaryDirectory, 'package.json'),
       JSON.stringify({ packageManager: 'pnpm@10.0.0', dependencies: {} }),
     );
-    fixture.runCommand.mockRejectedValueOnce(new Error('install unavailable'));
+    fixture.runCommand.mockImplementationOnce(
+      async (_command, _args, options) => {
+        options?.stdout?.write('package-manager stdout\n');
+        options?.stderr?.write('package-manager stderr\n');
+        throw new Error('install unavailable');
+      },
+    );
 
     const exitCode = await runCli(
       [
@@ -488,6 +498,11 @@ describe('init.integration', () => {
         status: 'partial',
         completedSteps: ['project', 'repository_link'],
         failedStep: 'package_install',
+        cause: {
+          details: {
+            diagnostics: 'package-manager stdout\npackage-manager stderr',
+          },
+        },
       },
       suggestions: ['pnpm add @edgestore/server zod'],
     });
