@@ -45,7 +45,10 @@ const customBucket = es
   });
 
 const router = es.router({ valibotBucket, arkTypeBucket, customBucket });
-const client = createEdgeStore({ router, provider: edgestoreProvider() }).client;
+const client = createEdgeStore({
+  router,
+  provider: edgestoreProvider(),
+}).client;
 const { useEdgeStore } = createEdgeStoreProvider<typeof router>();
 const { edgestore } = useEdgeStore();
 
