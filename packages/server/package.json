@@ -130,7 +130,8 @@
     "@standard-schema/spec": "^1.1.0",
     "@panva/hkdf": "^1.2.1",
     "cookie": "^2.0.1",
-    "jose": "^6.2.3"
+    "jose": "^6.2.3",
+    "zod": "3.25.76"
   },
   "peerDependencies": {
     "@aws-sdk/client-s3": ">=3.0.0",
@@ -163,8 +164,7 @@
     "react": "catalog:",
     "react-dom": "catalog:",
     "tsx": "catalog:",
-    "typescript": "catalog:",
-    "zod": "3.25.76"
+    "typescript": "catalog:"
   },
   "gitHead": "a223c4cb8df50e6b64f9db5dc2daf93848748da9"
 }

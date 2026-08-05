@@ -949,6 +949,9 @@ importers:
       jose:
         specifier: ^6.2.3
         version: 6.2.3
+      zod:
+        specifier: 3.25.76
+        version: 3.25.76
     devDependencies:
       '@aws-sdk/client-s3':
         specifier: 'catalog:'
@@ -995,9 +998,6 @@ importers:
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
-      zod:
-        specifier: 3.25.76
-        version: 3.25.76
 
   packages/shared:
     dependencies:
