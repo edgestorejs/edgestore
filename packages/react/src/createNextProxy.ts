@@ -5,7 +5,6 @@ import {
   type InferBucketPathOrder,
   type InferMetadataObject,
   type InferSchemaInput,
-  type NoInput,
   type Prettify,
   type SharedFileMutationRes,
   type SharedRequestUploadRes,
@@ -62,7 +61,7 @@ export type BucketFunctions<TRouter extends AnyRouter> = {
      * })
      */
     upload: (
-      params: TRouter['buckets'][K]['_def']['input'] extends NoInput
+      params: TRouter['buckets'][K]['_def']['input'] extends undefined
         ? {
             file: File;
             signal?: AbortSignal;

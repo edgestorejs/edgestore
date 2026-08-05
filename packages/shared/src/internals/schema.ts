@@ -1,16 +1,10 @@
 import { type StandardSchemaV1 } from '@standard-schema/spec';
 import { EdgeStoreError } from '../errors';
 
-/** @internal */
-export const NO_INPUT = Symbol('edgestore.no-input');
-
-/** @internal */
-export type NoInput = typeof NO_INPUT;
-
 export type AnySchema = StandardSchemaV1<any, Record<string, unknown>>;
 
 /** @internal */
-export type AnyInput = AnySchema | NoInput;
+export type AnyInput = AnySchema | undefined;
 
 export type InferSchemaInput<TSchema extends AnyInput> =
   TSchema extends StandardSchemaV1
@@ -33,14 +27,38 @@ function formatIssue(issue: StandardSchemaV1.Issue): string {
 }
 
 /** @internal */
+export function assertStandardSchema(
+  schema: unknown,
+): asserts schema is AnySchema {
+  const protocol =
+    typeof schema === 'object' && schema !== null && '~standard' in schema
+      ? schema['~standard']
+      : undefined;
+
+  if (
+    typeof protocol !== 'object' ||
+    protocol === null ||
+    !('version' in protocol) ||
+    protocol.version !== 1 ||
+    !('validate' in protocol) ||
+    typeof protocol.validate !== 'function'
+  ) {
+    throw new EdgeStoreError({
+      code: 'SERVER_ERROR',
+      message: 'Bucket input schemas must implement Standard Schema V1',
+    });
+  }
+}
+
+/** @internal */
 export async function parseBucketInput<TSchema extends AnyInput>(
   schema: TSchema,
   input: unknown,
 ): Promise<
-  TSchema extends NoInput ? Record<string, never> : InferSchemaOutput<TSchema>
+  TSchema extends undefined ? Record<string, never> : InferSchemaOutput<TSchema>
 > {
-  if (schema === NO_INPUT) {
-    return {} as TSchema extends NoInput
+  if (schema === undefined) {
+    return {} as TSchema extends undefined
       ? Record<string, never>
       : InferSchemaOutput<TSchema>;
   }
@@ -64,7 +82,7 @@ export async function parseBucketInput<TSchema extends AnyInput>(
     });
   }
 
-  return result.value as TSchema extends NoInput
+  return result.value as TSchema extends undefined
     ? Record<string, never>
     : InferSchemaOutput<TSchema>;
 }
