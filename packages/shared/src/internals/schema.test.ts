@@ -3,7 +3,7 @@ import { type } from 'arktype';
 import * as v from 'valibot';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import { NO_INPUT, parseBucketInput } from './schema';
+import { parseBucketInput } from './schema';
 
 const schemas = [
   {
@@ -60,6 +60,6 @@ describe('parseBucketInput', () => {
   });
 
   it('returns an empty object for schema-less buckets', async () => {
-    await expect(parseBucketInput(NO_INPUT, undefined)).resolves.toEqual({});
+    await expect(parseBucketInput(undefined, undefined)).resolves.toEqual({});
   });
 });
