@@ -1,199 +1,44 @@
-import {
-  EDGE_STORE_ERROR_CODES,
-  EdgeStoreError,
-  type EdgeStoreErrorCodeKey,
-  type EdgeStoreRouter,
-  type MaybePromise,
-  type Provider,
-} from '@edgestore/shared';
+import { type AnyContext } from '@edgestore/shared';
 import { type Context as HonoContext } from 'hono';
 import Logger, { type LogLevel } from '../../libs/logger';
-import { matchPath } from '../../libs/utils';
-import { EdgeStoreProvider } from '../../providers/edgestore';
 import {
-  completeMultipartUpload,
-  confirmUpload,
-  deleteFile,
-  fetchProxyFile,
-  getCookieConfig,
-  init,
-  requestUpload,
-  requestUploadParts,
-  type CompleteMultipartUploadBody,
-  type ConfirmUploadBody,
-  type CookieConfig,
-  type DeleteFileBody,
-  type RequestUploadBody,
-  type RequestUploadPartsParams,
-} from '../shared';
+  dispatchEdgeStoreRequest,
+  resolveContext,
+  type CreateContextConfig,
+} from '../dispatcher';
+import { type CookieConfig, type HandlerEdgeStore } from '../shared';
 
 export type CreateContextOptions = {
   c: HonoContext;
 };
 
-export type Config<TCtx> = {
-  provider?: Provider;
-  router: EdgeStoreRouter<TCtx>;
+export type Config<TCtx extends AnyContext> = {
+  edgestore: HandlerEdgeStore<TCtx>;
   logLevel?: LogLevel;
   cookieConfig?: CookieConfig;
-} & (TCtx extends Record<string, never>
-  ? object
-  : {
-      provider?: Provider;
-      router: EdgeStoreRouter<TCtx>;
-      createContext: (opts: CreateContextOptions) => MaybePromise<TCtx>;
-      cookieConfig?: CookieConfig;
-    });
+} & CreateContextConfig<TCtx, CreateContextOptions>;
 
-declare const globalThis: {
-  _EDGE_STORE_LOGGER: Logger;
-};
-
-// Helper to get a cookie value from Hono Context
-function getCookie(c: HonoContext, name: string): string | undefined {
-  const cookies = c.req.header('cookie');
-  if (!cookies) return undefined;
-
-  const match = new RegExp(`${name}=([^;]+)`).exec(cookies);
-  return match ? match[1] : undefined;
-}
-
-export function createEdgeStoreHonoHandler<TCtx>(config: Config<TCtx>) {
-  const { provider = EdgeStoreProvider(), cookieConfig } = config;
+export function createEdgeStoreHonoHandler<TCtx extends AnyContext>(
+  config: Config<TCtx>,
+) {
+  const { cookieConfig } = config;
   const log = new Logger(config.logLevel);
-  globalThis._EDGE_STORE_LOGGER = log;
   log.debug('Creating EdgeStore Hono handler');
 
-  const resolvedCookieConfig = getCookieConfig(cookieConfig);
-
-  return async (c: HonoContext): Promise<Response> => {
-    try {
-      const pathname = new URL(c.req.url).pathname;
-
-      if (matchPath(pathname, '/health')) {
-        return c.text('OK');
-      } else if (matchPath(pathname, '/init')) {
-        let ctx = {} as TCtx;
-        try {
-          ctx =
-            'createContext' in config
-              ? await config.createContext({ c })
-              : ({} as TCtx);
-        } catch (err) {
-          throw new EdgeStoreError({
-            message: 'Error creating context',
-            code: 'CREATE_CONTEXT_ERROR',
-            cause: err instanceof Error ? err : undefined,
-          });
-        }
-        const { newCookies, ...body } = await init({
-          ctx,
-          provider,
-          router: config.router,
-          cookieConfig,
-        });
-
-        // Set cookies
-        if (Array.isArray(newCookies)) {
-          for (const cookie of newCookies) {
-            c.header('Set-Cookie', cookie, { append: true });
-          }
-        } else if (newCookies) {
-          c.header('Set-Cookie', newCookies);
-        }
-
-        return c.json(body);
-      } else if (matchPath(pathname, '/request-upload')) {
-        const body = await c.req.json<RequestUploadBody>();
-        return c.json(
-          await requestUpload({
-            provider,
-            router: config.router,
-            body,
-            ctxToken: getCookie(c, resolvedCookieConfig.ctx.name),
+  return async (c: HonoContext): Promise<Response> =>
+    await dispatchEdgeStoreRequest<TCtx>({
+      edgestore: config.edgestore,
+      logger: log,
+      cookieConfig,
+      request: {
+        pathname: new URL(c.req.url).pathname,
+        readJson: () => c.req.json(),
+        getQuery: (name) => c.req.query(name),
+        cookieHeader: c.req.header('cookie'),
+        createContext: () =>
+          resolveContext<TCtx, CreateContextOptions>(config, {
+            c,
           }),
-        );
-      } else if (matchPath(pathname, '/request-upload-parts')) {
-        const body = await c.req.json<RequestUploadPartsParams>();
-        return c.json(
-          await requestUploadParts({
-            provider,
-            router: config.router,
-            body,
-            ctxToken: getCookie(c, resolvedCookieConfig.ctx.name),
-          }),
-        );
-      } else if (matchPath(pathname, '/complete-multipart-upload')) {
-        const body = await c.req.json<CompleteMultipartUploadBody>();
-        await completeMultipartUpload({
-          provider,
-          router: config.router,
-          body,
-          ctxToken: getCookie(c, resolvedCookieConfig.ctx.name),
-        });
-        return c.body(null, 200);
-      } else if (matchPath(pathname, '/confirm-upload')) {
-        const body = await c.req.json<ConfirmUploadBody>();
-        return c.json(
-          await confirmUpload({
-            provider,
-            router: config.router,
-            body,
-            ctxToken: getCookie(c, resolvedCookieConfig.ctx.name),
-          }),
-        );
-      } else if (matchPath(pathname, '/delete-file')) {
-        const body = await c.req.json<DeleteFileBody>();
-        return c.json(
-          await deleteFile({
-            provider,
-            router: config.router,
-            body,
-            ctxToken: getCookie(c, resolvedCookieConfig.ctx.name),
-          }),
-        );
-      } else if (matchPath(pathname, '/proxy-file')) {
-        const url = c.req.query('url');
-
-        if (typeof url === 'string') {
-          const proxyRes = await fetchProxyFile({
-            cookieHeader: c.req.header('cookie'),
-            url,
-          });
-
-          return new Response(
-            proxyRes.body === null ? null : Buffer.from(proxyRes.body),
-            {
-              status: proxyRes.status,
-              headers: {
-                'Content-Type': proxyRes.contentType,
-              },
-            },
-          );
-        } else {
-          return c.body(null, 400);
-        }
-      } else {
-        return c.body(null, 404);
-      }
-    } catch (err) {
-      if (err instanceof EdgeStoreError) {
-        log[err.level](err.formattedMessage());
-        if (err.cause) log[err.level](err.cause);
-        return c.json(
-          err.formattedJson(),
-          EDGE_STORE_ERROR_CODES[err.code as EdgeStoreErrorCodeKey],
-        );
-      } else {
-        log.error(err);
-        return c.json(
-          new EdgeStoreError({
-            message: 'Internal Server Error',
-            code: 'SERVER_ERROR',
-          }).formattedJson(),
-          500,
-        );
-      }
-    }
-  };
+      },
+    });
 }

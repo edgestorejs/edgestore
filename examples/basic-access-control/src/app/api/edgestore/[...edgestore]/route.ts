@@ -1,9 +1,9 @@
-import { initEdgeStore } from '@edgestore/server';
+import { createEdgeStore, initEdgeStore } from '@edgestore/server';
 import {
   createEdgeStoreNextHandler,
   type CreateContextOptions,
 } from '@edgestore/server/adapters/next/app';
-import { initEdgeStoreClient } from '@edgestore/server/core';
+import { edgestore } from '@edgestore/server/providers/edgestore';
 import { cookies } from 'next/headers';
 import { z } from 'zod';
 
@@ -23,7 +23,7 @@ const es = initEdgeStore.context<Context>().create();
 /**
  * This is the main router for the EdgeStore buckets.
  */
-const edgeStoreRouter = es.router({
+const router = es.router({
   privateImages: es
     .imageBucket()
     .input(z.object({ type: z.enum(['post', 'article']) }))
@@ -33,8 +33,14 @@ const edgeStoreRouter = es.router({
     }),
 });
 
+export const configuredEdgeStore = createEdgeStore({
+  router,
+  provider: edgestore(),
+  baseUrl: 'http://localhost:3000/api/edgestore',
+});
+
 const handler = createEdgeStoreNextHandler({
-  router: edgeStoreRouter,
+  edgestore: configuredEdgeStore,
   createContext,
 });
 
@@ -43,9 +49,6 @@ export { handler as GET, handler as POST };
 /**
  * This type is used to create the type-safe client for the frontend.
  */
-export type EdgeStoreRouter = typeof edgeStoreRouter;
+export type EdgeStoreRouter = typeof router;
 
-export const backendClient = initEdgeStoreClient({
-  router: edgeStoreRouter,
-  baseUrl: 'http://localhost:3000/api/edgestore',
-});
+export const backendClient = configuredEdgeStore.client;

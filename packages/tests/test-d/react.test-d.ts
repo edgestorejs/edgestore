@@ -18,10 +18,12 @@ const { useEdgeStore } = createEdgeStoreProvider<typeof router>();
 type Edgestore = ReturnType<typeof useEdgeStore>['edgestore'];
 type FileUploadResponse = Awaited<ReturnType<Edgestore['files']['upload']>>;
 type ImageUploadResponse = Awaited<ReturnType<Edgestore['images']['upload']>>;
+type FileMutationResponse = Awaited<
+  ReturnType<Edgestore['files']['deleteMany']>
+>;
 
 expectType<[]>({} as FileUploadResponse['pathOrder']);
 expectType<'author'[]>({} as ImageUploadResponse['pathOrder']);
-
 type DocumentUploadParams = Parameters<Edgestore['documents']['upload']>[0];
 
 expectAssignable<DocumentUploadParams>({
@@ -33,3 +35,8 @@ expectNotAssignable<DocumentUploadParams>({
   file: {} as File,
   input: { category: 'other' },
 });
+expectType<string[]>({} as FileMutationResponse['succeeded']);
+expectType<string>({} as FileMutationResponse['failed'][number]['url']);
+expectType<string>(
+  {} as FileMutationResponse['failed'][number]['error']['code'],
+);
