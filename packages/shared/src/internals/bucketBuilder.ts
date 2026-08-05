@@ -2,11 +2,10 @@ import { EdgeStoreError } from '../errors';
 import { type KeysOfUnion, type MaybePromise, type Simplify } from '../types';
 import { createPathParamProxy } from './createPathParamProxy';
 import {
-  NO_INPUT,
+  assertStandardSchema,
   type AnyInput,
   type AnySchema,
   type InferSchemaOutput,
-  type NoInput,
 } from './schema';
 
 export type { AnyInput } from './schema';
@@ -31,21 +30,22 @@ type UnionToIntersection<TType> = (
   ? I
   : never;
 
-export type InferBucketPathKeys<TBucket extends Builder<any, AnyDef>> =
-  KeysOfUnion<TBucket['_def']['path'][number]>;
+export type InferBucketPathKeys<TBucket extends AnyBuilder> = KeysOfUnion<
+  TBucket['_def']['path'][number]
+>;
 
 type InferBucketPathKeysFromDef<TDef extends AnyDef> = KeysOfUnion<
   TDef['path'][number]
 >;
 
-export type InferBucketPathObject<TBucket extends Builder<any, AnyDef>> =
+export type InferBucketPathObject<TBucket extends AnyBuilder> =
   InferBucketPathKeys<TBucket> extends never
     ? Record<string, never>
     : {
         [TKey in InferBucketPathKeys<TBucket>]: string;
       };
 
-export type InferBucketPathOrder<TBucket extends Builder<any, AnyDef>> =
+export type InferBucketPathOrder<TBucket extends AnyBuilder> =
   InferBucketPathKeys<TBucket> extends never
     ? []
     : InferBucketPathKeys<TBucket>[];
@@ -89,7 +89,7 @@ type InferMetadataObjectFromFn<TMetadata> = [
     ? NormalizeMetadata<Awaited<ReturnType<Exclude<TMetadata, undefined>>>>
     : Record<string, never>;
 
-export type InferMetadataObject<TBucket extends Builder<any, AnyDef>> =
+export type InferMetadataObject<TBucket extends AnyBuilder> =
   InferMetadataObjectFromFn<TBucket['_def']['metadata']>;
 
 type InferMetadataObjectFromDef<TDef extends AnyDef> =
@@ -222,7 +222,7 @@ type Def<
   beforeDelete?: BeforeDeleteFn<any, any>;
 };
 
-type AnyDef = Def<any, AnyPath, AnyMetadataFn | undefined>;
+type AnyDef = Def<AnyInput, AnyPath, AnyMetadataFn | undefined>;
 
 type Builder<TCtx, TDef extends AnyDef> = {
   /** only used for types */
@@ -387,7 +387,14 @@ type Builder<TCtx, TDef extends AnyDef> = {
   >;
 };
 
-export type AnyBuilder = Builder<any, AnyDef>;
+type ErasedBuilder<TCtx> = {
+  $config: {
+    ctx: TCtx;
+  };
+  _def: AnyDef;
+};
+
+export type AnyBuilder = ErasedBuilder<any>;
 
 const createNewBuilder = (initDef: AnyDef, newDef: Partial<AnyDef>) => {
   const mergedDef = {
@@ -405,7 +412,7 @@ const createNewBuilder = (initDef: AnyDef, newDef: Partial<AnyDef>) => {
 function createBuilder<
   TCtx,
   TType extends BucketType,
-  TInput extends AnyInput = NoInput,
+  TInput extends AnyInput = undefined,
   TPath extends AnyPath = [],
   TMetadata extends AnyMetadataFn | undefined = undefined,
 >(
@@ -427,7 +434,7 @@ function createBuilder<
 > {
   const _def: AnyDef = {
     type: opts.type,
-    input: NO_INPUT,
+    input: undefined,
     path: [],
     metadata: undefined,
     ...initDef,
@@ -440,6 +447,7 @@ function createBuilder<
     // @ts-expect-error - I think it would be too much work to make this type correct.
     _def,
     input(input) {
+      assertStandardSchema(input);
       return createNewBuilder(_def, {
         input,
       }) as any;
@@ -535,9 +543,9 @@ class EdgeStoreBuilder<TCtx = Record<string, never>> {
 
 export type EdgeStoreRouter<
   TCtx,
-  TBuckets extends Record<string, Builder<TCtx, AnyDef>> = Record<
+  TBuckets extends Record<string, ErasedBuilder<TCtx>> = Record<
     string,
-    Builder<TCtx, AnyDef>
+    ErasedBuilder<TCtx>
   >,
 > = {
   /**

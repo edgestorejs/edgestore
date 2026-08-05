@@ -1,6 +1,7 @@
 import {
   initEdgeStore,
   type AccessControlSchema,
+  type AnyBuilder,
   type AnyContext,
   type EdgeStoreRouter,
   type InferBucketPathObject,
@@ -65,6 +66,11 @@ const broadMetadataBucket = es
     present: 'value',
     absent: undefined,
   }));
+
+type AnyBuilderInput = AnyBuilder['_def']['input'];
+expectAssignable<AnyBuilderInput>(undefined);
+expectAssignable<AnyBuilderInput>(z.object({ value: z.string() }));
+expectNotAssignable<AnyBuilderInput>('not a schema');
 
 expectType<{ author: string; type: string }>(
   {} as InferBucketPathObject<typeof imageBucket>,

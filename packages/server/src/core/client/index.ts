@@ -11,7 +11,6 @@ import {
   type InferMetadataObject,
   type InferSchemaInput,
   type MaybePromise,
-  type NoInput,
   type Prettify,
   type ProviderCapability,
   type ProviderCapabilityFile,
@@ -184,7 +183,7 @@ export type UploadFileRequest<TBucket extends AnyBuilder> = {
   : {
       ctx: TBucket['$config']['ctx'];
     }) &
-  (TBucket['_def']['input'] extends NoInput
+  (TBucket['_def']['input'] extends undefined
     ? {}
     : {
         input: InferSchemaInput<TBucket['_def']['input']>;

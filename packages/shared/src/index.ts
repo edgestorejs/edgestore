@@ -1,7 +1,12 @@
 export * from './errors';
 export * from './types';
 export * from './internals/bucketBuilder';
-export * from './internals/schema';
+export {
+  type AnySchema,
+  type InferSchemaInput,
+  type InferSchemaOutput,
+  parseBucketInput,
+} from './internals/schema';
 export * from './internals/types';
 export * from './internals/providerTypes';
 export * from './internals/providerCapabilities';
