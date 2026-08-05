@@ -53,7 +53,9 @@ jobs:
         shell: bash
         run: |
           if [[ "$GITHUB_REF_NAME" == "next" ]]; then
-            jq -e '.mode == "pre" and .tag == "next"' .changeset/pre.json
+            jq -e \
+              '.mode == "pre" and (.tag == "next" or .tag == "rc")' \
+              .changeset/pre.json
           elif [[ -f .changeset/pre.json ]]; then
             echo 'main must not contain a Changesets prerelease state'
             exit 1
@@ -207,6 +209,11 @@ jobs:
 
       - name: Create snapshot versions
         run: |
+          if [[ -f .changeset/pre.json ]] &&
+             jq -e '.mode == "pre"' .changeset/pre.json >/dev/null; then
+            pnpm changeset pre exit
+          fi
+
           pnpm changeset version --snapshot canary
           pnpm -s sync-versions
         env:

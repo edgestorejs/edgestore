@@ -34,24 +34,30 @@ EDGE_STORE_SECRET_KEY=your-secret-key
 Now we can create the API endpoint in our Astro app. Create a file at `src/pages/api/edgestore/[...edgestore].ts`:
 
 ```ts
-import { initEdgeStore } from '@edgestore/server';
+import { createEdgeStore, initEdgeStore } from '@edgestore/server';
 import { createEdgeStoreAstroHandler } from '@edgestore/server/adapters/astro';
+import { edgestore } from '@edgestore/server/providers/edgestore';
 
 export const prerender = false;
 
 const es = initEdgeStore.create();
 
-const edgeStoreRouter = es.router({
+const router = es.router({
   publicFiles: es.fileBucket(),
 });
 
+const configuredEdgeStore = createEdgeStore({
+  router,
+  provider: edgestore(),
+});
+
 const handler = createEdgeStoreAstroHandler({
-  router: edgeStoreRouter,
+  edgestore: configuredEdgeStore,
 });
 
 export { handler as GET, handler as POST };
 
-export type EdgeStoreRouter = typeof edgeStoreRouter;
+export type EdgeStoreRouter = typeof router;
 ```
 
 The example above is the simplest bucket you can create with EdgeStore. Just a simple file bucket with no validation that will be accessible by anyone with the link.

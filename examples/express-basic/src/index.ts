@@ -1,5 +1,6 @@
-import { initEdgeStore } from '@edgestore/server';
+import { createEdgeStore, initEdgeStore } from '@edgestore/server';
 import { createEdgeStoreExpressHandler } from '@edgestore/server/adapters/express';
+import { edgestore } from '@edgestore/server/providers/edgestore';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
@@ -35,14 +36,18 @@ app.use(express.json());
 
 const es = initEdgeStore.create();
 
-const edgeStoreRouter = es.router({
+const router = es.router({
   publicFiles: es.fileBucket(),
 });
 
-export type EdgeStoreRouter = typeof edgeStoreRouter;
+export type EdgeStoreRouter = typeof router;
 
+const configuredEdgeStore = createEdgeStore({
+  router,
+  provider: edgestore(),
+});
 const handler = createEdgeStoreExpressHandler({
-  router: edgeStoreRouter,
+  edgestore: configuredEdgeStore,
 });
 
 // --- EXPRESS ROUTES ---

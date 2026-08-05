@@ -43,7 +43,7 @@ const imageBucket = es
   .beforeDelete(({ ctx, fileInfo }) => {
     expectType<Context>(ctx);
     expectType<{ author: string; type: string }>(fileInfo.path);
-    expectType<{ role: 'admin' | 'visitor'; extension: string | undefined }>(
+    expectType<{ role: 'admin' | 'visitor'; extension?: string }>(
       fileInfo.metadata,
     );
     return true;
@@ -59,6 +59,12 @@ const transformedInputBucket = es
     expectType<number>(input.count);
     return true;
   });
+const broadMetadataBucket = es
+  .fileBucket()
+  .metadata((): Record<string, string | null | undefined> => ({
+    present: 'value',
+    absent: undefined,
+  }));
 
 expectType<{ author: string; type: string }>(
   {} as InferBucketPathObject<typeof imageBucket>,
@@ -66,12 +72,15 @@ expectType<{ author: string; type: string }>(
 expectType<('author' | 'type')[]>(
   {} as InferBucketPathOrder<typeof imageBucket>,
 );
-expectType<{ role: 'admin' | 'visitor'; extension: string | undefined }>(
+expectType<{ role: 'admin' | 'visitor'; extension?: string }>(
   {} as InferMetadataObject<typeof imageBucket>,
 );
 expectType<{ author: string }>({} as InferBucketPathObject<typeof fileBucket>);
 expectType<[]>({} as InferBucketPathOrder<typeof emptyBucket>);
 void transformedInputBucket;
+expectType<Record<string, string>>(
+  {} as InferMetadataObject<typeof broadMetadataBucket>,
+);
 
 expectAssignable<AccessControlSchema<Context, typeof imageBucket._def>>({
   userId: { path: 'author' },
@@ -100,31 +109,18 @@ type ExactRouter = EdgeStoreRouter<Context, typeof router.buckets>;
 expectType<typeof imageBucket>({} as ExactRouter['buckets']['imageBucket']);
 expectType<typeof fileBucket>({} as ExactRouter['buckets']['fileBucket']);
 
-type NestedContext = {
-  user: {
-    id: string;
-    profile: {
-      role: 'admin' | 'visitor';
-    };
-  };
-};
-
-const nestedEs = initEdgeStore.context<NestedContext>().create();
-const nestedBucket = nestedEs
-  .fileBucket()
-  .path(({ ctx }) => [
-    { author: ctx.user.id },
-    { role: ctx.user.profile.role },
-  ]);
-
-expectType<{ author: string; role: string }>(
-  {} as InferBucketPathObject<typeof nestedBucket>,
-);
+expectAssignable<AnyContext>({
+  userId: 'user-1',
+  role: undefined,
+});
 
 expectNotAssignable<AnyContext>({
   user: {
-    id: 123,
+    id: 'user-1',
   },
 });
-// @ts-expect-error context path leaves must be string-compatible.
-initEdgeStore.context<{ user: { id: number } }>().create();
+// @ts-expect-error nested context values are not supported.
+initEdgeStore.context<{ user: { id: string } }>().create();
+expectNotAssignable<AnyContext>({ userId: null });
+// @ts-expect-error null context values are not supported.
+initEdgeStore.context<{ userId: null }>().create();
