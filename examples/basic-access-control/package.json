@@ -9,8 +9,8 @@
     "lint": "eslint --cache --report-unused-disable-directives src"
   },
   "dependencies": {
-    "@edgestore/react": "^0.8.0",
-    "@edgestore/server": "^0.8.0",
+    "@edgestore/react": "^1.0.0-next.1",
+    "@edgestore/server": "^1.0.0-next.1",
     "next": "16.2.10",
     "react": "19.2.7",
     "react-dom": "19.2.7",

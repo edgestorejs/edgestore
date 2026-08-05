@@ -1,0 +1,86 @@
+---
+title: Azure Blob Storage
+description: Learn how to use your own Azure Blob Storage with EdgeStore.
+---
+
+You can also use the EdgeStore package with your own Azure Blob Storage. You might want to do that in case you have strict company policies that require you to have all the data in your own Azure account.
+
+The provider creates short-lived, blob-scoped SAS URLs for browser uploads and
+private reads. Permanent file URLs never contain credentials. Advanced hosted
+features such as image processing still require separate infrastructure.
+
+## Installation
+
+You need to install some peer dependencies to use this provider.
+
+```package-install
+@azure/storage-blob
+```
+
+Then configure the provider together with the router and pass the resulting
+`configuredEdgeStore` instance to the adapter.
+
+```ts
+import { createEdgeStore, initEdgeStore } from '@edgestore/server';
+import {
+  createEdgeStoreNextHandler,
+  type CreateContextOptions,
+} from '@edgestore/server/adapters/next/pages';
+// [!code ++]
+import { azureBlob } from '@edgestore/server/providers/azure-blob';
+import { z } from 'zod';
+
+// ...
+
+const configuredEdgeStore = createEdgeStore({
+  router,
+  // [!code ++]
+  provider: azureBlob(),
+});
+
+export default createEdgeStoreNextHandler<Context>({
+  edgestore: configuredEdgeStore,
+  createContext,
+});
+```
+
+## Options
+
+```ts
+export type AzureBlobProviderOptions = {
+  /**
+   * The storage account name for Azure Blob Storage
+   * Can also be set via the `ES_AZURE_ACCOUNT_NAME` environment variable.
+   */
+  storageAccountName?: string;
+  /**
+   * Account key used for server-side requests and signing short-lived URLs.
+   * Can also be set via the `ES_AZURE_ACCOUNT_KEY` environment variable.
+   */
+  storageAccountKey?: string;
+  /**
+   * Azure Blob Storage container name
+   * Can also be set via the `ES_AZURE_CONTAINER_NAME` environment variable.
+   */
+  containerName?: string;
+  /**
+   * Optional base URL for Azurite or another compatible endpoint.
+   * Can also be set via the `ES_AZURE_BASE_URL` environment variable.
+   */
+  customBaseUrl?: string;
+  /**
+   * Lifetime of browser upload URLs in seconds.
+   * @default 3600
+   */
+  uploadUrlExpiresIn?: number;
+  /**
+   * Default lifetime of private read URLs in seconds.
+   * @default 3600
+   */
+  signedUrlExpiresIn?: number;
+};
+```
+
+The account key stays on the server. Upload URLs receive only create/write
+permissions, while private read URLs receive only read permission and expire
+independently.

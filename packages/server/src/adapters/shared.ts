@@ -1,9 +1,11 @@
 import {
   EdgeStoreError,
-  type AnyBuilder,
+  type AnyContext,
+  type AnyEdgeStoreProvider,
   type EdgeStoreRouter,
-  type Provider,
-  type SharedDeleteFileRes,
+  type ProviderFileMutationResult,
+  type SharedConfirmUploadsRes,
+  type SharedDeleteFilesRes,
   type SharedInitRes,
   type SharedRequestUploadPartsRes,
   type SharedRequestUploadRes,
@@ -11,14 +13,19 @@ import {
 import { hkdf } from '@panva/hkdf';
 import { stringifySetCookie } from 'cookie';
 import { EncryptJWT, jwtDecrypt } from 'jose';
-import type Logger from '../libs/logger';
-import { IMAGE_MIME_TYPES } from './imageTypes';
+import { z } from 'zod';
+import { getProviderBaseUrl, referenceFromUrl } from '../core/provider';
+import { buildPath, parseBucketInput, parsePath } from '../core/routerRules';
+import { validateFileForBucket } from '../core/validateFile';
+import { getEnv, isDev } from '../libs/env';
+import type { LoggerLike } from '../libs/logger';
 
 // TODO: change it to 1 hour when we have a way to refresh the token
 const DEFAULT_MAX_AGE = 30 * 24 * 60 * 60; // 30 days
 
-declare const globalThis: {
-  _EDGE_STORE_LOGGER: Logger;
+export type HandlerEdgeStore<TCtx extends AnyContext> = {
+  provider: AnyEdgeStoreProvider;
+  router: EdgeStoreRouter<TCtx>;
 };
 
 const NO_BODY_STATUSES = new Set([204, 205, 304]);
@@ -158,37 +165,20 @@ export function getCookieConfig(
   };
 }
 
-export async function init<TCtx>(params: {
-  provider: Provider;
+export async function init<TCtx extends AnyContext>(params: {
+  provider: AnyEdgeStoreProvider;
   router: EdgeStoreRouter<TCtx>;
   ctx: TCtx;
+  logger: LoggerLike;
   cookieConfig?: CookieConfig;
 }): Promise<SharedInitRes> {
-  const log = globalThis._EDGE_STORE_LOGGER;
-  const { ctx, provider, router, cookieConfig } = params;
-  log.debug('Running [init]', { ctx });
+  const { ctx, provider, router, logger, cookieConfig } = params;
+  logger.debug('Running [init]', { ctx });
 
   const resolvedCookieConfig = getCookieConfig(cookieConfig);
 
   const ctxToken = await encryptJWT(ctx);
-  const requiresFileAccessCookie =
-    provider.name === 'edgestore' &&
-    Object.values(router.buckets).some(
-      (bucket) =>
-        bucket._def.accessControl !== undefined &&
-        bucket._def.accessControl !== 'private',
-    );
-  const shouldRunProviderInit =
-    provider.name !== 'edgestore' || requiresFileAccessCookie;
-
-  let token: string | undefined;
-  if (shouldRunProviderInit) {
-    const initRes = await provider.init({
-      ctx,
-      router: router,
-    });
-    token = initRes.token;
-  }
+  const initRes = await provider.init({ ctx, router });
   const newCookies = [
     stringifySetCookie({
       name: resolvedCookieConfig.ctx.name,
@@ -196,62 +186,65 @@ export async function init<TCtx>(params: {
       ...resolvedCookieConfig.ctx.options,
     }),
   ];
-  if (token) {
+  if (initRes.token) {
     newCookies.push(
       stringifySetCookie({
         name: resolvedCookieConfig.token.name,
-        value: token,
+        value: initRes.token,
         ...resolvedCookieConfig.token.options,
       }),
     );
   }
-  const baseUrl = await provider.getBaseUrl();
+  const baseUrl = await getProviderBaseUrl(provider);
 
-  log.debug('Finished [init]', {
+  logger.debug('Finished [init]', {
     ctx,
     newCookies,
-    token,
     baseUrl,
     providerName: provider.name,
-    requiresFileAccessCookie,
+    clientInit: initRes.clientInit,
   });
 
   return {
     newCookies,
-    token,
     baseUrl,
     providerName: provider.name,
-    requiresFileAccessCookie,
+    clientInit: initRes.clientInit,
   };
 }
 
-export type RequestUploadBody = {
-  bucketName: string;
-  input: any;
-  fileInfo: {
-    size: number;
-    type: string;
-    extension: string;
-    fileName?: string;
-    replaceTargetUrl?: string;
-    temporary: boolean;
-  };
-};
+const nonEmptyStringSchema = z.string().min(1);
 
-export async function requestUpload<TCtx>(params: {
-  provider: Provider;
+export const requestUploadBodySchema = z.object({
+  bucketName: nonEmptyStringSchema,
+  input: z.unknown().default({}),
+  fileInfo: z.object({
+    size: z.number().finite().nonnegative(),
+    type: z.string(),
+    extension: z.string(),
+    fileName: z.string().optional(),
+    replaceTargetUrl: nonEmptyStringSchema.optional(),
+    temporary: z.boolean().default(false),
+  }),
+});
+
+export type RequestUploadBody = z.infer<typeof requestUploadBodySchema>;
+
+export async function requestUpload<TCtx extends AnyContext>(params: {
+  provider: AnyEdgeStoreProvider;
   router: EdgeStoreRouter<TCtx>;
   ctxToken: string | undefined;
   body: RequestUploadBody;
+  logger: LoggerLike;
 }): Promise<SharedRequestUploadRes> {
   const {
     provider,
     router,
     ctxToken,
+    logger,
     body: { bucketName, input, fileInfo },
   } = params;
-  const log = globalThis._EDGE_STORE_LOGGER;
-  log.debug('Running [requestUpload]', { bucketName, input, fileInfo });
+  logger.debug('Running [requestUpload]', { bucketName, input, fileInfo });
 
   if (!ctxToken) {
     throw new EdgeStoreError({
@@ -261,7 +254,7 @@ export async function requestUpload<TCtx>(params: {
   }
   const ctx = await getContext(ctxToken);
 
-  log.debug('Decrypted Context', { ctx });
+  logger.debug('Decrypted Context', { ctx });
 
   const bucket = router.buckets[bucketName];
   if (!bucket) {
@@ -270,11 +263,12 @@ export async function requestUpload<TCtx>(params: {
       code: 'BAD_REQUEST',
     });
   }
+  const parsedInput = await parseBucketInput(bucket, input);
   if (bucket._def.beforeUpload) {
-    log.debug('Running [beforeUpload]');
+    logger.debug('Running [beforeUpload]');
     const canUpload = await bucket._def.beforeUpload?.({
       ctx,
-      input,
+      input: parsedInput,
       fileInfo: {
         size: fileInfo.size,
         type: fileInfo.type,
@@ -284,7 +278,7 @@ export async function requestUpload<TCtx>(params: {
         temporary: fileInfo.temporary,
       },
     });
-    log.debug('Finished [beforeUpload]', { canUpload });
+    logger.debug('Finished [beforeUpload]', { canUpload });
     if (!canUpload) {
       throw new EdgeStoreError({
         message: 'Upload not allowed for the current context',
@@ -293,78 +287,28 @@ export async function requestUpload<TCtx>(params: {
     }
   }
 
-  if (bucket._def.type === 'IMAGE') {
-    if (!IMAGE_MIME_TYPES.includes(fileInfo.type)) {
-      throw new EdgeStoreError({
-        code: 'MIME_TYPE_NOT_ALLOWED',
-        message: 'Only images are allowed in this bucket',
-        details: {
-          allowedMimeTypes: IMAGE_MIME_TYPES,
-          mimeType: fileInfo.type,
-        },
-      });
-    }
-  }
-
-  if (bucket._def.bucketConfig?.maxSize) {
-    if (fileInfo.size > bucket._def.bucketConfig.maxSize) {
-      throw new EdgeStoreError({
-        code: 'FILE_TOO_LARGE',
-        message: `File size is too big. Max size is ${bucket._def.bucketConfig.maxSize}`,
-        details: {
-          maxFileSize: bucket._def.bucketConfig.maxSize,
-          fileSize: fileInfo.size,
-        },
-      });
-    }
-  }
-
-  if (bucket._def.bucketConfig?.accept) {
-    const accept = bucket._def.bucketConfig.accept;
-    let accepted = false;
-    for (const acceptedMimeType of accept) {
-      if (acceptedMimeType.endsWith('/*')) {
-        const mimeType = acceptedMimeType.replace('/*', '');
-        if (fileInfo.type.startsWith(mimeType)) {
-          accepted = true;
-          break;
-        }
-      } else if (fileInfo.type === acceptedMimeType) {
-        accepted = true;
-        break;
-      }
-    }
-    if (!accepted) {
-      throw new EdgeStoreError({
-        code: 'MIME_TYPE_NOT_ALLOWED',
-        message: `"${
-          fileInfo.type
-        }" is not allowed. Accepted types are ${JSON.stringify(accept)}`,
-        details: {
-          allowedMimeTypes: accept,
-          mimeType: fileInfo.type,
-        },
-      });
-    }
-  }
+  validateFileForBucket({ bucket, fileInfo });
 
   const path = buildPath({
-    fileInfo,
     bucket,
-    pathAttrs: { ctx, input },
+    pathAttrs: { ctx, input: parsedInput },
   });
-  const metadata = await bucket._def.metadata?.({ ctx, input });
+  const metadata =
+    (await bucket._def.metadata?.({
+      ctx,
+      input: parsedInput,
+    })) ?? {};
   const isPublic = bucket._def.accessControl === undefined;
   const autoSignedUrls = bucket._def.autoSignedUrls;
 
-  log.debug('upload info', {
+  logger.debug('upload info', {
     path,
     metadata,
     isPublic,
     bucketType: bucket._def.type,
   });
 
-  const requestUploadRes = await provider.requestUpload({
+  const requestUploadRes = await provider.uploads.request({
     bucketName,
     bucketType: bucket._def.type,
     fileInfo: {
@@ -377,7 +321,7 @@ export async function requestUpload<TCtx>(params: {
   });
   const { parsedPath, pathOrder } = parsePath(path);
 
-  log.debug('Finished [requestUpload]');
+  logger.debug('Finished [requestUpload]');
 
   return {
     ...requestUploadRes,
@@ -389,28 +333,33 @@ export async function requestUpload<TCtx>(params: {
   };
 }
 
-export type RequestUploadPartsParams = {
-  multipart: {
-    uploadId: string;
-    parts: number[];
-  };
-  path: string;
-};
+export const requestUploadPartsBodySchema = z.object({
+  multipart: z.object({
+    uploadId: nonEmptyStringSchema,
+    parts: z.array(z.number().int().positive()),
+  }),
+  path: nonEmptyStringSchema,
+});
 
-export async function requestUploadParts<TCtx>(params: {
-  provider: Provider;
+export type RequestUploadPartsParams = z.infer<
+  typeof requestUploadPartsBodySchema
+>;
+
+export async function requestUploadParts<TCtx extends AnyContext>(params: {
+  provider: AnyEdgeStoreProvider;
   router: EdgeStoreRouter<TCtx>;
   ctxToken: string | undefined;
   body: RequestUploadPartsParams;
+  logger: LoggerLike;
 }): Promise<SharedRequestUploadPartsRes> {
   const {
     provider,
     ctxToken,
+    logger,
     body: { multipart, path },
   } = params;
 
-  const log = globalThis._EDGE_STORE_LOGGER;
-  log.debug('Running [requestUploadParts]', { multipart, path });
+  logger.debug('Running [requestUploadParts]', { multipart, path });
 
   if (!ctxToken) {
     throw new EdgeStoreError({
@@ -420,41 +369,55 @@ export async function requestUploadParts<TCtx>(params: {
   }
   await getContext(ctxToken); // just to check if the token is valid
 
-  const res = await provider.requestUploadParts({
+  const multipartUploads = provider.uploads.multipart;
+  if (!multipartUploads) {
+    throw new EdgeStoreError({
+      message: `Provider ${provider.name} does not support multipart uploads.`,
+      code: 'BAD_REQUEST',
+    });
+  }
+  const res = await multipartUploads.requestParts({
     multipart,
     path,
   });
 
-  log.debug('Finished [requestUploadParts]');
+  logger.debug('Finished [requestUploadParts]');
 
   return res;
 }
 
-export type CompleteMultipartUploadBody = {
-  bucketName: string;
-  uploadId: string;
-  key: string;
-  parts: {
-    partNumber: number;
-    eTag: string;
-  }[];
-};
+export const completeMultipartUploadBodySchema = z.object({
+  bucketName: nonEmptyStringSchema,
+  uploadId: nonEmptyStringSchema,
+  key: nonEmptyStringSchema,
+  parts: z.array(
+    z.object({
+      partNumber: z.number().int().positive(),
+      eTag: nonEmptyStringSchema,
+    }),
+  ),
+});
 
-export async function completeMultipartUpload<TCtx>(params: {
-  provider: Provider;
+export type CompleteMultipartUploadBody = z.infer<
+  typeof completeMultipartUploadBodySchema
+>;
+
+export async function completeMultipartUpload<TCtx extends AnyContext>(params: {
+  provider: AnyEdgeStoreProvider;
   router: EdgeStoreRouter<TCtx>;
   ctxToken: string | undefined;
   body: CompleteMultipartUploadBody;
+  logger: LoggerLike;
 }) {
   const {
     provider,
     router,
     ctxToken,
+    logger,
     body: { bucketName, uploadId, key, parts },
   } = params;
 
-  const log = globalThis._EDGE_STORE_LOGGER;
-  log.debug('Running [completeMultipartUpload]', {
+  logger.debug('Running [completeMultipartUpload]', {
     bucketName,
     uploadId,
     key,
@@ -475,37 +438,45 @@ export async function completeMultipartUpload<TCtx>(params: {
     });
   }
 
-  const res = await provider.completeMultipartUpload({
+  const multipartUploads = provider.uploads.multipart;
+  if (!multipartUploads) {
+    throw new EdgeStoreError({
+      message: `Provider ${provider.name} does not support multipart uploads.`,
+      code: 'BAD_REQUEST',
+    });
+  }
+  await multipartUploads.complete({
     uploadId,
     key,
     parts,
   });
 
-  log.debug('Finished [completeMultipartUpload]');
-
-  return res;
+  logger.debug('Finished [completeMultipartUpload]');
 }
 
-export type ConfirmUploadBody = {
-  bucketName: string;
-  url: string;
-};
+export const confirmUploadsBodySchema = z.object({
+  bucketName: nonEmptyStringSchema,
+  urls: z.array(nonEmptyStringSchema),
+});
 
-export async function confirmUpload<TCtx>(params: {
-  provider: Provider;
+export type ConfirmUploadsBody = z.infer<typeof confirmUploadsBodySchema>;
+
+export async function confirmUploads<TCtx extends AnyContext>(params: {
+  provider: AnyEdgeStoreProvider;
   router: EdgeStoreRouter<TCtx>;
   ctxToken: string | undefined;
-  body: ConfirmUploadBody;
-}) {
+  body: ConfirmUploadsBody;
+  logger: LoggerLike;
+}): Promise<SharedConfirmUploadsRes> {
   const {
     provider,
     router,
     ctxToken,
-    body: { bucketName, url },
+    logger,
+    body: { bucketName, urls },
   } = params;
 
-  const log = globalThis._EDGE_STORE_LOGGER;
-  log.debug('Running [confirmUpload]', { bucketName, url });
+  logger.debug('Running [confirmUploads]', { bucketName, urls });
 
   if (!ctxToken) {
     throw new EdgeStoreError({
@@ -522,35 +493,47 @@ export async function confirmUpload<TCtx>(params: {
     });
   }
 
-  const res = await provider.confirmUpload({
-    bucket,
-    url: unproxyUrl(url),
+  if (!provider.files.confirm) {
+    throw new EdgeStoreError({
+      message: `Provider ${provider.name} does not support file confirmation.`,
+      code: 'SERVER_ERROR',
+    });
+  }
+  const files = await Promise.all(
+    urls.map((url) => referenceFromUrl(provider, unproxyUrl(url))),
+  );
+  const result = await provider.files.confirm({
+    bucketName,
+    files,
   });
 
-  log.debug('Finished [confirmUpload]');
-  return res;
+  logger.debug('Finished [confirmUploads]');
+  return mapFrontendMutationResult(urls, result);
 }
 
-export type DeleteFileBody = {
-  bucketName: string;
-  url: string;
-};
+export const deleteFilesBodySchema = z.object({
+  bucketName: nonEmptyStringSchema,
+  urls: z.array(nonEmptyStringSchema),
+});
 
-export async function deleteFile<TCtx>(params: {
-  provider: Provider;
+export type DeleteFilesBody = z.infer<typeof deleteFilesBodySchema>;
+
+export async function deleteFiles<TCtx extends AnyContext>(params: {
+  provider: AnyEdgeStoreProvider;
   router: EdgeStoreRouter<TCtx>;
   ctxToken: string | undefined;
-  body: DeleteFileBody;
-}): Promise<SharedDeleteFileRes> {
+  body: DeleteFilesBody;
+  logger: LoggerLike;
+}): Promise<SharedDeleteFilesRes> {
   const {
     provider,
     router,
     ctxToken,
-    body: { bucketName, url },
+    logger,
+    body: { bucketName, urls },
   } = params;
 
-  const log = globalThis._EDGE_STORE_LOGGER;
-  log.debug('Running [deleteFile]', { bucketName, url });
+  logger.debug('Running [deleteFiles]', { bucketName, urls });
 
   if (!ctxToken) {
     throw new EdgeStoreError({
@@ -575,31 +558,84 @@ export async function deleteFile<TCtx>(params: {
     });
   }
 
-  const fileInfo = await provider.getFile({
-    url: unproxyUrl(url),
-  });
-
-  const canDelete = await bucket._def.beforeDelete({
-    ctx,
-    fileInfo,
-  });
-  if (!canDelete) {
+  if (!provider.files.delete) {
+    throw new EdgeStoreError({
+      message: `Provider ${provider.name} does not support file deletion.`,
+      code: 'SERVER_ERROR',
+    });
+  }
+  const files = await Promise.all(
+    urls.map((url) => referenceFromUrl(provider, unproxyUrl(url))),
+  );
+  const fileRecords = await Promise.all(
+    files.map((file) =>
+      Promise.resolve(provider.files.get({ bucketName, file })),
+    ),
+  );
+  const authorizations = await Promise.all(
+    fileRecords.map((file) => {
+      if (file.path === undefined && bucket._def.path.length > 0) {
+        throw new EdgeStoreError({
+          message: `Provider ${provider.name} must return path from files.get to authorize frontend deletion for a bucket with configured path fields.`,
+          code: 'SERVER_ERROR',
+        });
+      }
+      if (file.metadata === undefined && bucket._def.metadata !== undefined) {
+        throw new EdgeStoreError({
+          message: `Provider ${provider.name} must return metadata from files.get to authorize frontend deletion for a bucket with configured metadata fields.`,
+          code: 'SERVER_ERROR',
+        });
+      }
+      return Promise.resolve(
+        bucket._def.beforeDelete!({
+          ctx,
+          fileInfo: {
+            url: file.url,
+            size: file.sizeBytes,
+            uploadedAt: new Date(file.uploadedAt),
+            path: file.path ?? {},
+            metadata: file.metadata ?? {},
+          },
+        }),
+      );
+    }),
+  );
+  if (authorizations.some((allowed) => !allowed)) {
     throw new EdgeStoreError({
       message: 'Delete not allowed for the current context',
       code: 'DELETE_NOT_ALLOWED',
     });
   }
-  const res = await provider.deleteFile({
-    bucket,
-    url: unproxyUrl(url),
+  const result = await provider.files.delete({
+    bucketName,
+    files,
   });
 
-  log.debug('Finished [deleteFile]');
+  logger.debug('Finished [deleteFiles]');
 
-  return res;
+  return mapFrontendMutationResult(urls, result);
 }
 
-async function encryptJWT(ctx: any) {
+function mapFrontendMutationResult(
+  urls: string[],
+  result: ProviderFileMutationResult<string>,
+): SharedDeleteFilesRes {
+  if (result.results.length !== urls.length) {
+    throw new Error(
+      `The provider returned ${result.results.length} mutation results for ${urls.length} files.`,
+    );
+  }
+  const succeeded: string[] = [];
+  const failed: SharedDeleteFilesRes['failed'] = [];
+  result.results.forEach((item, index) => {
+    const url = urls[index]!;
+    if (item.success) succeeded.push(url);
+    else failed.push({ url, error: item.error });
+  });
+  return { succeeded, failed };
+}
+
+async function encryptJWT(ctx: AnyContext) {
   const secret =
     getEnv('EDGE_STORE_JWT_SECRET') ?? getEnv('EDGE_STORE_SECRET_KEY');
   if (!secret) {
@@ -609,7 +645,7 @@ async function encryptJWT(ctx: any) {
     });
   }
   const encryptionSecret = await getDerivedEncryptionKey(secret);
-  return await new EncryptJWT(ctx)
+  return await new EncryptJWT({ ctx })
     .setProtectedHeader({ alg: 'dir', enc: 'A256GCM' })
     .setIssuedAt()
     .setExpirationTime(Date.now() / 1000 + DEFAULT_MAX_AGE)
@@ -630,7 +666,15 @@ async function decryptJWT(token: string) {
   const { payload } = await jwtDecrypt(token, encryptionSecret, {
     clockTolerance: 15,
   });
-  return payload;
+  const result = z.object({ ctx: z.record(z.string()) }).safeParse(payload);
+  if (!result.success) {
+    throw new EdgeStoreError({
+      message: 'Invalid edgestore-ctx cookie',
+      code: 'UNAUTHORIZED',
+      cause: result.error,
+    });
+  }
+  return result.data.ctx;
 }
 
 async function getDerivedEncryptionKey(secret: string) {
@@ -641,57 +685,6 @@ async function getDerivedEncryptionKey(secret: string) {
     'EdgeStore Generated Encryption Key',
     32,
   );
-}
-
-export function buildPath(params: {
-  fileInfo: RequestUploadBody['fileInfo'];
-  bucket: AnyBuilder;
-  pathAttrs: {
-    ctx: any;
-    input: any;
-  };
-}) {
-  const { bucket } = params;
-  const pathParams = bucket._def.path;
-  const path = pathParams.map((param) => {
-    const paramEntries = Object.entries(param);
-    if (paramEntries[0] === undefined) {
-      throw new EdgeStoreError({
-        message: `Empty path param found in: ${JSON.stringify(pathParams)}`,
-        code: 'SERVER_ERROR',
-      });
-    }
-    const [key, value] = paramEntries[0];
-    // this is a string like: "ctx.xxx" or "input.yyy.zzz"
-    const currParamVal = value()
-      .split('.')
-      .reduce((acc2: any, key: string) => {
-        if (acc2[key] === undefined) {
-          throw new EdgeStoreError({
-            message: `Missing key ${key} in ${JSON.stringify(acc2)}`,
-            code: 'BAD_REQUEST',
-          });
-        }
-        return acc2[key];
-      }, params.pathAttrs as any) as string;
-    return {
-      key,
-      value: currParamVal,
-    };
-  });
-  return path;
-}
-
-export function parsePath(path: { key: string; value: string }[]) {
-  const parsedPath = path.reduce<Record<string, string>>((acc, curr) => {
-    acc[curr.key] = curr.value;
-    return acc;
-  }, {});
-  const pathOrder = path.map((p) => p.key);
-  return {
-    parsedPath,
-    pathOrder,
-  };
 }
 
 async function getContext(token: string) {
@@ -714,21 +707,4 @@ function unproxyUrl(url: string) {
     }
   }
   return url;
-}
-
-export function getEnv(key: string): string | undefined {
-  if (typeof process !== 'undefined' && process.env) {
-    // @ts-expect-error - In Vite/Astro, the env variables are available on `import.meta`.
-    return process.env[key] ?? import.meta.env?.[key];
-  }
-  // @ts-expect-error - In Vite/Astro, the env variables are available on `import.meta`.
-  return import.meta.env?.[key];
-}
-
-export function isDev(): boolean {
-  return (
-    process?.env?.NODE_ENV === 'development' ||
-    // @ts-expect-error - In Vite/Astro, the env variables are available on `import.meta`.
-    import.meta.env?.DEV
-  );
 }

@@ -16,9 +16,9 @@ export const input = [
   'src/adapters/next/app/index.ts',
   'src/adapters/remix/index.ts',
   'src/adapters/start/index.ts',
-  'src/providers/aws/index.ts',
-  'src/providers/azure/index.ts',
+  'src/providers/azure-blob/index.ts',
   'src/providers/edgestore/index.ts',
+  'src/providers/s3/index.ts',
 ];
 
 export default function rollup(): RollupOptions[] {

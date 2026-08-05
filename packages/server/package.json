@@ -1,6 +1,6 @@
 {
   "name": "@edgestore/server",
-  "version": "0.8.0",
+  "version": "1.0.0-next.1",
   "description": "Upload files with ease from React/Next.js",
   "homepage": "https://edgestore.dev",
   "license": "MIT",
@@ -41,7 +41,6 @@
     "test:smoke:prod": "TEST_ENV=prod vitest run --config vitest.smoke.config.ts",
     "test:smoke:adapter": "vitest run --config vitest.smoke.config.ts src/adapters/edgestore.smoke.test.ts",
     "test:smoke:client": "vitest run --config vitest.smoke.config.ts src/core/client/edgestore.smoke.test.ts",
-    "test:smoke:errors": "vitest run --config vitest.smoke.config.ts src/core/sdk/edgestore.errors.smoke.test.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint --cache --report-unused-disable-directives src"
   },
@@ -97,20 +96,20 @@
       "import": "./dist/core/index.js",
       "default": "./dist/core/index.js"
     },
-    "./providers/aws": {
-      "types": "./dist/providers/aws/index.d.ts",
-      "import": "./dist/providers/aws/index.js",
-      "default": "./dist/providers/aws/index.js"
-    },
-    "./providers/azure": {
-      "types": "./dist/providers/azure/index.d.ts",
-      "import": "./dist/providers/azure/index.js",
-      "default": "./dist/providers/azure/index.js"
+    "./providers/azure-blob": {
+      "types": "./dist/providers/azure-blob/index.d.ts",
+      "import": "./dist/providers/azure-blob/index.js",
+      "default": "./dist/providers/azure-blob/index.js"
     },
     "./providers/edgestore": {
       "types": "./dist/providers/edgestore/index.d.ts",
       "import": "./dist/providers/edgestore/index.js",
       "default": "./dist/providers/edgestore/index.js"
+    },
+    "./providers/s3": {
+      "types": "./dist/providers/s3/index.d.ts",
+      "import": "./dist/providers/s3/index.js",
+      "default": "./dist/providers/s3/index.js"
     }
   },
   "files": [
@@ -126,7 +125,9 @@
     "!**/__tests__"
   ],
   "dependencies": {
-    "@edgestore/shared": "0.8.0",
+    "@edgestore/sdk": "1.0.0-next.1",
+    "@edgestore/shared": "1.0.0-next.1",
+    "@standard-schema/spec": "^1.1.0",
     "@panva/hkdf": "^1.2.1",
     "cookie": "^2.0.1",
     "jose": "^6.2.3"
