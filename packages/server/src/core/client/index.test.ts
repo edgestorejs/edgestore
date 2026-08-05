@@ -439,6 +439,7 @@ describe('createEdgeStore', () => {
     await client.documents.upload({
       content: 'invoice',
       ctx: { userId: 'user-1' },
+      input: undefined,
     });
 
     expect(backend.upload).toHaveBeenCalledWith(
