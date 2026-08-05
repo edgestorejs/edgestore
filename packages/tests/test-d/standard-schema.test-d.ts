@@ -1,5 +1,6 @@
 import { createEdgeStoreProvider } from '@edgestore/react';
-import { initEdgeStoreClient } from '@edgestore/server/core';
+import { createEdgeStore } from '@edgestore/server';
+import { edgestore as edgestoreProvider } from '@edgestore/server/providers/edgestore';
 import { initEdgeStore } from '@edgestore/shared';
 import { type StandardSchemaV1 } from '@standard-schema/spec';
 import { type } from 'arktype';
@@ -44,7 +45,7 @@ const customBucket = es
   });
 
 const router = es.router({ valibotBucket, arkTypeBucket, customBucket });
-const client = initEdgeStoreClient({ router });
+const client = createEdgeStore({ router, provider: edgestoreProvider() }).client;
 const { useEdgeStore } = createEdgeStoreProvider<typeof router>();
 const { edgestore } = useEdgeStore();
 
