@@ -217,7 +217,7 @@ const nonEmptyStringSchema = z.string().min(1);
 
 export const requestUploadBodySchema = z.object({
   bucketName: nonEmptyStringSchema,
-  input: z.unknown().default({}),
+  input: z.unknown(),
   fileInfo: z.object({
     size: z.number().finite().nonnegative(),
     type: z.string(),

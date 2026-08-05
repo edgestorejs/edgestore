@@ -93,11 +93,7 @@ function createUploadMethods<
 
   return {
     upload: async (params: Prettify<UploadFileRequest<TBucket>>) => {
-      const {
-        content,
-        ctx = {},
-        input = {},
-      }: UploadImplementationParams = params;
+      const { content, ctx = {}, input }: UploadImplementationParams = params;
       let { blob, extension } = await resolveUploadContent(
         content,
         params.signal,

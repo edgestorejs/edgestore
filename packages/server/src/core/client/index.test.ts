@@ -425,6 +425,32 @@ describe('createEdgeStore', () => {
     );
   });
 
+  it('preserves undefined input for schemas that provide defaults', async () => {
+    const es = initEdgeStore.context<{ userId: string }>().create();
+    const router = es.router({
+      documents: es
+        .fileBucket()
+        .input(z.object({ type: z.string() }).default({ type: 'invoice' }))
+        .path(({ input }) => [{ type: input.type }])
+        .metadata(({ input }) => ({ type: input.type })),
+    });
+    const client = createEdgeStore({ router, provider }).client;
+
+    await client.documents.upload({
+      content: 'invoice',
+      ctx: { userId: 'user-1' },
+    });
+
+    expect(backend.upload).toHaveBeenCalledWith(
+      expect.objectContaining({
+        fileInfo: expect.objectContaining({
+          path: [{ key: 'type', value: 'invoice' }],
+          metadata: { type: 'invoice' },
+        }),
+      }),
+    );
+  });
+
   it('awaits async validation and rejects invalid input before upload', async () => {
     const es = initEdgeStore.context<{ userId: string }>().create();
     const router = es.router({
