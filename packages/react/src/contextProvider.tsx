@@ -1,14 +1,8 @@
-import { type AnyRouter } from '@edgestore/shared';
+import { type AnyRouter, type SharedInitRes } from '@edgestore/shared';
 import * as React from 'react';
 import { createNextProxy, type BucketFunctions } from './createNextProxy';
 import EdgeStoreClientError from './libs/errors/EdgeStoreClientError';
 import { handleError } from './libs/errors/handleError';
-
-const DEFAULT_BASE_URL =
-  (typeof process !== 'undefined'
-    ? process.env.NEXT_PUBLIC_EDGE_STORE_BASE_URL
-    : // @ts-expect-error - In Vite, the env variables are available on `import.meta`.
-      import.meta.env?.EDGE_STORE_BASE_URL) ?? 'https://files.edgestore.dev';
 
 type EdgeStoreContextValue<TRouter extends AnyRouter> = {
   edgestore: BucketFunctions<TRouter>;
@@ -156,25 +150,17 @@ function EdgeStoreProviderInner<TRouter extends AnyRouter>({
         credentials: 'include',
       });
       if (res.ok) {
-        const json = await res.json();
+        const json = (await res.json()) as Omit<SharedInitRes, 'newCookies'>;
 
-        // Older servers do not return requiresFileAccessCookie, so only skip
-        // _init when the server explicitly says the files cookie is unnecessary.
-        if (
-          json.providerName === 'edgestore' &&
-          json.requiresFileAccessCookie !== false
-        ) {
-          if (!json.token) {
-            throw new EdgeStoreClientError("Couldn't initialize EdgeStore.");
-          }
-
-          const innerRes = await fetch(`${DEFAULT_BASE_URL}/_init`, {
-            method: 'GET',
-            credentials: 'include',
-            headers: {
-              'x-edgestore-token': json.token,
+        if (json.clientInit) {
+          const innerRes = await fetch(
+            joinUrl(json.baseUrl, json.clientInit.path),
+            {
+              method: 'GET',
+              credentials: 'include',
+              headers: json.clientInit.headers,
             },
-          });
+          );
           if (innerRes.ok) {
             // update state
             setState({
@@ -191,7 +177,6 @@ function EdgeStoreProviderInner<TRouter extends AnyRouter>({
             throw new EdgeStoreClientError("Couldn't initialize EdgeStore.");
           }
         } else {
-          // For non-edgestore providers, just update state without calling _init
           setState({
             loading: false,
             initialized: true,
@@ -238,4 +223,8 @@ function EdgeStoreProviderInner<TRouter extends AnyRouter>({
       </context.Provider>
     </>
   );
+}
+
+function joinUrl(baseUrl: string, path: string) {
+  return `${baseUrl.replace(/\/+$/, '')}/${path.replace(/^\/+/, '')}`;
 }

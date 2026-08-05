@@ -1,6 +1,7 @@
 import { initEdgeStore } from '@edgestore/shared';
 import { describe, expect, it } from 'vitest';
-import { initEdgeStoreClient } from '.';
+import { createEdgeStore } from '..';
+import { edgestore } from '../../providers/edgestore';
 import {
   createSmokeFileName,
   getSmokeBucketName,
@@ -16,9 +17,10 @@ function createSmokeBucketClient() {
   const router = es.router({
     [smokeBucketName]: es.fileBucket(),
   });
-  const client = initEdgeStoreClient({
+  const client = createEdgeStore({
     router,
-  });
+    provider: edgestore(),
+  }).client;
   const bucketClient = client[smokeBucketName];
   if (!bucketClient) {
     throw new Error(`Smoke bucket ${smokeBucketName} was not initialized`);
@@ -35,26 +37,28 @@ describe('EdgeStore backend client live smoke test', () => {
     const uploadRes = await runSmokeUploadLifecycle({
       expectedSize: SMOKE_CONTENT.length,
       deleteDescription: 'deleteFile',
-      upload: () =>
-        bucketClient.upload({
+      upload: async () => {
+        const file = await bucketClient.upload({
           content: SMOKE_CONTENT,
           options: {
             manualFileName: createSmokeFileName('client'),
             temporary: true,
           },
-        }),
-      confirmUpload: (url) =>
-        bucketClient.confirmUpload({
-          url,
-        }),
-      getFile: (url) =>
-        bucketClient.getFile({
-          url,
-        }),
-      deleteFile: (url) =>
-        bucketClient.deleteFile({
-          url,
-        }),
+        });
+        return { url: file.url, size: file.sizeBytes };
+      },
+      confirmUpload: async (url) => {
+        await bucketClient.confirm({ url });
+        return { success: true };
+      },
+      getFile: async (url) => {
+        const file = await bucketClient.get({ url });
+        return { url: file.url, size: file.sizeBytes };
+      },
+      deleteFile: async (url) => {
+        await bucketClient.delete({ url });
+        return { success: true };
+      },
     });
 
     expect(uploadRes).toMatchObject({

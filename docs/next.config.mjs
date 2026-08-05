@@ -11,6 +11,20 @@ const withMDX = createMDX();
 const config = {
   reactStrictMode: true,
   serverExternalPackages: ['typescript', 'twoslash'],
+  async redirects() {
+    return [
+      {
+        source: '/docs/providers/aws',
+        destination: '/docs/providers/s3',
+        permanent: true,
+      },
+      {
+        source: '/docs/providers/azure',
+        destination: '/docs/providers/azure-blob',
+        permanent: true,
+      },
+    ];
+  },
   async rewrites() {
     return [
       {

@@ -1,176 +1,75 @@
-import {
-  EDGE_STORE_ERROR_CODES,
-  EdgeStoreError,
-  type EdgeStoreErrorCodeKey,
-  type EdgeStoreRouter,
-  type MaybePromise,
-  type Provider,
-} from '@edgestore/shared';
+import { EdgeStoreError, type AnyContext } from '@edgestore/shared';
 import { type NextApiRequest, type NextApiResponse } from 'next/types';
 import Logger, { type LogLevel } from '../../../libs/logger';
-import { matchPath } from '../../../libs/utils';
-import { EdgeStoreProvider } from '../../../providers/edgestore';
 import {
-  completeMultipartUpload,
-  confirmUpload,
-  deleteFile,
-  fetchProxyFile,
-  getCookieConfig,
-  init,
-  requestUpload,
-  requestUploadParts,
-  type CompleteMultipartUploadBody,
-  type ConfirmUploadBody,
-  type CookieConfig,
-  type DeleteFileBody,
-  type RequestUploadBody,
-  type RequestUploadPartsParams,
-} from '../../shared';
+  dispatchEdgeStoreRequest,
+  resolveContext,
+  toNodeDispatchResponse,
+  type CreateContextConfig,
+} from '../../dispatcher';
+import type { CookieConfig, HandlerEdgeStore } from '../../shared';
 
 export type CreateContextOptions = {
   req: NextApiRequest;
   res: NextApiResponse;
 };
 
-export type Config<TCtx> = {
-  provider?: Provider;
-  router: EdgeStoreRouter<TCtx>;
+export type Config<TCtx extends AnyContext> = {
+  edgestore: HandlerEdgeStore<TCtx>;
   logLevel?: LogLevel;
   cookieConfig?: CookieConfig;
-} & (TCtx extends Record<string, never>
-  ? object
-  : {
-      provider?: Provider;
-      router: EdgeStoreRouter<TCtx>;
-      createContext: (opts: CreateContextOptions) => MaybePromise<TCtx>;
-      cookieConfig?: CookieConfig;
-    });
+} & CreateContextConfig<TCtx, CreateContextOptions>;
 
-declare const globalThis: {
-  _EDGE_STORE_LOGGER: Logger;
-};
-
-export function createEdgeStoreNextHandler<TCtx>(config: Config<TCtx>) {
-  const { provider = EdgeStoreProvider(), cookieConfig } = config;
+export function createEdgeStoreNextHandler<TCtx extends AnyContext>(
+  config: Config<TCtx>,
+) {
   const log = new Logger(config.logLevel);
-  globalThis._EDGE_STORE_LOGGER = log;
   log.debug('Creating EdgeStore Next handler (pages adapter)');
 
-  const resolvedCookieConfig = getCookieConfig(cookieConfig);
-
   return async (req: NextApiRequest, res: NextApiResponse) => {
-    try {
-      if (!('json' in res))
-        throw new EdgeStoreError({
-          message:
-            'Error running the pages adapter. Make sure you are importing the correct adapter in your router configuration',
-          code: 'SERVER_ERROR',
-        });
-      const pathname = req.url ?? '';
-      if (matchPath(pathname, '/health')) {
-        res.send('OK');
-      } else if (matchPath(pathname, '/init')) {
-        let ctx = {} as TCtx;
-        try {
-          ctx =
-            'createContext' in config
-              ? await config.createContext({ req, res })
-              : ({} as TCtx);
-        } catch (err) {
-          throw new EdgeStoreError({
-            message: 'Error creating context',
-            code: 'CREATE_CONTEXT_ERROR',
-            cause: err instanceof Error ? err : undefined,
-          });
-        }
-        const { newCookies, ...body } = await init({
-          ctx,
-          provider,
-          router: config.router,
-          cookieConfig,
-        });
-        res.setHeader('Set-Cookie', newCookies);
-        res.json(body);
-      } else if (matchPath(pathname, '/request-upload')) {
-        res.json(
-          await requestUpload({
-            provider,
-            router: config.router,
-            body: req.body as RequestUploadBody,
-            ctxToken: req.cookies[resolvedCookieConfig.ctx.name],
-          }),
-        );
-      } else if (matchPath(pathname, '/request-upload-parts')) {
-        res.json(
-          await requestUploadParts({
-            provider,
-            router: config.router,
-            body: req.body as RequestUploadPartsParams,
-            ctxToken: req.cookies[resolvedCookieConfig.ctx.name],
-          }),
-        );
-      } else if (matchPath(pathname, '/complete-multipart-upload')) {
-        await completeMultipartUpload({
-          provider,
-          router: config.router,
-          body: req.body as CompleteMultipartUploadBody,
-          ctxToken: req.cookies[resolvedCookieConfig.ctx.name],
-        });
-        res.status(200).end();
-      } else if (matchPath(pathname, '/confirm-upload')) {
-        res.json(
-          await confirmUpload({
-            provider,
-            router: config.router,
-            body: req.body as ConfirmUploadBody,
-            ctxToken: req.cookies[resolvedCookieConfig.ctx.name],
-          }),
-        );
-      } else if (matchPath(pathname, '/delete-file')) {
-        res.json(
-          await deleteFile({
-            provider,
-            router: config.router,
-            body: req.body as DeleteFileBody,
-            ctxToken: req.cookies[resolvedCookieConfig.ctx.name],
-          }),
-        );
-      } else if (matchPath(pathname, '/proxy-file')) {
-        const { url } = req.query;
-        if (typeof url === 'string') {
-          const proxyRes = await fetchProxyFile({
-            cookieHeader: req.headers.cookie,
-            url,
-          });
-
-          res.setHeader('Content-Type', proxyRes.contentType);
-
-          res.status(proxyRes.status);
-          res.end(
-            proxyRes.body === null ? undefined : Buffer.from(proxyRes.body),
-          );
-        } else {
-          res.status(400).end();
-        }
-      } else {
-        res.status(404).end();
-      }
-    } catch (err) {
-      if (err instanceof EdgeStoreError) {
-        log[err.level](err.formattedMessage());
-        if (err.cause) log[err.level](err.cause);
-        res
-          .status(EDGE_STORE_ERROR_CODES[err.code as EdgeStoreErrorCodeKey])
-          .json(err.formattedJson());
-      } else {
-        log.error(err);
-        res.status(500).send(
-          new EdgeStoreError({
-            message: 'Internal Server Error',
-            code: 'SERVER_ERROR',
-          }).formattedJson(),
-        );
-      }
+    if (!('json' in (res as object))) {
+      const error = new EdgeStoreError({
+        message:
+          'Error running the pages adapter. Make sure you are importing the correct adapter in your router configuration',
+        code: 'SERVER_ERROR',
+      });
+      res.status(500).json(error.formattedJson());
+      return;
     }
+
+    const url = new URL(req.url ?? '', 'http://edgestore.local');
+    const response = await dispatchEdgeStoreRequest<TCtx>({
+      edgestore: config.edgestore,
+      logger: log,
+      cookieConfig: config.cookieConfig,
+      request: {
+        pathname: url.pathname,
+        readJson: async () => req.body,
+        getQuery: (name) => {
+          const value = req.query[name];
+          return typeof value === 'string'
+            ? value
+            : (url.searchParams.get(name) ?? undefined);
+        },
+        cookieHeader: req.headers.cookie,
+        cookies: req.cookies,
+        createContext: () =>
+          resolveContext<TCtx, CreateContextOptions>(config, {
+            req,
+            res,
+          }),
+      },
+    });
+    const normalized = await toNodeDispatchResponse(response);
+    for (const [name, value] of normalized.headers) {
+      res.setHeader(name, value);
+    }
+    res.status(normalized.status);
+    if (normalized.body === undefined) {
+      res.end();
+      return;
+    }
+    if (normalized.isJson) res.json(normalized.body);
+    else res.end(normalized.body);
   };
 }

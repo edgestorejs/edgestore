@@ -39,20 +39,26 @@ You can have multiple buckets in your app, each with its own configuration.
 <Tabs items={['app', 'pages']} groupId="next-router">
 
 ```ts tab="app" title="src/app/api/edgestore/[...edgestore]/route.ts"
-import { initEdgeStore } from '@edgestore/server';
+import { createEdgeStore, initEdgeStore } from '@edgestore/server';
 import { createEdgeStoreNextHandler } from '@edgestore/server/adapters/next/app';
+import { edgestore } from '@edgestore/server/providers/edgestore';
 
 const es = initEdgeStore.create();
 
 /**
  * This is the main router for the EdgeStore buckets.
  */
-const edgeStoreRouter = es.router({
+const router = es.router({
   publicFiles: es.fileBucket(),
 });
 
+const configuredEdgeStore = createEdgeStore({
+  router,
+  provider: edgestore(),
+});
+
 const handler = createEdgeStoreNextHandler({
-  router: edgeStoreRouter,
+  edgestore: configuredEdgeStore,
 });
 
 export { handler as GET, handler as POST };
@@ -60,30 +66,36 @@ export { handler as GET, handler as POST };
 /**
  * This type is used to create the type-safe client for the frontend.
  */
-export type EdgeStoreRouter = typeof edgeStoreRouter;
+export type EdgeStoreRouter = typeof router;
 ```
 
 ```ts tab="pages" title="src/pages/api/edgestore/[...edgestore].ts"
-import { initEdgeStore } from '@edgestore/server';
+import { createEdgeStore, initEdgeStore } from '@edgestore/server';
 import { createEdgeStoreNextHandler } from '@edgestore/server/adapters/next/pages';
+import { edgestore } from '@edgestore/server/providers/edgestore';
 
 const es = initEdgeStore.create();
 
 /**
  * This is the main router for the edgestore buckets.
  */
-const edgeStoreRouter = es.router({
+const router = es.router({
   publicFiles: es.fileBucket(),
 });
 
+const configuredEdgeStore = createEdgeStore({
+  router,
+  provider: edgestore(),
+});
+
 export default createEdgeStoreNextHandler({
-  router: edgeStoreRouter,
+  edgestore: configuredEdgeStore,
 });
 
 /**
  * This type is used to create the type-safe client for the frontend.
  */
-export type EdgeStoreRouter = typeof edgeStoreRouter;
+export type EdgeStoreRouter = typeof router;
 ```
 
 </Tabs>
@@ -230,7 +242,7 @@ const res = await edgestore.publicFiles.upload({
 
 ### Delete file
 
-You can delete a file by passing its url to the `delete` method.
+You can delete a file by passing its URL to the `delete` method.
 
 To be able to delete a file from a client component like this, you will need to set the `beforeDelete` [lifecycle hook](/docs/configuration#lifecycle-hooks) on the bucket.
 
@@ -239,6 +251,24 @@ await edgestore.publicFiles.delete({
   url: urlToDelete,
 });
 ```
+
+Use `deleteMany` to send one request for multiple files. Storage failures are
+reported per URL:
+
+```tsx
+const result = await edgestore.publicFiles.deleteMany({
+  urls: selectedFiles.map((file) => file.url),
+});
+
+for (const failure of result.failed) {
+  console.error(failure.url, failure.error.code);
+}
+```
+
+EdgeStore runs `beforeDelete` for every file before deleting any of them. If
+one file is unauthorized, the entire request is rejected without calling the
+storage provider. Once authorization succeeds, the provider may still return
+partial storage failures in `result.failed`.
 
 ### Cancel upload
 
@@ -328,11 +358,19 @@ await edgestore.publicFiles.upload({
 });
 ```
 
-To confirm a temporary file, you can use the `confirmUpload` method.
+To confirm a temporary file, you can use the `confirm` method.
 
 ```tsx
-await edgestore.publicFiles.confirmUpload({
+await edgestore.publicFiles.confirm({
   url: urlToConfirm,
+});
+```
+
+To confirm several temporary files in one request, use `confirmMany`:
+
+```tsx
+const result = await edgestore.publicFiles.confirmMany({
+  urls: temporaryFiles.map((file) => file.url),
 });
 ```
 
