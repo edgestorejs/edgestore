@@ -37,6 +37,7 @@ cleanupUnusedCatalogs: true
 
 overrides:
   '@edgestore/server': 'workspace:*'
+  '@edgestore/sdk': 'workspace:*'
   '@edgestore/shared': 'workspace:*'
   '@edgestore/react': 'workspace:*'
 

@@ -2,6 +2,8 @@ import { initEdgeStore } from '@edgestore/shared';
 import { parseCookie } from 'cookie';
 import express from 'express';
 import { describe, expect, it } from 'vitest';
+import { createEdgeStore } from '../core';
+import { edgestore } from '../providers/edgestore';
 import {
   createSmokeFileName,
   getSmokeBucketName,
@@ -66,7 +68,7 @@ async function createSmokeServer() {
     [smokeImageBucketName]: es.imageBucket(),
   });
   const handler = createEdgeStoreExpressHandler({
-    router,
+    edgestore: createEdgeStore({ router, provider: edgestore() }),
   });
   const app = express();
   app.use(express.json());
@@ -186,7 +188,7 @@ describe('EdgeStore adapter live smoke test', () => {
           };
         },
         confirmUpload: async (url) => {
-          const confirmRes = await fetch(`${baseUrl}/confirm-upload`, {
+          const confirmRes = await fetch(`${baseUrl}/confirm-uploads`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -194,15 +196,18 @@ describe('EdgeStore adapter live smoke test', () => {
             },
             body: JSON.stringify({
               bucketName: smokeBucketName,
-              url,
+              urls: [url],
             }),
           });
           await expectOk(confirmRes);
 
-          return (await confirmRes.json()) as { success: boolean };
+          const result = (await confirmRes.json()) as {
+            failed: unknown[];
+          };
+          return { success: result.failed.length === 0 };
         },
         deleteFile: async (url) => {
-          const deleteRes = await fetch(`${baseUrl}/delete-file`, {
+          const deleteRes = await fetch(`${baseUrl}/delete-files`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -210,12 +215,15 @@ describe('EdgeStore adapter live smoke test', () => {
             },
             body: JSON.stringify({
               bucketName: smokeBucketName,
-              url,
+              urls: [url],
             }),
           });
           await expectOk(deleteRes);
 
-          return (await deleteRes.json()) as { success: boolean };
+          const result = (await deleteRes.json()) as {
+            failed: unknown[];
+          };
+          return { success: result.failed.length === 0 };
         },
       });
 

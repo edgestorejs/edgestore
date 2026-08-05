@@ -1,5 +1,6 @@
-import { initEdgeStore } from '@edgestore/server';
+import { createEdgeStore, initEdgeStore } from '@edgestore/server';
 import { createEdgeStoreFastifyHandler } from '@edgestore/server/adapters/fastify';
+import { edgestore } from '@edgestore/server/providers/edgestore';
 import fastifyCookie from '@fastify/cookie';
 import fastifyCors from '@fastify/cors';
 import fastify from 'fastify';
@@ -31,14 +32,18 @@ async function configureApp() {
 
 const es = initEdgeStore.create();
 
-const edgeStoreRouter = es.router({
+const router = es.router({
   publicFiles: es.fileBucket(),
 });
 
-export type EdgeStoreRouter = typeof edgeStoreRouter;
+export type EdgeStoreRouter = typeof router;
 
+const configuredEdgeStore = createEdgeStore({
+  router,
+  provider: edgestore(),
+});
 const handler = createEdgeStoreFastifyHandler({
-  router: edgeStoreRouter,
+  edgestore: configuredEdgeStore,
 });
 
 // --- FASTIFY ROUTES ---

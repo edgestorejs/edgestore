@@ -19,7 +19,13 @@
     "vite-basic": "0.1.0",
     "@edgestore/react": "0.8.0",
     "@edgestore/server": "0.8.0",
-    "@edgestore/shared": "0.8.0"
+    "@edgestore/shared": "0.8.0",
+    "@edgestore/sdk": "0.7.0"
   },
-  "changesets": []
+  "changesets": [
+    "clean-production-dependencies",
+    "esm-only-packages",
+    "introduce-api-v2-sdk",
+    "redesign-provider-backend-client"
+  ]
 }

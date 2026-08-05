@@ -1,7 +1,8 @@
 import { createEdgeStoreProvider } from '@edgestore/react';
+import { createEdgeStore } from '@edgestore/server';
 import { createEdgeStoreFastifyHandler } from '@edgestore/server/adapters/fastify';
 import { createEdgeStoreHonoHandler } from '@edgestore/server/adapters/hono';
-import { initEdgeStoreClient } from '@edgestore/server/core';
+import { edgestore as createHostedProvider } from '@edgestore/server/providers/edgestore';
 import { initEdgeStore } from '@edgestore/shared';
 import { z } from 'zod';
 
@@ -45,19 +46,23 @@ const router = es.router({
     .autoSignedUrls({ includeThumbnails: true }),
 });
 
-const backendClient = initEdgeStoreClient({ router });
+const configuredEdgeStore = createEdgeStore({
+  router,
+  provider: createHostedProvider(),
+});
+const backendClient = configuredEdgeStore.client;
 const { useEdgeStore } = createEdgeStoreProvider<typeof router>();
 const { edgestore, state: providerState } = useEdgeStore();
 const backendSignedUploadMethod = backendClient.privateFiles.upload;
 const reactSignedUploadMethod = edgestore.privateFiles.upload;
 
 const honoHandler = createEdgeStoreHonoHandler({
-  router,
+  edgestore: configuredEdgeStore,
   createContext: () => ({ userId: 'user-1', role: 'admin' }),
 });
 
 const fastifyHandler = createEdgeStoreFastifyHandler({
-  router,
+  edgestore: configuredEdgeStore,
   createContext: () => ({ userId: 'user-1', role: 'admin' }),
 });
 
@@ -71,16 +76,17 @@ async function inspectOperationResults() {
     ctx: { userId: 'user-1', role: 'admin' },
     input: { category: 'invoice' },
   });
-  const backendGetFile = await backendClient.privateFiles.getFile({
+  const backendGetFile = await backendClient.privateFiles.get({
     url: 'https://example.com/file',
   });
-  const backendListFiles = await backendClient.privateFiles.listFiles();
-  const backendGetSignedUrl = await backendClient.privateFiles.getSignedUrl({
+  const backendListFiles = await backendClient.privateFiles.list();
+  const backendGetSignedUrl = await backendClient.privateFiles.createSignedUrl({
     url: 'https://example.com/file',
   });
-  const backendGetSignedUrls = await backendClient.privateImages.getSignedUrls({
-    urls: ['https://example.com/image'],
-  });
+  const backendGetSignedUrls =
+    await backendClient.privateImages.createSignedUrls({
+      urls: ['https://example.com/image'],
+    });
 
   const reactUnsignedUpload = await edgestore.publicFiles.upload({
     file: null! as File,

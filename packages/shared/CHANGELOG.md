@@ -1,5 +1,45 @@
 # @edgestore/shared
 
+## 1.0.0-next.1
+
+### Major Changes
+
+- [#194](https://github.com/edgestorejs/edgestore/pull/194) [`6933267`](https://github.com/edgestorejs/edgestore/commit/6933267367ac8d3090578195afbddfe3cd6569ba) Thanks [@perfectbase](https://github.com/perfectbase)! - Redesign providers, HTTP handlers, and the router-derived backend client for
+  EdgeStore API v2. Configure a router and provider once with `createEdgeStore`,
+  pass the resulting instance to adapters through `edgestore`, and access its
+  eagerly created, type-safe backend client through `.client`.
+
+  Providers now use the resource-oriented `EdgeStoreProvider` contract and the
+  public `defineProvider` helper. File references, cursors, capabilities, inputs,
+  and results are inferred from each provider definition, and unsupported
+  backend methods remain absent. Provider `get` and `list` operations can return
+  router path and metadata fields independently; their presence and optionality
+  are reflected in the generated backend client. The hosted `edgestore()`
+  provider uses the new API v2 SDK and supports project credentials or a Bearer
+  token with an explicit project. Direct storage providers are exposed as `s3()`
+  and `azureBlob()`.
+
+  Backend and React lifecycle methods use singular names with `Many` batch
+  variants. Batch mutations preserve per-file failures, frontend deletion
+  authorizes every file before mutating storage, and file operations remain
+  scoped to the selected router bucket. Router context is a flat map of optional
+  string values shared by hooks, path and metadata builders, and provider
+  initialization.
+
+  Framework adapters now delegate routing, cookies, proxying, response
+  normalization, and error formatting to a shared dispatcher. Provider browser
+  initialization is capability-driven rather than selected by provider name.
+  The S3 provider reserves the router bucket as the first key segment, and Azure
+  Blob Storage generates short-lived blob-scoped upload and read credentials.
+
+## 1.0.0-next.0
+
+### Major Changes
+
+- [#159](https://github.com/edgestorejs/edgestore/pull/159) [`cb42a68`](https://github.com/edgestorejs/edgestore/commit/cb42a684d2a194bf77de9a2af8cdec1f4ac72f1f) Thanks [@perfectbase](https://github.com/perfectbase)! - Publish the EdgeStore packages as ESM-only packages and require Node.js 24 or
+  newer. Emit NodeNext-compatible declaration imports, and upgrade the server
+  runtime dependencies to `cookie` 2 and `jose` 6.
+
 ## 0.8.0
 
 ### Minor Changes

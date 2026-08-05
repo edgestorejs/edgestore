@@ -1,11 +1,11 @@
 ---
-title: AWS
-description: Learn how to use your own AWS S3 bucket or S3-compatible services like Minio with EdgeStore using the AWS Provider.
+title: S3
+description: Learn how to use your own AWS S3 bucket or an S3-compatible service with EdgeStore.
 ---
 
 You can also use the EdgeStore package with your own AWS S3 bucket. You might want to do that in case you have strict company policies that require you to have all the data in your own AWS account.
 
-You can also use the AWS Provider with other S3 compatible storage services like [Minio](https://min.io/).
+You can also use the S3 provider with other S3-compatible storage services like [MinIO](https://min.io/).
 
 By using this provider, you will be able to use most of the basic features of EdgeStore. However, for some of the more advanced features like access control with protected files, you will have to create your own infrastructure and logic from scratch.
 
@@ -17,24 +17,29 @@ You need to install some peer dependencies to use this provider.
 @aws-sdk/client-s3 @aws-sdk/s3-request-presigner
 ```
 
-Then you can set the provider in the router.
+Then configure the provider together with the router and pass the resulting
+`configuredEdgeStore` instance to the adapter.
 
 ```ts
-import { initEdgeStore } from '@edgestore/server';
+import { createEdgeStore, initEdgeStore } from '@edgestore/server';
 import {
   createEdgeStoreNextHandler,
   type CreateContextOptions,
 } from '@edgestore/server/adapters/next/pages';
 // [!code ++]
-import { AWSProvider } from '@edgestore/server/providers/aws';
+import { s3 } from '@edgestore/server/providers/s3';
 import { z } from 'zod';
 
 // ...
 
-export default createEdgeStoreNextHandler<Context>({
+const configuredEdgeStore = createEdgeStore({
+  router,
   // [!code ++]
-  provider: AWSProvider(),
-  router: edgeStoreRouter,
+  provider: s3(),
+});
+
+export default createEdgeStoreNextHandler<Context>({
+  edgestore: configuredEdgeStore,
   createContext,
 });
 ```
@@ -42,7 +47,7 @@ export default createEdgeStoreNextHandler<Context>({
 ## Options
 
 ```ts
-export type AWSProviderOptions = {
+export type S3ProviderOptions = {
   /**
    * AWS SDK credentials (or credentials provider) to use for S3 requests.
    *
@@ -86,41 +91,57 @@ export type AWSProviderOptions = {
    */
   jwtSecret?: string;
   /**
-   * Optional function to overwrite the S3 key (object path) for uploads.
-   * This function receives the EdgeStore bucket name, fileInfo and the default S3 key
-   * and should return the desired S3 key string.
+   * Customizes the object path beneath the logical EdgeStore bucket prefix.
+   *
+   * The logical bucket prefix is always preserved so router authorization for
+   * one bucket cannot access objects from another.
    */
-  overwritePath?: (args: {
-    esBucketName: string;
+  path?: (args: {
+    edgestoreBucketName: string;
     fileInfo: FileInfo;
-    defaultAccessPath: string;
+    defaultPath: string;
   }) => Promise<string> | string;
 };
 ```
 
-## Overwriting S3 Object Keys
+## Customizing S3 Object Paths
 
-By default, the same logic used for generating the path for the EdgeStore Provider is used for the AWS Provider. However, sometimes you might want a cleaner path for the S3 objects that matches your use case.
+By default, the S3 provider uses the same path-generation logic as the hosted
+provider. The first object-key segment is always the logical EdgeStore router
+bucket. This lets multiple logical buckets safely share one physical S3 bucket:
 
-For that, you can use the `overwritePath` option.
+```text
+documents/_public/acme/invoice.pdf
+avatars/_public/user-123/profile.png
+```
 
-```ts
-// ...
-const handler = createEdgeStoreNextHandler({
-  createContext,
+Use `path` to customize everything beneath that protected prefix. For example,
+this removes `_public` while keeping the remaining generated path:
 
-  provider: AWSProvider({
-    // [!code ++:4]
-    overwritePath: ({ defaultAccessPath }) => {
-      // `publicFiles/_public/123/test.png` -> `123/test.png`
-      return defaultAccessPath.split('/_public/')[1];
+```ts title="src/server/edgestore.ts"
+const configuredEdgeStore = createEdgeStore({
+  router,
+  provider: s3({
+    path: ({ defaultPath }) => {
+      // `documents/_public/acme/invoice.pdf`
+      // becomes `documents/acme/invoice.pdf`
+      return defaultPath.replace(/^_public\//, '');
     },
   }),
-  router: edgeStoreRouter,
+});
+
+const handler = createEdgeStoreNextHandler({
+  edgestore: configuredEdgeStore,
+  createContext,
 });
 ```
 
-If you are removing the `_public` folder from the path like in the example above, you might also want to disable the dev proxy in the `createEdgeStoreProvider` function.
+The callback returns a path relative to the logical bucket and cannot escape
+that boundary. It also receives `edgestoreBucketName` and `fileInfo` when you
+need provider-specific naming logic.
+
+If you remove `_public`, you might also want to disable the development proxy
+in `createEdgeStoreProvider`.
 
 ```ts
 const { EdgeStoreProvider, useEdgeStore } =
@@ -131,10 +152,11 @@ const { EdgeStoreProvider, useEdgeStore } =
 
 ## Using with Minio
 
-You can use the AWS Provider with Minio or other S3-compatible storage providers by setting the `endpoint` and `forcePathStyle` options.
+You can use the S3 provider with MinIO or other S3-compatible storage providers
+by setting the `endpoint` and `forcePathStyle` options.
 
 ```ts
-provider: AWSProvider({
+provider: s3({
   endpoint: 'http://localhost:9000', // can be set via the `ES_AWS_ENDPOINT` environment variable
   forcePathStyle: true, // can be set via the `ES_AWS_FORCE_PATH_STYLE` environment variable
 }),
