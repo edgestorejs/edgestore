@@ -592,8 +592,8 @@ export async function detectPackages(cwd: string): Promise<PackagePlan> {
       : 'node';
   const wanted =
     framework === 'next' || framework === 'react'
-      ? ['@edgestore/server', '@edgestore/react', 'zod']
-      : ['@edgestore/server', 'zod'];
+      ? ['@edgestore/server', '@edgestore/react']
+      : ['@edgestore/server'];
   return {
     framework,
     manager: await detectPackageManager(cwd),

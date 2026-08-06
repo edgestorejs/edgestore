@@ -402,7 +402,7 @@ describe('init.integration', () => {
     expect(exitCode).toBe(0);
     expect(fixture.runCommand).toHaveBeenCalledWith(
       'pnpm',
-      ['add', '@edgestore/server', '@edgestore/react', 'zod'],
+      ['add', '@edgestore/server', '@edgestore/react'],
       { cwd: temporaryDirectory },
     );
   });
@@ -504,7 +504,7 @@ describe('init.integration', () => {
           },
         },
       },
-      suggestions: ['pnpm add @edgestore/server zod'],
+      suggestions: ['pnpm add @edgestore/server'],
     });
   });
 });
