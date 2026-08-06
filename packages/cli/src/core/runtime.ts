@@ -20,6 +20,7 @@ import {
   type ResolvedCredential,
 } from './credentials';
 import { usageError } from './errors';
+import { DefaultOAuthService, type OAuthService } from './oauth';
 import { CliOutput, type OutputMode } from './output';
 import { DefaultCliPrompts, type CliPrompts } from './prompts';
 
@@ -102,6 +103,7 @@ export type CliRuntime = {
     remove(): Promise<string | undefined>;
   };
   credentials: CredentialStore;
+  oauth: OAuthService;
   prompts: CliPrompts;
   sdkFactory: SdkFactory;
   openUrl(url: string): Promise<void>;
@@ -137,6 +139,7 @@ export function createDefaultRuntime(signal: AbortSignal): CliRuntime {
     globalConfig: new GlobalConfigStore(path.join(paths.config, 'config.json')),
     repoConfig: new RepoConfigStore(process.cwd()),
     credentials: new KeyringCredentialStore(),
+    oauth: new DefaultOAuthService(),
     prompts: new DefaultCliPrompts(),
     sdkFactory: ({ token, baseUrl }) =>
       createEdgeStoreSdk({ credentials: { token }, apiUrl: baseUrl }),
@@ -172,10 +175,15 @@ export async function credentialFor(
   const credential = await resolveCredential(
     runtime.env.EDGESTORE_TOKEN,
     runtime.credentials,
-    apiUrl.displayUrl,
+    {
+      apiOrigin: apiUrl.displayUrl,
+      oauth: runtime.oauth,
+      signal: runtime.signal,
+    },
   );
   if (!credential) {
     throw usageError('authentication_required', 'Not logged in.', [
+      'edgestore login',
       'edgestore login --token',
     ]);
   }

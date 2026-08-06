@@ -26,11 +26,11 @@ export class CliError extends Error {
 }
 
 const remediation: Record<string, string[]> = {
-  authentication_required: ['edgestore login --token'],
-  invalid_credential: ['edgestore login --token'],
+  authentication_required: ['edgestore login', 'edgestore login --token'],
+  invalid_credential: ['edgestore login', 'edgestore login --token'],
   credential_not_allowed: [
     'Use a management token instead of a project access key.',
-    'edgestore login --token',
+    'edgestore login',
   ],
   bucket_not_empty: [
     'edgestore bucket empty <bucket>',

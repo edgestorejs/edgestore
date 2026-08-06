@@ -39,7 +39,11 @@ export async function doctorCommand(
     credential = await resolveCredential(
       runtime.env.EDGESTORE_TOKEN,
       runtime.credentials,
-      apiUrl.displayUrl,
+      {
+        apiOrigin: apiUrl.displayUrl,
+        oauth: runtime.oauth,
+        signal: runtime.signal,
+      },
     );
     checks.push({
       name: 'Credential',

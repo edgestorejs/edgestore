@@ -1,29 +1,86 @@
+import { z } from 'zod';
 import { CliError } from './errors';
 
 const SERVICE_NAME = 'edgestore-cli';
 const CREDENTIAL_NAME = 'management-credential';
+const OAUTH_CLIENT_NAME = 'oauth-client';
+const OAUTH_CREDENTIAL_PREFIX = 'edgestore-oauth:';
+const REFRESH_WINDOW_MS = 5 * 60 * 1_000;
+
+const oauthCredentialSchema = z
+  .object({
+    version: z.literal(1),
+    kind: z.literal('oauth'),
+    accessToken: z.string().min(1),
+    refreshToken: z.string().min(1),
+    expiresAt: z.number().int().positive(),
+    clientId: z.string().min(1),
+    issuer: z.string().url(),
+    resource: z.string().url(),
+    scope: z.string().optional(),
+  })
+  .strict();
+
+const oauthClientRegistrationSchema = z
+  .object({
+    version: z.literal(1),
+    clientId: z.string().min(1),
+    issuer: z.string().url(),
+    redirectUri: z.string().url(),
+  })
+  .strict();
+
+export type OAuthCredential = z.infer<typeof oauthCredentialSchema>;
+export type OAuthClientRegistration = z.infer<
+  typeof oauthClientRegistrationSchema
+>;
 
 export interface CredentialStore {
   get(apiOrigin: string): Promise<string | undefined>;
   set(apiOrigin: string, token: string): Promise<void>;
   delete(apiOrigin: string): Promise<boolean>;
+  getOAuthClient(
+    apiOrigin: string,
+  ): Promise<OAuthClientRegistration | undefined>;
+  setOAuthClient(
+    apiOrigin: string,
+    client: OAuthClientRegistration,
+  ): Promise<void>;
   available(): Promise<boolean>;
 }
 
 export class KeyringCredentialStore implements CredentialStore {
   async get(apiOrigin: string): Promise<string | undefined> {
-    const entry = await createEntry(apiOrigin);
+    const entry = await createEntry(CREDENTIAL_NAME, apiOrigin);
     return (await entry.getPassword()) ?? undefined;
   }
 
   async set(apiOrigin: string, token: string): Promise<void> {
-    const entry = await createEntry(apiOrigin);
+    const entry = await createEntry(CREDENTIAL_NAME, apiOrigin);
     await entry.setPassword(token);
   }
 
   async delete(apiOrigin: string): Promise<boolean> {
-    const entry = await createEntry(apiOrigin);
+    const entry = await createEntry(CREDENTIAL_NAME, apiOrigin);
     return entry.deleteCredential();
+  }
+
+  async getOAuthClient(
+    apiOrigin: string,
+  ): Promise<OAuthClientRegistration | undefined> {
+    const entry = await createEntry(OAUTH_CLIENT_NAME, apiOrigin);
+    const value = await entry.getPassword();
+    if (!value) return undefined;
+
+    return parseOAuthClientRegistration(value);
+  }
+
+  async setOAuthClient(
+    apiOrigin: string,
+    client: OAuthClientRegistration,
+  ): Promise<void> {
+    const entry = await createEntry(OAUTH_CLIENT_NAME, apiOrigin);
+    await entry.setPassword(JSON.stringify(client));
   }
 
   async available(): Promise<boolean> {
@@ -36,10 +93,10 @@ export class KeyringCredentialStore implements CredentialStore {
   }
 }
 
-async function createEntry(apiOrigin: string) {
+async function createEntry(name: string, apiOrigin: string) {
   try {
     const { AsyncEntry } = await import('@napi-rs/keyring');
-    return new AsyncEntry(SERVICE_NAME, `${CREDENTIAL_NAME}:${apiOrigin}`);
+    return new AsyncEntry(SERVICE_NAME, `${name}:${apiOrigin}`);
   } catch (error) {
     throw new CliError(
       'keychain_unavailable',
@@ -57,20 +114,100 @@ async function createEntry(apiOrigin: string) {
 
 export type ResolvedCredential = {
   token: string;
-  source: 'environment' | 'keychain';
+  source: 'environment' | 'keychain' | 'oauth';
+};
+
+type OAuthCredentialRefresher = {
+  refresh(
+    credential: OAuthCredential,
+    signal: AbortSignal,
+  ): Promise<OAuthCredential>;
 };
 
 export async function resolveCredential(
   envToken: string | undefined,
   store: CredentialStore,
-  apiOrigin: string,
+  options: {
+    apiOrigin: string;
+    oauth?: OAuthCredentialRefresher;
+    signal?: AbortSignal;
+    now?: () => number;
+  },
 ): Promise<ResolvedCredential | undefined> {
   if (envToken?.trim()) {
     return { token: envToken.trim(), source: 'environment' };
   }
 
-  const token = await store.get(apiOrigin);
-  return token?.trim()
-    ? { token: token.trim(), source: 'keychain' }
-    : undefined;
+  const stored = await store.get(options.apiOrigin);
+  if (!stored?.trim()) return undefined;
+
+  const credential = parseStoredCredential(stored.trim());
+  if (typeof credential === 'string') {
+    return { token: credential, source: 'keychain' };
+  }
+
+  const now = options?.now?.() ?? Date.now();
+  if (credential.expiresAt > now + REFRESH_WINDOW_MS) {
+    return { token: credential.accessToken, source: 'oauth' };
+  }
+  if (!options?.oauth || !options.signal) {
+    throw invalidStoredCredential(
+      'The stored OAuth login has expired and cannot be refreshed.',
+    );
+  }
+
+  const refreshed = await options.oauth.refresh(credential, options.signal);
+  await store.set(options.apiOrigin, serializeOAuthCredential(refreshed));
+  return { token: refreshed.accessToken, source: 'oauth' };
+}
+
+export function serializeOAuthCredential(credential: OAuthCredential): string {
+  return `${OAUTH_CREDENTIAL_PREFIX}${JSON.stringify(
+    oauthCredentialSchema.parse(credential),
+  )}`;
+}
+
+export function parseStoredOAuthCredential(
+  value: string | undefined,
+): OAuthCredential | undefined {
+  if (!value?.startsWith(OAUTH_CREDENTIAL_PREFIX)) return undefined;
+  const parsed = parseJson(value.slice(OAUTH_CREDENTIAL_PREFIX.length));
+  const result = oauthCredentialSchema.safeParse(parsed);
+  if (!result.success) {
+    throw invalidStoredCredential(
+      'The stored OAuth login is invalid.',
+      result.error,
+    );
+  }
+  return result.data;
+}
+
+function parseStoredCredential(value: string): string | OAuthCredential {
+  return parseStoredOAuthCredential(value) ?? value;
+}
+
+function parseOAuthClientRegistration(value: string): OAuthClientRegistration {
+  const result = oauthClientRegistrationSchema.safeParse(parseJson(value));
+  if (!result.success) {
+    throw invalidStoredCredential(
+      'The stored OAuth client registration is invalid.',
+      result.error,
+    );
+  }
+  return result.data;
+}
+
+function parseJson(value: string): unknown {
+  try {
+    return JSON.parse(value);
+  } catch (error) {
+    throw invalidStoredCredential('The stored OAuth data is invalid.', error);
+  }
+}
+
+function invalidStoredCredential(message: string, details?: unknown) {
+  return new CliError('invalid_stored_credential', message, {
+    details,
+    suggestions: ['edgestore login'],
+  });
 }

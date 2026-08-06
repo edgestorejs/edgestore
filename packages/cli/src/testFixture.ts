@@ -6,7 +6,12 @@ import type {
   LocatedRepoConfig,
   RepoConfig,
 } from './core/config';
-import type { CredentialStore } from './core/credentials';
+import type {
+  CredentialStore,
+  OAuthClientRegistration,
+  OAuthCredential,
+} from './core/credentials';
+import type { OAuthService } from './core/oauth';
 import type { CliRuntime, CliSdk } from './core/runtime';
 
 type ManagementClient = ManagementEdgeStoreSdk['management'];
@@ -174,6 +179,11 @@ type CliTestFixture = {
   readRepoConfig: Mock;
   credentials: CredentialStore;
   setCredential: Mock;
+  setOAuthClient: Mock;
+  oauthLogin: Mock<OAuthService['login']>;
+  oauthRefresh: Mock<OAuthService['refresh']>;
+  oauthRevoke: Mock<OAuthService['revoke']>;
+  whoami: Mock<ManagementClient['whoami']>;
   readToken: Mock;
   confirmTyped: Mock;
   createAccountToken: Mock;
@@ -243,10 +253,16 @@ export function createFixture(): CliTestFixture {
     ['https://api.edgestore.dev', 'stored_token'],
     ['https://api-dev.edgestore.dev', 'stored_dev_token'],
   ]);
+  const oauthClientValues = new Map<string, OAuthClientRegistration>();
   const readToken = vi.fn(async () => 'mgmt_test');
   const setCredential = vi.fn(async (apiOrigin: string, token: string) => {
     credentialValues.set(apiOrigin, token);
   });
+  const setOAuthClient = vi.fn(
+    async (apiOrigin: string, client: OAuthClientRegistration) => {
+      oauthClientValues.set(apiOrigin, client);
+    },
+  );
   const confirmTyped = vi.fn(async () => undefined);
   const availableAccounts: (typeof account | typeof teamAccount)[] = [account];
   const listAccounts = vi.fn(async () => ({
@@ -304,8 +320,43 @@ export function createFixture(): CliTestFixture {
     delete: vi.fn(async (apiOrigin) => {
       return credentialValues.delete(apiOrigin);
     }),
+    getOAuthClient: vi.fn(async (apiOrigin) =>
+      oauthClientValues.get(apiOrigin),
+    ),
+    setOAuthClient,
     available: vi.fn(async () => true),
   };
+  const oauthCredential: OAuthCredential = {
+    version: 1,
+    kind: 'oauth',
+    accessToken: 'oauth_access',
+    refreshToken: 'oauth_refresh',
+    expiresAt: Date.now() + 60 * 60 * 1_000,
+    clientId: 'oauth_client',
+    issuer: 'https://dashboard.edgestore.dev',
+    resource: 'https://api.edgestore.dev/v2',
+    scope: 'account:read project:read',
+  };
+  const oauthClient: OAuthClientRegistration = {
+    version: 1,
+    clientId: 'oauth_client',
+    issuer: 'https://dashboard.edgestore.dev',
+    redirectUri: 'http://127.0.0.1:45678/oauth/callback',
+  };
+  const oauthLogin = vi.fn<OAuthService['login']>(async (input) => {
+    const authorizationUrl =
+      'https://dashboard.edgestore.dev/oauth/authorize?client_id=oauth_client';
+    input.onAuthorizationUrl?.(authorizationUrl);
+    await input.openUrl(authorizationUrl);
+    return { credential: oauthCredential, client: oauthClient };
+  });
+  const oauthRefresh = vi.fn<OAuthService['refresh']>(async (credential) => ({
+    ...credential,
+    accessToken: 'oauth_access_refreshed',
+    refreshToken: 'oauth_refresh_rotated',
+    expiresAt: Date.now() + 60 * 60 * 1_000,
+  }));
+  const oauthRevoke = vi.fn<OAuthService['revoke']>(async () => undefined);
 
   const createAccountToken = vi.fn<ManagementClient['tokens']['createAccount']>(
     async () => ({
@@ -441,6 +492,23 @@ export function createFixture(): CliTestFixture {
     upload: { id: input.uploadId, status: 'processing' },
   }));
   const deleteProject = vi.fn(async () => ({}));
+  const whoami = vi.fn<ManagementClient['whoami']>(async () => ({
+    actor: {
+      kind: 'user_token',
+      tokenId: 'tok_123',
+      scopes: ['account:read', 'project:read'],
+      user: {
+        id: 'user_123',
+        clerkUserId: 'clerk_123',
+        accountId: account.id,
+        email: 'ravi@example.com',
+        username: 'ravi',
+        firstName: 'Ravi',
+        lastName: null,
+        picture: 'https://example.com/ravi.png',
+      },
+    },
+  }));
   const sdk = {
     system: {
       health: vi.fn<ManagementEdgeStoreSdk['system']['health']>(async () => ({
@@ -449,23 +517,7 @@ export function createFixture(): CliTestFixture {
       })),
     },
     management: {
-      whoami: vi.fn<ManagementClient['whoami']>(async () => ({
-        actor: {
-          kind: 'user_token',
-          tokenId: 'tok_123',
-          scopes: ['account:read', 'project:read'],
-          user: {
-            id: 'user_123',
-            clerkUserId: 'clerk_123',
-            accountId: account.id,
-            email: 'ravi@example.com',
-            username: 'ravi',
-            firstName: 'Ravi',
-            lastName: null,
-            picture: 'https://example.com/ravi.png',
-          },
-        },
-      })),
+      whoami,
       accounts: {
         list: listAccounts,
         get: vi.fn(async ({ account: accountId }: { account: string }) => ({
@@ -573,6 +625,11 @@ export function createFixture(): CliTestFixture {
       }),
     },
     credentials,
+    oauth: {
+      login: oauthLogin,
+      refresh: oauthRefresh,
+      revoke: oauthRevoke,
+    },
     prompts: {
       readToken,
       confirmTyped,
@@ -597,6 +654,11 @@ export function createFixture(): CliTestFixture {
     readRepoConfig,
     credentials,
     setCredential,
+    setOAuthClient,
+    oauthLogin,
+    oauthRefresh,
+    oauthRevoke,
+    whoami,
     readToken,
     confirmTyped,
     createAccountToken,

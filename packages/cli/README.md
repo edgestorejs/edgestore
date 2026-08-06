@@ -7,16 +7,16 @@ npm install --global @edgestore/cli
 edgestore --help
 ```
 
-Log in with a management token, then use `init` for guided local setup:
+Log in through the dashboard, then use `init` for guided local setup:
 
 ```sh
-edgestore login --token
+edgestore login
 edgestore init
 ```
 
-Use `EDGESTORE_TOKEN` for automation. Persisted credentials are stored in the
-operating system credential store and are never written to a plaintext config
-file.
+Use `edgestore login --token` or `EDGESTORE_TOKEN` for automation and other
+non-browser environments. Persisted credentials are stored in the operating
+system credential store and are never written to a plaintext config file.
 
 The CLI manages accounts, projects and their keys, management tokens, buckets,
 files, uploads, team members, and invitations. Secrets are returned only when

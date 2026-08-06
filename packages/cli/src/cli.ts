@@ -143,6 +143,7 @@ function createProgram(
       'after',
       `
 Common workflows:
+  edgestore login
   edgestore login --token
   edgestore init
   edgestore project list
@@ -161,7 +162,7 @@ Common workflows:
 
   program
     .command('login')
-    .description('Log in with a management credential')
+    .description('Log in to EdgeStore')
     .option('--token', 'read and securely store a management token')
     .action(async (options: { token?: boolean }) => {
       await loginCommand(runtime, globalFlags(program), options);
