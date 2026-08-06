@@ -1848,6 +1848,7 @@
                                       "bucket:empty",
                                       "file:read",
                                       "file:write",
+                                      "file:delete",
                                       "project-key:read",
                                       "project-key:create",
                                       "project-key:revoke",
@@ -1894,6 +1895,7 @@
                                       "bucket:empty",
                                       "file:read",
                                       "file:write",
+                                      "file:delete",
                                       "project-key:read",
                                       "project-key:create",
                                       "project-key:revoke",
@@ -1981,6 +1983,185 @@
                                 "kind",
                                 "tokenId",
                                 "scopes",
+                                "user"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "kind": {
+                                  "const": "oauth_user",
+                                  "description": "OAuth user principal."
+                                },
+                                "subject": {
+                                  "type": "string",
+                                  "description": "OAuth subject identifier."
+                                },
+                                "clientId": {
+                                  "type": "string",
+                                  "description": "OAuth client identifier."
+                                },
+                                "scopes": {
+                                  "type": "array",
+                                  "items": {
+                                    "enum": [
+                                      "account:read",
+                                      "project:read",
+                                      "project:create",
+                                      "project:delete",
+                                      "bucket:read",
+                                      "bucket:write",
+                                      "bucket:delete",
+                                      "bucket:empty",
+                                      "file:read",
+                                      "file:write",
+                                      "file:delete",
+                                      "project-key:read",
+                                      "project-key:create",
+                                      "project-key:revoke",
+                                      "member:read",
+                                      "member:write",
+                                      "token:read",
+                                      "token:create",
+                                      "token:revoke"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  "description": "Effective management permissions."
+                                },
+                                "access": {
+                                  "type": "object",
+                                  "properties": {
+                                    "accounts": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "object",
+                                        "properties": {
+                                          "accountId": {
+                                            "type": "string"
+                                          },
+                                          "projects": {
+                                            "anyOf": [
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "mode": {
+                                                    "const": "all"
+                                                  }
+                                                },
+                                                "required": [
+                                                  "mode"
+                                                ]
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "mode": {
+                                                    "const": "selected"
+                                                  },
+                                                  "projectIds": {
+                                                    "type": "array",
+                                                    "items": {
+                                                      "type": "string"
+                                                    }
+                                                  }
+                                                },
+                                                "required": [
+                                                  "mode",
+                                                  "projectIds"
+                                                ]
+                                              }
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "accountId",
+                                          "projects"
+                                        ]
+                                      }
+                                    }
+                                  },
+                                  "required": [
+                                    "accounts"
+                                  ],
+                                  "description": "Accounts and projects this OAuth grant may access."
+                                },
+                                "user": {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": {
+                                      "type": "string",
+                                      "description": "Unique EdgeStore user ID."
+                                    },
+                                    "clerkUserId": {
+                                      "type": "string",
+                                      "description": "User ID from the identity provider."
+                                    },
+                                    "accountId": {
+                                      "type": "string",
+                                      "description": "User's personal account ID."
+                                    },
+                                    "email": {
+                                      "type": "string",
+                                      "description": "Primary email address."
+                                    },
+                                    "username": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string"
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ],
+                                      "description": "Username when configured."
+                                    },
+                                    "firstName": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string"
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ],
+                                      "description": "First name when configured."
+                                    },
+                                    "lastName": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string"
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ],
+                                      "description": "Last name when configured."
+                                    },
+                                    "picture": {
+                                      "type": "string",
+                                      "description": "Profile image URL."
+                                    }
+                                  },
+                                  "required": [
+                                    "id",
+                                    "clerkUserId",
+                                    "accountId",
+                                    "email",
+                                    "username",
+                                    "firstName",
+                                    "lastName",
+                                    "picture"
+                                  ],
+                                  "description": "Authenticated user identity."
+                                }
+                              },
+                              "required": [
+                                "kind",
+                                "subject",
+                                "clientId",
+                                "scopes",
+                                "access",
                                 "user"
                               ]
                             }
@@ -11373,6 +11554,7 @@
                                     "bucket:empty",
                                     "file:read",
                                     "file:write",
+                                    "file:delete",
                                     "project-key:read",
                                     "project-key:create",
                                     "project-key:revoke",
@@ -11635,6 +11817,7 @@
                   "preset": {
                     "enum": [
                       "deploy",
+                      "storage-management",
                       "read-only",
                       "full-access"
                     ],
@@ -11656,6 +11839,7 @@
                         "bucket:empty",
                         "file:read",
                         "file:write",
+                        "file:delete",
                         "project-key:read",
                         "project-key:create",
                         "project-key:revoke",
@@ -11739,6 +11923,7 @@
                                   "bucket:empty",
                                   "file:read",
                                   "file:write",
+                                  "file:delete",
                                   "project-key:read",
                                   "project-key:create",
                                   "project-key:revoke",
@@ -12056,6 +12241,7 @@
                                     "bucket:empty",
                                     "file:read",
                                     "file:write",
+                                    "file:delete",
                                     "project-key:read",
                                     "project-key:create",
                                     "project-key:revoke",
@@ -12290,6 +12476,7 @@
                   "preset": {
                     "enum": [
                       "deploy",
+                      "storage-management",
                       "read-only",
                       "full-access"
                     ],
@@ -12311,6 +12498,7 @@
                         "bucket:empty",
                         "file:read",
                         "file:write",
+                        "file:delete",
                         "project-key:read",
                         "project-key:create",
                         "project-key:revoke",
@@ -12394,6 +12582,7 @@
                                   "bucket:empty",
                                   "file:read",
                                   "file:write",
+                                  "file:delete",
                                   "project-key:read",
                                   "project-key:create",
                                   "project-key:revoke",
@@ -14202,8 +14391,12 @@
                                             "between": {
                                               "type": "array",
                                               "prefixItems": [
-                                                {},
-                                                {}
+                                                {
+                                                  "type": "string"
+                                                },
+                                                {
+                                                  "type": "string"
+                                                }
                                               ],
                                               "description": "Inclusive lower and upper bounds."
                                             }
@@ -14272,8 +14465,12 @@
                                             "between": {
                                               "type": "array",
                                               "prefixItems": [
-                                                {},
-                                                {}
+                                                {
+                                                  "type": "string"
+                                                },
+                                                {
+                                                  "type": "string"
+                                                }
                                               ],
                                               "description": "Inclusive lower and upper bounds."
                                             }
@@ -14425,8 +14622,12 @@
                                             "between": {
                                               "type": "array",
                                               "prefixItems": [
-                                                {},
-                                                {}
+                                                {
+                                                  "type": "string"
+                                                },
+                                                {
+                                                  "type": "string"
+                                                }
                                               ],
                                               "description": "Inclusive lower and upper bounds."
                                             }
@@ -14495,8 +14696,12 @@
                                             "between": {
                                               "type": "array",
                                               "prefixItems": [
-                                                {},
-                                                {}
+                                                {
+                                                  "type": "string"
+                                                },
+                                                {
+                                                  "type": "string"
+                                                }
                                               ],
                                               "description": "Inclusive lower and upper bounds."
                                             }
@@ -14873,8 +15078,12 @@
                                             "between": {
                                               "type": "array",
                                               "prefixItems": [
-                                                {},
-                                                {}
+                                                {
+                                                  "type": "string"
+                                                },
+                                                {
+                                                  "type": "string"
+                                                }
                                               ],
                                               "description": "Inclusive lower and upper bounds."
                                             }
@@ -14943,8 +15152,12 @@
                                             "between": {
                                               "type": "array",
                                               "prefixItems": [
-                                                {},
-                                                {}
+                                                {
+                                                  "type": "string"
+                                                },
+                                                {
+                                                  "type": "string"
+                                                }
                                               ],
                                               "description": "Inclusive lower and upper bounds."
                                             }
@@ -15096,8 +15309,12 @@
                                             "between": {
                                               "type": "array",
                                               "prefixItems": [
-                                                {},
-                                                {}
+                                                {
+                                                  "type": "string"
+                                                },
+                                                {
+                                                  "type": "string"
+                                                }
                                               ],
                                               "description": "Inclusive lower and upper bounds."
                                             }
@@ -15166,8 +15383,12 @@
                                             "between": {
                                               "type": "array",
                                               "prefixItems": [
-                                                {},
-                                                {}
+                                                {
+                                                  "type": "string"
+                                                },
+                                                {
+                                                  "type": "string"
+                                                }
                                               ],
                                               "description": "Inclusive lower and upper bounds."
                                             }
