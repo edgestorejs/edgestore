@@ -166,10 +166,41 @@ describe('adapter dispatcher', () => {
     expect(response.status).toBe(400);
     await expect(response.json()).resolves.toMatchObject({
       code: 'BAD_REQUEST',
-      message: 'Invalid bucket input',
+      message: 'Invalid input: label: Expected string, received number',
     });
     expect(beforeUpload).not.toHaveBeenCalled();
     expect(provider.uploads.request).not.toHaveBeenCalled();
+  });
+
+  it('preserves omitted input for schemas that provide defaults', async () => {
+    const beforeUpload = vi.fn(() => true);
+    const es = initEdgeStore.context<typeof testCtx>().create();
+    const router = es.router({
+      documents: es
+        .fileBucket()
+        .input(z.object({ label: z.string() }).default({ label: 'default' }))
+        .beforeUpload(beforeUpload),
+    });
+    const { dispatch, provider } = createDispatcher(
+      createSilentLogger(),
+      router,
+    );
+    const init = await dispatch('/api/edgestore/init');
+    const token = extractCookieValue(init.headers.getSetCookie());
+
+    const response = await dispatch('/api/edgestore/request-upload', {
+      body: {
+        bucketName: requestUploadBody.bucketName,
+        fileInfo: requestUploadBody.fileInfo,
+      },
+      cookieHeader: `${testCookieConfig.ctx.name}=${token}`,
+    });
+
+    expect(response.status).toBe(200);
+    expect(beforeUpload).toHaveBeenCalledWith(
+      expect.objectContaining({ input: { label: 'default' } }),
+    );
+    expect(provider.uploads.request).toHaveBeenCalledOnce();
   });
 
   it('keeps operation logging scoped to the selected handler', async () => {

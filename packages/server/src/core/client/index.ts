@@ -9,6 +9,7 @@ import {
   type InferBucketPathObject,
   type InferBucketPathOrder,
   type InferMetadataObject,
+  type InferSchemaInput,
   type MaybePromise,
   type Prettify,
   type ProviderCapability,
@@ -22,7 +23,6 @@ import {
   type ProviderReferenceInput,
   type Simplify,
 } from '@edgestore/shared';
-import type { z, ZodNever } from 'zod';
 import { createBucketClient } from './bucketClient';
 
 type AnyBackendProvider = AnyEdgeStoreProvider;
@@ -183,10 +183,10 @@ export type UploadFileRequest<TBucket extends AnyBuilder> = {
   : {
       ctx: TBucket['$config']['ctx'];
     }) &
-  (TBucket['_def']['input'] extends ZodNever
+  (TBucket['_def']['input'] extends undefined
     ? {}
     : {
-        input: z.infer<TBucket['_def']['input']>;
+        input: InferSchemaInput<TBucket['_def']['input']>;
       });
 
 export type UploadFileRes<

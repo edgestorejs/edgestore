@@ -61,20 +61,16 @@
   },
   "peerDependencies": {
     "react": ">=16.8.0",
-    "react-dom": ">=16.8.0",
-    "zod": ">=3.0.0"
-  },
-  "peerDependenciesMeta": {
-    "zod": {
-      "optional": true
-    }
+    "react-dom": ">=16.8.0"
   },
   "devDependencies": {
     "@types/node": "catalog:",
+    "arktype": "2.2.3",
     "react": "catalog:",
     "react-dom": "catalog:",
     "tsx": "catalog:",
     "typescript": "catalog:",
+    "valibot": "1.4.2",
     "zod": "3.25.76"
   },
   "gitHead": "a223c4cb8df50e6b64f9db5dc2daf93848748da9"

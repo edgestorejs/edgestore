@@ -42,7 +42,7 @@ type BucketContext<
 type UploadImplementationParams = {
   content: UploadContent;
   ctx?: Record<string, unknown>;
-  input?: Record<string, unknown>;
+  input?: unknown;
 };
 
 export function createBucketClient<
@@ -93,11 +93,7 @@ function createUploadMethods<
 
   return {
     upload: async (params: Prettify<UploadFileRequest<TBucket>>) => {
-      const {
-        content,
-        ctx = {},
-        input = {},
-      }: UploadImplementationParams = params;
+      const { content, ctx = {}, input }: UploadImplementationParams = params;
       let { blob, extension } = await resolveUploadContent(
         content,
         params.signal,
