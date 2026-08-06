@@ -1,6 +1,7 @@
 import {
   initEdgeStore,
   type AccessControlSchema,
+  type AnyBuilder,
   type AnyContext,
   type EdgeStoreRouter,
   type InferBucketPathObject,
@@ -52,12 +53,24 @@ const imageBucket = es
 const fileBucket = es.fileBucket().path(({ ctx }) => [{ author: ctx.userId }]);
 const privateFileBucket = es.fileBucket().accessControl('private');
 const emptyBucket = es.fileBucket();
+const transformedInputBucket = es
+  .fileBucket()
+  .input(z.object({ count: z.string().transform(Number) }))
+  .beforeUpload(({ input }) => {
+    expectType<number>(input.count);
+    return true;
+  });
 const broadMetadataBucket = es
   .fileBucket()
   .metadata((): Record<string, string | null | undefined> => ({
     present: 'value',
     absent: undefined,
   }));
+
+type AnyBuilderInput = AnyBuilder['_def']['input'];
+expectAssignable<AnyBuilderInput>(undefined);
+expectAssignable<AnyBuilderInput>(z.object({ value: z.string() }));
+expectNotAssignable<AnyBuilderInput>('not a schema');
 
 expectType<{ author: string; type: string }>(
   {} as InferBucketPathObject<typeof imageBucket>,
@@ -70,6 +83,7 @@ expectType<{ role: 'admin' | 'visitor'; extension?: string }>(
 );
 expectType<{ author: string }>({} as InferBucketPathObject<typeof fileBucket>);
 expectType<[]>({} as InferBucketPathOrder<typeof emptyBucket>);
+void transformedInputBucket;
 expectType<Record<string, string>>(
   {} as InferMetadataObject<typeof broadMetadataBucket>,
 );

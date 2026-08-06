@@ -391,6 +391,96 @@ describe('createEdgeStore', () => {
     });
   });
 
+  it('validates and transforms input before computing upload data', async () => {
+    const es = initEdgeStore.context<{ userId: string }>().create();
+    const router = es.router({
+      documents: es
+        .fileBucket()
+        .input(
+          z.object({
+            type: z.string().transform((value) => value.trim().toUpperCase()),
+          }),
+        )
+        .path(({ input }) => [{ type: input.type }])
+        .metadata(({ input }) => ({ type: input.type })),
+    });
+    const client = createEdgeStore({
+      router,
+      provider,
+    }).client;
+
+    await client.documents.upload({
+      content: 'invoice',
+      ctx: { userId: 'user-1' },
+      input: { type: ' invoice ' },
+    });
+
+    expect(backend.upload).toHaveBeenCalledWith(
+      expect.objectContaining({
+        fileInfo: expect.objectContaining({
+          path: [{ key: 'type', value: 'INVOICE' }],
+          metadata: { type: 'INVOICE' },
+        }),
+      }),
+    );
+  });
+
+  it('preserves undefined input for schemas that provide defaults', async () => {
+    const es = initEdgeStore.context<{ userId: string }>().create();
+    const router = es.router({
+      documents: es
+        .fileBucket()
+        .input(z.object({ type: z.string() }).default({ type: 'invoice' }))
+        .path(({ input }) => [{ type: input.type }])
+        .metadata(({ input }) => ({ type: input.type })),
+    });
+    const client = createEdgeStore({ router, provider }).client;
+
+    await client.documents.upload({
+      content: 'invoice',
+      ctx: { userId: 'user-1' },
+      input: undefined,
+    });
+
+    expect(backend.upload).toHaveBeenCalledWith(
+      expect.objectContaining({
+        fileInfo: expect.objectContaining({
+          path: [{ key: 'type', value: 'invoice' }],
+          metadata: { type: 'invoice' },
+        }),
+      }),
+    );
+  });
+
+  it('awaits async validation and rejects invalid input before upload', async () => {
+    const es = initEdgeStore.context<{ userId: string }>().create();
+    const router = es.router({
+      documents: es.fileBucket().input(
+        z.object({ token: z.string() }).refine(async ({ token }) => {
+          await Promise.resolve();
+          return token === 'allowed';
+        }, 'Token is not allowed'),
+      ),
+    });
+    const client = createEdgeStore({
+      router,
+      provider,
+    }).client;
+
+    await expect(
+      client.documents.upload({
+        content: 'invoice',
+        ctx: { userId: 'user-1' },
+        input: { token: 'denied' },
+      }),
+    ).rejects.toMatchObject({
+      code: 'BAD_REQUEST',
+      message: 'Invalid input: Token is not allowed',
+    });
+    expect(backend.upload).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it('preserves upload failures from the provider capability', async () => {
     const client = createClient();
     backend.upload.mockRejectedValueOnce(new Error('upload failed'));

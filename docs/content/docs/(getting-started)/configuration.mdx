@@ -89,6 +89,12 @@ async function runAfterAuthChange() {
 
 Every uploaded file can hold two types of data: `metadata` and `path`. You can use this data for access control or for filtering files. The `metadata` and `path` can be generated from the context (`ctx`) or from the `input` of the upload request.
 
+<Callout type="info">
+  The `.input()` method accepts any object schema that implements [Standard
+  Schema](https://standardschema.dev/), including schemas from Zod, Valibot,
+  and ArkType.
+</Callout>
+
 ```ts
 import { initEdgeStore } from '@edgestore/server';
 import {
