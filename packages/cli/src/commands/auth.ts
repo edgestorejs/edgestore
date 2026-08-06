@@ -2,6 +2,7 @@ import type { ManagementEdgeStoreSdk } from '@edgestore/sdk';
 import { usageError } from '../core/errors';
 import type { CliRuntime, GlobalFlags } from '../core/runtime';
 import { apiUrlFor, credentialFor, outputFor } from '../core/runtime';
+import { selectWorkspaceContext } from '../core/workspace';
 
 export type LoginOptions = {
   token?: boolean;
@@ -81,6 +82,7 @@ export async function whoamiCommand(
   runtime: CliRuntime,
   flags: GlobalFlags,
 ): Promise<void> {
+  await selectWorkspaceContext(runtime, flags, 'read');
   const credential = await credentialFor(runtime, flags);
   const apiUrl = apiUrlFor(runtime, flags);
   const sdk = runtime.sdkFactory({

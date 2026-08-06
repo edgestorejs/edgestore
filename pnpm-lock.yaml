@@ -881,6 +881,9 @@ importers:
       '@edgestore/sdk':
         specifier: workspace:*
         version: link:../sdk
+      '@manypkg/get-packages':
+        specifier: 3.1.0
+        version: 3.1.0
       '@napi-rs/keyring':
         specifier: 1.3.0
         version: 1.3.0

@@ -34,7 +34,7 @@ export async function fileListCommand(
       '--all and --cursor cannot be used together.',
     );
   }
-  const project = await resolvedProjectRef(runtime, input.project);
+  const project = await resolvedProjectRef(runtime, flags, input.project);
   const sdk = await sdkFor(runtime, flags);
   const files = [];
   let cursor = input.cursor;
@@ -80,7 +80,7 @@ export async function fileInfoCommand(
 ): Promise<void> {
   const sdk = await sdkFor(runtime, flags);
   const result = await sdk.management.files.lookup({
-    project: await resolvedProjectRef(runtime, input.project),
+    project: await resolvedProjectRef(runtime, flags, input.project),
     file: fileReference(input.reference, input.bucket),
     signal: runtime.signal,
   });
@@ -112,7 +112,7 @@ export async function fileDownloadCommand(
 ): Promise<void> {
   const sdk = await sdkFor(runtime, flags);
   const result = await sdk.management.files.generateAccessUrls({
-    project: await resolvedProjectRef(runtime, input.project),
+    project: await resolvedProjectRef(runtime, flags, input.project),
     files: [fileReference(input.reference, input.bucket)],
     signal: runtime.signal,
   });
@@ -183,7 +183,7 @@ export async function fileDeleteCommand(
       'delete',
     );
   }
-  const project = await resolvedProjectRef(runtime, input.project);
+  const project = await resolvedProjectRef(runtime, flags, input.project);
   const sdk = await sdkFor(runtime, flags);
   const refs = input.references.map((value) =>
     fileReference(value, input.bucket),

@@ -41,28 +41,48 @@ describe('GlobalConfigStore', () => {
 });
 
 describe('RepoConfigStore', () => {
-  it('writes at the Git root and discovers the config from a child', async () => {
+  it('writes at the nearest package root and discovers it from a child', async () => {
     const root = await temporaryDirectory();
     await writeFile(path.join(root, '.git'), 'gitdir: elsewhere\n');
-    const child = path.join(root, 'apps', 'web');
+    await writeFile(path.join(root, 'package.json'), '{}');
+    const workspace = path.join(root, 'apps', 'web');
+    const child = path.join(workspace, 'src');
     await mkdir(child, { recursive: true });
+    await writeFile(path.join(workspace, 'package.json'), '{}');
     const store = new RepoConfigStore(child);
 
     const configPath = await store.write({
       account: 'acc_123',
       project: 'x36t1ejdlz',
-      envFile: 'apps/web/.env.development.local',
+      envFile: '.env.development.local',
     });
 
-    expect(configPath).toBe(path.join(root, '.edgestore', 'config.json'));
+    expect(configPath).toBe(path.join(workspace, '.edgestore', 'config.json'));
     await expect(store.read()).resolves.toEqual({
       config: {
         account: 'acc_123',
         project: 'x36t1ejdlz',
-        envFile: 'apps/web/.env.development.local',
+        envFile: '.env.development.local',
       },
       path: configPath,
     });
+  });
+
+  it('does not inherit the monorepo root config inside a workspace', async () => {
+    const root = await temporaryDirectory();
+    await writeFile(path.join(root, '.git'), 'gitdir: elsewhere\n');
+    await writeFile(path.join(root, 'package.json'), '{}');
+    await new RepoConfigStore(root).write({
+      account: 'acc_root',
+      project: 'root-project',
+    });
+    const workspace = path.join(root, 'apps', 'web');
+    await mkdir(workspace, { recursive: true });
+    await writeFile(path.join(workspace, 'package.json'), '{}');
+
+    await expect(
+      new RepoConfigStore(workspace).read(),
+    ).resolves.toBeUndefined();
   });
 
   it('removes only the local config', async () => {

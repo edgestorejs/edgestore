@@ -5,6 +5,7 @@ import { resolveCredential } from '../core/credentials';
 import { renderTable } from '../core/output';
 import type { CliRuntime, GlobalFlags } from '../core/runtime';
 import { apiUrlFor, outputFor } from '../core/runtime';
+import { selectWorkspaceContext } from '../core/workspace';
 
 type Check = {
   name: string;
@@ -17,6 +18,7 @@ export async function doctorCommand(
   flags: GlobalFlags,
   version: string,
 ): Promise<void> {
+  await selectWorkspaceContext(runtime, flags, 'read');
   const checks: Check[] = [{ name: 'CLI', status: 'pass', detail: version }];
   const apiUrl = apiUrlFor(runtime, flags);
 

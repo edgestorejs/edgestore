@@ -14,6 +14,7 @@ import {
   deliverEnvSecretWithRollback,
   preflightEnvSecret,
 } from '../core/secretDelivery';
+import { isWorkspaceRoot, selectWorkspaceContext } from '../core/workspace';
 import { activeAccount } from './account';
 import { parseBucketType } from './bucket';
 
@@ -81,9 +82,13 @@ export async function initCommand(
   flags: GlobalFlags,
   options: InitOptions,
 ): Promise<void> {
+  await selectWorkspaceContext(runtime, flags, 'write');
   const interactive = runtime.io.inputIsTty && !flags.json && !flags.plain;
   validateOptions(options, interactive);
-  const packages = await detectPackages(runtime.cwd);
+  const packages = await detectPackages(runtime.cwd, {
+    installAtWorkspaceRoot:
+      Boolean(flags.cwd) && (await isWorkspaceRoot(runtime.cwd)),
+  });
   const sdk = await sdkFor(runtime, flags);
   const account = await resolveAccount({ runtime, sdk, options, interactive });
   const context = { runtime, sdk, options, interactive, account };
@@ -535,9 +540,13 @@ export type PackagePlan = {
   framework: 'next' | 'react' | 'node' | 'unknown';
   manager?: 'pnpm' | 'npm' | 'yarn' | 'bun';
   missing: string[];
+  installAtWorkspaceRoot?: boolean;
 };
 
-export async function detectPackages(cwd: string): Promise<PackagePlan> {
+export async function detectPackages(
+  cwd: string,
+  options: { installAtWorkspaceRoot?: boolean } = {},
+): Promise<PackagePlan> {
   const packagePath = path.join(cwd, 'package.json');
   let manifest: {
     packageManager?: string;
@@ -598,6 +607,7 @@ export async function detectPackages(cwd: string): Promise<PackagePlan> {
     framework,
     manager: await detectPackageManager(cwd),
     missing: wanted.filter((name) => !dependencies[name]),
+    installAtWorkspaceRoot: options.installAtWorkspaceRoot,
   };
 }
 
@@ -612,7 +622,11 @@ async function installPackages(
   },
 ): Promise<{ command?: string; ran: boolean }> {
   if (!plan.manager || !plan.missing.length) return { ran: false };
-  const args = installArgs(plan.manager, plan.missing);
+  const args = installArgs(
+    plan.manager,
+    plan.missing,
+    plan.installAtWorkspaceRoot,
+  );
   const command = [plan.manager, ...args].join(' ');
   const shouldInstall =
     options.requested ??
@@ -715,28 +729,35 @@ function projectKeyName(output: string | undefined): string {
 async function protectSecretFile(cwd: string, output: string): Promise<string> {
   const absolute = path.resolve(cwd, output);
   const gitRoot = await findGitRoot(cwd);
-  const root = gitRoot ?? path.resolve(cwd);
-  const relative = path.relative(root, absolute);
-  if (!relative || relative.startsWith('..') || path.isAbsolute(relative)) {
+  const packageRoot = path.resolve(cwd);
+  const boundary = gitRoot ?? packageRoot;
+  const repositoryRelative = path.relative(boundary, absolute);
+  const packageRelative = path.relative(packageRoot, absolute);
+  if (
+    !packageRelative ||
+    packageRelative.startsWith('..') ||
+    path.isAbsolute(packageRelative)
+  ) {
     throw usageError(
       'secret_output_unprotected',
-      `Secret output ${absolute} must be inside ${root}.`,
-      ['Choose an env file inside the current repository.'],
+      `Secret output ${absolute} must be inside ${packageRoot}.`,
+      ['Choose an env file inside the selected package.'],
     );
   }
-  const normalized = relative.replaceAll(path.sep, '/');
+  const normalized = packageRelative.replaceAll(path.sep, '/');
+  const gitPath = repositoryRelative.replaceAll(path.sep, '/');
   if (gitRoot) {
-    if (await isTrackedFile(gitRoot, normalized)) {
+    if (await isTrackedFile(gitRoot, gitPath)) {
       throw usageError(
         'secret_output_tracked',
         `Secret output ${absolute} is already tracked by Git.`,
         ['Remove it from Git before creating a project key.'],
       );
     }
-    if (await isIgnoredFile(gitRoot, normalized)) return normalized;
+    if (await isIgnoredFile(gitRoot, gitPath)) return normalized;
   }
 
-  const gitignorePath = path.join(root, '.gitignore');
+  const gitignorePath = path.join(packageRoot, '.gitignore');
   let contents = '';
   try {
     contents = await readFile(gitignorePath, 'utf8');
@@ -759,7 +780,7 @@ async function protectSecretFile(cwd: string, output: string): Promise<string> {
       },
     );
   }
-  if (gitRoot && !(await isIgnoredFile(gitRoot, normalized))) {
+  if (gitRoot && !(await isIgnoredFile(gitRoot, gitPath))) {
     throw new CliError(
       'secret_output_unprotected',
       `Could not protect secret output ${absolute}.`,
@@ -881,8 +902,12 @@ function packageJsonForStrategy(
 function installArgs(
   manager: 'pnpm' | 'npm' | 'yarn' | 'bun',
   packages: string[],
+  installAtWorkspaceRoot = false,
 ): string[] {
   if (manager === 'npm') return ['install', ...packages];
+  if (manager === 'pnpm' && installAtWorkspaceRoot) {
+    return ['add', '-w', ...packages];
+  }
   return ['add', ...packages];
 }
 

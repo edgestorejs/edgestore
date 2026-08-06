@@ -10,7 +10,7 @@ export async function bucketListCommand(
   flags: GlobalFlags,
   project?: string,
 ): Promise<void> {
-  const projectRef = await resolvedProjectRef(runtime, project);
+  const projectRef = await resolvedProjectRef(runtime, flags, project);
   const sdk = await sdkFor(runtime, flags);
   const result = await sdk.management.buckets.list({
     project: projectRef,
@@ -71,7 +71,7 @@ export async function bucketCreateCommand(
   }
   const sdk = await sdkFor(runtime, flags);
   const result = await sdk.management.buckets.create({
-    project: await resolvedProjectRef(runtime, input.project),
+    project: await resolvedProjectRef(runtime, flags, input.project),
     name: input.bucket,
     type,
     visibility: input.public ? 'public' : 'protected',
@@ -95,7 +95,7 @@ export async function bucketDeleteCommand(
   input: { bucket: string; project?: string; yes?: boolean },
 ): Promise<void> {
   validateBucketName(input.bucket);
-  const project = await resolvedProjectRef(runtime, input.project);
+  const project = await resolvedProjectRef(runtime, flags, input.project);
   let bucket = input.bucket;
   if (!input.yes) {
     if (!runtime.io.inputIsTty || flags.json) {
@@ -135,7 +135,7 @@ export async function bucketEmptyCommand(
     yes?: boolean;
   },
 ): Promise<void> {
-  const project = await resolvedProjectRef(runtime, input.project);
+  const project = await resolvedProjectRef(runtime, flags, input.project);
   if (!input.yes) {
     if (!runtime.io.inputIsTty || flags.json) {
       throw usageError(
@@ -230,7 +230,7 @@ export async function bucketEmptyStatusCommand(
   flags: GlobalFlags,
   input: { bucket: string; project?: string; job?: string },
 ): Promise<void> {
-  const project = await resolvedProjectRef(runtime, input.project);
+  const project = await resolvedProjectRef(runtime, flags, input.project);
   const sdk = await sdkFor(runtime, flags);
   const result = input.job
     ? await sdk.management.buckets.emptyJobs.get({
@@ -268,7 +268,7 @@ async function getBucket(
 ) {
   const sdk = await sdkFor(runtime, flags);
   return sdk.management.buckets.get({
-    project: await resolvedProjectRef(runtime, input.project),
+    project: await resolvedProjectRef(runtime, flags, input.project),
     bucket: input.bucket,
     signal: runtime.signal,
   });

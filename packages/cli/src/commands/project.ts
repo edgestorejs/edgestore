@@ -2,6 +2,7 @@ import { usageError } from '../core/errors';
 import { renderTable } from '../core/output';
 import type { CliRuntime, GlobalFlags } from '../core/runtime';
 import { outputFor, sdkFor } from '../core/runtime';
+import { selectWorkspaceContext } from '../core/workspace';
 import { activeAccount } from './account';
 
 export async function projectListCommand(
@@ -9,6 +10,7 @@ export async function projectListCommand(
   flags: GlobalFlags,
   options: { account?: string },
 ): Promise<void> {
+  await selectWorkspaceContext(runtime, flags, 'read');
   const account = await activeAccount(runtime, options.account);
   const sdk = await sdkFor(runtime, flags);
   const result = await sdk.management.projects.list({
@@ -141,6 +143,7 @@ export async function projectCurrentCommand(
   runtime: CliRuntime,
   flags: GlobalFlags,
 ): Promise<void> {
+  await selectWorkspaceContext(runtime, flags, 'read');
   const located = await runtime.repoConfig.read();
   if (!located) {
     throw missingProjectError();
@@ -166,6 +169,7 @@ export async function projectLinkCommand(
   flags: GlobalFlags,
   projectRef: string,
 ): Promise<void> {
+  await selectWorkspaceContext(runtime, flags, 'write');
   const sdk = await sdkFor(runtime, flags);
   const result = await sdk.management.projects.get({
     project: projectRef,
@@ -191,6 +195,7 @@ export async function projectUnlinkCommand(
   runtime: CliRuntime,
   flags: GlobalFlags,
 ): Promise<void> {
+  await selectWorkspaceContext(runtime, flags, 'read');
   const configPath = await runtime.repoConfig.remove();
   if (!configPath) {
     throw missingProjectError();
@@ -205,9 +210,11 @@ export async function projectUnlinkCommand(
 
 export async function resolvedProjectRef(
   runtime: CliRuntime,
+  flags: GlobalFlags,
   explicit?: string,
 ): Promise<string> {
   if (explicit) return explicit;
+  await selectWorkspaceContext(runtime, flags, 'read');
   const located = await runtime.repoConfig.read();
   if (!located) throw missingProjectError();
   return located.config.project;
@@ -220,7 +227,7 @@ async function getProject(
 ) {
   const sdk = await sdkFor(runtime, flags);
   const result = await sdk.management.projects.get({
-    project: await resolvedProjectRef(runtime, explicit),
+    project: await resolvedProjectRef(runtime, flags, explicit),
     signal: runtime.signal,
   });
   return result.project;

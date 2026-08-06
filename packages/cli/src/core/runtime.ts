@@ -27,6 +27,7 @@ export type GlobalFlags = {
   json?: boolean;
   plain?: boolean;
   apiUrl?: string;
+  cwd?: string;
   color: boolean;
   progress: boolean;
 };
@@ -89,6 +90,7 @@ export type CliRuntime = {
   env: NodeJS.ProcessEnv;
   io: RuntimeIo;
   signal: AbortSignal;
+  setCwd(cwd: string): void;
   globalConfig: {
     path: string;
     read(): Promise<GlobalConfig>;
@@ -116,8 +118,7 @@ export type CliRuntime = {
 
 export function createDefaultRuntime(signal: AbortSignal): CliRuntime {
   const paths = envPaths('edgestore', { suffix: '' });
-
-  return {
+  const runtime: CliRuntime = {
     exitCode: 0,
     cwd: process.cwd(),
     env: process.env,
@@ -129,6 +130,10 @@ export function createDefaultRuntime(signal: AbortSignal): CliRuntime {
       outputIsTty: Boolean(process.stdout.isTTY),
     },
     signal,
+    setCwd(cwd) {
+      runtime.cwd = cwd;
+      runtime.repoConfig = new RepoConfigStore(cwd);
+    },
     globalConfig: new GlobalConfigStore(path.join(paths.config, 'config.json')),
     repoConfig: new RepoConfigStore(process.cwd()),
     credentials: new KeyringCredentialStore(),
@@ -138,6 +143,7 @@ export function createDefaultRuntime(signal: AbortSignal): CliRuntime {
     openUrl,
     runCommand,
   };
+  return runtime;
 }
 
 export function outputFor(runtime: CliRuntime, flags: GlobalFlags): CliOutput {

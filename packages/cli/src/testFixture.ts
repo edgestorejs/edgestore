@@ -548,6 +548,9 @@ export function createFixture(): CliTestFixture {
       outputIsTty: false,
     },
     signal: abortController.signal,
+    setCwd(cwd) {
+      runtime.cwd = cwd;
+    },
     globalConfig: {
       path: '/config/edgestore/config.json',
       read: vi.fn(async () => ({ ...globalConfig })),

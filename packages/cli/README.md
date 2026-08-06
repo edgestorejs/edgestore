@@ -29,6 +29,19 @@ edgestore file upload ./logo.png --bucket publicFiles
 edgestore project key create <basePath> --name local --output .env.local
 ```
 
+In a monorepo, run commands from the application package or select it
+explicitly with `--cwd`:
+
+```sh
+edgestore --cwd apps/web init
+edgestore --cwd apps/web bucket list
+```
+
+Each workspace package keeps its own `.edgestore/config.json`. From the
+monorepo root, the CLI uses the only configured package automatically or asks
+which package to use when more than one is configured. Automation should pass
+`--cwd` or an explicit `--project` when the choice is ambiguous.
+
 Use `--json` for structured output and `--plain` for commands with one natural
 value. Run `edgestore completion bash`, `zsh`, or `fish` to configure shell
 completion.
