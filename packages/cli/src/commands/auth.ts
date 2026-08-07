@@ -162,9 +162,11 @@ async function browserLogin(
     client: await runtime.credentials.getOAuthClient(apiUrl.displayUrl),
     signal: runtime.signal,
     openUrl: (url) => runtime.openUrl(url),
-    onAuthorizationUrl: () => {
+    onAuthorizationUrl: (url) => {
       if (output.options.mode === 'human') {
-        runtime.io.stderr.write('Opening a browser to continue login...\n');
+        runtime.io.stderr.write(
+          `Opening a browser to continue login...\nIf it does not open, visit:\n  ${url}\n`,
+        );
       }
     },
     onBrowserOpenFailed: (url) => {

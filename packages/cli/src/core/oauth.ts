@@ -47,12 +47,23 @@ export class DefaultOAuthService implements OAuthService {
 
   async login(input: BrowserOAuthLoginInput): Promise<BrowserOAuthLoginResult> {
     try {
-      return await this.performLogin(input);
+      return await this.performLoginWithRecovery(input);
     } catch (error) {
       if (input.signal.aborted || error instanceof CliError) throw error;
       throw new CliError('oauth_login_failed', oauthErrorMessage(error), {
         suggestions: ['edgestore login', 'edgestore login --token'],
       });
+    }
+  }
+
+  private async performLoginWithRecovery(
+    input: BrowserOAuthLoginInput,
+  ): Promise<BrowserOAuthLoginResult> {
+    try {
+      return await this.performLogin(input);
+    } catch (error) {
+      if (!input.client || !isInvalidClientError(error)) throw error;
+      return await this.performLogin({ ...input, client: undefined });
     }
   }
 
@@ -346,6 +357,14 @@ function credentialFromTokens(
 
 function normalizeUrl(value: string) {
   return new URL(value).toString().replace(/\/$/, '');
+}
+
+function isInvalidClientError(error: unknown): boolean {
+  return (
+    (error instanceof oauth.AuthorizationResponseError ||
+      error instanceof oauth.ResponseBodyError) &&
+    error.error === 'invalid_client'
+  );
 }
 
 function isLoopback(url: URL) {

@@ -3,10 +3,24 @@ import type { OAuthCredential } from './credentials';
 import { DefaultOAuthService } from './oauth';
 
 const oauthMocks = vi.hoisted(() => {
+  class AuthorizationResponseError extends Error {
+    constructor(readonly error: string) {
+      super('authorization response error');
+    }
+  }
+
+  class ResponseBodyError extends Error {
+    constructor(readonly error: string) {
+      super('response body error');
+    }
+  }
+
   const config = {
     clientMetadata: () => ({ client_id: 'client_123' }),
   };
   return {
+    AuthorizationResponseError,
+    ResponseBodyError,
     config,
     dynamicClientRegistration: vi.fn(async () => config),
     discovery: vi.fn(async () => config),
@@ -51,6 +65,8 @@ const callbackMocks = vi.hoisted(() => {
 });
 
 vi.mock('openid-client', () => ({
+  AuthorizationResponseError: oauthMocks.AuthorizationResponseError,
+  ResponseBodyError: oauthMocks.ResponseBodyError,
   customFetch: Symbol.for('openid-client.customFetch'),
   allowInsecureRequests: vi.fn(),
   None: vi.fn(() => vi.fn()),
@@ -131,6 +147,81 @@ describe('OAuth service', () => {
       },
       client: { clientId: 'client_123' },
     });
+    expect(callbackMocks.close).toHaveBeenCalledOnce();
+  });
+
+  it('re-registers once when a cached client is rejected', async () => {
+    oauthMocks.authorizationCodeGrant
+      .mockRejectedValueOnce(
+        new oauthMocks.AuthorizationResponseError('invalid_client'),
+      )
+      .mockResolvedValueOnce({
+        access_token: 'access_123',
+        refresh_token: 'refresh_123',
+        expires_in: 3_600,
+        scope: 'account:read project:read file:write',
+      });
+    const onClientRegistered = vi.fn(async () => undefined);
+    const openUrl = vi.fn(async () => undefined);
+    const service = new DefaultOAuthService(async () =>
+      Response.json({
+        resource: 'https://api.example.test/v2',
+        authorization_servers: ['https://dashboard.example.test'],
+        scopes_supported: ['account:read'],
+      }),
+    );
+
+    const result = await service.login({
+      apiOrigin: 'https://api.example.test',
+      resource: 'https://api.example.test/v2',
+      client: {
+        version: 1,
+        clientId: 'stale_client',
+        issuer: 'https://dashboard.example.test',
+        redirectUri: 'http://127.0.0.1:45678/oauth/callback',
+      },
+      signal: new AbortController().signal,
+      openUrl,
+      onClientRegistered,
+    });
+
+    expect(oauthMocks.discovery).toHaveBeenCalledOnce();
+    expect(oauthMocks.dynamicClientRegistration).toHaveBeenCalledOnce();
+    expect(onClientRegistered).toHaveBeenCalledOnce();
+    expect(openUrl).toHaveBeenCalledTimes(2);
+    expect(callbackMocks.close).toHaveBeenCalledTimes(2);
+    expect(result.client.clientId).toBe('client_123');
+  });
+
+  it('does not re-register when authorization is denied', async () => {
+    oauthMocks.authorizationCodeGrant.mockRejectedValueOnce(
+      new oauthMocks.AuthorizationResponseError('access_denied'),
+    );
+    const service = new DefaultOAuthService(async () =>
+      Response.json({
+        resource: 'https://api.example.test/v2',
+        authorization_servers: ['https://dashboard.example.test'],
+        scopes_supported: ['account:read'],
+      }),
+    );
+
+    await expect(
+      service.login({
+        apiOrigin: 'https://api.example.test',
+        resource: 'https://api.example.test/v2',
+        client: {
+          version: 1,
+          clientId: 'client_123',
+          issuer: 'https://dashboard.example.test',
+          redirectUri: 'http://127.0.0.1:45678/oauth/callback',
+        },
+        signal: new AbortController().signal,
+        openUrl: vi.fn(async () => undefined),
+      }),
+    ).rejects.toMatchObject({ code: 'oauth_login_failed' });
+
+    expect(oauthMocks.dynamicClientRegistration).not.toHaveBeenCalled();
+    expect(callbackMocks.open).toHaveBeenCalledOnce();
     expect(callbackMocks.close).toHaveBeenCalledOnce();
   });
 

@@ -39,6 +39,9 @@ describe('auth', () => {
     expect(fixture.stderr()).toContain(
       'Opening a browser to continue login...',
     );
+    expect(fixture.stderr()).toContain(
+      'https://dashboard.edgestore.dev/oauth/authorize?client_id=oauth_client',
+    );
   });
 
   it('selects an account authorized by the OAuth grant', async () => {
