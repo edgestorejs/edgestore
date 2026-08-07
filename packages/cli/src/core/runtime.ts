@@ -5,6 +5,7 @@ import {
   type ManagementEdgeStoreSdk,
 } from '@edgestore/sdk';
 import envPaths from 'env-paths';
+import open from 'open';
 import { resolveApiUrl, type ResolvedApiUrl } from './apiUrl';
 import {
   GlobalConfigStore,
@@ -225,14 +226,8 @@ function getOutputMode(flags: GlobalFlags): OutputMode {
   return 'human';
 }
 
-function openUrl(url: string): Promise<void> {
-  if (process.platform === 'darwin') {
-    return runCommand('open', [url]);
-  }
-  if (process.platform === 'win32') {
-    return runCommand('cmd', ['/c', 'start', '', url]);
-  }
-  return runCommand('xdg-open', [url]);
+async function openUrl(url: string): Promise<void> {
+  await open(url);
 }
 
 function runCommand(

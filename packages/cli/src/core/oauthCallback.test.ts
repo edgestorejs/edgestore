@@ -23,8 +23,32 @@ describe('OAuth loopback callback', () => {
       const received = await callback.callback;
 
       expect(response.status).toBe(200);
-      expect(await response.text()).toContain('Logged in to EdgeStore');
+      expect(await response.text()).toContain('Authorization received');
       expect(received.searchParams.get('code')).toBe('code_123');
+    } finally {
+      await callback.close();
+    }
+  });
+
+  it('shows a neutral page for OAuth error callbacks', async () => {
+    const callback = await openOAuthCallbackServer(
+      'expected-state',
+      new AbortController().signal,
+    );
+
+    try {
+      const failed = new URL(callback.redirectUri);
+      failed.searchParams.set('state', 'expected-state');
+      failed.searchParams.set('error', 'access_denied');
+      failed.searchParams.set('error_description', 'untrusted details');
+      const response = await fetch(failed);
+      const received = await callback.callback;
+      const page = await response.text();
+
+      expect(response.status).toBe(200);
+      expect(page).toContain('Login was not completed');
+      expect(page).not.toContain('untrusted details');
+      expect(received.searchParams.get('error')).toBe('access_denied');
     } finally {
       await callback.close();
     }

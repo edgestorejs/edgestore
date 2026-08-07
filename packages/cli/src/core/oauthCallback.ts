@@ -156,7 +156,11 @@ function waitForCallback(
         connection: 'close',
         'content-type': 'text/html; charset=utf-8',
       });
-      response.end(successPage);
+      response.end(
+        callbackUrl.searchParams.has('error')
+          ? authorizationFailedPage
+          : authorizationReceivedPage,
+      );
       finish(undefined, callbackUrl);
     };
 
@@ -181,12 +185,25 @@ function abortError() {
   return new DOMException('The operation was aborted.', 'AbortError');
 }
 
-const successPage = `<!doctype html>
+const authorizationReceivedPage = callbackPage(
+  'EdgeStore authorization received',
+  'Authorization received',
+  'Return to the terminal to finish logging in.',
+);
+
+const authorizationFailedPage = callbackPage(
+  'EdgeStore login not completed',
+  'Login was not completed',
+  'Return to the terminal for details or to try again.',
+);
+
+function callbackPage(title: string, heading: string, message: string): string {
+  return `<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>EdgeStore login complete</title>
+    <title>${title}</title>
     <style>
       body { margin: 0; min-height: 100vh; display: grid; place-items: center; font: 16px/1.5 system-ui, sans-serif; color: #18181b; background: #fafafa; }
       main { width: min(32rem, calc(100% - 3rem)); }
@@ -194,5 +211,6 @@ const successPage = `<!doctype html>
       p { margin: 0; color: #52525b; }
     </style>
   </head>
-  <body><main><h1>Logged in to EdgeStore</h1><p>You can close this window and return to the terminal.</p></main></body>
+  <body><main><h1>${heading}</h1><p>${message}</p></main></body>
 </html>`;
+}
