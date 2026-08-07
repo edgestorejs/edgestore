@@ -213,7 +213,7 @@ async function checkEnvFile(
   const label = localConfig?.config.envFile ?? '.env.local';
   const configRoot = localConfig?.config.envFile
     ? path.dirname(path.dirname(localConfig.path))
-    : runtime.cwd;
+    : runtime.workspaceCwd;
   const envPath = path.resolve(configRoot, label);
   let contents = '';
   try {

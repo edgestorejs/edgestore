@@ -88,10 +88,12 @@ export type SdkFactory = (options: {
 export type CliRuntime = {
   exitCode: number;
   cwd: string;
+  workspaceCwd: string;
   env: NodeJS.ProcessEnv;
   io: RuntimeIo;
   signal: AbortSignal;
   setCwd(cwd: string): void;
+  setWorkspaceCwd(cwd: string): void;
   globalConfig: {
     path: string;
     read(): Promise<GlobalConfig>;
@@ -120,9 +122,11 @@ export type CliRuntime = {
 
 export function createDefaultRuntime(signal: AbortSignal): CliRuntime {
   const paths = envPaths('edgestore', { suffix: '' });
+  const cwd = process.cwd();
   const runtime: CliRuntime = {
     exitCode: 0,
-    cwd: process.cwd(),
+    cwd,
+    workspaceCwd: cwd,
     env: process.env,
     io: {
       stdin: process.stdin,
@@ -134,10 +138,14 @@ export function createDefaultRuntime(signal: AbortSignal): CliRuntime {
     signal,
     setCwd(cwd) {
       runtime.cwd = cwd;
+      runtime.setWorkspaceCwd(cwd);
+    },
+    setWorkspaceCwd(cwd) {
+      runtime.workspaceCwd = cwd;
       runtime.repoConfig = new RepoConfigStore(cwd);
     },
     globalConfig: new GlobalConfigStore(path.join(paths.config, 'config.json')),
-    repoConfig: new RepoConfigStore(process.cwd()),
+    repoConfig: new RepoConfigStore(cwd),
     credentials: new KeyringCredentialStore(),
     oauth: new DefaultOAuthService(),
     prompts: new DefaultCliPrompts(),
