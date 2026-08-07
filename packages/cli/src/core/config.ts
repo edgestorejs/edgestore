@@ -147,7 +147,6 @@ export async function findGitRoot(start: string): Promise<string | undefined> {
 export async function findPackageRoot(start: string): Promise<string> {
   const initial = path.resolve(start);
   const gitRoot = await findGitRoot(initial);
-  if (!gitRoot) return initial;
   let current = initial;
 
   while (true) {

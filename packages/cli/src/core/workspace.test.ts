@@ -28,7 +28,8 @@ describe('selectWorkspaceContext', () => {
 
     await selectWorkspaceContext(fixture.runtime, flags, 'read');
 
-    expect(fixture.runtime.cwd).toBe(workspace);
+    expect(fixture.runtime.cwd).toBe(source);
+    expect(fixture.runtime.workspaceCwd).toBe(workspace);
   });
 
   it('uses the only configured workspace from the monorepo root', async () => {
@@ -41,7 +42,8 @@ describe('selectWorkspaceContext', () => {
 
     await selectWorkspaceContext(fixture.runtime, flags, 'read');
 
-    expect(fixture.runtime.cwd).toBe(workspace);
+    expect(fixture.runtime.cwd).toBe(root);
+    expect(fixture.runtime.workspaceCwd).toBe(workspace);
   });
 
   it('prompts for one of multiple configured workspaces', async () => {
@@ -58,7 +60,8 @@ describe('selectWorkspaceContext', () => {
 
     await selectWorkspaceContext(fixture.runtime, flags, 'read');
 
-    expect(fixture.runtime.cwd).toBe(api);
+    expect(fixture.runtime.cwd).toBe(root);
+    expect(fixture.runtime.workspaceCwd).toBe(api);
     expect(select).toHaveBeenCalledWith(
       'Which workspace package should EdgeStore use?',
       expect.arrayContaining([
@@ -98,7 +101,52 @@ describe('selectWorkspaceContext', () => {
 
     await selectWorkspaceContext(fixture.runtime, flags, 'write');
 
-    expect(fixture.runtime.cwd).toBe(api);
+    expect(fixture.runtime.cwd).toBe(root);
+    expect(fixture.runtime.workspaceCwd).toBe(api);
+  });
+
+  it('discovers a workspace without a Git repository', async () => {
+    const root = await monorepo(false);
+    const workspace = await packageDirectory(root, 'apps/web', 'web');
+    await configure(workspace, 'web-project');
+    const fixture = createFixture();
+    fixture.runtime.cwd = root;
+
+    await selectWorkspaceContext(fixture.runtime, flags, 'read');
+
+    expect(fixture.runtime.workspaceCwd).toBe(workspace);
+  });
+
+  it('normalizes an explicit subdirectory to its workspace package', async () => {
+    const root = await monorepo();
+    const workspace = await packageDirectory(root, 'apps/web', 'web');
+    const source = path.join(workspace, 'src');
+    await mkdir(source);
+    const fixture = createFixture();
+    fixture.runtime.setCwd(source);
+
+    await selectWorkspaceContext(
+      fixture.runtime,
+      { ...flags, cwd: 'apps/web/src' },
+      'read',
+    );
+
+    expect(fixture.runtime.cwd).toBe(source);
+    expect(fixture.runtime.workspaceCwd).toBe(workspace);
+  });
+
+  it('does not discover a parent workspace across a nested Git root', async () => {
+    const root = await monorepo();
+    const nested = await packageDirectory(root, 'vendor/tool', 'tool');
+    await mkdir(path.join(nested, '.git'));
+    const source = path.join(nested, 'src');
+    await mkdir(source);
+    const fixture = createFixture();
+    fixture.runtime.cwd = source;
+
+    await selectWorkspaceContext(fixture.runtime, flags, 'read');
+
+    expect(fixture.runtime.workspaceCwd).toBe(nested);
   });
 
   it('does not discover a workspace for an explicit project', async () => {
@@ -108,13 +156,14 @@ describe('selectWorkspaceContext', () => {
       resolvedProjectRef(fixture.runtime, flags, 'x36t1ejdlz'),
     ).resolves.toBe('x36t1ejdlz');
     expect(fixture.runtime.cwd).toBe('/repo');
+    expect(fixture.runtime.workspaceCwd).toBe('/repo');
   });
 });
 
-async function monorepo(): Promise<string> {
+async function monorepo(git = true): Promise<string> {
   const root = await mkdtemp(path.join(tmpdir(), 'edgestore-workspace-'));
   directories.push(root);
-  await mkdir(path.join(root, '.git'));
+  if (git) await mkdir(path.join(root, '.git'));
   await writeFile(path.join(root, 'package.json'), '{"private":true}\n');
   await writeFile(
     path.join(root, 'pnpm-workspace.yaml'),

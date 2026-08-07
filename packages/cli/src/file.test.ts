@@ -1,4 +1,5 @@
 import {
+  mkdir,
   mkdtemp,
   readdir,
   readFile,
@@ -178,6 +179,47 @@ describe('file', () => {
       path: 'reports',
       fileName: 'renamed.txt',
     });
+  });
+
+  it('keeps upload paths relative to the invocation directory', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-upload-'),
+    );
+    fixture.runtime.cwd = temporaryDirectory;
+    fixture.repoConfig.config = {
+      account: account.id,
+      project: project.basePath,
+    };
+    await writeFile(
+      path.join(temporaryDirectory, 'package.json'),
+      JSON.stringify({ private: true }),
+    );
+    await writeFile(
+      path.join(temporaryDirectory, 'pnpm-workspace.yaml'),
+      "packages:\n  - 'apps/*'\n",
+    );
+    await writeFile(path.join(temporaryDirectory, 'logo.txt'), 'upload me');
+    const appDirectory = path.join(temporaryDirectory, 'apps', 'web');
+    await mkdir(path.join(appDirectory, '.edgestore'), { recursive: true });
+    await writeFile(
+      path.join(appDirectory, 'package.json'),
+      JSON.stringify({ name: 'web' }),
+    );
+    await writeFile(
+      path.join(appDirectory, '.edgestore', 'config.json'),
+      JSON.stringify({ account: account.id, project: project.basePath }),
+    );
+
+    const exitCode = await runCli(
+      ['file', 'upload', 'logo.txt', '--bucket', 'publicFiles'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(0);
+    expect(fixture.uploadFile).toHaveBeenCalledOnce();
+    expect(fixture.runtime.cwd).toBe(temporaryDirectory);
+    expect(fixture.runtime.workspaceCwd).toBe(appDirectory);
   });
 
   it('rejects --keep-name with an exact upload destination', async () => {

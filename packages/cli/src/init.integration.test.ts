@@ -491,7 +491,8 @@ describe('init.integration', () => {
     );
 
     expect(exitCode).toBe(0);
-    expect(fixture.runtime.cwd).toBe(appDirectory);
+    expect(fixture.runtime.cwd).toBe(temporaryDirectory);
+    expect(fixture.runtime.workspaceCwd).toBe(appDirectory);
     expect(fixture.runCommand).toHaveBeenCalledWith(
       'pnpm',
       ['add', '@edgestore/server', '@edgestore/react'],

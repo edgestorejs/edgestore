@@ -83,11 +83,12 @@ export async function initCommand(
   options: InitOptions,
 ): Promise<void> {
   await selectWorkspaceContext(runtime, flags, 'write');
+  const packageCwd = runtime.workspaceCwd;
   const interactive = runtime.io.inputIsTty && !flags.json && !flags.plain;
   validateOptions(options, interactive);
-  const packages = await detectPackages(runtime.cwd, {
+  const packages = await detectPackages(packageCwd, {
     installAtWorkspaceRoot:
-      Boolean(flags.cwd) && (await isWorkspaceRoot(runtime.cwd)),
+      Boolean(flags.cwd) && (await isWorkspaceRoot(packageCwd)),
   });
   const sdk = await sdkFor(runtime, flags);
   const account = await resolveAccount({ runtime, sdk, options, interactive });
@@ -100,11 +101,11 @@ export async function initCommand(
   let envFile: string | undefined;
   if (secretOutput) {
     await preflightEnvSecret(
-      runtime.cwd,
+      packageCwd,
       ['EDGE_STORE_ACCESS_KEY', 'EDGE_STORE_SECRET_KEY'],
       { output: secretOutput, update: options.update },
     );
-    envFile = await protectSecretFile(runtime.cwd, secretOutput);
+    envFile = await protectSecretFile(packageCwd, secretOutput);
   }
 
   const projectResult =
@@ -128,7 +129,7 @@ export async function initCommand(
     );
     try {
       await deliverEnvSecretWithRollback({
-        cwd: runtime.cwd,
+        cwd: packageCwd,
         values: {
           EDGE_STORE_ACCESS_KEY: keyResult.key.accessKey,
           EDGE_STORE_SECRET_KEY: keyResult.secretKey,
@@ -224,6 +225,7 @@ export async function initCommand(
   let install: Awaited<ReturnType<typeof installPackages>>;
   try {
     install = await installPackages(runtime, packages, {
+      cwd: packageCwd,
       requested: options.install,
       interactive,
       structured: Boolean(flags.json || flags.plain),
@@ -247,7 +249,7 @@ export async function initCommand(
     `Linked ${projectResult.project.name} (${projectResult.project.basePath}).`,
     `Config: ${configPath}`,
     ...(secretOutput
-      ? [`Secrets: ${path.resolve(runtime.cwd, secretOutput)}`]
+      ? [`Secrets: ${path.resolve(packageCwd, secretOutput)}`]
       : []),
     ...(bucket ? [`Bucket: ${bucket.name}`] : []),
     ...(install.command && !install.ran
@@ -407,7 +409,7 @@ async function createProject(context: InitContext, createKey: boolean) {
     (await promptText(runtime, {
       interactive,
       message: 'Project name',
-      placeholder: path.basename(runtime.cwd),
+      placeholder: path.basename(runtime.workspaceCwd),
     }));
   return sdk.management.projects.create({
     account,
@@ -615,6 +617,7 @@ async function installPackages(
   runtime: CliRuntime,
   plan: PackagePlan,
   options: {
+    cwd: string;
     requested?: boolean;
     interactive: boolean;
     structured: boolean;
@@ -640,7 +643,7 @@ async function installPackages(
   const captured = options.structured ? createOutputCapture() : undefined;
   try {
     await runtime.runCommand(plan.manager, args, {
-      cwd: runtime.cwd,
+      cwd: options.cwd,
       ...(captured ? { stdout: captured.stream, stderr: captured.stream } : {}),
     });
   } catch (error) {
@@ -700,7 +703,9 @@ async function resolveSecretOutput(
   if (explicitOutput) return explicitOutput;
   if (!interactive) return '.env.local';
 
-  const discovered = (await readdir(runtime.cwd, { withFileTypes: true }))
+  const discovered = (
+    await readdir(runtime.workspaceCwd, { withFileTypes: true })
+  )
     .filter(
       (entry) =>
         entry.isFile() &&

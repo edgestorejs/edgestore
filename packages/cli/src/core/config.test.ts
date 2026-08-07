@@ -122,8 +122,9 @@ describe('RepoConfigStore', () => {
     );
   });
 
-  it('does not search parent directories outside a Git repository', async () => {
+  it('discovers the nearest package outside a Git repository', async () => {
     const parent = await temporaryDirectory();
+    await writeFile(path.join(parent, 'package.json'), '{}');
     const parentStore = new RepoConfigStore(parent);
     await parentStore.write({
       account: 'acc_parent',
@@ -132,7 +133,9 @@ describe('RepoConfigStore', () => {
     const child = path.join(parent, 'child');
     await mkdir(child);
 
-    await expect(new RepoConfigStore(child).read()).resolves.toBeUndefined();
+    await expect(new RepoConfigStore(child).read()).resolves.toMatchObject({
+      config: { account: 'acc_parent', project: 'parent-project' },
+    });
   });
 });
 
