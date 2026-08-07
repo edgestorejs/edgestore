@@ -52,7 +52,7 @@ export class RepoConfigStore {
 
   async read(): Promise<LocatedRepoConfig | undefined> {
     const configPath = path.join(
-      await findPackageRoot(this.cwd),
+      await findRepoConfigRoot(this.cwd),
       '.edgestore',
       'config.json',
     );
@@ -65,7 +65,7 @@ export class RepoConfigStore {
   }
 
   async write(config: RepoConfig): Promise<string> {
-    const root = await findPackageRoot(this.cwd);
+    const root = await findRepoConfigRoot(this.cwd);
     const configPath = path.join(root, '.edgestore', 'config.json');
     await writeConfig(configPath, repoConfigSchema.parse(config));
     return configPath;
@@ -156,6 +156,14 @@ export async function findPackageRoot(start: string): Promise<string> {
     if (parent === current) return initial;
     current = parent;
   }
+}
+
+async function findRepoConfigRoot(start: string): Promise<string> {
+  const packageRoot = await findPackageRoot(start);
+  if (await pathExists(path.join(packageRoot, 'package.json'))) {
+    return packageRoot;
+  }
+  return (await findGitRoot(start)) ?? packageRoot;
 }
 
 async function pathExists(candidate: string): Promise<boolean> {
