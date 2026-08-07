@@ -123,6 +123,21 @@ describe('auth', () => {
     );
     expect(fixture.stdout()).toContain('Logged out.');
   });
+
+  it('removes a malformed OAuth login without attempting revocation', async () => {
+    const malformed = serializeOAuthCredential(oauthCredential()).slice(0, -1);
+    await fixture.credentials.set('https://api.edgestore.dev', malformed);
+
+    const exitCode = await runCli(['logout'], fixture.runtime, '0.0.0');
+
+    expect(exitCode).toBe(0);
+    expect(fixture.oauthRevoke).not.toHaveBeenCalled();
+    await expect(
+      fixture.credentials.get('https://api.edgestore.dev'),
+    ).resolves.toBeUndefined();
+    expect(fixture.stderr()).toContain('stored OAuth login is invalid');
+    expect(fixture.stdout()).toContain('Logged out.');
+  });
 });
 
 function oauthCredential(): OAuthCredential {

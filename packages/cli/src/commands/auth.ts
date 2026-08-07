@@ -52,8 +52,16 @@ export async function logoutCommand(
   flags: GlobalFlags,
 ): Promise<void> {
   const apiOrigin = apiUrlFor(runtime, flags).displayUrl;
+  const output = outputFor(runtime, flags);
   const stored = await runtime.credentials.get(apiOrigin);
-  const oauthCredential = parseStoredOAuthCredential(stored);
+  let oauthCredential;
+  try {
+    oauthCredential = parseStoredOAuthCredential(stored);
+  } catch {
+    output.warning(
+      'The stored OAuth login is invalid. Skipping remote revocation.',
+    );
+  }
   let oauthRevoked: boolean | undefined;
   if (oauthCredential) {
     try {
@@ -62,14 +70,13 @@ export async function logoutCommand(
     } catch (error) {
       if (runtime.signal.aborted) throw error;
       oauthRevoked = false;
-      outputFor(runtime, flags).warning(
+      output.warning(
         'The OAuth grant could not be revoked remotely. The login will still be removed locally.',
       );
     }
   }
   const deleted = await runtime.credentials.delete(apiOrigin);
   const environmentTokenActive = Boolean(runtime.env.EDGESTORE_TOKEN?.trim());
-  const output = outputFor(runtime, flags);
 
   output.result(
     {
