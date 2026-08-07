@@ -85,6 +85,25 @@ describe('RepoConfigStore', () => {
     ).resolves.toBeUndefined();
   });
 
+  it('falls back to the Git root when no package manifest exists', async () => {
+    const root = await temporaryDirectory();
+    await writeFile(path.join(root, '.git'), 'gitdir: elsewhere\n');
+    const child = path.join(root, 'scripts', 'release');
+    await mkdir(child, { recursive: true });
+    const store = new RepoConfigStore(child);
+
+    const configPath = await store.write({
+      account: 'acc_123',
+      project: 'x36t1ejdlz',
+    });
+
+    expect(configPath).toBe(path.join(root, '.edgestore', 'config.json'));
+    await expect(store.read()).resolves.toMatchObject({
+      config: { account: 'acc_123', project: 'x36t1ejdlz' },
+      path: configPath,
+    });
+  });
+
   it('removes only the local config', async () => {
     const root = await temporaryDirectory();
     const store = new RepoConfigStore(root);

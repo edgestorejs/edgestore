@@ -51,9 +51,8 @@ async function selectWorkspaceDirectory(
   purpose: ContextPurpose,
 ): Promise<string> {
   const start = path.resolve(runtime.cwd);
-  const gitRoot = await findGitRoot(start);
   const packageRoot = await findPackageRoot(start);
-  const workspaceRoot = await findWorkspaceRoot(start, gitRoot);
+  const workspaceRoot = await findWorkspaceRoot(start);
   if (!workspaceRoot || start !== workspaceRoot || flags.cwd) {
     return packageRoot;
   }
@@ -85,12 +84,13 @@ async function selectWorkspaceDirectory(
   return workspaceRoot;
 }
 
-async function findWorkspaceRoot(
+export async function findWorkspaceRoot(
   start: string,
-  gitRoot: string | undefined,
 ): Promise<string | undefined> {
+  const resolvedStart = path.resolve(start);
+  const gitRoot = await findGitRoot(resolvedStart);
   try {
-    const root = await findRoot(start);
+    const root = await findRoot(resolvedStart);
     if (root.tool === 'root') return undefined;
     if (gitRoot && !isWithin(gitRoot, root.rootDir)) return undefined;
     return root.rootDir;

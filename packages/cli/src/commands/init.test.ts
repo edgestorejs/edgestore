@@ -2,7 +2,7 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { detectPackages } from './init';
+import { detectPackages, renderInstallCommand, type PackagePlan } from './init';
 
 describe('detectPackages', () => {
   let directory: string | undefined;
@@ -68,6 +68,65 @@ describe('detectPackages', () => {
       code: 'invalid_package_manifest',
       message: `Invalid package manifest at ${path.join(directory, 'package.json')}.`,
     });
+  });
+});
+
+describe('renderInstallCommand', () => {
+  const workspace = { root: '/repo', packageName: 'web' };
+
+  it.each([
+    {
+      manager: 'pnpm' as const,
+      args: ['add', '@edgestore/server'],
+      expected: 'pnpm --filter ./apps/web add @edgestore/server',
+    },
+    {
+      manager: 'npm' as const,
+      args: ['install', '@edgestore/server'],
+      expected: 'npm install @edgestore/server --workspace apps/web',
+    },
+    {
+      manager: 'yarn' as const,
+      args: ['add', '@edgestore/server'],
+      expected: 'yarn workspace web add @edgestore/server',
+    },
+    {
+      manager: 'bun' as const,
+      args: ['add', '@edgestore/server'],
+      expected: 'bun --cwd apps/web add @edgestore/server',
+    },
+  ])('renders a $manager workspace command', ({ manager, args, expected }) => {
+    const plan: PackagePlan = {
+      framework: 'node',
+      manager,
+      missing: ['@edgestore/server'],
+      workspace,
+    };
+
+    expect(
+      renderInstallCommand(manager, args, {
+        plan,
+        packageCwd: '/repo/apps/web',
+        invocationCwd: '/repo',
+      }),
+    ).toBe(expected);
+  });
+
+  it('falls back to cwd targeting for an unnamed Yarn workspace', () => {
+    const plan: PackagePlan = {
+      framework: 'node',
+      manager: 'yarn',
+      missing: ['@edgestore/server'],
+      workspace: { root: '/repo' },
+    };
+
+    expect(
+      renderInstallCommand('yarn', ['add', '@edgestore/server'], {
+        plan,
+        packageCwd: '/repo/apps/web',
+        invocationCwd: '/repo',
+      }),
+    ).toBe('yarn --cwd apps/web add @edgestore/server');
   });
 });
 

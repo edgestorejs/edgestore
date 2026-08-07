@@ -448,13 +448,12 @@ describe('init.integration', () => {
     );
   });
 
-  it('detects and installs from the only configured workspace package', async () => {
+  it('detects, installs, and renders commands for a Git-less workspace package', async () => {
     temporaryDirectory = await mkdtemp(
       path.join(tmpdir(), 'edgestore-cli-init-'),
     );
     fixture.runtime.cwd = temporaryDirectory;
     fixture.runtime.io.inputIsTty = false;
-    await mkdir(path.join(temporaryDirectory, '.git'));
     await writeFile(
       path.join(temporaryDirectory, 'pnpm-workspace.yaml'),
       "packages:\n  - 'apps/*'\n",
@@ -498,6 +497,23 @@ describe('init.integration', () => {
       ['add', '@edgestore/server', '@edgestore/react'],
       { cwd: appDirectory },
     );
+
+    const deferredFixture = createFixture();
+    deferredFixture.runtime.cwd = temporaryDirectory;
+    deferredFixture.runtime.io.inputIsTty = false;
+    const deferredExitCode = await runCli(
+      ['--json', 'init', '--link', project.basePath, '--without-key'],
+      deferredFixture.runtime,
+      '0.0.0',
+    );
+
+    expect(deferredExitCode).toBe(0);
+    expect(JSON.parse(deferredFixture.stdout()).install).toEqual({
+      command:
+        'pnpm --filter ./apps/web add @edgestore/server @edgestore/react',
+      cwd: appDirectory,
+      ran: false,
+    });
   });
 
   it('keeps package-manager output off structured stdout', async () => {

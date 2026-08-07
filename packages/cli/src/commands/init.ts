@@ -5,7 +5,7 @@ import { Writable } from 'node:stream';
 import { promisify } from 'node:util';
 import type { ManagementEdgeStoreSdk } from '@edgestore/sdk';
 import { detect } from 'package-manager-detector/detect';
-import { renderCliCommand } from '../core/command';
+import { renderCliCommand, renderShellCommand } from '../core/command';
 import { findGitRoot } from '../core/config';
 import { CliError, normalizeError, usageError } from '../core/errors';
 import type { CliRuntime, CliSdk, GlobalFlags } from '../core/runtime';
@@ -14,7 +14,11 @@ import {
   deliverEnvSecretWithRollback,
   preflightEnvSecret,
 } from '../core/secretDelivery';
-import { isWorkspaceRoot, selectWorkspaceContext } from '../core/workspace';
+import {
+  findWorkspaceRoot,
+  isWorkspaceRoot,
+  selectWorkspaceContext,
+} from '../core/workspace';
 import { activeAccount } from './account';
 import { parseBucketType } from './bucket';
 
@@ -226,6 +230,7 @@ export async function initCommand(
   try {
     install = await installPackages(runtime, packages, {
       cwd: packageCwd,
+      invocationCwd: runtime.cwd,
       requested: options.install,
       interactive,
       structured: Boolean(flags.json || flags.plain),
@@ -543,14 +548,21 @@ export type PackagePlan = {
   manager?: 'pnpm' | 'npm' | 'yarn' | 'bun';
   missing: string[];
   installAtWorkspaceRoot?: boolean;
+  workspace?: {
+    root: string;
+    packageName?: string;
+  };
 };
 
 export async function detectPackages(
   cwd: string,
   options: { installAtWorkspaceRoot?: boolean } = {},
 ): Promise<PackagePlan> {
+  const resolvedCwd = path.resolve(cwd);
+  const workspaceRoot = await findWorkspaceRoot(resolvedCwd);
   const packagePath = path.join(cwd, 'package.json');
   let manifest: {
+    name?: string;
     packageManager?: string;
     dependencies?: Record<string, string>;
     devDependencies?: Record<string, string>;
@@ -610,6 +622,14 @@ export async function detectPackages(
     manager: await detectPackageManager(cwd),
     missing: wanted.filter((name) => !dependencies[name]),
     installAtWorkspaceRoot: options.installAtWorkspaceRoot,
+    ...(workspaceRoot && workspaceRoot !== resolvedCwd
+      ? {
+          workspace: {
+            root: workspaceRoot,
+            ...(manifest.name ? { packageName: manifest.name } : {}),
+          },
+        }
+      : {}),
   };
 }
 
@@ -618,19 +638,24 @@ async function installPackages(
   plan: PackagePlan,
   options: {
     cwd: string;
+    invocationCwd: string;
     requested?: boolean;
     interactive: boolean;
     structured: boolean;
     json: boolean;
   },
-): Promise<{ command?: string; ran: boolean }> {
+): Promise<{ command?: string; cwd?: string; ran: boolean }> {
   if (!plan.manager || !plan.missing.length) return { ran: false };
   const args = installArgs(
     plan.manager,
     plan.missing,
     plan.installAtWorkspaceRoot,
   );
-  const command = [plan.manager, ...args].join(' ');
+  const command = renderInstallCommand(plan.manager, args, {
+    plan,
+    packageCwd: options.cwd,
+    invocationCwd: options.invocationCwd,
+  });
   const shouldInstall =
     options.requested ??
     (options.interactive
@@ -639,7 +664,7 @@ async function installPackages(
           true,
         )
       : false);
-  if (!shouldInstall) return { command, ran: false };
+  if (!shouldInstall) return { command, cwd: options.cwd, ran: false };
   const captured = options.structured ? createOutputCapture() : undefined;
   try {
     await runtime.runCommand(plan.manager, args, {
@@ -666,7 +691,56 @@ async function installPackages(
       diagnostics.endsWith('\n') ? diagnostics : `${diagnostics}\n`,
     );
   }
-  return { command, ran: true };
+  return { command, cwd: options.cwd, ran: true };
+}
+
+export function renderInstallCommand(
+  manager: NonNullable<PackagePlan['manager']>,
+  args: string[],
+  context: {
+    plan: PackagePlan;
+    packageCwd: string;
+    invocationCwd: string;
+  },
+): string {
+  const { plan, packageCwd, invocationCwd } = context;
+  const workspace = plan.workspace;
+  if (invocationCwd === workspace?.root) {
+    const workspacePath = path
+      .relative(workspace.root, packageCwd)
+      .replaceAll(path.sep, '/');
+    if (manager === 'pnpm') {
+      return renderShellCommand([
+        manager,
+        '--filter',
+        `./${workspacePath}`,
+        ...args,
+      ]);
+    }
+    if (manager === 'npm') {
+      return renderShellCommand([
+        manager,
+        ...args,
+        '--workspace',
+        workspacePath,
+      ]);
+    }
+    if (manager === 'yarn' && workspace.packageName) {
+      return renderShellCommand([
+        manager,
+        'workspace',
+        workspace.packageName,
+        ...args,
+      ]);
+    }
+  }
+
+  const relativeCwd = path.relative(invocationCwd, packageCwd) || '.';
+  if (relativeCwd === '.') return renderShellCommand([manager, ...args]);
+  if (manager === 'npm') {
+    return renderShellCommand([manager, '--prefix', relativeCwd, ...args]);
+  }
+  return renderShellCommand([manager, '--cwd', relativeCwd, ...args]);
 }
 
 function createOutputCapture(limit = 32_768): {
@@ -864,7 +938,8 @@ async function detectPackageManager(
   cwd: string,
 ): Promise<'pnpm' | 'npm' | 'yarn' | 'bun'> {
   const start = path.resolve(cwd);
-  const boundary = (await findGitRoot(start)) ?? start;
+  const boundary =
+    (await findWorkspaceRoot(start)) ?? (await findGitRoot(start)) ?? start;
   let directory = start;
   while (true) {
     for (const strategy of [
