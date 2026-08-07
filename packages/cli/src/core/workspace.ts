@@ -1,5 +1,6 @@
 import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
+import { findRoot, NoPkgJsonFound } from '@manypkg/find-root';
 import { getPackages } from '@manypkg/get-packages';
 import { findGitRoot, findPackageRoot } from './config';
 import { usageError } from './errors';
@@ -28,21 +29,18 @@ export async function selectWorkspaceContext(
   flags: GlobalFlags,
   purpose: ContextPurpose,
 ): Promise<void> {
-  if (flags.cwd) return;
-
   const selected = await selectWorkspaceDirectory(runtime, flags, purpose);
-  if (selected !== runtime.cwd) runtime.setCwd(selected);
+  if (selected !== runtime.workspaceCwd) runtime.setWorkspaceCwd(selected);
 }
 
 export async function isWorkspaceRoot(directory: string): Promise<boolean> {
-  if (await exists(path.join(directory, 'pnpm-workspace.yaml'))) return true;
   try {
-    const manifest = JSON.parse(
-      await readFile(path.join(directory, 'package.json'), 'utf8'),
-    ) as { workspaces?: unknown };
-    return Array.isArray(manifest.workspaces) || Boolean(manifest.workspaces);
+    const root = await findRoot(directory);
+    return root.tool !== 'root' && root.rootDir === path.resolve(directory);
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return false;
+    if (error instanceof NoPkgJsonFound || error instanceof SyntaxError) {
+      return false;
+    }
     throw error;
   }
 }
@@ -55,18 +53,20 @@ async function selectWorkspaceDirectory(
   const start = path.resolve(runtime.cwd);
   const gitRoot = await findGitRoot(start);
   const packageRoot = await findPackageRoot(start);
-  if (!gitRoot || start !== gitRoot) return packageRoot;
-  if (!(await isWorkspaceRoot(gitRoot))) return packageRoot;
+  const workspaceRoot = await findWorkspaceRoot(start, gitRoot);
+  if (!workspaceRoot || start !== workspaceRoot || flags.cwd) {
+    return packageRoot;
+  }
 
-  const packages = await discoverPackageDirectories(gitRoot);
+  const packages = await discoverPackageDirectories(workspaceRoot);
   const configured = [];
-  for (const directory of [gitRoot, ...packages]) {
+  for (const directory of [workspaceRoot, ...packages]) {
     if (await exists(path.join(directory, '.edgestore', 'config.json'))) {
       configured.push(directory);
     }
   }
 
-  if (configured.includes(gitRoot)) return gitRoot;
+  if (configured.includes(workspaceRoot)) return workspaceRoot;
   if (configured.length === 1) return configured[0]!;
   if (configured.length > 1) {
     return chooseWorkspace(runtime, flags, {
@@ -74,7 +74,7 @@ async function selectWorkspaceDirectory(
       kind: 'configured',
     });
   }
-  if (purpose === 'read') return gitRoot;
+  if (purpose === 'read') return workspaceRoot;
   if (packages.length === 1) return packages[0]!;
   if (packages.length > 1) {
     return chooseWorkspace(runtime, flags, {
@@ -82,7 +82,31 @@ async function selectWorkspaceDirectory(
       kind: 'available',
     });
   }
-  return gitRoot;
+  return workspaceRoot;
+}
+
+async function findWorkspaceRoot(
+  start: string,
+  gitRoot: string | undefined,
+): Promise<string | undefined> {
+  try {
+    const root = await findRoot(start);
+    if (root.tool === 'root') return undefined;
+    if (gitRoot && !isWithin(gitRoot, root.rootDir)) return undefined;
+    return root.rootDir;
+  } catch (error) {
+    if (error instanceof NoPkgJsonFound || error instanceof SyntaxError) {
+      return undefined;
+    }
+    throw error;
+  }
+}
+
+function isWithin(parent: string, candidate: string): boolean {
+  const relative = path.relative(parent, candidate);
+  return (
+    !relative || (!relative.startsWith(`..${path.sep}`) && relative !== '..')
+  );
 }
 
 async function chooseWorkspace(

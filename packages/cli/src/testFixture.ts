@@ -539,6 +539,7 @@ export function createFixture(): CliTestFixture {
   const runtime: CliRuntime = {
     exitCode: 0,
     cwd: '/repo',
+    workspaceCwd: '/repo',
     env: {},
     io: {
       stdin: Readable.from([]),
@@ -550,6 +551,10 @@ export function createFixture(): CliTestFixture {
     signal: abortController.signal,
     setCwd(cwd) {
       runtime.cwd = cwd;
+      runtime.setWorkspaceCwd(cwd);
+    },
+    setWorkspaceCwd(cwd) {
+      runtime.workspaceCwd = cwd;
     },
     globalConfig: {
       path: '/config/edgestore/config.json',
