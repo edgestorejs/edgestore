@@ -740,6 +740,9 @@ export function renderInstallCommand(
   if (manager === 'npm') {
     return renderShellCommand([manager, '--prefix', relativeCwd, ...args]);
   }
+  if (manager === 'pnpm') {
+    return renderShellCommand([manager, '--dir', relativeCwd, ...args]);
+  }
   return renderShellCommand([manager, '--cwd', relativeCwd, ...args]);
 }
 

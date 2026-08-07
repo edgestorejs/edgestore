@@ -128,6 +128,23 @@ describe('renderInstallCommand', () => {
       }),
     ).toBe('yarn --cwd apps/web add @edgestore/server');
   });
+
+  it('uses pnpm directory targeting outside the workspace root', () => {
+    const plan: PackagePlan = {
+      framework: 'node',
+      manager: 'pnpm',
+      missing: ['@edgestore/server'],
+      workspace,
+    };
+
+    expect(
+      renderInstallCommand('pnpm', ['add', '@edgestore/server'], {
+        plan,
+        packageCwd: '/repo/apps/web',
+        invocationCwd: '/repo/apps/web/src',
+      }),
+    ).toBe('pnpm --dir .. add @edgestore/server');
+  });
 });
 
 async function repository(): Promise<string> {
