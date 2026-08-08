@@ -234,11 +234,49 @@ export async function projectKeyRotateCommand(
       });
     }
   }
-  await sdk.management.projectKeys.revoke({
-    project: input.project,
-    keyId: input.keyId,
-    signal: runtime.signal,
-  });
+  try {
+    await sdk.management.projectKeys.revoke({
+      project: input.project,
+      keyId: input.keyId,
+      signal: runtime.signal,
+    });
+  } catch (error) {
+    const cause = normalizeError(error);
+    const delivery = delivered.length
+      ? delivered
+      : ['Printed to the terminal.'];
+    throw new CliError(
+      'project_key_rotation_incomplete',
+      `Replacement key ${result.key.id} was delivered, but revocation of old key ${input.keyId} could not be confirmed.`,
+      {
+        details: {
+          status: 'partial',
+          replacement: { keyId: result.key.id, delivery },
+          oldKey: { keyId: input.keyId, status: 'revocation_unconfirmed' },
+          cause: {
+            code: cause.code,
+            message: cause.message,
+            ...(cause.options.details === undefined
+              ? {}
+              : { details: cause.options.details }),
+          },
+        },
+        requestId: cause.options.requestId,
+        suggestions: [
+          ...(cause.options.suggestions ?? []),
+          renderCliCommand(flags, [
+            'project',
+            'key',
+            'revoke',
+            input.project,
+            input.keyId,
+            '--yes',
+          ]),
+        ],
+        exitCode: cause.exitCode,
+      },
+    );
+  }
   output.result(
     { replacement: result, revokedKeyId: input.keyId },
     input.yes

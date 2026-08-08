@@ -372,6 +372,69 @@ describe('project', () => {
     );
   });
 
+  it('reports delivered rotation state when old-key revocation fails', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-key-'),
+    );
+    fixture.runtime.cwd = temporaryDirectory;
+    fixture.createProjectKey.mockResolvedValueOnce({
+      key: { ...projectKey, id: 'key_replacement' },
+      secretKey: 'secret_test',
+    });
+    fixture.revokeProjectKey.mockRejectedValueOnce(
+      new Error('revocation unavailable'),
+    );
+
+    const exitCode = await runCli(
+      [
+        '--json',
+        '--api-url',
+        'https://api-dev.edgestore.dev',
+        'project',
+        'key',
+        'rotate',
+        project.basePath,
+        projectKey.id,
+        '--name',
+        'replacement',
+        '--output',
+        '.env.local',
+        '--yes',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(1);
+    expect(fixture.revokeProjectKey).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(fixture.stderr()).error).toMatchObject({
+      code: 'project_key_rotation_incomplete',
+      details: {
+        status: 'partial',
+        replacement: {
+          keyId: 'key_replacement',
+          delivery: [
+            `Saved to ${path.join(temporaryDirectory, '.env.local')}.`,
+          ],
+        },
+        oldKey: {
+          keyId: projectKey.id,
+          status: 'revocation_unconfirmed',
+        },
+        cause: {
+          code: 'unexpected_error',
+          message: 'revocation unavailable',
+        },
+      },
+      suggestions: [
+        `edgestore --json --api-url https://api-dev.edgestore.dev project key revoke ${project.basePath} ${projectKey.id} --yes`,
+      ],
+    });
+    await expect(
+      readFile(path.join(temporaryDirectory, '.env.local'), 'utf8'),
+    ).resolves.toContain('EDGE_STORE_SECRET_KEY=secret_test');
+  });
+
   it('preserves and quotes rotation options in confirmation recovery', async () => {
     const exitCode = await runCli(
       [
