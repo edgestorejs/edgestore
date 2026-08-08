@@ -159,7 +159,7 @@ async function browserLogin(
   const result = await runtime.oauth.login({
     apiOrigin: apiUrl.displayUrl,
     resource: apiUrl.sdkBaseUrl,
-    client: await runtime.credentials.getOAuthClient(apiUrl.displayUrl),
+    client: await runtime.credentials.getCachedOAuthClient(apiUrl.displayUrl),
     signal: runtime.signal,
     openUrl: (url) => runtime.openUrl(url),
     onAuthorizationUrl: (url) => {
@@ -175,9 +175,12 @@ async function browserLogin(
       );
     },
     onClientRegistered: (client) =>
-      runtime.credentials.setOAuthClient(apiUrl.displayUrl, client),
+      runtime.credentials.setCachedOAuthClient(apiUrl.displayUrl, client),
   });
-  await runtime.credentials.setOAuthClient(apiUrl.displayUrl, result.client);
+  await runtime.credentials.setCachedOAuthClient(
+    apiUrl.displayUrl,
+    result.client,
+  );
 
   const sdk = runtime.sdkFactory({
     token: result.credential.accessToken,

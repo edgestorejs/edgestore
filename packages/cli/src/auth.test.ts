@@ -26,7 +26,7 @@ describe('auth', () => {
     expect(fixture.openUrl).toHaveBeenCalledWith(
       expect.stringContaining('/oauth/authorize'),
     );
-    expect(fixture.setOAuthClient).toHaveBeenCalledWith(
+    expect(fixture.setCachedOAuthClient).toHaveBeenCalledWith(
       'https://api.edgestore.dev',
       expect.objectContaining({ clientId: 'oauth_client' }),
     );

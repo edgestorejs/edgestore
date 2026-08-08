@@ -179,7 +179,7 @@ type CliTestFixture = {
   readRepoConfig: Mock;
   credentials: CredentialStore;
   setCredential: Mock;
-  setOAuthClient: Mock;
+  setCachedOAuthClient: Mock;
   oauthLogin: Mock<OAuthService['login']>;
   oauthRefresh: Mock<OAuthService['refresh']>;
   oauthRevoke: Mock<OAuthService['revoke']>;
@@ -258,7 +258,7 @@ export function createFixture(): CliTestFixture {
   const setCredential = vi.fn(async (apiOrigin: string, token: string) => {
     credentialValues.set(apiOrigin, token);
   });
-  const setOAuthClient = vi.fn(
+  const setCachedOAuthClient = vi.fn(
     async (apiOrigin: string, client: OAuthClientRegistration) => {
       oauthClientValues.set(apiOrigin, client);
     },
@@ -320,10 +320,10 @@ export function createFixture(): CliTestFixture {
     delete: vi.fn(async (apiOrigin) => {
       return credentialValues.delete(apiOrigin);
     }),
-    getOAuthClient: vi.fn(async (apiOrigin) =>
+    getCachedOAuthClient: vi.fn(async (apiOrigin) =>
       oauthClientValues.get(apiOrigin),
     ),
-    setOAuthClient,
+    setCachedOAuthClient,
     available: vi.fn(async () => true),
   };
   const oauthCredential: OAuthCredential = {
@@ -659,7 +659,7 @@ export function createFixture(): CliTestFixture {
     readRepoConfig,
     credentials,
     setCredential,
-    setOAuthClient,
+    setCachedOAuthClient,
     oauthLogin,
     oauthRefresh,
     oauthRevoke,

@@ -39,10 +39,10 @@ export interface CredentialStore {
   get(apiOrigin: string): Promise<string | undefined>;
   set(apiOrigin: string, token: string): Promise<void>;
   delete(apiOrigin: string): Promise<boolean>;
-  getOAuthClient(
+  getCachedOAuthClient(
     apiOrigin: string,
   ): Promise<OAuthClientRegistration | undefined>;
-  setOAuthClient(
+  setCachedOAuthClient(
     apiOrigin: string,
     client: OAuthClientRegistration,
   ): Promise<void>;
@@ -65,17 +65,17 @@ export class KeyringCredentialStore implements CredentialStore {
     return entry.deleteCredential();
   }
 
-  async getOAuthClient(
+  async getCachedOAuthClient(
     apiOrigin: string,
   ): Promise<OAuthClientRegistration | undefined> {
     const entry = await createEntry(OAUTH_CLIENT_NAME, apiOrigin);
     const value = await entry.getPassword();
     if (!value) return undefined;
 
-    return parseOAuthClientRegistration(value);
+    return parseCachedOAuthClientRegistration(value);
   }
 
-  async setOAuthClient(
+  async setCachedOAuthClient(
     apiOrigin: string,
     client: OAuthClientRegistration,
   ): Promise<void> {
@@ -186,15 +186,17 @@ function parseStoredCredential(value: string): string | OAuthCredential {
   return parseStoredOAuthCredential(value) ?? value;
 }
 
-function parseOAuthClientRegistration(value: string): OAuthClientRegistration {
-  const result = oauthClientRegistrationSchema.safeParse(parseJson(value));
-  if (!result.success) {
-    throw invalidStoredCredential(
-      'The stored OAuth client registration is invalid.',
-      result.error,
-    );
+function parseCachedOAuthClientRegistration(
+  value: string,
+): OAuthClientRegistration | undefined {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(value);
+  } catch {
+    return undefined;
   }
-  return result.data;
+  const result = oauthClientRegistrationSchema.safeParse(parsed);
+  return result.success ? result.data : undefined;
 }
 
 function parseJson(value: string): unknown {

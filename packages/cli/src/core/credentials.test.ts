@@ -1,11 +1,45 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  KeyringCredentialStore,
   parseStoredOAuthCredential,
   resolveCredential,
   serializeOAuthCredential,
   type CredentialStore,
   type OAuthCredential,
 } from './credentials';
+
+const keyringMocks = vi.hoisted(() => {
+  const getPassword = vi.fn<() => Promise<string | null>>();
+  const setPassword = vi.fn<(value: string) => Promise<void>>();
+  const deleteCredential = vi.fn<() => Promise<boolean>>();
+
+  return {
+    getPassword,
+    setPassword,
+    deleteCredential,
+    AsyncEntry: class {
+      getPassword() {
+        return getPassword();
+      }
+
+      setPassword(value: string) {
+        return setPassword(value);
+      }
+
+      deleteCredential() {
+        return deleteCredential();
+      }
+    },
+  };
+});
+
+vi.mock('@napi-rs/keyring', () => ({ AsyncEntry: keyringMocks.AsyncEntry }));
+
+beforeEach(() => {
+  keyringMocks.getPassword.mockReset().mockResolvedValue(null);
+  keyringMocks.setPassword.mockReset().mockResolvedValue(undefined);
+  keyringMocks.deleteCredential.mockReset().mockResolvedValue(true);
+});
 
 describe('resolveCredential', () => {
   it('prefers EDGESTORE_TOKEN without reading the keychain', async () => {
@@ -77,6 +111,58 @@ describe('resolveCredential', () => {
   });
 });
 
+describe('OAuth client cache', () => {
+  it('reads a valid cached registration', async () => {
+    keyringMocks.getPassword.mockResolvedValueOnce(
+      JSON.stringify({
+        version: 1,
+        clientId: 'client_123',
+        issuer: 'https://dashboard.edgestore.dev',
+        redirectUri: 'http://127.0.0.1:45678/oauth/callback',
+      }),
+    );
+
+    await expect(
+      new KeyringCredentialStore().getCachedOAuthClient(
+        'https://api.edgestore.dev',
+      ),
+    ).resolves.toMatchObject({ clientId: 'client_123' });
+  });
+
+  it.each([
+    ['malformed JSON', '{'],
+    [
+      'an unsupported version',
+      JSON.stringify({
+        version: 2,
+        clientId: 'client_123',
+        issuer: 'https://dashboard.edgestore.dev',
+        redirectUri: 'http://127.0.0.1:45678/oauth/callback',
+      }),
+    ],
+  ])('treats %s as a cache miss', async (_case, value) => {
+    keyringMocks.getPassword.mockResolvedValueOnce(value);
+
+    await expect(
+      new KeyringCredentialStore().getCachedOAuthClient(
+        'https://api.edgestore.dev',
+      ),
+    ).resolves.toBeUndefined();
+  });
+
+  it('propagates keychain read failures', async () => {
+    keyringMocks.getPassword.mockRejectedValueOnce(
+      new Error('keychain failed'),
+    );
+
+    await expect(
+      new KeyringCredentialStore().getCachedOAuthClient(
+        'https://api.edgestore.dev',
+      ),
+    ).rejects.toThrow('keychain failed');
+  });
+});
+
 function credentialStore(token: string): {
   store: CredentialStore;
   getCredential: ReturnType<typeof vi.fn<CredentialStore['get']>>;
@@ -88,8 +174,8 @@ function credentialStore(token: string): {
     get: getCredential,
     set: setCredential,
     delete: vi.fn(async () => true),
-    getOAuthClient: vi.fn(async () => undefined),
-    setOAuthClient: vi.fn(async () => undefined),
+    getCachedOAuthClient: vi.fn(async () => undefined),
+    setCachedOAuthClient: vi.fn(async () => undefined),
     available: vi.fn(async () => true),
   };
   return { store, getCredential, setCredential };
