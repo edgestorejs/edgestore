@@ -46,6 +46,23 @@ describe('selectWorkspaceContext', () => {
     expect(fixture.runtime.workspaceCwd).toBe(workspace);
   });
 
+  it('prefers a configured root over configured child packages', async () => {
+    const root = await monorepo();
+    const workspace = await packageDirectory(root, 'apps/web', 'web');
+    await configure(root, 'root-project');
+    await configure(workspace, 'web-project');
+    const fixture = createFixture();
+    fixture.runtime.cwd = root;
+    const select = vi.fn(async () => workspace);
+    fixture.runtime.prompts.select =
+      select as typeof fixture.runtime.prompts.select;
+
+    await selectWorkspaceContext(fixture.runtime, flags, 'read');
+
+    expect(fixture.runtime.workspaceCwd).toBe(root);
+    expect(select).not.toHaveBeenCalled();
+  });
+
   it('prompts for one of multiple configured workspaces', async () => {
     const root = await monorepo();
     const web = await packageDirectory(root, 'apps/web', 'web');
