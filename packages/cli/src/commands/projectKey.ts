@@ -1,5 +1,5 @@
 import { renderCliCommand } from '../core/command';
-import { CliError, usageError } from '../core/errors';
+import { CliError, normalizeError, usageError } from '../core/errors';
 import { renderTable } from '../core/output';
 import type { CliRuntime, GlobalFlags } from '../core/runtime';
 import { outputFor, sdkFor } from '../core/runtime';
@@ -183,6 +183,33 @@ export async function projectKeyRotateCommand(
         'saved',
       );
     } catch (error) {
+      if (input.output) {
+        const cause = normalizeError(error);
+        throw new CliError(
+          cause.code,
+          `${cause.message} Replacement key ${result.key.id} remains active because its secret was written to ${input.output}. The old key was not revoked.`,
+          {
+            details: {
+              replacementKeyId: result.key.id,
+              oldKeyId: input.keyId,
+              output: input.output,
+            },
+            requestId: cause.options.requestId,
+            suggestions: [
+              ...(cause.options.suggestions ?? []),
+              renderCliCommand(flags, [
+                'project',
+                'key',
+                'revoke',
+                input.project,
+                input.keyId,
+                '--yes',
+              ]),
+            ],
+            exitCode: cause.exitCode,
+          },
+        );
+      }
       await rollbackCredentialAfterFailure({
         cause: error,
         successMessage: 'The replacement project key was revoked.',
