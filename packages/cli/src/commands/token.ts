@@ -90,6 +90,12 @@ export async function tokenCreateCommand(
     expiresAt?: string;
   } & SecretDeliveryOptions,
 ): Promise<void> {
+  if (options.user && options.account) {
+    throw usageError(
+      'conflicting_token_owner',
+      '--user and --account cannot be used together.',
+    );
+  }
   if (options.preset && options.scope?.length) {
     throw usageError(
       'conflicting_token_permissions',

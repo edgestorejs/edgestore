@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { runCli } from './cli';
+import { CliError } from './core/errors';
 import {
   account,
   createFixture,
@@ -100,6 +101,32 @@ describe('init.integration', () => {
     expect(exitCode).toBe(2);
     expect(fixture.projectCreate).not.toHaveBeenCalled();
     expect(fixture.stderr()).toContain('Bucket type must be file or image.');
+  });
+
+  it('resolves optional bucket prompts before mutating init state', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-init-'),
+    );
+    fixture.runtime.cwd = temporaryDirectory;
+    fixture.runtime.prompts.confirm = vi
+      .fn()
+      .mockRejectedValueOnce(
+        new CliError('interrupted', 'Operation canceled.', { exitCode: 130 }),
+      );
+
+    const exitCode = await runCli(
+      ['init', '--new', '--name', 'Marketing Site', '--without-key'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(130);
+    expect(fixture.createProject).not.toHaveBeenCalled();
+    expect(fixture.createBucket).not.toHaveBeenCalled();
+    expect(fixture.repoConfig.config).toBeUndefined();
+    await expect(
+      readFile(path.join(temporaryDirectory, '.gitignore'), 'utf8'),
+    ).rejects.toMatchObject({ code: 'ENOENT' });
   });
 
   it('delivers new-project keys to an ignored env file during init', async () => {

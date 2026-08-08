@@ -229,6 +229,31 @@ describe('token', () => {
     expect(fixture.createAccountToken).not.toHaveBeenCalled();
   });
 
+  it('rejects conflicting token ownership options', async () => {
+    const exitCode = await runCli(
+      [
+        'token',
+        'create',
+        '--name',
+        'conflicting owner',
+        '--user',
+        '--account',
+        account.id,
+        '--preset',
+        'deploy',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(2);
+    expect(fixture.stderr()).toContain(
+      '--user and --account cannot be used together.',
+    );
+    expect(fixture.createUserToken).not.toHaveBeenCalled();
+    expect(fixture.createAccountToken).not.toHaveBeenCalled();
+  });
+
   it('requires token permissions', async () => {
     const exitCode = await runCli(
       ['token', 'create', '--name', 'missing permissions'],

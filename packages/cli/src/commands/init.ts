@@ -101,6 +101,7 @@ export async function initCommand(
   const secretOutput = createKey
     ? await resolveSecretOutput(runtime, options.output, interactive)
     : undefined;
+  const bucketChoice = await resolveBucket(runtime, options, interactive);
   let envFile: string | undefined;
   if (secretOutput) {
     await preflightEnvSecret(
@@ -186,7 +187,6 @@ export async function initCommand(
   if (keyResult && secretOutput) completedSteps.push('secret_delivery');
   completedSteps.push('repository_link');
 
-  const bucketChoice = await resolveBucket(runtime, options, interactive);
   let bucket: InitBucket | undefined;
   if (bucketChoice) {
     const continuation = renderCliCommand(
