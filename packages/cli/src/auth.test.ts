@@ -45,7 +45,8 @@ describe('auth', () => {
   });
 
   it('selects an account authorized by the OAuth grant', async () => {
-    fixture.globalConfig.activeAccount = 'acc_unavailable';
+    fixture.globalConfig.activeAccounts['https://api.edgestore.dev'] =
+      'acc_unavailable';
     fixture.whoami.mockResolvedValueOnce({
       actor: {
         kind: 'oauth_user',
@@ -70,7 +71,9 @@ describe('auth', () => {
 
     await runCli(['login'], fixture.runtime, '0.0.0');
 
-    expect(fixture.globalConfig.activeAccount).toBe(teamAccount.id);
+    expect(
+      fixture.globalConfig.activeAccounts['https://api.edgestore.dev'],
+    ).toBe(teamAccount.id);
     expect(fixture.stdout()).toContain('2 scopes across 1 account.');
   });
 
@@ -82,6 +85,36 @@ describe('auth', () => {
       'mgmt_test',
     );
     expect(fixture.stdout()).toContain('Logged in as ravi@example.com.');
+  });
+
+  it('warns when an environment token shadows a browser login', async () => {
+    fixture.runtime.env.EDGESTORE_TOKEN = 'environment_token';
+    fixture.globalConfig.activeAccounts['https://api.edgestore.dev'] =
+      'acc_existing';
+
+    await runCli(['login'], fixture.runtime, '0.0.0');
+
+    expect(fixture.setCredential).toHaveBeenCalled();
+    expect(fixture.stderr()).toContain(
+      'EDGESTORE_TOKEN is set, so this stored login is not currently active.',
+    );
+    expect(
+      fixture.globalConfig.activeAccounts['https://api.edgestore.dev'],
+    ).toBe('acc_existing');
+  });
+
+  it('reports an environment-token override in structured token login', async () => {
+    fixture.runtime.env.EDGESTORE_TOKEN = 'environment_token';
+    fixture.runtime.io.inputIsTty = false;
+
+    await runCli(['--json', 'login', '--token'], fixture.runtime, '0.0.0');
+
+    expect(JSON.parse(fixture.stdout())).toMatchObject({
+      authenticated: true,
+      credentialStored: true,
+      credentialActive: false,
+      environmentTokenActive: true,
+    });
   });
 
   it('stores a login for the selected API origin', async () => {

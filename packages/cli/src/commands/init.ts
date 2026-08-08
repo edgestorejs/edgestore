@@ -6,10 +6,10 @@ import { promisify } from 'node:util';
 import type { ManagementEdgeStoreSdk } from '@edgestore/sdk';
 import { detect } from 'package-manager-detector/detect';
 import { renderCliCommand, renderShellCommand } from '../core/command';
-import { findGitRoot } from '../core/config';
+import { findGitRoot, withActiveAccount } from '../core/config';
 import { CliError, normalizeError, usageError } from '../core/errors';
 import type { CliRuntime, CliSdk, GlobalFlags } from '../core/runtime';
-import { outputFor, sdkFor } from '../core/runtime';
+import { apiUrlFor, outputFor, sdkFor } from '../core/runtime';
 import {
   deliverEnvSecretWithRollback,
   preflightEnvSecret,
@@ -74,6 +74,7 @@ type PartialInitState = {
 type InitContext = {
   runtime: CliRuntime;
   sdk: CliSdk;
+  flags: GlobalFlags;
   options: InitOptions;
   interactive: boolean;
   account: string;
@@ -94,8 +95,14 @@ export async function initCommand(
     installAtWorkspaceRoot: await isWorkspaceRoot(packageCwd),
   });
   const sdk = await sdkFor(runtime, flags);
-  const account = await resolveAccount({ runtime, sdk, options, interactive });
-  const context = { runtime, sdk, options, interactive, account };
+  const account = await resolveAccount({
+    runtime,
+    sdk,
+    flags,
+    options,
+    interactive,
+  });
+  const context = { runtime, sdk, flags, options, interactive, account };
   const mode = await resolveMode(runtime, options, interactive);
   const createKey = await shouldCreateKey(context, mode);
   const secretOutput = createKey
@@ -368,10 +375,10 @@ function validateOptions(options: InitOptions, interactive: boolean): void {
 async function resolveAccount(
   context: Omit<InitContext, 'account'>,
 ): Promise<string> {
-  const { runtime, sdk, options, interactive } = context;
+  const { runtime, sdk, flags, options, interactive } = context;
   if (options.account) return options.account;
   try {
-    return await activeAccount(runtime);
+    return await activeAccount(runtime, flags);
   } catch (error) {
     if (!interactive) throw error;
   }
@@ -388,7 +395,9 @@ async function resolveAccount(
     })),
   );
   const config = await runtime.globalConfig.read();
-  await runtime.globalConfig.write({ ...config, activeAccount: selected });
+  await runtime.globalConfig.write(
+    withActiveAccount(config, apiUrlFor(runtime, flags).displayUrl, selected),
+  );
   return selected;
 }
 

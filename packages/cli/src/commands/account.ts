@@ -1,8 +1,9 @@
 import { renderCliCommand } from '../core/command';
+import { activeAccountFor, withActiveAccount } from '../core/config';
 import { CliError, usageError } from '../core/errors';
 import { renderTable } from '../core/output';
 import type { CliRuntime, GlobalFlags } from '../core/runtime';
-import { outputFor, sdkFor } from '../core/runtime';
+import { apiUrlFor, outputFor, sdkFor } from '../core/runtime';
 
 type Account = Awaited<
   ReturnType<
@@ -17,8 +18,12 @@ export async function accountListCommand(
   const sdk = await sdkFor(runtime, flags);
   const result = await sdk.management.accounts.list({ signal: runtime.signal });
   const config = await runtime.globalConfig.read();
+  const activeAccount = activeAccountFor(
+    config,
+    apiUrlFor(runtime, flags).displayUrl,
+  );
   const rows = result.accounts.map((account) => [
-    account.id === config.activeAccount ? '*' : '',
+    account.id === activeAccount ? '*' : '',
     account.id,
     account.type.toLowerCase(),
     account.displayName,
@@ -35,14 +40,11 @@ export async function accountCurrentCommand(
   runtime: CliRuntime,
   flags: GlobalFlags,
 ): Promise<void> {
-  const config = await runtime.globalConfig.read();
-  if (!config.activeAccount) {
-    throw missingAccountError();
-  }
+  const accountId = await activeAccount(runtime, flags);
 
   const sdk = await sdkFor(runtime, flags);
   const result = await sdk.management.accounts.get({
-    account: config.activeAccount,
+    account: accountId,
     signal: runtime.signal,
   });
   const { account } = result;
@@ -72,10 +74,9 @@ export async function accountSwitchCommand(
   }
 
   const config = await runtime.globalConfig.read();
-  await runtime.globalConfig.write({
-    ...config,
-    activeAccount: account.id,
-  });
+  await runtime.globalConfig.write(
+    withActiveAccount(config, apiUrlFor(runtime, flags).displayUrl, account.id),
+  );
   outputFor(runtime, flags).result(
     account,
     `Switched to ${account.displayName} (${account.id}).`,
@@ -85,6 +86,7 @@ export async function accountSwitchCommand(
 
 export async function activeAccount(
   runtime: CliRuntime,
+  flags: GlobalFlags,
   explicitAccount?: string,
 ): Promise<string> {
   if (explicitAccount) {
@@ -92,10 +94,14 @@ export async function activeAccount(
   }
 
   const config = await runtime.globalConfig.read();
-  if (!config.activeAccount) {
+  const account = activeAccountFor(
+    config,
+    apiUrlFor(runtime, flags).displayUrl,
+  );
+  if (!account) {
     throw missingAccountError();
   }
-  return config.activeAccount;
+  return account;
 }
 
 export async function accountUsageCommand(
@@ -104,7 +110,7 @@ export async function accountUsageCommand(
 ): Promise<void> {
   const sdk = await sdkFor(runtime, flags);
   const result = await sdk.management.accounts.get({
-    account: await activeAccount(runtime),
+    account: await activeAccount(runtime, flags),
     signal: runtime.signal,
   });
   const account = result.account;
@@ -126,7 +132,7 @@ export async function accountBillingCommand(
 ): Promise<void> {
   const sdk = await sdkFor(runtime, flags);
   const result = await sdk.management.accounts.get({
-    account: await activeAccount(runtime),
+    account: await activeAccount(runtime, flags),
     signal: runtime.signal,
   });
   const account = result.account;
@@ -151,8 +157,9 @@ export async function accountLeaveCommand(
   options: { yes?: boolean },
 ): Promise<void> {
   const config = await runtime.globalConfig.read();
-  if (!config.activeAccount) throw missingAccountError();
-  const accountId = config.activeAccount;
+  const apiOrigin = apiUrlFor(runtime, flags).displayUrl;
+  const accountId = activeAccountFor(config, apiOrigin);
+  if (!accountId) throw missingAccountError();
   const sdk = await sdkFor(runtime, flags);
   const current = await sdk.management.accounts.get({
     account: accountId,
@@ -191,10 +198,9 @@ export async function accountLeaveCommand(
     account: accountId,
     signal: runtime.signal,
   });
-  await runtime.globalConfig.write({
-    ...config,
-    activeAccount: personal.id,
-  });
+  await runtime.globalConfig.write(
+    withActiveAccount(config, apiOrigin, personal.id),
+  );
   outputFor(runtime, flags).result(
     { left: accountId, activeAccount: personal.id },
     `Left ${current.account.displayName}. Switched to ${personal.displayName}.`,

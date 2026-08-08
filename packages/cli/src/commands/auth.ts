@@ -1,4 +1,5 @@
 import type { ManagementEdgeStoreSdk } from '@edgestore/sdk';
+import { activeAccountFor, withActiveAccount } from '../core/config';
 import {
   parseStoredOAuthCredential,
   serializeOAuthCredential,
@@ -36,15 +37,20 @@ export async function loginCommand(
     baseUrl: apiUrl.sdkBaseUrl,
   });
   const identity = await sdk.management.whoami({ signal: runtime.signal });
+  const environmentTokenActive = hasEnvironmentToken(runtime);
 
   await runtime.credentials.set(apiUrl.displayUrl, token);
-  await updateActiveAccount(runtime, identity.actor);
+  if (!environmentTokenActive) {
+    await updateActiveAccount(runtime, flags, identity.actor);
+  }
 
-  outputFor(runtime, flags).result(
-    { authenticated: true, actor: identity.actor },
+  const output = outputFor(runtime, flags);
+  output.result(
+    loginResult(identity.actor, environmentTokenActive),
     `Logged in as ${actorLabel(identity.actor)}.`,
     actorLabel(identity.actor),
   );
+  warnWhenStoredLoginIsInactive(output, environmentTokenActive);
 }
 
 export async function logoutCommand(
@@ -108,9 +114,10 @@ export async function whoamiCommand(
   const identity = await sdk.management.whoami({ signal: runtime.signal });
   const globalConfig = await runtime.globalConfig.read();
   const localConfig = await runtime.repoConfig.read();
+  const activeAccount = activeAccountFor(globalConfig, apiUrl.displayUrl);
 
   const context = {
-    activeAccount: globalConfig.activeAccount,
+    activeAccount,
     localAccount: localConfig?.config.account,
     localProject: localConfig?.config.project,
     apiUrl: apiUrl.displayUrl,
@@ -187,11 +194,14 @@ async function browserLogin(
     baseUrl: apiUrl.sdkBaseUrl,
   });
   const identity = await sdk.management.whoami({ signal: runtime.signal });
+  const environmentTokenActive = hasEnvironmentToken(runtime);
   await runtime.credentials.set(
     apiUrl.displayUrl,
     serializeOAuthCredential(result.credential),
   );
-  await updateActiveAccount(runtime, identity.actor);
+  if (!environmentTokenActive) {
+    await updateActiveAccount(runtime, flags, identity.actor);
+  }
 
   const accessSummary =
     identity.actor.kind === 'oauth_user'
@@ -201,10 +211,11 @@ async function browserLogin(
         )
       : '';
   output.result(
-    { authenticated: true, actor: identity.actor },
+    loginResult(identity.actor, environmentTokenActive),
     `Logged in as ${actorLabel(identity.actor)}.${accessSummary}`,
     actorLabel(identity.actor),
   );
+  warnWhenStoredLoginIsInactive(output, environmentTokenActive);
 }
 
 function formatOAuthAccess(scopeCount: number, accountCount: number) {
@@ -213,23 +224,56 @@ function formatOAuthAccess(scopeCount: number, accountCount: number) {
 
 async function updateActiveAccount(
   runtime: CliRuntime,
+  flags: GlobalFlags,
   actor: Awaited<
     ReturnType<ManagementEdgeStoreSdk['management']['whoami']>
   >['actor'],
 ): Promise<void> {
   const config = await runtime.globalConfig.read();
+  const apiOrigin = apiUrlFor(runtime, flags).displayUrl;
+  const current = activeAccountFor(config, apiOrigin);
   let accountId: string | undefined;
   if (actor.kind === 'account_token') {
     accountId = actor.accountId;
   } else if (actor.kind === 'oauth_user') {
     const available = actor.access.accounts.map((item) => item.accountId);
-    accountId = available.includes(config.activeAccount ?? '')
-      ? config.activeAccount
-      : available[0];
+    accountId = available.includes(current ?? '') ? current : available[0];
   } else {
     accountId = actor.user.accountId;
   }
-  if (accountId && accountId !== config.activeAccount) {
-    await runtime.globalConfig.write({ ...config, activeAccount: accountId });
+  if (accountId && accountId !== current) {
+    await runtime.globalConfig.write(
+      withActiveAccount(config, apiOrigin, accountId),
+    );
+  }
+}
+
+function hasEnvironmentToken(runtime: CliRuntime): boolean {
+  return Boolean(runtime.env.EDGESTORE_TOKEN?.trim());
+}
+
+function loginResult(
+  actor: Awaited<
+    ReturnType<ManagementEdgeStoreSdk['management']['whoami']>
+  >['actor'],
+  environmentTokenActive: boolean,
+) {
+  return {
+    authenticated: true,
+    credentialStored: true,
+    credentialActive: !environmentTokenActive,
+    environmentTokenActive,
+    actor,
+  };
+}
+
+function warnWhenStoredLoginIsInactive(
+  output: ReturnType<typeof outputFor>,
+  environmentTokenActive: boolean,
+): void {
+  if (environmentTokenActive && output.options.mode === 'human') {
+    output.warning(
+      'EDGESTORE_TOKEN is set, so this stored login is not currently active.',
+    );
   }
 }

@@ -10,14 +10,27 @@ import {
 } from 'node:fs/promises';
 import path from 'node:path';
 import { z } from 'zod';
+import { DEFAULT_API_ORIGIN } from './apiUrl';
 import { CliError } from './errors';
 
-const globalConfigSchema = z
+const legacyGlobalConfigSchema = z
   .object({
     version: z.literal(1),
     activeAccount: z.string().min(1).optional(),
   })
   .strict();
+
+const globalConfigSchema = z
+  .object({
+    version: z.literal(2),
+    activeAccounts: z.record(z.string(), z.string().min(1)),
+  })
+  .strict();
+
+const persistedGlobalConfigSchema = z.union([
+  globalConfigSchema,
+  legacyGlobalConfigSchema,
+]);
 
 const repoConfigSchema = z
   .object({
@@ -39,12 +52,40 @@ export class GlobalConfigStore {
   constructor(readonly path: string) {}
 
   async read(): Promise<GlobalConfig> {
-    return readConfig(this.path, globalConfigSchema, { version: 1 });
+    const config = await readConfig(this.path, persistedGlobalConfigSchema, {
+      version: 2,
+      activeAccounts: {},
+    });
+    if (config.version === 2) return config;
+    return {
+      version: 2,
+      activeAccounts: config.activeAccount
+        ? { [DEFAULT_API_ORIGIN]: config.activeAccount }
+        : {},
+    };
   }
 
   async write(config: GlobalConfig): Promise<void> {
     await writeConfig(this.path, globalConfigSchema.parse(config));
   }
+}
+
+export function activeAccountFor(
+  config: GlobalConfig,
+  apiOrigin: string,
+): string | undefined {
+  return config.activeAccounts[apiOrigin];
+}
+
+export function withActiveAccount(
+  config: GlobalConfig,
+  apiOrigin: string,
+  accountId: string,
+): GlobalConfig {
+  return {
+    ...config,
+    activeAccounts: { ...config.activeAccounts, [apiOrigin]: accountId },
+  };
 }
 
 export class RepoConfigStore {

@@ -13,7 +13,7 @@ describe('runCli', () => {
   });
 
   it('emits stable JSON errors on stderr', async () => {
-    fixture.globalConfig.activeAccount = undefined;
+    delete fixture.globalConfig.activeAccounts['https://api.edgestore.dev'];
 
     const exitCode = await runCli(
       ['--json', 'project', 'list'],

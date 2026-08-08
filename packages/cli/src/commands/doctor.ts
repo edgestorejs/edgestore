@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import type { LocatedRepoConfig } from '../core/config';
+import { activeAccountFor, type LocatedRepoConfig } from '../core/config';
 import { resolveCredential } from '../core/credentials';
 import { renderTable } from '../core/output';
 import type { CliRuntime, GlobalFlags } from '../core/runtime';
@@ -23,6 +23,7 @@ export async function doctorCommand(
   const apiUrl = apiUrlFor(runtime, flags);
 
   const globalConfig = await checkGlobalConfig(runtime, checks);
+  const activeAccount = activeAccountFor(globalConfig, apiUrl.displayUrl);
   const localConfig = await checkLocalConfig(runtime, checks);
   const envKeys = await checkEnvFile(runtime, localConfig, checks);
   const keychainAvailable = await runtime.credentials.available();
@@ -99,10 +100,10 @@ export async function doctorCommand(
       });
     }
 
-    if (authenticated && globalConfig.activeAccount) {
+    if (authenticated && activeAccount) {
       try {
         const account = await sdk.management.accounts.get({
-          account: globalConfig.activeAccount,
+          account: activeAccount,
           signal: runtime.signal,
         });
         checks.push({
@@ -178,7 +179,7 @@ async function checkGlobalConfig(
       status: 'fail',
       detail: error instanceof Error ? error.message : 'Could not read config',
     });
-    return { version: 1 };
+    return { version: 2, activeAccounts: {} };
   }
 }
 

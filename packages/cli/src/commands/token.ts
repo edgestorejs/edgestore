@@ -32,7 +32,7 @@ export async function tokenListCommand(
   const pageSize = options.limit ?? 50;
   const account = options.user
     ? undefined
-    : await activeAccount(runtime, options.account);
+    : await activeAccount(runtime, flags, options.account);
   const tokens = [];
   let page = options.page ?? 1;
 
@@ -128,7 +128,7 @@ export async function tokenCreateCommand(
   const result = options.user
     ? await sdk.management.tokens.createUser(body)
     : await sdk.management.tokens.createAccount({
-        account: await activeAccount(runtime, options.account),
+        account: await activeAccount(runtime, flags, options.account),
         ...body,
       });
   const delivered = await deliverEnvSecretWithRollback({

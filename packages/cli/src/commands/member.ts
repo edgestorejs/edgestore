@@ -249,7 +249,7 @@ export async function invitationActionCommand(
 async function selectedAccount(runtime: CliRuntime, flags: GlobalFlags) {
   const sdk = await sdkFor(runtime, flags);
   const result = await sdk.management.accounts.get({
-    account: await activeAccount(runtime),
+    account: await activeAccount(runtime, flags),
     signal: runtime.signal,
   });
   return result.account;

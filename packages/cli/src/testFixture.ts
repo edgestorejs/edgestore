@@ -1,6 +1,7 @@
 import { PassThrough, Readable } from 'node:stream';
 import type { ManagementEdgeStoreSdk } from '@edgestore/sdk';
 import { vi, type Mock } from 'vitest';
+import { DEFAULT_API_ORIGIN } from './core/apiUrl';
 import type {
   GlobalConfig,
   LocatedRepoConfig,
@@ -237,8 +238,11 @@ export function createFixture(): CliTestFixture {
   stderrStream.on('data', (chunk: Buffer) => stderrChunks.push(chunk));
 
   const globalConfig: GlobalConfig = {
-    version: 1,
-    activeAccount: account.id,
+    version: 2,
+    activeAccounts: {
+      [DEFAULT_API_ORIGIN]: account.id,
+      'https://api-dev.edgestore.dev': account.id,
+    },
   };
   const repoConfig: { config?: RepoConfig } = {};
   const readRepoConfig = vi.fn(

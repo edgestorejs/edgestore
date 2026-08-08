@@ -31,7 +31,7 @@ describe('account', () => {
   });
 
   it('switches to the personal account without changing remote state', async () => {
-    fixture.globalConfig.activeAccount = undefined;
+    delete fixture.globalConfig.activeAccounts['https://api.edgestore.dev'];
 
     await runCli(
       ['account', 'switch', 'personal', '--plain'],
@@ -39,8 +39,31 @@ describe('account', () => {
       '0.0.0',
     );
 
-    expect(fixture.globalConfig.activeAccount).toBe('acc_123');
+    expect(
+      fixture.globalConfig.activeAccounts['https://api.edgestore.dev'],
+    ).toBe('acc_123');
     expect(fixture.stdout()).toBe('acc_123\n');
+  });
+
+  it('keeps active accounts isolated by API origin', async () => {
+    fixture.availableAccounts.push(teamAccount);
+
+    await runCli(
+      [
+        '--api-url',
+        'https://api-dev.edgestore.dev/v2/',
+        'account',
+        'switch',
+        teamAccount.id,
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(fixture.globalConfig.activeAccounts).toEqual({
+      'https://api.edgestore.dev': account.id,
+      'https://api-dev.edgestore.dev': teamAccount.id,
+    });
   });
 
   it('shows usage for the active account', async () => {
@@ -52,7 +75,8 @@ describe('account', () => {
 
   it('leaves a team and switches back to the personal account', async () => {
     fixture.availableAccounts.push(teamAccount);
-    fixture.globalConfig.activeAccount = teamAccount.id;
+    fixture.globalConfig.activeAccounts['https://api.edgestore.dev'] =
+      teamAccount.id;
 
     await runCli(
       ['account', 'leave', '--yes', '--plain'],
@@ -64,13 +88,16 @@ describe('account', () => {
       account: teamAccount.id,
       signal: fixture.runtime.signal,
     });
-    expect(fixture.globalConfig.activeAccount).toBe(account.id);
+    expect(
+      fixture.globalConfig.activeAccounts['https://api.edgestore.dev'],
+    ).toBe(account.id);
     expect(fixture.stdout()).toBe(`${account.id}\n`);
   });
 
   it('preserves API and output context in the account leave confirmation', async () => {
     fixture.availableAccounts.push(teamAccount);
-    fixture.globalConfig.activeAccount = teamAccount.id;
+    fixture.globalConfig.activeAccounts['https://api-dev.edgestore.dev'] =
+      teamAccount.id;
     fixture.runtime.io.inputIsTty = false;
 
     const exitCode = await runCli(
@@ -94,7 +121,8 @@ describe('account', () => {
 
   it('does not leave when the personal fallback cannot be resolved', async () => {
     fixture.availableAccounts.push(teamAccount);
-    fixture.globalConfig.activeAccount = teamAccount.id;
+    fixture.globalConfig.activeAccounts['https://api.edgestore.dev'] =
+      teamAccount.id;
     fixture.listAccounts.mockRejectedValueOnce(
       new Error('accounts unavailable'),
     );
@@ -107,7 +135,9 @@ describe('account', () => {
 
     expect(exitCode).toBe(1);
     expect(fixture.accountLeave).not.toHaveBeenCalled();
-    expect(fixture.globalConfig.activeAccount).toBe(teamAccount.id);
+    expect(
+      fixture.globalConfig.activeAccounts['https://api.edgestore.dev'],
+    ).toBe(teamAccount.id);
   });
 
   it('explains that personal accounts do not have members', async () => {
@@ -141,7 +171,8 @@ describe('account', () => {
 
   it('describes an empty invitation history without pending-only wording', async () => {
     fixture.availableAccounts.push(teamAccount);
-    fixture.globalConfig.activeAccount = teamAccount.id;
+    fixture.globalConfig.activeAccounts['https://api.edgestore.dev'] =
+      teamAccount.id;
 
     await runCli(['member', 'invitation', 'list'], fixture.runtime, '0.0.0');
 
@@ -195,7 +226,8 @@ describe('account', () => {
 
   it('invites a member to the active team', async () => {
     fixture.availableAccounts.push(teamAccount);
-    fixture.globalConfig.activeAccount = teamAccount.id;
+    fixture.globalConfig.activeAccounts['https://api.edgestore.dev'] =
+      teamAccount.id;
 
     await runCli(
       ['member', 'invite', 'friend@example.com', '--role', 'viewer'],
@@ -216,7 +248,8 @@ describe('account', () => {
 
   it('rejects plain member invitations before remote work', async () => {
     fixture.availableAccounts.push(teamAccount);
-    fixture.globalConfig.activeAccount = teamAccount.id;
+    fixture.globalConfig.activeAccounts['https://api.edgestore.dev'] =
+      teamAccount.id;
 
     const exitCode = await runCli(
       ['--plain', 'member', 'invite', 'friend@example.com', '--role', 'viewer'],
@@ -232,7 +265,8 @@ describe('account', () => {
 
   it('stops a member invitation batch when canceled', async () => {
     fixture.availableAccounts.push(teamAccount);
-    fixture.globalConfig.activeAccount = teamAccount.id;
+    fixture.globalConfig.activeAccounts['https://api.edgestore.dev'] =
+      teamAccount.id;
     fixture.invitationCreate.mockImplementationOnce(async () => {
       fixture.abortController.abort();
       throw new EdgeStoreAbortError();
@@ -261,7 +295,8 @@ describe('account', () => {
 
   it('requires --yes for noninteractive owner invitations', async () => {
     fixture.availableAccounts.push(teamAccount);
-    fixture.globalConfig.activeAccount = teamAccount.id;
+    fixture.globalConfig.activeAccounts['https://api-dev.edgestore.dev'] =
+      teamAccount.id;
 
     const exitCode = await runCli(
       [
@@ -289,7 +324,8 @@ describe('account', () => {
 
   it('uses one --yes to confirm a multi-email owner invitation', async () => {
     fixture.availableAccounts.push(teamAccount);
-    fixture.globalConfig.activeAccount = teamAccount.id;
+    fixture.globalConfig.activeAccounts['https://api.edgestore.dev'] =
+      teamAccount.id;
 
     const exitCode = await runCli(
       [
@@ -312,7 +348,8 @@ describe('account', () => {
 
   it('requires --yes for a noninteractive owner role change', async () => {
     fixture.availableAccounts.push(teamAccount);
-    fixture.globalConfig.activeAccount = teamAccount.id;
+    fixture.globalConfig.activeAccounts['https://api.edgestore.dev'] =
+      teamAccount.id;
 
     const exitCode = await runCli(
       ['--json', 'member', 'role', 'user_123', 'owner'],

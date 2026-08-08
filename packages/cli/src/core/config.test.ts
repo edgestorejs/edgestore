@@ -19,7 +19,10 @@ describe('GlobalConfigStore', () => {
     const root = await temporaryDirectory();
     const store = new GlobalConfigStore(path.join(root, 'config.json'));
 
-    await expect(store.read()).resolves.toEqual({ version: 1 });
+    await expect(store.read()).resolves.toEqual({
+      version: 2,
+      activeAccounts: {},
+    });
   });
 
   it('writes and reads active account state', async () => {
@@ -27,15 +30,45 @@ describe('GlobalConfigStore', () => {
     const configPath = path.join(root, 'nested', 'config.json');
     const store = new GlobalConfigStore(configPath);
 
-    await store.write({ version: 1, activeAccount: 'acc_123' });
+    await store.write({
+      version: 2,
+      activeAccounts: {
+        'https://api.edgestore.dev': 'acc_123',
+        'https://api-dev.edgestore.dev': 'acc_dev',
+      },
+    });
 
     await expect(store.read()).resolves.toEqual({
-      version: 1,
-      activeAccount: 'acc_123',
+      version: 2,
+      activeAccounts: {
+        'https://api.edgestore.dev': 'acc_123',
+        'https://api-dev.edgestore.dev': 'acc_dev',
+      },
     });
     expect(JSON.parse(await readFile(configPath, 'utf8'))).toEqual({
-      version: 1,
-      activeAccount: 'acc_123',
+      version: 2,
+      activeAccounts: {
+        'https://api.edgestore.dev': 'acc_123',
+        'https://api-dev.edgestore.dev': 'acc_dev',
+      },
+    });
+  });
+
+  it('migrates the legacy active account only to the default API', async () => {
+    const root = await temporaryDirectory();
+    const configPath = path.join(root, 'config.json');
+    await writeFile(
+      configPath,
+      JSON.stringify({ version: 1, activeAccount: 'acc_legacy' }),
+    );
+
+    const store = new GlobalConfigStore(configPath);
+
+    await expect(store.read()).resolves.toEqual({
+      version: 2,
+      activeAccounts: {
+        'https://api.edgestore.dev': 'acc_legacy',
+      },
     });
   });
 });

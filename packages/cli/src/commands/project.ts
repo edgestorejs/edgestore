@@ -12,7 +12,7 @@ export async function projectListCommand(
   options: { account?: string },
 ): Promise<void> {
   await selectWorkspaceContext(runtime, flags, 'read');
-  const account = await activeAccount(runtime, options.account);
+  const account = await activeAccount(runtime, flags, options.account);
   const sdk = await sdkFor(runtime, flags);
   const result = await sdk.management.projects.list({
     account,
@@ -72,7 +72,7 @@ export async function projectCreateCommand(
       ],
     );
   }
-  const account = await activeAccount(runtime, options.account);
+  const account = await activeAccount(runtime, flags, options.account);
   const sdk = await sdkFor(runtime, flags);
   const result = await sdk.management.projects.create({
     account,
