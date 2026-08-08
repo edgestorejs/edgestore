@@ -1,3 +1,4 @@
+import { renderCliCommand } from '../core/command';
 import { usageError } from '../core/errors';
 import { renderTable } from '../core/output';
 import type { CliRuntime, GlobalFlags } from '../core/runtime';
@@ -114,7 +115,14 @@ export async function projectDeleteCommand(
       throw usageError(
         'confirmation_required',
         'Project deletion requires confirmation.',
-        [`edgestore project delete ${options.project} --yes`],
+        [
+          renderCliCommand(flags, [
+            'project',
+            'delete',
+            options.project,
+            '--yes',
+          ]),
+        ],
       );
     }
     project = await getProject(runtime, flags, options.project);

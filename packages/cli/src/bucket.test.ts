@@ -177,4 +177,29 @@ describe('bucket', () => {
       signal: fixture.runtime.signal,
     });
   });
+
+  it('preserves context in non-interactive delete suggestions', async () => {
+    fixture.runtime.io.inputIsTty = false;
+
+    const exitCode = await runCli(
+      [
+        '--json',
+        '--api-url',
+        'https://api-dev.edgestore.dev',
+        'bucket',
+        'delete',
+        'publicFiles',
+        '--project',
+        project.basePath,
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(2);
+    expect(JSON.parse(fixture.stderr()).error.suggestions).toEqual([
+      `edgestore --json --api-url https://api-dev.edgestore.dev bucket delete publicFiles --yes --project ${project.basePath}`,
+    ]);
+    expect(fixture.deleteBucket).not.toHaveBeenCalled();
+  });
 });

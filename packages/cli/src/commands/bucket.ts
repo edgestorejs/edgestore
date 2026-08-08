@@ -102,7 +102,11 @@ export async function bucketDeleteCommand(
       throw usageError(
         'confirmation_required',
         'Bucket deletion requires confirmation.',
-        [`edgestore bucket delete ${input.bucket} --yes`],
+        [
+          renderCliCommand(flags, ['bucket', 'delete', input.bucket, '--yes'], {
+            project,
+          }),
+        ],
       );
     }
     const current = await getBucket(runtime, flags, {

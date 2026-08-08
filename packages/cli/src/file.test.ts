@@ -157,6 +157,9 @@ describe('file', () => {
     );
 
     expect(fixture.uploadFile).toHaveBeenCalledTimes(5);
+    expect(fixture.uploadFile.mock.calls[0]?.[0]).toMatchObject({
+      signedReadUrl: {},
+    });
     expect(fixture.uploadFile.mock.calls[0]?.[0]).not.toHaveProperty('path');
     expect(fixture.uploadFile.mock.calls[0]?.[0]).not.toHaveProperty(
       'fileName',
@@ -179,6 +182,49 @@ describe('file', () => {
       path: 'reports',
       fileName: 'renamed.txt',
     });
+  });
+
+  it('prints the signed read URL returned for a protected upload', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-upload-'),
+    );
+    fixture.runtime.cwd = temporaryDirectory;
+    await writeFile(path.join(temporaryDirectory, 'private.txt'), 'secret');
+    fixture.uploadFile.mockResolvedValueOnce({
+      upload: { id: 'upload_123', status: 'completed' },
+      file: {
+        ...uploadedFile,
+        id: 'upload_123',
+        url: 'https://files.example/private.txt',
+      },
+      signedReadUrl: {
+        url: 'https://files.example/private.txt',
+        signedUrl: 'https://files.example/private.txt?signature=test',
+        expiresAt: '2026-08-08T12:00:00.000Z',
+        expiresIn: 3600,
+      },
+    });
+
+    await runCli(
+      [
+        'file',
+        'upload',
+        'private.txt',
+        '--bucket',
+        'protectedFiles',
+        '--project',
+        project.basePath,
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(fixture.stdout()).toContain(
+      'https://files.example/private.txt?signature=test',
+    );
+    expect(fixture.stdout()).not.toContain(
+      'private.txt -> https://files.example/private.txt (',
+    );
   });
 
   it('keeps upload paths relative to the invocation directory', async () => {

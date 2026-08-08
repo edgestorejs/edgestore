@@ -69,6 +69,7 @@ export async function fileUploadCommand(
           project,
           bucket: input.bucket,
           source,
+          signedReadUrl: {},
           ...(destination.fileName ? { fileName: destination.fileName } : {}),
           ...(destination.path ? { path: destination.path } : {}),
           mimeType,

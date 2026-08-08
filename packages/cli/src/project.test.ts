@@ -85,13 +85,22 @@ describe('project', () => {
     fixture.runtime.io.inputIsTty = false;
 
     const exitCode = await runCli(
-      ['project', 'delete', project.basePath],
+      [
+        '--json',
+        '--api-url',
+        'https://api-dev.edgestore.dev',
+        'project',
+        'delete',
+        project.basePath,
+      ],
       fixture.runtime,
       '0.0.0',
     );
 
     expect(exitCode).toBe(2);
-    expect(fixture.stderr()).toContain('--yes');
+    expect(JSON.parse(fixture.stderr()).error.suggestions).toEqual([
+      `edgestore --json --api-url https://api-dev.edgestore.dev project delete ${project.basePath} --yes`,
+    ]);
   });
 
   it('requires --yes for project deletion in plain mode', async () => {
