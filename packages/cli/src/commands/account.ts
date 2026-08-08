@@ -1,6 +1,6 @@
 import { renderCliCommand } from '../core/command';
 import { activeAccountFor, withActiveAccount } from '../core/config';
-import { CliError, usageError } from '../core/errors';
+import { CliError, normalizeError, usageError } from '../core/errors';
 import { renderTable } from '../core/output';
 import type { CliRuntime, GlobalFlags } from '../core/runtime';
 import { apiUrlFor, outputFor, sdkFor } from '../core/runtime';
@@ -198,9 +198,44 @@ export async function accountLeaveCommand(
     account: accountId,
     signal: runtime.signal,
   });
-  await runtime.globalConfig.write(
-    withActiveAccount(config, apiOrigin, personal.id),
-  );
+  try {
+    await runtime.globalConfig.write(
+      withActiveAccount(config, apiOrigin, personal.id),
+    );
+  } catch (error) {
+    const failure = normalizeError(error);
+    throw new CliError(
+      'account_leave_partial_failure',
+      `Left ${current.account.displayName}, but the active account could not be switched to ${personal.displayName}.`,
+      {
+        details: {
+          status: 'partial',
+          leftAccount: {
+            id: accountId,
+            displayName: current.account.displayName,
+          },
+          activeAccount: {
+            intendedId: personal.id,
+            status: 'update_failed',
+          },
+          configPath: runtime.globalConfig.path,
+          cause: {
+            code: failure.code,
+            message: failure.message,
+            ...(failure.options.details === undefined
+              ? {}
+              : { details: failure.options.details }),
+          },
+        },
+        requestId: failure.options.requestId,
+        suggestions: [
+          ...(failure.options.suggestions ?? []),
+          renderCliCommand(flags, ['account', 'switch', 'personal']),
+        ],
+        exitCode: failure.exitCode,
+      },
+    );
+  }
   outputFor(runtime, flags).result(
     { left: accountId, activeAccount: personal.id },
     `Left ${current.account.displayName}. Switched to ${personal.displayName}.`,

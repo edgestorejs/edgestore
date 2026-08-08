@@ -10,6 +10,7 @@ import {
   writeFile,
 } from 'node:fs/promises';
 import path from 'node:path';
+import { parseDotenvAssignment } from './dotenv';
 import { CliError, normalizeError, usageError } from './errors';
 
 export type SecretDeliveryOptions = {
@@ -277,27 +278,7 @@ function assertAssignmentsAvailable(input: {
 function hasAssignment(contents: string, name: string): boolean {
   return contents
     .split('\n')
-    .some((line) => parseAssignment(line)?.name === name);
-}
-
-function parseAssignment(
-  line: string,
-):
-  | { name: string; prefix: string; separator: string; carriageReturn: string }
-  | undefined {
-  const carriageReturn = line.endsWith('\r') ? '\r' : '';
-  const content = carriageReturn ? line.slice(0, -1) : line;
-  const match =
-    /^(\s*(?:export[ \t]+)?)([A-Za-z_][A-Za-z0-9_]*)([ \t]*=[ \t]*)/.exec(
-      content,
-    );
-  if (match?.[1] === undefined || !match[2] || !match[3]) return undefined;
-  return {
-    prefix: match[1],
-    name: match[2],
-    separator: match[3],
-    carriageReturn,
-  };
+    .some((line) => parseDotenvAssignment(line)?.name === name);
 }
 
 function updateAssignments(
@@ -306,7 +287,7 @@ function updateAssignments(
 ): string {
   const replaced = new Set<string>();
   const lines = contents.split('\n').map((line) => {
-    const assignment = parseAssignment(line);
+    const assignment = parseDotenvAssignment(line);
     if (!assignment) return line;
     const value = values[assignment.name];
     if (value === undefined) return line;

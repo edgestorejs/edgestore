@@ -6,6 +6,7 @@ import {
   type LocatedRepoConfig,
 } from '../core/config';
 import { resolveCredential } from '../core/credentials';
+import { dotenvValue } from '../core/dotenv';
 import { renderTable } from '../core/output';
 import type { CliRuntime, GlobalFlags } from '../core/runtime';
 import { apiUrlFor, outputFor } from '../core/runtime';
@@ -257,8 +258,8 @@ async function checkEnvFile(
     }
     return { hasSecretKey: false, label };
   }
-  const accessKey = envValue(contents, 'EDGE_STORE_ACCESS_KEY');
-  const hasSecretKey = Boolean(envValue(contents, 'EDGE_STORE_SECRET_KEY'));
+  const accessKey = dotenvValue(contents, 'EDGE_STORE_ACCESS_KEY');
+  const hasSecretKey = Boolean(dotenvValue(contents, 'EDGE_STORE_SECRET_KEY'));
   checks.push({
     name: label,
     status: accessKey && hasSecretKey ? 'pass' : 'warn',
@@ -325,10 +326,4 @@ function rethrowIfAborted(signal: AbortSignal): void {
   throw signal.reason instanceof Error
     ? signal.reason
     : new DOMException('The operation was aborted.', 'AbortError');
-}
-
-function envValue(contents: string, name: string): string | undefined {
-  const match = new RegExp(`^${name}=(.+)$`, 'm').exec(contents);
-  const value = match?.[1]?.trim();
-  return value ? value : undefined;
 }

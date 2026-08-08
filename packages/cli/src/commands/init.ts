@@ -59,13 +59,13 @@ type InitBucket = Awaited<
 type InitCompletedStep =
   'project' | 'project_key' | 'secret_delivery' | 'repository_link' | 'bucket';
 
-type InitFailedStep = 'bucket_creation' | 'package_install';
+type InitFailedStep = 'repository_link' | 'bucket_creation' | 'package_install';
 
 type PartialInitState = {
   project: InitProject;
   key?: InitProjectKey;
   bucket?: InitBucket;
-  configPath: string;
+  configPath?: string;
   output?: string;
   completedSteps: InitCompletedStep[];
   failedStep: InitFailedStep;
@@ -185,16 +185,32 @@ export async function initCommand(
   }
 
   const apiOrigin = apiUrlFor(runtime, flags).displayUrl;
-  const configPath = await runtime.repoConfig.write({
-    account: projectResult.project.accountId,
-    project: projectResult.project.basePath,
-    ...(apiOrigin === DEFAULT_API_ORIGIN ? {} : { apiUrl: apiOrigin }),
-    ...(envFile ? { envFile } : {}),
-  });
-
   const completedSteps: InitCompletedStep[] = ['project'];
   if (keyResult) completedSteps.push('project_key');
   if (keyResult && secretOutput) completedSteps.push('secret_delivery');
+  let configPath: string;
+  try {
+    configPath = await runtime.repoConfig.write({
+      account: projectResult.project.accountId,
+      project: projectResult.project.basePath,
+      ...(apiOrigin === DEFAULT_API_ORIGIN ? {} : { apiUrl: apiOrigin }),
+      ...(envFile ? { envFile } : {}),
+    });
+  } catch (error) {
+    if (mode !== 'new') throw error;
+    throw partialInitError(error, {
+      project: projectResult.project,
+      key: keyResult?.key,
+      output: secretOutput,
+      completedSteps,
+      failedStep: 'repository_link',
+      continuation: renderCliCommand(flags, [
+        'project',
+        'link',
+        projectResult.project.basePath,
+      ]),
+    });
+  }
   completedSteps.push('repository_link');
 
   let bucket: InitBucket | undefined;
@@ -289,10 +305,11 @@ export async function initCommand(
 
 function partialInitError(error: unknown, state: PartialInitState): CliError {
   const failure = normalizeError(error);
-  const label =
-    state.failedStep === 'bucket_creation'
-      ? 'bucket creation'
-      : 'package installation';
+  const label = {
+    repository_link: 'repository linking',
+    bucket_creation: 'bucket creation',
+    package_install: 'package installation',
+  }[state.failedStep];
   const completed = state.completedSteps
     .map((step) => step.replaceAll('_', ' '))
     .join(', ');
@@ -303,9 +320,13 @@ function partialInitError(error: unknown, state: PartialInitState): CliError {
       ),
     ),
   );
+  const prefix =
+    state.failedStep === 'repository_link'
+      ? `Project ${state.project.basePath} was created, but`
+      : 'The project is linked, but';
   return new CliError(
     'init_partial_failure',
-    `The project is linked, but ${label} failed: ${failure.message} Completed: ${completed}.`,
+    `${prefix} ${label} failed: ${failure.message} Completed: ${completed}.`,
     {
       details: {
         status: 'partial',
@@ -314,10 +335,11 @@ function partialInitError(error: unknown, state: PartialInitState): CliError {
         project: state.project,
         ...(state.key ? { key: state.key } : {}),
         ...(state.bucket ? { bucket: state.bucket } : {}),
-        configPath: state.configPath,
+        ...(state.configPath ? { configPath: state.configPath } : {}),
         ...(state.output ? { output: state.output } : {}),
         cause: {
           code: failure.code,
+          message: failure.message,
           ...(failure.options.details === undefined
             ? {}
             : { details: failure.options.details }),

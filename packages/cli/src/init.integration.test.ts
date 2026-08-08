@@ -90,6 +90,45 @@ describe('init.integration', () => {
     });
   });
 
+  it('reports a created project when repository linking fails', async () => {
+    fixture.runtime.io.inputIsTty = false;
+    fixture.projectCreate.mockResolvedValueOnce({ project });
+    fixture.runtime.repoConfig.write = vi.fn(async () => {
+      throw new Error('disk full');
+    });
+
+    const exitCode = await runCli(
+      [
+        '--json',
+        '--api-url',
+        'https://api-dev.edgestore.dev',
+        'init',
+        '--new',
+        '--name',
+        'Marketing Site',
+        '--without-key',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(1);
+    expect(fixture.projectCreate).toHaveBeenCalledOnce();
+    expect(JSON.parse(fixture.stderr()).error).toMatchObject({
+      code: 'init_partial_failure',
+      details: {
+        status: 'partial',
+        completedSteps: ['project'],
+        failedStep: 'repository_link',
+        project: { basePath: project.basePath },
+        cause: { code: 'unexpected_error', message: 'disk full' },
+      },
+      suggestions: [
+        `edgestore --json --api-url https://api-dev.edgestore.dev project link ${project.basePath}`,
+      ],
+    });
+  });
+
   it('validates non-interactive bucket options before creating a project', async () => {
     fixture.runtime.io.inputIsTty = false;
 

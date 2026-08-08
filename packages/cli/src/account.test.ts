@@ -1,5 +1,5 @@
 import { EdgeStoreAbortError } from '@edgestore/sdk';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { runCli } from './cli';
 import { account, createFixture, teamAccount } from './testFixture';
 
@@ -117,6 +117,47 @@ describe('account', () => {
     expect(JSON.parse(fixture.stderr()).error.suggestions).toEqual([
       'edgestore --json --api-url https://api-dev.edgestore.dev account leave --yes',
     ]);
+  });
+
+  it('reports a completed leave when local account switching fails', async () => {
+    fixture.availableAccounts.push(teamAccount);
+    fixture.globalConfig.activeAccounts['https://api-dev.edgestore.dev'] =
+      teamAccount.id;
+    fixture.runtime.globalConfig.write = vi.fn(async () => {
+      throw new Error('config is read-only');
+    });
+
+    const exitCode = await runCli(
+      [
+        '--json',
+        '--api-url',
+        'https://api-dev.edgestore.dev',
+        'account',
+        'leave',
+        '--yes',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(1);
+    expect(fixture.accountLeave).toHaveBeenCalledOnce();
+    expect(JSON.parse(fixture.stderr()).error).toMatchObject({
+      code: 'account_leave_partial_failure',
+      details: {
+        status: 'partial',
+        leftAccount: { id: teamAccount.id },
+        activeAccount: { intendedId: account.id, status: 'update_failed' },
+        configPath: '/config/edgestore/config.json',
+        cause: {
+          code: 'unexpected_error',
+          message: 'config is read-only',
+        },
+      },
+      suggestions: [
+        'edgestore --json --api-url https://api-dev.edgestore.dev account switch personal',
+      ],
+    });
   });
 
   it('does not leave when the personal fallback cannot be resolved', async () => {
