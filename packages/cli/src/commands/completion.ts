@@ -6,7 +6,7 @@ const topLevel =
   'login logout whoami doctor init account member project token bucket file open completion';
 
 const globalOptions =
-  '--json --plain --api-url --cwd --color --no-color --progress --no-progress --help --version';
+  '--json --plain --api-url --cwd --no-color --no-progress --help --version';
 
 const bashCandidates: Record<string, string> = {
   '': topLevel,

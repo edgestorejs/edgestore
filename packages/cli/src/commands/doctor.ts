@@ -227,7 +227,14 @@ async function checkEnvFile(
     contents = await readFile(envPath, 'utf8');
   } catch (error) {
     rethrowIfAborted(runtime.signal);
-    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+    const code = (error as NodeJS.ErrnoException).code;
+    if (code === 'ENOENT' && localConfig?.config.envFile) {
+      checks.push({
+        name: label,
+        status: 'warn',
+        detail: 'Configured env file not found',
+      });
+    } else if (code !== 'ENOENT') {
       checks.push({
         name: label,
         status: 'fail',

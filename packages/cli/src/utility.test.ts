@@ -57,7 +57,7 @@ describe('utility', () => {
     expect(fixture.stdout()).toContain("-a 'project'");
   });
 
-  it('completes nested Bash commands and their options', async () => {
+  it('completes Bash commands and registered options', async () => {
     await runCli(['completion', 'bash', '--plain'], fixture.runtime, '0.0.0');
 
     const script = fixture.stdout();
@@ -77,12 +77,26 @@ describe('utility', () => {
       ],
       { encoding: 'utf8' },
     );
+    const globalOptions = execFileSync(
+      'bash',
+      [
+        '-c',
+        `${script}\nCOMP_WORDS=(edgestore --); COMP_CWORD=1; _edgestore; printf '%s\\n' "\${COMPREPLY[@]}"`,
+      ],
+      { encoding: 'utf8' },
+    ).split('\n');
 
     expect(nestedCommands.split('\n')).toEqual(
       expect.arrayContaining(['list', 'create', 'rotate', 'revoke']),
     );
     expect(nestedOptions.split('\n')).toEqual(
       expect.arrayContaining(['--name', '--output', '--yes']),
+    );
+    expect(globalOptions).toEqual(
+      expect.arrayContaining(['--no-color', '--no-progress']),
+    );
+    expect(globalOptions).not.toEqual(
+      expect.arrayContaining(['--color', '--progress']),
     );
   });
 
@@ -134,6 +148,30 @@ describe('utility', () => {
     } finally {
       await rm(directory, { recursive: true, force: true });
     }
+  });
+
+  it('warns when the env file remembered by init is missing', async () => {
+    fixture.readRepoConfig.mockResolvedValueOnce({
+      config: {
+        account: account.id,
+        project: project.basePath,
+        envFile: '.env.development.local',
+      },
+      path: '/repo/.edgestore/config.json',
+    });
+
+    const exitCode = await runCli(
+      ['--json', 'doctor'],
+      fixture.runtime,
+      '1.2.3',
+    );
+
+    expect(exitCode).toBe(0);
+    expect(JSON.parse(fixture.stdout()).checks).toContainEqual({
+      name: '.env.development.local',
+      status: 'warn',
+      detail: 'Configured env file not found',
+    });
   });
 
   it('warns when the configured environment key has been revoked', async () => {
