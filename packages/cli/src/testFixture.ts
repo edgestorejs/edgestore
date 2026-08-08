@@ -203,6 +203,7 @@ type CliTestFixture = {
   invitationRevoke: Mock;
   invitationResend: Mock;
   listAccountTokens: Mock;
+  listUserTokens: Mock;
   revokeToken: Mock;
   createBucket: Mock;
   getBucket: Mock;
@@ -401,6 +402,9 @@ export function createFixture(): CliTestFixture {
   const listAccountTokens = vi.fn<ManagementClient['tokens']['listAccount']>(
     async () => ({ tokens: [] }),
   );
+  const listUserTokens = vi.fn<ManagementClient['tokens']['listUser']>(
+    async () => ({ tokens: [] }),
+  );
   const revokeToken = vi.fn(async () => ({}));
   const createBucket = vi.fn(async () => ({
     bucket: {
@@ -559,7 +563,7 @@ export function createFixture(): CliTestFixture {
       },
       tokens: {
         listAccount: listAccountTokens,
-        listUser: vi.fn(async () => ({ tokens: [] })),
+        listUser: listUserTokens,
         createAccount: createAccountToken,
         createUser: createUserToken,
         revoke: revokeToken,
@@ -690,6 +694,7 @@ export function createFixture(): CliTestFixture {
     invitationRevoke,
     invitationResend,
     listAccountTokens,
+    listUserTokens,
     revokeToken,
     createBucket,
     getBucket,

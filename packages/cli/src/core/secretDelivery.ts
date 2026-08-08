@@ -277,7 +277,27 @@ function assertAssignmentsAvailable(input: {
 function hasAssignment(contents: string, name: string): boolean {
   return contents
     .split('\n')
-    .some((line) => line.replace(/\r$/, '').startsWith(`${name}=`));
+    .some((line) => parseAssignment(line)?.name === name);
+}
+
+function parseAssignment(
+  line: string,
+):
+  | { name: string; prefix: string; separator: string; carriageReturn: string }
+  | undefined {
+  const carriageReturn = line.endsWith('\r') ? '\r' : '';
+  const content = carriageReturn ? line.slice(0, -1) : line;
+  const match =
+    /^(\s*(?:export[ \t]+)?)([A-Za-z_][A-Za-z0-9_]*)([ \t]*=[ \t]*)/.exec(
+      content,
+    );
+  if (match?.[1] === undefined || !match[2] || !match[3]) return undefined;
+  return {
+    prefix: match[1],
+    name: match[2],
+    separator: match[3],
+    carriageReturn,
+  };
 }
 
 function updateAssignments(
@@ -286,15 +306,12 @@ function updateAssignments(
 ): string {
   const replaced = new Set<string>();
   const lines = contents.split('\n').map((line) => {
-    const carriageReturn = line.endsWith('\r') ? '\r' : '';
-    const content = carriageReturn ? line.slice(0, -1) : line;
-    for (const [name, value] of Object.entries(values)) {
-      if (content.startsWith(`${name}=`)) {
-        replaced.add(name);
-        return `${name}=${value}${carriageReturn}`;
-      }
-    }
-    return line;
+    const assignment = parseAssignment(line);
+    if (!assignment) return line;
+    const value = values[assignment.name];
+    if (value === undefined) return line;
+    replaced.add(assignment.name);
+    return `${assignment.prefix}${assignment.name}${assignment.separator}${value}${assignment.carriageReturn}`;
   });
   let next = lines.join('\n');
   for (const [name, value] of Object.entries(values)) {

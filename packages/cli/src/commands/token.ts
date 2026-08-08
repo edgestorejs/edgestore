@@ -17,6 +17,18 @@ type TokenScope = NonNullable<
   >[0]['scopes']
 >[number];
 
+function validateTokenOwner(options: {
+  user?: boolean;
+  account?: string;
+}): void {
+  if (options.user && options.account) {
+    throw usageError(
+      'conflicting_token_owner',
+      '--user and --account cannot be used together.',
+    );
+  }
+}
+
 export async function tokenListCommand(
   runtime: CliRuntime,
   flags: GlobalFlags,
@@ -28,6 +40,7 @@ export async function tokenListCommand(
     all?: boolean;
   },
 ): Promise<void> {
+  validateTokenOwner(options);
   const sdk = await sdkFor(runtime, flags);
   const pageSize = options.limit ?? 50;
   const account = options.user
@@ -90,12 +103,7 @@ export async function tokenCreateCommand(
     expiresAt?: string;
   } & SecretDeliveryOptions,
 ): Promise<void> {
-  if (options.user && options.account) {
-    throw usageError(
-      'conflicting_token_owner',
-      '--user and --account cannot be used together.',
-    );
-  }
+  validateTokenOwner(options);
   if (options.preset && options.scope?.length) {
     throw usageError(
       'conflicting_token_permissions',
