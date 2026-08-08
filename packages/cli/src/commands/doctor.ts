@@ -51,6 +51,7 @@ export async function doctorCommand(
       detail: credential ? credential.source : 'Not configured',
     });
   } catch (error) {
+    rethrowIfAborted(runtime.signal);
     checks.push({
       name: 'Credential',
       status: 'fail',
@@ -67,6 +68,7 @@ export async function doctorCommand(
     await sdk.system.health({ signal: runtime.signal });
     checks.push({ name: 'API', status: 'pass', detail: apiUrl.displayUrl });
   } catch (error) {
+    rethrowIfAborted(runtime.signal);
     checks.push({
       name: 'API',
       status: 'fail',
@@ -89,6 +91,7 @@ export async function doctorCommand(
         detail: `${identity.actor.kind}${scopeDetail}`,
       });
     } catch (error) {
+      rethrowIfAborted(runtime.signal);
       checks.push({
         name: 'Authentication',
         status: 'fail',
@@ -108,6 +111,7 @@ export async function doctorCommand(
           detail: `${account.account.displayName} (${account.account.id})`,
         });
       } catch (error) {
+        rethrowIfAborted(runtime.signal);
         checks.push({
           name: 'Active account',
           status: 'fail',
@@ -131,6 +135,7 @@ export async function doctorCommand(
           checks,
         });
       } catch (error) {
+        rethrowIfAborted(runtime.signal);
         checks.push({
           name: 'Linked project',
           status: 'fail',
@@ -167,6 +172,7 @@ async function checkGlobalConfig(
     });
     return config;
   } catch (error) {
+    rethrowIfAborted(runtime.signal);
     checks.push({
       name: 'Global config',
       status: 'fail',
@@ -189,6 +195,7 @@ async function checkLocalConfig(
     });
     return located;
   } catch (error) {
+    rethrowIfAborted(runtime.signal);
     checks.push({
       name: 'Local config',
       status: 'fail',
@@ -219,6 +226,7 @@ async function checkEnvFile(
   try {
     contents = await readFile(envPath, 'utf8');
   } catch (error) {
+    rethrowIfAborted(runtime.signal);
     if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
       checks.push({
         name: label,
@@ -282,12 +290,20 @@ async function checkLinkedProject(
         : `${envKeys.label} access key is not for the linked project`,
     });
   } catch {
+    rethrowIfAborted(runtime.signal);
     checks.push({
       name: 'Environment project',
       status: 'warn',
       detail: `Could not compare ${envKeys.label} with project key metadata`,
     });
   }
+}
+
+function rethrowIfAborted(signal: AbortSignal): void {
+  if (!signal.aborted) return;
+  throw signal.reason instanceof Error
+    ? signal.reason
+    : new DOMException('The operation was aborted.', 'AbortError');
 }
 
 function envValue(contents: string, name: string): string | undefined {

@@ -182,4 +182,21 @@ describe('utility', () => {
       detail: 'Invalid EdgeStore config at /repo/.edgestore/config.json.',
     });
   });
+
+  it('reports doctor cancellation as an interruption in JSON mode', async () => {
+    fixture.health.mockImplementationOnce(async () => {
+      fixture.abortController.abort();
+      throw fixture.abortController.signal.reason;
+    });
+
+    const exitCode = await runCli(
+      ['--json', 'doctor'],
+      fixture.runtime,
+      '1.2.3',
+    );
+
+    expect(exitCode).toBe(130);
+    expect(fixture.stdout()).toBe('');
+    expect(JSON.parse(fixture.stderr()).error.code).toBe('interrupted');
+  });
 });

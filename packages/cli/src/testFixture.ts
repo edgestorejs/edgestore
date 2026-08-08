@@ -183,6 +183,7 @@ type CliTestFixture = {
   oauthLogin: Mock<OAuthService['login']>;
   oauthRefresh: Mock<OAuthService['refresh']>;
   oauthRevoke: Mock<OAuthService['revoke']>;
+  health: Mock<ManagementEdgeStoreSdk['system']['health']>;
   whoami: Mock<ManagementClient['whoami']>;
   readToken: Mock;
   confirmTyped: Mock;
@@ -509,12 +510,15 @@ export function createFixture(): CliTestFixture {
       },
     },
   }));
+  const health = vi.fn<ManagementEdgeStoreSdk['system']['health']>(
+    async () => ({
+      ok: true,
+      version: 'v2',
+    }),
+  );
   const sdk = {
     system: {
-      health: vi.fn<ManagementEdgeStoreSdk['system']['health']>(async () => ({
-        ok: true,
-        version: 'v2',
-      })),
+      health,
     },
     management: {
       whoami,
@@ -663,6 +667,7 @@ export function createFixture(): CliTestFixture {
     oauthLogin,
     oauthRefresh,
     oauthRevoke,
+    health,
     whoami,
     readToken,
     confirmTyped,
