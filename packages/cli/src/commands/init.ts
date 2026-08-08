@@ -91,8 +91,7 @@ export async function initCommand(
   const interactive = runtime.io.inputIsTty && !flags.json && !flags.plain;
   validateOptions(options, interactive);
   const packages = await detectPackages(packageCwd, {
-    installAtWorkspaceRoot:
-      Boolean(flags.cwd) && (await isWorkspaceRoot(packageCwd)),
+    installAtWorkspaceRoot: await isWorkspaceRoot(packageCwd),
   });
   const sdk = await sdkFor(runtime, flags);
   const account = await resolveAccount({ runtime, sdk, options, interactive });
