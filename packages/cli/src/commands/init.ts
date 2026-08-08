@@ -5,7 +5,7 @@ import { Writable } from 'node:stream';
 import { promisify } from 'node:util';
 import type { ManagementEdgeStoreSdk } from '@edgestore/sdk';
 import { detect } from 'package-manager-detector/detect';
-import { renderCliCommand } from '../core/command';
+import { renderCliCommand, renderShellCommand } from '../core/command';
 import { findGitRoot } from '../core/config';
 import { CliError, normalizeError, usageError } from '../core/errors';
 import type { CliRuntime, CliSdk, GlobalFlags } from '../core/runtime';
@@ -14,6 +14,11 @@ import {
   deliverEnvSecretWithRollback,
   preflightEnvSecret,
 } from '../core/secretDelivery';
+import {
+  findWorkspaceRoot,
+  isWorkspaceRoot,
+  selectWorkspaceContext,
+} from '../core/workspace';
 import { activeAccount } from './account';
 import { parseBucketType } from './bucket';
 
@@ -81,9 +86,13 @@ export async function initCommand(
   flags: GlobalFlags,
   options: InitOptions,
 ): Promise<void> {
+  await selectWorkspaceContext(runtime, flags, 'write');
+  const packageCwd = runtime.workspaceCwd;
   const interactive = runtime.io.inputIsTty && !flags.json && !flags.plain;
   validateOptions(options, interactive);
-  const packages = await detectPackages(runtime.cwd);
+  const packages = await detectPackages(packageCwd, {
+    installAtWorkspaceRoot: await isWorkspaceRoot(packageCwd),
+  });
   const sdk = await sdkFor(runtime, flags);
   const account = await resolveAccount({ runtime, sdk, options, interactive });
   const context = { runtime, sdk, options, interactive, account };
@@ -95,11 +104,11 @@ export async function initCommand(
   let envFile: string | undefined;
   if (secretOutput) {
     await preflightEnvSecret(
-      runtime.cwd,
+      packageCwd,
       ['EDGE_STORE_ACCESS_KEY', 'EDGE_STORE_SECRET_KEY'],
       { output: secretOutput, update: options.update },
     );
-    envFile = await protectSecretFile(runtime.cwd, secretOutput);
+    envFile = await protectSecretFile(packageCwd, secretOutput);
   }
 
   const projectResult =
@@ -123,7 +132,7 @@ export async function initCommand(
     );
     try {
       await deliverEnvSecretWithRollback({
-        cwd: runtime.cwd,
+        cwd: packageCwd,
         values: {
           EDGE_STORE_ACCESS_KEY: keyResult.key.accessKey,
           EDGE_STORE_SECRET_KEY: keyResult.secretKey,
@@ -219,6 +228,8 @@ export async function initCommand(
   let install: Awaited<ReturnType<typeof installPackages>>;
   try {
     install = await installPackages(runtime, packages, {
+      cwd: packageCwd,
+      invocationCwd: runtime.cwd,
       requested: options.install,
       interactive,
       structured: Boolean(flags.json || flags.plain),
@@ -242,7 +253,7 @@ export async function initCommand(
     `Linked ${projectResult.project.name} (${projectResult.project.basePath}).`,
     `Config: ${configPath}`,
     ...(secretOutput
-      ? [`Secrets: ${path.resolve(runtime.cwd, secretOutput)}`]
+      ? [`Secrets: ${path.resolve(packageCwd, secretOutput)}`]
       : []),
     ...(bucket ? [`Bucket: ${bucket.name}`] : []),
     ...(install.command && !install.ran
@@ -402,7 +413,7 @@ async function createProject(context: InitContext, createKey: boolean) {
     (await promptText(runtime, {
       interactive,
       message: 'Project name',
-      placeholder: path.basename(runtime.cwd),
+      placeholder: path.basename(runtime.workspaceCwd),
     }));
   return sdk.management.projects.create({
     account,
@@ -535,11 +546,22 @@ export type PackagePlan = {
   framework: 'next' | 'react' | 'node' | 'unknown';
   manager?: 'pnpm' | 'npm' | 'yarn' | 'bun';
   missing: string[];
+  installAtWorkspaceRoot?: boolean;
+  workspace?: {
+    root: string;
+    packageName?: string;
+  };
 };
 
-export async function detectPackages(cwd: string): Promise<PackagePlan> {
+export async function detectPackages(
+  cwd: string,
+  options: { installAtWorkspaceRoot?: boolean } = {},
+): Promise<PackagePlan> {
+  const resolvedCwd = path.resolve(cwd);
+  const workspaceRoot = await findWorkspaceRoot(resolvedCwd);
   const packagePath = path.join(cwd, 'package.json');
   let manifest: {
+    name?: string;
     packageManager?: string;
     dependencies?: Record<string, string>;
     devDependencies?: Record<string, string>;
@@ -598,6 +620,15 @@ export async function detectPackages(cwd: string): Promise<PackagePlan> {
     framework,
     manager: await detectPackageManager(cwd),
     missing: wanted.filter((name) => !dependencies[name]),
+    installAtWorkspaceRoot: options.installAtWorkspaceRoot,
+    ...(workspaceRoot && workspaceRoot !== resolvedCwd
+      ? {
+          workspace: {
+            root: workspaceRoot,
+            ...(manifest.name ? { packageName: manifest.name } : {}),
+          },
+        }
+      : {}),
   };
 }
 
@@ -605,15 +636,25 @@ async function installPackages(
   runtime: CliRuntime,
   plan: PackagePlan,
   options: {
+    cwd: string;
+    invocationCwd: string;
     requested?: boolean;
     interactive: boolean;
     structured: boolean;
     json: boolean;
   },
-): Promise<{ command?: string; ran: boolean }> {
+): Promise<{ command?: string; cwd?: string; ran: boolean }> {
   if (!plan.manager || !plan.missing.length) return { ran: false };
-  const args = installArgs(plan.manager, plan.missing);
-  const command = [plan.manager, ...args].join(' ');
+  const args = installArgs(
+    plan.manager,
+    plan.missing,
+    plan.installAtWorkspaceRoot,
+  );
+  const command = renderInstallCommand(plan.manager, args, {
+    plan,
+    packageCwd: options.cwd,
+    invocationCwd: options.invocationCwd,
+  });
   const shouldInstall =
     options.requested ??
     (options.interactive
@@ -622,11 +663,11 @@ async function installPackages(
           true,
         )
       : false);
-  if (!shouldInstall) return { command, ran: false };
+  if (!shouldInstall) return { command, cwd: options.cwd, ran: false };
   const captured = options.structured ? createOutputCapture() : undefined;
   try {
     await runtime.runCommand(plan.manager, args, {
-      cwd: runtime.cwd,
+      cwd: options.cwd,
       ...(captured ? { stdout: captured.stream, stderr: captured.stream } : {}),
     });
   } catch (error) {
@@ -649,7 +690,59 @@ async function installPackages(
       diagnostics.endsWith('\n') ? diagnostics : `${diagnostics}\n`,
     );
   }
-  return { command, ran: true };
+  return { command, cwd: options.cwd, ran: true };
+}
+
+export function renderInstallCommand(
+  manager: NonNullable<PackagePlan['manager']>,
+  args: string[],
+  context: {
+    plan: PackagePlan;
+    packageCwd: string;
+    invocationCwd: string;
+  },
+): string {
+  const { plan, packageCwd, invocationCwd } = context;
+  const workspace = plan.workspace;
+  if (invocationCwd === workspace?.root) {
+    const workspacePath = path
+      .relative(workspace.root, packageCwd)
+      .replaceAll(path.sep, '/');
+    if (manager === 'pnpm') {
+      return renderShellCommand([
+        manager,
+        '--filter',
+        `./${workspacePath}`,
+        ...args,
+      ]);
+    }
+    if (manager === 'npm') {
+      return renderShellCommand([
+        manager,
+        ...args,
+        '--workspace',
+        workspacePath,
+      ]);
+    }
+    if (manager === 'yarn' && workspace.packageName) {
+      return renderShellCommand([
+        manager,
+        'workspace',
+        workspace.packageName,
+        ...args,
+      ]);
+    }
+  }
+
+  const relativeCwd = path.relative(invocationCwd, packageCwd) || '.';
+  if (relativeCwd === '.') return renderShellCommand([manager, ...args]);
+  if (manager === 'npm') {
+    return renderShellCommand([manager, '--prefix', relativeCwd, ...args]);
+  }
+  if (manager === 'pnpm') {
+    return renderShellCommand([manager, '--dir', relativeCwd, ...args]);
+  }
+  return renderShellCommand([manager, '--cwd', relativeCwd, ...args]);
 }
 
 function createOutputCapture(limit = 32_768): {
@@ -686,7 +779,9 @@ async function resolveSecretOutput(
   if (explicitOutput) return explicitOutput;
   if (!interactive) return '.env.local';
 
-  const discovered = (await readdir(runtime.cwd, { withFileTypes: true }))
+  const discovered = (
+    await readdir(runtime.workspaceCwd, { withFileTypes: true })
+  )
     .filter(
       (entry) =>
         entry.isFile() &&
@@ -715,28 +810,35 @@ function projectKeyName(output: string | undefined): string {
 async function protectSecretFile(cwd: string, output: string): Promise<string> {
   const absolute = path.resolve(cwd, output);
   const gitRoot = await findGitRoot(cwd);
-  const root = gitRoot ?? path.resolve(cwd);
-  const relative = path.relative(root, absolute);
-  if (!relative || relative.startsWith('..') || path.isAbsolute(relative)) {
+  const packageRoot = path.resolve(cwd);
+  const boundary = gitRoot ?? packageRoot;
+  const repositoryRelative = path.relative(boundary, absolute);
+  const packageRelative = path.relative(packageRoot, absolute);
+  if (
+    !packageRelative ||
+    packageRelative.startsWith('..') ||
+    path.isAbsolute(packageRelative)
+  ) {
     throw usageError(
       'secret_output_unprotected',
-      `Secret output ${absolute} must be inside ${root}.`,
-      ['Choose an env file inside the current repository.'],
+      `Secret output ${absolute} must be inside ${packageRoot}.`,
+      ['Choose an env file inside the selected package.'],
     );
   }
-  const normalized = relative.replaceAll(path.sep, '/');
+  const normalized = packageRelative.replaceAll(path.sep, '/');
+  const gitPath = repositoryRelative.replaceAll(path.sep, '/');
   if (gitRoot) {
-    if (await isTrackedFile(gitRoot, normalized)) {
+    if (await isTrackedFile(gitRoot, gitPath)) {
       throw usageError(
         'secret_output_tracked',
         `Secret output ${absolute} is already tracked by Git.`,
         ['Remove it from Git before creating a project key.'],
       );
     }
-    if (await isIgnoredFile(gitRoot, normalized)) return normalized;
+    if (await isIgnoredFile(gitRoot, gitPath)) return normalized;
   }
 
-  const gitignorePath = path.join(root, '.gitignore');
+  const gitignorePath = path.join(packageRoot, '.gitignore');
   let contents = '';
   try {
     contents = await readFile(gitignorePath, 'utf8');
@@ -759,7 +861,7 @@ async function protectSecretFile(cwd: string, output: string): Promise<string> {
       },
     );
   }
-  if (gitRoot && !(await isIgnoredFile(gitRoot, normalized))) {
+  if (gitRoot && !(await isIgnoredFile(gitRoot, gitPath))) {
     throw new CliError(
       'secret_output_unprotected',
       `Could not protect secret output ${absolute}.`,
@@ -838,7 +940,8 @@ async function detectPackageManager(
   cwd: string,
 ): Promise<'pnpm' | 'npm' | 'yarn' | 'bun'> {
   const start = path.resolve(cwd);
-  const boundary = (await findGitRoot(start)) ?? start;
+  const boundary =
+    (await findWorkspaceRoot(start)) ?? (await findGitRoot(start)) ?? start;
   let directory = start;
   while (true) {
     for (const strategy of [
@@ -881,8 +984,12 @@ function packageJsonForStrategy(
 function installArgs(
   manager: 'pnpm' | 'npm' | 'yarn' | 'bun',
   packages: string[],
+  installAtWorkspaceRoot = false,
 ): string[] {
   if (manager === 'npm') return ['install', ...packages];
+  if (manager === 'pnpm' && installAtWorkspaceRoot) {
+    return ['add', '-w', ...packages];
+  }
   return ['add', ...packages];
 }
 

@@ -1,3 +1,6 @@
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { runCli } from './cli';
 import { createFixture } from './testFixture';
@@ -97,4 +100,33 @@ describe('runCli', () => {
       expect(fixture.stderr()).toBe('');
     },
   );
+
+  it('applies an explicit working directory before running a command', async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), 'edgestore-cwd-'));
+    try {
+      const exitCode = await runCli(
+        ['--cwd', directory, 'account', 'list'],
+        fixture.runtime,
+        '0.0.0',
+      );
+
+      expect(exitCode).toBe(0);
+      expect(fixture.runtime.cwd).toBe(directory);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
+  it('rejects a missing working directory', async () => {
+    const exitCode = await runCli(
+      ['--json', '--cwd', '/missing/edgestore-app', 'account', 'list'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(2);
+    expect(JSON.parse(fixture.stderr()).error).toMatchObject({
+      code: 'working_directory_not_found',
+    });
+  });
 });

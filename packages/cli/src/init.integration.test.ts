@@ -407,6 +407,107 @@ describe('init.integration', () => {
     );
   });
 
+  it('uses pnpm workspace-root mode for the selected root', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-init-'),
+    );
+    fixture.runtime.cwd = temporaryDirectory;
+    fixture.runtime.io.inputIsTty = false;
+    await mkdir(path.join(temporaryDirectory, '.git'));
+    await writeFile(
+      path.join(temporaryDirectory, 'pnpm-workspace.yaml'),
+      "packages:\n  - 'apps/*'\n",
+    );
+    await writeFile(
+      path.join(temporaryDirectory, 'package.json'),
+      JSON.stringify({
+        packageManager: 'pnpm@11.15.1',
+        dependencies: { next: '16' },
+      }),
+    );
+
+    const exitCode = await runCli(
+      ['init', '--link', project.basePath, '--without-key', '--install'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(0);
+    expect(fixture.runCommand).toHaveBeenCalledWith(
+      'pnpm',
+      ['add', '-w', '@edgestore/server', '@edgestore/react'],
+      { cwd: temporaryDirectory },
+    );
+  });
+
+  it('detects, installs, and renders commands for a Git-less workspace package', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-init-'),
+    );
+    fixture.runtime.cwd = temporaryDirectory;
+    fixture.runtime.io.inputIsTty = false;
+    await writeFile(
+      path.join(temporaryDirectory, 'pnpm-workspace.yaml'),
+      "packages:\n  - 'apps/*'\n",
+    );
+    await writeFile(
+      path.join(temporaryDirectory, 'package.json'),
+      JSON.stringify({
+        name: 'workspace-root',
+        private: true,
+        packageManager: 'pnpm@11.15.1',
+      }),
+    );
+    const appDirectory = path.join(temporaryDirectory, 'apps', 'web');
+    const apiDirectory = path.join(temporaryDirectory, 'apps', 'api');
+    await mkdir(path.join(appDirectory, '.edgestore'), { recursive: true });
+    await mkdir(apiDirectory, { recursive: true });
+    await writeFile(
+      path.join(appDirectory, 'package.json'),
+      JSON.stringify({ name: 'web', dependencies: { next: '16' } }),
+    );
+    await writeFile(
+      path.join(apiDirectory, 'package.json'),
+      JSON.stringify({ name: 'api' }),
+    );
+    await writeFile(
+      path.join(appDirectory, '.edgestore', 'config.json'),
+      JSON.stringify({ account: account.id, project: project.basePath }),
+    );
+
+    const exitCode = await runCli(
+      ['init', '--link', project.basePath, '--without-key', '--install'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(0);
+    expect(fixture.runtime.cwd).toBe(temporaryDirectory);
+    expect(fixture.runtime.workspaceCwd).toBe(appDirectory);
+    expect(fixture.runCommand).toHaveBeenCalledWith(
+      'pnpm',
+      ['add', '@edgestore/server', '@edgestore/react'],
+      { cwd: appDirectory },
+    );
+
+    const deferredFixture = createFixture();
+    deferredFixture.runtime.cwd = temporaryDirectory;
+    deferredFixture.runtime.io.inputIsTty = false;
+    const deferredExitCode = await runCli(
+      ['--json', 'init', '--link', project.basePath, '--without-key'],
+      deferredFixture.runtime,
+      '0.0.0',
+    );
+
+    expect(deferredExitCode).toBe(0);
+    expect(JSON.parse(deferredFixture.stdout()).install).toEqual({
+      command:
+        'pnpm --filter ./apps/web add @edgestore/server @edgestore/react',
+      cwd: appDirectory,
+      ran: false,
+    });
+  });
+
   it('keeps package-manager output off structured stdout', async () => {
     temporaryDirectory = await mkdtemp(
       path.join(tmpdir(), 'edgestore-cli-init-'),

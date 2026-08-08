@@ -49,7 +49,7 @@ export async function fileUploadCommand(
     );
   }
 
-  const project = await resolvedProjectRef(runtime, input.project);
+  const project = await resolvedProjectRef(runtime, flags, input.project);
   const sdk = await sdkFor(runtime, flags);
   const results = [];
   for (const [index, localFile] of localFiles.entries()) {
@@ -220,7 +220,7 @@ export async function fileUploadStatusCommand(
 ): Promise<void> {
   const sdk = await sdkFor(runtime, flags);
   const result = await sdk.management.uploads.get({
-    project: await resolvedProjectRef(runtime, input.project),
+    project: await resolvedProjectRef(runtime, flags, input.project),
     uploadId: input.uploadId,
     signal: runtime.signal,
   });
@@ -238,7 +238,7 @@ export async function fileUploadCancelCommand(
   flags: GlobalFlags,
   input: { uploadId: string; project?: string; yes?: boolean },
 ): Promise<void> {
-  const project = await resolvedProjectRef(runtime, input.project);
+  const project = await resolvedProjectRef(runtime, flags, input.project);
   if (!input.yes) {
     if (!runtime.io.inputIsTty || flags.json) {
       throw usageError(

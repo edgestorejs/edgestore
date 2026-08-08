@@ -51,10 +51,12 @@ export class RepoConfigStore {
   constructor(private readonly cwd: string) {}
 
   async read(): Promise<LocatedRepoConfig | undefined> {
-    const configPath = await findRepoConfig(this.cwd);
-    if (!configPath) {
-      return undefined;
-    }
+    const configPath = path.join(
+      await findRepoConfigRoot(this.cwd),
+      '.edgestore',
+      'config.json',
+    );
+    if (!(await pathExists(configPath))) return undefined;
 
     return {
       config: await readConfig(configPath, repoConfigSchema),
@@ -63,7 +65,7 @@ export class RepoConfigStore {
   }
 
   async write(config: RepoConfig): Promise<string> {
-    const root = (await findGitRoot(this.cwd)) ?? this.cwd;
+    const root = await findRepoConfigRoot(this.cwd);
     const configPath = path.join(root, '.edgestore', 'config.json');
     await writeConfig(configPath, repoConfigSchema.parse(config));
     return configPath;
@@ -126,28 +128,6 @@ async function writeConfig<TConfig>(
   await rename(temporaryPath, configPath);
 }
 
-async function findRepoConfig(start: string): Promise<string | undefined> {
-  let current = path.resolve(start);
-  const gitRoot = await findGitRoot(current);
-
-  if (!gitRoot) {
-    const candidate = path.join(current, '.edgestore', 'config.json');
-    return (await pathExists(candidate)) ? candidate : undefined;
-  }
-
-  while (true) {
-    const candidate = path.join(current, '.edgestore', 'config.json');
-    if (await pathExists(candidate)) {
-      return candidate;
-    }
-
-    if (current === gitRoot) {
-      return undefined;
-    }
-    current = path.dirname(current);
-  }
-}
-
 export async function findGitRoot(start: string): Promise<string | undefined> {
   let current = path.resolve(start);
 
@@ -162,6 +142,28 @@ export async function findGitRoot(start: string): Promise<string | undefined> {
     }
     current = parent;
   }
+}
+
+export async function findPackageRoot(start: string): Promise<string> {
+  const initial = path.resolve(start);
+  const gitRoot = await findGitRoot(initial);
+  let current = initial;
+
+  while (true) {
+    if (await pathExists(path.join(current, 'package.json'))) return current;
+    if (current === gitRoot) return initial;
+    const parent = path.dirname(current);
+    if (parent === current) return initial;
+    current = parent;
+  }
+}
+
+async function findRepoConfigRoot(start: string): Promise<string> {
+  const packageRoot = await findPackageRoot(start);
+  if (await pathExists(path.join(packageRoot, 'package.json'))) {
+    return packageRoot;
+  }
+  return (await findGitRoot(start)) ?? packageRoot;
 }
 
 async function pathExists(candidate: string): Promise<boolean> {

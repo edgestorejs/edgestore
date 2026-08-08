@@ -61,6 +61,7 @@ import {
 } from './commands/upload';
 import { CliError, normalizeError } from './core/errors';
 import { outputFor, type CliRuntime, type GlobalFlags } from './core/runtime';
+import { resolveWorkingDirectory } from './core/workspace';
 
 export async function runCli(
   argv: string[],
@@ -129,6 +130,7 @@ function createProgram(
     .option('--json', 'emit structured JSON')
     .option('--plain', 'emit a single plain-text value')
     .option('--api-url <url>', 'override the EdgeStore API URL')
+    .option('--cwd <directory>', 'run as if started in this directory')
     .option('--no-color', 'disable color output')
     .option('--no-progress', 'disable progress output')
     .showHelpAfterError()
@@ -141,6 +143,7 @@ function createProgram(
       'after',
       `
 Common workflows:
+  edgestore login
   edgestore login --token
   edgestore init
   edgestore project list
@@ -149,13 +152,17 @@ Common workflows:
 `,
     );
 
-  program.hook('preAction', () => {
+  program.hook('preAction', async () => {
+    const requestedCwd = globalFlags(program).cwd;
+    if (requestedCwd) {
+      runtime.setCwd(await resolveWorkingDirectory(runtime.cwd, requestedCwd));
+    }
     outputFor(runtime, globalFlags(program));
   });
 
   program
     .command('login')
-    .description('Log in with a management credential')
+    .description('Log in to EdgeStore')
     .option('--token', 'read and securely store a management token')
     .action(async (options: { token?: boolean }) => {
       await loginCommand(runtime, globalFlags(program), options);
@@ -773,6 +780,7 @@ function globalFlags(program: Command): GlobalFlags {
     json?: boolean;
     plain?: boolean;
     apiUrl?: string;
+    cwd?: string;
     color: boolean;
     progress: boolean;
   }>();
@@ -781,6 +789,7 @@ function globalFlags(program: Command): GlobalFlags {
     json: options.json,
     plain: options.plain,
     apiUrl: options.apiUrl,
+    cwd: options.cwd,
     color: options.color,
     progress: options.progress,
   };

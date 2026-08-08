@@ -15,7 +15,7 @@ export async function openCommand(
   const target = parseTarget(input.target);
   const project =
     target === 'project'
-      ? await resolvedProjectRef(runtime, input.project)
+      ? await resolvedProjectRef(runtime, flags, input.project)
       : undefined;
   const url = dashboardUrl(runtime, target, project);
 

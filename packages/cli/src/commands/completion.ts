@@ -6,7 +6,7 @@ const topLevel =
   'login logout whoami doctor init account member project token bucket file open completion';
 
 const globalOptions =
-  '--json --plain --api-url --color --no-color --progress --no-progress --help --version';
+  '--json --plain --api-url --cwd --color --no-color --progress --no-progress --help --version';
 
 const bashCandidates: Record<string, string> = {
   '': topLevel,
@@ -149,7 +149,7 @@ function bashCompletionScript(): string {
       continue
     fi
     case "$word" in
-      --api-url|--link|--name|--account|--output|--bucket|--bucket-type|--page|--limit|--role|--scope|--preset|--expires-at|--type|--retry|--job|--project|--cursor|--path)
+      --api-url|--cwd|--link|--name|--account|--output|--bucket|--bucket-type|--page|--limit|--role|--scope|--preset|--expires-at|--type|--retry|--job|--project|--cursor|--path)
         skip_value=1
         continue
         ;;

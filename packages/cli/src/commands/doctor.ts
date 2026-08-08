@@ -5,6 +5,7 @@ import { resolveCredential } from '../core/credentials';
 import { renderTable } from '../core/output';
 import type { CliRuntime, GlobalFlags } from '../core/runtime';
 import { apiUrlFor, outputFor } from '../core/runtime';
+import { selectWorkspaceContext } from '../core/workspace';
 
 type Check = {
   name: string;
@@ -17,6 +18,7 @@ export async function doctorCommand(
   flags: GlobalFlags,
   version: string,
 ): Promise<void> {
+  await selectWorkspaceContext(runtime, flags, 'read');
   const checks: Check[] = [{ name: 'CLI', status: 'pass', detail: version }];
   const apiUrl = apiUrlFor(runtime, flags);
 
@@ -37,7 +39,11 @@ export async function doctorCommand(
     credential = await resolveCredential(
       runtime.env.EDGESTORE_TOKEN,
       runtime.credentials,
-      apiUrl.displayUrl,
+      {
+        apiOrigin: apiUrl.displayUrl,
+        oauth: runtime.oauth,
+        signal: runtime.signal,
+      },
     );
     checks.push({
       name: 'Credential',
@@ -207,7 +213,7 @@ async function checkEnvFile(
   const label = localConfig?.config.envFile ?? '.env.local';
   const configRoot = localConfig?.config.envFile
     ? path.dirname(path.dirname(localConfig.path))
-    : runtime.cwd;
+    : runtime.workspaceCwd;
   const envPath = path.resolve(configRoot, label);
   let contents = '';
   try {

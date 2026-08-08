@@ -18,6 +18,7 @@ describe('renderCliCommand', () => {
         {
           json: true,
           apiUrl: 'https://api-dev.edgestore.dev',
+          cwd: 'apps/web client',
           color: false,
           progress: false,
         },
@@ -25,7 +26,7 @@ describe('renderCliCommand', () => {
         { project: 'x36t1ejdlz' },
       ),
     ).toBe(
-      'edgestore --json --api-url https://api-dev.edgestore.dev bucket empty-status publicFiles --job job_123 --project x36t1ejdlz',
+      "edgestore --json --api-url https://api-dev.edgestore.dev --cwd 'apps/web client' bucket empty-status publicFiles --job job_123 --project x36t1ejdlz",
     );
   });
 

@@ -41,26 +41,65 @@ describe('GlobalConfigStore', () => {
 });
 
 describe('RepoConfigStore', () => {
-  it('writes at the Git root and discovers the config from a child', async () => {
+  it('writes at the nearest package root and discovers it from a child', async () => {
     const root = await temporaryDirectory();
     await writeFile(path.join(root, '.git'), 'gitdir: elsewhere\n');
-    const child = path.join(root, 'apps', 'web');
+    await writeFile(path.join(root, 'package.json'), '{}');
+    const workspace = path.join(root, 'apps', 'web');
+    const child = path.join(workspace, 'src');
+    await mkdir(child, { recursive: true });
+    await writeFile(path.join(workspace, 'package.json'), '{}');
+    const store = new RepoConfigStore(child);
+
+    const configPath = await store.write({
+      account: 'acc_123',
+      project: 'x36t1ejdlz',
+      envFile: '.env.development.local',
+    });
+
+    expect(configPath).toBe(path.join(workspace, '.edgestore', 'config.json'));
+    await expect(store.read()).resolves.toEqual({
+      config: {
+        account: 'acc_123',
+        project: 'x36t1ejdlz',
+        envFile: '.env.development.local',
+      },
+      path: configPath,
+    });
+  });
+
+  it('does not inherit the monorepo root config inside a workspace', async () => {
+    const root = await temporaryDirectory();
+    await writeFile(path.join(root, '.git'), 'gitdir: elsewhere\n');
+    await writeFile(path.join(root, 'package.json'), '{}');
+    await new RepoConfigStore(root).write({
+      account: 'acc_root',
+      project: 'root-project',
+    });
+    const workspace = path.join(root, 'apps', 'web');
+    await mkdir(workspace, { recursive: true });
+    await writeFile(path.join(workspace, 'package.json'), '{}');
+
+    await expect(
+      new RepoConfigStore(workspace).read(),
+    ).resolves.toBeUndefined();
+  });
+
+  it('falls back to the Git root when no package manifest exists', async () => {
+    const root = await temporaryDirectory();
+    await writeFile(path.join(root, '.git'), 'gitdir: elsewhere\n');
+    const child = path.join(root, 'scripts', 'release');
     await mkdir(child, { recursive: true });
     const store = new RepoConfigStore(child);
 
     const configPath = await store.write({
       account: 'acc_123',
       project: 'x36t1ejdlz',
-      envFile: 'apps/web/.env.development.local',
     });
 
     expect(configPath).toBe(path.join(root, '.edgestore', 'config.json'));
-    await expect(store.read()).resolves.toEqual({
-      config: {
-        account: 'acc_123',
-        project: 'x36t1ejdlz',
-        envFile: 'apps/web/.env.development.local',
-      },
+    await expect(store.read()).resolves.toMatchObject({
+      config: { account: 'acc_123', project: 'x36t1ejdlz' },
       path: configPath,
     });
   });
@@ -102,8 +141,9 @@ describe('RepoConfigStore', () => {
     );
   });
 
-  it('does not search parent directories outside a Git repository', async () => {
+  it('discovers the nearest package outside a Git repository', async () => {
     const parent = await temporaryDirectory();
+    await writeFile(path.join(parent, 'package.json'), '{}');
     const parentStore = new RepoConfigStore(parent);
     await parentStore.write({
       account: 'acc_parent',
@@ -112,7 +152,9 @@ describe('RepoConfigStore', () => {
     const child = path.join(parent, 'child');
     await mkdir(child);
 
-    await expect(new RepoConfigStore(child).read()).resolves.toBeUndefined();
+    await expect(new RepoConfigStore(child).read()).resolves.toMatchObject({
+      config: { account: 'acc_parent', project: 'parent-project' },
+    });
   });
 });
 

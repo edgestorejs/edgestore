@@ -5,6 +5,7 @@ import {
   type ManagementEdgeStoreSdk,
 } from '@edgestore/sdk';
 import envPaths from 'env-paths';
+import open from 'open';
 import { resolveApiUrl, type ResolvedApiUrl } from './apiUrl';
 import {
   GlobalConfigStore,
@@ -20,6 +21,7 @@ import {
   type ResolvedCredential,
 } from './credentials';
 import { usageError } from './errors';
+import { DefaultOAuthService, type OAuthService } from './oauth';
 import { CliOutput, type OutputMode } from './output';
 import { DefaultCliPrompts, type CliPrompts } from './prompts';
 
@@ -27,6 +29,7 @@ export type GlobalFlags = {
   json?: boolean;
   plain?: boolean;
   apiUrl?: string;
+  cwd?: string;
   color: boolean;
   progress: boolean;
 };
@@ -86,9 +89,12 @@ export type SdkFactory = (options: {
 export type CliRuntime = {
   exitCode: number;
   cwd: string;
+  workspaceCwd: string;
   env: NodeJS.ProcessEnv;
   io: RuntimeIo;
   signal: AbortSignal;
+  setCwd(cwd: string): void;
+  setWorkspaceCwd(cwd: string): void;
   globalConfig: {
     path: string;
     read(): Promise<GlobalConfig>;
@@ -100,6 +106,7 @@ export type CliRuntime = {
     remove(): Promise<string | undefined>;
   };
   credentials: CredentialStore;
+  oauth: OAuthService;
   prompts: CliPrompts;
   sdkFactory: SdkFactory;
   openUrl(url: string): Promise<void>;
@@ -116,10 +123,11 @@ export type CliRuntime = {
 
 export function createDefaultRuntime(signal: AbortSignal): CliRuntime {
   const paths = envPaths('edgestore', { suffix: '' });
-
-  return {
+  const cwd = process.cwd();
+  const runtime: CliRuntime = {
     exitCode: 0,
-    cwd: process.cwd(),
+    cwd,
+    workspaceCwd: cwd,
     env: process.env,
     io: {
       stdin: process.stdin,
@@ -129,15 +137,25 @@ export function createDefaultRuntime(signal: AbortSignal): CliRuntime {
       outputIsTty: Boolean(process.stdout.isTTY),
     },
     signal,
+    setCwd(cwd) {
+      runtime.cwd = cwd;
+      runtime.setWorkspaceCwd(cwd);
+    },
+    setWorkspaceCwd(cwd) {
+      runtime.workspaceCwd = cwd;
+      runtime.repoConfig = new RepoConfigStore(cwd);
+    },
     globalConfig: new GlobalConfigStore(path.join(paths.config, 'config.json')),
-    repoConfig: new RepoConfigStore(process.cwd()),
+    repoConfig: new RepoConfigStore(cwd),
     credentials: new KeyringCredentialStore(),
+    oauth: new DefaultOAuthService(),
     prompts: new DefaultCliPrompts(),
     sdkFactory: ({ token, baseUrl }) =>
       createEdgeStoreSdk({ credentials: { token }, apiUrl: baseUrl }),
     openUrl,
     runCommand,
   };
+  return runtime;
 }
 
 export function outputFor(runtime: CliRuntime, flags: GlobalFlags): CliOutput {
@@ -166,10 +184,15 @@ export async function credentialFor(
   const credential = await resolveCredential(
     runtime.env.EDGESTORE_TOKEN,
     runtime.credentials,
-    apiUrl.displayUrl,
+    {
+      apiOrigin: apiUrl.displayUrl,
+      oauth: runtime.oauth,
+      signal: runtime.signal,
+    },
   );
   if (!credential) {
     throw usageError('authentication_required', 'Not logged in.', [
+      'edgestore login',
       'edgestore login --token',
     ]);
   }
@@ -203,14 +226,8 @@ function getOutputMode(flags: GlobalFlags): OutputMode {
   return 'human';
 }
 
-function openUrl(url: string): Promise<void> {
-  if (process.platform === 'darwin') {
-    return runCommand('open', [url]);
-  }
-  if (process.platform === 'win32') {
-    return runCommand('cmd', ['/c', 'start', '', url]);
-  }
-  return runCommand('xdg-open', [url]);
+async function openUrl(url: string): Promise<void> {
+  await open(url);
 }
 
 function runCommand(
