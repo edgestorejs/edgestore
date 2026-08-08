@@ -1,8 +1,10 @@
+import { DEFAULT_API_ORIGIN } from '../core/apiUrl';
 import { renderCliCommand } from '../core/command';
+import { apiOriginForRepoConfig } from '../core/config';
 import { usageError } from '../core/errors';
 import { renderTable } from '../core/output';
 import type { CliRuntime, GlobalFlags } from '../core/runtime';
-import { outputFor, sdkFor } from '../core/runtime';
+import { apiUrlFor, outputFor, sdkFor } from '../core/runtime';
 import { selectWorkspaceContext } from '../core/workspace';
 import { activeAccount } from './account';
 
@@ -19,8 +21,12 @@ export async function projectListCommand(
     signal: runtime.signal,
   });
   const local = await runtime.repoConfig.read();
+  const currentApiOrigin = apiUrlFor(runtime, flags).displayUrl;
   const rows = result.projects.map((project) => [
-    project.basePath === local?.config.project ? '*' : '',
+    project.basePath === local?.config.project &&
+    apiOriginForRepoConfig(local.config) === currentApiOrigin
+      ? '*'
+      : '',
     project.basePath,
     project.name,
     project.id,
@@ -184,9 +190,11 @@ export async function projectLinkCommand(
     signal: runtime.signal,
   });
   const { project } = result;
+  const apiOrigin = apiUrlFor(runtime, flags).displayUrl;
   const configPath = await runtime.repoConfig.write({
     account: project.accountId,
     project: project.basePath,
+    ...(apiOrigin === DEFAULT_API_ORIGIN ? {} : { apiUrl: apiOrigin }),
   });
 
   outputFor(runtime, flags).result(
@@ -225,6 +233,18 @@ export async function resolvedProjectRef(
   await selectWorkspaceContext(runtime, flags, 'read');
   const located = await runtime.repoConfig.read();
   if (!located) throw missingProjectError();
+  const linkedApiOrigin = apiOriginForRepoConfig(located.config);
+  const currentApiOrigin = apiUrlFor(runtime, flags).displayUrl;
+  if (linkedApiOrigin !== currentApiOrigin) {
+    throw usageError(
+      'project_api_mismatch',
+      `The linked project belongs to ${linkedApiOrigin}, but this command is using ${currentApiOrigin}.`,
+      [
+        `Run this command with --api-url ${linkedApiOrigin}.`,
+        'Pass --project explicitly to use the current API instead of the repository link.',
+      ],
+    );
+  }
   return located.config.project;
 }
 

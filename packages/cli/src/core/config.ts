@@ -36,6 +36,7 @@ const repoConfigSchema = z
   .object({
     account: z.string().min(1),
     project: z.string().min(1),
+    apiUrl: z.string().url().optional(),
     envFile: z.string().min(1).optional(),
   })
   .strict();
@@ -47,6 +48,10 @@ export type LocatedRepoConfig = {
   config: RepoConfig;
   path: string;
 };
+
+export function apiOriginForRepoConfig(config: RepoConfig): string {
+  return config.apiUrl ?? DEFAULT_API_ORIGIN;
+}
 
 export class GlobalConfigStore {
   constructor(readonly path: string) {}

@@ -26,6 +26,33 @@ describe('bucket', () => {
     );
   });
 
+  it('rejects a linked project from another API origin', async () => {
+    fixture.repoConfig.config = {
+      account: account.id,
+      project: project.basePath,
+    };
+
+    const exitCode = await runCli(
+      [
+        '--json',
+        '--api-url',
+        'https://api-dev.edgestore.dev',
+        'bucket',
+        'list',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(2);
+    expect(JSON.parse(fixture.stderr()).error).toMatchObject({
+      code: 'project_api_mismatch',
+      message: expect.stringContaining(
+        'linked project belongs to https://api.edgestore.dev',
+      ),
+    });
+  });
+
   it('starts an empty-bucket job and prints its status command', async () => {
     fixture.repoConfig.config = {
       account: account.id,

@@ -4,7 +4,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { runCli } from './cli';
 import { CliError } from './core/errors';
-import { createFixture, project, projectKey } from './testFixture';
+import { account, createFixture, project, projectKey } from './testFixture';
 
 describe('project', () => {
   let fixture: ReturnType<typeof createFixture>;
@@ -31,6 +31,26 @@ describe('project', () => {
       project: 'x36t1ejdlz',
     });
     expect(fixture.stdout()).toContain('Marketing Site (x36t1ejdlz)');
+  });
+
+  it('stores the normalized API origin for custom-environment links', async () => {
+    await runCli(
+      [
+        '--api-url',
+        'https://api-dev.edgestore.dev/v2/',
+        'project',
+        'link',
+        project.id,
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(fixture.repoConfig.config).toEqual({
+      account: account.id,
+      project: project.basePath,
+      apiUrl: 'https://api-dev.edgestore.dev',
+    });
   });
 
   it('creates a project without linking the current directory', async () => {

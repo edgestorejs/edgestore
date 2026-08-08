@@ -72,6 +72,7 @@ describe('init.integration', () => {
     expect(fixture.repoConfig.config).toEqual({
       account: account.id,
       project: project.basePath,
+      apiUrl: 'https://api-dev.edgestore.dev',
     });
     expect(JSON.parse(fixture.stderr()).error).toMatchObject({
       code: 'init_partial_failure',

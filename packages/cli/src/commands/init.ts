@@ -5,6 +5,7 @@ import { Writable } from 'node:stream';
 import { promisify } from 'node:util';
 import type { ManagementEdgeStoreSdk } from '@edgestore/sdk';
 import { detect } from 'package-manager-detector/detect';
+import { DEFAULT_API_ORIGIN } from '../core/apiUrl';
 import { renderCliCommand, renderShellCommand } from '../core/command';
 import { findGitRoot, withActiveAccount } from '../core/config';
 import { CliError, normalizeError, usageError } from '../core/errors';
@@ -183,9 +184,11 @@ export async function initCommand(
     }
   }
 
+  const apiOrigin = apiUrlFor(runtime, flags).displayUrl;
   const configPath = await runtime.repoConfig.write({
     account: projectResult.project.accountId,
     project: projectResult.project.basePath,
+    ...(apiOrigin === DEFAULT_API_ORIGIN ? {} : { apiUrl: apiOrigin }),
     ...(envFile ? { envFile } : {}),
   });
 

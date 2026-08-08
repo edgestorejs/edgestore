@@ -1,6 +1,10 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import { activeAccountFor, type LocatedRepoConfig } from '../core/config';
+import {
+  activeAccountFor,
+  apiOriginForRepoConfig,
+  type LocatedRepoConfig,
+} from '../core/config';
 import { resolveCredential } from '../core/credentials';
 import { renderTable } from '../core/output';
 import type { CliRuntime, GlobalFlags } from '../core/runtime';
@@ -25,6 +29,9 @@ export async function doctorCommand(
   const globalConfig = await checkGlobalConfig(runtime, checks);
   const activeAccount = activeAccountFor(globalConfig, apiUrl.displayUrl);
   const localConfig = await checkLocalConfig(runtime, checks);
+  const linkedApiOrigin = localConfig
+    ? apiOriginForRepoConfig(localConfig.config)
+    : undefined;
   const envKeys = await checkEnvFile(runtime, localConfig, checks);
   const keychainAvailable = await runtime.credentials.available();
   checks.push({
@@ -128,7 +135,13 @@ export async function doctorCommand(
       });
     }
 
-    if (authenticated && localConfig) {
+    if (authenticated && localConfig && linkedApiOrigin !== apiUrl.displayUrl) {
+      checks.push({
+        name: 'Linked project',
+        status: 'fail',
+        detail: `Linked to ${linkedApiOrigin}, current API is ${apiUrl.displayUrl}`,
+      });
+    } else if (authenticated && localConfig) {
       try {
         await checkLinkedProject(runtime, sdk, {
           local: localConfig,
