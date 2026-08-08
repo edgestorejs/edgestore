@@ -11,7 +11,7 @@ const globalOptions =
 const bashCandidates: Record<string, string> = {
   '': topLevel,
   login: '--token',
-  logout: '--yes',
+  logout: '',
   whoami: '',
   doctor: '',
   init: '--new --link --name --account --create-key --without-key --output --update --bucket --bucket-type --public --protected --install --allow-overage',

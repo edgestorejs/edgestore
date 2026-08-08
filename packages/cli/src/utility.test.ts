@@ -85,6 +85,14 @@ describe('utility', () => {
       ],
       { encoding: 'utf8' },
     ).split('\n');
+    const logoutOptions = execFileSync(
+      'bash',
+      [
+        '-c',
+        `${script}\nCOMP_WORDS=(edgestore logout --); COMP_CWORD=2; _edgestore; printf '%s\\n' "\${COMPREPLY[@]}"`,
+      ],
+      { encoding: 'utf8' },
+    ).split('\n');
 
     expect(nestedCommands.split('\n')).toEqual(
       expect.arrayContaining(['list', 'create', 'rotate', 'revoke']),
@@ -98,6 +106,7 @@ describe('utility', () => {
     expect(globalOptions).not.toEqual(
       expect.arrayContaining(['--color', '--progress']),
     );
+    expect(logoutOptions).not.toContain('--yes');
   });
 
   it('checks linked project keys without exposing env secrets', async () => {
