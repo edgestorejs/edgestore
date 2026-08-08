@@ -407,7 +407,7 @@ describe('init.integration', () => {
     );
   });
 
-  it('uses pnpm workspace-root mode only for an explicitly selected root', async () => {
+  it('uses pnpm workspace-root mode for the selected root', async () => {
     temporaryDirectory = await mkdtemp(
       path.join(tmpdir(), 'edgestore-cli-init-'),
     );
@@ -427,15 +427,7 @@ describe('init.integration', () => {
     );
 
     const exitCode = await runCli(
-      [
-        '--cwd',
-        '.',
-        'init',
-        '--link',
-        project.basePath,
-        '--without-key',
-        '--install',
-      ],
+      ['init', '--link', project.basePath, '--without-key', '--install'],
       fixture.runtime,
       '0.0.0',
     );
