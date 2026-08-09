@@ -10,6 +10,7 @@ import {
   createFixture,
   project,
   projectCreateResult,
+  projectKey,
 } from './testFixture';
 
 describe('init.integration', () => {
@@ -127,6 +128,55 @@ describe('init.integration', () => {
         `edgestore --json --api-url https://api-dev.edgestore.dev project link ${project.basePath}`,
       ],
     });
+  });
+
+  it('reports a created key when linking an existing project fails', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-init-'),
+    );
+    fixture.runtime.setCwd(temporaryDirectory);
+    fixture.runtime.io.inputIsTty = false;
+    fixture.runtime.repoConfig.write = vi.fn(async () => {
+      throw new Error('disk full');
+    });
+
+    const exitCode = await runCli(
+      [
+        '--json',
+        '--api-url',
+        'https://api-dev.edgestore.dev',
+        'init',
+        '--link',
+        project.basePath,
+        '--create-key',
+        '--output',
+        '.env.local',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(1);
+    expect(fixture.projectCreate).not.toHaveBeenCalled();
+    expect(fixture.createProjectKey).toHaveBeenCalledOnce();
+    expect(JSON.parse(fixture.stderr()).error).toMatchObject({
+      code: 'init_partial_failure',
+      message: expect.stringContaining(`Project key ${projectKey.id}`),
+      details: {
+        status: 'partial',
+        completedSteps: ['project', 'project_key', 'secret_delivery'],
+        failedStep: 'repository_link',
+        project: { basePath: project.basePath },
+        key: { id: projectKey.id },
+        output: '.env.local',
+      },
+      suggestions: [
+        `edgestore --json --api-url https://api-dev.edgestore.dev project link ${project.basePath}`,
+      ],
+    });
+    await expect(
+      readFile(path.join(temporaryDirectory, '.env.local'), 'utf8'),
+    ).resolves.toContain('EDGE_STORE_SECRET_KEY=secret_test');
   });
 
   it('validates non-interactive bucket options before creating a project', async () => {

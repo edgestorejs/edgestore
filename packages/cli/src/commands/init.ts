@@ -63,6 +63,7 @@ type InitFailedStep = 'repository_link' | 'bucket_creation' | 'package_install';
 
 type PartialInitState = {
   project: InitProject;
+  projectCreated?: boolean;
   key?: InitProjectKey;
   bucket?: InitBucket;
   configPath?: string;
@@ -197,9 +198,10 @@ export async function initCommand(
       ...(envFile ? { envFile } : {}),
     });
   } catch (error) {
-    if (mode !== 'new') throw error;
+    if (mode !== 'new' && !keyResult) throw error;
     throw partialInitError(error, {
       project: projectResult.project,
+      projectCreated: mode === 'new',
       key: keyResult?.key,
       output: secretOutput,
       completedSteps,
@@ -322,7 +324,9 @@ function partialInitError(error: unknown, state: PartialInitState): CliError {
   );
   const prefix =
     state.failedStep === 'repository_link'
-      ? `Project ${state.project.basePath} was created, but`
+      ? state.projectCreated
+        ? `Project ${state.project.basePath} was created, but`
+        : `Project key ${state.key?.id ?? 'unknown'} was created, but`
       : 'The project is linked, but';
   return new CliError(
     'init_partial_failure',
