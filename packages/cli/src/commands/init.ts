@@ -10,7 +10,7 @@ import { renderCliCommand, renderShellCommand } from '../core/command';
 import { findGitRoot, withActiveAccount } from '../core/config';
 import { CliError, normalizeError, usageError } from '../core/errors';
 import type { CliRuntime, CliSdk, GlobalFlags } from '../core/runtime';
-import { apiUrlFor, outputFor, sdkFor } from '../core/runtime';
+import { apiUrlFor, isInteractive, outputFor, sdkFor } from '../core/runtime';
 import {
   deliverEnvSecretWithRollback,
   preflightEnvSecret,
@@ -91,7 +91,7 @@ export async function initCommand(
 ): Promise<void> {
   await selectWorkspaceContext(runtime, flags, 'write');
   const packageCwd = runtime.workspaceCwd;
-  const interactive = runtime.io.inputIsTty && !flags.json && !flags.plain;
+  const interactive = isInteractive(runtime, flags);
   validateOptions(options, interactive);
   const packages = await detectPackages(packageCwd, {
     installAtWorkspaceRoot: await isWorkspaceRoot(packageCwd),

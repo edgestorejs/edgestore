@@ -3,7 +3,7 @@ import { activeAccountFor, withActiveAccount } from '../core/config';
 import { CliError, normalizeError, usageError } from '../core/errors';
 import { renderTable } from '../core/output';
 import type { CliRuntime, GlobalFlags } from '../core/runtime';
-import { apiUrlFor, outputFor, sdkFor } from '../core/runtime';
+import { apiUrlFor, isInteractive, outputFor, sdkFor } from '../core/runtime';
 
 type Account = Awaited<
   ReturnType<
@@ -182,7 +182,7 @@ export async function accountLeaveCommand(
     );
   }
   if (!options.yes) {
-    if (!runtime.io.inputIsTty || flags.json) {
+    if (!isInteractive(runtime, flags)) {
       throw usageError(
         'confirmation_required',
         'Leaving an account requires confirmation.',

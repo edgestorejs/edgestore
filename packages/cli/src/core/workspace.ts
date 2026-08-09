@@ -4,7 +4,7 @@ import { findRoot, NoPkgJsonFound } from '@manypkg/find-root';
 import { getPackages } from '@manypkg/get-packages';
 import { findGitRoot, findPackageRoot } from './config';
 import { usageError } from './errors';
-import type { CliRuntime, GlobalFlags } from './runtime';
+import { isInteractive, type CliRuntime, type GlobalFlags } from './runtime';
 
 type ContextPurpose = 'read' | 'write';
 
@@ -117,8 +117,7 @@ async function chooseWorkspace(
     kind: 'configured' | 'available';
   },
 ): Promise<string> {
-  const interactive = runtime.io.inputIsTty && !flags.json && !flags.plain;
-  if (!interactive) {
+  if (!isInteractive(runtime, flags)) {
     throw usageError(
       'workspace_context_required',
       `Multiple ${input.kind} workspaces were found.`,

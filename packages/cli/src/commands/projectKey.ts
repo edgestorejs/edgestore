@@ -2,7 +2,7 @@ import { renderCliCommand } from '../core/command';
 import { CliError, normalizeError, usageError } from '../core/errors';
 import { renderTable } from '../core/output';
 import type { CliRuntime, GlobalFlags } from '../core/runtime';
-import { outputFor, sdkFor } from '../core/runtime';
+import { isInteractive, outputFor, sdkFor } from '../core/runtime';
 import {
   deliverEnvSecretWithRollback,
   preflightEnvSecret,
@@ -365,7 +365,7 @@ function requireInteractiveConfirmation(
   flags: GlobalFlags,
   suggestions: string[],
 ): void {
-  if (!runtime.io.inputIsTty || flags.json) {
+  if (!isInteractive(runtime, flags)) {
     throw usageError(
       'confirmation_required',
       'This operation requires confirmation.',

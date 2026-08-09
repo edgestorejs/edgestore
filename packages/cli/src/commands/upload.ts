@@ -5,7 +5,7 @@ import { EdgeStoreUploadCleanupError } from '@edgestore/sdk';
 import { renderCliCommand } from '../core/command';
 import { CliError, normalizeError, usageError } from '../core/errors';
 import type { CliRuntime, GlobalFlags } from '../core/runtime';
-import { outputFor, sdkFor } from '../core/runtime';
+import { isInteractive, outputFor, sdkFor } from '../core/runtime';
 import { resolvedProjectRef } from './project';
 
 export async function fileUploadCommand(
@@ -241,7 +241,7 @@ export async function fileUploadCancelCommand(
 ): Promise<void> {
   const project = await resolvedProjectRef(runtime, flags, input.project);
   if (!input.yes) {
-    if (!runtime.io.inputIsTty || flags.json) {
+    if (!isInteractive(runtime, flags)) {
       throw usageError(
         'confirmation_required',
         'Upload cancellation requires confirmation.',

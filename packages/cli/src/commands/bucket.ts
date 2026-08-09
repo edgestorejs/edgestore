@@ -2,7 +2,7 @@ import { renderCliCommand } from '../core/command';
 import { CliError, usageError } from '../core/errors';
 import { renderTable } from '../core/output';
 import type { CliRuntime, GlobalFlags } from '../core/runtime';
-import { outputFor, sdkFor } from '../core/runtime';
+import { isInteractive, outputFor, sdkFor } from '../core/runtime';
 import { resolvedProjectRef } from './project';
 
 export async function bucketListCommand(
@@ -98,7 +98,7 @@ export async function bucketDeleteCommand(
   const project = await resolvedProjectRef(runtime, flags, input.project);
   let bucket = input.bucket;
   if (!input.yes) {
-    if (!runtime.io.inputIsTty || flags.json) {
+    if (!isInteractive(runtime, flags)) {
       throw usageError(
         'confirmation_required',
         'Bucket deletion requires confirmation.',
@@ -141,7 +141,7 @@ export async function bucketEmptyCommand(
 ): Promise<void> {
   const project = await resolvedProjectRef(runtime, flags, input.project);
   if (!input.yes) {
-    if (!runtime.io.inputIsTty || flags.json) {
+    if (!isInteractive(runtime, flags)) {
       throw usageError(
         'confirmation_required',
         'Emptying a bucket requires confirmation.',

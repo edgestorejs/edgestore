@@ -3,7 +3,7 @@ import { renderCliCommand } from '../core/command';
 import { usageError } from '../core/errors';
 import { renderTable } from '../core/output';
 import type { CliRuntime, GlobalFlags } from '../core/runtime';
-import { outputFor, sdkFor } from '../core/runtime';
+import { isInteractive, outputFor, sdkFor } from '../core/runtime';
 import {
   deliverEnvSecretWithRollback,
   preflightEnvSecret,
@@ -180,7 +180,7 @@ export async function tokenRevokeCommand(
   input: { tokenId: string; yes?: boolean },
 ): Promise<void> {
   if (!input.yes) {
-    if (!runtime.io.inputIsTty || flags.json) {
+    if (!isInteractive(runtime, flags)) {
       throw usageError(
         'confirmation_required',
         'Token revocation requires confirmation.',

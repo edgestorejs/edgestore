@@ -4,7 +4,7 @@ import { apiOriginForRepoConfig } from '../core/config';
 import { usageError } from '../core/errors';
 import { renderTable } from '../core/output';
 import type { CliRuntime, GlobalFlags } from '../core/runtime';
-import { apiUrlFor, outputFor, sdkFor } from '../core/runtime';
+import { apiUrlFor, isInteractive, outputFor, sdkFor } from '../core/runtime';
 import { selectWorkspaceContext } from '../core/workspace';
 import { activeAccount } from './account';
 
@@ -117,7 +117,7 @@ export async function projectDeleteCommand(
 ): Promise<void> {
   let project;
   if (!options.yes) {
-    if (!runtime.io.inputIsTty || flags.json || flags.plain) {
+    if (!isInteractive(runtime, flags)) {
       throw usageError(
         'confirmation_required',
         'Project deletion requires confirmation.',

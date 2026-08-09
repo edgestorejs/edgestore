@@ -205,6 +205,27 @@ describe('bucket', () => {
     });
   });
 
+  it('requires --yes for bucket deletion in plain mode', async () => {
+    const exitCode = await runCli(
+      [
+        '--plain',
+        'bucket',
+        'delete',
+        'publicFiles',
+        '--project',
+        project.basePath,
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(2);
+    expect(fixture.confirmTyped).not.toHaveBeenCalled();
+    expect(fixture.getBucket).not.toHaveBeenCalled();
+    expect(fixture.deleteBucket).not.toHaveBeenCalled();
+    expect(fixture.stderr()).toContain('--yes');
+  });
+
   it('preserves context in non-interactive delete suggestions', async () => {
     fixture.runtime.io.inputIsTty = false;
 

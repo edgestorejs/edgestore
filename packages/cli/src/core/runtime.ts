@@ -158,6 +158,13 @@ export function createDefaultRuntime(signal: AbortSignal): CliRuntime {
   return runtime;
 }
 
+export function isInteractive(
+  runtime: CliRuntime,
+  flags: GlobalFlags,
+): boolean {
+  return runtime.io.inputIsTty && !flags.json && !flags.plain;
+}
+
 export function outputFor(runtime: CliRuntime, flags: GlobalFlags): CliOutput {
   const mode = getOutputMode(flags);
   return new CliOutput(runtime.io, {

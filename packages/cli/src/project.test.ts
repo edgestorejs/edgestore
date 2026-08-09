@@ -251,16 +251,14 @@ describe('project', () => {
         'replacement',
         '--output',
         '.env.local',
+        '--yes',
       ],
       fixture.runtime,
       '0.0.0',
     );
 
     expect(exitCode).toBe(0);
-    expect(fixture.confirmTyped).toHaveBeenCalledWith(
-      expect.stringContaining(projectKey.id),
-      'saved',
-    );
+    expect(fixture.confirmTyped).not.toHaveBeenCalled();
     expect(fixture.stdout()).toBe(`${projectKey.id}\n`);
   });
 
@@ -283,7 +281,6 @@ describe('project', () => {
 
     const exitCode = await runCli(
       [
-        '--plain',
         'project',
         'key',
         'rotate',
@@ -301,13 +298,14 @@ describe('project', () => {
 
     expect(exitCode).toBe(130);
     expect(fixture.revokeProjectKey).not.toHaveBeenCalled();
-    expect(fixture.stdout()).toBe('');
+    expect(fixture.stdout()).toContain('Created replacement key');
+    expect(fixture.stdout()).toContain('Saved to');
     expect(fixture.stderr()).toContain(
       'Replacement key key_replacement remains active',
     );
     expect(fixture.stderr()).toContain('The old key was not revoked.');
     expect(fixture.stderr()).toContain(
-      `edgestore --plain project key revoke ${project.basePath} ${projectKey.id} --yes`,
+      `edgestore project key revoke ${project.basePath} ${projectKey.id} --yes`,
     );
     await expect(
       readFile(path.join(temporaryDirectory, '.env.local'), 'utf8'),

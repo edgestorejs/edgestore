@@ -8,7 +8,7 @@ import type { ReadableStream } from 'node:stream/web';
 import { CliError, normalizeError, usageError } from '../core/errors';
 import { renderTable } from '../core/output';
 import type { CliRuntime, GlobalFlags } from '../core/runtime';
-import { outputFor, sdkFor } from '../core/runtime';
+import { isInteractive, outputFor, sdkFor } from '../core/runtime';
 import { resolvedProjectRef } from './project';
 
 type FileRef =
@@ -171,7 +171,7 @@ export async function fileDeleteCommand(
     );
   }
   if (!input.yes) {
-    if (!runtime.io.inputIsTty || flags.json) {
+    if (!isInteractive(runtime, flags)) {
       throw usageError(
         'confirmation_required',
         'File deletion requires confirmation.',

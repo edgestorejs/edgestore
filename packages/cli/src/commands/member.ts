@@ -2,7 +2,7 @@ import { renderCliCommand } from '../core/command';
 import { usageError } from '../core/errors';
 import { renderTable } from '../core/output';
 import type { CliRuntime, GlobalFlags } from '../core/runtime';
-import { outputFor, sdkFor } from '../core/runtime';
+import { isInteractive, outputFor, sdkFor } from '../core/runtime';
 import { activeAccount } from './account';
 
 type Role = 'OWNER' | 'MEMBER' | 'VIEWER';
@@ -272,7 +272,7 @@ async function confirmOwnerRole(
   input: { role: Role; yes?: boolean; command: string[] },
 ): Promise<void> {
   if (input.role !== 'OWNER' || input.yes) return;
-  if (!runtime.io.inputIsTty || flags.json) {
+  if (!isInteractive(runtime, flags)) {
     throw usageError(
       'confirmation_required',
       'Assigning the owner role requires confirmation.',
@@ -297,7 +297,7 @@ async function confirmDestructive(
   input: { expected: string; yes?: boolean },
 ): Promise<void> {
   if (input.yes) return;
-  if (!runtime.io.inputIsTty || flags.json) {
+  if (!isInteractive(runtime, flags)) {
     throw usageError('confirmation_required', 'This operation requires --yes.');
   }
   await runtime.prompts.confirmTyped(
