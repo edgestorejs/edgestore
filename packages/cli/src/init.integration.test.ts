@@ -150,7 +150,7 @@ describe('init.integration', () => {
         project.basePath,
         '--create-key',
         '--output',
-        '.env.local',
+        '.env.development.local',
       ],
       fixture.runtime,
       '0.0.0',
@@ -168,14 +168,14 @@ describe('init.integration', () => {
         failedStep: 'repository_link',
         project: { basePath: project.basePath },
         key: { id: projectKey.id },
-        output: '.env.local',
+        output: '.env.development.local',
       },
       suggestions: [
-        `edgestore --json --api-url https://api-dev.edgestore.dev project link ${project.basePath}`,
+        `edgestore --json --api-url https://api-dev.edgestore.dev project link ${project.basePath} --env-file .env.development.local`,
       ],
     });
     await expect(
-      readFile(path.join(temporaryDirectory, '.env.local'), 'utf8'),
+      readFile(path.join(temporaryDirectory, '.env.development.local'), 'utf8'),
     ).resolves.toContain('EDGE_STORE_SECRET_KEY=secret_test');
   });
 

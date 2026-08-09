@@ -437,8 +437,12 @@ Targets:
   project
     .command('link <project>')
     .description('Link this repository to a project base path or ID')
-    .action(async (projectRef: string) => {
-      await projectLinkCommand(runtime, globalFlags(program), projectRef);
+    .option('--env-file <path>', 'env file containing project keys')
+    .action(async (projectRef: string, options: { envFile?: string }) => {
+      await projectLinkCommand(runtime, globalFlags(program), {
+        projectRef,
+        ...options,
+      });
     });
 
   project

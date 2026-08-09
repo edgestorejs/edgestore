@@ -210,6 +210,7 @@ export async function initCommand(
         'project',
         'link',
         projectResult.project.basePath,
+        ...(envFile ? ['--env-file', envFile] : []),
       ]),
     });
   }

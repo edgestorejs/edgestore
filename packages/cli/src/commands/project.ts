@@ -181,12 +181,12 @@ export async function projectCurrentCommand(
 export async function projectLinkCommand(
   runtime: CliRuntime,
   flags: GlobalFlags,
-  projectRef: string,
+  input: { projectRef: string; envFile?: string },
 ): Promise<void> {
   await selectWorkspaceContext(runtime, flags, 'write');
   const sdk = await sdkFor(runtime, flags);
   const result = await sdk.management.projects.get({
-    project: projectRef,
+    project: input.projectRef,
     signal: runtime.signal,
   });
   const { project } = result;
@@ -195,6 +195,7 @@ export async function projectLinkCommand(
     account: project.accountId,
     project: project.basePath,
     ...(apiOrigin === DEFAULT_API_ORIGIN ? {} : { apiUrl: apiOrigin }),
+    ...(input.envFile ? { envFile: input.envFile } : {}),
   });
 
   outputFor(runtime, flags).result(

@@ -53,6 +53,20 @@ describe('project', () => {
     });
   });
 
+  it('remembers a custom env file when linking', async () => {
+    await runCli(
+      ['project', 'link', project.id, '--env-file', '.env.development.local'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(fixture.repoConfig.config).toEqual({
+      account: account.id,
+      project: project.basePath,
+      envFile: '.env.development.local',
+    });
+  });
+
   it('creates a project without linking the current directory', async () => {
     await runCli(
       ['project', 'create', '--name', 'Marketing Site'],
