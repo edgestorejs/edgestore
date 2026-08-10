@@ -8,7 +8,7 @@ const topLevel =
 const globalOptions =
   '--json --plain --api-url --cwd --no-color --no-progress --help --version';
 
-const bashCandidates: Record<string, string> = {
+const completionCandidates: Record<string, string> = {
   '': topLevel,
   login: '--token',
   logout: '',
@@ -100,17 +100,10 @@ function completionScript(shell: string): string {
     return bashCompletionScript();
   }
   if (shell === 'zsh') {
-    return `#compdef edgestore
-_arguments '1:command:(${topLevel})' '*::argument:->args'`;
+    return zshCompletionScript();
   }
   if (shell === 'fish') {
-    return topLevel
-      .split(' ')
-      .map(
-        (command) =>
-          `complete -c edgestore -n '__fish_use_subcommand' -a '${command}'`,
-      )
-      .join('\n');
+    return fishCompletionScript();
   }
   throw usageError('unsupported_shell', `Unsupported shell: ${shell}.`, [
     'Choose bash, zsh, or fish.',
@@ -118,7 +111,7 @@ _arguments '1:command:(${topLevel})' '*::argument:->args'`;
 }
 
 function bashCompletionScript(): string {
-  const commandTransitions = Object.keys(bashCandidates)
+  const commandTransitions = Object.keys(completionCandidates)
     .filter(Boolean)
     .map((commandPath) => {
       const segments = commandPath.split(':');
@@ -127,7 +120,7 @@ function bashCompletionScript(): string {
       return `      '${parent}:${command}') command_path='${commandPath}' ;;`;
     })
     .join('\n');
-  const candidateCases = Object.entries(bashCandidates)
+  const candidateCases = Object.entries(completionCandidates)
     .map(
       ([commandPath, candidates]) =>
         `    '${commandPath}') candidates='${globalOptions} ${candidates}' ;;`,
@@ -166,4 +159,101 @@ ${candidateCases}
   COMPREPLY=( $(compgen -W "$candidates" -- "$current") )
 }
 complete -F _edgestore edgestore`;
+}
+
+function zshCompletionScript(): string {
+  const commandTransitions = Object.keys(completionCandidates)
+    .filter(Boolean)
+    .map((commandPath) => {
+      const segments = commandPath.split(':');
+      const command = segments.at(-1);
+      const parent = segments.slice(0, -1).join(':');
+      return `      '${parent}:${command}') command_path='${commandPath}' ;;`;
+    })
+    .join('\n');
+  const candidateCases = Object.entries(completionCandidates)
+    .map(
+      ([commandPath, candidates]) =>
+        `    '${commandPath}') candidate_string='${globalOptions} ${candidates}' ;;`,
+    )
+    .join('\n');
+
+  return `#compdef edgestore
+_edgestore() {
+  local command_path=''
+  local candidate_string=''
+  local word
+  integer skip_value=0
+  integer index
+
+  for ((index = 2; index < CURRENT; index++)); do
+    word="\${words[index]}"
+    if ((skip_value)); then
+      skip_value=0
+      continue
+    fi
+    case "$word" in
+      --api-url|--cwd|--link|--name|--account|--output|--env-file|--bucket|--bucket-type|--page|--limit|--role|--scope|--preset|--expires-at|--type|--retry|--job|--project|--cursor|--path)
+        skip_value=1
+        continue
+        ;;
+      --*=*|--*) continue ;;
+    esac
+    case "$command_path:$word" in
+${commandTransitions}
+    esac
+  done
+
+  case "$command_path" in
+${candidateCases}
+  esac
+  compadd -- \${(z)candidate_string}
+}
+compdef _edgestore edgestore`;
+}
+
+function fishCompletionScript(): string {
+  const commandTransitions = Object.keys(completionCandidates)
+    .filter(Boolean)
+    .map((commandPath) => {
+      const segments = commandPath.split(':');
+      const command = segments.at(-1);
+      const parent = segments.slice(0, -1).join(':');
+      return `      case '${parent}:${command}'; set command_path '${commandPath}'`;
+    })
+    .join('\n');
+  const completions = Object.entries(completionCandidates)
+    .map(
+      ([commandPath, candidates]) =>
+        `complete -c edgestore -n 'test "$(__edgestore_command_path)" = "${commandPath}"' -a '${globalOptions} ${candidates}'`,
+    )
+    .join('\n');
+
+  return `function __edgestore_command_path
+  set -l command_path ''
+  set -l skip_value 0
+  set -l tokens (commandline -opc)
+  set -e tokens[1]
+
+  for word in $tokens
+    if test $skip_value -eq 1
+      set skip_value 0
+      continue
+    end
+    switch $word
+      case --api-url --cwd --link --name --account --output --env-file --bucket --bucket-type --page --limit --role --scope --preset --expires-at --type --retry --job --project --cursor --path
+        set skip_value 1
+        continue
+      case '--*=*' '--*'
+        continue
+    end
+    switch "$command_path:$word"
+${commandTransitions}
+    end
+  end
+
+  echo $command_path
+end
+
+${completions}`;
 }

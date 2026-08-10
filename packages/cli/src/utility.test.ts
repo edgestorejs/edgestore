@@ -54,7 +54,30 @@ describe('utility', () => {
     await runCli(['completion', 'fish', '--plain'], fixture.runtime, '0.0.0');
 
     expect(fixture.stdout()).toContain('complete -c edgestore');
-    expect(fixture.stdout()).toContain("-a 'project'");
+    expect(fixture.stdout()).toContain('account member project token');
+  });
+
+  it('generates nested zsh and fish completion from the shared command model', async () => {
+    await runCli(['completion', 'fish', '--plain'], fixture.runtime, '0.0.0');
+
+    const fishScript = fixture.stdout();
+    expect(fishScript).toContain(
+      'test "$(__edgestore_command_path)" = "project:key"',
+    );
+    expect(fishScript).toContain(
+      "-a '--json --plain --api-url --cwd --no-color --no-progress --help --version list ls create rotate revoke'",
+    );
+
+    const zshFixture = createFixture();
+    await runCli(['completion', 'zsh', '--plain'], zshFixture.runtime, '0.0.0');
+    const zshScript = zshFixture.stdout();
+    expect(() =>
+      execFileSync('/bin/zsh', ['-n'], { input: zshScript }),
+    ).not.toThrow();
+    expect(zshScript).toContain("':project') command_path='project'");
+    expect(zshScript).toContain(
+      "'project:key') candidate_string='--json --plain",
+    );
   });
 
   it('completes Bash commands and registered options', async () => {
