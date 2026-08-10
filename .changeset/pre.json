@@ -20,12 +20,18 @@
     "@edgestore/react": "0.8.0",
     "@edgestore/server": "0.8.0",
     "@edgestore/shared": "0.8.0",
-    "@edgestore/sdk": "0.7.0"
+    "@edgestore/sdk": "0.7.0",
+    "@edgestore/cli": "0.0.0"
   },
   "changesets": [
+    "bright-pandas-auth",
+    "calm-clouds-guide",
     "clean-production-dependencies",
     "esm-only-packages",
     "introduce-api-v2-sdk",
-    "redesign-provider-backend-client"
+    "redesign-provider-backend-client",
+    "remove-zod-peer",
+    "standard-schema-core",
+    "validate-http-schema-input"
   ]
 }

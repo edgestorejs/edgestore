@@ -10,8 +10,8 @@
     "typecheck": "react-router typegen && tsc"
   },
   "dependencies": {
-    "@edgestore/react": "^1.0.0-next.1",
-    "@edgestore/server": "^1.0.0-next.1",
+    "@edgestore/react": "^1.0.0-next.2",
+    "@edgestore/server": "^1.0.0-next.2",
     "@react-router/node": "8.2.0",
     "@react-router/serve": "8.2.0",
     "isbot": "5.2.1",
