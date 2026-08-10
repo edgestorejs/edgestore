@@ -43,7 +43,7 @@ const bashCandidates: Record<string, string> = {
   'project:create': '--name --account --without-key --allow-overage',
   'project:delete': '--yes',
   'project:rm': '--yes',
-  'project:link': '',
+  'project:link': '--env-file',
   'project:unlink': '',
   'project:key': 'list ls create rotate revoke',
   'project:key:list': '',
@@ -149,7 +149,7 @@ function bashCompletionScript(): string {
       continue
     fi
     case "$word" in
-      --api-url|--cwd|--link|--name|--account|--output|--bucket|--bucket-type|--page|--limit|--role|--scope|--preset|--expires-at|--type|--retry|--job|--project|--cursor|--path)
+      --api-url|--cwd|--link|--name|--account|--output|--env-file|--bucket|--bucket-type|--page|--limit|--role|--scope|--preset|--expires-at|--type|--retry|--job|--project|--cursor|--path)
         skip_value=1
         continue
         ;;

@@ -43,6 +43,15 @@ export class EdgeStoreNetworkError extends EdgeStoreError {
   }
 }
 
+/** A control-plane request that exceeded the configured deadline. */
+export class EdgeStoreTimeoutError extends EdgeStoreError {
+  override readonly name = 'EdgeStoreTimeoutError';
+
+  constructor(message: string, options?: ErrorOptions) {
+    super(message, options);
+  }
+}
+
 /** A request or upload canceled through an `AbortSignal`. */
 export class EdgeStoreAbortError extends EdgeStoreError {
   override readonly name = 'EdgeStoreAbortError';

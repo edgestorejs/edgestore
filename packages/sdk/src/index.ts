@@ -9,6 +9,7 @@ export {
   EdgeStoreError,
   EdgeStoreFileMutationError,
   EdgeStoreNetworkError,
+  EdgeStoreTimeoutError,
   EdgeStoreUploadCanceledError,
   EdgeStoreUploadCleanupError,
   EdgeStoreUploadError,

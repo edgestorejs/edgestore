@@ -2,6 +2,7 @@ import {
   EdgeStoreAbortError,
   EdgeStoreApiError,
   EdgeStoreNetworkError,
+  EdgeStoreTimeoutError,
 } from '@edgestore/sdk';
 
 export class CliError extends Error {
@@ -58,6 +59,16 @@ export function normalizeError(error: unknown): CliError {
         'Check your network connection and the configured API URL.',
       ],
     });
+  }
+
+  if (error instanceof EdgeStoreTimeoutError) {
+    return new CliError(
+      'request_timeout',
+      'The EdgeStore API request timed out.',
+      {
+        suggestions: ['Try the command again.'],
+      },
+    );
   }
 
   if (error instanceof EdgeStoreAbortError || isNativeAbortError(error)) {

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { runCli } from './cli';
 import {
   parseStoredOAuthCredential,
@@ -76,6 +76,76 @@ describe('auth', () => {
     ).toBe(teamAccount.id);
     expect(fixture.stdout()).toContain('2 scopes across 1 account.');
   });
+
+  it('revokes a new OAuth grant when identity validation fails', async () => {
+    fixture.whoami.mockRejectedValueOnce(new Error('API unavailable'));
+
+    const exitCode = await runCli(
+      ['--json', 'login'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(1);
+    expect(fixture.oauthRevoke).toHaveBeenCalledWith(
+      expect.objectContaining({ refreshToken: 'oauth_refresh' }),
+      expect.any(AbortSignal),
+    );
+    expect(fixture.setCredential).not.toHaveBeenCalled();
+  });
+
+  it('reports when a failed OAuth login cannot revoke its new grant', async () => {
+    fixture.whoami.mockRejectedValueOnce(new Error('API unavailable'));
+    fixture.oauthRevoke.mockRejectedValueOnce(new Error('Issuer unavailable'));
+
+    const exitCode = await runCli(
+      ['--json', 'login'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(1);
+    expect(JSON.parse(fixture.stderr()).error).toMatchObject({
+      code: 'oauth_login_cleanup_failed',
+      details: {
+        status: 'partial',
+        credentialStored: false,
+        oauthGrant: { status: 'revocation_failed' },
+      },
+    });
+  });
+
+  it.each([
+    ['browser', ['login']],
+    ['token', ['login', '--token']],
+  ])(
+    'reports partial %s login when active-account storage fails',
+    async (_mode, command) => {
+      fixture.runtime.io.inputIsTty = false;
+      fixture.globalConfig.activeAccounts['https://api.edgestore.dev'] =
+        teamAccount.id;
+      fixture.runtime.globalConfig.write = vi.fn(async () => {
+        throw new Error('Config is read-only');
+      });
+
+      const exitCode = await runCli(
+        ['--json', ...command],
+        fixture.runtime,
+        '0.0.0',
+      );
+
+      expect(exitCode).toBe(1);
+      expect(fixture.setCredential).toHaveBeenCalled();
+      expect(JSON.parse(fixture.stderr()).error).toMatchObject({
+        code: 'login_partial_failure',
+        details: {
+          status: 'partial',
+          credentialStored: true,
+          activeAccount: { status: 'update_failed' },
+        },
+      });
+    },
+  );
 
   it('validates a token before saving it', async () => {
     await runCli(['login', '--token'], fixture.runtime, '0.0.0');

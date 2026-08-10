@@ -3,8 +3,9 @@ import { activeAccountFor, withActiveAccount } from '../core/config';
 import {
   parseStoredOAuthCredential,
   serializeOAuthCredential,
+  type OAuthCredential,
 } from '../core/credentials';
-import { usageError } from '../core/errors';
+import { CliError, normalizeError, usageError } from '../core/errors';
 import type { CliRuntime, GlobalFlags } from '../core/runtime';
 import { apiUrlFor, credentialFor, outputFor } from '../core/runtime';
 import { selectWorkspaceContext } from '../core/workspace';
@@ -41,7 +42,7 @@ export async function loginCommand(
 
   await runtime.credentials.set(apiUrl.displayUrl, token);
   if (!environmentTokenActive) {
-    await updateActiveAccount(runtime, flags, identity.actor);
+    await updateActiveAccountAfterLogin(runtime, flags, identity.actor);
   }
 
   const output = outputFor(runtime, flags);
@@ -184,23 +185,34 @@ async function browserLogin(
     onClientRegistered: (client) =>
       runtime.credentials.setCachedOAuthClient(apiUrl.displayUrl, client),
   });
-  await runtime.credentials.setCachedOAuthClient(
-    apiUrl.displayUrl,
-    result.client,
-  );
-
-  const sdk = runtime.sdkFactory({
-    token: result.credential.accessToken,
-    baseUrl: apiUrl.sdkBaseUrl,
-  });
-  const identity = await sdk.management.whoami({ signal: runtime.signal });
+  let identity: Awaited<
+    ReturnType<ManagementEdgeStoreSdk['management']['whoami']>
+  >;
+  let credentialStored = false;
+  try {
+    await runtime.credentials.setCachedOAuthClient(
+      apiUrl.displayUrl,
+      result.client,
+    );
+    const sdk = runtime.sdkFactory({
+      token: result.credential.accessToken,
+      baseUrl: apiUrl.sdkBaseUrl,
+    });
+    identity = await sdk.management.whoami({ signal: runtime.signal });
+    await runtime.credentials.set(
+      apiUrl.displayUrl,
+      serializeOAuthCredential(result.credential),
+    );
+    credentialStored = true;
+  } catch (error) {
+    if (!credentialStored && !runtime.signal.aborted) {
+      await revokeFailedLogin(runtime, result.credential, error);
+    }
+    throw error;
+  }
   const environmentTokenActive = hasEnvironmentToken(runtime);
-  await runtime.credentials.set(
-    apiUrl.displayUrl,
-    serializeOAuthCredential(result.credential),
-  );
   if (!environmentTokenActive) {
-    await updateActiveAccount(runtime, flags, identity.actor);
+    await updateActiveAccountAfterLogin(runtime, flags, identity.actor);
   }
 
   const accessSummary =
@@ -244,6 +256,79 @@ async function updateActiveAccount(
   if (accountId && accountId !== current) {
     await runtime.globalConfig.write(
       withActiveAccount(config, apiOrigin, accountId),
+    );
+  }
+}
+
+async function updateActiveAccountAfterLogin(
+  runtime: CliRuntime,
+  flags: GlobalFlags,
+  actor: Awaited<
+    ReturnType<ManagementEdgeStoreSdk['management']['whoami']>
+  >['actor'],
+): Promise<void> {
+  try {
+    await updateActiveAccount(runtime, flags, actor);
+  } catch (error) {
+    const failure = normalizeError(error);
+    throw new CliError(
+      'login_partial_failure',
+      'Login succeeded and the credential was stored, but the active account could not be updated.',
+      {
+        details: {
+          status: 'partial',
+          credentialStored: true,
+          activeAccount: { status: 'update_failed' },
+          configPath: runtime.globalConfig.path,
+          actor,
+          cause: {
+            code: failure.code,
+            message: failure.message,
+            ...(failure.options.details === undefined
+              ? {}
+              : { details: failure.options.details }),
+          },
+        },
+        requestId: failure.options.requestId,
+        suggestions: [
+          ...(failure.options.suggestions ?? []),
+          'Fix access to the global config, then run edgestore account switch <account-id>.',
+        ],
+        exitCode: failure.exitCode,
+      },
+    );
+  }
+}
+
+async function revokeFailedLogin(
+  runtime: CliRuntime,
+  credential: OAuthCredential,
+  loginError: unknown,
+): Promise<void> {
+  try {
+    await runtime.oauth.revoke(
+      credential,
+      AbortSignal.any([runtime.signal, AbortSignal.timeout(10_000)]),
+    );
+  } catch (error) {
+    const failure = normalizeError(loginError);
+    const cleanup = normalizeError(error);
+    throw new CliError(
+      'oauth_login_cleanup_failed',
+      'Login failed and the new OAuth grant could not be revoked.',
+      {
+        details: {
+          status: 'partial',
+          credentialStored: false,
+          oauthGrant: { status: 'revocation_failed' },
+          cause: { code: failure.code, message: failure.message },
+          cleanup: { code: cleanup.code, message: cleanup.message },
+        },
+        suggestions: [
+          'Revoke the EdgeStore CLI grant from your account settings.',
+          'edgestore login',
+        ],
+      },
     );
   }
 }
