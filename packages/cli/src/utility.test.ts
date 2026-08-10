@@ -1,4 +1,5 @@
 import { execFileSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -77,9 +78,12 @@ describe('utility', () => {
     const zshFixture = createFixture();
     await runCli(['completion', 'zsh', '--plain'], zshFixture.runtime, '0.0.0');
     const zshScript = zshFixture.stdout();
-    expect(() =>
-      execFileSync('/bin/zsh', ['-n'], { input: zshScript }),
-    ).not.toThrow();
+    const zshPath = ['/bin/zsh', '/usr/bin/zsh'].find(existsSync);
+    if (zshPath) {
+      expect(() =>
+        execFileSync(zshPath, ['-n'], { input: zshScript }),
+      ).not.toThrow();
+    }
     expect(zshScript).toContain("':project') command_path='project'");
     expect(zshScript).toContain(
       "'project:key') candidate_string='--json --plain",
