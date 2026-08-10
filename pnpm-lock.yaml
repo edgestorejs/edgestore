@@ -694,24 +694,6 @@ importers:
 
   examples/next-complete:
     dependencies:
-      '@edgestore/react':
-        specifier: workspace:*
-        version: link:../../packages/react
-      '@edgestore/server':
-        specifier: workspace:*
-        version: link:../../packages/server
-      '@radix-ui/react-slot':
-        specifier: 1.2.3
-        version: 1.2.3(@types/react@19.2.17)(react@19.2.7)
-      class-variance-authority:
-        specifier: 0.7.1
-        version: 0.7.1
-      clsx:
-        specifier: 2.1.1
-        version: 2.1.1
-      lucide-react:
-        specifier: 0.487.0
-        version: 0.487.0(react@19.2.7)
       next:
         specifier: 16.2.10
         version: 16.2.10(@babel/core@7.29.7(supports-color@9.4.0))(@opentelemetry/api@1.9.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
@@ -721,18 +703,6 @@ importers:
       react-dom:
         specifier: 19.2.7
         version: 19.2.7(react@19.2.7)
-      react-dropzone:
-        specifier: 14.4.1
-        version: 14.4.1(react@19.2.7)
-      tailwind-merge:
-        specifier: 3.6.0
-        version: 3.6.0
-      tw-animate-css:
-        specifier: 1.4.0
-        version: 1.4.0
-      zod:
-        specifier: 3.25.76
-        version: 3.25.76
     devDependencies:
       '@tailwindcss/postcss':
         specifier: 4.3.3
