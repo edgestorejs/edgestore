@@ -552,7 +552,7 @@ Examples:
     .option('--account <account-id>', 'override the active account')
     .option(
       '--preset <preset>',
-      'permission preset: deploy, read-only, or full-access',
+      'permission preset: deploy, storage-management, read-only, or full-access',
     )
     .option('--scope <scope>', 'explicit permission scope', collectValue, [])
     .option('--expires-at <timestamp>', 'ISO 8601 expiration timestamp')

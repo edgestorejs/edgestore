@@ -17,6 +17,12 @@ type TokenScope = NonNullable<
   >[0]['scopes']
 >[number];
 
+type TokenPreset = NonNullable<
+  Parameters<
+    ManagementEdgeStoreSdk['management']['tokens']['createUser']
+  >[0]['preset']
+>;
+
 function validateTokenOwner(options: {
   user?: boolean;
   account?: string;
@@ -98,7 +104,7 @@ export async function tokenCreateCommand(
     user?: boolean;
     account?: string;
     name: string;
-    preset?: 'deploy' | 'read-only' | 'full-access';
+    preset?: TokenPreset;
     scope?: string[];
     expiresAt?: string;
   } & SecretDeliveryOptions,

@@ -181,6 +181,28 @@ describe('token', () => {
     expect(input).not.toHaveProperty('scopes');
   });
 
+  it('creates management tokens with the storage preset', async () => {
+    await runCli(
+      [
+        'token',
+        'create',
+        '--name',
+        'storage access',
+        '--preset',
+        'storage-management',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(fixture.createAccountToken).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'storage access',
+        preset: 'storage-management',
+      }),
+    );
+  });
+
   it('forwards repeated explicit token scopes unchanged', async () => {
     await runCli(
       [
