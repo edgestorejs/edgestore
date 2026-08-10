@@ -44,5 +44,6 @@ when more than one is configured. Automation should pass `--cwd` or an explicit
 `--project` when the choice is ambiguous.
 
 Use `--json` for structured output and `--plain` for commands with one natural
-value. Run `edgestore completion bash`, `zsh`, or `fish` to configure shell
-completion.
+value. Both modes are non-interactive, so pass required choices explicitly and
+use `--yes` when a command requires confirmation. Run `edgestore completion
+bash`, `zsh`, or `fish` to configure shell completion.
