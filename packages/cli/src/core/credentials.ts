@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { CliError } from './errors';
+import { CliError, normalizeError } from './errors';
 
 const SERVICE_NAME = 'edgestore-cli';
 const CREDENTIAL_NAME = 'management-credential';
@@ -117,11 +117,12 @@ export type ResolvedCredential = {
   source: 'environment' | 'keychain' | 'oauth';
 };
 
-type OAuthCredentialRefresher = {
+type OAuthCredentialLifecycle = {
   refresh(
     credential: OAuthCredential,
     signal: AbortSignal,
   ): Promise<OAuthCredential>;
+  revoke(credential: OAuthCredential, signal: AbortSignal): Promise<void>;
 };
 
 export async function resolveCredential(
@@ -129,7 +130,7 @@ export async function resolveCredential(
   store: CredentialStore,
   options: {
     apiOrigin: string;
-    oauth?: OAuthCredentialRefresher;
+    oauth?: OAuthCredentialLifecycle;
     signal?: AbortSignal;
     now?: () => number;
   },
@@ -157,7 +158,45 @@ export async function resolveCredential(
   }
 
   const refreshed = await options.oauth.refresh(credential, options.signal);
-  await store.set(options.apiOrigin, serializeOAuthCredential(refreshed));
+  try {
+    await store.set(options.apiOrigin, serializeOAuthCredential(refreshed));
+  } catch (error) {
+    const storage = normalizeError(error);
+    let cleanup;
+    try {
+      await options.oauth.revoke(refreshed, AbortSignal.timeout(10_000));
+    } catch (cleanupError) {
+      cleanup = normalizeError(cleanupError);
+    }
+    throw new CliError(
+      'oauth_refresh_storage_failed',
+      cleanup
+        ? 'The refreshed OAuth login could not be stored or revoked.'
+        : 'The refreshed OAuth login could not be stored and was revoked.',
+      {
+        details: {
+          status: cleanup ? 'partial' : 'rolled_back',
+          refreshedCredentialStored: false,
+          storedCredential: { status: 'stale' },
+          oauthGrant: { status: cleanup ? 'revocation_failed' : 'revoked' },
+          cause: { code: storage.code, message: storage.message },
+          ...(cleanup
+            ? {
+                cleanup: { code: cleanup.code, message: cleanup.message },
+              }
+            : {}),
+        },
+        requestId: storage.options.requestId,
+        suggestions: cleanup
+          ? [
+              'Revoke the EdgeStore CLI grant from your account settings.',
+              'edgestore login',
+            ]
+          : ['edgestore login'],
+        exitCode: storage.exitCode,
+      },
+    );
+  }
   return { token: refreshed.accessToken, source: 'oauth' };
 }
 

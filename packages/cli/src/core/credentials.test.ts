@@ -68,11 +68,12 @@ describe('resolveCredential', () => {
     const credential = oauthCredential({ expiresAt: 1_000_000 });
     const { store } = credentialStore(serializeOAuthCredential(credential));
     const refresh = vi.fn();
+    const revoke = vi.fn();
 
     await expect(
       resolveCredential(undefined, store, {
         apiOrigin: 'https://api.edgestore.dev',
-        oauth: { refresh },
+        oauth: { refresh, revoke },
         signal: new AbortController().signal,
         now: () => 1,
       }),
@@ -91,11 +92,12 @@ describe('resolveCredential', () => {
       serializeOAuthCredential(credential),
     );
     const refresh = vi.fn(async () => refreshed);
+    const revoke = vi.fn(async () => undefined);
 
     await expect(
       resolveCredential(undefined, store, {
         apiOrigin: 'https://api.edgestore.dev',
-        oauth: { refresh },
+        oauth: { refresh, revoke },
         signal: new AbortController().signal,
         now: () => 1,
       }),
@@ -108,6 +110,74 @@ describe('resolveCredential', () => {
     expect(
       parseStoredOAuthCredential(setCredential.mock.calls[0]?.[1]),
     ).toEqual(refreshed);
+  });
+
+  it('revokes a rotated OAuth credential when storing it fails', async () => {
+    const credential = oauthCredential({ expiresAt: 1_000 });
+    const refreshed = oauthCredential({
+      accessToken: 'oauth_access_new',
+      refreshToken: 'oauth_refresh_new',
+      expiresAt: 1_000_000,
+    });
+    const { store, setCredential } = credentialStore(
+      serializeOAuthCredential(credential),
+    );
+    setCredential.mockRejectedValueOnce(new Error('Keychain is locked'));
+    const refresh = vi.fn(async () => refreshed);
+    const revoke = vi.fn(async () => undefined);
+
+    await expect(
+      resolveCredential(undefined, store, {
+        apiOrigin: 'https://api.edgestore.dev',
+        oauth: { refresh, revoke },
+        signal: new AbortController().signal,
+        now: () => 1,
+      }),
+    ).rejects.toMatchObject({
+      code: 'oauth_refresh_storage_failed',
+      options: {
+        details: {
+          status: 'rolled_back',
+          refreshedCredentialStored: false,
+          oauthGrant: { status: 'revoked' },
+        },
+      },
+    });
+    expect(revoke).toHaveBeenCalledWith(refreshed, expect.any(AbortSignal));
+  });
+
+  it('reports partial refresh when rotated credential revocation fails', async () => {
+    const credential = oauthCredential({ expiresAt: 1_000 });
+    const refreshed = oauthCredential({
+      accessToken: 'oauth_access_new',
+      refreshToken: 'oauth_refresh_new',
+      expiresAt: 1_000_000,
+    });
+    const { store, setCredential } = credentialStore(
+      serializeOAuthCredential(credential),
+    );
+    setCredential.mockRejectedValueOnce(new Error('Keychain is locked'));
+    const refresh = vi.fn(async () => refreshed);
+    const revoke = vi.fn(async () => {
+      throw new Error('Issuer unavailable');
+    });
+
+    await expect(
+      resolveCredential(undefined, store, {
+        apiOrigin: 'https://api.edgestore.dev',
+        oauth: { refresh, revoke },
+        signal: new AbortController().signal,
+        now: () => 1,
+      }),
+    ).rejects.toMatchObject({
+      code: 'oauth_refresh_storage_failed',
+      options: {
+        details: {
+          status: 'partial',
+          oauthGrant: { status: 'revocation_failed' },
+        },
+      },
+    });
   });
 });
 
