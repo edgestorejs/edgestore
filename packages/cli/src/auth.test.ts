@@ -265,6 +265,74 @@ describe('auth', () => {
     expect(fixture.stderr()).toContain('stored OAuth login is invalid');
     expect(fixture.stdout()).toContain('Logged out.');
   });
+
+  it('keeps JSON output parseable when logout emits a warning', async () => {
+    const malformed = serializeOAuthCredential(oauthCredential()).slice(0, -1);
+    await fixture.credentials.set('https://api.edgestore.dev', malformed);
+
+    const exitCode = await runCli(
+      ['--json', 'logout'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(0);
+    expect(JSON.parse(fixture.stdout())).toMatchObject({ loggedOut: true });
+    expect(fixture.stderr()).toBe('');
+  });
+
+  it('reports partial logout when remote revocation succeeds but local deletion fails', async () => {
+    await fixture.credentials.set(
+      'https://api.edgestore.dev',
+      serializeOAuthCredential(oauthCredential()),
+    );
+    fixture.runtime.credentials.delete = vi.fn(async () => {
+      throw new Error('Keychain is locked');
+    });
+
+    const exitCode = await runCli(
+      ['--json', 'logout'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(1);
+    expect(JSON.parse(fixture.stderr()).error).toMatchObject({
+      code: 'logout_partial_failure',
+      details: {
+        status: 'partial',
+        oauthGrant: { status: 'revoked' },
+        localCredential: { status: 'delete_failed' },
+      },
+    });
+  });
+
+  it('reports both logout failures as one JSON error', async () => {
+    await fixture.credentials.set(
+      'https://api.edgestore.dev',
+      serializeOAuthCredential(oauthCredential()),
+    );
+    fixture.oauthRevoke.mockRejectedValueOnce(new Error('Issuer unavailable'));
+    fixture.runtime.credentials.delete = vi.fn(async () => {
+      throw new Error('Keychain is locked');
+    });
+
+    const exitCode = await runCli(
+      ['--json', 'logout'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(1);
+    expect(JSON.parse(fixture.stderr()).error).toMatchObject({
+      code: 'logout_failed',
+      details: {
+        status: 'failed',
+        oauthGrant: { status: 'revocation_failed' },
+        localCredential: { status: 'delete_failed' },
+      },
+    });
+  });
 });
 
 function oauthCredential(): OAuthCredential {

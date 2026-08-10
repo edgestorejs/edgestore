@@ -49,6 +49,7 @@ export class CliOutput {
   }
 
   warning(message: string): void {
+    if (this.options.mode === 'json') return;
     this.writeStderr(`${this.colors.yellow('Warning:')} ${message}`);
   }
 

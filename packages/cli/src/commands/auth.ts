@@ -1,4 +1,5 @@
 import type { ManagementEdgeStoreSdk } from '@edgestore/sdk';
+import { renderCliCommand } from '../core/command';
 import { activeAccountFor, withActiveAccount } from '../core/config';
 import {
   parseStoredOAuthCredential,
@@ -70,6 +71,7 @@ export async function logoutCommand(
     );
   }
   let oauthRevoked: boolean | undefined;
+  let revocationFailure: CliError | undefined;
   if (oauthCredential) {
     try {
       await runtime.oauth.revoke(oauthCredential, runtime.signal);
@@ -77,12 +79,62 @@ export async function logoutCommand(
     } catch (error) {
       if (runtime.signal.aborted) throw error;
       oauthRevoked = false;
+      revocationFailure = normalizeError(error);
       output.warning(
         'The OAuth grant could not be revoked remotely. The login will still be removed locally.',
       );
     }
   }
-  const deleted = await runtime.credentials.delete(apiOrigin);
+  let deleted: boolean;
+  try {
+    deleted = await runtime.credentials.delete(apiOrigin);
+  } catch (error) {
+    const deletionFailure = normalizeError(error);
+    if (oauthRevoked) {
+      throw new CliError(
+        'logout_partial_failure',
+        'The OAuth grant was revoked, but the stored login could not be removed.',
+        {
+          details: {
+            status: 'partial',
+            oauthGrant: { status: 'revoked' },
+            localCredential: {
+              status: 'delete_failed',
+              cause: errorDetails(deletionFailure),
+            },
+          },
+          requestId: deletionFailure.options.requestId,
+          suggestions: [renderCliCommand(flags, ['logout'])],
+          exitCode: deletionFailure.exitCode,
+        },
+      );
+    }
+    if (revocationFailure) {
+      throw new CliError(
+        'logout_failed',
+        'The OAuth grant could not be revoked and the stored login could not be removed.',
+        {
+          details: {
+            status: 'failed',
+            oauthGrant: {
+              status: 'revocation_failed',
+              cause: errorDetails(revocationFailure),
+            },
+            localCredential: {
+              status: 'delete_failed',
+              cause: errorDetails(deletionFailure),
+            },
+          },
+          requestId:
+            deletionFailure.options.requestId ??
+            revocationFailure.options.requestId,
+          suggestions: [renderCliCommand(flags, ['logout'])],
+          exitCode: deletionFailure.exitCode,
+        },
+      );
+    }
+    throw deletionFailure;
+  }
   const environmentTokenActive = Boolean(runtime.env.EDGESTORE_TOKEN?.trim());
 
   output.result(
@@ -99,6 +151,16 @@ export async function logoutCommand(
       'EDGESTORE_TOKEN is still set and will authenticate this process.',
     );
   }
+}
+
+function errorDetails(error: CliError) {
+  return {
+    code: error.code,
+    message: error.message,
+    ...(error.options.details === undefined
+      ? {}
+      : { details: error.options.details }),
+  };
 }
 
 export async function whoamiCommand(

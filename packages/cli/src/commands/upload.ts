@@ -95,7 +95,7 @@ export async function fileUploadCommand(
           `Completed (${results.length}):`,
           ...results.map(
             (result) =>
-              `  ${result.localPath} -> ${result.file.url} (${result.file.id})`,
+              `  ${result.localPath} -> ${result.signedReadUrl?.signedUrl ?? result.file.url} (${result.file.id})`,
           ),
           `Interrupted: ${localFile}`,
           `Not attempted (${notAttemptedPaths.length}):`,

@@ -388,6 +388,12 @@ describe('file', () => {
           id: 'upload_first',
           url: 'https://files.example/first.txt',
         },
+        signedReadUrl: {
+          url: 'https://files.example/first.txt',
+          signedUrl: 'https://files.example/first.txt?signature=test',
+          expiresAt: '2026-08-08T12:00:00.000Z',
+          expiresIn: 3600,
+        },
       };
     });
 
@@ -409,7 +415,8 @@ describe('file', () => {
     expect(exitCode).toBe(1);
     expect(fixture.stdout()).toBe('');
     expect(fixture.uploadFile).toHaveBeenCalledTimes(2);
-    expect(JSON.parse(fixture.stderr()).error).toMatchObject({
+    const error = JSON.parse(fixture.stderr()).error;
+    expect(error).toMatchObject({
       code: 'file_upload_incomplete',
       details: {
         completed: [{ localPath: path.join(temporaryDirectory, 'first.txt') }],
@@ -418,6 +425,9 @@ describe('file', () => {
         cause: { message: 'second upload request failed' },
       },
     });
+    expect(error.message).toContain(
+      'https://files.example/first.txt?signature=test',
+    );
   });
 
   it('treats an existing upload path with glob characters literally', async () => {
