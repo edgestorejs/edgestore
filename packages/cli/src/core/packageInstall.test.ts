@@ -2,7 +2,11 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { detectPackages, renderInstallCommand, type PackagePlan } from './init';
+import {
+  detectPackages,
+  renderInstallCommand,
+  type PackagePlan,
+} from './packageInstall';
 
 describe('detectPackages', () => {
   let directory: string | undefined;

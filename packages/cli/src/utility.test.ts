@@ -54,7 +54,9 @@ describe('utility', () => {
     await runCli(['completion', 'fish', '--plain'], fixture.runtime, '0.0.0');
 
     expect(fixture.stdout()).toContain('complete -c edgestore');
-    expect(fixture.stdout()).toContain('account member project token');
+    expect(fixture.stdout()).toContain(
+      'test "$(__edgestore_command_path)" = ""',
+    );
   });
 
   it('generates nested zsh and fish completion from the shared command model', async () => {
@@ -64,9 +66,13 @@ describe('utility', () => {
     expect(fishScript).toContain(
       'test "$(__edgestore_command_path)" = "project:key"',
     );
-    expect(fishScript).toContain(
-      "-a '--json --plain --api-url --cwd --no-color --no-progress --help --version list ls create rotate revoke'",
-    );
+    const projectKeyCompletion = fishScript
+      .split('\n')
+      .find((line) => line.includes('= "project:key"'));
+    expect(projectKeyCompletion).toContain('list');
+    expect(projectKeyCompletion).toContain('create');
+    expect(projectKeyCompletion).toContain('rotate');
+    expect(projectKeyCompletion).toContain('revoke');
 
     const zshFixture = createFixture();
     await runCli(['completion', 'zsh', '--plain'], zshFixture.runtime, '0.0.0');
@@ -124,6 +130,22 @@ describe('utility', () => {
       ],
       { encoding: 'utf8' },
     ).split('\n');
+    const rootAfterOptionValue = execFileSync(
+      'bash',
+      [
+        '-c',
+        `${script}\nCOMP_WORDS=(edgestore --cwd project ''); COMP_CWORD=3; _edgestore; printf '%s\\n' "\${COMPREPLY[@]}"`,
+      ],
+      { encoding: 'utf8' },
+    ).split('\n');
+    const openTargets = execFileSync(
+      'bash',
+      [
+        '-c',
+        `${script}\nCOMP_WORDS=(edgestore open ''); COMP_CWORD=2; _edgestore; printf '%s\\n' "\${COMPREPLY[@]}"`,
+      ],
+      { encoding: 'utf8' },
+    ).split('\n');
 
     expect(nestedCommands.split('\n')).toEqual(
       expect.arrayContaining(['list', 'create', 'rotate', 'revoke']),
@@ -139,7 +161,12 @@ describe('utility', () => {
     );
     expect(logoutOptions).not.toContain('--yes');
     expect(projectLinkOptions).toContain('--env-file');
-    expect(script).toContain('--output|--env-file|--bucket');
+    expect(rootAfterOptionValue).toEqual(
+      expect.arrayContaining(['login', 'project', 'completion']),
+    );
+    expect(openTargets).toEqual(
+      expect.arrayContaining(['account', 'billing', 'project']),
+    );
   });
 
   it('checks linked project keys without exposing env secrets', async () => {

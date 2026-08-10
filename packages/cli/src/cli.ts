@@ -16,7 +16,10 @@ import {
   bucketListCommand,
   bucketShowCommand,
 } from './commands/bucket';
-import { completionCommand } from './commands/completion';
+import {
+  completionCommand,
+  withCompletionCandidates,
+} from './commands/completion';
 import { doctorCommand } from './commands/doctor';
 import {
   fileDeleteCommand,
@@ -219,8 +222,11 @@ Examples:
       await initCommand(runtime, globalFlags(program), options);
     });
 
-  program
-    .command('open [target] [project]')
+  withCompletionCandidates(program.command('open [target] [project]'), [
+    'account',
+    'billing',
+    'project',
+  ])
     .description('Open the EdgeStore dashboard')
     .addHelpText(
       'after',
@@ -235,11 +241,17 @@ Targets:
       await openCommand(runtime, globalFlags(program), { target, project });
     });
 
-  program
-    .command('completion <shell>')
+  withCompletionCandidates(program.command('completion <shell>'), [
+    'bash',
+    'zsh',
+    'fish',
+  ])
     .description('Print shell completion for bash, zsh, or fish')
     .action(async (shell: string) => {
-      await completionCommand(runtime, globalFlags(program), shell);
+      await completionCommand(runtime, globalFlags(program), {
+        shell,
+        program,
+      });
     });
 
   const account = program

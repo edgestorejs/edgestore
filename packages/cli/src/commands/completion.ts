@@ -1,117 +1,103 @@
+import type { Command, Option } from 'commander';
 import { usageError } from '../core/errors';
 import type { CliRuntime, GlobalFlags } from '../core/runtime';
 import { outputFor } from '../core/runtime';
 
-const topLevel =
-  'login logout whoami doctor init account member project token bucket file open completion';
-
-const globalOptions =
-  '--json --plain --api-url --cwd --no-color --no-progress --help --version';
-
-const completionCandidates: Record<string, string> = {
-  '': topLevel,
-  login: '--token',
-  logout: '',
-  whoami: '',
-  doctor: '',
-  init: '--new --link --name --account --create-key --without-key --output --update --bucket --bucket-type --public --protected --install --allow-overage',
-  account: 'list ls usage billing current switch use leave',
-  'account:list': '',
-  'account:ls': '',
-  'account:usage': '',
-  'account:billing': '',
-  'account:current': '',
-  'account:switch': '',
-  'account:use': '',
-  'account:leave': '--yes',
-  member: 'list ls invite role remove invitation',
-  'member:list': '--page --limit --all',
-  'member:ls': '--page --limit --all',
-  'member:invite': '--role --allow-overage --yes',
-  'member:role': '--yes',
-  'member:remove': '--yes',
-  'member:invitation': 'list ls revoke resend',
-  'member:invitation:list': '--page --limit --all',
-  'member:invitation:ls': '--page --limit --all',
-  'member:invitation:revoke': '--yes',
-  'member:invitation:resend': '',
-  project: 'list ls current show create delete rm link unlink key',
-  'project:list': '--account',
-  'project:ls': '--account',
-  'project:current': '',
-  'project:show': '',
-  'project:create': '--name --account --without-key --allow-overage',
-  'project:delete': '--yes',
-  'project:rm': '--yes',
-  'project:link': '--env-file',
-  'project:unlink': '',
-  'project:key': 'list ls create rotate revoke',
-  'project:key:list': '',
-  'project:key:ls': '',
-  'project:key:create': '--name --copy --output --update',
-  'project:key:rotate': '--name --copy --output --update --yes',
-  'project:key:revoke': '--yes',
-  token: 'list ls create revoke',
-  'token:list': '--user --account --page --limit --all',
-  'token:ls': '--user --account --page --limit --all',
-  'token:create':
-    '--name --user --account --scope --preset --expires-at --copy --output --update',
-  'token:revoke': '--yes',
-  bucket: 'list ls create show delete rm empty empty-status',
-  'bucket:list': '--project',
-  'bucket:ls': '--project',
-  'bucket:create': '--type --public --protected --project',
-  'bucket:show': '--project',
-  'bucket:delete': '--project --yes',
-  'bucket:rm': '--project --yes',
-  'bucket:empty': '--project --retry --wait --yes',
-  'bucket:empty-status': '--project --job',
-  file: 'list ls info download delete rm upload upload-status upload-cancel',
-  'file:list': '--bucket --project --limit --cursor --all',
-  'file:ls': '--bucket --project --limit --cursor --all',
-  'file:info': '--bucket --project',
-  'file:download': '--bucket --project --output',
-  'file:delete': '--bucket --project --yes',
-  'file:rm': '--bucket --project --yes',
-  'file:upload': '--bucket --project --path --keep-name',
-  'file:upload-status': '--project',
-  'file:upload-cancel': '--project --yes',
-  open: 'account billing project',
-  'open:account': '',
-  'open:billing': '',
-  'open:project': '',
-  completion: 'bash zsh fish',
-  'completion:bash': '',
-  'completion:zsh': '',
-  'completion:fish': '',
+type CompletionModel = {
+  candidates: Record<string, string>;
+  globalOptions: string;
+  valueOptions: string[];
 };
+
+const argumentCandidates = new WeakMap<Command, string[]>();
+
+export function withCompletionCandidates(
+  command: Command,
+  candidates: string[],
+): Command {
+  argumentCandidates.set(command, candidates);
+  return command;
+}
 
 export async function completionCommand(
   runtime: CliRuntime,
   flags: GlobalFlags,
-  shell: string,
+  input: { shell: string; program: Command },
 ): Promise<void> {
-  const script = completionScript(shell);
-  outputFor(runtime, flags).result({ shell, script }, script, script);
+  const script = completionScript(input.shell, completionModel(input.program));
+  outputFor(runtime, flags).result(
+    { shell: input.shell, script },
+    script,
+    script,
+  );
 }
 
-function completionScript(shell: string): string {
+function completionScript(shell: string, model: CompletionModel): string {
   if (shell === 'bash') {
-    return bashCompletionScript();
+    return bashCompletionScript(model);
   }
   if (shell === 'zsh') {
-    return zshCompletionScript();
+    return zshCompletionScript(model);
   }
   if (shell === 'fish') {
-    return fishCompletionScript();
+    return fishCompletionScript(model);
   }
   throw usageError('unsupported_shell', `Unsupported shell: ${shell}.`, [
     'Choose bash, zsh, or fish.',
   ]);
 }
 
-function bashCompletionScript(): string {
-  const commandTransitions = Object.keys(completionCandidates)
+function completionModel(program: Command): CompletionModel {
+  const candidates: Record<string, string> = {};
+  const valueOptions = new Set<string>();
+
+  const visit = (command: Command, paths: string[], root = false): void => {
+    const children = command.commands.flatMap((child) => [
+      child.name(),
+      ...child.aliases(),
+    ]);
+    const options = root ? [] : optionNames(command.options);
+    const fixedArguments = argumentCandidates.get(command) ?? [];
+    const values = [...children, ...fixedArguments, ...options].join(' ');
+    for (const commandPath of paths) candidates[commandPath] = values;
+    for (const commandPath of paths) {
+      for (const argument of fixedArguments) {
+        candidates[`${commandPath}:${argument}`] = '';
+      }
+    }
+    for (const option of command.options) {
+      if ((option.required || option.optional) && option.long) {
+        valueOptions.add(option.long);
+      }
+    }
+    for (const child of command.commands) {
+      const names = [child.name(), ...child.aliases()];
+      visit(
+        child,
+        paths.flatMap((parent) =>
+          names.map((name) => (parent ? `${parent}:${name}` : name)),
+        ),
+      );
+    }
+  };
+
+  visit(program, [''], true);
+  const rootOptions = optionNames(program.options).filter(
+    (option) => option !== '--version',
+  );
+  return {
+    candidates,
+    globalOptions: [...rootOptions, '--help', '--version'].join(' '),
+    valueOptions: [...valueOptions],
+  };
+}
+
+function optionNames(options: readonly Option[]): string[] {
+  return options.flatMap((option) => (option.long ? [option.long] : []));
+}
+
+function bashCompletionScript(model: CompletionModel): string {
+  const commandTransitions = Object.keys(model.candidates)
     .filter(Boolean)
     .map((commandPath) => {
       const segments = commandPath.split(':');
@@ -120,10 +106,10 @@ function bashCompletionScript(): string {
       return `      '${parent}:${command}') command_path='${commandPath}' ;;`;
     })
     .join('\n');
-  const candidateCases = Object.entries(completionCandidates)
+  const candidateCases = Object.entries(model.candidates)
     .map(
       ([commandPath, candidates]) =>
-        `    '${commandPath}') candidates='${globalOptions} ${candidates}' ;;`,
+        `    '${commandPath}') candidates='${model.globalOptions} ${candidates}' ;;`,
     )
     .join('\n');
 
@@ -142,7 +128,7 @@ function bashCompletionScript(): string {
       continue
     fi
     case "$word" in
-      --api-url|--cwd|--link|--name|--account|--output|--env-file|--bucket|--bucket-type|--page|--limit|--role|--scope|--preset|--expires-at|--type|--retry|--job|--project|--cursor|--path)
+      ${model.valueOptions.join('|')})
         skip_value=1
         continue
         ;;
@@ -161,8 +147,8 @@ ${candidateCases}
 complete -F _edgestore edgestore`;
 }
 
-function zshCompletionScript(): string {
-  const commandTransitions = Object.keys(completionCandidates)
+function zshCompletionScript(model: CompletionModel): string {
+  const commandTransitions = Object.keys(model.candidates)
     .filter(Boolean)
     .map((commandPath) => {
       const segments = commandPath.split(':');
@@ -171,10 +157,10 @@ function zshCompletionScript(): string {
       return `      '${parent}:${command}') command_path='${commandPath}' ;;`;
     })
     .join('\n');
-  const candidateCases = Object.entries(completionCandidates)
+  const candidateCases = Object.entries(model.candidates)
     .map(
       ([commandPath, candidates]) =>
-        `    '${commandPath}') candidate_string='${globalOptions} ${candidates}' ;;`,
+        `    '${commandPath}') candidate_string='${model.globalOptions} ${candidates}' ;;`,
     )
     .join('\n');
 
@@ -193,7 +179,7 @@ _edgestore() {
       continue
     fi
     case "$word" in
-      --api-url|--cwd|--link|--name|--account|--output|--env-file|--bucket|--bucket-type|--page|--limit|--role|--scope|--preset|--expires-at|--type|--retry|--job|--project|--cursor|--path)
+      ${model.valueOptions.join('|')})
         skip_value=1
         continue
         ;;
@@ -212,8 +198,8 @@ ${candidateCases}
 compdef _edgestore edgestore`;
 }
 
-function fishCompletionScript(): string {
-  const commandTransitions = Object.keys(completionCandidates)
+function fishCompletionScript(model: CompletionModel): string {
+  const commandTransitions = Object.keys(model.candidates)
     .filter(Boolean)
     .map((commandPath) => {
       const segments = commandPath.split(':');
@@ -222,10 +208,10 @@ function fishCompletionScript(): string {
       return `      case '${parent}:${command}'; set command_path '${commandPath}'`;
     })
     .join('\n');
-  const completions = Object.entries(completionCandidates)
+  const completions = Object.entries(model.candidates)
     .map(
       ([commandPath, candidates]) =>
-        `complete -c edgestore -n 'test "$(__edgestore_command_path)" = "${commandPath}"' -a '${globalOptions} ${candidates}'`,
+        `complete -c edgestore -n 'test "$(__edgestore_command_path)" = "${commandPath}"' -a '${model.globalOptions} ${candidates}'`,
     )
     .join('\n');
 
@@ -241,7 +227,7 @@ function fishCompletionScript(): string {
       continue
     end
     switch $word
-      case --api-url --cwd --link --name --account --output --env-file --bucket --bucket-type --page --limit --role --scope --preset --expires-at --type --retry --job --project --cursor --path
+      case ${model.valueOptions.join(' ')}
         set skip_value 1
         continue
       case '--*=*' '--*'

@@ -1,14 +1,14 @@
-import { execFile } from 'node:child_process';
-import { readdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { Writable } from 'node:stream';
-import { promisify } from 'node:util';
 import type { ManagementEdgeStoreSdk } from '@edgestore/sdk';
-import { detect } from 'package-manager-detector/detect';
 import { DEFAULT_API_ORIGIN } from '../core/apiUrl';
-import { renderCliCommand, renderShellCommand } from '../core/command';
-import { findGitRoot, withActiveAccount } from '../core/config';
+import { renderCliCommand } from '../core/command';
+import { withActiveAccount } from '../core/config';
 import { CliError, normalizeError, usageError } from '../core/errors';
+import {
+  detectPackages,
+  installPackages,
+  packageNextSteps,
+} from '../core/packageInstall';
 import type { CliRuntime, CliSdk, GlobalFlags } from '../core/runtime';
 import { apiUrlFor, isInteractive, outputFor, sdkFor } from '../core/runtime';
 import {
@@ -16,10 +16,11 @@ import {
   preflightEnvSecret,
 } from '../core/secretDelivery';
 import {
-  findWorkspaceRoot,
-  isWorkspaceRoot,
-  selectWorkspaceContext,
-} from '../core/workspace';
+  projectKeyName,
+  protectSecretFile,
+  resolveSecretOutput,
+} from '../core/secretFile';
+import { isWorkspaceRoot, selectWorkspaceContext } from '../core/workspace';
 import { activeAccount } from './account';
 import { parseBucketType } from './bucket';
 
@@ -81,8 +82,6 @@ type InitContext = {
   interactive: boolean;
   account: string;
 };
-
-const execFileAsync = promisify(execFile);
 
 export async function initCommand(
   runtime: CliRuntime,
@@ -289,7 +288,7 @@ export async function initCommand(
       ? ['', 'Install packages:', `  ${install.command}`]
       : []),
     '',
-    ...nextSteps(packages.framework),
+    ...packageNextSteps(packages.framework),
   ].join('\n');
   outputFor(runtime, flags).result(
     {
@@ -581,391 +580,6 @@ async function resolveBucket(
   return { name, type, visibility };
 }
 
-export type PackagePlan = {
-  framework: 'next' | 'react' | 'node' | 'unknown';
-  manager?: 'pnpm' | 'npm' | 'yarn' | 'bun';
-  missing: string[];
-  installAtWorkspaceRoot?: boolean;
-  workspace?: {
-    root: string;
-    packageName?: string;
-  };
-};
-
-export async function detectPackages(
-  cwd: string,
-  options: { installAtWorkspaceRoot?: boolean } = {},
-): Promise<PackagePlan> {
-  const resolvedCwd = path.resolve(cwd);
-  const workspaceRoot = await findWorkspaceRoot(resolvedCwd);
-  const packagePath = path.join(cwd, 'package.json');
-  let manifest: {
-    name?: string;
-    packageManager?: string;
-    dependencies?: Record<string, string>;
-    devDependencies?: Record<string, string>;
-  };
-  let contents: string;
-  try {
-    contents = await readFile(packagePath, 'utf8');
-  } catch (error) {
-    if (!isMissingPathError(error)) {
-      throw new CliError(
-        'package_manifest_unreadable',
-        `Could not read package manifest at ${packagePath}.`,
-        {
-          details: {
-            path: packagePath,
-            cause: error instanceof Error ? error.message : String(error),
-          },
-        },
-      );
-    }
-    return {
-      framework: 'unknown',
-      manager: await detectPackageManager(cwd),
-      missing: [],
-    };
-  }
-  try {
-    manifest = JSON.parse(contents) as typeof manifest;
-  } catch (error) {
-    throw new CliError(
-      'invalid_package_manifest',
-      `Invalid package manifest at ${packagePath}.`,
-      {
-        details: {
-          path: packagePath,
-          cause: error instanceof Error ? error.message : String(error),
-        },
-        exitCode: 2,
-      },
-    );
-  }
-  const dependencies = {
-    ...manifest.dependencies,
-    ...manifest.devDependencies,
-  };
-  const framework = dependencies.next
-    ? 'next'
-    : dependencies.react
-      ? 'react'
-      : 'node';
-  const wanted =
-    framework === 'next' || framework === 'react'
-      ? ['@edgestore/server', '@edgestore/react']
-      : ['@edgestore/server'];
-  return {
-    framework,
-    manager: await detectPackageManager(cwd),
-    missing: wanted.filter((name) => !dependencies[name]),
-    installAtWorkspaceRoot: options.installAtWorkspaceRoot,
-    ...(workspaceRoot && workspaceRoot !== resolvedCwd
-      ? {
-          workspace: {
-            root: workspaceRoot,
-            ...(manifest.name ? { packageName: manifest.name } : {}),
-          },
-        }
-      : {}),
-  };
-}
-
-async function installPackages(
-  runtime: CliRuntime,
-  plan: PackagePlan,
-  options: {
-    cwd: string;
-    invocationCwd: string;
-    requested?: boolean;
-    interactive: boolean;
-    structured: boolean;
-    json: boolean;
-  },
-): Promise<{ command?: string; cwd?: string; ran: boolean }> {
-  if (!plan.manager || !plan.missing.length) return { ran: false };
-  const args = installArgs(
-    plan.manager,
-    plan.missing,
-    plan.installAtWorkspaceRoot,
-  );
-  const command = renderInstallCommand(plan.manager, args, {
-    plan,
-    packageCwd: options.cwd,
-    invocationCwd: options.invocationCwd,
-  });
-  const shouldInstall =
-    options.requested ??
-    (options.interactive
-      ? await runtime.prompts.confirm(
-          `Install EdgeStore packages with ${plan.manager}?`,
-          true,
-        )
-      : false);
-  if (!shouldInstall) return { command, cwd: options.cwd, ran: false };
-  const captured = options.structured ? createOutputCapture() : undefined;
-  try {
-    await runtime.runCommand(plan.manager, args, {
-      cwd: options.cwd,
-      ...(captured ? { stdout: captured.stream, stderr: captured.stream } : {}),
-    });
-  } catch (error) {
-    const diagnostics = captured?.read().trim();
-    if (diagnostics && !options.json) {
-      runtime.io.stderr.write(`${diagnostics}\n`);
-    }
-    throw new CliError(
-      'package_install_failed',
-      error instanceof Error ? error.message : 'Package installation failed.',
-      {
-        ...(diagnostics ? { details: { diagnostics } } : {}),
-        suggestions: [command],
-      },
-    );
-  }
-  const diagnostics = captured?.read();
-  if (diagnostics) {
-    runtime.io.stderr.write(
-      diagnostics.endsWith('\n') ? diagnostics : `${diagnostics}\n`,
-    );
-  }
-  return { command, cwd: options.cwd, ran: true };
-}
-
-export function renderInstallCommand(
-  manager: NonNullable<PackagePlan['manager']>,
-  args: string[],
-  context: {
-    plan: PackagePlan;
-    packageCwd: string;
-    invocationCwd: string;
-  },
-): string {
-  const { plan, packageCwd, invocationCwd } = context;
-  const workspace = plan.workspace;
-  if (invocationCwd === workspace?.root) {
-    const workspacePath = path
-      .relative(workspace.root, packageCwd)
-      .replaceAll(path.sep, '/');
-    if (manager === 'pnpm') {
-      return renderShellCommand([
-        manager,
-        '--filter',
-        `./${workspacePath}`,
-        ...args,
-      ]);
-    }
-    if (manager === 'npm') {
-      return renderShellCommand([
-        manager,
-        ...args,
-        '--workspace',
-        workspacePath,
-      ]);
-    }
-    if (manager === 'yarn' && workspace.packageName) {
-      return renderShellCommand([
-        manager,
-        'workspace',
-        workspace.packageName,
-        ...args,
-      ]);
-    }
-  }
-
-  const relativeCwd = path.relative(invocationCwd, packageCwd) || '.';
-  if (relativeCwd === '.') return renderShellCommand([manager, ...args]);
-  if (manager === 'npm') {
-    return renderShellCommand([manager, '--prefix', relativeCwd, ...args]);
-  }
-  if (manager === 'pnpm') {
-    return renderShellCommand([manager, '--dir', relativeCwd, ...args]);
-  }
-  return renderShellCommand([manager, '--cwd', relativeCwd, ...args]);
-}
-
-function createOutputCapture(limit = 32_768): {
-  stream: NodeJS.WritableStream;
-  read(): string;
-} {
-  let output = '';
-  return {
-    stream: new Writable({
-      write(chunk, _encoding, callback) {
-        output = `${output}${Buffer.from(chunk).toString('utf8')}`.slice(
-          -limit,
-        );
-        callback();
-      },
-    }),
-    read: () => output,
-  };
-}
-
-function isMissingPathError(error: unknown): error is NodeJS.ErrnoException {
-  return (
-    error instanceof Error &&
-    'code' in error &&
-    (error.code === 'ENOENT' || error.code === 'ENOTDIR')
-  );
-}
-
-async function resolveSecretOutput(
-  runtime: CliRuntime,
-  explicitOutput: string | undefined,
-  interactive: boolean,
-): Promise<string> {
-  if (explicitOutput) return explicitOutput;
-  if (!interactive) return '.env.local';
-
-  const discovered = (
-    await readdir(runtime.workspaceCwd, { withFileTypes: true })
-  )
-    .filter(
-      (entry) =>
-        entry.isFile() &&
-        entry.name.startsWith('.env') &&
-        !/\.(?:example|sample|template)$/i.test(entry.name),
-    )
-    .map((entry) => entry.name)
-    .sort();
-  if (!discovered.length || discovered.every((name) => name === '.env.local')) {
-    return '.env.local';
-  }
-  const choices = Array.from(new Set([...discovered, '.env.local']));
-  return runtime.prompts.select(
-    'Where should EdgeStore save the project key?',
-    choices.map((value) => ({ value, label: value })),
-  );
-}
-
-function projectKeyName(output: string | undefined): string {
-  const match = /^\.env\.([^.]+)(?:\.local)?$/i.exec(
-    path.basename(output ?? ''),
-  );
-  return match?.[1] && match[1].toLowerCase() !== 'local' ? match[1] : 'local';
-}
-
-async function protectSecretFile(cwd: string, output: string): Promise<string> {
-  const absolute = path.resolve(cwd, output);
-  const gitRoot = await findGitRoot(cwd);
-  const packageRoot = path.resolve(cwd);
-  const boundary = gitRoot ?? packageRoot;
-  const repositoryRelative = path.relative(boundary, absolute);
-  const packageRelative = path.relative(packageRoot, absolute);
-  if (
-    !packageRelative ||
-    packageRelative.startsWith('..') ||
-    path.isAbsolute(packageRelative)
-  ) {
-    throw usageError(
-      'secret_output_unprotected',
-      `Secret output ${absolute} must be inside ${packageRoot}.`,
-      ['Choose an env file inside the selected package.'],
-    );
-  }
-  const normalized = packageRelative.replaceAll(path.sep, '/');
-  const gitPath = repositoryRelative.replaceAll(path.sep, '/');
-  if (gitRoot) {
-    if (await isTrackedFile(gitRoot, gitPath)) {
-      throw usageError(
-        'secret_output_tracked',
-        `Secret output ${absolute} is already tracked by Git.`,
-        ['Remove it from Git before creating a project key.'],
-      );
-    }
-    if (await isIgnoredFile(gitRoot, gitPath)) return normalized;
-  }
-
-  const gitignorePath = path.join(packageRoot, '.gitignore');
-  let contents = '';
-  try {
-    contents = await readFile(gitignorePath, 'utf8');
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
-  }
-  const entry = `/${normalized}`;
-  const next = `${contents}${contents ? (contents.endsWith('\n') ? '' : '\n') : ''}${entry}\n`;
-  try {
-    await writeFile(gitignorePath, next);
-  } catch (error) {
-    throw new CliError(
-      'secret_output_unprotected',
-      `Could not protect secret output ${absolute}.`,
-      {
-        details: {
-          path: gitignorePath,
-          cause: error instanceof Error ? error.message : String(error),
-        },
-      },
-    );
-  }
-  if (gitRoot && !(await isIgnoredFile(gitRoot, gitPath))) {
-    throw new CliError(
-      'secret_output_unprotected',
-      `Could not protect secret output ${absolute}.`,
-    );
-  }
-  return normalized;
-}
-
-async function isIgnoredFile(root: string, relative: string): Promise<boolean> {
-  try {
-    await execFileAsync('git', [
-      '-C',
-      root,
-      'check-ignore',
-      '--quiet',
-      '--no-index',
-      '--',
-      relative,
-    ]);
-    return true;
-  } catch (error) {
-    if ((error as { code?: unknown }).code === 1) {
-      return false;
-    }
-    throw new CliError(
-      'secret_output_unprotected',
-      `Could not verify Git ignore rules for ${path.join(root, relative)}.`,
-      {
-        details: {
-          path: path.join(root, relative),
-          cause: error instanceof Error ? error.message : String(error),
-        },
-      },
-    );
-  }
-}
-
-async function isTrackedFile(root: string, relative: string): Promise<boolean> {
-  try {
-    await execFileAsync('git', [
-      '-C',
-      root,
-      'ls-files',
-      '--error-unmatch',
-      '--',
-      relative,
-    ]);
-    return true;
-  } catch (error) {
-    if ((error as { code?: unknown }).code === 1) {
-      return false;
-    }
-    throw new CliError(
-      'secret_output_unprotected',
-      `Could not verify Git tracking for ${path.join(root, relative)}.`,
-      {
-        details: {
-          path: path.join(root, relative),
-          cause: error instanceof Error ? error.message : String(error),
-        },
-      },
-    );
-  }
-}
-
 function validateBucketName(name: string): void {
   if (!/^[A-Za-z0-9][A-Za-z0-9_-]{0,254}$/.test(name)) {
     throw usageError(
@@ -973,63 +587,6 @@ function validateBucketName(name: string): void {
       'Bucket names must begin with a letter or number and contain only letters, numbers, underscores, or hyphens.',
     );
   }
-}
-
-async function detectPackageManager(
-  cwd: string,
-): Promise<'pnpm' | 'npm' | 'yarn' | 'bun'> {
-  const start = path.resolve(cwd);
-  const boundary =
-    (await findWorkspaceRoot(start)) ?? (await findGitRoot(start)) ?? start;
-  let directory = start;
-  while (true) {
-    for (const strategy of [
-      'packageManager-field',
-      'lockfile',
-      'devEngines-field',
-    ] as const) {
-      const result = await detect({
-        cwd: directory,
-        stopDir: directory,
-        strategies: [strategy],
-        packageJsonParser: (contents) =>
-          packageJsonForStrategy(contents, strategy),
-      });
-      if (
-        result?.name === 'pnpm' ||
-        result?.name === 'npm' ||
-        result?.name === 'yarn' ||
-        result?.name === 'bun'
-      ) {
-        return result.name;
-      }
-    }
-    if (directory === boundary) break;
-    directory = path.dirname(directory);
-  }
-  return 'npm';
-}
-
-function packageJsonForStrategy(
-  contents: string,
-  strategy: 'packageManager-field' | 'lockfile' | 'devEngines-field',
-): Record<string, unknown> {
-  const manifest = JSON.parse(contents) as Record<string, unknown>;
-  if (strategy !== 'packageManager-field') delete manifest.packageManager;
-  if (strategy !== 'devEngines-field') delete manifest.devEngines;
-  return manifest;
-}
-
-function installArgs(
-  manager: 'pnpm' | 'npm' | 'yarn' | 'bun',
-  packages: string[],
-  installAtWorkspaceRoot = false,
-): string[] {
-  if (manager === 'npm') return ['install', ...packages];
-  if (manager === 'pnpm' && installAtWorkspaceRoot) {
-    return ['add', '-w', ...packages];
-  }
-  return ['add', ...packages];
 }
 
 async function promptText(
@@ -1047,25 +604,4 @@ function requireInteractive(
   if (!interactive) {
     throw usageError('interactive_input_required', message);
   }
-}
-
-function nextSteps(framework: PackagePlan['framework']): string[] {
-  if (framework === 'next') {
-    return [
-      'Next steps:',
-      '  Configure an EdgeStore router in your Next.js app.',
-      '  Add the EdgeStore provider to your client layout.',
-    ];
-  }
-  if (framework === 'react') {
-    return [
-      'Next steps:',
-      '  Configure an EdgeStore server endpoint.',
-      '  Add the EdgeStore provider to your React app.',
-    ];
-  }
-  return [
-    'Next steps:',
-    '  Configure an EdgeStore router and server endpoint.',
-  ];
 }
