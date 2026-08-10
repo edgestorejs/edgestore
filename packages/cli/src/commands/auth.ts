@@ -205,7 +205,7 @@ async function browserLogin(
     );
     credentialStored = true;
   } catch (error) {
-    if (!credentialStored && !runtime.signal.aborted) {
+    if (!credentialStored) {
       await revokeFailedLogin(runtime, result.credential, error);
     }
     throw error;
@@ -306,10 +306,7 @@ async function revokeFailedLogin(
   loginError: unknown,
 ): Promise<void> {
   try {
-    await runtime.oauth.revoke(
-      credential,
-      AbortSignal.any([runtime.signal, AbortSignal.timeout(10_000)]),
-    );
+    await runtime.oauth.revoke(credential, AbortSignal.timeout(10_000));
   } catch (error) {
     const failure = normalizeError(loginError);
     const cleanup = normalizeError(error);

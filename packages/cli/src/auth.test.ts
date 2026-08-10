@@ -94,6 +94,27 @@ describe('auth', () => {
     expect(fixture.setCredential).not.toHaveBeenCalled();
   });
 
+  it('revokes a new OAuth grant when identity validation is interrupted', async () => {
+    fixture.whoami.mockImplementationOnce(async () => {
+      fixture.abortController.abort();
+      throw fixture.abortController.signal.reason;
+    });
+
+    const exitCode = await runCli(
+      ['--json', 'login'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(130);
+    expect(fixture.oauthRevoke).toHaveBeenCalledWith(
+      expect.objectContaining({ refreshToken: 'oauth_refresh' }),
+      expect.any(AbortSignal),
+    );
+    const cleanupSignal = fixture.oauthRevoke.mock.calls[0]?.[1];
+    expect(cleanupSignal?.aborted).toBe(false);
+  });
+
   it('reports when a failed OAuth login cannot revoke its new grant', async () => {
     fixture.whoami.mockRejectedValueOnce(new Error('API unavailable'));
     fixture.oauthRevoke.mockRejectedValueOnce(new Error('Issuer unavailable'));
