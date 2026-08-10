@@ -79,7 +79,8 @@ export async function putWithRetry(
         isRetryable: (error) =>
           error instanceof SignedUploadResponseError
             ? isRetryableStatus(error.status)
-            : !(error instanceof EdgeStoreUploadError),
+            : !findBlobReadError(error) &&
+              !(error instanceof EdgeStoreUploadError),
         getRetryDelayMs: (error) =>
           error instanceof SignedUploadResponseError
             ? error.retryAfterMs
@@ -89,6 +90,8 @@ export async function putWithRetry(
   } catch (error) {
     if (error instanceof EdgeStoreAbortError) throw error;
     if (error instanceof EdgeStoreUploadError) throw error;
+    const blobReadError = findBlobReadError(error);
+    if (blobReadError) throw blobReadError;
     if (error instanceof SignedUploadResponseError) {
       throw new EdgeStoreUploadError(error.message, options.uploadId);
     }
@@ -97,6 +100,22 @@ export async function putWithRetry(
       { cause: error },
     );
   }
+}
+
+function findBlobReadError(error: unknown): DOMException | undefined {
+  const seen = new Set<unknown>();
+  let current = error;
+  while (current instanceof Error && !seen.has(current)) {
+    if (
+      current instanceof DOMException &&
+      current.name === 'NotReadableError'
+    ) {
+      return current;
+    }
+    seen.add(current);
+    current = current.cause;
+  }
+  return undefined;
 }
 
 async function cancelResponseBody(

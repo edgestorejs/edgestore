@@ -1,3 +1,4 @@
+import { createManagementUploadOperations } from './internal/managementUploadOperations';
 import type {
   OperationBody,
   OperationId,
@@ -5,6 +6,12 @@ import type {
   OperationResult,
 } from './internal/operationTypes';
 import type { Transport } from './internal/transport';
+import {
+  uploadManagementFile,
+  type ManagementUploadInput,
+  type ManagementUploadResult,
+} from './managementUpload';
+import type { UploadDefaults } from './uploadTypes';
 
 type CallOptions = {
   /** Cancels the request. */
@@ -126,6 +133,8 @@ export type ManagementResourceClient = {
     ): Promise<Result<'v2.management.files.delete'>>;
   };
   uploads: {
+    /** Transfers a file and waits for server-side processing to complete. */
+    upload(input: ManagementUploadInput): Promise<ManagementUploadResult>;
     /** Requests signed upload destination(s) without transferring data. */
     request(
       input: BucketInput &
@@ -157,7 +166,9 @@ export type ManagementResourceClient = {
 
 export function createManagementResourceClient(
   transport: Transport,
+  uploadDefaults: UploadDefaults = {},
 ): ManagementResourceClient {
+  const uploadOperations = createManagementUploadOperations(transport);
   return {
     projects: {
       list: ({ account, signal }) =>
@@ -323,58 +334,17 @@ export function createManagementResourceClient(
         ),
     },
     uploads: {
-      request: ({ project, bucket, signal, ...body }) =>
-        transport.execute((client) =>
-          client.POST(
-            '/management/projects/{projectRef}/buckets/{bucketName}/uploads',
-            {
-              params: {
-                path: { projectRef: project, bucketName: bucket },
-              },
-              body,
-              signal,
-            },
-          ),
+      upload: (input) =>
+        uploadManagementFile(
+          { transport, operations: uploadOperations },
+          input,
+          uploadDefaults,
         ),
-      get: ({ project, uploadId, signal }) =>
-        transport.execute((client) =>
-          client.GET('/management/projects/{projectRef}/uploads/{uploadId}', {
-            params: { path: { projectRef: project, uploadId } },
-            signal,
-          }),
-        ),
-      cancel: ({ project, uploadId, signal }) =>
-        transport.execute((client) =>
-          client.DELETE(
-            '/management/projects/{projectRef}/uploads/{uploadId}',
-            {
-              params: { path: { projectRef: project, uploadId } },
-              signal,
-            },
-          ),
-        ),
-      createParts: ({ project, uploadId, signal, ...body }) =>
-        transport.execute((client) =>
-          client.POST(
-            '/management/projects/{projectRef}/uploads/{uploadId}/parts',
-            {
-              params: { path: { projectRef: project, uploadId } },
-              body,
-              signal,
-            },
-          ),
-        ),
-      completeMultipart: ({ project, uploadId, signal, ...body }) =>
-        transport.execute((client) =>
-          client.POST(
-            '/management/projects/{projectRef}/uploads/{uploadId}/complete',
-            {
-              params: { path: { projectRef: project, uploadId } },
-              body,
-              signal,
-            },
-          ),
-        ),
+      request: uploadOperations.request,
+      get: uploadOperations.get,
+      cancel: uploadOperations.cancel,
+      createParts: uploadOperations.createParts,
+      completeMultipart: uploadOperations.completeMultipart,
     },
   };
 }

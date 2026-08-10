@@ -1941,7 +1941,7 @@ export interface operations {
                                 /** @description Owning account ID. */
                                 accountId: string;
                                 /** @description Effective management permissions. */
-                                scopes: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "bucket:delete" | "bucket:empty" | "file:read" | "file:write" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
+                                scopes: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "bucket:delete" | "bucket:empty" | "file:read" | "file:write" | "file:delete" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
                             } | {
                                 /**
                                  * @description User-owned management-token principal.
@@ -1951,7 +1951,52 @@ export interface operations {
                                 /** @description Authenticated token ID. */
                                 tokenId: string;
                                 /** @description Effective management permissions. */
-                                scopes: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "bucket:delete" | "bucket:empty" | "file:read" | "file:write" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
+                                scopes: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "bucket:delete" | "bucket:empty" | "file:read" | "file:write" | "file:delete" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
+                                /** @description Authenticated user identity. */
+                                user: {
+                                    /** @description Unique EdgeStore user ID. */
+                                    id: string;
+                                    /** @description User ID from the identity provider. */
+                                    clerkUserId: string;
+                                    /** @description User's personal account ID. */
+                                    accountId: string;
+                                    /** @description Primary email address. */
+                                    email: string;
+                                    /** @description Username when configured. */
+                                    username: string | null;
+                                    /** @description First name when configured. */
+                                    firstName: string | null;
+                                    /** @description Last name when configured. */
+                                    lastName: string | null;
+                                    /** @description Profile image URL. */
+                                    picture: string;
+                                };
+                            } | {
+                                /**
+                                 * @description OAuth user principal.
+                                 * @constant
+                                 */
+                                kind: "oauth_user";
+                                /** @description OAuth subject identifier. */
+                                subject: string;
+                                /** @description OAuth client identifier. */
+                                clientId: string;
+                                /** @description Effective management permissions. */
+                                scopes: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "bucket:delete" | "bucket:empty" | "file:read" | "file:write" | "file:delete" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
+                                /** @description Accounts and projects this OAuth grant may access. */
+                                access: {
+                                    accounts: {
+                                        accountId: string;
+                                        projects: {
+                                            /** @constant */
+                                            mode: "all";
+                                        } | {
+                                            /** @constant */
+                                            mode: "selected";
+                                            projectIds: string[];
+                                        };
+                                    }[];
+                                };
                                 /** @description Authenticated user identity. */
                                 user: {
                                     /** @description Unique EdgeStore user ID. */
@@ -6161,7 +6206,7 @@ export interface operations {
                                 /** @description Non-secret token prefix used to identify the credential. */
                                 tokenPrefix: string;
                                 /** @description Granted permissions. */
-                                scopes: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "bucket:delete" | "bucket:empty" | "file:read" | "file:write" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
+                                scopes: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "bucket:delete" | "bucket:empty" | "file:read" | "file:write" | "file:delete" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
                                 /** @description ISO 8601 creation timestamp. */
                                 createdAt: string;
                                 /** @description ISO 8601 last-update timestamp. */
@@ -6261,9 +6306,9 @@ export interface operations {
                      * @description Named permission set. Mutually exclusive with scopes.
                      * @enum {string}
                      */
-                    preset?: "deploy" | "read-only" | "full-access";
+                    preset?: "deploy" | "storage-management" | "read-only" | "full-access";
                     /** @description Explicit permissions. Mutually exclusive with preset. */
-                    scopes?: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "bucket:delete" | "bucket:empty" | "file:read" | "file:write" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
+                    scopes?: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "bucket:delete" | "bucket:empty" | "file:read" | "file:write" | "file:delete" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
                     /** @description ISO 8601 expiration timestamp, or null for no expiration. */
                     expiresAt?: string | null;
                 };
@@ -6294,7 +6339,7 @@ export interface operations {
                                 /** @description Non-secret token prefix used to identify the credential. */
                                 tokenPrefix: string;
                                 /** @description Granted permissions. */
-                                scopes: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "bucket:delete" | "bucket:empty" | "file:read" | "file:write" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
+                                scopes: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "bucket:delete" | "bucket:empty" | "file:read" | "file:write" | "file:delete" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
                                 /** @description ISO 8601 creation timestamp. */
                                 createdAt: string;
                                 /** @description ISO 8601 last-update timestamp. */
@@ -6413,7 +6458,7 @@ export interface operations {
                                 /** @description Non-secret token prefix used to identify the credential. */
                                 tokenPrefix: string;
                                 /** @description Granted permissions. */
-                                scopes: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "bucket:delete" | "bucket:empty" | "file:read" | "file:write" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
+                                scopes: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "bucket:delete" | "bucket:empty" | "file:read" | "file:write" | "file:delete" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
                                 /** @description ISO 8601 creation timestamp. */
                                 createdAt: string;
                                 /** @description ISO 8601 last-update timestamp. */
@@ -6501,9 +6546,9 @@ export interface operations {
                      * @description Named permission set. Mutually exclusive with scopes.
                      * @enum {string}
                      */
-                    preset?: "deploy" | "read-only" | "full-access";
+                    preset?: "deploy" | "storage-management" | "read-only" | "full-access";
                     /** @description Explicit permissions. Mutually exclusive with preset. */
-                    scopes?: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "bucket:delete" | "bucket:empty" | "file:read" | "file:write" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
+                    scopes?: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "bucket:delete" | "bucket:empty" | "file:read" | "file:write" | "file:delete" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
                     /** @description ISO 8601 expiration timestamp, or null for no expiration. */
                     expiresAt?: string | null;
                 };
@@ -6534,7 +6579,7 @@ export interface operations {
                                 /** @description Non-secret token prefix used to identify the credential. */
                                 tokenPrefix: string;
                                 /** @description Granted permissions. */
-                                scopes: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "bucket:delete" | "bucket:empty" | "file:read" | "file:write" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
+                                scopes: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "bucket:delete" | "bucket:empty" | "file:read" | "file:write" | "file:delete" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
                                 /** @description ISO 8601 creation timestamp. */
                                 createdAt: string;
                                 /** @description ISO 8601 last-update timestamp. */
@@ -7313,8 +7358,8 @@ export interface operations {
                                     } | {
                                         /** @description Inclusive lower and upper bounds. */
                                         between: [
-                                            unknown,
-                                            unknown
+                                            string,
+                                            string
                                         ];
                                     };
                                 };
@@ -7340,8 +7385,8 @@ export interface operations {
                                     } | {
                                         /** @description Inclusive lower and upper bounds. */
                                         between: [
-                                            unknown,
-                                            unknown
+                                            string,
+                                            string
                                         ];
                                     };
                                 };
@@ -7399,8 +7444,8 @@ export interface operations {
                                     } | {
                                         /** @description Inclusive lower and upper bounds. */
                                         between: [
-                                            unknown,
-                                            unknown
+                                            string,
+                                            string
                                         ];
                                     };
                                 };
@@ -7426,8 +7471,8 @@ export interface operations {
                                     } | {
                                         /** @description Inclusive lower and upper bounds. */
                                         between: [
-                                            unknown,
-                                            unknown
+                                            string,
+                                            string
                                         ];
                                     };
                                 };
@@ -7567,8 +7612,8 @@ export interface operations {
                                     } | {
                                         /** @description Inclusive lower and upper bounds. */
                                         between: [
-                                            unknown,
-                                            unknown
+                                            string,
+                                            string
                                         ];
                                     };
                                 };
@@ -7594,8 +7639,8 @@ export interface operations {
                                     } | {
                                         /** @description Inclusive lower and upper bounds. */
                                         between: [
-                                            unknown,
-                                            unknown
+                                            string,
+                                            string
                                         ];
                                     };
                                 };
@@ -7653,8 +7698,8 @@ export interface operations {
                                     } | {
                                         /** @description Inclusive lower and upper bounds. */
                                         between: [
-                                            unknown,
-                                            unknown
+                                            string,
+                                            string
                                         ];
                                     };
                                 };
@@ -7680,8 +7725,8 @@ export interface operations {
                                     } | {
                                         /** @description Inclusive lower and upper bounds. */
                                         between: [
-                                            unknown,
-                                            unknown
+                                            string,
+                                            string
                                         ];
                                     };
                                 };
