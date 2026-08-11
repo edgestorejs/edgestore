@@ -21,20 +21,16 @@ export default function BlogPage() {
   return (
     <main className="container w-full max-w-5xl flex-1 py-16 sm:py-24">
       <header className="max-w-2xl">
-        <p className="mb-4 text-sm font-medium tracking-wide text-primary uppercase">
-          EdgeStore Blog
-        </p>
-        <h1 className="text-4xl font-semibold tracking-tight text-balance sm:text-6xl">
-          Building better file uploads, one release at a time.
+        <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">
+          Blog
         </h1>
-        <p className="mt-6 text-lg leading-8 text-muted-foreground">
-          Product news, release notes, and practical guides from the team behind
-          EdgeStore.
+        <p className="mt-4 text-lg text-muted-foreground">
+          Release notes and technical updates from EdgeStore.
         </p>
       </header>
 
       {posts.length > 0 ? (
-        <div className="mt-16 grid gap-5 sm:mt-20 sm:grid-cols-2">
+        <div className="mt-12 grid gap-5 sm:grid-cols-2">
           {posts.map((post) => (
             <Link
               key={post.url}

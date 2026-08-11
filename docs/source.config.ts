@@ -7,7 +7,6 @@ import {
   metaSchema,
 } from 'fumadocs-mdx/config';
 import { transformerTwoslash } from 'fumadocs-twoslash';
-import { z } from 'zod';
 
 // Options: https://fumadocs.vercel.app/docs/mdx/collections#define-docs
 export const docs = defineDocs({
@@ -27,9 +26,12 @@ export const blogPosts = defineCollections({
   type: 'doc',
   dir: 'content/blog',
   schema: frontmatterSchema.extend({
-    description: z.string(),
-    author: z.string(),
-    date: z.string().date(),
+    description: frontmatterSchema.shape.title,
+    author: frontmatterSchema.shape.title,
+    date: frontmatterSchema.shape.title.regex(
+      /^\d{4}-\d{2}-\d{2}$/,
+      'Expected a date in YYYY-MM-DD format',
+    ),
   }),
 });
 
