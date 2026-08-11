@@ -16,4 +16,24 @@ export const blog = loader({
   source: toFumadocsSource(blogPosts, []),
 });
 
+export function getPublishedBlogPosts() {
+  return blog.getPages().filter((page) => !page.data.draft);
+}
+
+export function getBlogPosts() {
+  return process.env.NODE_ENV === 'production'
+    ? getPublishedBlogPosts()
+    : blog.getPages();
+}
+
+export function getBlogPost(slug: string) {
+  const page = blog.getPage([slug]);
+
+  if (!page || (process.env.NODE_ENV === 'production' && page.data.draft)) {
+    return undefined;
+  }
+
+  return page;
+}
+
 export type Page = InferPageType<typeof source>;

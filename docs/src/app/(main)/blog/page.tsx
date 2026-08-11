@@ -1,4 +1,4 @@
-import { blog } from '@/lib/source';
+import { getBlogPosts } from '@/lib/source';
 import { ArrowRightIcon } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
@@ -6,6 +6,9 @@ import Link from 'next/link';
 export const metadata: Metadata = {
   title: 'Blog',
   description: 'News, release notes, and technical articles from EdgeStore.',
+  alternates: {
+    canonical: '/blog',
+  },
 };
 
 const dateFormatter = new Intl.DateTimeFormat('en', {
@@ -14,9 +17,9 @@ const dateFormatter = new Intl.DateTimeFormat('en', {
 });
 
 export default function BlogPage() {
-  const posts = blog
-    .getPages()
-    .toSorted((a, b) => b.data.date.localeCompare(a.data.date));
+  const posts = getBlogPosts().toSorted((a, b) =>
+    b.data.date.localeCompare(a.data.date),
+  );
 
   return (
     <main className="container w-full max-w-5xl flex-1 py-16 sm:py-24">
@@ -43,6 +46,11 @@ export default function BlogPage() {
               >
                 {dateFormatter.format(new Date(post.data.date))}
               </time>
+              {post.data.draft ? (
+                <span className="mt-3 w-fit rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
+                  Draft
+                </span>
+              ) : null}
               <h2 className="mt-5 text-2xl font-semibold tracking-tight text-balance">
                 {post.data.title}
               </h2>
