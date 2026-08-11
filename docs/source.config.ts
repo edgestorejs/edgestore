@@ -28,6 +28,7 @@ export const blogPosts = defineCollections({
   schema: frontmatterSchema.extend({
     description: frontmatterSchema.shape.title,
     author: frontmatterSchema.shape.title,
+    category: frontmatterSchema.shape.title.optional(),
     draft: frontmatterSchema.shape.full.default(false),
     date: frontmatterSchema.shape.title.regex(
       /^\d{4}-\d{2}-\d{2}$/,
