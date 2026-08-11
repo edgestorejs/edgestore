@@ -1,11 +1,13 @@
 import { rehypeCodeDefaultOptions } from 'fumadocs-core/mdx-plugins';
 import {
+  defineCollections,
   defineConfig,
   defineDocs,
   frontmatterSchema,
   metaSchema,
 } from 'fumadocs-mdx/config';
 import { transformerTwoslash } from 'fumadocs-twoslash';
+import { z } from 'zod';
 
 // Options: https://fumadocs.vercel.app/docs/mdx/collections#define-docs
 export const docs = defineDocs({
@@ -19,6 +21,16 @@ export const docs = defineDocs({
   meta: {
     schema: metaSchema,
   },
+});
+
+export const blogPosts = defineCollections({
+  type: 'doc',
+  dir: 'content/blog',
+  schema: frontmatterSchema.extend({
+    description: z.string(),
+    author: z.string(),
+    date: z.string().date(),
+  }),
 });
 
 export default defineConfig({
