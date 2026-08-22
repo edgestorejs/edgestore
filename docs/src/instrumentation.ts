@@ -1,22 +1,18 @@
-import { LangfuseSpanProcessor, type ShouldExportSpan } from '@langfuse/otel';
-import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
+import { LangfuseSpanProcessor } from '@langfuse/otel';
+import { LangfuseVercelAiSdkIntegration } from '@langfuse/vercel-ai-sdk';
+import { NodeSDK } from '@opentelemetry/sdk-node';
+import { registerTelemetry } from 'ai';
 import { env } from './env';
 
-// Next.js will auto-run this file on startup:
-// https://nextjs.org/docs/app/building-your-application/optimizing/instrumentation
-//
-// Optional: filter out noisy Next.js infra spans.
-const shouldExportSpan: ShouldExportSpan = (span) => {
-  return span.otelSpan.instrumentationScope.name !== 'next.js';
-};
-
 export const langfuseSpanProcessor = new LangfuseSpanProcessor({
-  shouldExportSpan,
   environment: env.VERCEL_ENV ?? 'local',
 });
 
-const tracerProvider = new NodeTracerProvider({
+const sdk = new NodeSDK({
   spanProcessors: [langfuseSpanProcessor],
 });
 
-tracerProvider.register();
+export function register() {
+  sdk.start();
+  registerTelemetry(new LangfuseVercelAiSdkIntegration());
+}
