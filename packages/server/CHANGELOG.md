@@ -1,5 +1,23 @@
 # @edgestore/server
 
+## 1.0.0-next.2
+
+### Major Changes
+
+- [#151](https://github.com/edgestorejs/edgestore/pull/151) [`57027e8`](https://github.com/edgestorejs/edgestore/commit/57027e8112ec138353c4863c55cd703d1b55e485) Thanks [@perfectbase](https://github.com/perfectbase)! - Remove the Zod peer dependency. Applications can install any Standard
+  Schema-compatible validation library for bucket input.
+
+- [#151](https://github.com/edgestorejs/edgestore/pull/151) [`7737d73`](https://github.com/edgestorejs/edgestore/commit/7737d73d10c9bb28d49e56a5593ebd259ba1fb8e) Thanks [@perfectbase](https://github.com/perfectbase)! - Accept Standard Schema-compatible bucket input schemas and infer client input
+  separately from the validated output provided to server callbacks.
+
+### Patch Changes
+
+- [#151](https://github.com/edgestorejs/edgestore/pull/151) [`1d152af`](https://github.com/edgestorejs/edgestore/commit/1d152afa007844fe3ff25fc7d736758415783433) Thanks [@perfectbase](https://github.com/perfectbase)! - Validate and transform bucket input before HTTP upload hooks, path resolution,
+  metadata generation, or provider calls.
+- Updated dependencies [[`a944263`](https://github.com/edgestorejs/edgestore/commit/a944263d329a5f0f6df2f408038fb7015e0a750f), [`3e669a1`](https://github.com/edgestorejs/edgestore/commit/3e669a102a2b75f30e36d17ac23454200332f247), [`57027e8`](https://github.com/edgestorejs/edgestore/commit/57027e8112ec138353c4863c55cd703d1b55e485), [`7737d73`](https://github.com/edgestorejs/edgestore/commit/7737d73d10c9bb28d49e56a5593ebd259ba1fb8e)]:
+  - @edgestore/sdk@1.0.0-next.2
+  - @edgestore/shared@1.0.0-next.2
+
 ## 1.0.0-next.1
 
 ### Major Changes

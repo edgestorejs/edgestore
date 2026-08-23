@@ -97,6 +97,10 @@ jobs:
       - name: Build CLI
         run: pnpm --filter @edgestore/cli build
 
+      - name: Validate zsh completion
+        if: runner.os == 'macOS'
+        run: pnpm --filter @edgestore/cli exec vitest run src/utility.test.ts
+
       - name: Load native credential store module
         run: pnpm --filter @edgestore/cli exec node -e "import('@napi-rs/keyring')"
 
