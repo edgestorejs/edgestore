@@ -193,6 +193,7 @@ export class DefaultOAuthService implements OAuthService {
       }
       const clientRegistration: OAuthClientRegistration = {
         version: 2,
+        flow: 'browser',
         clientId,
         issuer: issuerIdentifier,
         redirectUri: callback.redirectUri,
@@ -267,6 +268,7 @@ export class DefaultOAuthService implements OAuthService {
     }
     const clientRegistration: OAuthClientRegistration = reusableClient ?? {
       version: 2,
+      flow: 'device',
       clientId,
       issuer: issuerIdentifier,
     };
@@ -357,7 +359,7 @@ export class DefaultOAuthService implements OAuthService {
         client_name: 'EdgeStore CLI',
         redirect_uris: [redirectUri],
         token_endpoint_auth_method: 'none',
-        grant_types: ['authorization_code', 'refresh_token', deviceGrantType],
+        grant_types: ['authorization_code', 'refresh_token'],
         response_types: ['code'],
       },
       oauth.None(),
@@ -447,7 +449,7 @@ function reusableClientRegistration(
   issuer: URL,
 ) {
   if (
-    !client?.redirectUri ||
+    client?.flow !== 'browser' ||
     normalizeUrl(client.issuer) !== normalizeUrl(issuer.toString()) ||
     !isReusableOAuthRedirectUri(client.redirectUri)
   ) {
@@ -460,7 +462,7 @@ function reusableDeviceClientRegistration(
   client: OAuthClientRegistration | undefined,
   issuer: URL,
 ) {
-  return client &&
+  return client?.flow === 'device' &&
     normalizeUrl(client.issuer) === normalizeUrl(issuer.toString())
     ? client
     : undefined;

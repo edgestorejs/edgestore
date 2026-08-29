@@ -186,6 +186,7 @@ describe('OAuth client cache', () => {
     keyringMocks.getPassword.mockResolvedValueOnce(
       JSON.stringify({
         version: 2,
+        flow: 'browser',
         clientId: 'client_123',
         issuer: 'https://dashboard.edgestore.dev',
         redirectUri: 'http://127.0.0.1:45678/oauth/callback',

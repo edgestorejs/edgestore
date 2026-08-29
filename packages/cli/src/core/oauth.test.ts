@@ -133,9 +133,7 @@ describe('OAuth service', () => {
         application_type: 'native',
         redirect_uris: ['http://127.0.0.1:45678/oauth/callback'],
         token_endpoint_auth_method: 'none',
-        grant_types: expect.arrayContaining([
-          'urn:ietf:params:oauth:grant-type:device_code',
-        ]),
+        grant_types: ['authorization_code', 'refresh_token'],
       }),
       expect.any(Function),
       expect.objectContaining({ algorithm: 'oauth2' }),
@@ -185,6 +183,13 @@ describe('OAuth service', () => {
     const result = await service.loginWithDeviceCode({
       apiOrigin: 'https://api.example.test',
       resource: 'https://api.example.test/v2',
+      client: {
+        version: 2,
+        flow: 'browser',
+        clientId: 'browser_client',
+        issuer: 'https://dashboard.example.test',
+        redirectUri: 'http://127.0.0.1:45678/oauth/callback',
+      },
       signal,
       openUrl,
       onDeviceAuthorization,
@@ -230,6 +235,7 @@ describe('OAuth service', () => {
     );
     expect(onClientRegistered).toHaveBeenCalledWith({
       version: 2,
+      flow: 'device',
       clientId: 'client_123',
       issuer: 'https://dashboard.example.test',
     });
@@ -238,7 +244,7 @@ describe('OAuth service', () => {
         accessToken: 'device_access_123',
         refreshToken: 'device_refresh_123',
       },
-      client: { version: 2, clientId: 'client_123' },
+      client: { version: 2, flow: 'device', clientId: 'client_123' },
     });
   });
 
@@ -268,6 +274,7 @@ describe('OAuth service', () => {
       resource: 'https://api.example.test/v2',
       client: {
         version: 2,
+        flow: 'browser',
         clientId: 'stale_client',
         issuer: 'https://dashboard.example.test',
         redirectUri: 'http://127.0.0.1:45678/oauth/callback',
@@ -303,6 +310,7 @@ describe('OAuth service', () => {
         resource: 'https://api.example.test/v2',
         client: {
           version: 2,
+          flow: 'browser',
           clientId: 'client_123',
           issuer: 'https://dashboard.example.test',
           redirectUri: 'http://127.0.0.1:45678/oauth/callback',

@@ -346,9 +346,16 @@ export function createFixture(): CliTestFixture {
   };
   const oauthClient: OAuthClientRegistration = {
     version: 2,
+    flow: 'browser',
     clientId: 'oauth_client',
     issuer: 'https://dashboard.edgestore.dev',
     redirectUri: 'http://127.0.0.1:45678/oauth/callback',
+  };
+  const oauthDeviceClient: OAuthClientRegistration = {
+    version: 2,
+    flow: 'device',
+    clientId: 'oauth_device_client',
+    issuer: 'https://dashboard.edgestore.dev',
   };
   const oauthLogin = vi.fn<OAuthService['login']>(async (input) => {
     const authorizationUrl =
@@ -368,7 +375,7 @@ export function createFixture(): CliTestFixture {
         expiresIn: 600,
       });
       await input.openUrl(verificationUriComplete);
-      return { credential: oauthCredential, client: oauthClient };
+      return { credential: oauthCredential, client: oauthDeviceClient };
     },
   );
   const oauthRefresh = vi.fn<OAuthService['refresh']>(async (credential) => ({
