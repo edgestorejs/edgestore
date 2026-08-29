@@ -4,6 +4,7 @@ import { activeAccountFor, withActiveAccount } from '../core/config';
 import {
   parseStoredOAuthCredential,
   serializeOAuthCredential,
+  type OAuthClientRegistration,
   type OAuthCredential,
 } from '../core/credentials';
 import { CliError, normalizeError, usageError } from '../core/errors';
@@ -12,6 +13,7 @@ import { apiUrlFor, credentialFor, outputFor } from '../core/runtime';
 import { selectWorkspaceContext } from '../core/workspace';
 
 export type LoginOptions = {
+  device?: boolean;
   token?: boolean;
 };
 
@@ -20,12 +22,33 @@ export async function loginCommand(
   flags: GlobalFlags,
   options: LoginOptions,
 ): Promise<void> {
-  if (!options.token) return await browserLogin(runtime, flags);
-  if (flags.json && runtime.io.inputIsTty) {
+  if (options.device && options.token) {
+    throw usageError(
+      'conflicting_login_modes',
+      '--device and --token cannot be used together.',
+    );
+  }
+  const machineOutputFlag = flags.json
+    ? '--json'
+    : flags.plain
+      ? '--plain'
+      : undefined;
+  if (!options.token && machineOutputFlag) {
     throw usageError(
       'interactive_input_disabled',
-      'Interactive token input is disabled with --json.',
-      ['printf %s "$EDGESTORE_TOKEN" | edgestore login --token --json'],
+      `OAuth login is interactive and cannot be used with ${machineOutputFlag}.`,
+      ['edgestore login', 'edgestore login --device'],
+    );
+  }
+  if (options.device) return await oauthLogin(runtime, flags, 'device');
+  if (!options.token) return await oauthLogin(runtime, flags, 'browser');
+  if (machineOutputFlag && runtime.io.inputIsTty) {
+    throw usageError(
+      'interactive_input_disabled',
+      `Interactive token input is disabled with ${machineOutputFlag}.`,
+      [
+        `printf %s "$EDGESTORE_TOKEN" | edgestore login --token ${machineOutputFlag}`,
+      ],
     );
   }
 
@@ -220,33 +243,51 @@ function actorLabel(
   return actor.user.email;
 }
 
-async function browserLogin(
+async function oauthLogin(
   runtime: CliRuntime,
   flags: GlobalFlags,
+  mode: 'browser' | 'device',
 ): Promise<void> {
   const apiUrl = apiUrlFor(runtime, flags);
   const output = outputFor(runtime, flags);
-  const result = await runtime.oauth.login({
+  const sharedInput = {
     apiOrigin: apiUrl.displayUrl,
     resource: apiUrl.sdkBaseUrl,
     client: await runtime.credentials.getCachedOAuthClient(apiUrl.displayUrl),
     signal: runtime.signal,
-    openUrl: (url) => runtime.openUrl(url),
-    onAuthorizationUrl: (url) => {
-      if (output.options.mode === 'human') {
-        runtime.io.stderr.write(
-          `Opening a browser to continue login...\nIf it does not open, visit:\n  ${url}\n`,
-        );
-      }
-    },
-    onBrowserOpenFailed: (url) => {
+    openUrl: (url: string) => runtime.openUrl(url),
+    onBrowserOpenFailed: (url: string) => {
       output.warning(
         `Could not open a browser automatically. Open this URL:\n  ${url}`,
       );
     },
-    onClientRegistered: (client) =>
+    onClientRegistered: (client: OAuthClientRegistration) =>
       runtime.credentials.setCachedOAuthClient(apiUrl.displayUrl, client),
-  });
+  };
+  const result =
+    mode === 'device'
+      ? await runtime.oauth.loginWithDeviceCode({
+          ...sharedInput,
+          onDeviceAuthorization: (authorization) => {
+            if (output.options.mode !== 'human') return;
+            const url =
+              authorization.verificationUriComplete ??
+              authorization.verificationUri;
+            runtime.io.stderr.write(
+              `Confirm this one-time code in your browser:\n  ${authorization.userCode}\nOpening a browser to continue login...\nIf it does not open, visit:\n  ${url}\n`,
+            );
+          },
+        })
+      : await runtime.oauth.login({
+          ...sharedInput,
+          onAuthorizationUrl: (url) => {
+            if (output.options.mode === 'human') {
+              runtime.io.stderr.write(
+                `Opening a browser to continue login...\nIf it does not open, visit:\n  ${url}\n`,
+              );
+            }
+          },
+        });
   let identity: Awaited<
     ReturnType<ManagementEdgeStoreSdk['management']['whoami']>
   >;

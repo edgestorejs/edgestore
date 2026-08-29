@@ -44,6 +44,27 @@ describe('auth', () => {
     );
   });
 
+  it('logs in with a device code without a local callback', async () => {
+    await runCli(['login', '--device'], fixture.runtime, '0.0.0');
+
+    expect(fixture.oauthDeviceLogin).toHaveBeenCalledWith(
+      expect.objectContaining({
+        apiOrigin: 'https://api.edgestore.dev',
+        resource: 'https://api.edgestore.dev/v2',
+      }),
+    );
+    expect(fixture.oauthLogin).not.toHaveBeenCalled();
+    expect(fixture.stderr()).toContain('ABCD-EFGH');
+    expect(fixture.stderr()).toContain(
+      'https://dashboard.edgestore.dev/oauth/device?user_code=ABCD-EFGH',
+    );
+    expect(fixture.openUrl).toHaveBeenCalledWith(
+      'https://dashboard.edgestore.dev/oauth/device?user_code=ABCD-EFGH',
+    );
+    expect(fixture.setCredential).toHaveBeenCalled();
+    expect(fixture.stdout()).toContain('Logged in as ravi@example.com.');
+  });
+
   it('selects an account authorized by the OAuth grant', async () => {
     fixture.globalConfig.activeAccounts['https://api.edgestore.dev'] =
       'acc_unavailable';
@@ -80,11 +101,7 @@ describe('auth', () => {
   it('revokes a new OAuth grant when identity validation fails', async () => {
     fixture.whoami.mockRejectedValueOnce(new Error('API unavailable'));
 
-    const exitCode = await runCli(
-      ['--json', 'login'],
-      fixture.runtime,
-      '0.0.0',
-    );
+    const exitCode = await runCli(['login'], fixture.runtime, '0.0.0');
 
     expect(exitCode).toBe(1);
     expect(fixture.oauthRevoke).toHaveBeenCalledWith(
@@ -100,11 +117,7 @@ describe('auth', () => {
       throw fixture.abortController.signal.reason;
     });
 
-    const exitCode = await runCli(
-      ['--json', 'login'],
-      fixture.runtime,
-      '0.0.0',
-    );
+    const exitCode = await runCli(['login'], fixture.runtime, '0.0.0');
 
     expect(exitCode).toBe(130);
     expect(fixture.oauthRevoke).toHaveBeenCalledWith(
@@ -119,26 +132,17 @@ describe('auth', () => {
     fixture.whoami.mockRejectedValueOnce(new Error('API unavailable'));
     fixture.oauthRevoke.mockRejectedValueOnce(new Error('Issuer unavailable'));
 
-    const exitCode = await runCli(
-      ['--json', 'login'],
-      fixture.runtime,
-      '0.0.0',
-    );
+    const exitCode = await runCli(['login'], fixture.runtime, '0.0.0');
 
     expect(exitCode).toBe(1);
-    expect(JSON.parse(fixture.stderr()).error).toMatchObject({
-      code: 'oauth_login_cleanup_failed',
-      details: {
-        status: 'partial',
-        credentialStored: false,
-        oauthGrant: { status: 'revocation_failed' },
-      },
-    });
+    expect(fixture.stderr()).toContain(
+      'Login failed and the new OAuth grant could not be revoked.',
+    );
   });
 
   it.each([
     ['browser', ['login']],
-    ['token', ['login', '--token']],
+    ['device', ['login', '--device']],
   ])(
     'reports partial %s login when active-account storage fails',
     async (_mode, command) => {
@@ -149,24 +153,41 @@ describe('auth', () => {
         throw new Error('Config is read-only');
       });
 
-      const exitCode = await runCli(
-        ['--json', ...command],
-        fixture.runtime,
-        '0.0.0',
-      );
+      const exitCode = await runCli(command, fixture.runtime, '0.0.0');
 
       expect(exitCode).toBe(1);
       expect(fixture.setCredential).toHaveBeenCalled();
-      expect(JSON.parse(fixture.stderr()).error).toMatchObject({
-        code: 'login_partial_failure',
-        details: {
-          status: 'partial',
-          credentialStored: true,
-          activeAccount: { status: 'update_failed' },
-        },
-      });
+      expect(fixture.stderr()).toContain(
+        'Login succeeded and the credential was stored, but the active account could not be updated.',
+      );
     },
   );
+
+  it('reports partial token login when active-account storage fails', async () => {
+    fixture.runtime.io.inputIsTty = false;
+    fixture.globalConfig.activeAccounts['https://api.edgestore.dev'] =
+      teamAccount.id;
+    fixture.runtime.globalConfig.write = vi.fn(async () => {
+      throw new Error('Config is read-only');
+    });
+
+    const exitCode = await runCli(
+      ['--json', 'login', '--token'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(1);
+    expect(fixture.setCredential).toHaveBeenCalled();
+    expect(JSON.parse(fixture.stderr()).error).toMatchObject({
+      code: 'login_partial_failure',
+      details: {
+        status: 'partial',
+        credentialStored: true,
+        activeAccount: { status: 'update_failed' },
+      },
+    });
+  });
 
   it('validates a token before saving it', async () => {
     await runCli(['login', '--token'], fixture.runtime, '0.0.0');
@@ -221,17 +242,81 @@ describe('auth', () => {
     );
   });
 
-  it('does not prompt for a token in JSON mode', async () => {
+  it.each(['--json', '--plain'])(
+    'does not prompt for a token in %s mode',
+    async (outputMode) => {
+      const exitCode = await runCli(
+        ['login', '--token', outputMode],
+        fixture.runtime,
+        '0.0.0',
+      );
+
+      expect(exitCode).toBe(2);
+      expect(fixture.readToken).not.toHaveBeenCalled();
+      if (outputMode === '--json') {
+        expect(JSON.parse(fixture.stderr()).error.code).toBe(
+          'interactive_input_disabled',
+        );
+      } else {
+        expect(fixture.stderr()).toContain(
+          'Interactive token input is disabled',
+        );
+      }
+    },
+  );
+
+  it.each([
+    ['browser', '--json', ['--json', 'login']],
+    ['browser', '--plain', ['--plain', 'login']],
+    ['device', '--json', ['--json', 'login', '--device']],
+    ['device', '--plain', ['--plain', 'login', '--device']],
+  ])(
+    'rejects %s OAuth login in %s mode before starting OAuth',
+    async (_flow, outputMode, command) => {
+      const exitCode = await runCli(command, fixture.runtime, '0.0.0');
+
+      expect(exitCode).toBe(2);
+      expect(fixture.oauthLogin).not.toHaveBeenCalled();
+      expect(fixture.oauthDeviceLogin).not.toHaveBeenCalled();
+      expect(fixture.setCachedOAuthClient).not.toHaveBeenCalled();
+      if (outputMode === '--json') {
+        expect(JSON.parse(fixture.stderr()).error.code).toBe(
+          'interactive_input_disabled',
+        );
+      } else {
+        expect(fixture.stderr()).toContain(
+          'OAuth login is interactive and cannot be used',
+        );
+      }
+    },
+  );
+
+  it('accepts piped token input in plain mode', async () => {
+    fixture.runtime.io.inputIsTty = false;
+
     const exitCode = await runCli(
-      ['login', '--token', '--json'],
+      ['login', '--token', '--plain'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(0);
+    expect(fixture.readToken).toHaveBeenCalled();
+    expect(fixture.stdout()).toBe('ravi@example.com\n');
+  });
+
+  it('rejects conflicting login modes', async () => {
+    const exitCode = await runCli(
+      ['--json', 'login', '--device', '--token'],
       fixture.runtime,
       '0.0.0',
     );
 
     expect(exitCode).toBe(2);
+    expect(fixture.oauthDeviceLogin).not.toHaveBeenCalled();
     expect(fixture.readToken).not.toHaveBeenCalled();
     expect(JSON.parse(fixture.stderr()).error.code).toBe(
-      'interactive_input_disabled',
+      'conflicting_login_modes',
     );
   });
 

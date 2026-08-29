@@ -17,24 +17,39 @@ const resourceMetadataSchema = z
   })
   .passthrough();
 
-export type BrowserOAuthLoginResult = {
+const deviceGrantType = 'urn:ietf:params:oauth:grant-type:device_code';
+
+export type OAuthLoginResult = {
   credential: OAuthCredential;
   client: OAuthClientRegistration;
 };
 
-export type BrowserOAuthLoginInput = {
+type OAuthLoginInput = {
   apiOrigin: string;
   resource: string;
   client?: OAuthClientRegistration;
   signal: AbortSignal;
   openUrl(url: string): Promise<void>;
-  onAuthorizationUrl?(url: string): void;
   onBrowserOpenFailed?(url: string, error: unknown): void;
   onClientRegistered?(client: OAuthClientRegistration): Promise<void>;
 };
 
+export type BrowserOAuthLoginInput = OAuthLoginInput & {
+  onAuthorizationUrl?(url: string): void;
+};
+
+export type DeviceOAuthLoginInput = OAuthLoginInput & {
+  onDeviceAuthorization?(authorization: {
+    userCode: string;
+    verificationUri: string;
+    verificationUriComplete?: string;
+    expiresIn: number;
+  }): void;
+};
+
 export interface OAuthService {
-  login(input: BrowserOAuthLoginInput): Promise<BrowserOAuthLoginResult>;
+  login(input: BrowserOAuthLoginInput): Promise<OAuthLoginResult>;
+  loginWithDeviceCode(input: DeviceOAuthLoginInput): Promise<OAuthLoginResult>;
   refresh(
     credential: OAuthCredential,
     signal: AbortSignal,
@@ -45,7 +60,7 @@ export interface OAuthService {
 export class DefaultOAuthService implements OAuthService {
   constructor(private readonly fetchImplementation: typeof fetch = fetch) {}
 
-  async login(input: BrowserOAuthLoginInput): Promise<BrowserOAuthLoginResult> {
+  async login(input: BrowserOAuthLoginInput): Promise<OAuthLoginResult> {
     try {
       return await this.performLoginWithRecovery(input);
     } catch (error) {
@@ -56,14 +71,38 @@ export class DefaultOAuthService implements OAuthService {
     }
   }
 
+  async loginWithDeviceCode(
+    input: DeviceOAuthLoginInput,
+  ): Promise<OAuthLoginResult> {
+    try {
+      return await this.performDeviceLoginWithRecovery(input);
+    } catch (error) {
+      if (input.signal.aborted || error instanceof CliError) throw error;
+      throw new CliError('oauth_login_failed', oauthErrorMessage(error), {
+        suggestions: ['edgestore login --device', 'edgestore login --token'],
+      });
+    }
+  }
+
   private async performLoginWithRecovery(
     input: BrowserOAuthLoginInput,
-  ): Promise<BrowserOAuthLoginResult> {
+  ): Promise<OAuthLoginResult> {
     try {
       return await this.performLogin(input);
     } catch (error) {
       if (!input.client || !isInvalidClientError(error)) throw error;
       return await this.performLogin({ ...input, client: undefined });
+    }
+  }
+
+  private async performDeviceLoginWithRecovery(
+    input: DeviceOAuthLoginInput,
+  ): Promise<OAuthLoginResult> {
+    try {
+      return await this.performDeviceLogin(input);
+    } catch (error) {
+      if (!input.client || !isInvalidClientError(error)) throw error;
+      return await this.performDeviceLogin({ ...input, client: undefined });
     }
   }
 
@@ -92,10 +131,14 @@ export class DefaultOAuthService implements OAuthService {
       if (signal.aborted || error instanceof CliError) throw error;
       throw new CliError(
         'oauth_refresh_failed',
-        'The browser login could not be refreshed.',
+        'The OAuth login could not be refreshed.',
         {
           details: oauthErrorMessage(error),
-          suggestions: ['edgestore login', 'edgestore login --token'],
+          suggestions: [
+            'edgestore login',
+            'edgestore login --device',
+            'edgestore login --token',
+          ],
         },
       );
     }
@@ -116,7 +159,7 @@ export class DefaultOAuthService implements OAuthService {
 
   private async performLogin(
     input: BrowserOAuthLoginInput,
-  ): Promise<BrowserOAuthLoginResult> {
+  ): Promise<OAuthLoginResult> {
     const metadata = await this.protectedResourceMetadata(
       input.apiOrigin,
       input.resource,
@@ -152,7 +195,8 @@ export class DefaultOAuthService implements OAuthService {
         );
       }
       const clientRegistration: OAuthClientRegistration = {
-        version: 1,
+        version: 2,
+        flow: 'browser',
         clientId,
         issuer: issuerIdentifier,
         redirectUri: callback.redirectUri,
@@ -198,6 +242,79 @@ export class DefaultOAuthService implements OAuthService {
     }
   }
 
+  private async performDeviceLogin(
+    input: DeviceOAuthLoginInput,
+  ): Promise<OAuthLoginResult> {
+    const metadata = await this.protectedResourceMetadata(
+      input.apiOrigin,
+      input.resource,
+      input.signal,
+    );
+    const issuer = new URL(metadata.authorization_servers[0]!);
+    const issuerIdentifier = normalizeUrl(issuer.toString());
+    const reusableClient = reusableDeviceClientRegistration(
+      input.client,
+      issuer,
+    );
+    const config = reusableClient
+      ? await this.discover(issuer, {
+          clientId: reusableClient.clientId,
+          signal: input.signal,
+        })
+      : await this.registerDeviceClient(issuer, input.signal);
+    const clientId = config.clientMetadata().client_id;
+    if (!clientId) {
+      throw new CliError(
+        'oauth_registration_failed',
+        'The OAuth server did not return a client ID.',
+      );
+    }
+    const clientRegistration: OAuthClientRegistration = reusableClient ?? {
+      version: 2,
+      flow: 'device',
+      clientId,
+      issuer: issuerIdentifier,
+    };
+    if (!reusableClient) {
+      await input.onClientRegistered?.(clientRegistration);
+    }
+
+    const authorization = await oauth.initiateDeviceAuthorization(config, {
+      resource: metadata.resource,
+      scope: [...new Set(metadata.scopes_supported)].join(' '),
+    });
+    input.onDeviceAuthorization?.({
+      userCode: authorization.user_code,
+      verificationUri: authorization.verification_uri,
+      ...(authorization.verification_uri_complete
+        ? { verificationUriComplete: authorization.verification_uri_complete }
+        : {}),
+      expiresIn: authorization.expires_in,
+    });
+    const verificationUrl =
+      authorization.verification_uri_complete ?? authorization.verification_uri;
+    try {
+      await input.openUrl(verificationUrl);
+    } catch (error) {
+      input.onBrowserOpenFailed?.(verificationUrl, error);
+    }
+
+    const tokens = await oauth.pollDeviceAuthorizationGrant(
+      config,
+      authorization,
+      { resource: metadata.resource },
+      { signal: input.signal },
+    );
+    return {
+      credential: credentialFromTokens(tokens, {
+        clientId,
+        issuer: issuerIdentifier,
+        resource: metadata.resource,
+      }),
+      client: clientRegistration,
+    };
+  }
+
   private async protectedResourceMetadata(
     apiOrigin: string,
     expectedResource: string,
@@ -211,7 +328,7 @@ export class DefaultOAuthService implements OAuthService {
     if (!response.ok) {
       throw new CliError(
         'oauth_metadata_unavailable',
-        `The EdgeStore API does not advertise browser login (${response.status}).`,
+        `The EdgeStore API does not advertise OAuth login (${response.status}).`,
         { suggestions: ['edgestore login --token'] },
       );
     }
@@ -247,6 +364,22 @@ export class DefaultOAuthService implements OAuthService {
         token_endpoint_auth_method: 'none',
         grant_types: ['authorization_code', 'refresh_token'],
         response_types: ['code'],
+      },
+      oauth.None(),
+      this.discoveryOptions(issuer, signal),
+    );
+  }
+
+  private async registerDeviceClient(issuer: URL, signal: AbortSignal) {
+    return await oauth.dynamicClientRegistration(
+      issuer,
+      {
+        application_type: 'native',
+        client_name: 'EdgeStore CLI',
+        redirect_uris: [],
+        token_endpoint_auth_method: 'none',
+        grant_types: [deviceGrantType, 'refresh_token'],
+        response_types: [],
       },
       oauth.None(),
       this.discoveryOptions(issuer, signal),
@@ -318,9 +451,22 @@ function reusableClientRegistration(
   client: OAuthClientRegistration | undefined,
   issuer: URL,
 ) {
-  return client &&
-    normalizeUrl(client.issuer) === normalizeUrl(issuer.toString()) &&
-    isReusableOAuthRedirectUri(client.redirectUri)
+  if (
+    client?.flow !== 'browser' ||
+    normalizeUrl(client.issuer) !== normalizeUrl(issuer.toString()) ||
+    !isReusableOAuthRedirectUri(client.redirectUri)
+  ) {
+    return undefined;
+  }
+  return client;
+}
+
+function reusableDeviceClientRegistration(
+  client: OAuthClientRegistration | undefined,
+  issuer: URL,
+) {
+  return client?.flow === 'device' &&
+    normalizeUrl(client.issuer) === normalizeUrl(issuer.toString())
     ? client
     : undefined;
 }
@@ -363,7 +509,7 @@ function isInvalidClientError(error: unknown): boolean {
   return (
     (error instanceof oauth.AuthorizationResponseError ||
       error instanceof oauth.ResponseBodyError) &&
-    error.error === 'invalid_client'
+    (error.error === 'invalid_client' || error.error === 'unauthorized_client')
   );
 }
 
@@ -379,5 +525,5 @@ function isAddressInUse(error: unknown): boolean {
 
 function oauthErrorMessage(error: unknown) {
   if (error instanceof Error && error.message) return error.message;
-  return 'Browser login failed.';
+  return 'OAuth login failed.';
 }

@@ -182,6 +182,7 @@ type CliTestFixture = {
   setCredential: Mock;
   setCachedOAuthClient: Mock;
   oauthLogin: Mock<OAuthService['login']>;
+  oauthDeviceLogin: Mock<OAuthService['loginWithDeviceCode']>;
   oauthRefresh: Mock<OAuthService['refresh']>;
   oauthRevoke: Mock<OAuthService['revoke']>;
   health: Mock<ManagementEdgeStoreSdk['system']['health']>;
@@ -344,10 +345,17 @@ export function createFixture(): CliTestFixture {
     scope: 'account:read project:read',
   };
   const oauthClient: OAuthClientRegistration = {
-    version: 1,
+    version: 2,
+    flow: 'browser',
     clientId: 'oauth_client',
     issuer: 'https://dashboard.edgestore.dev',
     redirectUri: 'http://127.0.0.1:45678/oauth/callback',
+  };
+  const oauthDeviceClient: OAuthClientRegistration = {
+    version: 2,
+    flow: 'device',
+    clientId: 'oauth_device_client',
+    issuer: 'https://dashboard.edgestore.dev',
   };
   const oauthLogin = vi.fn<OAuthService['login']>(async (input) => {
     const authorizationUrl =
@@ -356,6 +364,20 @@ export function createFixture(): CliTestFixture {
     await input.openUrl(authorizationUrl);
     return { credential: oauthCredential, client: oauthClient };
   });
+  const oauthDeviceLogin = vi.fn<OAuthService['loginWithDeviceCode']>(
+    async (input) => {
+      const verificationUri = 'https://dashboard.edgestore.dev/oauth/device';
+      const verificationUriComplete = `${verificationUri}?user_code=ABCD-EFGH`;
+      input.onDeviceAuthorization?.({
+        userCode: 'ABCD-EFGH',
+        verificationUri,
+        verificationUriComplete,
+        expiresIn: 600,
+      });
+      await input.openUrl(verificationUriComplete);
+      return { credential: oauthCredential, client: oauthDeviceClient };
+    },
+  );
   const oauthRefresh = vi.fn<OAuthService['refresh']>(async (credential) => ({
     ...credential,
     accessToken: 'oauth_access_refreshed',
@@ -644,6 +666,7 @@ export function createFixture(): CliTestFixture {
     credentials,
     oauth: {
       login: oauthLogin,
+      loginWithDeviceCode: oauthDeviceLogin,
       refresh: oauthRefresh,
       revoke: oauthRevoke,
     },
@@ -673,6 +696,7 @@ export function createFixture(): CliTestFixture {
     setCredential,
     setCachedOAuthClient,
     oauthLogin,
+    oauthDeviceLogin,
     oauthRefresh,
     oauthRevoke,
     health,

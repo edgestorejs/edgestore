@@ -21,14 +21,25 @@ const oauthCredentialSchema = z
   })
   .strict();
 
-const oauthClientRegistrationSchema = z
-  .object({
-    version: z.literal(1),
-    clientId: z.string().min(1),
-    issuer: z.string().url(),
-    redirectUri: z.string().url(),
-  })
-  .strict();
+const oauthClientRegistrationSchema = z.discriminatedUnion('flow', [
+  z
+    .object({
+      version: z.literal(2),
+      flow: z.literal('browser'),
+      clientId: z.string().min(1),
+      issuer: z.string().url(),
+      redirectUri: z.string().url(),
+    })
+    .strict(),
+  z
+    .object({
+      version: z.literal(2),
+      flow: z.literal('device'),
+      clientId: z.string().min(1),
+      issuer: z.string().url(),
+    })
+    .strict(),
+]);
 
 export type OAuthCredential = z.infer<typeof oauthCredentialSchema>;
 export type OAuthClientRegistration = z.infer<
