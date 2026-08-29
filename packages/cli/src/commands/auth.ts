@@ -28,13 +28,27 @@ export async function loginCommand(
       '--device and --token cannot be used together.',
     );
   }
-  if (options.device) return await oauthLogin(runtime, flags, 'device');
-  if (!options.token) return await oauthLogin(runtime, flags, 'browser');
-  if (flags.json && runtime.io.inputIsTty) {
+  const machineOutputFlag = flags.json
+    ? '--json'
+    : flags.plain
+      ? '--plain'
+      : undefined;
+  if (!options.token && machineOutputFlag) {
     throw usageError(
       'interactive_input_disabled',
-      'Interactive token input is disabled with --json.',
-      ['printf %s "$EDGESTORE_TOKEN" | edgestore login --token --json'],
+      `OAuth login is interactive and cannot be used with ${machineOutputFlag}.`,
+      ['edgestore login', 'edgestore login --device'],
+    );
+  }
+  if (options.device) return await oauthLogin(runtime, flags, 'device');
+  if (!options.token) return await oauthLogin(runtime, flags, 'browser');
+  if (machineOutputFlag && runtime.io.inputIsTty) {
+    throw usageError(
+      'interactive_input_disabled',
+      `Interactive token input is disabled with ${machineOutputFlag}.`,
+      [
+        `printf %s "$EDGESTORE_TOKEN" | edgestore login --token ${machineOutputFlag}`,
+      ],
     );
   }
 

@@ -30,7 +30,6 @@ type OAuthLoginInput = {
   client?: OAuthClientRegistration;
   signal: AbortSignal;
   openUrl(url: string): Promise<void>;
-  onAuthorizationUrl?(url: string): void;
   onBrowserOpenFailed?(url: string, error: unknown): void;
   onClientRegistered?(client: OAuthClientRegistration): Promise<void>;
 };
@@ -132,10 +131,14 @@ export class DefaultOAuthService implements OAuthService {
       if (signal.aborted || error instanceof CliError) throw error;
       throw new CliError(
         'oauth_refresh_failed',
-        'The browser login could not be refreshed.',
+        'The OAuth login could not be refreshed.',
         {
           details: oauthErrorMessage(error),
-          suggestions: ['edgestore login', 'edgestore login --token'],
+          suggestions: [
+            'edgestore login',
+            'edgestore login --device',
+            'edgestore login --token',
+          ],
         },
       );
     }
