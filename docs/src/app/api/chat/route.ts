@@ -15,6 +15,7 @@ import {
   type UIMessage,
 } from 'ai';
 import { after } from 'next/server';
+import type { z } from 'zod';
 import {
   GetDocsToolSchema,
   ProvideLinksToolSchema,
@@ -90,10 +91,15 @@ Guidelines:
 - Never invent API methods, configuration options, or features that aren't documented.
 - If a feature doesn't exist in EdgeStore, say so clearly.
 
-After providing your answer, use the "provideLinks" tool to share relevant documentation links with the user. Include links to the documentation pages you referenced in your answer.`;
+Before writing your final answer, call the "provideLinks" tool exactly once with the documentation pages you referenced. After the tool returns, write a complete, non-empty answer to the user. Do not call "provideLinks" again, and do not treat the tool call as the answer.`;
 
   const result = streamText({
-    model: 'openai/gpt-4.1-mini',
+    model: 'openai/gpt-5.6-luna',
+    providerOptions: {
+      openai: {
+        reasoningEffort: 'none',
+      },
+    },
     system: systemPrompt,
     tools: {
       getDocs: {
@@ -105,6 +111,9 @@ After providing your answer, use the "provideLinks" tool to share relevant docum
       },
       provideLinks: {
         inputSchema: ProvideLinksToolSchema,
+        execute: ({ links }: z.infer<typeof ProvideLinksToolSchema>) => ({
+          links,
+        }),
       },
     },
     messages: await convertToModelMessages(reqJson.messages, {
