@@ -10,8 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@edgestore/react": "^1.0.0-next.2",
-    "@edgestore/server": "^1.0.0-next.2",
+    "@edgestore/react": "^1.0.0-next.3",
+    "@edgestore/server": "^1.0.0-next.3",
     "@tanstack/react-router": "1.170.18",
     "@tanstack/react-start": "1.168.32",
     "@tanstack/router-plugin": "1.168.23",

@@ -1,5 +1,13 @@
 # @edgestore/server
 
+## 1.0.0-next.3
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @edgestore/sdk@1.0.0-next.3
+  - @edgestore/shared@1.0.0-next.3
+
 ## 1.0.0-next.2
 
 ### Major Changes
