@@ -6,6 +6,7 @@ import { renderCliCommand } from '../core/command';
 import { CliError, normalizeError, usageError } from '../core/errors';
 import type { CliRuntime, GlobalFlags } from '../core/runtime';
 import { isInteractive, outputFor, sdkFor } from '../core/runtime';
+import { createUploadProgressDisplay } from '../core/uploadProgress';
 import { resolvedProjectRef } from './project';
 
 export async function fileUploadCommand(
@@ -52,68 +53,72 @@ export async function fileUploadCommand(
   const project = await resolvedProjectRef(runtime, flags, input.project);
   const sdk = await sdkFor(runtime, flags);
   const results = [];
-  for (const [index, localFile] of localFiles.entries()) {
-    try {
-      const fileName = path.basename(localFile);
-      const mimeType = mimeTypeFor(fileName);
-      const destination = resolveUploadDestination(input.path, {
-        fileName,
-        keepName: input.keepName,
-      });
-      const source = await openAsBlob(
-        localFile,
-        mimeType ? { type: mimeType } : undefined,
-      );
+  const progressDisplay = createUploadProgressDisplay(runtime, flags);
+  try {
+    for (const [index, localFile] of localFiles.entries()) {
       try {
-        const completed = await sdk.management.uploads.upload({
-          project,
-          bucket: input.bucket,
-          source,
-          signedReadUrl: {},
-          ...(destination.fileName ? { fileName: destination.fileName } : {}),
-          ...(destination.path ? { path: destination.path } : {}),
-          mimeType,
-          signal: runtime.signal,
-          onProgress: (progress) =>
-            reportProgress(runtime, flags, {
-              fileName,
-              percentage: progress.percentage,
-            }),
+        const fileName = path.basename(localFile);
+        const mimeType = mimeTypeFor(fileName);
+        const destination = resolveUploadDestination(input.path, {
+          fileName,
+          keepName: input.keepName,
         });
-        results.push({ localPath: localFile, ...completed });
+        const source = await openAsBlob(
+          localFile,
+          mimeType ? { type: mimeType } : undefined,
+        );
+        progressDisplay.start(index, fileName, source.size);
+        try {
+          const completed = await sdk.management.uploads.upload({
+            project,
+            bucket: input.bucket,
+            source,
+            signedReadUrl: {},
+            ...(destination.fileName ? { fileName: destination.fileName } : {}),
+            ...(destination.path ? { path: destination.path } : {}),
+            mimeType,
+            signal: runtime.signal,
+            onProgress: (progress) => progressDisplay.update(index, progress),
+          });
+          progressDisplay.succeed(index);
+          results.push({ localPath: localFile, ...completed });
+        } catch (error) {
+          progressDisplay.fail(index, runtime.signal.aborted);
+          throw normalizeUploadError(error, { runtime, flags, project });
+        }
       } catch (error) {
-        throw normalizeUploadError(error, { runtime, flags, project });
-      }
-    } catch (error) {
-      if (localFiles.length === 1) throw error;
-      const cause = normalizeError(error);
-      const notAttemptedPaths = localFiles.slice(index + 1);
-      throw new CliError(
-        'file_upload_incomplete',
-        [
-          `Upload batch stopped while processing ${localFile}: ${cause.message}`,
-          `Completed (${results.length}):`,
-          ...results.map(
-            (result) =>
-              `  ${result.localPath} -> ${result.signedReadUrl?.signedUrl ?? result.file.url} (${result.file.id})`,
-          ),
-          `Interrupted: ${localFile}`,
-          `Not attempted (${notAttemptedPaths.length}):`,
-          ...notAttemptedPaths.map((file) => `  ${file}`),
-        ].join('\n'),
-        {
-          details: {
-            completed: results,
-            interruptedPath: localFile,
-            notAttemptedPaths,
-            cause: errorDetails(cause),
+        if (localFiles.length === 1) throw error;
+        const cause = normalizeError(error);
+        const notAttemptedPaths = localFiles.slice(index + 1);
+        throw new CliError(
+          'file_upload_incomplete',
+          [
+            `Upload batch stopped while processing ${localFile}: ${cause.message}`,
+            `Completed (${results.length}):`,
+            ...results.map(
+              (result) =>
+                `  ${result.localPath} -> ${result.signedReadUrl?.signedUrl ?? result.file.url} (${result.file.id})`,
+            ),
+            `Interrupted: ${localFile}`,
+            `Not attempted (${notAttemptedPaths.length}):`,
+            ...notAttemptedPaths.map((file) => `  ${file}`),
+          ].join('\n'),
+          {
+            details: {
+              completed: results,
+              interruptedPath: localFile,
+              notAttemptedPaths,
+              cause: errorDetails(cause),
+            },
+            requestId: cause.options.requestId,
+            suggestions: cause.options.suggestions,
+            exitCode: cause.exitCode,
           },
-          requestId: cause.options.requestId,
-          suggestions: cause.options.suggestions,
-          exitCode: cause.exitCode,
-        },
-      );
+        );
+      }
     }
+  } finally {
+    progressDisplay.close();
   }
   const human = results
     .map((result) => {
@@ -200,18 +205,6 @@ function interruptedError(): CliError {
 
 function isFileBlobMutation(error: unknown): boolean {
   return error instanceof DOMException && error.name === 'NotReadableError';
-}
-
-function reportProgress(
-  runtime: CliRuntime,
-  flags: GlobalFlags,
-  progress: { fileName: string; percentage: number },
-): void {
-  if (flags.progress && !flags.json && runtime.io.outputIsTty) {
-    runtime.io.stderr.write(
-      `${progress.fileName}: uploading ${progress.percentage}%\n`,
-    );
-  }
 }
 
 export async function fileUploadStatusCommand(
