@@ -4,10 +4,23 @@ import path from 'node:path';
 import { EdgeStoreUploadCleanupError } from '@edgestore/sdk';
 import { renderCliCommand } from '../core/command';
 import { CliError, normalizeError, usageError } from '../core/errors';
-import type { CliRuntime, GlobalFlags } from '../core/runtime';
+import type { CliRuntime, CliSdk, GlobalFlags } from '../core/runtime';
 import { isInteractive, outputFor, sdkFor } from '../core/runtime';
-import { createUploadProgressDisplay } from '../core/uploadProgress';
+import {
+  createUploadProgressDisplay,
+  type UploadProgressDisplay,
+} from '../core/uploadProgress';
 import { resolvedProjectRef } from './project';
+
+const FILE_UPLOAD_CONCURRENCY = 3;
+
+type CompletedUpload = Awaited<
+  ReturnType<CliSdk['management']['uploads']['upload']>
+> & { localPath: string };
+
+type UploadOutcome =
+  | { status: 'completed'; result: CompletedUpload }
+  | { status: 'failed'; localPath: string; cause: CliError };
 
 export async function fileUploadCommand(
   runtime: CliRuntime,
@@ -52,79 +65,61 @@ export async function fileUploadCommand(
 
   const project = await resolvedProjectRef(runtime, flags, input.project);
   const sdk = await sdkFor(runtime, flags);
-  const results = [];
   const progressDisplay = createUploadProgressDisplay(runtime, flags);
+  let outcomes: (UploadOutcome | undefined)[];
   try {
-    for (const [index, localFile] of localFiles.entries()) {
+    const upload = async (
+      localFile: string,
+      index: number,
+    ): Promise<UploadOutcome> => {
       try {
-        const fileName = path.basename(localFile);
-        const mimeType = mimeTypeFor(fileName);
-        const destination = resolveUploadDestination(input.path, {
-          fileName,
-          keepName: input.keepName,
-        });
-        const source = await openAsBlob(
-          localFile,
-          mimeType ? { type: mimeType } : undefined,
-        );
-        progressDisplay?.start(index, fileName, source.size);
-        try {
-          const completed = await sdk.management.uploads.upload({
+        return {
+          status: 'completed',
+          result: await uploadLocalFile({
+            runtime,
+            flags,
+            sdk,
+            progressDisplay,
+            index,
+            localFile,
             project,
             bucket: input.bucket,
-            source,
-            signedReadUrl: {},
-            ...(destination.fileName ? { fileName: destination.fileName } : {}),
-            ...(destination.path ? { path: destination.path } : {}),
-            mimeType,
-            signal: runtime.signal,
-            ...(progressDisplay
-              ? {
-                  onProgress: (progress) =>
-                    progressDisplay.update(index, progress),
-                }
-              : {}),
-          });
-          progressDisplay?.succeed(index);
-          results.push({ localPath: localFile, ...completed });
-        } catch (error) {
-          progressDisplay?.fail(index, runtime.signal.aborted);
-          throw normalizeUploadError(error, { runtime, flags, project });
-        }
+            destinationPath: input.path,
+            keepName: input.keepName,
+          }),
+        };
       } catch (error) {
-        if (localFiles.length === 1) throw error;
-        const cause = normalizeError(error);
-        const notAttemptedPaths = localFiles.slice(index + 1);
-        throw new CliError(
-          'file_upload_incomplete',
-          [
-            `Upload batch stopped while processing ${localFile}: ${cause.message}`,
-            `Completed (${results.length}):`,
-            ...results.map(
-              (result) =>
-                `  ${result.localPath} -> ${result.signedReadUrl?.signedUrl ?? result.file.url} (${result.file.id})`,
-            ),
-            `Interrupted: ${localFile}`,
-            `Not attempted (${notAttemptedPaths.length}):`,
-            ...notAttemptedPaths.map((file) => `  ${file}`),
-          ].join('\n'),
-          {
-            details: {
-              completed: results,
-              interruptedPath: localFile,
-              notAttemptedPaths,
-              cause: errorDetails(cause),
-            },
-            requestId: cause.options.requestId,
-            suggestions: cause.options.suggestions,
-            exitCode: cause.exitCode,
-          },
-        );
+        return {
+          status: 'failed',
+          localPath: localFile,
+          cause: normalizeError(error),
+        };
       }
-    }
+    };
+    outcomes =
+      localFiles.length === 1
+        ? [await upload(localFiles[0]!, 0)]
+        : await mapConcurrent(localFiles, upload, {
+            concurrency: FILE_UPLOAD_CONCURRENCY,
+            signal: runtime.signal,
+          });
   } finally {
     progressDisplay?.close();
   }
+
+  const results = outcomes.flatMap((outcome) =>
+    outcome?.status === 'completed' ? [outcome.result] : [],
+  );
+  const failures = outcomes.flatMap((outcome) =>
+    outcome?.status === 'failed' ? [outcome] : [],
+  );
+  const notAttemptedPaths = localFiles.filter((_, index) => !outcomes[index]);
+  if (failures.length || notAttemptedPaths.length) {
+    if (localFiles.length === 1 && failures[0]) throw failures[0].cause;
+    if (runtime.signal.aborted && !failures.length) throw interruptedError();
+    throw batchUploadError({ results, failures, notAttemptedPaths });
+  }
+
   const human = results
     .map((result) => {
       const readUrl = result.signedReadUrl?.signedUrl ?? result.file.url;
@@ -132,6 +127,119 @@ export async function fileUploadCommand(
     })
     .join('\n');
   outputFor(runtime, flags).result({ uploads: results }, human);
+}
+
+async function uploadLocalFile(input: {
+  runtime: CliRuntime;
+  flags: GlobalFlags;
+  sdk: CliSdk;
+  progressDisplay?: UploadProgressDisplay;
+  index: number;
+  localFile: string;
+  project: string;
+  bucket: string;
+  destinationPath?: string;
+  keepName?: boolean;
+}): Promise<CompletedUpload> {
+  const { progressDisplay } = input;
+  const fileName = path.basename(input.localFile);
+  const mimeType = mimeTypeFor(fileName);
+  const destination = resolveUploadDestination(input.destinationPath, {
+    fileName,
+    keepName: input.keepName,
+  });
+  const source = await openAsBlob(
+    input.localFile,
+    mimeType ? { type: mimeType } : undefined,
+  );
+  progressDisplay?.start(input.index, fileName, source.size);
+  try {
+    const completed = await input.sdk.management.uploads.upload({
+      project: input.project,
+      bucket: input.bucket,
+      source,
+      signedReadUrl: {},
+      ...(destination.fileName ? { fileName: destination.fileName } : {}),
+      ...(destination.path ? { path: destination.path } : {}),
+      mimeType,
+      signal: input.runtime.signal,
+      ...(progressDisplay
+        ? {
+            onProgress: (progress) =>
+              progressDisplay.update(input.index, progress),
+          }
+        : {}),
+    });
+    progressDisplay?.succeed(input.index);
+    return { localPath: input.localFile, ...completed };
+  } catch (error) {
+    progressDisplay?.fail(input.index, input.runtime.signal.aborted);
+    throw normalizeUploadError(error, {
+      runtime: input.runtime,
+      flags: input.flags,
+      project: input.project,
+    });
+  }
+}
+
+async function mapConcurrent<TValue, TResult>(
+  values: TValue[],
+  mapper: (value: TValue, index: number) => Promise<TResult>,
+  options: { concurrency: number; signal: AbortSignal },
+): Promise<(TResult | undefined)[]> {
+  const results: (TResult | undefined)[] = Array(values.length);
+  let nextIndex = 0;
+  const workers = Array.from(
+    { length: Math.min(options.concurrency, values.length) },
+    async () => {
+      while (!options.signal.aborted) {
+        const index = nextIndex++;
+        if (index >= values.length) return;
+        results[index] = await mapper(values[index]!, index);
+      }
+    },
+  );
+  await Promise.all(workers);
+  return results;
+}
+
+function batchUploadError(input: {
+  results: CompletedUpload[];
+  failures: Extract<UploadOutcome, { status: 'failed' }>[];
+  notAttemptedPaths: string[];
+}): CliError {
+  const firstFailure = input.failures[0]?.cause;
+  const lines = [
+    `Upload batch finished with ${input.failures.length} failure${input.failures.length === 1 ? '' : 's'}.`,
+    `Completed (${input.results.length}):`,
+    ...input.results.map(
+      (result) =>
+        `  ${result.localPath} -> ${result.signedReadUrl?.signedUrl ?? result.file.url} (${result.file.id})`,
+    ),
+    `Failed (${input.failures.length}):`,
+    ...input.failures.map(
+      (failure) => `  ${failure.localPath}: ${failure.cause.message}`,
+    ),
+    ...(input.notAttemptedPaths.length
+      ? [
+          `Not attempted (${input.notAttemptedPaths.length}):`,
+          ...input.notAttemptedPaths.map((file) => `  ${file}`),
+        ]
+      : []),
+  ];
+  return new CliError('file_upload_incomplete', lines.join('\n'), {
+    details: {
+      completed: input.results,
+      failures: input.failures.map((failure) => ({
+        localPath: failure.localPath,
+        cause: errorDetails(failure.cause),
+      })),
+      notAttemptedPaths: input.notAttemptedPaths,
+    },
+    requestId: firstFailure?.options.requestId,
+    suggestions: firstFailure?.options.suggestions,
+    exitCode: firstFailure?.exitCode,
+  });
 }
 
 function resolveUploadDestination(

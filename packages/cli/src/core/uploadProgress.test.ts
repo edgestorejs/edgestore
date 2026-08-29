@@ -141,6 +141,26 @@ describe('UploadProgressDisplay', () => {
 
     expect(write).toHaveBeenCalled();
   });
+
+  it('keeps concurrent rows in input order', () => {
+    vi.useFakeTimers();
+    const { live } = fakeLiveOutput();
+    const display = new UploadProgressDisplay(live, false);
+
+    display.start(1, 'second.txt', 20);
+    display.start(0, 'first.txt', 10);
+
+    const frame = live.mock.calls.at(-1)?.[0] ?? '';
+    expect(frame.indexOf('first.txt')).toBeLessThan(
+      frame.indexOf('second.txt'),
+    );
+
+    display.succeed(0);
+    const completedFrame = String(live.mock.lastCall?.[0]).split('\n');
+    expect(completedFrame[0]).toBe('◆ first.txt uploaded · 10 B');
+    expect(completedFrame[1]).toContain('second.txt');
+    display.close();
+  });
 });
 
 function fakeLiveOutput() {

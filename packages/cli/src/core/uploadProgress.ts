@@ -103,8 +103,9 @@ export class UploadProgressDisplay {
     }
     const spinner = this.colors.magenta(SPINNER_FRAMES[this.frame] ?? '◒');
     this.live(
-      [...this.entries.values()]
-        .map((entry) => renderEntry(entry, spinner, this.colors))
+      [...this.entries.entries()]
+        .sort(([left], [right]) => left - right)
+        .map(([, entry]) => renderEntry(entry, spinner, this.colors))
         .join('\n'),
     );
   }
