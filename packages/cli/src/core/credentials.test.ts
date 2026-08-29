@@ -185,7 +185,7 @@ describe('OAuth client cache', () => {
   it('reads a valid cached registration', async () => {
     keyringMocks.getPassword.mockResolvedValueOnce(
       JSON.stringify({
-        version: 1,
+        version: 2,
         clientId: 'client_123',
         issuer: 'https://dashboard.edgestore.dev',
         redirectUri: 'http://127.0.0.1:45678/oauth/callback',
@@ -204,7 +204,7 @@ describe('OAuth client cache', () => {
     [
       'an unsupported version',
       JSON.stringify({
-        version: 2,
+        version: 1,
         clientId: 'client_123',
         issuer: 'https://dashboard.edgestore.dev',
         redirectUri: 'http://127.0.0.1:45678/oauth/callback',

@@ -14,9 +14,10 @@ edgestore login
 edgestore init
 ```
 
-Use `edgestore login --token` or `EDGESTORE_TOKEN` for automation and other
-non-browser environments. Persisted credentials are stored in the operating
-system credential store and are never written to a plaintext config file.
+Use `edgestore login --device` when a local browser callback is unavailable.
+Use `edgestore login --token` or `EDGESTORE_TOKEN` for automation. Persisted
+credentials are stored in the operating system credential store and are never
+written to a plaintext config file.
 
 The CLI manages accounts, projects and their keys, management tokens, buckets,
 files, uploads, team members, and invitations. Secrets are returned only when

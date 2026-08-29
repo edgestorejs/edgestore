@@ -166,8 +166,9 @@ Common workflows:
   program
     .command('login')
     .description('Log in to EdgeStore')
+    .option('--device', 'log in with a device code')
     .option('--token', 'read and securely store a management token')
-    .action(async (options: { token?: boolean }) => {
+    .action(async (options: { device?: boolean; token?: boolean }) => {
       await loginCommand(runtime, globalFlags(program), options);
     });
 

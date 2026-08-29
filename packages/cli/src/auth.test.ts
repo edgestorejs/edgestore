@@ -44,6 +44,27 @@ describe('auth', () => {
     );
   });
 
+  it('logs in with a device code without a local callback', async () => {
+    await runCli(['login', '--device'], fixture.runtime, '0.0.0');
+
+    expect(fixture.oauthDeviceLogin).toHaveBeenCalledWith(
+      expect.objectContaining({
+        apiOrigin: 'https://api.edgestore.dev',
+        resource: 'https://api.edgestore.dev/v2',
+      }),
+    );
+    expect(fixture.oauthLogin).not.toHaveBeenCalled();
+    expect(fixture.stderr()).toContain('ABCD-EFGH');
+    expect(fixture.stderr()).toContain(
+      'https://dashboard.edgestore.dev/oauth/device?user_code=ABCD-EFGH',
+    );
+    expect(fixture.openUrl).toHaveBeenCalledWith(
+      'https://dashboard.edgestore.dev/oauth/device?user_code=ABCD-EFGH',
+    );
+    expect(fixture.setCredential).toHaveBeenCalled();
+    expect(fixture.stdout()).toContain('Logged in as ravi@example.com.');
+  });
+
   it('selects an account authorized by the OAuth grant', async () => {
     fixture.globalConfig.activeAccounts['https://api.edgestore.dev'] =
       'acc_unavailable';
@@ -138,6 +159,7 @@ describe('auth', () => {
 
   it.each([
     ['browser', ['login']],
+    ['device', ['login', '--device']],
     ['token', ['login', '--token']],
   ])(
     'reports partial %s login when active-account storage fails',
@@ -232,6 +254,21 @@ describe('auth', () => {
     expect(fixture.readToken).not.toHaveBeenCalled();
     expect(JSON.parse(fixture.stderr()).error.code).toBe(
       'interactive_input_disabled',
+    );
+  });
+
+  it('rejects conflicting login modes', async () => {
+    const exitCode = await runCli(
+      ['--json', 'login', '--device', '--token'],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(2);
+    expect(fixture.oauthDeviceLogin).not.toHaveBeenCalled();
+    expect(fixture.readToken).not.toHaveBeenCalled();
+    expect(JSON.parse(fixture.stderr()).error.code).toBe(
+      'conflicting_login_modes',
     );
   });
 

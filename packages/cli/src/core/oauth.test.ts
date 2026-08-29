@@ -37,6 +37,20 @@ const oauthMocks = vi.hoisted(() => {
       expires_in: 3_600,
       scope: 'account:read project:read file:write',
     })),
+    initiateDeviceAuthorization: vi.fn(async () => ({
+      device_code: 'device_123',
+      user_code: 'ABCD-EFGH',
+      verification_uri: 'https://dashboard.example.test/oauth/device',
+      verification_uri_complete:
+        'https://dashboard.example.test/oauth/device?user_code=ABCD-EFGH',
+      expires_in: 600,
+    })),
+    pollDeviceAuthorizationGrant: vi.fn(async () => ({
+      access_token: 'device_access_123',
+      refresh_token: 'device_refresh_123',
+      expires_in: 3_600,
+      scope: 'account:read project:read file:write',
+    })),
     refreshTokenGrant: vi.fn(async () => ({
       access_token: 'access_456',
       refresh_token: 'refresh_456',
@@ -77,6 +91,8 @@ vi.mock('openid-client', () => ({
   discovery: oauthMocks.discovery,
   buildAuthorizationUrl: oauthMocks.buildAuthorizationUrl,
   authorizationCodeGrant: oauthMocks.authorizationCodeGrant,
+  initiateDeviceAuthorization: oauthMocks.initiateDeviceAuthorization,
+  pollDeviceAuthorizationGrant: oauthMocks.pollDeviceAuthorizationGrant,
   refreshTokenGrant: oauthMocks.refreshTokenGrant,
   tokenRevocation: oauthMocks.tokenRevocation,
 }));
@@ -117,6 +133,9 @@ describe('OAuth service', () => {
         application_type: 'native',
         redirect_uris: ['http://127.0.0.1:45678/oauth/callback'],
         token_endpoint_auth_method: 'none',
+        grant_types: expect.arrayContaining([
+          'urn:ietf:params:oauth:grant-type:device_code',
+        ]),
       }),
       expect.any(Function),
       expect.objectContaining({ algorithm: 'oauth2' }),
@@ -150,6 +169,79 @@ describe('OAuth service', () => {
     expect(callbackMocks.close).toHaveBeenCalledOnce();
   });
 
+  it('registers a callback-free client and completes device login', async () => {
+    const fetchImplementation: typeof fetch = async () =>
+      Response.json({
+        resource: 'https://api.example.test/v2',
+        authorization_servers: ['https://dashboard.example.test'],
+        scopes_supported: ['account:read', 'project:read', 'file:write'],
+      });
+    const openUrl = vi.fn(async (_url: string) => undefined);
+    const onDeviceAuthorization = vi.fn();
+    const onClientRegistered = vi.fn(async () => undefined);
+    const signal = new AbortController().signal;
+    const service = new DefaultOAuthService(fetchImplementation);
+
+    const result = await service.loginWithDeviceCode({
+      apiOrigin: 'https://api.example.test',
+      resource: 'https://api.example.test/v2',
+      signal,
+      openUrl,
+      onDeviceAuthorization,
+      onClientRegistered,
+    });
+
+    expect(oauthMocks.dynamicClientRegistration).toHaveBeenCalledWith(
+      new URL('https://dashboard.example.test'),
+      expect.objectContaining({
+        application_type: 'native',
+        redirect_uris: [],
+        grant_types: [
+          'urn:ietf:params:oauth:grant-type:device_code',
+          'refresh_token',
+        ],
+        response_types: [],
+      }),
+      expect.any(Function),
+      expect.objectContaining({ algorithm: 'oauth2' }),
+    );
+    expect(oauthMocks.initiateDeviceAuthorization).toHaveBeenCalledWith(
+      oauthMocks.config,
+      {
+        resource: 'https://api.example.test/v2',
+        scope: 'account:read project:read file:write',
+      },
+    );
+    expect(onDeviceAuthorization).toHaveBeenCalledWith({
+      userCode: 'ABCD-EFGH',
+      verificationUri: 'https://dashboard.example.test/oauth/device',
+      verificationUriComplete:
+        'https://dashboard.example.test/oauth/device?user_code=ABCD-EFGH',
+      expiresIn: 600,
+    });
+    expect(onDeviceAuthorization.mock.invocationCallOrder[0]).toBeLessThan(
+      openUrl.mock.invocationCallOrder[0]!,
+    );
+    expect(oauthMocks.pollDeviceAuthorizationGrant).toHaveBeenCalledWith(
+      oauthMocks.config,
+      expect.objectContaining({ device_code: 'device_123' }),
+      { resource: 'https://api.example.test/v2' },
+      { signal },
+    );
+    expect(onClientRegistered).toHaveBeenCalledWith({
+      version: 2,
+      clientId: 'client_123',
+      issuer: 'https://dashboard.example.test',
+    });
+    expect(result).toMatchObject({
+      credential: {
+        accessToken: 'device_access_123',
+        refreshToken: 'device_refresh_123',
+      },
+      client: { version: 2, clientId: 'client_123' },
+    });
+  });
+
   it('re-registers once when a cached client is rejected', async () => {
     oauthMocks.authorizationCodeGrant
       .mockRejectedValueOnce(
@@ -175,7 +267,7 @@ describe('OAuth service', () => {
       apiOrigin: 'https://api.example.test',
       resource: 'https://api.example.test/v2',
       client: {
-        version: 1,
+        version: 2,
         clientId: 'stale_client',
         issuer: 'https://dashboard.example.test',
         redirectUri: 'http://127.0.0.1:45678/oauth/callback',
@@ -210,7 +302,7 @@ describe('OAuth service', () => {
         apiOrigin: 'https://api.example.test',
         resource: 'https://api.example.test/v2',
         client: {
-          version: 1,
+          version: 2,
           clientId: 'client_123',
           issuer: 'https://dashboard.example.test',
           redirectUri: 'http://127.0.0.1:45678/oauth/callback',

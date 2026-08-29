@@ -23,10 +23,10 @@ const oauthCredentialSchema = z
 
 const oauthClientRegistrationSchema = z
   .object({
-    version: z.literal(1),
+    version: z.literal(2),
     clientId: z.string().min(1),
     issuer: z.string().url(),
-    redirectUri: z.string().url(),
+    redirectUri: z.string().url().optional(),
   })
   .strict();
 
