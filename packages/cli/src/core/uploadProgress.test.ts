@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import type { CliRuntime, GlobalFlags } from './runtime';
 import {
+  createUploadProgressDisplay,
   UploadProgressDisplay,
   type UploadProgressOutput,
 } from './uploadProgress';
@@ -93,6 +95,52 @@ describe('UploadProgressDisplay', () => {
 
     expect(live.mock.lastCall?.[0]).toBe('◆ archive.zip uploaded · 8 MB');
     display.close();
+  });
+
+  it('does not render live progress when stderr is redirected', () => {
+    const write = vi.fn(() => true);
+    const runtime = {
+      env: {},
+      io: {
+        stderr: { write },
+        outputIsTty: true,
+        stderrIsTty: false,
+      },
+    } as unknown as CliRuntime;
+    const flags: GlobalFlags = {
+      color: false,
+      progress: true,
+    };
+    const display = createUploadProgressDisplay(runtime, flags);
+
+    display.start(0, 'archive.zip', 100);
+    display.succeed(0);
+    display.close();
+
+    expect(write).not.toHaveBeenCalled();
+  });
+
+  it('renders live progress when stdout is redirected but stderr is a TTY', () => {
+    const write = vi.fn(() => true);
+    const runtime = {
+      env: {},
+      io: {
+        stderr: { write },
+        outputIsTty: false,
+        stderrIsTty: true,
+      },
+    } as unknown as CliRuntime;
+    const flags: GlobalFlags = {
+      color: false,
+      progress: true,
+    };
+    const display = createUploadProgressDisplay(runtime, flags);
+
+    display.start(0, 'archive.zip', 100);
+    display.succeed(0);
+    display.close();
+
+    expect(write).toHaveBeenCalled();
   });
 });
 

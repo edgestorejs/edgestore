@@ -633,6 +633,7 @@ export function createFixture(): CliTestFixture {
       stderr: stderrStream,
       inputIsTty: true,
       outputIsTty: false,
+      stderrIsTty: false,
     },
     signal: abortController.signal,
     setCwd(cwd) {

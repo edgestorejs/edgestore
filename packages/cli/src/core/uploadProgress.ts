@@ -117,7 +117,7 @@ export function createUploadProgressDisplay(
   flags: GlobalFlags,
 ): UploadProgressDisplay {
   const enabled =
-    flags.progress && !flags.json && !flags.plain && runtime.io.outputIsTty;
+    flags.progress && !flags.json && !flags.plain && runtime.io.stderrIsTty;
   return new UploadProgressDisplay(
     enabled
       ? createLogUpdate(runtime.io.stderr, {
