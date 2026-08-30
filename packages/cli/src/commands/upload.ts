@@ -62,6 +62,10 @@ export async function fileUploadCommand(
       '--path must end in / when uploading multiple files.',
     );
   }
+  validateUniqueUploadDestinations(localFiles, {
+    destinationPath: input.path,
+    keepName: input.keepName,
+  });
 
   const project = await resolvedProjectRef(runtime, flags, input.project);
   const sdk = await sdkFor(runtime, flags);
@@ -209,6 +213,13 @@ function batchUploadError(input: {
   notAttemptedPaths: string[];
 }): CliError {
   const firstFailure = input.failures[0]?.cause;
+  const suggestions = Array.from(
+    new Set(
+      input.failures.flatMap(
+        (failure) => failure.cause.options.suggestions ?? [],
+      ),
+    ),
+  );
   const lines = [
     `Upload batch finished with ${input.failures.length} failure${input.failures.length === 1 ? '' : 's'}.`,
     `Completed (${input.results.length}):`,
@@ -237,9 +248,50 @@ function batchUploadError(input: {
       notAttemptedPaths: input.notAttemptedPaths,
     },
     requestId: firstFailure?.options.requestId,
-    suggestions: firstFailure?.options.suggestions,
+    ...(suggestions.length ? { suggestions } : {}),
     exitCode: firstFailure?.exitCode,
   });
+}
+
+function validateUniqueUploadDestinations(
+  localFiles: string[],
+  options: { destinationPath?: string; keepName?: boolean },
+): void {
+  const filesByDestination = new Map<string, string[]>();
+  for (const localFile of localFiles) {
+    const destination = resolveUploadDestination(options.destinationPath, {
+      fileName: path.basename(localFile),
+      keepName: options.keepName,
+    });
+    if (!destination.fileName) continue;
+    const remotePath = path.posix.join(
+      destination.path ?? '',
+      destination.fileName,
+    );
+    const files = filesByDestination.get(remotePath) ?? [];
+    files.push(localFile);
+    filesByDestination.set(remotePath, files);
+  }
+
+  const conflicts = [...filesByDestination.entries()].filter(
+    ([, files]) => files.length > 1,
+  );
+  if (!conflicts.length) return;
+
+  throw usageError(
+    'upload_destination_conflict',
+    [
+      'Multiple files resolve to the same upload destination:',
+      ...conflicts.flatMap(([remotePath, files]) => [
+        `  ${remotePath}`,
+        ...files.map((file) => `    ${file}`),
+      ]),
+    ].join('\n'),
+    [
+      'Rename the local files so each destination is unique.',
+      'Omit --keep-name to let EdgeStore generate unique file names.',
+    ],
+  );
 }
 
 function resolveUploadDestination(

@@ -420,6 +420,47 @@ describe('file', () => {
     });
   });
 
+  it('rejects multiple files that resolve to the same destination', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-upload-'),
+    );
+    fixture.runtime.cwd = temporaryDirectory;
+    await Promise.all(
+      ['first', 'second'].map(async (directory) => {
+        const parent = path.join(temporaryDirectory!, directory);
+        await mkdir(parent);
+        await writeFile(path.join(parent, 'photo.jpg'), directory);
+      }),
+    );
+
+    const exitCode = await runCli(
+      [
+        '--json',
+        'file',
+        'upload',
+        'first/photo.jpg',
+        'second/photo.jpg',
+        '--bucket',
+        'publicFiles',
+        '--project',
+        project.basePath,
+        '--path',
+        'gallery/',
+        '--keep-name',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(2);
+    expect(fixture.uploadFile).not.toHaveBeenCalled();
+    const error = JSON.parse(fixture.stderr()).error;
+    expect(error).toMatchObject({ code: 'upload_destination_conflict' });
+    expect(error.message).toContain('gallery/photo.jpg');
+    expect(error.message).toContain('first/photo.jpg');
+    expect(error.message).toContain('second/photo.jpg');
+  });
+
   it('reports every completed and failed file after a batch settles', async () => {
     temporaryDirectory = await mkdtemp(
       path.join(tmpdir(), 'edgestore-cli-upload-'),
@@ -650,6 +691,54 @@ describe('file', () => {
       },
       suggestions: [
         `edgestore --json --api-url https://api-dev.edgestore.dev file upload-cancel upload_123 --yes --project ${project.basePath}`,
+      ],
+    });
+  });
+
+  it('reports cleanup commands for every failed batch upload', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-upload-'),
+    );
+    fixture.runtime.cwd = temporaryDirectory;
+    await Promise.all(
+      ['first.txt', 'second.txt'].map((file) =>
+        writeFile(path.join(temporaryDirectory!, file), file),
+      ),
+    );
+    fixture.uploadFile.mockImplementation(async (input) => {
+      const fileName = await (input.source as Blob).text();
+      throw new EdgeStoreUploadCleanupError({
+        message: 'Automatic cancellation failed.',
+        uploadId: `upload_${fileName}`,
+        uploadCause: new Error(`${fileName} transfer failed`),
+        cleanupCause: new Error('cleanup unavailable'),
+      });
+    });
+
+    const exitCode = await runCli(
+      [
+        '--json',
+        '--api-url',
+        'https://api-dev.edgestore.dev',
+        'file',
+        'upload',
+        'first.txt',
+        'second.txt',
+        '--bucket',
+        'publicFiles',
+        '--project',
+        project.basePath,
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+
+    expect(exitCode).toBe(1);
+    expect(JSON.parse(fixture.stderr()).error).toMatchObject({
+      code: 'file_upload_incomplete',
+      suggestions: [
+        `edgestore --json --api-url https://api-dev.edgestore.dev file upload-cancel upload_first.txt --yes --project ${project.basePath}`,
+        `edgestore --json --api-url https://api-dev.edgestore.dev file upload-cancel upload_second.txt --yes --project ${project.basePath}`,
       ],
     });
   });
