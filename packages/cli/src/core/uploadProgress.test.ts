@@ -82,6 +82,18 @@ describe('UploadProgressDisplay', () => {
     expect(done).toHaveBeenCalledOnce();
     expect(vi.getTimerCount()).toBe(0);
   });
+
+  it('uses familiar labels for binary-scaled file sizes', () => {
+    vi.useFakeTimers();
+    const { live } = fakeLiveOutput();
+    const display = new UploadProgressDisplay(live, false);
+
+    display.start(0, 'archive.zip', 8 * 1024 * 1024);
+    display.succeed(0);
+
+    expect(live.mock.lastCall?.[0]).toBe('◆ archive.zip uploaded · 8 MB');
+    display.close();
+  });
 });
 
 function fakeLiveOutput() {
