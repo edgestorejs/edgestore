@@ -48,12 +48,22 @@ export async function putWithRetry(
     requireETag?: boolean;
   },
 ): Promise<string | undefined> {
+  let reportedBytes = 0;
+  const onProgress = options.onProgress
+    ? (transferredBytes: number) => {
+        const nextBytes = Math.max(reportedBytes, transferredBytes);
+        if (nextBytes === reportedBytes) return;
+        reportedBytes = nextBytes;
+        options.onProgress?.(reportedBytes);
+      }
+    : undefined;
+
   try {
     return await retry(
       async (signal) => {
         const response = await transport.fetch(
           options.url,
-          createUploadRequest(options.body, signal, options.onProgress),
+          createUploadRequest(options.body, signal, onProgress),
         );
 
         try {
