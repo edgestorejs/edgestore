@@ -58,6 +58,33 @@ describe('putWithRetry', () => {
     expect(onProgress.mock.calls).toEqual([[2], [5]]);
   });
 
+  it('preserves progress callback errors without retrying', async () => {
+    const progressError = new Error('Progress handler failed.');
+    const onProgress = vi.fn(() => {
+      throw progressError;
+    });
+    const fetch = vi.fn<typeof globalThis.fetch>(async (input, init) => {
+      const request = new Request(input, init);
+      await request.text();
+      return new Response(null, { status: 200 });
+    });
+    const transport = createTransport({
+      credentials: classifyCredentials({ token: 'management-token' }),
+      fetch,
+    });
+
+    await expect(
+      putWithRetry(transport, {
+        url: 'https://storage.example/upload',
+        body: chunkedBlob(),
+        uploadId: 'upload_123',
+        onProgress,
+      }),
+    ).rejects.toBe(progressError);
+    expect(fetch).toHaveBeenCalledOnce();
+    expect(onProgress).toHaveBeenCalledOnce();
+  });
+
   it('preserves nested Blob read errors without retrying', async () => {
     const blobReadError = new DOMException(
       'The source changed while being read.',

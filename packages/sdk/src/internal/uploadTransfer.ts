@@ -49,12 +49,18 @@ export async function putWithRetry(
   },
 ): Promise<string | undefined> {
   let reportedBytes = 0;
+  let progressFailure: { error: unknown } | undefined;
   const onProgress = options.onProgress
     ? (transferredBytes: number) => {
         const nextBytes = Math.max(reportedBytes, transferredBytes);
         if (nextBytes === reportedBytes) return;
-        reportedBytes = nextBytes;
-        options.onProgress?.(reportedBytes);
+        try {
+          options.onProgress?.(nextBytes);
+          reportedBytes = nextBytes;
+        } catch (error) {
+          progressFailure = { error };
+          throw error;
+        }
       }
     : undefined;
 
@@ -89,10 +95,12 @@ export async function putWithRetry(
       {
         signal: options.signal,
         isRetryable: (error) =>
-          error instanceof SignedUploadResponseError
-            ? isRetryableStatus(error.status)
-            : !findBlobReadError(error) &&
-              !(error instanceof EdgeStoreUploadError),
+          progressFailure
+            ? false
+            : error instanceof SignedUploadResponseError
+              ? isRetryableStatus(error.status)
+              : !findBlobReadError(error) &&
+                !(error instanceof EdgeStoreUploadError),
         getRetryDelayMs: (error) =>
           error instanceof SignedUploadResponseError
             ? error.retryAfterMs
@@ -100,6 +108,7 @@ export async function putWithRetry(
       },
     );
   } catch (error) {
+    if (progressFailure) throw progressFailure.error;
     if (error instanceof EdgeStoreAbortError) throw error;
     if (error instanceof EdgeStoreUploadError) throw error;
     const blobReadError = findBlobReadError(error);
