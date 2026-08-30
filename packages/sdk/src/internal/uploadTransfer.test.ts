@@ -4,6 +4,41 @@ import { createTransport } from './transport';
 import { putWithRetry } from './uploadTransfer';
 
 describe('putWithRetry', () => {
+  it('reports uploaded bytes while preserving Blob request headers', async () => {
+    const onProgress = vi.fn();
+    const body = new Blob(['hello'], { type: 'text/plain' });
+    Object.defineProperty(body, 'stream', {
+      value: () =>
+        new ReadableStream<Uint8Array>({
+          start(controller) {
+            controller.enqueue(new TextEncoder().encode('he'));
+            controller.enqueue(new TextEncoder().encode('llo'));
+            controller.close();
+          },
+        }),
+    });
+    const fetch = vi.fn<typeof globalThis.fetch>(async (input, init) => {
+      const request = new Request(input, init);
+      expect(request.headers.get('content-length')).toBe('5');
+      expect(request.headers.get('content-type')).toBe('text/plain');
+      await expect(request.text()).resolves.toBe('hello');
+      return new Response(null, { status: 200 });
+    });
+    const transport = createTransport({
+      credentials: classifyCredentials({ token: 'management-token' }),
+      fetch,
+    });
+
+    await putWithRetry(transport, {
+      url: 'https://storage.example/upload',
+      body,
+      uploadId: 'upload_123',
+      onProgress,
+    });
+
+    expect(onProgress.mock.calls).toEqual([[2], [5]]);
+  });
+
   it('preserves nested Blob read errors without retrying', async () => {
     const blobReadError = new DOMException(
       'The source changed while being read.',

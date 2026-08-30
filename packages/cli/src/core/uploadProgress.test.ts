@@ -9,7 +9,7 @@ describe('UploadProgressDisplay', () => {
 
   it('redraws phase changes and ignores duplicate progress events', () => {
     vi.useFakeTimers();
-    const { live, persist } = fakeLiveOutput();
+    const { done, live } = fakeLiveOutput();
     const display = new UploadProgressDisplay(live, false);
 
     display.start(0, 'archive.zip', 100);
@@ -27,12 +27,14 @@ describe('UploadProgressDisplay', () => {
       percentage: 0,
       phase: 'uploading',
     });
+    vi.advanceTimersByTime(80);
     display.update(0, {
       transferredBytes: 50,
       totalBytes: 100,
       percentage: 50,
       phase: 'uploading',
     });
+    vi.advanceTimersByTime(80);
     display.update(0, {
       transferredBytes: 50,
       totalBytes: 100,
@@ -45,6 +47,7 @@ describe('UploadProgressDisplay', () => {
       percentage: 100,
       phase: 'processing',
     });
+    vi.advanceTimersByTime(80);
 
     expect(live).toHaveBeenCalledTimes(4);
     expect(live.mock.calls[1]?.[0]).toContain('0 B / 100 B · uploading');
@@ -52,19 +55,31 @@ describe('UploadProgressDisplay', () => {
     expect(live.mock.calls[3]?.[0]).toContain('100 B / 100 B · processing');
 
     display.succeed(0);
-    expect(persist).toHaveBeenCalledOnce();
-    expect(persist).toHaveBeenCalledWith('◆ archive.zip uploaded · 100 B');
+    expect(live.mock.lastCall?.[0]).toBe('◆ archive.zip uploaded · 100 B');
+
+    display.close();
+    expect(done).toHaveBeenCalledOnce();
   });
 
-  it('clears an unfinished live row when the command closes', () => {
+  it('keeps rows in input order as uploads finish', () => {
     vi.useFakeTimers();
-    const { clear, live } = fakeLiveOutput();
+    const { done, live } = fakeLiveOutput();
     const display = new UploadProgressDisplay(live, false);
 
-    display.start(0, 'archive.zip', 100);
+    display.start(0, 'first.zip', 100);
+    display.start(1, 'second.zip', 200);
+    display.start(2, 'third.zip', 300);
+    display.succeed(2);
+    display.succeed(1);
+
+    const rows = String(live.mock.lastCall?.[0]).split('\n');
+    expect(rows[0]).toContain('first.zip');
+    expect(rows[1]).toBe('◆ second.zip uploaded · 200 B');
+    expect(rows[2]).toBe('◆ third.zip uploaded · 300 B');
+
     display.close();
 
-    expect(clear).toHaveBeenCalled();
+    expect(done).toHaveBeenCalledOnce();
     expect(vi.getTimerCount()).toBe(0);
   });
 });
@@ -72,10 +87,11 @@ describe('UploadProgressDisplay', () => {
 function fakeLiveOutput() {
   const clear = vi.fn();
   const persist = vi.fn();
+  const done = vi.fn();
   const live = Object.assign(vi.fn(), {
     clear,
-    done: vi.fn(),
+    done,
     persist,
   }) as unknown as UploadProgressOutput & ReturnType<typeof vi.fn>;
-  return { clear, live, persist };
+  return { clear, done, live, persist };
 }

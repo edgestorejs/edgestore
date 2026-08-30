@@ -12,6 +12,7 @@ type UploadEntry = {
   fileName: string;
   totalBytes: number;
   progress: UploadProgress;
+  status: 'active' | 'succeeded' | 'failed' | 'canceled';
 };
 
 export class UploadProgressDisplay {
@@ -38,6 +39,7 @@ export class UploadProgressDisplay {
         percentage: 0,
         phase: 'preparing',
       },
+      status: 'active',
     });
     this.startTimer();
     this.render();
@@ -45,36 +47,30 @@ export class UploadProgressDisplay {
 
   update(id: number, progress: UploadProgress): void {
     const entry = this.entries.get(id);
-    if (!entry || sameProgress(entry.progress, progress)) return;
+    if (entry?.status !== 'active' || sameProgress(entry.progress, progress))
+      return;
     entry.progress = progress;
-    this.render();
   }
 
   succeed(id: number): void {
     const entry = this.entries.get(id);
     if (!entry || !this.live) return;
-    this.entries.delete(id);
-    this.live.persist(
-      `${this.colors.green('◆')} ${entry.fileName} ${this.colors.green('uploaded')} · ${formatBytes(entry.totalBytes)}`,
-    );
+    entry.status = 'succeeded';
     this.afterEntryFinished();
   }
 
   fail(id: number, canceled: boolean): void {
     const entry = this.entries.get(id);
     if (!entry || !this.live) return;
-    this.entries.delete(id);
-    const label = canceled ? 'canceled' : 'failed';
-    this.live.persist(
-      `${this.colors.red('■')} ${entry.fileName} ${this.colors.red(label)}`,
-    );
+    entry.status = canceled ? 'canceled' : 'failed';
     this.afterEntryFinished();
   }
 
   close(): void {
     this.stopTimer();
+    this.render();
+    this.live?.done();
     this.entries.clear();
-    this.live?.clear();
   }
 
   private startTimer(): void {
@@ -93,7 +89,11 @@ export class UploadProgressDisplay {
   }
 
   private afterEntryFinished(): void {
-    if (!this.entries.size) this.stopTimer();
+    if (
+      [...this.entries.values()].every((entry) => entry.status !== 'active')
+    ) {
+      this.stopTimer();
+    }
     this.render();
   }
 
@@ -134,6 +134,13 @@ function renderEntry(
   spinner: string,
   colors: ReturnType<typeof createColors>,
 ): string {
+  if (entry.status === 'succeeded') {
+    return `${colors.green('◆')} ${entry.fileName} ${colors.green('uploaded')} · ${formatBytes(entry.totalBytes)}`;
+  }
+  if (entry.status !== 'active') {
+    return `${colors.red('■')} ${entry.fileName} ${colors.red(entry.status)}`;
+  }
+
   const { progress } = entry;
   const percentage = Math.max(0, Math.min(100, progress.percentage));
   const completed = Math.round((percentage / 100) * BAR_WIDTH);
