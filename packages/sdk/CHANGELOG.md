@@ -1,5 +1,12 @@
 # @edgestore/sdk
 
+## 1.0.0-next.4
+
+### Patch Changes
+
+- [#233](https://github.com/edgestorejs/edgestore/pull/233) [`cd209e0`](https://github.com/edgestorejs/edgestore/commit/cd209e0036bad76bf8c59f8e19f9c468ef947de7) Thanks [@raviships](https://github.com/raviships)! - Report byte-level upload transfer progress and render stable, in-place upload
+  rows in interactive terminals instead of appending one line for every update.
+
 ## 1.0.0-next.3
 
 ## 1.0.0-next.2

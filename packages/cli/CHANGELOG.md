@@ -1,5 +1,19 @@
 # @edgestore/cli
 
+## 1.0.0-next.4
+
+### Minor Changes
+
+- [#233](https://github.com/edgestorejs/edgestore/pull/233) [`89555c5`](https://github.com/edgestorejs/edgestore/commit/89555c5c9f97a192be2a3612cb1bbbe1e5129e7c) Thanks [@raviships](https://github.com/raviships)! - Upload up to three files concurrently and report all file-level failures after
+  the active batch settles.
+
+### Patch Changes
+
+- [#233](https://github.com/edgestorejs/edgestore/pull/233) [`cd209e0`](https://github.com/edgestorejs/edgestore/commit/cd209e0036bad76bf8c59f8e19f9c468ef947de7) Thanks [@raviships](https://github.com/raviships)! - Report byte-level upload transfer progress and render stable, in-place upload
+  rows in interactive terminals instead of appending one line for every update.
+- Updated dependencies [[`cd209e0`](https://github.com/edgestorejs/edgestore/commit/cd209e0036bad76bf8c59f8e19f9c468ef947de7)]:
+  - @edgestore/sdk@1.0.0-next.4
+
 ## 1.0.0-next.3
 
 ### Minor Changes

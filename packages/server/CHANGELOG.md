@@ -1,5 +1,13 @@
 # @edgestore/server
 
+## 1.0.0-next.4
+
+### Patch Changes
+
+- Updated dependencies [[`cd209e0`](https://github.com/edgestorejs/edgestore/commit/cd209e0036bad76bf8c59f8e19f9c468ef947de7)]:
+  - @edgestore/sdk@1.0.0-next.4
+  - @edgestore/shared@1.0.0-next.4
+
 ## 1.0.0-next.3
 
 ### Patch Changes

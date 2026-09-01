@@ -1,5 +1,12 @@
 # @edgestore/react
 
+## 1.0.0-next.4
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @edgestore/shared@1.0.0-next.4
+
 ## 1.0.0-next.3
 
 ### Patch Changes
