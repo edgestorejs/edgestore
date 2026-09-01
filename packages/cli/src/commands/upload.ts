@@ -67,7 +67,7 @@ export async function fileUploadCommand(
           localFile,
           mimeType ? { type: mimeType } : undefined,
         );
-        progressDisplay.start(index, fileName, source.size);
+        progressDisplay?.start(index, fileName, source.size);
         try {
           const completed = await sdk.management.uploads.upload({
             project,
@@ -78,12 +78,17 @@ export async function fileUploadCommand(
             ...(destination.path ? { path: destination.path } : {}),
             mimeType,
             signal: runtime.signal,
-            onProgress: (progress) => progressDisplay.update(index, progress),
+            ...(progressDisplay
+              ? {
+                  onProgress: (progress) =>
+                    progressDisplay.update(index, progress),
+                }
+              : {}),
           });
-          progressDisplay.succeed(index);
+          progressDisplay?.succeed(index);
           results.push({ localPath: localFile, ...completed });
         } catch (error) {
-          progressDisplay.fail(index, runtime.signal.aborted);
+          progressDisplay?.fail(index, runtime.signal.aborted);
           throw normalizeUploadError(error, { runtime, flags, project });
         }
       } catch (error) {
@@ -118,7 +123,7 @@ export async function fileUploadCommand(
       }
     }
   } finally {
-    progressDisplay.close();
+    progressDisplay?.close();
   }
   const human = results
     .map((result) => {

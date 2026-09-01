@@ -157,6 +157,9 @@ describe('file', () => {
     );
 
     expect(fixture.uploadFile).toHaveBeenCalledTimes(5);
+    for (const [input] of fixture.uploadFile.mock.calls) {
+      expect(input).not.toHaveProperty('onProgress');
+    }
     expect(fixture.uploadFile.mock.calls[0]?.[0]).toMatchObject({
       signedReadUrl: {},
     });

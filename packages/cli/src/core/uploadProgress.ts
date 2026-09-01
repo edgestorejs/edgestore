@@ -22,14 +22,13 @@ export class UploadProgressDisplay {
   private frame = 0;
 
   constructor(
-    private readonly live: UploadProgressOutput | undefined,
+    private readonly live: UploadProgressOutput,
     color: boolean,
   ) {
     this.colors = createColors(color);
   }
 
   start(id: number, fileName: string, totalBytes: number): void {
-    if (!this.live) return;
     this.entries.set(id, {
       fileName,
       totalBytes,
@@ -54,14 +53,14 @@ export class UploadProgressDisplay {
 
   succeed(id: number): void {
     const entry = this.entries.get(id);
-    if (!entry || !this.live) return;
+    if (!entry) return;
     entry.status = 'succeeded';
     this.afterEntryFinished();
   }
 
   fail(id: number, canceled: boolean): void {
     const entry = this.entries.get(id);
-    if (!entry || !this.live) return;
+    if (!entry) return;
     entry.status = canceled ? 'canceled' : 'failed';
     this.afterEntryFinished();
   }
@@ -69,7 +68,7 @@ export class UploadProgressDisplay {
   close(): void {
     this.stopTimer();
     this.render();
-    this.live?.done();
+    this.live.done();
     this.entries.clear();
   }
 
@@ -98,7 +97,6 @@ export class UploadProgressDisplay {
   }
 
   private render(): void {
-    if (!this.live) return;
     if (!this.entries.size) {
       this.live.clear();
       return;
@@ -115,17 +113,16 @@ export class UploadProgressDisplay {
 export function createUploadProgressDisplay(
   runtime: CliRuntime,
   flags: GlobalFlags,
-): UploadProgressDisplay {
+): UploadProgressDisplay | undefined {
   const enabled =
     flags.progress && !flags.json && !flags.plain && runtime.io.stderrIsTty;
+  if (!enabled) return undefined;
   return new UploadProgressDisplay(
-    enabled
-      ? createLogUpdate(runtime.io.stderr, {
-          showCursor: true,
-          defaultWidth: 80,
-        })
-      : undefined,
-    enabled && flags.color && runtime.env.NO_COLOR === undefined,
+    createLogUpdate(runtime.io.stderr, {
+      showCursor: true,
+      defaultWidth: 80,
+    }),
+    flags.color && runtime.env.NO_COLOR === undefined,
   );
 }
 

@@ -113,10 +113,7 @@ describe('UploadProgressDisplay', () => {
     };
     const display = createUploadProgressDisplay(runtime, flags);
 
-    display.start(0, 'archive.zip', 100);
-    display.succeed(0);
-    display.close();
-
+    expect(display).toBeUndefined();
     expect(write).not.toHaveBeenCalled();
   });
 
@@ -135,6 +132,8 @@ describe('UploadProgressDisplay', () => {
       progress: true,
     };
     const display = createUploadProgressDisplay(runtime, flags);
+    expect(display).toBeDefined();
+    if (!display) throw new Error('Expected an upload progress display.');
 
     display.start(0, 'archive.zip', 100);
     display.succeed(0);
