@@ -22,6 +22,7 @@ export function putWithRetry(
     body: Blob;
     uploadId: string;
     signal?: AbortSignal;
+    onProgress?: (transferredBytes: number) => void;
     requireETag: true;
   },
 ): Promise<string>;
@@ -32,6 +33,7 @@ export function putWithRetry(
     body: Blob;
     uploadId: string;
     signal?: AbortSignal;
+    onProgress?: (transferredBytes: number) => void;
     requireETag?: false;
   },
 ): Promise<string | undefined>;
@@ -42,17 +44,33 @@ export async function putWithRetry(
     body: Blob;
     uploadId: string;
     signal?: AbortSignal;
+    onProgress?: (transferredBytes: number) => void;
     requireETag?: boolean;
   },
 ): Promise<string | undefined> {
+  let reportedBytes = 0;
+  let progressFailure: { error: unknown } | undefined;
+  const onProgress = options.onProgress
+    ? (transferredBytes: number) => {
+        const nextBytes = Math.max(reportedBytes, transferredBytes);
+        if (nextBytes === reportedBytes) return;
+        try {
+          options.onProgress?.(nextBytes);
+          reportedBytes = nextBytes;
+        } catch (error) {
+          progressFailure = { error };
+          throw error;
+        }
+      }
+    : undefined;
+
   try {
     return await retry(
       async (signal) => {
-        const response = await transport.fetch(options.url, {
-          method: 'PUT',
-          body: options.body,
-          signal,
-        });
+        const response = await transport.fetch(
+          options.url,
+          createUploadRequest(options.body, signal, onProgress),
+        );
 
         try {
           if (!response.ok) {
@@ -77,10 +95,12 @@ export async function putWithRetry(
       {
         signal: options.signal,
         isRetryable: (error) =>
-          error instanceof SignedUploadResponseError
-            ? isRetryableStatus(error.status)
-            : !findBlobReadError(error) &&
-              !(error instanceof EdgeStoreUploadError),
+          progressFailure
+            ? false
+            : error instanceof SignedUploadResponseError
+              ? isRetryableStatus(error.status)
+              : !findBlobReadError(error) &&
+                !(error instanceof EdgeStoreUploadError),
         getRetryDelayMs: (error) =>
           error instanceof SignedUploadResponseError
             ? error.retryAfterMs
@@ -88,6 +108,7 @@ export async function putWithRetry(
       },
     );
   } catch (error) {
+    if (progressFailure) throw progressFailure.error;
     if (error instanceof EdgeStoreAbortError) throw error;
     if (error instanceof EdgeStoreUploadError) throw error;
     const blobReadError = findBlobReadError(error);
@@ -100,6 +121,37 @@ export async function putWithRetry(
       { cause: error },
     );
   }
+}
+
+function createUploadRequest(
+  body: Blob,
+  signal: AbortSignal | undefined,
+  onProgress: ((transferredBytes: number) => void) | undefined,
+): RequestInit {
+  if (!onProgress) {
+    return { method: 'PUT', body, signal };
+  }
+
+  let transferredBytes = 0;
+  const stream = body.stream().pipeThrough(
+    new TransformStream<Uint8Array, Uint8Array>({
+      transform(chunk, controller) {
+        transferredBytes += chunk.byteLength;
+        onProgress(Math.min(transferredBytes, body.size));
+        controller.enqueue(chunk);
+      },
+    }),
+  );
+  const headers = new Headers({ 'content-length': String(body.size) });
+  if (body.type) headers.set('content-type', body.type);
+
+  return {
+    method: 'PUT',
+    body: stream,
+    headers,
+    signal,
+    duplex: 'half',
+  } as RequestInit & { duplex: 'half' };
 }
 
 function findBlobReadError(error: unknown): DOMException | undefined {
