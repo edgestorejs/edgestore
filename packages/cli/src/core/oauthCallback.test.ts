@@ -1,3 +1,5 @@
+import { once } from 'node:events';
+import { connect } from 'node:net';
 import { describe, expect, it } from 'vitest';
 import {
   isReusableOAuthRedirectUri,
@@ -75,5 +77,31 @@ describe('OAuth loopback callback', () => {
     await expect(callback.callback).rejects.toMatchObject({
       name: 'AbortError',
     });
+  });
+
+  it('closes idle browser connections without blocking shutdown', async () => {
+    const callback = await openOAuthCallbackServer(
+      'expected-state',
+      new AbortController().signal,
+    );
+    const redirectUri = new URL(callback.redirectUri);
+    const socket = connect(Number(redirectUri.port), redirectUri.hostname);
+
+    try {
+      await once(socket, 'connect');
+      const disconnected = new Promise<void>((resolve) => {
+        socket.once('close', resolve);
+        socket.once('error', () => resolve());
+      });
+
+      await callback.close();
+      await disconnected;
+
+      await expect(callback.callback).rejects.toMatchObject({
+        name: 'AbortError',
+      });
+    } finally {
+      socket.destroy();
+    }
   });
 });
