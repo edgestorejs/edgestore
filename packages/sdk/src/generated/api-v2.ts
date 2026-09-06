@@ -24,6 +24,26 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/file-delivery/{basePath}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Resolve public file routing policy
+         * @description Returns non-secret project routing policy for file delivery. No authentication is required. File authorization is enforced separately at the edge.
+         */
+        get: operations["v2.fileDelivery.get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/whoami": {
         parameters: {
             query?: never;
@@ -956,6 +976,27 @@ export type paths = {
 export type webhooks = Record<string, never>;
 export type components = {
     schemas: {
+        /** @description Billing changes are temporarily unavailable while we perform maintenance. Please try again shortly. */
+        BillingMaintenanceError: {
+            /** @description A structured EdgeStore API error. */
+            error: {
+                /**
+                 * @description Stable machine-readable error code.
+                 * @constant
+                 */
+                code: "billing_maintenance";
+                /**
+                 * @description Human-readable explanation of the error.
+                 * @default Billing changes are temporarily unavailable while we perform maintenance. Please try again shortly.
+                 */
+                message: string;
+                /**
+                 * @description HTTP status code returned with the error.
+                 * @constant
+                 */
+                status: 503;
+            };
+        };
         /** @description Invalid request */
         InvalidRequestError: {
             /** @description A structured EdgeStore API error. */
@@ -1137,6 +1178,27 @@ export type components = {
                  * @constant
                  */
                 status: 404;
+            };
+        };
+        /** @description The project contains files */
+        ProjectNotEmptyError: {
+            /** @description A structured EdgeStore API error. */
+            error: {
+                /**
+                 * @description Stable machine-readable error code.
+                 * @constant
+                 */
+                code: "project_not_empty";
+                /**
+                 * @description Human-readable explanation of the error.
+                 * @default The project contains files
+                 */
+                message: string;
+                /**
+                 * @description HTTP status code returned with the error.
+                 * @constant
+                 */
+                status: 409;
             };
         };
         /** @description Bucket not found */
@@ -1789,7 +1851,7 @@ export type components = {
              */
             type: "file" | "image";
             /**
-             * @description Read visibility. Protected buckets require signed read URLs.
+             * @description Whether reads are public or require signed URLs.
              * @enum {string}
              */
             visibility: "public" | "protected";
@@ -1855,6 +1917,79 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InvalidRequestError"];
+                };
+            };
+            /** @description 413 */
+            413: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayloadTooLargeError"];
+                };
+            };
+            /** @description 500 */
+            500: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InternalError"];
+                };
+            };
+        };
+    };
+    "v2.fileDelivery.get": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                basePath: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Successful response payload. */
+                        data: {
+                            /** @description Canonical project ID. */
+                            projectId: string;
+                            /** @description Immutable project storage prefix. */
+                            basePath: string;
+                            /** @description Whether the shared legacy file hostname may serve this project. */
+                            legacyFileDomainEnabled: boolean;
+                        };
+                    };
+                };
+            };
+            /** @description 400 */
+            400: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvalidRequestError"];
+                };
+            };
+            /** @description 404 */
+            404: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProjectNotFoundError"];
                 };
             };
             /** @description 413 */
@@ -2071,6 +2206,16 @@ export interface operations {
                     "application/json": components["schemas"]["InternalError"];
                 };
             };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
+                };
+            };
         };
     };
     "v2.management.accounts.list": {
@@ -2175,6 +2320,16 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InternalError"];
+                };
+            };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
                 };
             };
         };
@@ -2296,6 +2451,16 @@ export interface operations {
                     "application/json": components["schemas"]["InternalError"];
                 };
             };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
+                };
+            };
         };
     };
     "v2.management.accounts.leave": {
@@ -2390,6 +2555,16 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InternalError"];
+                };
+            };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
                 };
             };
         };
@@ -2493,6 +2668,16 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InternalError"];
+                };
+            };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
                 };
             };
         };
@@ -2651,6 +2836,16 @@ export interface operations {
                     "application/json": components["schemas"]["InternalError"];
                 };
             };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
+                };
+            };
         };
     };
     "v2.management.projects.get": {
@@ -2755,6 +2950,16 @@ export interface operations {
                     "application/json": components["schemas"]["InternalError"];
                 };
             };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
+                };
+            };
         };
     };
     "v2.management.projects.delete": {
@@ -2828,7 +3033,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["BucketEmptyInProgressError"];
+                    "application/json": components["schemas"]["ProjectNotEmptyError"] | components["schemas"]["BucketEmptyInProgressError"];
                 };
             };
             /** @description 413 */
@@ -2849,6 +3054,16 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InternalError"];
+                };
+            };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
                 };
             };
         };
@@ -2937,6 +3152,16 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InternalError"];
+                };
+            };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
                 };
             };
         };
@@ -3061,6 +3286,16 @@ export interface operations {
                     "application/json": components["schemas"]["InternalError"];
                 };
             };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
+                };
+            };
         };
     };
     "v2.management.buckets.get": {
@@ -3148,6 +3383,16 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InternalError"];
+                };
+            };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
                 };
             };
         };
@@ -3245,6 +3490,16 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InternalError"];
+                };
+            };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
                 };
             };
         };
@@ -3348,6 +3603,16 @@ export interface operations {
                     "application/json": components["schemas"]["InternalError"];
                 };
             };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
+                };
+            };
         };
     };
     "v2.management.buckets.empty": {
@@ -3447,6 +3712,16 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InternalError"];
+                };
+            };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
                 };
             };
         };
@@ -3585,6 +3860,16 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InternalError"];
+                };
+            };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
                 };
             };
         };
@@ -3727,6 +4012,16 @@ export interface operations {
                     "application/json": components["schemas"]["InternalError"];
                 };
             };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
+                };
+            };
         };
     };
     "v2.management.buckets.emptyJobs.retry": {
@@ -3839,6 +4134,16 @@ export interface operations {
                     "application/json": components["schemas"]["InternalError"];
                 };
             };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
+                };
+            };
         };
     };
     "v2.management.files.list": {
@@ -3936,6 +4241,16 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InternalError"];
+                };
+            };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
                 };
             };
         };
@@ -4045,6 +4360,16 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InternalError"];
+                };
+            };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
                 };
             };
         };
@@ -4179,6 +4504,16 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InternalError"];
+                };
+            };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
                 };
             };
         };
@@ -4357,6 +4692,16 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InternalError"];
+                };
+            };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
                 };
             };
         };
@@ -4558,6 +4903,16 @@ export interface operations {
                     "application/json": components["schemas"]["InternalError"];
                 };
             };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
+                };
+            };
         };
     };
     "v2.management.uploads.get": {
@@ -4690,6 +5045,16 @@ export interface operations {
                     "application/json": components["schemas"]["InternalError"];
                 };
             };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
+                };
+            };
         };
     };
     "v2.management.uploads.cancel": {
@@ -4795,6 +5160,16 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InternalError"];
+                };
+            };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
                 };
             };
         };
@@ -4909,6 +5284,16 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InternalError"];
+                };
+            };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
                 };
             };
         };
@@ -5031,6 +5416,16 @@ export interface operations {
                     "application/json": components["schemas"]["InternalError"];
                 };
             };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
+                };
+            };
         };
     };
     "v2.management.projectKeys.list": {
@@ -5134,6 +5529,16 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InternalError"];
+                };
+            };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
                 };
             };
         };
@@ -5251,6 +5656,16 @@ export interface operations {
                     "application/json": components["schemas"]["InternalError"];
                 };
             };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
+                };
+            };
         };
     };
     "v2.management.projectKeys.revoke": {
@@ -5346,6 +5761,16 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InternalError"];
+                };
+            };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
                 };
             };
         };
@@ -5460,6 +5885,16 @@ export interface operations {
                     "application/json": components["schemas"]["InternalError"];
                 };
             };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
+                };
+            };
         };
     };
     "v2.management.members.remove": {
@@ -5555,6 +5990,16 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InternalError"];
+                };
+            };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
                 };
             };
         };
@@ -5688,6 +6133,16 @@ export interface operations {
                     "application/json": components["schemas"]["InternalError"];
                 };
             };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
+                };
+            };
         };
     };
     "v2.management.invitations.list": {
@@ -5801,6 +6256,16 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InternalError"];
+                };
+            };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
                 };
             };
         };
@@ -5946,6 +6411,16 @@ export interface operations {
                     "application/json": components["schemas"]["InternalError"];
                 };
             };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
+                };
+            };
         };
     };
     "v2.management.invitations.revoke": {
@@ -6041,6 +6516,16 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InternalError"];
+                };
+            };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
                 };
             };
         };
@@ -6167,6 +6652,16 @@ export interface operations {
                     "application/json": components["schemas"]["InternalError"];
                 };
             };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
+                };
+            };
         };
     };
     "v2.management.tokens.listAccount": {
@@ -6284,6 +6779,16 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InternalError"];
+                };
+            };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
                 };
             };
         };
@@ -6421,6 +6926,16 @@ export interface operations {
                     "application/json": components["schemas"]["InternalError"];
                 };
             };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
+                };
+            };
         };
     };
     "v2.management.tokens.listUser": {
@@ -6526,6 +7041,16 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InternalError"];
+                };
+            };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
                 };
             };
         };
@@ -6651,6 +7176,16 @@ export interface operations {
                     "application/json": components["schemas"]["InternalError"];
                 };
             };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
+                };
+            };
         };
     };
     "v2.management.tokens.revoke": {
@@ -6737,6 +7272,16 @@ export interface operations {
                     "application/json": components["schemas"]["InternalError"];
                 };
             };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
+                };
+            };
         };
     };
     "v2.runtime.accessToken.create": {
@@ -6785,6 +7330,15 @@ export interface operations {
                         data: {
                             /** @description Encrypted runtime bearer token; store it securely. */
                             token: string;
+                            delivery?: {
+                                /**
+                                 * Format: uri
+                                 * @description Origin used for returned file URLs.
+                                 */
+                                baseUrl: string;
+                                /** @description File origins to initialize for protected access, including preserved legacy links. */
+                                initUrls: string[];
+                            };
                             /** @description Globally unique project base path. */
                             basePath: string;
                         };
@@ -6876,6 +7430,15 @@ export interface operations {
                         data: {
                             /** @description The project authenticated for runtime operations. */
                             project: {
+                                delivery?: {
+                                    /**
+                                     * Format: uri
+                                     * @description Origin used for returned file URLs.
+                                     */
+                                    baseUrl: string;
+                                    /** @description File origins to initialize for protected access, including preserved legacy links. */
+                                    initUrls: string[];
+                                };
                                 /** @description Unique project ID. */
                                 id: string;
                                 /** @description Globally unique project base path. */
@@ -8516,7 +9079,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"] | components["schemas"]["RestoreNotAllowedError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"] | components["schemas"]["RestoreNotAllowedError"] | components["schemas"]["StorageLimitExceededError"];
                 };
             };
             /** @description 404 */

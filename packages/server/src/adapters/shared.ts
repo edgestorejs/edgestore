@@ -195,7 +195,7 @@ export async function init<TCtx extends AnyContext>(params: {
       }),
     );
   }
-  const baseUrl = await getProviderBaseUrl(provider);
+  const baseUrl = initRes.baseUrl ?? (await getProviderBaseUrl(provider));
 
   logger.debug('Finished [init]', {
     ctx,

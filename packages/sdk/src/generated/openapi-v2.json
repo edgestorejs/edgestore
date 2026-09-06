@@ -92,6 +92,41 @@
       }
     },
     "schemas": {
+      "BillingMaintenanceError": {
+        "type": "object",
+        "description": "Billing changes are temporarily unavailable while we perform maintenance. Please try again shortly.",
+        "properties": {
+          "error": {
+            "type": "object",
+            "description": "A structured EdgeStore API error.",
+            "properties": {
+              "code": {
+                "const": "billing_maintenance",
+                "description": "Stable machine-readable error code."
+              },
+              "message": {
+                "type": "string",
+                "default": "Billing changes are temporarily unavailable while we perform maintenance. Please try again shortly.",
+                "description": "Human-readable explanation of the error."
+              },
+              "status": {
+                "const": 503,
+                "description": "HTTP status code returned with the error."
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "status"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "additionalProperties": false
+      },
       "InvalidRequestError": {
         "type": "object",
         "description": "Invalid request",
@@ -410,6 +445,41 @@
               },
               "status": {
                 "const": 404,
+                "description": "HTTP status code returned with the error."
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "status"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "additionalProperties": false
+      },
+      "ProjectNotEmptyError": {
+        "type": "object",
+        "description": "The project contains files",
+        "properties": {
+          "error": {
+            "type": "object",
+            "description": "A structured EdgeStore API error.",
+            "properties": {
+              "code": {
+                "const": "project_not_empty",
+                "description": "Stable machine-readable error code."
+              },
+              "message": {
+                "type": "string",
+                "default": "The project contains files",
+                "description": "Human-readable explanation of the error."
+              },
+              "status": {
+                "const": 409,
                 "description": "HTTP status code returned with the error."
               }
             },
@@ -1578,7 +1648,7 @@
               "protected"
             ],
             "type": "string",
-            "description": "Read visibility. Protected buckets require signed read URLs."
+            "description": "Whether reads are public or require signed URLs."
           },
           "usageBytes": {
             "type": "integer",
@@ -1665,6 +1735,134 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InvalidRequestError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "413": {
+            "description": "413",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayloadTooLargeError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "500": {
+            "description": "500",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/file-delivery/{basePath}": {
+      "get": {
+        "operationId": "v2.fileDelivery.get",
+        "summary": "Resolve public file routing policy",
+        "description": "Returns non-secret project routing policy for file delivery. No authentication is required. File authorization is enforced separately at the edge.",
+        "tags": [
+          "system"
+        ],
+        "parameters": [
+          {
+            "name": "basePath",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100,
+              "description": "Immutable project hostname label."
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "projectId": {
+                          "type": "string",
+                          "description": "Canonical project ID."
+                        },
+                        "basePath": {
+                          "type": "string",
+                          "description": "Immutable project storage prefix."
+                        },
+                        "legacyFileDomainEnabled": {
+                          "type": "boolean",
+                          "description": "Whether the shared legacy file hostname may serve this project."
+                        }
+                      },
+                      "required": [
+                        "projectId",
+                        "basePath",
+                        "legacyFileDomainEnabled"
+                      ],
+                      "description": "Successful response payload."
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "400": {
+            "description": "400",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequestError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "404": {
+            "description": "404",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectNotFoundError"
                 }
               }
             },
@@ -2274,6 +2472,21 @@
                 "$ref": "#/components/headers/RequestId"
               }
             }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
           }
         },
         "security": [
@@ -2504,6 +2717,21 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
                 }
               }
             },
@@ -2774,6 +3002,21 @@
                 "$ref": "#/components/headers/RequestId"
               }
             }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
           }
         },
         "security": [
@@ -2953,6 +3196,21 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
                 }
               }
             },
@@ -3164,6 +3422,21 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
                 }
               }
             },
@@ -3499,6 +3772,21 @@
                 "$ref": "#/components/headers/RequestId"
               }
             }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
           }
         },
         "security": [
@@ -3707,6 +3995,21 @@
                 "$ref": "#/components/headers/RequestId"
               }
             }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
           }
         },
         "security": [
@@ -3839,7 +4142,14 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/BucketEmptyInProgressError"
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/ProjectNotEmptyError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/BucketEmptyInProgressError"
+                    }
+                  ]
                 }
               }
             },
@@ -3870,6 +4180,21 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
                 }
               }
             },
@@ -4040,6 +4365,21 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
                 }
               }
             },
@@ -4296,6 +4636,21 @@
                 "$ref": "#/components/headers/RequestId"
               }
             }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
           }
         },
         "security": [
@@ -4474,6 +4829,21 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
                 }
               }
             },
@@ -4706,6 +5076,21 @@
                 "$ref": "#/components/headers/RequestId"
               }
             }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
           }
         },
         "security": [
@@ -4899,6 +5284,21 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
                 }
               }
             },
@@ -5112,6 +5512,21 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
                 }
               }
             },
@@ -5478,6 +5893,21 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
                 }
               }
             },
@@ -5859,6 +6289,21 @@
                 "$ref": "#/components/headers/RequestId"
               }
             }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
           }
         },
         "security": [
@@ -6093,6 +6538,21 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
                 }
               }
             },
@@ -6338,6 +6798,21 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
                 }
               }
             },
@@ -6613,6 +7088,21 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
                 }
               }
             },
@@ -7017,6 +7507,21 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
                 }
               }
             },
@@ -7525,6 +8030,21 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
                 }
               }
             },
@@ -8057,6 +8577,21 @@
                 "$ref": "#/components/headers/RequestId"
               }
             }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
           }
         },
         "security": [
@@ -8338,6 +8873,21 @@
                 "$ref": "#/components/headers/RequestId"
               }
             }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
           }
         },
         "security": [
@@ -8549,6 +9099,21 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
                 }
               }
             },
@@ -8802,6 +9367,21 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
                 }
               }
             },
@@ -9069,6 +9649,21 @@
                 "$ref": "#/components/headers/RequestId"
               }
             }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
           }
         },
         "security": [
@@ -9283,6 +9878,21 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
                 }
               }
             },
@@ -9535,6 +10145,21 @@
                 "$ref": "#/components/headers/RequestId"
               }
             }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
           }
         },
         "security": [
@@ -9719,6 +10344,21 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
                 }
               }
             },
@@ -9968,6 +10608,21 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
                 }
               }
             },
@@ -10254,6 +10909,21 @@
                 "$ref": "#/components/headers/RequestId"
               }
             }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
           }
         },
         "security": [
@@ -10443,6 +11113,21 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
                 }
               }
             },
@@ -10698,6 +11383,21 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
                 }
               }
             },
@@ -10989,6 +11689,21 @@
                 "$ref": "#/components/headers/RequestId"
               }
             }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
           }
         },
         "security": [
@@ -11180,6 +11895,21 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
                 }
               }
             },
@@ -11439,6 +12169,21 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
                 }
               }
             },
@@ -11764,6 +12509,21 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
                 }
               }
             },
@@ -12145,6 +12905,21 @@
                 "$ref": "#/components/headers/RequestId"
               }
             }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
           }
         },
         "security": [
@@ -12436,6 +13211,21 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
                 }
               }
             },
@@ -12789,6 +13579,21 @@
                 "$ref": "#/components/headers/RequestId"
               }
             }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
           }
         },
         "security": [
@@ -12948,6 +13753,21 @@
                 "$ref": "#/components/headers/RequestId"
               }
             }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
           }
         },
         "security": [
@@ -13070,6 +13890,30 @@
                         "token": {
                           "type": "string",
                           "description": "Encrypted runtime bearer token; store it securely."
+                        },
+                        "delivery": {
+                          "type": "object",
+                          "properties": {
+                            "baseUrl": {
+                              "type": "string",
+                              "format": "uri",
+                              "description": "Origin used for returned file URLs."
+                            },
+                            "initUrls": {
+                              "type": "array",
+                              "minItems": 1,
+                              "maxItems": 2,
+                              "items": {
+                                "type": "string",
+                                "format": "uri"
+                              },
+                              "description": "File origins to initialize for protected access, including preserved legacy links."
+                            }
+                          },
+                          "required": [
+                            "baseUrl",
+                            "initUrls"
+                          ]
                         },
                         "basePath": {
                           "type": "string",
@@ -13246,6 +14090,30 @@
                         "project": {
                           "type": "object",
                           "properties": {
+                            "delivery": {
+                              "type": "object",
+                              "properties": {
+                                "baseUrl": {
+                                  "type": "string",
+                                  "format": "uri",
+                                  "description": "Origin used for returned file URLs."
+                                },
+                                "initUrls": {
+                                  "type": "array",
+                                  "minItems": 1,
+                                  "maxItems": 2,
+                                  "items": {
+                                    "type": "string",
+                                    "format": "uri"
+                                  },
+                                  "description": "File origins to initialize for protected access, including preserved legacy links."
+                                }
+                              },
+                              "required": [
+                                "baseUrl",
+                                "initUrls"
+                              ]
+                            },
                             "id": {
                               "type": "string",
                               "description": "Unique project ID."
@@ -17358,6 +18226,9 @@
                     },
                     {
                       "$ref": "#/components/schemas/RestoreNotAllowedError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/StorageLimitExceededError"
                     }
                   ]
                 }
