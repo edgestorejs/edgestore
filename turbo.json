@@ -24,6 +24,7 @@
     "NEXT_PUBLIC_POSTHOG_KEY",
     "NEXT_PUBLIC_POSTHOG_UI_HOST",
     "PORT",
+    "FRONTEND_ORIGIN",
     "SKIP_ENV_VALIDATION"
   ],
   "tasks": {

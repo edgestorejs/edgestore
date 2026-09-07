@@ -14,6 +14,16 @@ const config = {
   async redirects() {
     return [
       {
+        source: '/docs/llms-vibe-coding',
+        destination: '/docs/agents',
+        permanent: true,
+      },
+      {
+        source: '/docs/llms-vibe-coding.md',
+        destination: '/docs/agents.md',
+        permanent: true,
+      },
+      {
         source: '/docs/providers/aws',
         destination: '/docs/providers/s3',
         permanent: true,

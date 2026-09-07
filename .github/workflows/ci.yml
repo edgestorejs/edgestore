@@ -62,6 +62,9 @@ jobs:
       - name: Runtime tests
         run: pnpm test
 
+      - name: Agent documentation contracts
+        run: pnpm --filter docs test:agents
+
       - name: Type tests
         run: pnpm test:types
 

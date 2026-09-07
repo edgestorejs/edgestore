@@ -19,13 +19,13 @@ Let's start by installing the required packages.
 
 Then go to your [Dashboard](https://dashboard.edgestore.dev), create a new project and copy the keys to your environment variables.
 
-```sh title=".env"
+```sh title=".env.local"
 EDGE_STORE_ACCESS_KEY=your-access-key
 EDGE_STORE_SECRET_KEY=your-secret-key
 ```
 
 <Callout type="warning">
-  Make sure you add `.env` to your `.gitignore` file. <br />
+  Reuse your application's existing environment-file convention. For a new app, use `.env.local` and add it to `.gitignore`. <br />
   You don't want to commit your secret keys to your repository.
 </Callout>
 
@@ -33,11 +33,11 @@ EDGE_STORE_SECRET_KEY=your-secret-key
 
 In your TanStack Start application, create an API route for EdgeStore with the following content:
 
-```ts title="app/routes/api/edgestore.$.ts"
+```ts title="src/routes/api/edgestore.$.ts"
 import { createEdgeStore, initEdgeStore } from '@edgestore/server';
 import { createEdgeStoreStartHandler } from '@edgestore/server/adapters/start';
 import { edgestore } from '@edgestore/server/providers/edgestore';
-import { createAPIFileRoute } from '@tanstack/start/api';
+import { createFileRoute } from '@tanstack/react-router';
 
 const es = initEdgeStore.create();
 const router = es.router({
@@ -55,9 +55,13 @@ const handler = createEdgeStoreStartHandler({
   edgestore: configuredEdgeStore,
 });
 
-export const APIRoute = createAPIFileRoute('/api/edgestore/$')({
-  GET: handler,
-  POST: handler,
+export const Route = createFileRoute('/api/edgestore/$')({
+  server: {
+    handlers: {
+      GET: handler,
+      POST: handler,
+    },
+  },
 });
 ```
 
@@ -65,7 +69,7 @@ export const APIRoute = createAPIFileRoute('/api/edgestore/$')({
 
 Now let's initiate our context provider in the frontend app.
 
-```tsx title="app/utils/edgestore.ts"
+```tsx title="src/utils/edgestore.ts"
 import { createEdgeStoreProvider } from '@edgestore/react';
 import { type EdgeStoreRouter } from '../routes/api/edgestore.$';
 
@@ -77,7 +81,7 @@ export { EdgeStoreProvider, useEdgeStore };
 
 And then wrap our app with the provider.
 
-```tsx title="app/routes/__root.tsx"
+```tsx title="src/routes/__root.tsx"
 // [!code ++]
 import { EdgeStoreProvider } from '~/utils/edgestore';
 
