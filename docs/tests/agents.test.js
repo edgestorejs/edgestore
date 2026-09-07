@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { access, readFile } from 'node:fs/promises';
 import test from 'node:test';
+import { z } from 'zod';
 import { DOCS_GIT_REF, DOCS_ORIGIN } from '../src/lib/constants.ts';
 
 process.env.SKIP_ENV_VALIDATION = '1';
@@ -22,9 +23,9 @@ await test('legacy agent URLs permanently redirect to existing replacements', as
     );
   }
   await access(new URL('(getting-started)/agents.mdx', docsRoot));
-  const meta = /** @type {{ pages: string[] }} */ (
-    JSON.parse(await readFile(new URL('meta.json', docsRoot), 'utf8'))
-  );
+  const meta = z
+    .object({ pages: z.array(z.string()) })
+    .parse(JSON.parse(await readFile(new URL('meta.json', docsRoot), 'utf8')));
   assert.ok(meta.pages.includes('(getting-started)/agents'));
   assert.ok(!meta.pages.includes('(getting-started)/llms-vibe-coding'));
 });
