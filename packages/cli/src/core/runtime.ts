@@ -40,6 +40,7 @@ export type RuntimeIo = {
   stderr: NodeJS.WritableStream;
   inputIsTty: boolean;
   outputIsTty: boolean;
+  stderrIsTty: boolean;
 };
 
 type ManagementClient = ManagementEdgeStoreSdk['management'];
@@ -135,6 +136,7 @@ export function createDefaultRuntime(signal: AbortSignal): CliRuntime {
       stderr: process.stderr,
       inputIsTty: Boolean(process.stdin.isTTY),
       outputIsTty: Boolean(process.stdout.isTTY),
+      stderrIsTty: Boolean(process.stderr.isTTY),
     },
     signal,
     setCwd(cwd) {
