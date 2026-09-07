@@ -33,8 +33,12 @@ credentials are stored in the operating system credential store and are never
 written to a plaintext config file.
 
 The CLI manages accounts, projects and their keys, management tokens, buckets,
-files, uploads, team members, and invitations. Secrets are returned only when
-they are created:
+files, uploads, team members, and invitations. Interactive users can display a
+new secret once. Automated project-key creation and rotation require `--output`
+to a protected, gitignored backend env file. JSON returns metadata and delivery
+information only, never `secretKey`; scripts that previously consumed that field
+must use file delivery instead. Do not read generated secrets back into agent
+context.
 
 ```sh
 edgestore project list
@@ -42,6 +46,10 @@ edgestore bucket create publicFiles --type file --public
 edgestore file upload ./logo.png --bucket publicFiles
 edgestore project key create <basePath> --name local --output .env.local
 ```
+
+`init` reuses its configured env destination, or detects existing env files before
+choosing `.env.local`. For an ambiguous noninteractive destination, pass `--output`
+explicitly after checking which file the backend loads.
 
 In a monorepo, run commands from the application package or select it
 explicitly with `--cwd`:
