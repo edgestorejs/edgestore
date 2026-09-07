@@ -4,6 +4,15 @@
  */
 import './src/env.js';
 import { createMDX } from 'fumadocs-mdx/next';
+import { getDocsDeployment } from './src/lib/docsDeployment.ts';
+
+getDocsDeployment({
+  channel: process.env.DOCS_RELEASE_CHANNEL,
+  branch:
+    process.env.VERCEL_GIT_COMMIT_REF ??
+    process.env.GITHUB_HEAD_REF ??
+    process.env.GITHUB_REF_NAME,
+});
 
 const withMDX = createMDX();
 
