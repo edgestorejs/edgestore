@@ -31,8 +31,8 @@
     "codegen:entrypoints": {},
     "build": {
       "dependsOn": ["^build", "codegen:entrypoints"],
-      "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [".next/**", "!.next/cache/**", "dist/**", "build/**"]
+      "inputs": ["$TURBO_DEFAULT$", ".env*", "$TURBO_ROOT$/docs/content/docs/**"],
+      "outputs": [".next/**", "!.next/cache/**", "dist/**", "build/**", "agent-docs/**"]
     },
     "lint": {
       "dependsOn": ["^build"],

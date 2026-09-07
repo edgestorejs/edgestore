@@ -32,8 +32,9 @@ Implement the following as small reviewable changes. Stages are dependency bound
 
 Progress:
 
-- Stage 1: documentation cleanup complete. Passed package/docs production build, Hono and Start builds, three docs contract tests, and local HTTP checks for both 308 redirects, agents HTML/Markdown and llms index/full responses. Draft PR publication in progress. Removed legacy assets remain recoverable from Git history.
-- Stages 2–7: pending.
+- Stage 1: [draft PR #238](https://github.com/edgestorejs/edgestore/pull/238), targeting next. Passed package/docs production build, Hono and Start builds, three docs contract tests, scoped lint, and local HTTP checks for both 308 redirects, agents HTML/Markdown and llms index/full responses. Removed legacy assets remain recoverable from Git history.
+- Stage 2: reference generation and npm packaging complete. Passed seven renderer/build tests, script typecheck/lint, dependency-policy check, package builds/typechecks/runtime tests/type tests, and byte-for-byte checks of all 16 reference files across three real tarballs. The entrypoint generator now explicitly preserves additional package assets. Implementation lives in `scripts/agentDocs/` to follow repository naming rules. Draft PR publication in progress.
+- Stages 3–7: pending.
 
 ### 1. Repair the documentation foundation
 

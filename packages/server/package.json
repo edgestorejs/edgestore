@@ -32,7 +32,9 @@
     "edge-store"
   ],
   "scripts": {
-    "build": "rollup --config rollup.config.ts --configPlugin rollup-plugin-swc3",
+    "build": "pnpm agent-docs:build && rollup --config rollup.config.ts --configPlugin rollup-plugin-swc3",
+    "agent-docs:build": "node --import tsx ../../scripts/agentDocs/build.ts server",
+    "prepack": "pnpm agent-docs:build",
     "dev": "pnpm build --watch",
     "codegen:entrypoints": "tsx entrypoints.script.ts",
     "test": "vitest run --config vitest.config.ts",
@@ -117,6 +119,7 @@
     "src",
     "README.md",
     "LICENSE",
+    "agent-docs",
     "package.json",
     "adapters",
     "core",
