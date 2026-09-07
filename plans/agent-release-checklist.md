@@ -33,6 +33,15 @@ the implementation PRs.
   targets, an appropriate test account, and exact scoped cleanup. The docs preview
   at `next.edgestore.dev` establishes none of those prerequisites.
 
+## Evaluation handoff
+
+The local harness is documented in `evals/agents/README.md`. It prepares matched
+baseline/skill workspaces and verifies installed tarballs in a separate starter.
+It does not launch coding agents, provision cloud resources, drive a browser, or
+automate ledger cleanup yet. Those are explicitly incomplete implementation and
+verification items, not covered by an artifact pass. Dev API and file origins
+have been verified; dedicated account/management access still needs selection.
+
 ## Local skill/plugin checks
 
 The root `skills/edgestore-setup` is canonical; the plugin points at that directory.
