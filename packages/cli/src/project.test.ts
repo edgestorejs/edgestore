@@ -94,6 +94,36 @@ describe('project', () => {
     expect(fixture.stderr()).toContain('--without-key');
   });
 
+  it.each([{ mode: ['--json'] }, { mode: [] }])(
+    'rejects automated initial keys (%j)',
+    async ({ mode }) => {
+      fixture.runtime.io.inputIsTty = false;
+      const exitCode = await runCli(
+        [...mode, 'project', 'create', '--name', 'Evaluation'],
+        fixture.runtime,
+        '0.0.0',
+      );
+      expect(exitCode).toBe(2);
+      expect(fixture.createProject).not.toHaveBeenCalled();
+      expect(fixture.stdout()).toBe('');
+      expect(fixture.stderr()).toContain('--without-key');
+    },
+  );
+
+  it('never serializes an initial key even if returned unexpectedly', async () => {
+    const exitCode = await runCli(
+      ['--json', 'project', 'create', '--name', 'Evaluation', '--without-key'],
+      fixture.runtime,
+      '0.0.0',
+    );
+    expect(exitCode).toBe(0);
+    expect(fixture.createProject).toHaveBeenCalledWith(
+      expect.objectContaining({ createKey: false }),
+    );
+    expect(JSON.parse(fixture.stdout())).toEqual({ project });
+    expect(fixture.stdout() + fixture.stderr()).not.toContain('secret_test');
+  });
+
   it('supports plain project creation without an initial key', async () => {
     const exitCode = await runCli(
       [

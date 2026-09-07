@@ -149,7 +149,10 @@ new secret once. Automated project-key creation and rotation require `--output`
 to a protected, gitignored backend env file. JSON returns metadata and delivery
 information only, never `secretKey`; scripts that previously consumed that field
 must use file delivery instead. Do not read generated secrets back into agent
-context.
+context. Automated `project create` requires `--without-key`; create a separate
+project key with `--output`. Automated `token create` also requires protected
+`--output` delivery, and its JSON result omits `secret`. Clipboard-only delivery
+does not satisfy these automated flows.
 
 ```sh
 edgestore project list
