@@ -71,12 +71,24 @@ export async function planMcp(options: McpOptions, action: McpAction) {
   const duplicate = Object.entries(servers).some(
     ([name, value]) => name !== 'edgestore' && isEdgeStore(value),
   );
-  const inherited = global ? undefined : await inheritedConnection(options);
-  const plugin = client === 'codex' && hasPlugin(config);
+  const globalTarget = clientConfig(client, home, {
+    global: true,
+    codexHome: options.codexHome,
+  });
+  const globalConfig = global
+    ? config
+    : parseConfig(
+        client,
+        await readOptional(globalTarget.file, globalTarget.root),
+      );
+  const inherited = global
+    ? undefined
+    : inheritedConnection(options, globalConfig);
+  const plugin =
+    client === 'codex' && (hasPlugin(config) || hasPlugin(globalConfig));
   let status = owned ? 'missing' : 'not-configured';
   if (inherited) status = inherited;
   if (duplicate) status = 'configured-under-other-name';
-  if (plugin) status = 'plugin-configured';
   if (entry !== undefined) {
     status = isEdgeStore(entry) ? 'unmanaged' : 'conflict';
     if (owned) status = 'modified';
@@ -139,6 +151,11 @@ export async function planMcp(options: McpOptions, action: McpAction) {
       endpoint: MCP_URL,
       authentication: 'not-checked',
       pluginDiscovery: 'visible-config-only',
+      warnings: plugin
+        ? [
+            'An enabled EdgeStore plugin is visible, but its connection inventory is unknown. Check the client for duplicate connections; a skill-only plugin does not configure MCP.',
+          ]
+        : [],
       plannedFiles: changes.map(({ file }) => file),
     },
     changes,
@@ -149,17 +166,10 @@ function isEdgeStore(entry: unknown): boolean {
   return object(entry) && entry.url === MCP_URL;
 }
 
-async function inheritedConnection(
+function inheritedConnection(
   options: McpOptions,
-): Promise<'inherited' | 'conflict' | undefined> {
-  const target = clientConfig(options.client, options.home, {
-    global: true,
-    codexHome: options.codexHome,
-  });
-  const config = parseConfig(
-    options.client,
-    await readOptional(target.file, target.root),
-  );
+  config: Record<string, unknown>,
+): 'inherited' | 'conflict' | undefined {
   // A named global entry with another endpoint is ambiguous, not a connection to adopt.
   const servers = serverEntries(options.client, config);
   if (servers.edgestore !== undefined && !isEdgeStore(servers.edgestore)) {
@@ -178,8 +188,5 @@ async function inheritedConnection(
         return 'inherited';
     }
   }
-  return Object.values(servers).some(isEdgeStore) ||
-    (options.client === 'codex' && hasPlugin(config))
-    ? 'inherited'
-    : undefined;
+  return Object.values(servers).some(isEdgeStore) ? 'inherited' : undefined;
 }

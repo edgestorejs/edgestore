@@ -1,0 +1,3 @@
+interface:
+  display_name: "EdgeStore Setup"
+  short_description: "Integrate and verify EdgeStore application uploads"

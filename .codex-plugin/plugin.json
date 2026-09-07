@@ -1,0 +1,20 @@
+{
+  "name": "edgestore",
+  "version": "0.1.0",
+  "description": "Version-aware EdgeStore setup and application upload verification.",
+  "author": { "name": "EdgeStore" },
+  "homepage": "https://next.edgestore.dev/docs/agents",
+  "repository": "https://github.com/edgestorejs/edgestore",
+  "license": "MIT",
+  "keywords": ["edgestore", "uploads", "typescript", "react"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "EdgeStore",
+    "shortDescription": "Integrate and verify application file uploads.",
+    "longDescription": "Set up EdgeStore using installed-version references, safe credential handoff, and application-path verification. This source plugin currently distributes the setup skill; configure the hosted MCP separately.",
+    "developerName": "EdgeStore",
+    "category": "Developer Tools",
+    "capabilities": [],
+    "defaultPrompt": ["Add EdgeStore uploads to this application."]
+  }
+}

@@ -75,6 +75,6 @@ export async function mcpCommand(
   };
   outputFor(runtime, flags).result(
     result,
-    `${client}: ${result.status}\n${result.configPath}\n${input.dryRun ? 'Dry run; no files changed.\n' : ''}Authentication was not checked. Open the client to connect when needed; review requested permissions and start with read-only consent. Configuration alone does not establish access or connectivity.`,
+    `${client}: ${result.status}\n${result.configPath}\n${result.warnings.join('\n')}${result.warnings.length ? '\n' : ''}${input.dryRun ? 'Dry run; no files changed.\n' : ''}Authentication was not checked. Open the client to connect when needed; review requested permissions and start with read-only consent. Configuration alone does not establish access or connectivity.`,
   );
 }

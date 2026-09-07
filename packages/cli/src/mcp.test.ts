@@ -231,12 +231,15 @@ describe.each(CLIENTS)('%s direct MCP', (client) => {
   });
 });
 
-it('observes enabled Codex plugins without changing their inventory', async () => {
+it('does not mistake an enabled skill-only plugin for a hosted connection', async () => {
   const { options, writeConfig } = await fixture('codex');
   await writeConfig('[plugins."edgestore@marketplace"]\nenabled = true\n');
   const plan = await planMcp(options, 'setup');
-  expect(plan.result.status).toBe('plugin-configured');
-  expect(plan.changes).toEqual([]);
+  expect(plan.result.status).toBe('not-configured');
+  expect(plan.result.warnings).toHaveLength(1);
+  expect(plan.changes[0]?.after).toContain(
+    '[plugins."edgestore@marketplace"]\nenabled = true',
+  );
 });
 
 it('respects CODEX_HOME for global configuration', async () => {

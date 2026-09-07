@@ -40,8 +40,9 @@ require `--yes`, which never overrides a collision or a modified entry.
 Setup preserves unrelated configuration and JSONC comments. A matching existing
 connection is left unmanaged; an inherited or differently named connection is
 reported without adding a duplicate. Observable enabled Codex plugin entries are
-also preserved. Plugin discovery is limited to visible configuration: CLI setup
-does not inspect every plugin source or edit plugin inventory.
+also preserved, but a plugin's name alone does not prove it provides a connection.
+CLI setup reports unknown plugin connection inventory; check the client for
+duplicates. It does not inspect every plugin source or edit plugin inventory.
 
 Ownership hashes live in `.edgestore/agent-assets.json` (or the CLI's user config
 directory for global setup). Keep this metadata with the managed configuration
