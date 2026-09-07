@@ -23,16 +23,15 @@ Read the relevant installed `@edgestore/server`, `@edgestore/react`, or
 `@edgestore/sdk` **`agent-docs/README.md`** and follow its local references. These
 belong to the installed package version; the skill and CLI can be newer. If the
 bundle is absent, use installed types/source plus documentation matching the
-version, and disclose the fallback. Before a new v1 prerelease installation, use
-[preview guidance](https://next.edgestore.dev/docs/agents). A moving preview is not
-an exact-version reference. Read the references again after installing packages.
+version, and disclose the fallback. Choose the package version before selecting
+online documentation. Read the references again after installing packages.
 
 For an existing 0.2 integration, resolve maintenance versus migration with the
 user before changing APIs. Do not silently upgrade it, combine API generations,
 or assume unsupported future versions work. Preserve installed versions unless
 the requested implementation requires and authorizes a change. For missing
-packages choose a compatible, explicit version/release lane; do not assume the
-registry's default tag matches this prerelease workflow.
+packages choose a compatible, explicit version. Use a prerelease only when the
+user requests it or the application requires one.
 
 ## Choose the integration
 
