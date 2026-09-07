@@ -33,8 +33,9 @@ Implement the following as small reviewable changes. Stages are dependency bound
 Progress:
 
 - Stage 1: [draft PR #238](https://github.com/edgestorejs/edgestore/pull/238), targeting next. Passed package/docs production build, Hono and Start builds, three docs contract tests, scoped lint, and local HTTP checks for both 308 redirects, agents HTML/Markdown and llms index/full responses. Removed legacy assets remain recoverable from Git history.
-- Stage 2: reference generation and npm packaging complete. Passed seven renderer/build tests, script typecheck/lint, dependency-policy check, package builds/typechecks/runtime tests/type tests, and byte-for-byte checks of all 16 reference files across three real tarballs. The entrypoint generator now explicitly preserves additional package assets. Implementation lives in `scripts/agentDocs/` to follow repository naming rules. Draft PR publication in progress.
-- Stages 3–7: pending.
+- Stage 2: [draft PR #239](https://github.com/edgestorejs/edgestore/pull/239), stacked on #238. Passed seven renderer/build tests, script typecheck/lint, dependency-policy check, package builds/typechecks/runtime tests/type tests, and byte-for-byte checks of all 16 reference files across three real tarballs. The entrypoint generator now explicitly preserves additional package assets. Implementation lives in `scripts/agentDocs/` to follow repository naming rules.
+- Stage 3a: application context implemented. Passed 18 new tests, all 256 CLI tests, CLI typecheck/lint/build, and a built-command smoke test against TanStack Start. Resolution is bounded to the application's repository/workspace and follows package-manager symlinks, never ambient global modules. Agent/MCP inspection remains explicitly not-inspected until stage 4. Draft PR publication in progress.
+- Stage 3b (credential safety) and stages 4–7: pending.
 
 ### 1. Repair the documentation foundation
 

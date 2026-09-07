@@ -7,6 +7,7 @@ import {
   accountSwitchCommand,
   accountUsageCommand,
 } from './commands/account';
+import { agentContextCommand } from './commands/agent';
 import { loginCommand, logoutCommand, whoamiCommand } from './commands/auth';
 import {
   bucketCreateCommand,
@@ -191,6 +192,17 @@ Common workflows:
     .description('Check local configuration and API connectivity')
     .action(async () => {
       await doctorCommand(runtime, globalFlags(program), version);
+    });
+
+  program
+    .command('agent')
+    .description('Inspect and configure coding-agent integrations')
+    .command('context')
+    .description(
+      'Inspect application versions and reference paths without authentication',
+    )
+    .action(async () => {
+      await agentContextCommand(runtime, globalFlags(program), version);
     });
 
   program

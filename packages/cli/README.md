@@ -2,6 +2,19 @@
 
 The official command-line interface for EdgeStore accounts and projects.
 
+Inspect an application's integration context without login:
+
+```sh
+edgestore --cwd apps/web agent context --json
+```
+
+Context schema version 1 reports installed application package versions and their
+bundled reference paths, not the CLI's transitive dependencies. Read local references
+before online examples. An ambiguous workspace root returns candidate directories
+and exit code 2; select one with `--cwd`. Existing 0.2 applications must explicitly
+choose maintenance or migration. Environment-file contents and credentials are
+never returned. Agent/MCP configuration currently reports `not-inspected`.
+
 ```sh
 npm install --global @edgestore/cli
 edgestore --help
