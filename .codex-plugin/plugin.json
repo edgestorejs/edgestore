@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "Version-aware EdgeStore setup and application upload verification.",
   "author": { "name": "EdgeStore" },
-  "homepage": "https://next.edgestore.dev/docs/agents",
+  "homepage": "https://edgestore.dev/docs/agents",
   "repository": "https://github.com/edgestorejs/edgestore",
   "license": "MIT",
   "keywords": ["edgestore", "uploads", "typescript", "react"],
