@@ -3,30 +3,76 @@ title: Agents
 description: Set up EdgeStore with a coding agent.
 ---
 
-## Connect MCP
+## Set up with the CLI
 
-Configure MCP with the CLI:
+Install the CLI with Node.js 24 or later:
+
+```sh
+npm install --global @edgestore/cli
+```
+
+Then run this in your application directory:
 
 ```sh
 edgestore mcp setup --client codex
 ```
 
-Use `claude` for Claude Code or `cursor` for Cursor. To configure it manually, add this remote HTTP server to your agent's MCP settings:
+Use `claude` for Claude Code or `cursor` for Cursor. Setup writes project-local configuration. Add `--global` to configure all projects. It does not sign you in.
 
-```text
-https://api.edgestore.dev/mcp
+Run `edgestore mcp status --client codex` to inspect the saved config. Check the connection in your client after signing in. If your CLI release does not have `mcp setup`, use manual configuration below.
+
+## Configure manually
+
+Add EdgeStore to your client's project configuration. Merge the entry into an existing config rather than replacing other servers.
+
+<Tabs items={['Codex', 'Claude Code', 'Cursor']}>
+
+```toml tab="Codex" title=".codex/config.toml"
+[mcp_servers.edgestore]
+url = "https://api.edgestore.dev/mcp"
 ```
 
-Sign in through your client and choose which permissions to grant. This endpoint connects to production accounts.
+```json tab="Claude Code" title=".mcp.json"
+{
+  "mcpServers": {
+    "edgestore": {
+      "type": "http",
+      "url": "https://api.edgestore.dev/mcp"
+    }
+  }
+}
+```
 
-Use MCP for supported remote actions. The [EdgeStore CLI](https://github.com/edgestorejs/edgestore/tree/next/packages/cli#readme) handles local project linking and credential delivery.
+```json tab="Cursor" title=".cursor/mcp.json"
+{
+  "mcpServers": {
+    "edgestore": {
+      "url": "https://api.edgestore.dev/mcp"
+    }
+  }
+}
+```
+
+</Tabs>
+
+### Sign in
+
+Restart your client after saving the config, then connect EdgeStore:
+
+- Codex requires project trust for `.codex/config.toml`. Run `codex mcp login edgestore`, then use `/mcp` to check the connection.
+- In Claude Code, approve the project's MCP configuration, then use `/mcp` to select EdgeStore and sign in.
+- In Cursor, open MCP settings and connect the EdgeStore server.
+
+Review the requested permissions before approving. This server connects to production accounts. MCP sign-in is separate from `edgestore login`; no project keys belong in these configs.
+
+After signing in, ask your agent to list your EdgeStore projects to check tool access.
+
+Client instructions: [Codex](https://learn.chatgpt.com/docs/extend/mcp), [Claude Code](https://code.claude.com/docs/en/mcp), and [Cursor](https://prod.cursor.com/help/customization/mcp).
 
 ## Give your agent the docs
 
-Use [next.edgestore.dev](https://next.edgestore.dev/docs/quick-start) for v1 prereleases and [edgestore.dev](https://edgestore.dev/docs/quick-start) for 0.2.
+Start with [Quick start](/docs/quick-start) or the adapter for [Next.js](/docs/adapters/next), [Hono](/docs/adapters/hono), or [TanStack Start](/docs/adapters/tanstack-start).
 
 - [llms.txt](/llms.txt) lists the docs.
 - [llms-full.txt](/llms-full.txt) includes all pages in one Markdown response.
 - Add `.md` to a page URL, such as [quick-start.md](/docs/quick-start.md), or use its Copy Markdown button.
-
-Adapter guides cover [Next.js](/docs/adapters/next), [Hono](/docs/adapters/hono), and [TanStack Start](/docs/adapters/tanstack-start).
