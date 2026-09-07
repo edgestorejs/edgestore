@@ -10,6 +10,7 @@ import {
 import { resolveCredential } from '../core/credentials';
 import { localApplicationChecks, type DoctorCheck } from '../core/doctorLocal';
 import { dotenvValue } from '../core/dotenv';
+import { CliError } from '../core/errors';
 import { renderTable } from '../core/output';
 import type { CliRuntime, GlobalFlags } from '../core/runtime';
 import { apiUrlFor, outputFor } from '../core/runtime';
@@ -284,10 +285,14 @@ async function checkEnvFile(
         detail: 'Configured env file not found',
       });
     } else if (code !== 'ENOENT') {
+      const unsafePath =
+        error instanceof CliError && error.code === 'unsafe_agent_path';
       checks.push({
         name: label,
-        status: 'fail',
-        detail: 'Could not read file',
+        status: unsafePath ? 'skip' : 'fail',
+        detail: unsafePath
+          ? 'Symlinked or out-of-scope env file was not inspected.'
+          : 'Could not read file',
       });
     }
     return { hasSecretKey: false, label };

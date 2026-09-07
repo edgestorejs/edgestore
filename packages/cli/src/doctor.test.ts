@@ -128,7 +128,7 @@ it.each([
 );
 
 it('does not follow source or env symlinks or execute modules', async () => {
-  const { directory } = await application();
+  const { directory, fixture } = await application();
   await mkdir(path.join(directory, 'src'));
   await writeFile(
     path.join(directory, 'outside.txt'),
@@ -147,6 +147,11 @@ it('does not follow source or env symlinks or execute modules', async () => {
     expect.objectContaining({ name: 'Environment inspection', status: 'skip' }),
   );
   expect(JSON.stringify(checks)).not.toContain('secret-sentinel');
+  expect(
+    await runCli(['doctor', '--offline', '--json'], fixture.runtime, '1'),
+  ).toBe(0);
+  expect(fixture.stdout()).toContain('Symlinked or out-of-scope');
+  expect(fixture.stdout()).not.toContain('secret-sentinel');
 });
 
 it('checks code, not comments or strings, and tolerates unsupported syntax', () => {
