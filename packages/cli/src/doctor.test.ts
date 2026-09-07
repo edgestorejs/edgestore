@@ -217,6 +217,16 @@ it.each([
     framework: 'hono',
     missing: ['@edgestore/server'],
   },
+  {
+    dependencies: { '@react-router/dev': '8', react: '19', vite: '8' },
+    framework: 'react-router',
+    missing: ['@edgestore/server', '@edgestore/react'],
+  },
+  {
+    dependencies: { astro: '7', react: '19' },
+    framework: 'astro',
+    missing: ['@edgestore/server', '@edgestore/react'],
+  },
 ])(
   'installs packages for the actual $framework application role',
   async ({ dependencies, framework, missing }) => {

@@ -626,7 +626,7 @@ export function createFixture(): CliTestFixture {
     exitCode: 0,
     cwd: '/repo',
     workspaceCwd: '/repo',
-    env: {},
+    env: { HOME: '/nonexistent-edgestore-test-home' },
     io: {
       stdin: Readable.from([]),
       stdout: stdoutStream,

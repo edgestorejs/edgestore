@@ -10,9 +10,9 @@ import {
   object,
   parseConfig,
   serverEntries,
-  type AgentClient,
 } from './clients';
 import { digest, readOptional, type FileChange } from './files';
+import type { AgentOptions } from './options';
 
 const stateSchema = z
   .object({
@@ -23,18 +23,9 @@ const stateSchema = z
   })
   .passthrough();
 
-export type McpOptions = {
-  client: AgentClient;
-  project: string;
-  home: string;
-  stateRoot: string;
-  global?: boolean;
-  codexHome?: string;
-};
-
 export type McpAction = 'setup' | 'status' | 'remove';
 
-export async function planMcp(options: McpOptions, action: McpAction) {
+export async function planMcp(options: AgentOptions, action: McpAction) {
   const { client, project, home, global = false } = options;
   const target = clientConfig(client, global ? home : project, {
     global,
@@ -167,7 +158,7 @@ function isEdgeStore(entry: unknown): boolean {
 }
 
 function inheritedConnection(
-  options: McpOptions,
+  options: AgentOptions,
   config: Record<string, unknown>,
 ): 'inherited' | 'conflict' | undefined {
   // A named global entry with another endpoint is ambiguous, not a connection to adopt.

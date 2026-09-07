@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 import { Command, CommanderError } from 'commander';
 import {
   accountBillingCommand,
@@ -8,6 +9,7 @@ import {
   accountUsageCommand,
 } from './commands/account';
 import { agentContextCommand } from './commands/agent';
+import { agentAssetsCommand } from './commands/agentAssets';
 import { loginCommand, logoutCommand, whoamiCommand } from './commands/auth';
 import {
   bucketCreateCommand,
@@ -202,16 +204,41 @@ Common workflows:
       });
     });
 
-  program
+  const agent = program
     .command('agent')
-    .description('Inspect and configure coding-agent integrations')
+    .description('Inspect and configure coding-agent integrations');
+  const assetFile = fileURLToPath(
+    new URL('../agent-assets/skills.json', import.meta.url),
+  );
+  agent
     .command('context')
     .description(
       'Inspect application versions and reference paths without authentication',
     )
     .action(async () => {
-      await agentContextCommand(runtime, globalFlags(program), version);
+      await agentContextCommand(runtime, globalFlags(program), {
+        cliVersion: version,
+        assetFile,
+      });
     });
+
+  for (const action of ['setup', 'update', 'status'] as const) {
+    agent
+      .command(action)
+      .description(`${action} packaged skills and the hosted MCP connection`)
+      .option('--client <client>', 'codex, claude, or cursor')
+      .option('--global', 'use user-level skill and MCP configuration')
+      .option('--skills-only', 'leave all MCP configuration untouched')
+      .option('--dry-run', 'inspect changes without writing')
+      .option('--yes', 'apply unchanged owned assets without confirmation')
+      .action(async (options) =>
+        agentAssetsCommand(runtime, globalFlags(program), {
+          ...options,
+          action,
+          assetFile,
+        }),
+      );
+  }
 
   const mcp = program
     .command('mcp')

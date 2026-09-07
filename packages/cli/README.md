@@ -13,7 +13,46 @@ bundled reference paths, not the CLI's transitive dependencies. Read local refer
 before online examples. An ambiguous workspace root returns candidate directories
 and exit code 2; select one with `--cwd`. Existing 0.2 applications must explicitly
 choose maintenance or migration. Environment-file contents and credentials are
-never returned. Agent/MCP configuration currently reports `not-inspected`.
+never returned. Agent/MCP configuration reports visible per-client installation
+status and unknowns, never raw configuration or authentication claims.
+
+## Agent setup and updates
+
+```sh
+edgestore agent setup --client codex --dry-run --json
+edgestore agent setup --client codex --yes
+edgestore agent status --client codex --json
+edgestore agent update --client codex --yes
+```
+
+Use `claude` or `cursor` for those clients. Default setup is project-local skills
+plus the same hosted MCP configuration as `mcp setup`. `--skills-only` does not
+read or alter MCP settings; `--global` explicitly selects user scope. Skill paths
+are `.agents/skills` for Codex, `.claude/skills` for Claude Code, and `.cursor/skills`
+for Cursor (under the Git/package root, or home for global setup). Existing global
+skills and Cursor's shared `.agents` source are reported without installing a
+duplicate. Other plugin/enterprise sources may be inaccessible; check the client.
+
+The CLI ships a deterministic snapshot of the canonical setup skill. Setup and
+updates do not fetch Git HEAD or call a third-party installer. `status` compares
+installed hashes with the snapshot bundled in **this CLI**, not the latest online
+release. `setup` is a no-op for an older owned snapshot and reports
+`update-available`; use `update` to apply the currently bundled snapshot. Installing
+a newer skill never upgrades the application's runtime packages or their API refs.
+
+Ownership metadata is `.edgestore/skill-assets.json`, separate from MCP ownership
+so skills-only workflows stay independent. Keep it with the installed files.
+Updates replace only unchanged owned assets and remove only obsolete unchanged
+owned files. User edits, extra files, and symlinks are preserved and block the
+update even with `--yes`. Dry runs write nothing. All proposed skill/MCP files are
+preflighted before writes; writes are individually atomic and partial failures
+report applied paths. Open a new task/restart the client to load updated skills.
+
+For source-based installation, the independent `skills` tool can discover the
+canonical directory with `npx skills add ./skills --list` from this repository.
+That tool owns its own installation/update behavior; EdgeStore does not overwrite
+its user-owned or symlinked assets. The repository plugin is another skill source,
+not a requirement for direct MCP setup.
 
 ## Direct MCP configuration
 

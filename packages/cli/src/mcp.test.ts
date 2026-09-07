@@ -24,7 +24,8 @@ import {
   type AgentClient,
 } from './core/agent/clients';
 import { applyChanges } from './core/agent/files';
-import { planMcp, type McpOptions } from './core/agent/mcp';
+import { planMcp } from './core/agent/mcp';
+import type { AgentOptions } from './core/agent/options';
 import { createFixture } from './testFixture';
 
 const directories: string[] = [];
@@ -41,7 +42,7 @@ async function fixture(client: AgentClient) {
     await mkdtemp(path.join(os.tmpdir(), 'edgestore-mcp-')),
   );
   directories.push(root);
-  const options: McpOptions = {
+  const options: AgentOptions = {
     client,
     project: path.join(root, 'app'),
     home: path.join(root, 'home'),
