@@ -2,18 +2,16 @@
 
 The official command-line interface for EdgeStore accounts and projects.
 
-Inspect an application's integration context without login:
+Inspect installed EdgeStore versions and local reference paths without logging in:
 
 ```sh
 edgestore --cwd apps/web agent context --json
 ```
 
-Context schema version 1 reports installed application package versions and their
-bundled reference paths, not the CLI's transitive dependencies. Read local references
-before online examples. An ambiguous workspace root returns candidate directories
-and exit code 2; select one with `--cwd`. Existing 0.2 applications must explicitly
-choose maintenance or migration. Environment-file contents and credentials are
-never returned. Agent/MCP configuration currently reports `not-inspected`.
+`agent context` reads the application's packages, not the CLI's dependencies.
+If several workspaces match, it lists them and returns exit code 2. Select one
+with `--cwd`. The JSON uses schema version 1 and excludes env values and secrets.
+Agent and MCP configuration report `not-inspected`.
 
 ```sh
 npm install --global @edgestore/cli
@@ -32,13 +30,12 @@ Use `edgestore login --token` or `EDGESTORE_TOKEN` for automation. Persisted
 credentials are stored in the operating system credential store and are never
 written to a plaintext config file.
 
-The CLI manages accounts, projects and their keys, management tokens, buckets,
-files, uploads, team members, and invitations. Interactive users can display a
-new secret once. Automated project-key creation and rotation require `--output`
-to a protected, gitignored backend env file. JSON returns metadata and delivery
-information only, never `secretKey`; scripts that previously consumed that field
-must use file delivery instead. Do not read generated secrets back into agent
-context.
+## Project keys
+
+Interactive commands display a new key once. Automated key creation and rotation
+require `--output` to a gitignored backend env file. JSON returns key metadata and
+delivery status. Scripts that read `secretKey` from JSON must switch to file
+delivery.
 
 ```sh
 edgestore project list
