@@ -1,62 +1,52 @@
 ---
 title: Agents
-description: Use EdgeStore documentation, CLI, and hosted MCP with coding agents.
+description: Set up EdgeStore with a coding agent.
 ---
-
-Coding agents can use EdgeStore's Markdown documentation to integrate file uploads and its hosted MCP or CLI to work with remote resources.
-
-## Use documentation for your package version
-
-Check the EdgeStore versions installed in the application workspace before making changes. A globally installed CLI may be newer than the application's packages.
-
-The v1 prerelease documentation is available at [next.edgestore.dev](https://next.edgestore.dev/docs/quick-start). Applications still using 0.2 should use the [stable documentation](https://edgestore.dev/docs/quick-start) until explicitly choosing to migrate. Do not mix examples from these versions or upgrade an existing application without approval.
-
-- [llms.txt](/llms.txt) lists documentation pages.
-- [llms-full.txt](/llms-full.txt) provides the documentation in one Markdown response.
-- Add `.md` to a documentation URL, such as [Quick Start Markdown](/docs/quick-start.md), to read that page as Markdown.
-- Every documentation page has a **Copy Markdown** button.
-
-Start with the adapter for your application: [Next.js](/docs/adapters/next), [Hono](/docs/adapters/hono), or [TanStack Start](/docs/adapters/tanstack-start). Reuse the application's existing backend, environment-file convention, and storage provider.
-
-Installed v1 packages include curated `agent-docs/` references. Use `edgestore --cwd <app> agent context --json` to locate them and inspect installed versions. Those package references are API authority even when your CLI or skill is newer.
 
 ## Install the setup skill
 
-The setup skill guides the agent through application inspection, resource selection, implementation, and a real upload/retrieval check. With a CLI build containing the agent commands:
+Run this in your application directory:
 
 ```sh
-edgestore agent setup --client codex --dry-run --json
-edgestore agent setup --client codex --yes
-edgestore agent status --client codex --json
-edgestore agent update --client codex --yes
+edgestore agent setup --client codex
 ```
 
-Use `claude` for Claude Code or `cursor` for Cursor. Setup defaults to project-local skills plus hosted MCP configuration; `--skills-only` leaves MCP configuration untouched and `--global` explicitly selects user-level configuration. It does not provision an EdgeStore project or log in.
+Use `claude` for Claude Code or `cursor` for Cursor. This installs the setup skill and configures MCP for the project. Add `--skills-only` to skip MCP, or `--global` to install for all projects. Restart your client or open a new task to load the skill.
 
-The CLI installs the skill snapshot packaged with that CLI release, not mutable repository HEAD. Status reports that revision and local modifications; update preserves user-edited files and never upgrades application packages. Open a new agent task or restart the client after installation. For source-based discovery, use `npx skills add https://github.com/edgestorejs/edgestore/tree/next/skills/edgestore-setup --list` once the changes are on `next`.
+The skill uses the API references bundled with your installed EdgeStore packages. To install the skill bundled with a newer CLI release, run:
 
-The repository plugin distributes the same canonical skill. Hosted connector registration is separate; the current source plugin is skill-only, and direct MCP setup works independently. Avoid duplicate skill sources in the client.
+```sh
+edgestore agent update --client codex
+```
 
-## Connect the hosted MCP
+Updating the skill leaves your application packages unchanged.
 
-Add `https://api.edgestore.dev/mcp` as a remote HTTP MCP server in your agent's MCP settings. Use the client's OAuth flow when you need access to your account. Available tools depend on the permissions granted to the connection.
+## Connect MCP
 
-To configure MCP without a plugin or skills, use `edgestore mcp setup --client codex` (or `claude`/`cursor`). `mcp status` inspects configuration; it does not prove authentication or connectivity. `mcp remove` removes only an unchanged connection owned by this CLI. Review requested permissions when connecting; configuration alone does not grant read-only access.
+To configure MCP without the skill:
 
-Prefer MCP for supported remote actions when it is connected. Use the [EdgeStore CLI](https://github.com/edgestorejs/edgestore/tree/next/packages/cli#readme) for local project linking, protected credential delivery, or actions unavailable through MCP. Do not repeat a resource-creation operation through both tools.
+```sh
+edgestore mcp setup --client codex
+```
 
-<Callout type="warning">
-  The hosted endpoint above is production. Do not assume the docs preview uses a separate test account or API. Select the intended account and project before changing resources, and use an explicitly configured non-production environment for automated live tests.
-</Callout>
+For manual configuration, add this remote HTTP server:
 
-## Credentials and implementation choices
+```text
+https://api.edgestore.dev/mcp
+```
 
-Keep project secrets in the backend's loaded, gitignored environment file. Do not paste secrets into prompts, commit them, or put them in frontend variables such as `VITE_*`.
+Sign in through your client and choose which permissions to grant. This endpoint connects to production accounts.
 
-Choose a bucket name that fits the application and make the public or protected access policy clear before implementing. Ask when access requirements are ambiguous or sensitive. Reuse existing resources where appropriate, and confirm destructive operations before running them.
+Use MCP for supported remote actions. The [EdgeStore CLI](https://github.com/edgestorejs/edgestore/tree/next/packages/cli#readme) handles local project linking and credential delivery.
 
-## Verify the application
+## Give your agent the docs
 
-Run relevant application typechecks and builds, then test an upload through the application's own client and server route. Independently retrieve the uploaded file to verify the result. API health or a CLI-only upload does not exercise the full application integration.
+Use [next.edgestore.dev](https://next.edgestore.dev/docs/quick-start) for v1 prereleases and [edgestore.dev](https://edgestore.dev/docs/quick-start) for 0.2.
 
-Use `edgestore doctor --offline` for bounded local checks without credential-store, OAuth, or API access. Normal doctor checks remote state only with an existing usable credential and never initiates login or refresh. Static observations and skipped checks do not prove the integration works. If authentication, browser access, or a running application is unavailable, explain what passed locally and what still needs verification. Keep secrets and signed URLs out of the final report, and clean up only test resources you are authorized to remove.
+- [llms.txt](/llms.txt) lists the docs.
+- [llms-full.txt](/llms-full.txt) includes all pages in one Markdown response.
+- Add `.md` to a page URL, such as [quick-start.md](/docs/quick-start.md), or use its Copy Markdown button.
+
+Run `edgestore agent context --json` to find installed versions and their local `agent-docs/` references.
+
+Adapter guides cover [Next.js](/docs/adapters/next), [Hono](/docs/adapters/hono), and [TanStack Start](/docs/adapters/tanstack-start).
