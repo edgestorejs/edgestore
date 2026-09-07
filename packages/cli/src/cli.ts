@@ -29,6 +29,7 @@ import {
   fileListCommand,
 } from './commands/file';
 import { initCommand } from './commands/init';
+import { mcpCommand } from './commands/mcp';
 import {
   invitationActionCommand,
   invitationListCommand,
@@ -204,6 +205,24 @@ Common workflows:
     .action(async () => {
       await agentContextCommand(runtime, globalFlags(program), version);
     });
+
+  const mcp = program
+    .command('mcp')
+    .description(
+      'Configure the hosted MCP without installing skills or logging in',
+    );
+  for (const action of ['setup', 'status', 'remove'] as const) {
+    mcp
+      .command(action)
+      .description(`${action} the EdgeStore MCP connection`)
+      .option('--client <client>', 'codex, claude, or cursor')
+      .option('--global', 'use the user-level client configuration')
+      .option('--dry-run', 'inspect proposed changes without writing')
+      .option('--yes', 'apply changes without confirmation')
+      .action(async (options) =>
+        mcpCommand(runtime, globalFlags(program), { ...options, action }),
+      );
+  }
 
   program
     .command('init')

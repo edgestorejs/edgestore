@@ -908,6 +908,9 @@ importers:
       env-paths:
         specifier: 4.0.0
         version: 4.0.0
+      jsonc-parser:
+        specifier: 3.3.1
+        version: 3.3.1
       log-update:
         specifier: 8.0.0
         version: 8.0.0
@@ -923,6 +926,9 @@ importers:
       picocolors:
         specifier: 1.1.1
         version: 1.1.1
+      smol-toml:
+        specifier: 1.7.0
+        version: 1.7.0
       zod:
         specifier: 4.3.5
         version: 4.3.5

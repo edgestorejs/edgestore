@@ -15,6 +15,52 @@ and exit code 2; select one with `--cwd`. Existing 0.2 applications must explici
 choose maintenance or migration. Environment-file contents and credentials are
 never returned. Agent/MCP configuration currently reports `not-inspected`.
 
+## Direct MCP configuration
+
+Configure the hosted connection independently of skills or plugins:
+
+```sh
+edgestore mcp setup --client codex --dry-run --json
+edgestore mcp setup --client codex --yes
+edgestore mcp status --client codex --json
+edgestore mcp remove --client codex --yes
+```
+
+Clients: `codex`, `claude` (Claude Code), and `cursor`. Project scope defaults to
+the Git root, or the package root outside Git. `--cwd` selects that context;
+`--global` explicitly selects user configuration instead. Noninteractive writes
+require `--yes`, which never overrides a collision or a modified entry.
+
+| Client | Project configuration | User configuration |
+| --- | --- | --- |
+| Codex | `.codex/config.toml` | `$CODEX_HOME/config.toml` or `~/.codex/config.toml` |
+| Claude Code | `.mcp.json` | `~/.claude.json` |
+| Cursor | `.cursor/mcp.json` | `~/.cursor/mcp.json` |
+
+Setup preserves unrelated configuration and JSONC comments. A matching existing
+connection is left unmanaged; an inherited or differently named connection is
+reported without adding a duplicate. Observable enabled Codex plugin entries are
+also preserved. Plugin discovery is limited to visible configuration: CLI setup
+does not inspect every plugin source or edit plugin inventory.
+
+Ownership hashes live in `.edgestore/agent-assets.json` (or the CLI's user config
+directory for global setup). Keep this metadata with the managed configuration
+to allow safe removal. `remove` only removes an unchanged owned entry, leaving the
+shared config file and unrelated settings intact. A later write failure reports
+which files were already applied; file writes are individually atomic, not a
+multi-file transaction. Dry runs write nothing and never print config contents.
+
+The endpoint is `https://api.edgestore.dev/mcp`, not selected by `--api-url`.
+Configuration status is not connectivity or authentication status. Setup never
+logs in, requests scopes, grants tool permissions, or provisions resources. Open
+the client when access is needed and review its consent flow. Start read-only;
+if the client cannot narrow the request, do not approve broader access without
+the user's authorization. Codex project configuration also requires project trust.
+
+Adapter contracts: [Codex MCP](https://learn.chatgpt.com/docs/extend/mcp?surface=cli),
+[Claude Code MCP](https://code.claude.com/docs/en/mcp), and
+[Cursor MCP](https://prod.cursor.com/help/customization/mcp).
+
 ```sh
 npm install --global @edgestore/cli
 edgestore --help
