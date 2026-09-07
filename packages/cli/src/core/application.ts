@@ -2,6 +2,7 @@ import { readdir, readFile, realpath, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { getPackages } from '@manypkg/get-packages';
 import { z } from 'zod';
+import { applicationKind } from './applicationKind';
 import { findGitRoot } from './config';
 import { usageError } from './errors';
 import { detectPackageManager } from './packageInstall';
@@ -19,18 +20,7 @@ const packageNames = [
   '@edgestore/sdk',
 ] as const;
 
-export function applicationKind(dependencies: Record<string, string>) {
-  if (dependencies['@tanstack/react-start'])
-    return { framework: 'tanstack-start', role: 'fullstack' } as const;
-  if (dependencies.next)
-    return { framework: 'next', role: 'fullstack' } as const;
-  if (dependencies.hono) return { framework: 'hono', role: 'backend' } as const;
-  if (dependencies.vite && dependencies.react)
-    return { framework: 'vite', role: 'frontend' } as const;
-  if (dependencies.react)
-    return { framework: 'react', role: 'frontend' } as const;
-  return { framework: 'unknown', role: 'unknown' } as const;
-}
+export { applicationKind } from './applicationKind';
 
 export async function inspectApplication(directory: string) {
   const manifestPath = path.join(directory, 'package.json');

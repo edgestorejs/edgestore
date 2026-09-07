@@ -61,6 +61,31 @@ Adapter contracts: [Codex MCP](https://learn.chatgpt.com/docs/extend/mcp?surface
 [Claude Code MCP](https://code.claude.com/docs/en/mcp), and
 [Cursor MCP](https://prod.cursor.com/help/customization/mcp).
 
+## Local diagnostics
+
+```sh
+edgestore --cwd apps/web doctor --offline --json
+edgestore --cwd apps/api doctor --json
+```
+
+`--offline` does not access the credential store, OAuth, or APIs. Without it,
+doctor uses only an existing usable credential, never initiates login or refresh,
+and skips all network checks if none is available. Remote checks are reads only.
+
+Checks report `pass`, `warn`, `fail`, or `skip`; any failure returns exit code 1.
+Warnings/skips do not mean the integration works. Application inspection is
+bounded to 200 source files, 2 MB, 2,000 directory entries, and ten directory
+levels in the selected package. It skips nested packages, dependency/build
+directories, symlinks, tests, and unparseable syntax. Parsing does not execute
+application code. Direct imports/JSX/CORS are observations, not a full module
+graph, route-mount proof, or security audit. Custom routing, provider ancestry,
+environment loading, and remote bucket mapping still require application checks.
+
+Environment diagnostics report presence and unsafe destinations, never values.
+Existing single env files are detected; ambiguous loaders remain explicit skips.
+`init --install` now distinguishes Start from frontend-only React/Vite: the latter
+gets only `@edgestore/react`, and still needs a separately selected backend.
+
 ```sh
 npm install --global @edgestore/cli
 edgestore --help

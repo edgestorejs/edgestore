@@ -191,8 +191,15 @@ Common workflows:
   program
     .command('doctor')
     .description('Check local configuration and API connectivity')
-    .action(async () => {
-      await doctorCommand(runtime, globalFlags(program), version);
+    .option(
+      '--offline',
+      'inspect locally without credentials, OAuth, or API requests',
+    )
+    .action(async (options) => {
+      await doctorCommand(runtime, globalFlags(program), {
+        version,
+        offline: options.offline,
+      });
     });
 
   program
