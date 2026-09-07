@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { access, readFile } from 'node:fs/promises';
 import test from 'node:test';
 import { z } from 'zod';
-import { DOCS_GIT_REF, DOCS_ORIGIN } from '../src/lib/constants.ts';
+import { getDocsDeployment } from '../src/lib/docsDeployment.ts';
 
 process.env.SKIP_ENV_VALIDATION = '1';
 const { default: config } = await import('../next.config.mjs');
@@ -59,7 +59,39 @@ await test('agents page links resolve to authored docs and legacy assets are rem
   }
 });
 
-await test('prerelease machine-readable docs stay on the next release lane', () => {
-  assert.equal(DOCS_ORIGIN, 'https://next.edgestore.dev');
-  assert.equal(DOCS_GIT_REF, 'next');
+await test('docs default to production even on a preview branch', () => {
+  const stable = { origin: 'https://edgestore.dev', gitRef: 'main' };
+  assert.deepEqual(getDocsDeployment(), stable);
+  assert.deepEqual(getDocsDeployment({ branch: 'next' }), stable);
+  assert.deepEqual(
+    getDocsDeployment({ channel: 'stable', branch: 'main' }),
+    stable,
+  );
+});
+
+await test('preview docs require an explicit channel', () => {
+  assert.deepEqual(getDocsDeployment({ channel: 'next', branch: 'next' }), {
+    origin: 'https://next.edgestore.dev',
+    gitRef: 'next',
+  });
+});
+
+await test('main rejects preview configuration and invalid channels fail', () => {
+  assert.throws(
+    () => getDocsDeployment({ channel: 'next', branch: 'main' }),
+    /main branch/,
+  );
+  assert.throws(
+    () => getDocsDeployment({ channel: 'preview' }),
+    /DOCS_RELEASE_CHANNEL/,
+  );
+});
+
+await test('agent instructions do not hardcode the preview website or source branch', async () => {
+  const content = await readFile(
+    new URL('(getting-started)/agents.mdx', docsRoot),
+    'utf8',
+  );
+  assert.ok(!content.includes('https://next.edgestore.dev'));
+  assert.ok(!content.includes('github.com/edgestorejs/edgestore/tree/next'));
 });

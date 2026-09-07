@@ -1,26 +1,23 @@
-# docs-new
+# EdgeStore docs
 
-This is a Next.js application generated with
-[Create Fumadocs](https://github.com/fuma-nama/fumadocs).
+Run `pnpm docs:dev` from the repository root.
 
-Run development server:
+## Deployment
 
-```bash
-npm run dev
-# or
-pnpm dev
-# or
-yarn dev
+The docs default to `https://edgestore.dev` with GitHub source links on `main`.
+Set `DOCS_RELEASE_CHANNEL=next` only on the deployment serving prerelease docs.
+This selects `https://next.edgestore.dev` and the `next` source branch together.
+
+For a local preview build:
+
+```sh
+DOCS_RELEASE_CHANNEL=next pnpm --filter docs build
 ```
 
-Open http://localhost:3000 with your browser to see the result.
+Leave the variable unset, or set it to `stable`, on the production docs deployment.
+A build from `main` rejects the `next` channel. Branch detection uses Vercel's
+commit ref or GitHub Actions' head/ref name. Turbo includes these settings in its
+cache key. Deployment settings do not change links in published package references;
+those follow the package version.
 
-## Learn More
-
-To learn more about Next.js and Fumadocs, take a look at the following
-resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js
-  features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-- [Fumadocs](https://fumadocs.vercel.app) - learn about Fumadocs
+Run `pnpm --filter docs test:agents` to check both channels and the production guard.
