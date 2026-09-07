@@ -2,18 +2,16 @@
 
 The official command-line interface for EdgeStore accounts and projects.
 
-Inspect an application's integration context without login:
+Inspect installed EdgeStore versions and local reference paths without logging in:
 
 ```sh
 edgestore --cwd apps/web agent context --json
 ```
 
-Context schema version 1 reports installed application package versions and their
-bundled reference paths, not the CLI's transitive dependencies. Read local references
-before online examples. An ambiguous workspace root returns candidate directories
-and exit code 2; select one with `--cwd`. Existing 0.2 applications must explicitly
-choose maintenance or migration. Environment-file contents and credentials are
-never returned. Agent/MCP configuration currently reports `not-inspected`.
+`agent context` reads the application's packages, not the CLI's dependencies.
+If several workspaces match, it lists them and returns exit code 2. Select one
+with `--cwd`. The JSON uses schema version 1 and excludes env values and secrets.
+Agent and MCP configuration report `not-inspected`.
 
 ## Direct MCP configuration
 
@@ -26,10 +24,9 @@ edgestore mcp status --client codex --json
 edgestore mcp remove --client codex --yes
 ```
 
-Clients: `codex`, `claude` (Claude Code), and `cursor`. Project scope defaults to
-the Git root, or the package root outside Git. `--cwd` selects that context;
-`--global` explicitly selects user configuration instead. Noninteractive writes
-require `--yes`, which never overrides a collision or a modified entry.
+Use `codex`, `claude` for Claude Code, or `cursor`. Setup writes to the Git root,
+or the package root outside Git. Use `--cwd` to select the project and `--global`
+for user configuration. Automated writes require `--yes`.
 
 | Client | Project configuration | User configuration |
 | --- | --- | --- |
@@ -37,25 +34,17 @@ require `--yes`, which never overrides a collision or a modified entry.
 | Claude Code | `.mcp.json` | `~/.claude.json` |
 | Cursor | `.cursor/mcp.json` | `~/.cursor/mcp.json` |
 
-Setup preserves unrelated configuration and JSONC comments. A matching existing
-connection is left unmanaged; an inherited or differently named connection is
-reported without adding a duplicate. Observable enabled Codex plugin entries are
-also preserved. Plugin discovery is limited to visible configuration: CLI setup
-does not inspect every plugin source or edit plugin inventory.
+Setup preserves existing connections, unrelated settings, and JSONC comments.
+The CLI cannot inspect every plugin. Check your client for duplicate connections.
 
-Ownership hashes live in `.edgestore/agent-assets.json` (or the CLI's user config
-directory for global setup). Keep this metadata with the managed configuration
-to allow safe removal. `remove` only removes an unchanged owned entry, leaving the
-shared config file and unrelated settings intact. A later write failure reports
-which files were already applied; file writes are individually atomic, not a
-multi-file transaction. Dry runs write nothing and never print config contents.
+Keep `.edgestore/agent-assets.json` with the config. Global setup stores this
+metadata in the CLI's user config directory. Removal requires an unchanged entry
+created by this CLI. `--yes` does not override user edits or name conflicts.
+If a write fails, the error lists files already changed.
 
-The endpoint is `https://api.edgestore.dev/mcp`, not selected by `--api-url`.
-Configuration status is not connectivity or authentication status. Setup never
-logs in, requests scopes, grants tool permissions, or provisions resources. Open
-the client when access is needed and review its consent flow. Start read-only;
-if the client cannot narrow the request, do not approve broader access without
-the user's authorization. Codex project configuration also requires project trust.
+Setup uses `https://api.edgestore.dev/mcp`; `--api-url` does not change it.
+`status` checks configuration only. Sign in and grant permissions through your
+client. Codex also requires project trust for project-local configuration.
 
 Adapter contracts: [Codex MCP](https://learn.chatgpt.com/docs/extend/mcp?surface=cli),
 [Claude Code MCP](https://code.claude.com/docs/en/mcp), and
@@ -68,23 +57,20 @@ edgestore --cwd apps/web doctor --offline --json
 edgestore --cwd apps/api doctor --json
 ```
 
-`--offline` does not access the credential store, OAuth, or APIs. Without it,
-doctor uses only an existing usable credential, never initiates login or refresh,
-and skips all network checks if none is available. Remote checks are reads only.
+`--offline` skips credentials and network access. Normal doctor uses an existing
+credential for read-only API checks. It does not log in or refresh credentials.
 
-Checks report `pass`, `warn`, `fail`, or `skip`; any failure returns exit code 1.
-Warnings/skips do not mean the integration works. Application inspection is
-bounded to 200 source files, 2 MB, 2,000 directory entries, and ten directory
-levels in the selected package. It skips nested packages, dependency/build
-directories, symlinks, tests, and unparseable syntax. Parsing does not execute
-application code. Direct imports/JSX/CORS are observations, not a full module
-graph, route-mount proof, or security audit. Custom routing, provider ancestry,
-environment loading, and remote bucket mapping still require application checks.
+Checks return `pass`, `warn`, `fail`, or `skip`. A failure sets exit code 1.
+Doctor checks adapter and provider imports, CORS, and env file locations without
+running application code or returning env values. It cannot verify route mounting,
+provider ancestry, custom env loading, or remote bucket mappings.
 
-Environment diagnostics report presence and unsafe destinations, never values.
-Existing single env files are detected; ambiguous loaders remain explicit skips.
-`init --install` now distinguishes Start from frontend-only React/Vite: the latter
-gets only `@edgestore/react`, and still needs a separately selected backend.
+Source inspection stops at 200 files, 2 MB, 2,000 directory entries, or ten levels.
+Nested packages, build outputs, dependencies, symlinks, tests, and unparseable
+files are skipped. Test uploads through the application to check what static
+inspection cannot.
+
+## Install and log in
 
 ```sh
 npm install --global @edgestore/cli
@@ -103,13 +89,12 @@ Use `edgestore login --token` or `EDGESTORE_TOKEN` for automation. Persisted
 credentials are stored in the operating system credential store and are never
 written to a plaintext config file.
 
-The CLI manages accounts, projects and their keys, management tokens, buckets,
-files, uploads, team members, and invitations. Interactive users can display a
-new secret once. Automated project-key creation and rotation require `--output`
-to a protected, gitignored backend env file. JSON returns metadata and delivery
-information only, never `secretKey`; scripts that previously consumed that field
-must use file delivery instead. Do not read generated secrets back into agent
-context.
+## Project keys
+
+Interactive commands display a new key once. Automated key creation and rotation
+require `--output` to a gitignored backend env file. JSON returns key metadata and
+delivery status. Scripts that read `secretKey` from JSON must switch to file
+delivery.
 
 ```sh
 edgestore project list
