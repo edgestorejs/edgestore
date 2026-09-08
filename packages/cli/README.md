@@ -2,6 +2,27 @@
 
 The official command-line interface for EdgeStore accounts and projects.
 
+## Install and log in
+
+```sh
+npm install --global @edgestore/cli
+edgestore --help
+```
+
+Log in through the dashboard, then use `init` for guided local setup:
+
+```sh
+edgestore login
+edgestore init
+```
+
+Use `edgestore login --device` when a local browser callback is unavailable.
+Use `edgestore login --token` or `EDGESTORE_TOKEN` for automation. Persisted
+credentials are stored in the operating system credential store and are never
+written to a plaintext config file.
+
+## Application context
+
 Inspect installed EdgeStore versions and local reference paths without logging in:
 
 ```sh
@@ -43,7 +64,7 @@ Keep `.edgestore/skill-assets.json` with the installed skill. Updates stop on
 user edits, extra files, or symlinks, even with `--yes`. If a write fails, the error
 lists files already changed. Restart the client or open a new task after updating.
 
-For installation from source, run `npx skills add ./skills --list` in this repo.
+To list the skill from this checkout, run `npx skills add ./skills --list` in this repo.
 The repository plugin includes the same skill. The CLI leaves skills installed
 through other tools untouched.
 
@@ -104,31 +125,16 @@ Nested packages, build outputs, dependencies, symlinks, tests, and unparseable
 files are skipped. Test uploads through the application to check what static
 inspection cannot.
 
-## Install and log in
+## Project keys and tokens
 
-```sh
-npm install --global @edgestore/cli
-edgestore --help
-```
+Interactive commands display a new secret once. Automated key creation, key
+rotation, and token creation require `--output` to a gitignored backend env file.
+JSON returns metadata and delivery status, without `secretKey` or `secret`.
+Scripts that read those fields must switch to file delivery.
 
-Log in through the dashboard, then use `init` for guided local setup:
-
-```sh
-edgestore login
-edgestore init
-```
-
-Use `edgestore login --device` when a local browser callback is unavailable.
-Use `edgestore login --token` or `EDGESTORE_TOKEN` for automation. Persisted
-credentials are stored in the operating system credential store and are never
-written to a plaintext config file.
-
-## Project keys
-
-Interactive commands display a new key once. Automated key creation and rotation
-require `--output` to a gitignored backend env file. JSON returns key metadata and
-delivery status. Scripts that read `secretKey` from JSON must switch to file
-delivery.
+Automated `project create` requires `--without-key`. Create its key separately
+with `project key create --output`. Clipboard-only delivery is not supported
+for automated commands.
 
 ```sh
 edgestore project list
@@ -140,6 +146,8 @@ edgestore project key create <basePath> --name local --output .env.local
 `init` reuses its configured env destination, or detects existing env files before
 choosing `.env.local`. For an ambiguous noninteractive destination, pass `--output`
 explicitly after checking which file the backend loads.
+
+## Workspaces
 
 In a monorepo, run commands from the application package or select it
 explicitly with `--cwd`:
@@ -154,6 +162,8 @@ monorepo root, the CLI uses the root configuration. From an unconfigured root,
 it uses the only configured package automatically or asks which package to use
 when more than one is configured. Automation should pass `--cwd` or an explicit
 `--project` when the choice is ambiguous.
+
+## Output
 
 Use `--json` for structured output and `--plain` for commands with one natural
 value. Both modes are non-interactive, so pass required choices explicitly and
