@@ -95,3 +95,16 @@ await test('agent instructions do not hardcode the preview website or source bra
   assert.ok(!content.includes('https://next.edgestore.dev'));
   assert.ok(!content.includes('github.com/edgestorejs/edgestore/tree/next'));
 });
+
+await test('distributed skill and plugin do not point users at the preview website', async () => {
+  for (const path of [
+    'skills/edgestore-setup/SKILL.md',
+    '.codex-plugin/plugin.json',
+  ]) {
+    const content = await readFile(
+      new URL(`../../${path}`, import.meta.url),
+      'utf8',
+    );
+    assert.ok(!content.includes('https://next.edgestore.dev'), path);
+  }
+});
