@@ -36,6 +36,12 @@ with `--cwd`, or use `--cwd .` to explicitly select the root. The JSON uses sche
 version 1 and includes per-client skill and
 MCP configuration status. It excludes env values, secrets, and raw config.
 
+Yarn Plug'n'Play resolution is not supported. When a PnP loader is present,
+declared packages report `unsupported-resolution` and compatibility is
+`unresolved`, not `not-installed`. The CLI does not execute the loader or infer
+installed versions from version ranges. Inspect exact versions and references
+through the project's Yarn environment.
+
 ## Agent setup and updates
 
 ```sh

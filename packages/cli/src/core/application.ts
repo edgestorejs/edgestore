@@ -41,6 +41,11 @@ export async function inspectApplication(directory: string) {
     ...manifest.devDependencies,
   };
   const workspaceRoot = await findWorkspaceRoot(directory);
+  const resolutionRoot =
+    workspaceRoot ?? (await findGitRoot(directory)) ?? directory;
+  const resolutionFiles = await readdir(resolutionRoot);
+  const plugAndPlay =
+    resolutionFiles.includes('.pnp.cjs') || resolutionFiles.includes('.pnp.js');
   const candidates =
     workspaceRoot === directory
       ? (await getPackages(directory)).packages
@@ -49,16 +54,28 @@ export async function inspectApplication(directory: string) {
       : [];
   const packages = await Promise.all(
     packageNames.map((name) =>
-      inspectPackage(directory, name, dependencies[name]),
+      inspectPackage(directory, name, {
+        declaredVersion: dependencies[name],
+        plugAndPlay,
+      }),
     ),
   );
   const versions = packages.flatMap((pkg) =>
     pkg.version ? [pkg.version] : [],
   );
   const families = new Set(versions.map(versionFamily));
-  const compatibility =
-    families.size > 1 ? 'mixed' : ([...families][0] ?? 'not-installed');
+  const compatibility = packages.some(
+    (pkg) => pkg.status === 'unsupported-resolution',
+  )
+    ? 'unresolved'
+    : families.size > 1
+      ? 'mixed'
+      : ([...families][0] ?? 'not-installed');
   const warnings: string[] = [];
+  if (compatibility === 'unresolved')
+    warnings.push(
+      "Yarn Plug'n'Play package resolution is not supported. Installed versions and bundled references were not inspected; this does not mean dependencies are missing.",
+    );
   if (compatibility === 'legacy')
     warnings.push(
       'Choose whether to maintain 0.2 or migrate before changing APIs. Do not upgrade implicitly.',
@@ -104,11 +121,20 @@ export function versionFamily(
 async function inspectPackage(
   directory: string,
   name: string,
-  declaredVersion: string | undefined,
+  {
+    declaredVersion,
+    plugAndPlay,
+  }: { declaredVersion: string | undefined; plugAndPlay: boolean },
 ) {
   const base = { name, declaredVersion };
   if (!declaredVersion)
     return { ...base, version: undefined, status: 'not-declared' as const };
+  if (plugAndPlay)
+    return {
+      ...base,
+      version: undefined,
+      status: 'unsupported-resolution' as const,
+    };
   let manifestPath: string;
   try {
     manifestPath = await resolveApplicationPackage(directory, name);

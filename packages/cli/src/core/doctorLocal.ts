@@ -53,6 +53,13 @@ export async function localApplicationChecks(
         : `${application.compatibility}; API authority is each installed package's references.`,
   });
   for (const pkg of application.packages) {
+    if (pkg.status === 'unsupported-resolution')
+      checks.push({
+        name: pkg.name,
+        status: 'warn',
+        detail:
+          "Yarn Plug'n'Play resolution is unsupported; installed versions and references could not be inspected.",
+      });
     if (pkg.status === 'not-resolved')
       checks.push({
         name: pkg.name,

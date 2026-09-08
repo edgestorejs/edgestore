@@ -16,6 +16,7 @@ import {
   inspectApplication,
   versionFamily,
 } from './core/application';
+import { localApplicationChecks } from './core/doctorLocal';
 import { detectPackages } from './core/packageInstall';
 import { createFixture } from './testFixture';
 
@@ -72,6 +73,78 @@ async function install(
 }
 
 describe('agent context', () => {
+  it.each([
+    ['1.0.0', 'https://edgestore.dev'],
+    ['1.0.0-next.3', 'https://next.edgestore.dev'],
+    ['1.0.0+build-id', 'https://edgestore.dev'],
+  ])(
+    'uses the CLI release channel for missing-package guidance: %s',
+    async (version, origin) => {
+      const directory = await app();
+      const fixture = createFixture();
+      fixture.runtime.setCwd(directory);
+      expect(
+        await runCli(['agent', 'context', '--json'], fixture.runtime, version),
+      ).toBe(0);
+      expect(JSON.parse(fixture.stdout()).referenceFallback.url).toBe(
+        `${origin}/docs/agents`,
+      );
+    },
+  );
+
+  it.each(['.pnp.cjs', '.pnp.js'])(
+    'reports unsupported PnP resolution without executing %s',
+    async (marker) => {
+      const directory = await app();
+      await writeFile(
+        path.join(directory, marker),
+        'throw new Error("Do not execute the PnP loader");',
+      );
+      await writeFile(
+        path.join(directory, 'package.json'),
+        JSON.stringify({
+          name: 'workspace',
+          private: true,
+          packageManager: 'yarn@4.0.0',
+          workspaces: ['apps/*'],
+        }),
+      );
+      const child = path.join(directory, 'apps/web');
+      await mkdir(child, { recursive: true });
+      await writeFile(
+        path.join(child, 'package.json'),
+        JSON.stringify({
+          name: 'web',
+          dependencies: { '@edgestore/react': '^1.0.0', react: '19' },
+        }),
+      );
+      const fixture = createFixture();
+      fixture.runtime.setCwd(child);
+      expect(
+        await runCli(['agent', 'context', '--json'], fixture.runtime, '1.0.0'),
+      ).toBe(0);
+      const context = JSON.parse(fixture.stdout());
+      expect(context.application.packageManager).toBe('yarn');
+      expect(context.application.compatibility).toBe('unresolved');
+      expect(context.application.packages[1].status).toBe(
+        'unsupported-resolution',
+      );
+      expect(context.application.warnings).toContainEqual(
+        expect.stringContaining("Plug'n'Play"),
+      );
+      expect(context.referenceFallback).toBeUndefined();
+      const checks = await localApplicationChecks(child);
+      expect(checks).toContainEqual(
+        expect.objectContaining({
+          name: '@edgestore/react',
+          status: 'warn',
+          detail: expect.stringContaining("Plug'n'Play"),
+        }),
+      );
+      expect(JSON.stringify(checks)).not.toContain('install dependencies');
+    },
+  );
+
   it('reports actual application packages without login, mutation or environment values', async () => {
     const directory = await app({ next: '16', '@edgestore/server': '^1.0.0' });
     const installed = await install(directory, '@edgestore/server');

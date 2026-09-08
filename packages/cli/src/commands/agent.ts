@@ -29,9 +29,9 @@ export async function agentContextCommand(
     ...(application.compatibility === 'not-installed'
       ? {
           referenceFallback: {
-            url: 'https://next.edgestore.dev/docs/agents',
+            url: `${/^[^+]*-/.test(input.cliVersion) ? 'https://next.edgestore.dev' : 'https://edgestore.dev'}/docs/agents`,
             warning:
-              'Prerelease setup guidance; resolve installed package references after installation.',
+              'Setup guidance follows the CLI release channel; resolve installed package references after installation.',
           },
         }
       : {}),
