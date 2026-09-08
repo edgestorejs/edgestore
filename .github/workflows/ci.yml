@@ -65,6 +65,9 @@ jobs:
       - name: Agent documentation contracts
         run: pnpm --filter docs test:agents
 
+      - name: Agent evaluation policy contracts (no agent or cloud runs)
+        run: pnpm eval:agents:test
+
       - name: Package agent references
         run: |
           pnpm agent-docs:test

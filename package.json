@@ -36,6 +36,8 @@
     "agent-assets:build": "node scripts/agentAssets.ts",
     "agent-assets:check": "node scripts/agentAssets.ts --check",
     "agent-assets:pack-check": "node scripts/agentAssetsPackCheck.ts",
+    "eval:agents": "node evals/agents/run.ts",
+    "eval:agents:test": "tsc -p evals/agents/tsconfig.json && node --test evals/agents/policy.test.ts",
     "test": "turbo run test --filter=@edgestore/*",
     "test:types": "turbo run test:types --filter=edgestore-tests",
     "test:smoke": "turbo run test:smoke --filter=@edgestore/server",

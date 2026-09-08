@@ -1,0 +1,5 @@
+packages:
+  - apps/*
+minimumReleaseAge: 1440
+allowBuilds:
+  esbuild: false
