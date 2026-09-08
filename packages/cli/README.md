@@ -30,8 +30,10 @@ edgestore --cwd apps/web agent context --json
 ```
 
 `agent context` reads the application's packages, not the CLI's dependencies.
-If several workspaces match, it lists them and returns exit code 2. Select one
-with `--cwd`. The JSON uses schema version 1 and includes per-client skill and
+At an unlinked workspace root with child packages, it lists them and returns exit
+code 2, even if the root declares a framework for tooling. Select an application
+with `--cwd`, or use `--cwd .` to explicitly select the root. The JSON uses schema
+version 1 and includes per-client skill and
 MCP configuration status. It excludes env values, secrets, and raw config.
 
 ## Agent setup and updates

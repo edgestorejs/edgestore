@@ -16,6 +16,7 @@ import {
   inspectApplication,
   versionFamily,
 } from './core/application';
+import { detectPackages } from './core/packageInstall';
 import { createFixture } from './testFixture';
 
 const directories: string[] = [];
@@ -171,46 +172,63 @@ describe('agent context', () => {
     });
   });
 
-  it('requires selection at an ambiguous root and respects --cwd and nested directories', async () => {
-    const directory = await app();
-    await writeFile(
-      path.join(directory, 'pnpm-workspace.yaml'),
-      'packages:\n  - apps/*\n',
-    );
-    for (const name of ['web', 'api']) {
-      await mkdir(path.join(directory, 'apps', name, 'src'), {
-        recursive: true,
-      });
+  it.each<Record<string, string>>([
+    {},
+    { react: '19' },
+    { next: '16', react: '19' },
+  ])(
+    'requires selection at an ambiguous root with %j and respects --cwd',
+    async (dependencies) => {
+      const directory = await app(dependencies);
       await writeFile(
-        path.join(directory, 'apps', name, 'package.json'),
-        JSON.stringify({
-          name,
-          dependencies:
-            name === 'web' ? { vite: '8', react: '19' } : { hono: '4' },
-        }),
+        path.join(directory, 'pnpm-workspace.yaml'),
+        'packages:\n  - apps/*\n',
       );
-    }
-    const fixture = createFixture();
-    fixture.runtime.setCwd(directory);
-    expect(
-      await runCli(['agent', 'context', '--json'], fixture.runtime, '1'),
-    ).toBe(2);
-    expect(JSON.parse(fixture.stdout()).selectionRequired).toBe(true);
-    const selected = createFixture();
-    selected.runtime.setCwd(directory);
-    expect(
-      await runCli(
-        ['--cwd', 'apps/web/src', 'agent', 'context', '--json'],
-        selected.runtime,
-        '1',
-      ),
-    ).toBe(0);
-    expect(JSON.parse(selected.stdout()).application).toMatchObject({
-      directory: path.join(directory, 'apps/web'),
-      framework: 'vite',
-      role: 'frontend',
-    });
-  });
+      for (const name of ['web', 'api']) {
+        await mkdir(path.join(directory, 'apps', name, 'src'), {
+          recursive: true,
+        });
+        await writeFile(
+          path.join(directory, 'apps', name, 'package.json'),
+          JSON.stringify({
+            name,
+            dependencies:
+              name === 'web' ? { vite: '8', react: '19' } : { hono: '4' },
+          }),
+        );
+      }
+      const fixture = createFixture();
+      fixture.runtime.setCwd(directory);
+      expect(
+        await runCli(['agent', 'context', '--json'], fixture.runtime, '1'),
+      ).toBe(2);
+      expect(JSON.parse(fixture.stdout()).selectionRequired).toBe(true);
+      const root = createFixture();
+      root.runtime.setCwd(directory);
+      expect(
+        await runCli(
+          ['--cwd', '.', 'agent', 'context', '--json'],
+          root.runtime,
+          '1',
+        ),
+      ).toBe(0);
+      expect(JSON.parse(root.stdout()).application.directory).toBe(directory);
+      const selected = createFixture();
+      selected.runtime.setCwd(directory);
+      expect(
+        await runCli(
+          ['--cwd', 'apps/web/src', 'agent', 'context', '--json'],
+          selected.runtime,
+          '1',
+        ),
+      ).toBe(0);
+      expect(JSON.parse(selected.stdout()).application).toMatchObject({
+        directory: path.join(directory, 'apps/web'),
+        framework: 'vite',
+        role: 'frontend',
+      });
+    },
+  );
 
   it('routes legacy and mixed versions explicitly instead of selecting v1 guidance silently', async () => {
     const directory = await app({
@@ -250,6 +268,7 @@ it.each([
   ],
   [{ next: '16', react: '19' }, 'next', 'fullstack'],
   [{ hono: '4' }, 'hono', 'backend'],
+  [{ hono: '4', vite: '8', react: '19' }, 'hono', 'fullstack'],
   [{ vite: '8', react: '19' }, 'vite', 'frontend'],
   [{ react: '19' }, 'react', 'frontend'],
   [{}, 'unknown', 'unknown'],
@@ -259,6 +278,14 @@ it.each([
     expect(applicationKind(dependencies)).toEqual({ framework, role });
   },
 );
+
+it('plans both packages for a combined Hono and Vite React app', async () => {
+  const directory = await app({ hono: '4', vite: '8', react: '19' });
+  expect(await detectPackages(directory)).toMatchObject({
+    framework: 'hono',
+    missing: ['@edgestore/server', '@edgestore/react'],
+  });
+});
 
 it.each([
   ['0.2.4', 'legacy'],

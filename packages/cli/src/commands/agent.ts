@@ -20,10 +20,7 @@ export async function agentContextCommand(
     input.assetFile,
   );
   const selectionRequired =
-    !flags.cwd &&
-    !linked &&
-    application.framework === 'unknown' &&
-    application.candidateWorkspaces.length > 0;
+    !flags.cwd && !linked && application.candidateWorkspaces.length > 0;
   const result = {
     schemaVersion: 1,
     cliVersion: input.cliVersion,

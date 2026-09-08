@@ -10,7 +10,11 @@ export function applicationKind(dependencies: Record<string, string>) {
       framework: 'astro',
       role: dependencies.react ? 'fullstack' : 'backend',
     } as const;
-  if (dependencies.hono) return { framework: 'hono', role: 'backend' } as const;
+  if (dependencies.hono)
+    return {
+      framework: 'hono',
+      role: dependencies.vite && dependencies.react ? 'fullstack' : 'backend',
+    } as const;
   if (dependencies.vite && dependencies.react)
     return { framework: 'vite', role: 'frontend' } as const;
   if (dependencies.react)
