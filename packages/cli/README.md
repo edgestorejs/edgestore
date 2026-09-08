@@ -13,6 +13,43 @@ If several workspaces match, it lists them and returns exit code 2. Select one
 with `--cwd`. The JSON uses schema version 1 and excludes env values and secrets.
 Agent and MCP configuration report `not-inspected`.
 
+## Direct MCP configuration
+
+Configure the hosted connection independently of skills or plugins:
+
+```sh
+edgestore mcp setup --client codex --dry-run --json
+edgestore mcp setup --client codex --yes
+edgestore mcp status --client codex --json
+edgestore mcp remove --client codex --yes
+```
+
+Use `codex`, `claude` for Claude Code, or `cursor`. Setup writes to the Git root,
+or the package root outside Git. Use `--cwd` to select the project and `--global`
+for user configuration. Automated writes require `--yes`.
+
+| Client | Project configuration | User configuration |
+| --- | --- | --- |
+| Codex | `.codex/config.toml` | `$CODEX_HOME/config.toml` or `~/.codex/config.toml` |
+| Claude Code | `.mcp.json` | `~/.claude.json` |
+| Cursor | `.cursor/mcp.json` | `~/.cursor/mcp.json` |
+
+Setup preserves existing connections, unrelated settings, and JSONC comments.
+The CLI cannot inspect every plugin. Check your client for duplicate connections.
+
+Keep `.edgestore/agent-assets.json` with the config. Global setup stores this
+metadata in the CLI's user config directory. Removal requires an unchanged entry
+created by this CLI. `--yes` does not override user edits or name conflicts.
+If a write fails, the error lists files already changed.
+
+Setup uses `https://api.edgestore.dev/mcp`; `--api-url` does not change it.
+`status` checks configuration only. Sign in and grant permissions through your
+client. Codex also requires project trust for project-local configuration.
+
+Adapter contracts: [Codex MCP](https://learn.chatgpt.com/docs/extend/mcp?surface=cli),
+[Claude Code MCP](https://code.claude.com/docs/en/mcp), and
+[Cursor MCP](https://prod.cursor.com/help/customization/mcp).
+
 ```sh
 npm install --global @edgestore/cli
 edgestore --help
