@@ -12,6 +12,7 @@ import path from 'node:path';
 import { afterEach, expect, it, vi } from 'vitest';
 import { runCli } from './cli';
 import { DEFAULT_API_ORIGIN } from './core/apiUrl';
+import { inspectApplication } from './core/application';
 import { serializeOAuthCredential } from './core/credentials';
 import { inspectSource, localApplicationChecks } from './core/doctorLocal';
 import { detectPackages } from './core/packageInstall';
@@ -202,6 +203,41 @@ it('identifies legacy handler wiring and provider JSX as observations only', () 
 });
 
 it.each([
+  ...['hono', 'express', 'fastify'].flatMap((framework) =>
+    [false, true].flatMap((react) =>
+      [false, true].map((vite) => ({
+        dependencies: {
+          [framework]: '1',
+          ...(react ? { react: '19' } : {}),
+          ...(vite ? { vite: '8' } : {}),
+        },
+        framework,
+        missing: react
+          ? ['@edgestore/server', '@edgestore/react']
+          : ['@edgestore/server'],
+      })),
+    ),
+  ),
+  {
+    dependencies: { next: '16', react: '19', express: '5' },
+    framework: 'next',
+    missing: ['@edgestore/server', '@edgestore/react'],
+  },
+  {
+    dependencies: { '@remix-run/react': '2', react: '19', express: '5' },
+    framework: 'react-router',
+    missing: ['@edgestore/server', '@edgestore/react'],
+  },
+  {
+    dependencies: { astro: '7' },
+    framework: 'astro',
+    missing: ['@edgestore/server'],
+  },
+  {
+    dependencies: { react: '19' },
+    framework: 'react',
+    missing: ['@edgestore/react'],
+  },
   {
     dependencies: { vite: '8', react: '19' },
     framework: 'vite',
@@ -235,5 +271,25 @@ it.each([
       framework,
       missing,
     });
+    expect(await inspectApplication(directory)).toMatchObject({
+      framework,
+      role:
+        missing.length === 2
+          ? 'fullstack'
+          : missing[0] === '@edgestore/react'
+            ? 'frontend'
+            : 'backend',
+    });
+    await writeFile(
+      path.join(directory, 'package.json'),
+      JSON.stringify({
+        dependencies: {
+          ...dependencies,
+          '@edgestore/server': '1',
+          '@edgestore/react': '1',
+        },
+      }),
+    );
+    expect((await detectPackages(directory)).missing).toEqual([]);
   },
 );

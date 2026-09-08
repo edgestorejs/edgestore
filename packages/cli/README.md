@@ -16,6 +16,13 @@ edgestore login
 edgestore init
 ```
 
+`init --install` selects packages from the application's dependencies. Next.js,
+Remix/React Router, and TanStack Start receive server and React packages. Astro,
+Hono, Express, and Fastify receive the server package, plus the React package
+when React is declared. React-only frontends receive the React package.
+Already-declared EdgeStore packages are left unchanged. Framework detection
+does not distinguish Next.js App Router from Pages Router.
+
 Use `edgestore login --device` when a local browser callback is unavailable.
 Use `edgestore login --token` or `EDGESTORE_TOKEN` for automation. Persisted
 credentials are stored in the operating system credential store and are never
