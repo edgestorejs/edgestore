@@ -4,6 +4,10 @@
   "globalDependencies": ["tsconfig.json", "tsconfig.build.json", "scripts/**"],
   "globalEnv": [
     "NODE_ENV",
+    "DOCS_RELEASE_CHANNEL",
+    "VERCEL_GIT_COMMIT_REF",
+    "GITHUB_HEAD_REF",
+    "GITHUB_REF_NAME",
     "ROLLUP_WATCH",
     "DASHBOARD_API_KEY",
     "DEV",
@@ -24,6 +28,7 @@
     "NEXT_PUBLIC_POSTHOG_KEY",
     "NEXT_PUBLIC_POSTHOG_UI_HOST",
     "PORT",
+    "FRONTEND_ORIGIN",
     "SKIP_ENV_VALIDATION"
   ],
   "tasks": {

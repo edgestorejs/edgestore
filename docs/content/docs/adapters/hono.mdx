@@ -11,7 +11,7 @@ You can use EdgeStore in these cases, even without using Next.js.
 
 ### Install
 
-Let's start by installing the required packages.
+Install `@edgestore/server` in the backend and `@edgestore/react` in the frontend. In a workspace, run the package installation in the corresponding package directories.
 
 ```package-install
 @edgestore/server @edgestore/react
@@ -21,13 +21,13 @@ Let's start by installing the required packages.
 
 Then go to your [Dashboard](https://dashboard.edgestore.dev), create a new project and copy the keys to your environment variables.
 
-```sh title=".env"
+```sh title=".env.local (backend only)"
 EDGE_STORE_ACCESS_KEY=your-access-key
 EDGE_STORE_SECRET_KEY=your-secret-key
 ```
 
 <Callout type="warning">
-  Make sure you add `.env` to your `.gitignore` file. <br />
+  Reuse the backend's existing environment-file convention and loader. The maintained Hono example loads `.env.local` in its development command; add that file to `.gitignore`. Never put these keys in frontend `VITE_*` variables. <br />
   You don't want to commit your secret keys to your repository.
 </Callout>
 
@@ -50,6 +50,7 @@ import { cors } from 'hono/cors';
 // --- HONO CONFIG ---
 
 const PORT = process.env.PORT ?? 3001;
+const frontendOrigin = process.env.FRONTEND_ORIGIN ?? 'http://localhost:5173';
 const app = new Hono();
 
 /**
@@ -57,10 +58,9 @@ const app = new Hono();
  * To avoid CORS issues, we should use the cors middleware.
  */
 app.use(
-  '*',
+  '/edgestore/*',
   cors({
-    // Change this to your frontend origin for better security
-    origin: (origin) => origin,
+    origin: frontendOrigin,
     credentials: true,
   }),
 );
@@ -110,7 +110,7 @@ serve(
 Now let's initiate our context provider in the frontend app.
 
 ```tsx title="src/lib/edgestore.ts"
-// You can import it from the other project if it's just the type
+// Use a type-only import from your actual Hono backend, not another adapter's example.
 import { type EdgeStoreRouter } from '../../../path/to/hono-backend/src';
 import { createEdgeStoreProvider } from '@edgestore/react';
 
@@ -129,13 +129,15 @@ import { EdgeStoreProvider } from '../lib/edgestore';
 function App() {
   return (
     {/* [!code ++] */}
-    <EdgeStoreProvider basePath="http://localhost:3001/edgestore">
+    <EdgeStoreProvider basePath={import.meta.env.VITE_EDGESTORE_BASE_PATH ?? '/edgestore'}>
       {/* Rest of your app */}
     {/* [!code ++] */}
     </EdgeStoreProvider>
   );
 }
 ```
+
+For Vite development with separate origins, set `VITE_EDGESTORE_BASE_PATH=http://localhost:3001/edgestore` in the frontend environment and `FRONTEND_ORIGIN=http://localhost:5173` in the backend environment. Use your actual ports. The base path is public configuration, not a credential. Across separate repositories, publish or otherwise share the backend router's types without importing backend runtime code into the browser bundle.
 
 ## Usage
 
