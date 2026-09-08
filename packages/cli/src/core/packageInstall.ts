@@ -260,7 +260,7 @@ function isMissingPathError(error: unknown): error is NodeJS.ErrnoException {
   );
 }
 
-async function detectPackageManager(
+export async function detectPackageManager(
   cwd: string,
 ): Promise<'pnpm' | 'npm' | 'yarn' | 'bun'> {
   const start = path.resolve(cwd);
