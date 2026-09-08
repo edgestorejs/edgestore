@@ -50,6 +50,28 @@ Adapter contracts: [Codex MCP](https://learn.chatgpt.com/docs/extend/mcp?surface
 [Claude Code MCP](https://code.claude.com/docs/en/mcp), and
 [Cursor MCP](https://prod.cursor.com/help/customization/mcp).
 
+## Local diagnostics
+
+```sh
+edgestore --cwd apps/web doctor --offline --json
+edgestore --cwd apps/api doctor --json
+```
+
+`--offline` skips credentials and network access. Normal doctor uses an existing
+credential for read-only API checks. It does not log in or refresh credentials.
+
+Checks return `pass`, `warn`, `fail`, or `skip`. A failure sets exit code 1.
+Doctor checks adapter and provider imports, CORS, and env file locations without
+running application code or returning env values. It cannot verify route mounting,
+provider ancestry, custom env loading, or remote bucket mappings.
+
+Source inspection stops at 200 files, 2 MB, 2,000 directory entries, or ten levels.
+Nested packages, build outputs, dependencies, symlinks, tests, and unparseable
+files are skipped. Test uploads through the application to check what static
+inspection cannot.
+
+## Install and log in
+
 ```sh
 npm install --global @edgestore/cli
 edgestore --help
