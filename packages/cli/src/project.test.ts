@@ -201,7 +201,7 @@ describe('project', () => {
 
     expect(exitCode).toBe(2);
     expect(fixture.createProjectKey).not.toHaveBeenCalled();
-    expect(fixture.stderr()).toContain('--copy or --output');
+    expect(fixture.stderr()).toContain('require --output');
   });
 
   it('keeps the key ID on plain stdout when the secret is delivered', async () => {

@@ -30,9 +30,12 @@ Use `edgestore login --token` or `EDGESTORE_TOKEN` for automation. Persisted
 credentials are stored in the operating system credential store and are never
 written to a plaintext config file.
 
-The CLI manages accounts, projects and their keys, management tokens, buckets,
-files, uploads, team members, and invitations. Secrets are returned only when
-they are created:
+## Project keys
+
+Interactive commands display a new key once. Automated key creation and rotation
+require `--output` to a gitignored backend env file. JSON returns key metadata and
+delivery status. Scripts that read `secretKey` from JSON must switch to file
+delivery.
 
 ```sh
 edgestore project list
@@ -40,6 +43,10 @@ edgestore bucket create publicFiles --type file --public
 edgestore file upload ./logo.png --bucket publicFiles
 edgestore project key create <basePath> --name local --output .env.local
 ```
+
+`init` reuses its configured env destination, or detects existing env files before
+choosing `.env.local`. For an ambiguous noninteractive destination, pass `--output`
+explicitly after checking which file the backend loads.
 
 In a monorepo, run commands from the application package or select it
 explicitly with `--cwd`:
