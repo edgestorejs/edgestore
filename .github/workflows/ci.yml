@@ -65,6 +65,12 @@ jobs:
       - name: Agent documentation contracts
         run: pnpm --filter docs test:agents
 
+      - name: Package agent references
+        run: |
+          pnpm agent-docs:test
+          pnpm agent-docs:check
+          pnpm agent-docs:pack-check
+
       - name: Type tests
         run: pnpm test:types
 
