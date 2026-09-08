@@ -14,10 +14,18 @@ npm install --global @edgestore/cli
 Then run this in your application directory:
 
 ```sh
+edgestore agent setup --client codex
+```
+
+Use `claude` for Claude Code or `cursor` for Cursor. This installs the setup skill and configures MCP for the project. Add `--skills-only` to skip MCP, or `--global` to install for all projects. Restart your client or open a new task to load the skill. Setup does not sign you in.
+
+For MCP only:
+
+```sh
 edgestore mcp setup --client codex
 ```
 
-Use `claude` for Claude Code or `cursor` for Cursor. Setup writes project-local configuration. Add `--global` to configure all projects. It does not sign you in.
+The skill reads API references bundled with your installed EdgeStore packages. After upgrading the CLI, update the skill with `edgestore agent update --client codex`. This leaves your application packages unchanged.
 
 Run `edgestore mcp status --client codex` to inspect the saved config. Check the connection in your client after signing in. If your CLI release does not have `mcp setup`, use manual configuration below.
 
@@ -76,3 +84,5 @@ Start with [Quick start](/docs/quick-start) or the adapter for [Next.js](/docs/a
 - [llms.txt](/llms.txt) lists the docs.
 - [llms-full.txt](/llms-full.txt) includes all pages in one Markdown response.
 - Add `.md` to a page URL, such as [quick-start.md](/docs/quick-start.md), or use its Copy Markdown button.
+
+Run `edgestore agent context --json` to find installed versions and their local `agent-docs/` references.

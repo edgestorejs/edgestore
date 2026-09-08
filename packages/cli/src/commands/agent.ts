@@ -1,3 +1,4 @@
+import { configurationStatus } from '../core/agent/status';
 import { resolveApiUrl } from '../core/apiUrl';
 import { inspectApplication } from '../core/application';
 import { apiOriginForRepoConfig } from '../core/config';
@@ -8,11 +9,16 @@ import { selectWorkspaceContext } from '../core/workspace';
 export async function agentContextCommand(
   runtime: CliRuntime,
   flags: GlobalFlags,
-  cliVersion: string,
+  input: { cliVersion: string; assetFile: string },
 ): Promise<void> {
   await selectWorkspaceContext(runtime, flags, 'read');
   const application = await inspectApplication(runtime.workspaceCwd);
   const linked = await runtime.repoConfig.read();
+  const configurations = await configurationStatus(
+    runtime,
+    flags,
+    input.assetFile,
+  );
   const selectionRequired =
     !flags.cwd &&
     !linked &&
@@ -20,7 +26,7 @@ export async function agentContextCommand(
     application.candidateWorkspaces.length > 0;
   const result = {
     schemaVersion: 1,
-    cliVersion,
+    cliVersion: input.cliVersion,
     selectionRequired,
     application,
     ...(application.compatibility === 'not-installed'
@@ -44,8 +50,14 @@ export async function agentContextCommand(
           envFile: linked.config.envFile,
         }
       : null,
-    agentConfiguration: { status: 'not-inspected' },
-    mcpConfiguration: { status: 'not-inspected' },
+    agentConfiguration: configurations.map(({ client, skills }) => ({
+      client,
+      ...skills,
+    })),
+    mcpConfiguration: configurations.map(({ client, mcp }) => ({
+      client,
+      ...mcp,
+    })),
   };
   if (selectionRequired) runtime.exitCode = 2;
   outputFor(runtime, flags).result(

@@ -14,7 +14,7 @@ export type FileChange = {
   file: string;
   root: string;
   before: string | undefined;
-  after: string;
+  after: string | undefined;
 };
 
 export function digest(value: string): string {
@@ -73,6 +73,13 @@ export async function applyChanges(changes: FileChange[]): Promise<void> {
   const applied: string[] = [];
   try {
     for (const change of changes) {
+      await validatePath(change.file, change.root);
+      if (change.after === undefined) {
+        await checkUnchanged(change);
+        await unlink(change.file);
+        applied.push(change.file);
+        continue;
+      }
       await mkdir(path.dirname(change.file), { recursive: true });
       await checkUnchanged(change);
       const temporary = `${change.file}.${randomUUID()}.tmp`;

@@ -70,6 +70,8 @@ jobs:
           pnpm agent-docs:test
           pnpm agent-docs:check
           pnpm agent-docs:pack-check
+          pnpm agent-assets:check
+          pnpm agent-assets:pack-check
 
       - name: Type tests
         run: pnpm test:types

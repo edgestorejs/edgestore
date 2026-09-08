@@ -29,14 +29,16 @@
     "edge-store"
   ],
   "scripts": {
-    "build": "pnpm typecheck && rollup --config rollup.config.ts --configPlugin rollup-plugin-swc3",
+    "build": "node ../../scripts/agentAssets.ts && pnpm typecheck && rollup --config rollup.config.ts --configPlugin rollup-plugin-swc3",
+    "prepack": "node ../../scripts/agentAssets.ts",
     "dev": "pnpm build --watch",
-    "test": "vitest run",
+    "test": "node ../../scripts/agentAssets.ts && vitest run",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint --cache --report-unused-disable-directives src"
   },
   "files": [
     "dist",
+    "agent-assets",
     "README.md",
     "LICENSE",
     "package.json"

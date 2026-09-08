@@ -10,8 +10,42 @@ edgestore --cwd apps/web agent context --json
 
 `agent context` reads the application's packages, not the CLI's dependencies.
 If several workspaces match, it lists them and returns exit code 2. Select one
-with `--cwd`. The JSON uses schema version 1 and excludes env values and secrets.
-Agent and MCP configuration report `not-inspected`.
+with `--cwd`. The JSON uses schema version 1 and includes per-client skill and
+MCP configuration status. It excludes env values, secrets, and raw config.
+
+## Agent setup and updates
+
+```sh
+edgestore agent setup --client codex --dry-run --json
+edgestore agent setup --client codex --yes
+edgestore agent status --client codex --json
+edgestore agent update --client codex --yes
+```
+
+Use `claude` for Claude Code or `cursor` for Cursor. Setup installs the skill and
+configures MCP for the project. `--skills-only` leaves MCP settings untouched;
+`--global` installs for all projects.
+
+| Client | Skill directory |
+| --- | --- |
+| Codex | `.agents/skills` |
+| Claude Code | `.claude/skills` |
+| Cursor | `.cursor/skills` |
+
+These paths are relative to the Git or package root, or your home for global
+setup. The CLI reports existing global skills without installing a duplicate.
+
+The skill comes from the installed CLI release. `status` compares against that
+copy, not an online release. `setup` leaves older installed copies in place;
+use `update` to replace them. Neither command upgrades application packages.
+
+Keep `.edgestore/skill-assets.json` with the installed skill. Updates stop on
+user edits, extra files, or symlinks, even with `--yes`. If a write fails, the error
+lists files already changed. Restart the client or open a new task after updating.
+
+For installation from source, run `npx skills add ./skills --list` in this repo.
+The repository plugin includes the same skill. The CLI leaves skills installed
+through other tools untouched.
 
 ## Direct MCP configuration
 

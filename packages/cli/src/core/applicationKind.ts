@@ -3,6 +3,13 @@ export function applicationKind(dependencies: Record<string, string>) {
     return { framework: 'tanstack-start', role: 'fullstack' } as const;
   if (dependencies.next)
     return { framework: 'next', role: 'fullstack' } as const;
+  if (dependencies['@react-router/dev'] || dependencies['@remix-run/react'])
+    return { framework: 'react-router', role: 'fullstack' } as const;
+  if (dependencies.astro)
+    return {
+      framework: 'astro',
+      role: dependencies.react ? 'fullstack' : 'backend',
+    } as const;
   if (dependencies.hono) return { framework: 'hono', role: 'backend' } as const;
   if (dependencies.vite && dependencies.react)
     return { framework: 'vite', role: 'frontend' } as const;

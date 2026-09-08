@@ -1,9 +1,6 @@
-import { homedir } from 'node:os';
-import path from 'node:path';
-import { CLIENTS, type AgentClient } from '../core/agent/clients';
 import { applyChanges } from '../core/agent/files';
 import { planMcp, type McpAction } from '../core/agent/mcp';
-import { findGitRoot, findPackageRoot } from '../core/config';
+import { agentOptions } from '../core/agent/options';
 import { usageError } from '../core/errors';
 import {
   isInteractive,
@@ -24,27 +21,8 @@ export async function mcpCommand(
   },
 ): Promise<void> {
   const { action } = input;
-  let client = input.client;
-  if (!client && isInteractive(runtime, flags)) {
-    client = await runtime.prompts.select(
-      'Coding agent',
-      CLIENTS.map((value) => ({ value, label: value })),
-    );
-  }
-  if (!CLIENTS.includes(client as AgentClient))
-    throw usageError(
-      'agent_client_required',
-      'Select --client codex, claude, or cursor.',
-    );
-  const options = {
-    client: client as AgentClient,
-    project:
-      (await findGitRoot(runtime.cwd)) ?? (await findPackageRoot(runtime.cwd)),
-    home: path.resolve(runtime.env.HOME ?? homedir()),
-    stateRoot: path.dirname(runtime.globalConfig.path),
-    global: input.global,
-    codexHome: runtime.env.CODEX_HOME,
-  };
+  const options = await agentOptions(runtime, flags, input);
+  const { client } = options;
   const plan = await planMcp(options, action);
   if (plan.changes.length && !input.dryRun) {
     if (!input.yes) {
