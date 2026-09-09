@@ -24,26 +24,6 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
-    "/file-delivery/{basePath}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Resolve public file routing policy
-         * @description Returns non-secret project routing policy for file delivery. No authentication is required. File authorization is enforced separately at the edge.
-         */
-        get: operations["v2.fileDelivery.get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/whoami": {
         parameters: {
             query?: never;
@@ -1917,79 +1897,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InvalidRequestError"];
-                };
-            };
-            /** @description 413 */
-            413: {
-                headers: {
-                    "x-request-id": components["headers"]["RequestId"];
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PayloadTooLargeError"];
-                };
-            };
-            /** @description 500 */
-            500: {
-                headers: {
-                    "x-request-id": components["headers"]["RequestId"];
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["InternalError"];
-                };
-            };
-        };
-    };
-    "v2.fileDelivery.get": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                basePath: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    "x-request-id": components["headers"]["RequestId"];
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Successful response payload. */
-                        data: {
-                            /** @description Canonical project ID. */
-                            projectId: string;
-                            /** @description Immutable project storage prefix. */
-                            basePath: string;
-                            /** @description Whether the shared legacy file hostname may serve this project. */
-                            legacyFileDomainEnabled: boolean;
-                        };
-                    };
-                };
-            };
-            /** @description 400 */
-            400: {
-                headers: {
-                    "x-request-id": components["headers"]["RequestId"];
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["InvalidRequestError"];
-                };
-            };
-            /** @description 404 */
-            404: {
-                headers: {
-                    "x-request-id": components["headers"]["RequestId"];
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProjectNotFoundError"];
                 };
             };
             /** @description 413 */

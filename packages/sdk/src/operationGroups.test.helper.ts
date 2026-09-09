@@ -1,9 +1,6 @@
 import type { OperationId } from './internal/operationTypes';
 
-export type SystemOperationId = Extract<
-  OperationId,
-  'v2.health' | 'v2.whoami' | 'v2.fileDelivery.get'
->;
+export type SystemOperationId = Extract<OperationId, 'v2.health' | 'v2.whoami'>;
 
 export type RuntimeOperationId = Extract<OperationId, `v2.runtime.${string}`>;
 

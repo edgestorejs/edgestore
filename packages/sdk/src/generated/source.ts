@@ -2,7 +2,7 @@ export const API_V2_SOURCE_REPOSITORY =
   'https://github.com/edgestorejs/edge-store-app' as const;
 
 export const API_V2_SOURCE_COMMIT =
-  '33ee43df8e8f5918637eb561bd90ccc341f6040b' as const;
+  'e133eff96747f1a6dcdc8f1046998416f5d1d511' as const;
 
 export const API_V2_SCHEMA_SHA256 =
-  'a3c285abd3afe932a205d8630d35136f2bdf3613796d2d6be937609681bb27ec' as const;
+  '96d704fae8e6382978ead6bdc7cbdb33ac5642d4a9aaa79170e4e32f9865cef0' as const;
