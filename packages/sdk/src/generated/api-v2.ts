@@ -2604,6 +2604,11 @@ export interface operations {
                     /** @description Human-readable project name. */
                     name: string;
                     /**
+                     * @description Use a project subdomain. Requires EdgeStore server and React packages 1.0 or later. Defaults to shared delivery for compatibility.
+                     * @default false
+                     */
+                    useProjectDomain?: boolean;
+                    /**
                      * @description Whether to create and return an initial project key.
                      * @default true
                      */

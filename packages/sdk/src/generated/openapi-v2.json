@@ -3358,6 +3358,11 @@
                     "maxLength": 100,
                     "description": "Human-readable project name."
                   },
+                  "useProjectDomain": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Use a project subdomain. Requires EdgeStore server and React packages 1.0 or later. Defaults to shared delivery for compatibility."
+                  },
                   "createKey": {
                     "type": "boolean",
                     "default": true,
