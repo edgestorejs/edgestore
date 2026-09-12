@@ -446,6 +446,7 @@ describe('edgestore provider', () => {
     expect(runtime.uploads.upload).toHaveBeenCalledWith(
       expect.objectContaining({
         bucket: 'files',
+        bucketConfig: { type: 'file', visibility: 'public' },
         source,
         metadata: { owner: 'user-1' },
       }),

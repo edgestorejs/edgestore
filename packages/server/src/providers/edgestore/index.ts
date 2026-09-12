@@ -179,6 +179,7 @@ export function edgestore(options?: EdgeStoreProviderOptions) {
       },
       upload: async ({
         bucketName,
+        bucketType,
         fileInfo,
         autoSignedUrls,
         source,
@@ -187,6 +188,10 @@ export function edgestore(options?: EdgeStoreProviderOptions) {
       }) => {
         const result = await runtime.uploads.upload({
           bucket: bucketName,
+          bucketConfig: {
+            type: bucketType.toLowerCase() as 'file' | 'image',
+            visibility: fileInfo.isPublic ? 'public' : 'protected',
+          },
           source,
           ...mapHighLevelUploadOptions(fileInfo, autoSignedUrls),
           signal,
