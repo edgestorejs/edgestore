@@ -1,5 +1,18 @@
 # @edgestore/react
 
+## 1.0.0-next.4
+
+### Minor Changes
+
+- [#237](https://github.com/edgestorejs/edgestore/pull/237) [`9dfc9fe`](https://github.com/edgestorejs/edgestore/commit/9dfc9fe8cea705a03d51d8a0fec39f3fb6189467) Thanks [@raviships](https://github.com/raviships)! - Discover project file origins from the service and initialize protected access on both project and preserved legacy hosts. Existing service responses and explicit development base URL overrides remain supported. Upload calls and file references are unchanged.
+
+  Allow management project creation to opt into project subdomains with `useProjectDomain: true`. Omitting the option preserves shared-domain compatibility with older packages.
+
+### Patch Changes
+
+- Updated dependencies [[`9dfc9fe`](https://github.com/edgestorejs/edgestore/commit/9dfc9fe8cea705a03d51d8a0fec39f3fb6189467)]:
+  - @edgestore/shared@1.0.0-next.4
+
 ## 1.0.0-next.3
 
 ### Patch Changes

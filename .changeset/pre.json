@@ -24,14 +24,18 @@
     "@edgestore/cli": "0.0.0"
   },
   "changesets": [
+    "bright-files-progress",
     "bright-pandas-auth",
     "calm-clouds-guide",
     "clean-production-dependencies",
     "esm-only-packages",
     "introduce-api-v2-sdk",
+    "project-file-origins",
+    "quick-files-upload",
     "redesign-provider-backend-client",
     "remove-zod-peer",
     "standard-schema-core",
+    "tidy-buckets-upload",
     "tidy-dots-login",
     "validate-http-schema-input"
   ]
