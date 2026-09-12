@@ -1,5 +1,11 @@
 import { execFile } from 'node:child_process';
-import { readdir, readFile, writeFile } from 'node:fs/promises';
+import {
+  lstat,
+  readdir,
+  readFile,
+  realpath,
+  writeFile,
+} from 'node:fs/promises';
 import path from 'node:path';
 import { promisify } from 'node:util';
 import { findGitRoot } from './config';
@@ -14,7 +20,8 @@ export async function resolveSecretOutput(
   interactive: boolean,
 ): Promise<string> {
   if (explicitOutput) return explicitOutput;
-  if (!interactive) return '.env.local';
+  const linked = await runtime.repoConfig.read();
+  if (linked?.config.envFile) return linked.config.envFile;
 
   const discovered = (
     await readdir(runtime.workspaceCwd, { withFileTypes: true })
@@ -29,6 +36,23 @@ export async function resolveSecretOutput(
     .sort();
   if (!discovered.length || discovered.every((name) => name === '.env.local')) {
     return '.env.local';
+  }
+  if (!interactive) {
+    if (
+      discovered.length === 1 &&
+      [
+        '.env',
+        '.env.local',
+        '.env.development',
+        '.env.development.local',
+      ].includes(discovered[0]!)
+    )
+      return discovered[0]!;
+    throw usageError(
+      'secret_output_required',
+      'Existing environment files require an explicit --output choice.',
+      ['Inspect the backend environment loader and pass --output <file>.'],
+    );
   }
   const choices = Array.from(new Set([...discovered, '.env.local']));
   return runtime.prompts.select(
@@ -54,6 +78,20 @@ export async function protectSecretFile(
   const boundary = gitRoot ?? packageRoot;
   const repositoryRelative = path.relative(boundary, absolute);
   const packageRelative = path.relative(packageRoot, absolute);
+  const realPackageRoot = await realpath(packageRoot);
+  const realParent = await realpath(path.dirname(absolute));
+  const realRelative = path.relative(realPackageRoot, realParent);
+  if (
+    realRelative === '..' ||
+    realRelative.startsWith(`..${path.sep}`) ||
+    path.isAbsolute(realRelative)
+  ) {
+    throw usageError(
+      'secret_output_unprotected',
+      'Secret output must not escape the selected package through a symlink.',
+    );
+  }
+  await rejectSymlink(absolute);
   if (
     !packageRelative ||
     packageRelative.startsWith('..') ||
@@ -79,6 +117,7 @@ export async function protectSecretFile(
   }
 
   const gitignorePath = path.join(packageRoot, '.gitignore');
+  await rejectSymlink(gitignorePath);
   let contents = '';
   try {
     contents = await readFile(gitignorePath, 'utf8');
@@ -108,6 +147,18 @@ export async function protectSecretFile(
     );
   }
   return normalized;
+}
+
+async function rejectSymlink(file: string): Promise<void> {
+  try {
+    if ((await lstat(file)).isSymbolicLink())
+      throw usageError(
+        'secret_output_unprotected',
+        `Refusing to overwrite a symlink at ${file}.`,
+      );
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+  }
 }
 
 async function isIgnoredFile(root: string, relative: string): Promise<boolean> {

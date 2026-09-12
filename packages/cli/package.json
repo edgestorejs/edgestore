@@ -29,19 +29,23 @@
     "edge-store"
   ],
   "scripts": {
-    "build": "pnpm typecheck && rollup --config rollup.config.ts --configPlugin rollup-plugin-swc3",
+    "build": "node ../../scripts/agentAssets.ts && pnpm typecheck && rollup --config rollup.config.ts --configPlugin rollup-plugin-swc3",
+    "prepack": "node ../../scripts/agentAssets.ts",
     "dev": "pnpm build --watch",
-    "test": "vitest run",
+    "test": "node ../../scripts/agentAssets.ts && vitest run",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint --cache --report-unused-disable-directives src"
   },
   "files": [
     "dist",
+    "agent-assets",
     "README.md",
     "LICENSE",
     "package.json"
   ],
   "dependencies": {
+    "@babel/parser": "7.29.7",
+    "@babel/types": "7.29.7",
     "@clack/prompts": "1.7.0",
     "@edgestore/sdk": "1.0.0-next.3",
     "@manypkg/find-root": "3.1.0",
@@ -49,11 +53,13 @@
     "@napi-rs/keyring": "1.3.0",
     "commander": "15.0.0",
     "env-paths": "4.0.0",
+    "jsonc-parser": "3.3.1",
     "log-update": "8.0.0",
     "open": "11.0.0",
     "openid-client": "6.8.4",
     "package-manager-detector": "1.8.0",
     "picocolors": "1.1.1",
+    "smol-toml": "1.7.0",
     "zod": "4.3.5"
   },
   "devDependencies": {

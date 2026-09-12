@@ -2,6 +2,16 @@ import { describe, expect, it } from 'vitest';
 import { resolveApiUrl } from './apiUrl';
 
 describe('resolveApiUrl', () => {
+  it('does not echo malformed values that may contain a credential', () => {
+    expect(() => resolveApiUrl('secret-sentinel not a URL', undefined)).toThrow(
+      'Invalid EdgeStore API URL.',
+    );
+    try {
+      resolveApiUrl('secret-sentinel not a URL', undefined);
+    } catch (error) {
+      expect(String(error)).not.toContain('secret-sentinel');
+    }
+  });
   it('uses the hosted API by default', () => {
     expect(resolveApiUrl(undefined, undefined)).toEqual({
       displayUrl: 'https://api.edgestore.dev',

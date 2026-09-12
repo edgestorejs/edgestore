@@ -1,0 +1,25 @@
+export function applicationKind(dependencies: Record<string, string>) {
+  if (dependencies['@tanstack/react-start'])
+    return { framework: 'tanstack-start', role: 'fullstack' } as const;
+  if (dependencies.next)
+    return { framework: 'next', role: 'fullstack' } as const;
+  if (dependencies['@react-router/dev'] || dependencies['@remix-run/react'])
+    return { framework: 'react-router', role: 'fullstack' } as const;
+  if (dependencies.astro)
+    return {
+      framework: 'astro',
+      role: dependencies.react ? 'fullstack' : 'backend',
+    } as const;
+  for (const framework of ['hono', 'express', 'fastify'] as const) {
+    if (dependencies[framework])
+      return {
+        framework,
+        role: dependencies.react ? 'fullstack' : 'backend',
+      } as const;
+  }
+  if (dependencies.vite && dependencies.react)
+    return { framework: 'vite', role: 'frontend' } as const;
+  if (dependencies.react)
+    return { framework: 'react', role: 'frontend' } as const;
+  return { framework: 'unknown', role: 'unknown' } as const;
+}

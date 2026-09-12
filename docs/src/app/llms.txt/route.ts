@@ -1,3 +1,4 @@
+import { DOCS_ORIGIN } from '@/lib/constants';
 import { source } from '@/lib/source';
 
 export const revalidate = false;
@@ -11,7 +12,7 @@ export function GET() {
     const dir = page.slugs.length <= 1 ? 'getting-started' : page.slugs[0]!;
     const list = map.get(dir) ?? [];
     list.push(
-      `- [${page.data.title}](https://edgestore.dev${page.url}.md): ${page.data.description}`,
+      `- [${page.data.title}](${DOCS_ORIGIN}${page.url}.md): ${page.data.description}`,
     );
     map.set(dir, list);
   }
