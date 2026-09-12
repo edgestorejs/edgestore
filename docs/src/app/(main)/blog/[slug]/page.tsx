@@ -1,4 +1,4 @@
-import { blog } from '@/lib/source';
+import { getBlogPost, getBlogPosts } from '@/lib/source';
 import { getMDXComponents } from '@/mdx-components';
 import { InlineTOC } from 'fumadocs-ui/components/inline-toc';
 import { ArrowLeftIcon } from 'lucide-react';
@@ -17,7 +17,7 @@ type BlogPostPageProps = {
 
 export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const { slug } = await params;
-  const page = blog.getPage([slug]);
+  const page = getBlogPost(slug);
   if (!page) notFound();
 
   const MDXContent = page.data.body;
@@ -41,6 +41,12 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
             {page.data.description}
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+            {page.data.draft ? (
+              <>
+                <span className="font-medium text-primary">Draft</span>
+                <span aria-hidden="true">·</span>
+              </>
+            ) : null}
             <span>{page.data.author}</span>
             <span aria-hidden="true">·</span>
             <time dateTime={page.data.date}>
@@ -59,7 +65,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 }
 
 export function generateStaticParams(): { slug: string }[] {
-  return blog.getPages().map((page) => ({
+  return getBlogPosts().map((page) => ({
     slug: page.slugs[0]!,
   }));
 }
@@ -68,12 +74,15 @@ export async function generateMetadata({
   params,
 }: BlogPostPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const page = blog.getPage([slug]);
+  const page = getBlogPost(slug);
   if (!page) notFound();
 
   return {
     title: page.data.title,
     description: page.data.description,
+    alternates: {
+      canonical: page.url,
+    },
     authors: [{ name: page.data.author }],
     openGraph: {
       type: 'article',
@@ -81,6 +90,7 @@ export async function generateMetadata({
       description: page.data.description,
       publishedTime: page.data.date,
       authors: [page.data.author],
+      url: page.url,
     },
   };
 }
