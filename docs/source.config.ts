@@ -1,5 +1,6 @@
 import { rehypeCodeDefaultOptions } from 'fumadocs-core/mdx-plugins';
 import {
+  defineCollections,
   defineConfig,
   defineDocs,
   frontmatterSchema,
@@ -19,6 +20,19 @@ export const docs = defineDocs({
   meta: {
     schema: metaSchema,
   },
+});
+
+export const blogPosts = defineCollections({
+  type: 'doc',
+  dir: 'content/blog',
+  schema: frontmatterSchema.extend({
+    description: frontmatterSchema.shape.title,
+    author: frontmatterSchema.shape.title,
+    date: frontmatterSchema.shape.title.regex(
+      /^\d{4}-\d{2}-\d{2}$/,
+      'Expected a date in YYYY-MM-DD format',
+    ),
+  }),
 });
 
 export default defineConfig({
