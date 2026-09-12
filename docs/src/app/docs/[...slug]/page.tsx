@@ -8,6 +8,7 @@ import {
   DocsPage,
   DocsTitle,
 } from 'fumadocs-ui/page';
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { EditOnGitHub, LLMCopyButton } from './page.client';
 
@@ -47,13 +48,32 @@ export function generateStaticParams() {
 
 export async function generateMetadata(props: {
   params: Promise<{ slug?: string[] }>;
-}) {
+}): Promise<Metadata> {
   const params = await props.params;
   const page = source.getPage(params.slug);
   if (!page) notFound();
 
+  const socialImage = {
+    alt: `${page.data.title} | EdgeStore Docs`,
+    height: 630,
+    url: `/og/docs/${params.slug?.join('/')}`,
+    width: 1200,
+  };
+
   return {
     title: page.data.title,
     description: page.data.description,
+    openGraph: {
+      description: page.data.description,
+      images: [socialImage],
+      title: page.data.title,
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      description: page.data.description,
+      images: [socialImage],
+      title: page.data.title,
+    },
   };
 }
