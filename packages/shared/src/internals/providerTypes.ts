@@ -12,11 +12,15 @@ export type InitParams<TCtx extends AnyContext = AnyContext> = {
 };
 
 export type ClientInit = {
+  /** Absolute initialization URLs for active file aliases. Falls back to baseUrl + path. */
+  urls?: string[];
   path: string;
   headers?: Record<string, string>;
 };
 
 export type InitRes = {
+  /** Delivery origin discovered during initialization. */
+  baseUrl?: string;
   token?: string;
   clientInit?: ClientInit;
 };

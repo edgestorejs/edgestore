@@ -229,6 +229,7 @@ describe('init', () => {
       name: 'custom-provider',
       init: vi.fn(() => ({
         token: 'provider-token',
+        baseUrl: 'https://discovered.example.test',
         clientInit: {
           path: '/_init',
           headers: { 'x-provider-token': 'provider-token' },
@@ -255,6 +256,7 @@ describe('init', () => {
     });
     expect(res).toMatchObject({
       providerName: 'custom-provider',
+      baseUrl: 'https://discovered.example.test',
       clientInit: {
         path: '/_init',
         headers: { 'x-provider-token': 'provider-token' },

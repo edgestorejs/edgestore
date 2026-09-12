@@ -83,7 +83,7 @@ export function edgestore(options?: EdgeStoreProviderOptions) {
       );
       if (!requiresFileAccessCookie) return {};
 
-      const { token } = await runtime.accessTokens.create({
+      const { token, delivery } = await runtime.accessTokens.create({
         context: Object.fromEntries(
           Object.entries(ctx).filter(
             (entry): entry is [string, string] => entry[1] !== undefined,
@@ -109,9 +109,12 @@ export function edgestore(options?: EdgeStoreProviderOptions) {
           ]),
         ),
       });
+      const overrideBaseUrl = getEnv('EDGE_STORE_BASE_URL');
       return {
         token,
+        baseUrl: overrideBaseUrl ?? delivery?.baseUrl ?? baseUrl,
         clientInit: {
+          ...(delivery && !overrideBaseUrl ? { urls: delivery.initUrls } : {}),
           path: '/_init',
           headers: {
             'x-edgestore-token': token,
@@ -176,6 +179,7 @@ export function edgestore(options?: EdgeStoreProviderOptions) {
       },
       upload: async ({
         bucketName,
+        bucketType,
         fileInfo,
         autoSignedUrls,
         source,
@@ -184,6 +188,10 @@ export function edgestore(options?: EdgeStoreProviderOptions) {
       }) => {
         const result = await runtime.uploads.upload({
           bucket: bucketName,
+          bucketConfig: {
+            type: bucketType.toLowerCase() as 'file' | 'image',
+            visibility: fileInfo.isPublic ? 'public' : 'protected',
+          },
           source,
           ...mapHighLevelUploadOptions(fileInfo, autoSignedUrls),
           signal,
