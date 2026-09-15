@@ -6,6 +6,9 @@ export const revalidate = false;
 export function GET() {
   const scanned: string[] = [];
   scanned.push('# Docs');
+  scanned.push(
+    `- [EdgeStore setup skill](${DOCS_ORIGIN}/SKILL.md): Instructions for integrating file uploads into an application.`,
+  );
   const map = new Map<string, string[]>();
 
   for (const page of source.getPages()) {

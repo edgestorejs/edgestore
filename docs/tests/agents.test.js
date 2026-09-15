@@ -3,10 +3,47 @@ import { access, readFile } from 'node:fs/promises';
 import test from 'node:test';
 import { z } from 'zod';
 import { getDocsDeployment } from '../src/lib/docsDeployment.ts';
+import { skillDocument } from '../src/lib/hostedSkill.ts';
 
 process.env.SKIP_ENV_VALIDATION = '1';
 const { default: config } = await import('../next.config.mjs');
 const docsRoot = new URL('../content/docs/', import.meta.url);
+
+await test('hosted skill preserves canonical instructions and serves its linked reference', async () => {
+  const source = await readFile(
+    new URL('../../skills/edgestore-setup/SKILL.md', import.meta.url),
+    'utf8',
+  );
+  const response = await skillDocument('SKILL.md');
+  assert.equal(
+    response.headers.get('content-type'),
+    'text/markdown; charset=utf-8',
+  );
+  const body = await response.text();
+  assert.equal(
+    body.replaceAll('](/skills/edgestore-setup/references/', '](references/'),
+    source,
+  );
+  const references = [
+    ...body.matchAll(/\]\((\/skills\/edgestore-setup\/references\/[^)]+)\)/g),
+  ];
+  assert.ok(references.length > 0);
+  for (const [, url] of references) {
+    assert.equal(url, '/skills/edgestore-setup/references/hosted-setup.md');
+    await access(new URL(`../src/app${url}/route.ts`, import.meta.url));
+    const reference = await skillDocument('references/hosted-setup.md');
+    assert.equal(
+      await reference.text(),
+      await readFile(
+        new URL(
+          '../../skills/edgestore-setup/references/hosted-setup.md',
+          import.meta.url,
+        ),
+        'utf8',
+      ),
+    );
+  }
+});
 
 await test('legacy agent URLs permanently redirect to existing replacements', async () => {
   const redirects = await config.redirects();

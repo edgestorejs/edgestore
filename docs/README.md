@@ -2,6 +2,17 @@
 
 Run `pnpm docs:dev` from the repository root.
 
+## Hosted skill
+
+`/SKILL.md` serves the canonical `skills/edgestore-setup/SKILL.md` from the repo
+root. Its local reference links are rewritten to the same site's
+`/skills/edgestore-setup/references/` routes. Both documents are rendered as static
+Markdown at build time; there is no separately maintained web copy.
+
+Edit the canonical skill and rebuild the docs to publish changes. Turbo already
+includes `skills/**` in build inputs. If the skill gains references, add their
+routes and extend the hosted-skill tests.
+
 ## Deployment
 
 The docs default to `https://edgestore.dev` with GitHub source links on `main`.
