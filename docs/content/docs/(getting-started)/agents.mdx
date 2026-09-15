@@ -11,7 +11,7 @@ for ongoing use, or [connect MCP only](#mcp-only) for account and project tools.
 
 Ask your coding agent:
 
-> Read [EdgeStore's setup skill](/SKILL.md) and add file uploads to this application.
+> Read https://edgestore.dev/SKILL.md and add file uploads to this application.
 
 The skill guides implementation using your installed package versions. Reading it
 does not install the skill or connect MCP. For ongoing use, install it with the CLI.
@@ -97,7 +97,7 @@ Client instructions: [Codex](https://learn.chatgpt.com/docs/extend/mcp), [Claude
 | Check | What it establishes |
 | --- | --- |
 | `edgestore agent status --client codex` | Whether the skill is installed and matches your CLI's bundled copy. |
-| `edgestore mcp status --client codex` | Whether the saved MCP configuration is valid—not whether the connection works. |
+| `edgestore mcp status --client codex` | Whether the saved MCP configuration is valid, not whether the connection works. |
 | Sign in and list projects through your client's MCP tools | Whether that connection can perform an authenticated read. Other actions may need additional permissions. |
 | `edgestore --cwd <app> doctor --offline` | Static checks of the selected application; warnings and skipped checks still need attention. |
 | Upload through your app, then retrieve the file | Whether the application's upload path works. For protected files, also test that unauthorized access is denied. |
@@ -108,12 +108,6 @@ successful MCP connection does not verify your application's backend credentials
 
 If setup stalls, check [Troubleshooting](/docs/troubleshooting) before creating
 another project or replacing keys.
-
-## Tasks to try
-
-- **Avatars:** “Add avatar uploads to the profile screen using EdgeStore. Reuse the existing form and explain the file access policy you choose.”
-- **Private attachments:** “Add attachments to support tickets. Only people who can view the ticket should be able to read its files.”
-- **Upload debugging:** “Find why this EdgeStore upload fails. Diagnose the existing integration before changing configuration.”
 
 ## Give your agent the docs
 

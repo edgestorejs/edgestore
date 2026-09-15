@@ -33,7 +33,7 @@ Open the handler's health endpoint. With the default Next.js route it is
 [http://localhost:3000/api/edgestore/health](http://localhost:3000/api/edgestore/health).
 Use your backend origin and mounted path for other adapters.
 
-An `OK` response confirms that this route is reachable—not that credentials,
+An `OK` response confirms that this route is reachable, not that credentials,
 bucket access, or uploads work. For a 404 or 405, check the catch-all route and
 GET/POST exports for your installed framework version. Match the React provider's
 `basePath` to the mounted endpoint, including any proxy prefix.
