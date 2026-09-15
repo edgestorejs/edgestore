@@ -33,7 +33,8 @@ EDGE_STORE_SECRET_KEY=your-secret-key
 
 ### Backend
 
-Now we can create the backend code in our express app.
+This example uses Express 5. Keep your existing middleware and load the backend
+env file before constructing the provider; Express does not load it automatically.
 
 The example below is the simplest bucket you can create with EdgeStore. Just a simple file bucket with no validation that will be accessible by anyone with the link.
 
@@ -43,7 +44,6 @@ You can have multiple buckets in your app, each with its own configuration.
 import { createEdgeStore, initEdgeStore } from '@edgestore/server';
 import { createEdgeStoreExpressHandler } from '@edgestore/server/adapters/express';
 import { edgestore } from '@edgestore/server/providers/edgestore';
-import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
@@ -60,8 +60,8 @@ const app = express();
  */
 app.use(
   cors({
-    // Change this to your frontend origin for better security
-    origin: true,
+    // Replace with your frontend origin; do not reflect arbitrary origins.
+    origin: 'http://localhost:5173',
     credentials: true,
   }),
 );
@@ -74,7 +74,7 @@ app.use(cookieParser());
  * We need to have access to the json request body.
  * We can use the body parser middleware to parse the request.
  */
-app.use(bodyParser.json());
+app.use(express.json());
 
 // --- EDGESTORE ROUTER CONFIG ---
 
@@ -102,13 +102,17 @@ app.get('/', (req, res) => {
 });
 
 // set the get and post routes for the edgestore router
-app.get('/edgestore/*', handler);
-app.post('/edgestore/*', handler);
+app.get('/edgestore/*splat', handler);
+app.post('/edgestore/*splat', handler);
 
 app.listen(PORT, () => {
   console.log(`⚡Server is running here 👉 http://localhost:${PORT}`);
 });
 ```
+
+Express 5 requires a named wildcard. On Express 4, use `/edgestore/*` instead;
+do not change the application's Express major version just to follow this example.
+See [Express 5 route syntax](https://expressjs.com/en/guide/migrating-5.html#path-syntax).
 
 ### Frontend
 
@@ -116,7 +120,7 @@ Now let's initiate our context provider in the frontend app.
 
 ```tsx title="src/lib/edgestore.ts"
 // You can import it from the other project if it's just the type
-import { type EdgeStoreRouter } from '../../../path/to/express-backend/src';
+import type { EdgeStoreRouter } from '../../../path/to/express-backend/src';
 import { createEdgeStoreProvider } from '@edgestore/react';
 
 const { EdgeStoreProvider, useEdgeStore } =
@@ -133,10 +137,8 @@ import { EdgeStoreProvider } from '../lib/edgestore';
 
 function App() {
   return (
-    {/* [!code ++] */}
     <EdgeStoreProvider basePath="http://localhost:3001/edgestore">
       {/* Rest of your app */}
-    {/* [!code ++] */}
     </EdgeStoreProvider>
   );
 }

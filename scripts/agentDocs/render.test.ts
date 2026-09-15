@@ -3,6 +3,7 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
+import ts from 'typescript';
 import { buildReferences, packageReferences, repoRoot } from './build';
 import { renderReference } from './render';
 import { docsOrigin } from './selection';
@@ -118,6 +119,70 @@ test('all curated references render deterministically and indexes identify their
     );
     for (const [, file] of first.get('README.md')!.matchAll(/\]\(([^)]+)\)/g)) {
       assert.ok(first.has(file!));
+    }
+  }
+});
+
+test('server references cover every shipped framework adapter, including both Next routers', async () => {
+  const files = await packageReferences('server');
+  const adapters: Record<string, string[]> = {
+    'next.md': ['next/app', 'next/pages'],
+    'tanstack-start.md': ['start'],
+    'remix.md': ['remix'],
+    'astro.md': ['astro'],
+    'hono.md': ['hono'],
+    'express.md': ['express'],
+    'fastify.md': ['fastify'],
+  };
+  const manifest = JSON.parse(
+    await readFile(path.join(repoRoot, 'packages/server/package.json'), 'utf8'),
+  ) as { exports: Record<string, unknown> };
+  assert.deepEqual(
+    Object.values(adapters).flat().sort(),
+    Object.keys(manifest.exports)
+      .filter((key) => key.startsWith('./adapters/'))
+      .map((key) => key.slice('./adapters/'.length))
+      .sort(),
+  );
+  for (const [file, imports] of Object.entries(adapters)) {
+    assert.ok(files.has(file), `Missing ${file}`);
+    for (const adapter of imports) {
+      assert.ok(
+        files.get(file)!.includes(`@edgestore/server/adapters/${adapter}`),
+        `Missing ${adapter} import in ${file}`,
+      );
+    }
+  }
+  assert.ok(files.has('troubleshooting.md'));
+});
+
+test('newly packaged adapter examples contain valid TypeScript and JSX syntax', async () => {
+  for (const adapter of ['remix', 'astro', 'express', 'fastify']) {
+    const source = await readFile(
+      path.join(repoRoot, `docs/content/docs/adapters/${adapter}.mdx`),
+      'utf8',
+    );
+    const snippets = [
+      ...source.matchAll(/```(tsx|ts)\b[^\n]*\n([\s\S]*?)\n```/g),
+    ];
+    assert.ok(snippets.length > 0, `No snippets found for ${adapter}`);
+    for (const [index, [, language, content]] of snippets.entries()) {
+      const { diagnostics } = ts.transpileModule(content!, {
+        fileName: `${adapter}-${index}.${language}`,
+        reportDiagnostics: true,
+        compilerOptions: {
+          target: ts.ScriptTarget.ESNext,
+          module: ts.ModuleKind.ESNext,
+          jsx: ts.JsxEmit.ReactJSX,
+        },
+      });
+      assert.deepEqual(
+        diagnostics?.map((item) =>
+          ts.flattenDiagnosticMessageText(item.messageText, '\n'),
+        ),
+        [],
+        `${adapter} snippet ${index}`,
+      );
     }
   }
 });

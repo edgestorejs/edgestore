@@ -1,6 +1,6 @@
 ---
 name: edgestore-setup
-description: Set up or extend EdgeStore file uploads in a TypeScript/React application. Use for an EdgeStore integration, upload UI, or bucket access policy; not unrelated storage migrations or account administration.
+description: Set up, extend, or troubleshoot EdgeStore file uploads in a TypeScript/React application. Use for an EdgeStore integration, upload UI, bucket access policy, or failing upload; not unrelated storage migrations or account administration.
 license: MIT
 ---
 
@@ -22,8 +22,8 @@ and backend separately; do not use the CLI's dependencies as the app's versions.
 Read the relevant installed `@edgestore/server`, `@edgestore/react`, or
 `@edgestore/sdk` **`agent-docs/README.md`** and follow its local references. These
 belong to the installed package version; the skill and CLI can be newer. If the
-bundle is absent, use installed types/source plus documentation matching the
-version, and disclose the fallback. Choose the package version before selecting
+bundle or needed reference is absent, use installed types/source plus documentation
+matching the version, and disclose the fallback. Choose the package version before selecting
 online documentation. Read the references again after installing packages.
 
 For an existing 0.2 integration, resolve maintenance versus migration with the
@@ -36,11 +36,13 @@ user requests it or the application requires one.
 ## Choose the integration
 
 Reuse the app's architecture, existing buckets, and configured storage provider.
-The initial supported setup paths are Next.js App Router, TanStack Start, and a
-Vite frontend with an existing or explicitly chosen Hono backend. Consult the
-installed adapter reference for route syntax. Do not add Hono just because an app
-uses Vite/React. Preserve Pages Router, S3, Azure, and custom-provider integrations;
-they are not a request to provision hosted infrastructure.
+Read the matching installed server reference: `next.md` (App or Pages Router),
+`tanstack-start.md`, `remix.md` (Remix or React Router framework mode), `astro.md`,
+`hono.md`, `express.md`, or `fastify.md`. Check the app's routing convention and
+framework version before adapting examples. A React Router client-side app still
+needs a backend; Vite alone does not choose one. Do not add Hono or replace an
+existing backend merely to follow an example. Preserve S3, Azure, and custom
+providers; an integration request does not imply hosted provisioning.
 
 Infer a bucket name from the application's feature (for example avatars or
 attachments); fall back to `publicFiles` when context is insufficient. Infer public
@@ -87,6 +89,11 @@ In split workspaces, export the real backend router type and import it with
 bundle backend runtime imports. For cross-origin calls, narrowly configure CORS
 for the intended frontend and EdgeStore route; do not reflect arbitrary origins
 with credentials. Check the React provider actually wraps the upload UI.
+
+For a failing integration, read the installed server's `troubleshooting.md` and
+the React package's `errors.md` when available and relevant. Diagnose the failing
+app request before reconfiguring MCP, provisioning another project, or replacing
+credentials.
 
 Run `edgestore --cwd <app> doctor --offline` when available, plus the app's own
 typecheck/build/tests. Treat doctor warnings and skips as unresolved observations,

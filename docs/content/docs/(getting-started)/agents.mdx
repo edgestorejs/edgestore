@@ -3,6 +3,10 @@ title: Agents
 description: Set up EdgeStore with a coding agent.
 ---
 
+Ask your agent to add uploads, reuse your application's architecture, and verify
+an upload through the app. Give it the skill for a single task, install the skill
+for ongoing use, or [connect MCP only](#mcp-only) for account and project tools.
+
 ## Give your agent the skill
 
 Ask your coding agent:
@@ -28,15 +32,17 @@ edgestore agent setup --client codex
 
 Use `claude` for Claude Code or `cursor` for Cursor. This installs the setup skill and configures MCP for the project. Add `--skills-only` to skip MCP, or `--global` to install for all projects. Restart your client or open a new task to load the skill. Setup does not sign you in.
 
-For MCP only:
+The skill reads API references bundled with your installed EdgeStore packages. After upgrading the CLI, update the skill with `edgestore agent update --client codex`. This leaves your application packages unchanged.
+
+### MCP only
 
 ```sh
 edgestore mcp setup --client codex
 ```
 
-The skill reads API references bundled with your installed EdgeStore packages. After upgrading the CLI, update the skill with `edgestore agent update --client codex`. This leaves your application packages unchanged.
-
-Run `edgestore mcp status --client codex` to inspect the saved config. Check the connection in your client after signing in. If your CLI release does not have `mcp setup`, use manual configuration below.
+MCP provides remote account and project tools; it does not install implementation
+instructions. If your CLI release does not have `mcp setup`, use manual
+configuration below.
 
 ## Configure manually
 
@@ -86,9 +92,38 @@ After signing in, ask your agent to list your EdgeStore projects to check tool a
 
 Client instructions: [Codex](https://learn.chatgpt.com/docs/extend/mcp), [Claude Code](https://code.claude.com/docs/en/mcp), and [Cursor](https://prod.cursor.com/help/customization/mcp).
 
+## Check what is ready
+
+| Check | What it establishes |
+| --- | --- |
+| `edgestore agent status --client codex` | Whether the skill is installed and matches your CLI's bundled copy. |
+| `edgestore mcp status --client codex` | Whether the saved MCP configuration is valid—not whether the connection works. |
+| Sign in and list projects through your client's MCP tools | Whether that connection can perform an authenticated read. Other actions may need additional permissions. |
+| `edgestore --cwd <app> doctor --offline` | Static checks of the selected application; warnings and skipped checks still need attention. |
+| Upload through your app, then retrieve the file | Whether the application's upload path works. For protected files, also test that unauthorized access is denied. |
+
+MCP permissions are enforced by the server and your authorization grants, not by
+the skill. Review requests to create resources or change access policies. A
+successful MCP connection does not verify your application's backend credentials.
+
+If setup stalls, check [Troubleshooting](/docs/troubleshooting) before creating
+another project or replacing keys.
+
+## Tasks to try
+
+- **Avatars:** “Add avatar uploads to the profile screen using EdgeStore. Reuse the existing form and explain the file access policy you choose.”
+- **Private attachments:** “Add attachments to support tickets. Only people who can view the ticket should be able to read its files.”
+- **Upload debugging:** “Find why this EdgeStore upload fails. Diagnose the existing integration before changing configuration.”
+
 ## Give your agent the docs
 
-Start with [Quick start](/docs/quick-start) or the adapter for [Next.js](/docs/adapters/next), [Hono](/docs/adapters/hono), or [TanStack Start](/docs/adapters/tanstack-start).
+Start with [Quick start](/docs/quick-start) or the adapter for
+[Next.js App or Pages Router](/docs/adapters/next),
+[TanStack Start](/docs/adapters/tanstack-start),
+[Remix / React Router](/docs/adapters/remix), [Astro](/docs/adapters/astro),
+[Hono](/docs/adapters/hono), [Express](/docs/adapters/express), or
+[Fastify](/docs/adapters/fastify). React-only applications need a backend for the
+server adapter.
 
 - [llms.txt](/llms.txt) lists the docs.
 - [llms-full.txt](/llms-full.txt) includes all pages in one Markdown response.

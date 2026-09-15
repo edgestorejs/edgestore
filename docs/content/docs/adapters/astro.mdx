@@ -3,7 +3,8 @@ title: Astro
 description: Learn how to integrate EdgeStore with your Astro applications using the dedicated Astro adapter.
 ---
 
-EdgeStore supports Astro applications through our dedicated Astro adapter, allowing you to use EdgeStore's file upload and management capabilities with your Astro project.
+The Astro adapter handles server requests. The upload UI below uses a hydrated
+React component.
 
 ## Setup
 
@@ -30,6 +31,10 @@ EDGE_STORE_SECRET_KEY=your-secret-key
 </Callout>
 
 ### Backend
+
+Configure an [Astro server adapter](https://docs.astro.build/en/guides/on-demand-rendering/)
+for your deployment and enable the React integration for the UI below. The
+EdgeStore endpoint must run on demand; a static-only deployment cannot serve it.
 
 Now we can create the API endpoint in our Astro app. Create a file at `src/pages/api/edgestore/[...edgestore].ts`:
 

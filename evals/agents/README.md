@@ -100,3 +100,26 @@ is the docs preview.
 
 Record which checks passed and which remain incomplete. Claude Code and Cursor
 comparisons are optional when subscriptions are unavailable.
+
+## Coverage and follow-up comparisons
+
+The fixtures cover Next.js App Router, TanStack Start, and Vite + Hono. Packaged
+references also cover Next.js Pages Router, Remix/React Router, Astro, Express,
+and Fastify. Reference coverage and framework detection do not establish a passed
+agent setup run; record each framework's actual validation separately.
+
+For a manual skill + MCP comparison, prepare a separate run of the same fixture
+and use its `skill/` starter. The runner does not create a third comparison arm or
+sign in to MCP. Configure the connection manually in that isolated client and
+verify the actual API/account before authorizing any writes. The fixed hosted
+MCP targets production; do not use it for a non-production run without a verified
+compatible test connection. If none is available, mark this comparison blocked.
+Do not let a CLI fallback silently turn it into a skill-only result.
+
+Keep the task, fixture, artifacts, model, and client settings the same across
+docs-only, skill-only, and skill + MCP runs. Record tool availability, interventions,
+app-path upload/retrieval results, and resources left behind. Use additional runs
+to exercise existing integrations, protected files, and a monorepo root requiring
+workspace selection. Check for unwanted package upgrades, duplicate resources,
+overwritten env values, and privacy changes in each generated diff. These are
+manual evaluations, not claims of benchmark results.

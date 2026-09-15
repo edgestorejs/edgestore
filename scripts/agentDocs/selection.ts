@@ -20,6 +20,14 @@ export const references: Record<string, Reference[]> = {
     },
     { file: 'hono.md', source: 'adapters/hono.mdx' },
     { file: 'tanstack-start.md', source: 'adapters/tanstack-start.mdx' },
+    { file: 'remix.md', source: 'adapters/remix.mdx' },
+    { file: 'astro.md', source: 'adapters/astro.mdx' },
+    { file: 'express.md', source: 'adapters/express.mdx' },
+    { file: 'fastify.md', source: 'adapters/fastify.mdx' },
+    {
+      file: 'troubleshooting.md',
+      source: '(getting-started)/troubleshooting.mdx',
+    },
     ...['edgestore', 's3', 'azure-blob', 'custom'].map((provider) => ({
       file: `provider-${provider}.md`,
       source: `providers/${provider}.mdx`,
