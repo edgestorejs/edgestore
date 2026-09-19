@@ -8,6 +8,7 @@ import { cors } from 'hono/cors';
 // --- HONO CONFIG ---
 
 const PORT = process.env.PORT ?? 3001;
+const frontendOrigin = process.env.FRONTEND_ORIGIN ?? 'http://localhost:5173';
 const app = new Hono();
 
 /**
@@ -15,10 +16,9 @@ const app = new Hono();
  * To avoid CORS issues, we should use the cors middleware.
  */
 app.use(
-  '*',
+  '/edgestore/*',
   cors({
-    // Change this to your frontend origin for better security
-    origin: (origin) => origin,
+    origin: frontendOrigin,
     credentials: true,
   }),
 );

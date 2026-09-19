@@ -9,7 +9,7 @@
     "(getting-started)/sdk",
     "(getting-started)/error-handling",
     "(getting-started)/logging",
-    "(getting-started)/llms-vibe-coding",
+    "(getting-started)/agents",
     "(getting-started)/troubleshooting",
     "---Components---",
     "components/image",

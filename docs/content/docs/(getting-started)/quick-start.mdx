@@ -17,13 +17,13 @@ Let's start by installing the required packages.
 
 Then go to your [Dashboard](https://dashboard.edgestore.dev), create a new project and copy the keys to your environment variables.
 
-```sh title=".env"
+```sh title=".env.local"
 EDGE_STORE_ACCESS_KEY=your-access-key
 EDGE_STORE_SECRET_KEY=your-secret-key
 ```
 
 <Callout type="warning">
-  Make sure you add `.env` to your `.gitignore` file. <br />
+  Reuse your application's existing environment-file convention. For a new app, use `.env.local` and add it to `.gitignore`. <br />
   You don't want to commit your secret keys to your repository.
 </Callout>
 

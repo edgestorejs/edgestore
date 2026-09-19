@@ -1,9 +1,10 @@
 ---
-title: Remix
-description: Learn how to integrate EdgeStore with your Remix applications, enabling robust file management capabilities.
+title: Remix / React Router
+description: Add EdgeStore uploads to Remix or React Router framework applications.
 ---
 
-React Router integrates seamlessly with EdgeStore, enabling you to build type-safe, full-stack React applications with robust file management capabilities.
+Use the Remix adapter with Remix or React Router framework mode. A client-only
+React Router application needs a separate backend; this route runs on the server.
 
 ## Setup
 
@@ -58,7 +59,7 @@ const handler = createEdgeStoreRemixHandler({
 export { handler as loader, handler as action };
 ```
 
-Add the EdgeStore API route to your routes file.
+For React Router framework mode, add the endpoint to your existing routes file:
 
 ```ts title="app/routes.ts"
 import { index, route, type RouteConfig } from '@react-router/dev/routes';
@@ -70,19 +71,28 @@ export default [
 ] satisfies RouteConfig;
 ```
 
+For Remix v2's default file-based routing, put the same handler in
+`app/routes/api.edgestore.$.ts` instead. Do not add a React Router `app/routes.ts`
+to a Remix application. Keep a custom route configuration if the app already uses
+one. See [Remix route conventions](https://v2.remix.run/docs/file-conventions/routes/)
+and [React Router routing](https://reactrouter.com/start/framework/routing).
+
 ### Frontend
 
 Now let's initiate our context provider in the frontend app.
 
 ```tsx title="app/lib/edgestore.ts"
 import { createEdgeStoreProvider } from '@edgestore/react';
-import { type EdgeStoreRouter } from '~/routes/api/edgestore';
+import type { EdgeStoreRouter } from '~/routes/api/edgestore';
 
 const { EdgeStoreProvider, useEdgeStore } =
   createEdgeStoreProvider<EdgeStoreRouter>();
 
 export { EdgeStoreProvider, useEdgeStore };
 ```
+
+Point the type-only import at your actual route module; for the Remix filename
+above, use `~/routes/api.edgestore.$`.
 
 And then wrap your app with the provider in your root component.
 
@@ -94,10 +104,8 @@ import { EdgeStoreProvider } from '~/lib/edgestore';
 
 export default function App() {
   return (
-    {/* [!code ++] */}
     <EdgeStoreProvider>
       <Outlet />
-    {/* [!code ++] */}
     </EdgeStoreProvider>
   );
 }

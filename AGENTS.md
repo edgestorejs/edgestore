@@ -34,6 +34,10 @@ For focused work, prefer Turbo or pnpm filters, for example:
 - Use `patch` for fixes, `minor` for backward-compatible features, and `major`
   for breaking changes.
 - Changes limited to tests, docs, examples, or internal tooling do not need one.
+- When changing package APIs, update the relevant authored documentation in
+  `docs/content/docs/`. Package `agent-docs/` references are generated from it;
+  do not edit generated files. Run `pnpm agent-docs:test` and, after building,
+  `pnpm agent-docs:pack-check` to verify the published references.
 
 ## Review guidelines
 

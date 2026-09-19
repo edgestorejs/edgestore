@@ -33,7 +33,7 @@ function writeFileSyncRecursive(filePath: string, content: string) {
 
 export async function generateEntrypoints(
   rawInputs: string[],
-  options: { includeSource?: boolean } = {},
+  options: { includeSource?: boolean; additionalFiles?: string[] } = {},
 ) {
   const inputs = [...rawInputs];
   // set some defaults for the package.json
@@ -45,6 +45,7 @@ export async function generateEntrypoints(
     ...(options.includeSource === false ? [] : ['src']),
     'README.md',
     'LICENSE',
+    ...(options.additionalFiles ?? []),
   ];
   pkgJson.exports = {
     './package.json': './package.json',

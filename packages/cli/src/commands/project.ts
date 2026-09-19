@@ -68,13 +68,12 @@ export async function projectCreateCommand(
     allowOverage?: boolean;
   },
 ): Promise<void> {
-  if (flags.plain && !options.withoutKey) {
+  if (!isInteractive(runtime, flags) && !options.withoutKey) {
     throw usageError(
       'one_time_secret_delivery_required',
-      'Plain output cannot deliver the initial project key.',
+      'Automated project creation requires --without-key.',
       [
-        'Use --without-key with --plain.',
-        'Use human or --json output to receive the one-time key.',
+        'Create the project with --without-key, then use project key create with --output to deliver a protected key.',
       ],
     );
   }
@@ -87,18 +86,19 @@ export async function projectCreateCommand(
     allowOverage: Boolean(options.allowOverage),
     signal: runtime.signal,
   });
-  const keyLines = result.projectKey
-    ? [
-        '',
-        `EDGE_STORE_ACCESS_KEY=${result.projectKey.key.accessKey}`,
-        `EDGE_STORE_SECRET_KEY=${result.projectKey.secretKey}`,
-        '',
-        'Save this secret now. You will not be able to view it again.',
-      ]
-    : [];
+  const keyLines =
+    isInteractive(runtime, flags) && result.projectKey
+      ? [
+          '',
+          `EDGE_STORE_ACCESS_KEY=${result.projectKey.key.accessKey}`,
+          `EDGE_STORE_SECRET_KEY=${result.projectKey.secretKey}`,
+          '',
+          'Save this secret now. You will not be able to view it again.',
+        ]
+      : [];
 
   outputFor(runtime, flags).result(
-    result,
+    { project: result.project },
     [
       `Created project "${result.project.name}" (${result.project.basePath}).`,
       ...keyLines,
