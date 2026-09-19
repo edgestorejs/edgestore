@@ -114,6 +114,8 @@ sign in to MCP. Configure the connection manually in that isolated client and
 verify the actual API/account before authorizing any writes. The fixed hosted
 MCP targets production; do not use it for a non-production run without a verified
 compatible test connection. If none is available, mark this comparison blocked.
+The CLI's `--api-url` flag does not change the configured MCP endpoint, and preview
+docs do not imply a non-production API.
 Do not let a CLI fallback silently turn it into a skill-only result.
 
 Keep the task, fixture, artifacts, model, and client settings the same across

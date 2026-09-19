@@ -15,11 +15,9 @@ edgestore mcp setup --client codex --dry-run --json
 edgestore mcp setup --client codex --yes
 ```
 
-Use `claude` or `cursor` for those clients. This only writes configuration for
-`https://api.edgestore.dev/mcp`; it does not log in or establish read-only grants.
-OAuth is deferred to the client. Review scopes before consenting. The fixed
-hosted MCP is production, even when the application uses preview docs. Do not
-point testing there by assuming a CLI `--api-url` flag also changes this connection.
+Use `claude` or `cursor` for those clients. Setup configures
+`https://api.edgestore.dev/mcp`. Sign in through your client and review the
+requested permissions.
 
 Check the installed CLI's `--help` before using it: a separately installed older
 CLI may not include agent-safe commands. Use JSON metadata and protected file
@@ -49,8 +47,6 @@ If MCP cannot perform the needed remote operation, use the corresponding CLI
 command after checking its help and resource selection. `init` provisions/links
 resources. Never rerun provisioning merely because agent configuration completed.
 
-For live tests, use a verified non-production API/account and a uniquely named
-test project. Pass the same explicit API target to CLI operations and configure
-the compatible hosted provider data-plane endpoint in the application. Record
-nonsecret resource IDs locally for exact cleanup, including after interruption.
-Do not infer cleanup authorization for existing projects or arbitrary buckets.
+Test uploads in the user's authorized EdgeStore project using the normal service.
+Keep track of test files so cleanup targets only those files. Do not infer
+permission to delete existing files, projects, or buckets.

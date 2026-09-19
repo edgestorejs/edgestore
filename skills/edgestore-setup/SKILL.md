@@ -103,8 +103,8 @@ For protected access, verify unauthenticated retrieval is denied and authorized
 retrieval works, without printing signed URLs. Do not substitute a CLI/SDK-only
 upload for the app path.
 
-Use only the account/environment authorized for testing. A docs preview is not a
-non-production API. Keep credentials and signed URLs out of logs, tool results,
+Use only the account and project authorized for testing.
+Keep credentials and signed URLs out of logs, tool results,
 screenshots, and the final response; perform sensitive retrieval in a local
 process that returns only the verification result. Clean up only exact test
 resources within authorized scope. Explain the integration choices, verification
