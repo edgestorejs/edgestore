@@ -1,0 +1,17 @@
+{
+  "name": "edgestore",
+  "version": "0.2.0",
+  "description": "Use when adding or troubleshooting EdgeStore file uploads in TypeScript and React apps.",
+  "author": { "name": "EdgeStore" },
+  "homepage": "https://edgestore.dev/docs/agents",
+  "repository": "https://github.com/edgestorejs/edgestore",
+  "license": "MIT",
+  "keywords": ["edgestore", "uploads", "typescript", "react"],
+  "skills": "./skills/",
+  "mcpServers": {
+    "edgestore": {
+      "type": "http",
+      "url": "https://api.edgestore.dev/mcp"
+    }
+  }
+}

@@ -136,7 +136,10 @@ await test('agent instructions do not hardcode the preview website or source bra
 await test('distributed skill and plugin do not point users at the preview website', async () => {
   for (const path of [
     'skills/edgestore-setup/SKILL.md',
+    'plugin.json',
+    'mcp.json',
     '.codex-plugin/plugin.json',
+    '.claude-plugin/plugin.json',
   ]) {
     const content = await readFile(
       new URL(`../../${path}`, import.meta.url),

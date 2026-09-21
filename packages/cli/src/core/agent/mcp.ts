@@ -144,7 +144,7 @@ export async function planMcp(options: AgentOptions, action: McpAction) {
       pluginDiscovery: 'visible-config-only',
       warnings: plugin
         ? [
-            'An enabled EdgeStore plugin is visible, but its connection inventory is unknown. Check the client for duplicate connections; a skill-only plugin does not configure MCP.',
+            'An EdgeStore plugin is enabled. Check its MCP connection before adding a separate one.',
           ]
         : [],
       plannedFiles: changes.map(({ file }) => file),

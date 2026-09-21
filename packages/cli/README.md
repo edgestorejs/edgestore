@@ -75,8 +75,10 @@ Keep `.edgestore/skill-assets.json` with the installed skill. Updates stop on
 user edits, extra files, or symlinks, even with `--yes`. If a write fails, the error
 lists files already changed. Restart the client or open a new task after updating.
 
-The repository plugin includes the same skill. The CLI leaves skills installed
-through other tools untouched.
+The repository plugin bundles the same skill and the hosted MCP connection for
+Codex, Claude Code, and Cursor. If you use the plugin, skip `agent setup` and
+`mcp setup` and sign in through your client's MCP controls. The CLI leaves
+skills installed through other tools untouched.
 
 ## Direct MCP configuration
 

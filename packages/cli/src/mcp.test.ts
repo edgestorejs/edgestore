@@ -256,7 +256,7 @@ describe.each(CLIENTS)('%s direct MCP', (client) => {
   });
 });
 
-it('does not mistake an enabled skill-only plugin for a hosted connection', async () => {
+it('does not infer a connection from a plugin name alone', async () => {
   const { options, writeConfig } = await fixture('codex');
   await writeConfig('[plugins."edgestore@marketplace"]\nenabled = true\n');
   const plan = await planMcp(options, 'setup');
@@ -264,6 +264,19 @@ it('does not mistake an enabled skill-only plugin for a hosted connection', asyn
   expect(plan.result.warnings).toHaveLength(1);
   expect(plan.changes[0]?.after).toContain(
     '[plugins."edgestore@marketplace"]\nenabled = true',
+  );
+});
+
+it('preserves plugin settings when a direct connection already exists or is removed', async () => {
+  const { options, target, writeConfig } = await fixture('codex');
+  const plugin = '[plugins."edgestore@marketplace"]\nenabled = true\n';
+  await writeConfig(plugin);
+  await applyChanges((await planMcp(options, 'setup')).changes);
+  expect((await planMcp(options, 'setup')).changes).toEqual([]);
+  await applyChanges((await planMcp(options, 'remove')).changes);
+  expect(await readFile(target.file, 'utf8')).toContain(plugin);
+  expect((await planMcp(options, 'status')).result.pluginDiscovery).toBe(
+    'visible-config-only',
   );
 });
 

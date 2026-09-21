@@ -2,6 +2,13 @@
 
 Check the official [documentation](https://edgestore.dev) for more information.
 
+## Agent plugin
+
+This repository bundles the EdgeStore setup skill and hosted MCP connection.
+Codex and Cursor use the portable `plugin.json` and `mcp.json`; Claude Code uses
+`.claude-plugin/plugin.json`. All clients use the same `skills/` directory.
+See [agent setup](https://edgestore.dev/docs/agents) for installation and sign-in.
+
 # Quick Start
 
 ## Next.js Setup
