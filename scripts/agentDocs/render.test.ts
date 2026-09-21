@@ -81,6 +81,70 @@ test('selects exact heading subtrees and rejects missing or ambiguous sections',
   );
 });
 
+test('preserves prompt text and selects headings inside a collapsed setup guide', () => {
+  const source =
+    frontmatter +
+    `
+<AgentPrompt>
+
+Read https://edgestore.dev/SKILL.md and add uploads.
+
+</AgentPrompt>
+
+<SetupGuide>
+
+## Setup
+
+### Install
+
+Install the packages.
+
+### Backend
+
+Keep the server route.
+
+</SetupGuide>
+
+## Other
+
+Unrelated content.
+`;
+  const full = renderReference(source, { sourceUrl });
+  assert.match(full, /https:\/\/edgestore.dev\/SKILL.md/);
+  assert.match(full, /Keep the server route/);
+  assert.doesNotMatch(full, /AgentPrompt|SetupGuide/);
+
+  const selected = renderReference(source, {
+    sourceUrl,
+    sections: ['Backend'],
+  });
+  assert.match(selected, /Keep the server route/);
+  assert.doesNotMatch(
+    selected,
+    /Install the packages|SKILL.md|Unrelated content/,
+  );
+  assert.throws(
+    () =>
+      renderReference(
+        source.replace('<SetupGuide>', '<SetupGuide open={run()}>'),
+        { sourceUrl },
+      ),
+    /Unsupported or non-static/,
+  );
+});
+
+test('collapsed quick start keeps both server and React package references complete', async () => {
+  const server = (await packageReferences('server')).get('next.md')!;
+  const react = (await packageReferences('react')).get('client.md')!;
+  assert.match(server, /EDGE_STORE_ACCESS_KEY/);
+  assert.match(server, /adapters\/next\/app/);
+  assert.match(server, /adapters\/next\/pages/);
+  assert.match(react, /createEdgeStoreProvider/);
+  assert.match(react, /replaceTargetUrl/);
+  assert.match(react, /confirmMany/);
+  assert.doesNotMatch(server + react, /AgentPrompt|SetupGuide|SKILL.md/);
+});
+
 test('fails loudly for unknown components, expressions, imports and missing metadata', () => {
   for (const mdx of [
     '<Unknown>Important</Unknown>',

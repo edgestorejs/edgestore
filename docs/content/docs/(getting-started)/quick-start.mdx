@@ -3,11 +3,21 @@ title: Quick Start
 description: Implement file uploads in your app with EdgeStore.
 ---
 
+## Set up with your agent
+
+<AgentPrompt>
+
+Read https://edgestore.dev/SKILL.md and add file uploads to this application.
+
+</AgentPrompt>
+
+[Install the skill or connect MCP](/docs/agents).
+
+<SetupGuide>
+
 ## Next.js Setup
 
 ### Install
-
-Let's start by installing the required packages.
 
 ```package-install
 @edgestore/server @edgestore/react
@@ -15,7 +25,7 @@ Let's start by installing the required packages.
 
 ### Environment Variables
 
-Then go to your [Dashboard](https://dashboard.edgestore.dev), create a new project and copy the keys to your environment variables.
+Copy your project's keys from the [dashboard](https://dashboard.edgestore.dev) to the backend env file:
 
 ```sh title=".env.local"
 EDGE_STORE_ACCESS_KEY=your-access-key
@@ -28,12 +38,7 @@ EDGE_STORE_SECRET_KEY=your-secret-key
 
 ### Backend
 
-Now we can create the backend code for our Next.js app.<br/>
-EdgeStore is compatible with both types of Next.js apps (`pages router` and `app router`).
-
-The example below is the simplest bucket you can create with EdgeStore. Just a simple file bucket with no validation that will be accessible by anyone with the link.
-
-You can have multiple buckets in your app, each with its own configuration.
+Choose your router below. This bucket's files are accessible to anyone with the link.
 
 <Tabs items={['app', 'pages']} groupId="next-router">
 
@@ -101,7 +106,7 @@ export type EdgeStoreRouter = typeof router;
 
 ### Frontend
 
-Now let's initiate our context provider.
+Create the React provider:
 
 <Tabs items={['app', 'pages']} groupId="next-router">
 
@@ -131,7 +136,7 @@ export { EdgeStoreProvider, useEdgeStore };
 
 </Tabs>
 
-And then wrap our app with the provider.
+Wrap your app with the provider:
 
 <Tabs items={['app', 'pages']} groupId="next-router">
 
@@ -166,10 +171,8 @@ import { EdgeStoreProvider } from '../lib/edgestore';
 
 export default function App({ Component, pageProps }: AppProps) {
   return (
-    {/* [!code ++] */}
     <EdgeStoreProvider>
       <Component {...pageProps} />
-    {/* [!code ++] */}
     </EdgeStoreProvider>
   );
 }
@@ -377,6 +380,8 @@ const result = await edgestore.publicFiles.confirmMany({
   You can check if a file is temporary in the dashboard. <br />
   Temporary files are marked with a clock icon.
 </Callout>
+
+</SetupGuide>
 
 ## Troubleshooting
 

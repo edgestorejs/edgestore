@@ -28,6 +28,13 @@ export function renderReference(
   ) {
     throw new Error(`Missing documentation title: ${options.sourceUrl}`);
   }
+  // Layout wrappers must not hide headings from package-specific selection.
+  tree.children = tree.children.flatMap((node) => {
+    if (node.type !== 'mdxJsxFlowElement' || node.name !== 'SetupGuide')
+      return [node];
+    validateAttributes(node);
+    return node.children as Root['children'];
+  });
   if (options.sections) tree.children = selectSections(tree, options.sections);
   const transformed = rewrite(tree, options)[0] as Root;
   return `# ${data.title}\n\nSource: ${options.sourceUrl}\n\n${writer.stringify(transformed)}`;
@@ -83,7 +90,8 @@ function rewrite(node: Nodes, options: RenderOptions): Nodes[] {
   if (node.type === 'mdxJsxFlowElement' || node.type === 'mdxJsxTextElement') {
     validateAttributes(node);
     if (node.name === 'br') return [{ type: 'text', value: '\n' }];
-    if (node.name === 'Tabs') return node.children;
+    if (node.name === 'Tabs' || node.name === 'AgentPrompt')
+      return node.children;
     if (node.name === 'Callout' && node.type === 'mdxJsxFlowElement') {
       const type = node.attributes.find(
         (attribute) =>

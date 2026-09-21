@@ -1,3 +1,5 @@
+import { AgentPrompt } from '@/components/agent-prompt';
+import { SetupGuide } from '@/components/setup-guide';
 import * as Twoslash from 'fumadocs-twoslash/ui';
 import * as TabsComponents from 'fumadocs-ui/components/tabs';
 import defaultMdxComponents from 'fumadocs-ui/mdx';
@@ -9,6 +11,8 @@ export function getMDXComponents(components?: MDXComponents): MDXComponents {
     ...defaultMdxComponents,
     ...Twoslash,
     ...TabsComponents,
+    AgentPrompt,
+    SetupGuide,
     ...components,
   };
 }
