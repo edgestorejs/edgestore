@@ -284,10 +284,10 @@ async function uploadFile(
       metadata: json.metadata as any,
     };
   } catch (e) {
-    if (e instanceof Error && e.name === 'AbortError') {
+    onProgressChange?.(0);
+    if (signal?.aborted || (e instanceof Error && e.name === 'AbortError')) {
       throw new UploadAbortedError('File upload aborted');
     }
-    onProgressChange?.(0);
     throw e;
   }
 }
@@ -537,6 +537,7 @@ async function multipartUpload(params: {
     // Complete multipart upload
     const res = await fetch(`${apiPath}/complete-multipart-upload`, {
       method: 'POST',
+      signal,
       credentials: 'include',
       body: JSON.stringify({
         bucketName,

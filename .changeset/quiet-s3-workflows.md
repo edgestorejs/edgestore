@@ -1,5 +1,5 @@
 ---
-'@edgestore/server': minor
+'@edgestore/server': major
 '@edgestore/react': minor
 '@edgestore/shared': minor
 ---

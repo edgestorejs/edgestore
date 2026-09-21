@@ -480,6 +480,55 @@ describe('createNextProxy upload', () => {
     expect(calls[1]!.init?.signal).toBeUndefined();
   });
 
+  it('keeps cancellation active while multipart completion is pending', async () => {
+    const { fetchMock } = createFetchMock([
+      jsonResponse(
+        uploadResponse({
+          uploadUrl: undefined,
+          multipart: {
+            key: 'assets/file',
+            uploadId: 'session',
+            partSize: 2,
+            totalParts: 1,
+            abortSupported: true,
+            parts: [{ partNumber: 1, uploadUrl: 'https://uploads.example/1' }],
+          },
+        }),
+      ),
+      jsonResponse({}),
+    ]);
+    const controller = new AbortController();
+    const { assets } = createProxy();
+    const upload = assets.upload({
+      file: new File(['ab'], 'file'),
+      signal: controller.signal,
+    });
+    const rejected = expect(upload).rejects.toBeInstanceOf(UploadAbortedError);
+    await waitForXhrs(1);
+    fetchMock.mockImplementationOnce(
+      (_url, init) =>
+        new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener(
+            'abort',
+            () => reject(new DOMException('Aborted', 'AbortError')),
+            { once: true },
+          );
+        }),
+    );
+    MockXMLHttpRequest.instances[0]!.load(200, 'etag');
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    expect(fetchMock.mock.calls[1]?.[0]).toBe(
+      '/api/edgestore/complete-multipart-upload',
+    );
+    expect(fetchMock.mock.calls[1]?.[1]?.signal).toBe(controller.signal);
+    controller.abort();
+    await rejected;
+    expect(fetchMock.mock.calls[2]?.[0]).toBe(
+      '/api/edgestore/abort-multipart-upload',
+    );
+    expect(fetchMock.mock.calls[2]?.[1]?.signal).toBeUndefined();
+  });
+
   it('cleans up on completion failure while preserving the original error', async () => {
     const { calls } = createFetchMock([
       jsonResponse(
