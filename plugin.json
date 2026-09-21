@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "edgestore",
-  "version": "0.2.0",
+  "version": "0.1.0",
   "description": "Use when adding or troubleshooting EdgeStore file uploads in TypeScript and React apps.",
   "author": { "name": "EdgeStore" },
   "homepage": "https://edgestore.dev/docs/agents",
