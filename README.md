@@ -1,11 +1,9 @@
 <h1 align="center">
-  <a href="https://edgestore.dev">
-    <img src="docs/public/img/logo.png" alt="" width="48" height="48" align="middle" />
-    <picture>
+  <a href="https://edgestore.dev"><img src="docs/public/img/logo.png" alt="EdgeStore home" width="48" height="48" align="middle" /></a>
+  <a href="https://edgestore.dev"><picture>
       <source media="(prefers-color-scheme: dark)" srcset="docs/public/img/edgestore.svg" />
       <img src="docs/public/img/edgestore-light.svg" alt="EdgeStore" width="240" align="middle" />
-    </picture>
-  </a>
+  </picture></a>
 </h1>
 
 <p align="center">Type-safe file uploads for TypeScript and React.</p>
