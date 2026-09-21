@@ -35,11 +35,11 @@ export async function agentAssetsCommand(
       if (!isInteractive(runtime, flags))
         throw usageError(
           'confirmation_required',
-          'Use --yes to install/update agent assets, or --dry-run to inspect changes.',
+          'Use --yes to apply changes or --dry-run to preview them.',
         );
       if (
         !(await runtime.prompts.confirm(
-          `Apply agent assets for ${options.client} at ${options.global ? options.home : options.project}?`,
+          `Apply ${input.skillsOnly ? 'skill' : 'skill and MCP'} changes for ${options.client} at ${options.global ? options.home : options.project}?`,
         ))
       )
         return;
@@ -86,16 +86,17 @@ export async function agentAssetsCommand(
       ...changes.map(
         ({ file }) => `${input.dryRun ? 'Would change' : 'Changed'}: ${file}`,
       ),
-      ...current.result.otherSources.map(
-        (file) => `Other visible skill source: ${file}`,
-      ),
+      ...current.result.otherSources.map((file) => `Skill found at: ${file}`),
       ...(connection?.result.warnings ?? []),
       ...(current.result.status === 'update-available'
-        ? [
-            'Use agent update to apply the skill snapshot bundled with this CLI.',
-          ]
+        ? ['Run edgestore agent update to install the skill from this CLI.']
         : []),
-      'No authentication or application provisioning was performed. Restart the client or open a new task to load updated skills. Plugin inventory was not fully inspected; check the client for duplicate skill sources.',
+      ...(!input.dryRun && skills.changes.length
+        ? ['Restart your client or open a new task to load the skill.']
+        : []),
+      ...(!input.dryRun && mcp?.changes.length
+        ? ['Open your client to connect EdgeStore.']
+        : []),
     ].join('\n'),
   );
 }

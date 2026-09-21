@@ -29,11 +29,11 @@ export async function mcpCommand(
       if (!isInteractive(runtime, flags))
         throw usageError(
           'confirmation_required',
-          'Use --yes to apply configuration changes, or --dry-run to inspect them.',
+          'Use --yes to apply changes or --dry-run to preview them.',
         );
       if (
         !(await runtime.prompts.confirm(
-          `Apply ${action} to ${plan.result.configPath}?`,
+          `${action === 'remove' ? 'Remove EdgeStore MCP from' : 'Configure EdgeStore MCP in'} ${plan.result.configPath}?`,
         ))
       )
         return;
@@ -53,6 +53,17 @@ export async function mcpCommand(
   };
   outputFor(runtime, flags).result(
     result,
-    `${client}: ${result.status}\n${result.configPath}\n${result.warnings.join('\n')}${result.warnings.length ? '\n' : ''}${input.dryRun ? 'Dry run; no files changed.\n' : ''}Authentication was not checked. Open the client to connect when needed; review requested permissions and start with read-only consent. Configuration alone does not establish access or connectivity.`,
+    [
+      `${client}: ${result.status}`,
+      result.configPath,
+      ...result.warnings,
+      ...(input.dryRun ? ['Dry run; no files changed.'] : []),
+      ...(action === 'status'
+        ? ['Connection and sign-in were not checked.']
+        : []),
+      ...(!input.dryRun && action === 'setup'
+        ? ['Open your client to connect EdgeStore.']
+        : []),
+    ].join('\n'),
   );
 }

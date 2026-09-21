@@ -66,6 +66,30 @@ async function fixture(client: AgentClient) {
 }
 
 describe.each(CLIENTS)('%s direct MCP', (client) => {
+  it('tailors completion guidance to the action', async () => {
+    const { cli } = await fixture(client);
+    for (const args of [
+      ['setup', '--dry-run'],
+      ['setup', '--yes'],
+      ['status'],
+      ['remove', '--yes'],
+    ]) {
+      const before = cli.stdout().length;
+      expect(
+        await runCli(['mcp', ...args, '--client', client], cli.runtime, '1'),
+      ).toBe(0);
+      const output = cli.stdout().slice(before);
+      expect(output.includes('Open your client to connect EdgeStore.')).toBe(
+        args[0] === 'setup' && !args.includes('--dry-run'),
+      );
+      expect(output.includes('Connection and sign-in were not checked.')).toBe(
+        args[0] === 'status',
+      );
+      if (args.includes('--dry-run'))
+        expect(output).toContain('Dry run; no files changed.');
+    }
+  });
+
   it('configures, repeats without writes, and removes only the owned entry', async () => {
     const { options, target, writeConfig } = await fixture(client);
     const original =

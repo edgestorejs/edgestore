@@ -206,15 +206,13 @@ Common workflows:
 
   const agent = program
     .command('agent')
-    .description('Inspect and configure coding-agent integrations');
+    .description('Manage coding-agent integrations');
   const assetFile = fileURLToPath(
     new URL('../agent-assets/skills.json', import.meta.url),
   );
   agent
     .command('context')
-    .description(
-      'Inspect application versions and reference paths without authentication',
-    )
+    .description('Show application versions and local documentation paths')
     .action(async () => {
       await agentContextCommand(runtime, globalFlags(program), {
         cliVersion: version,
@@ -222,15 +220,20 @@ Common workflows:
       });
     });
 
+  const agentDescriptions = {
+    setup: 'Install the EdgeStore skill and configure MCP',
+    update: 'Update the skill from this CLI and configure MCP',
+    status: 'Show installed skill and MCP configuration',
+  };
   for (const action of ['setup', 'update', 'status'] as const) {
     agent
       .command(action)
-      .description(`${action} packaged skills and the hosted MCP connection`)
+      .description(agentDescriptions[action])
       .option('--client <client>', 'codex, claude, or cursor')
       .option('--global', 'use user-level skill and MCP configuration')
-      .option('--skills-only', 'leave all MCP configuration untouched')
-      .option('--dry-run', 'inspect changes without writing')
-      .option('--yes', 'apply unchanged owned assets without confirmation')
+      .option('--skills-only', 'manage only the skill')
+      .option('--dry-run', 'preview changes without writing')
+      .option('--yes', 'skip confirmation prompts')
       .action(async (options) =>
         agentAssetsCommand(runtime, globalFlags(program), {
           ...options,
@@ -242,17 +245,20 @@ Common workflows:
 
   const mcp = program
     .command('mcp')
-    .description(
-      'Configure the hosted MCP without installing skills or logging in',
-    );
+    .description('Manage the EdgeStore MCP configuration');
+  const mcpDescriptions = {
+    setup: 'Configure the EdgeStore MCP connection',
+    status: 'Show the saved MCP configuration, not connection status',
+    remove: 'Remove the EdgeStore MCP connection',
+  };
   for (const action of ['setup', 'status', 'remove'] as const) {
     mcp
       .command(action)
-      .description(`${action} the EdgeStore MCP connection`)
+      .description(mcpDescriptions[action])
       .option('--client <client>', 'codex, claude, or cursor')
       .option('--global', 'use the user-level client configuration')
-      .option('--dry-run', 'inspect proposed changes without writing')
-      .option('--yes', 'apply changes without confirmation')
+      .option('--dry-run', 'preview changes without writing')
+      .option('--yes', 'skip confirmation prompts')
       .action(async (options) =>
         mcpCommand(runtime, globalFlags(program), { ...options, action }),
       );

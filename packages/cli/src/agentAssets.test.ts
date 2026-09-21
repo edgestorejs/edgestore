@@ -79,6 +79,32 @@ async function fixture(client: AgentClient) {
 }
 
 describe.each(CLIENTS)('%s skill assets', (client) => {
+  it('shows next steps only for applied changes', async () => {
+    const { cli } = await fixture(client);
+    for (const { args, restart, connect } of [
+      { args: ['setup', '--dry-run'], restart: false, connect: false },
+      { args: ['status'], restart: false, connect: false },
+      {
+        args: ['setup', '--skills-only', '--yes'],
+        restart: true,
+        connect: false,
+      },
+      { args: ['setup', '--yes'], restart: false, connect: true },
+      { args: ['setup', '--yes'], restart: false, connect: false },
+    ]) {
+      const before = cli.stdout().length;
+      expect(
+        await runCli(['agent', ...args, '--client', client], cli.runtime, '1'),
+      ).toBe(0);
+      const output = cli.stdout().slice(before);
+      expect(output.includes('Restart your client')).toBe(restart);
+      expect(output.includes('Open your client to connect EdgeStore.')).toBe(
+        connect,
+      );
+      if (args.includes('--dry-run')) expect(output).toContain('Would change:');
+    }
+  });
+
   it('installs, repeats without writes, and updates only an owned snapshot', async () => {
     const { options, skill } = await fixture(client);
     await applyChanges((await planSkills(options, first, 'setup')).changes);
