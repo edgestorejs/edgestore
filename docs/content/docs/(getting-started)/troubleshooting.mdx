@@ -3,29 +3,19 @@ title: Troubleshooting
 description: Diagnose EdgeStore setup, routing, credentials, and upload failures.
 ---
 
-Start with the failing request. MCP manages remote resources; your application
-uses its own server route, provider, and credentials. Reconnecting MCP does not
-repair an application route or load a missing backend environment variable.
+## Ask your agent to debug it
 
-## Inspect the selected application
+Copy this prompt into your coding agent and describe what is going wrong:
 
-If the CLI is available:
+```text
+Help me debug this EdgeStore issue: [describe the problem].
 
-```sh
-edgestore --cwd <app> agent context --json
-edgestore --cwd <app> doctor --offline --json
+Read https://edgestore.dev/docs/troubleshooting.md and inspect my existing
+integration. Explain the cause before making changes.
 ```
 
-Use the backend directory for server checks in a split workspace. `agent context`
-reports installed versions and local references. `doctor --offline` inspects
-configuration without authenticating or running the application. Follow its
-suggestions, but investigate warnings and skipped checks; a passing check is not
-an end-to-end upload test.
-
-If `agent context` lists candidate workspaces and exits with code 2, select the
-application with `--cwd`. Do not install packages at the monorepo root to resolve
-that message. If a separate CLI is too old to provide these commands, inspect the
-app's installed packages and configuration directly.
+Include the error message and steps to reproduce it, without credentials or
+private file URLs. The checks below work with or without an agent.
 
 ## Route not found or method not allowed
 
@@ -52,7 +42,8 @@ Do not make a bucket public to bypass an authorization failure.
 
 ## Browser upload failures
 
-Check the failing request and response in the browser's Network panel, then use
+Check the browser console for errors and the failing request and response in the
+Network panel, then use
 [Error handling](/docs/error-handling) to identify validation, size, or access
 errors. Confirm that the React provider wraps the upload component.
 
@@ -61,18 +52,79 @@ CORS and check the adapter's cookie and deployment requirements. Do not combine
 arbitrary reflected origins with credentials. Preserve type-only router imports
 so backend code and credentials cannot enter the frontend bundle.
 
-If needed, enable server [debug logging](/docs/logging) temporarily. Redact keys,
-tokens, cookies, and signed URLs before sharing logs or screenshots.
-
 After a fix, upload through the application and retrieve the file independently.
 For protected files, confirm that unauthorized retrieval is denied too.
 
+## Enable server debug logging
+
+Enable [debug logging](/docs/logging) temporarily to inspect server-side failures.
+These messages appear in your backend's terminal or server logs, not the browser
+console. Redact keys, tokens, cookies, and signed URLs before sharing logs or
+screenshots.
+
+## Inspect the application with the CLI
+
+If the CLI is available:
+
+```sh
+edgestore --cwd <app> agent context --json
+edgestore --cwd <app> doctor --offline --json
+```
+
+Use the backend directory for server checks in a split workspace. `agent context`
+reports installed versions and local references. `doctor --offline` inspects
+configuration without authenticating or running the application. Follow its
+suggestions, but investigate warnings and skipped checks; a passing check is not
+an end-to-end upload test.
+
+If `agent context` lists candidate workspaces and exits with code 2, select the
+application with `--cwd`. Do not install packages at the monorepo root to resolve
+that message. If a separate CLI is too old to provide these commands, inspect the
+app's installed packages and configuration directly.
+
 ## MCP setup or sign-in failures
+
+MCP manages remote resources separately from your application's upload route.
+Reconnecting it does not repair that route or load backend environment variables.
 
 Use `edgestore mcp status --client codex` (or `claude` / `cursor`) to inspect saved
 configuration. It does not test OAuth or connectivity. Follow the client-specific
 [sign-in instructions](/docs/agents#sign-in), then try a read such as listing
 projects. Review granted permissions if one action works but another is denied.
+
+## Try an example app
+
+Run an [example close to your framework](https://github.com/edgestorejs/edgestore/tree/main/examples)
+to help isolate the problem. If it works with the same project, compare its route,
+provider, and environment setup with your application.
+
+For the basic Next.js example, clone the repository:
+
+```sh
+git clone https://github.com/edgestorejs/edgestore.git
+cd edgestore
+```
+
+Choose a repository revision matching the EdgeStore version you are debugging.
+Use the Node.js and pnpm versions required by that revision's root `package.json`.
+Install dependencies and build the local packages from the repository root:
+
+```sh
+pnpm install
+pnpm build
+```
+
+Configure `examples/next-basic/.env.local` with credentials for a project you are
+authorized to test, following [Quick start](/docs/quick-start#environment-variables).
+Keep the file gitignored and use a harmless test file. Then start the example:
+
+```sh
+pnpm --filter next-basic dev
+```
+
+Open the URL printed by Next.js, usually [http://localhost:3000](http://localhost:3000),
+and try an upload. Compare results using the same EdgeStore version and file;
+an example on a different version does not isolate the cause.
 
 ## Still blocked?
 
