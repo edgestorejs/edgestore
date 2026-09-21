@@ -57,10 +57,11 @@ export { handler as GET, handler as POST };
 </Callout>
 
 The hosted `edgestore()` provider supports the complete backend client. S3
-currently exposes `get`, `delete`, and `deleteMany`. Azure Blob Storage also
-exposes `createSignedUrl` and `createSignedUrls` for private reads. Methods such
-as backend upload and listing remain absent from those clients until the
-provider implements them.
+supports `upload`, `get`, `delete`, `deleteMany`, and private-read
+`createSignedUrl` / `createSignedUrls`, accepting key or URL references.
+Azure Blob Storage supports lookup, deletion, and private signed reads.
+Unsupported operations, such as S3 listing and confirmation or Azure backend
+upload, remain absent from each provider's client type.
 
 ## Backend Upload
 
