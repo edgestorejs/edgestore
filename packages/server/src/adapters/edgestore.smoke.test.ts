@@ -76,8 +76,8 @@ async function createSmokeServer() {
     req.cookies = parseCookie(req.headers.cookie ?? '');
     next();
   });
-  app.get('/edgestore/*', handler);
-  app.post('/edgestore/*', handler);
+  app.get('/edgestore/*path', handler);
+  app.post('/edgestore/*path', handler);
 
   const server = app.listen(0, '127.0.0.1');
 

@@ -48,13 +48,22 @@ export const linkItems: LinkItemType[] = [
 ];
 
 export const logo = (
-  <Image
-    src="/img/logo-sm.png"
-    alt="EdgeStore"
-    aria-label="EdgeStore"
-    width={28}
-    height={28}
-  />
+  <>
+    <Image
+      src="/img/edgestore-lockup-light.svg"
+      alt="EdgeStore"
+      width={161}
+      height={24}
+      className="shrink-0 dark:hidden"
+    />
+    <Image
+      src="/img/edgestore-lockup.svg"
+      alt="EdgeStore"
+      width={161}
+      height={24}
+      className="hidden shrink-0 dark:block"
+    />
+  </>
 );
 
 /**
@@ -66,11 +75,6 @@ export const logo = (
  */
 export const baseOptions: BaseLayoutProps = {
   nav: {
-    title: (
-      <>
-        {logo}
-        <div className="h-7 w-[120px] shrink-0 bg-[url('/img/edgestore-light.svg')] bg-contain bg-center bg-no-repeat dark:bg-[url('/img/edgestore.svg')]" />
-      </>
-    ),
+    title: logo,
   },
 };

@@ -53,6 +53,7 @@ const fileInfo = {
 describe('edgestore provider', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.unstubAllEnvs();
   });
 
   it('uses project credentials without changing their configuration shape', () => {
@@ -125,6 +126,7 @@ describe('edgestore provider', () => {
         router,
       }),
     ).resolves.toEqual({
+      baseUrl: 'https://files.edgestore.dev',
       token: 'token',
       clientInit: {
         path: '/_init',
@@ -142,6 +144,30 @@ describe('edgestore provider', () => {
         },
       },
     });
+  });
+
+  it('discovers both protected file aliases and preserves explicit overrides', async () => {
+    const delivery = {
+      baseUrl: 'https://project.content.test',
+      initUrls: [
+        'https://project.content.test/_init',
+        'https://files.edgestore.dev/_init',
+      ],
+    };
+    runtime.accessTokens.create.mockResolvedValue({ token: 'token', delivery });
+    const es = initEdgeStore.create();
+    const router = es.router({
+      files: es.fileBucket().accessControl({ userId: 'user-1' }),
+    });
+    const provider = edgestore({ accessKey: 'access', secretKey: 'secret' });
+    expect(await provider.init({ ctx: {}, router })).toMatchObject({
+      baseUrl: delivery.baseUrl,
+      clientInit: { urls: delivery.initUrls },
+    });
+    vi.stubEnv('EDGE_STORE_BASE_URL', 'http://localhost:4444');
+    const overridden = await provider.init({ ctx: {}, router });
+    expect(overridden.baseUrl).toBe('http://localhost:4444');
+    expect(overridden.clientInit?.urls).toBeUndefined();
   });
 
   it('does not create an access token for public-only buckets', async () => {
@@ -420,6 +446,7 @@ describe('edgestore provider', () => {
     expect(runtime.uploads.upload).toHaveBeenCalledWith(
       expect.objectContaining({
         bucket: 'files',
+        bucketConfig: { type: 'file', visibility: 'public' },
         source,
         metadata: { owner: 'user-1' },
       }),

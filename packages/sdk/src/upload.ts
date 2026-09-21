@@ -80,18 +80,22 @@ export async function uploadRuntimeFile(
       typeof multipart === 'object',
   });
 
-  const bucketResult = await operations.buckets.get({
-    project,
-    bucket,
-    signal,
-  });
+  const bucketConfig =
+    input.bucketConfig ??
+    (
+      await operations.buckets.get({
+        project,
+        bucket,
+        signal,
+      })
+    ).bucket;
   const partNumbers = multipartPlan?.partNumbers;
 
   const requested = await operations.uploads.request({
     project,
     bucket,
-    bucketType: bucketResult.bucket.type,
-    visibility: bucketResult.bucket.visibility,
+    bucketType: bucketConfig.type,
+    visibility: bucketConfig.visibility,
     sizeBytes: totalBytes,
     fileName: fileName ?? prepared.fileName,
     mimeType: mimeType ?? prepared.mimeType,

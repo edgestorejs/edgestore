@@ -1,23 +1,22 @@
 ---
 title: Astro
-description: Learn how to integrate EdgeStore with your Astro applications using the dedicated Astro adapter.
+description: Add EdgeStore uploads to Astro.
 ---
 
-EdgeStore supports Astro applications through our dedicated Astro adapter, allowing you to use EdgeStore's file upload and management capabilities with your Astro project.
+The Astro adapter handles server requests. The upload UI below uses a hydrated
+React component.
 
 ## Setup
 
 ### Install
 
-Let's start by installing the required packages.
-
 ```package-install
 @edgestore/server @edgestore/react
 ```
 
-### Environment Variables
+### Environment variables
 
-Then go to your [Dashboard](https://dashboard.edgestore.dev), create a new project and copy the keys to your environment variables.
+Copy your project's keys from the [dashboard](https://dashboard.edgestore.dev) to the backend env file:
 
 ```sh title=".env"
 EDGE_STORE_ACCESS_KEY=your-access-key
@@ -25,13 +24,16 @@ EDGE_STORE_SECRET_KEY=your-secret-key
 ```
 
 <Callout type="warning">
-  Make sure you add `.env` to your `.gitignore` file. <br />
-  You don't want to commit your secret keys to your repository.
+  Add `.env` to `.gitignore`.
 </Callout>
 
 ### Backend
 
-Now we can create the API endpoint in our Astro app. Create a file at `src/pages/api/edgestore/[...edgestore].ts`:
+Configure an [Astro server adapter](https://docs.astro.build/en/guides/on-demand-rendering/)
+for your deployment and enable the React integration for the UI below. The
+EdgeStore endpoint must run on demand; a static-only deployment cannot serve it.
+
+Create `src/pages/api/edgestore/[...edgestore].ts`:
 
 ```ts
 import { createEdgeStore, initEdgeStore } from '@edgestore/server';
@@ -60,13 +62,11 @@ export { handler as GET, handler as POST };
 export type EdgeStoreRouter = typeof router;
 ```
 
-The example above is the simplest bucket you can create with EdgeStore. Just a simple file bucket with no validation that will be accessible by anyone with the link.
-
-You can have multiple buckets in your app, each with its own configuration.
+This bucket's files are accessible to anyone with the link.
 
 ### Frontend
 
-Now let's create our context provider:
+Create the React provider:
 
 ```tsx title="src/lib/edgestore.ts"
 import { createEdgeStoreProvider } from '@edgestore/react';
@@ -78,7 +78,7 @@ const { EdgeStoreProvider, useEdgeStore } =
 export { EdgeStoreProvider, useEdgeStore };
 ```
 
-And then let's create out upload component:
+Create the upload component:
 
 ```tsx title="src/components/FileUploader.tsx"
 import { useState } from 'react';
@@ -127,7 +127,7 @@ function FileUploaderInner() {
 }
 ```
 
-Finally, let's use the `FileUploader` component in our app.
+Hydrate the component with `client:load`:
 
 ```astro title="src/pages/index.astro"
 ---
@@ -142,7 +142,3 @@ import { FileUploader } from '../components/FileUploader';
   </body>
 </html>
 ```
-
-## Usage
-
-To upload or use the other functionalities of EdgeStore, you can look at the main [Quick Start](/docs/quick-start) guide. The usage should be the same.

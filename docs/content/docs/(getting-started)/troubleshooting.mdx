@@ -1,45 +1,88 @@
 ---
 title: Troubleshooting
-description: Learn how to troubleshoot common issues with EdgeStore.
+description: Diagnose EdgeStore setup, routing, credentials, and upload failures.
 ---
 
-If you followed the docs to get started with EdgeStore, but you are having issues, here are some things you can try to find out what the problem might be.
+## Ask your agent to debug it
 
-## Check if the API is correctly configured
+<AgentPrompt>
 
-You can try to access the `/health` endpoint of your edgestore API from the browser.
+Read https://edgestore.dev/docs/troubleshooting.md and inspect my existing
+EdgeStore integration. Explain the cause before making changes.
 
-The default URL is: [http://localhost:3000/api/edgestore/health](http://localhost:3000/api/edgestore/health)
+Problem:
 
-If you can see `OK` on the page, then the API is configured in the correct path.
+[Describe the problem]
 
-## Set the log level to `debug`
+</AgentPrompt>
 
-You can set the [log level](./logging) to `debug` to see in more details what is happening in the server. (These logs are for the server-side and will not be visible in the browser console)
+Include the error message and steps to reproduce it.
 
-## Check the browser console and network tab
+## Route not found or method not allowed
 
-Open the developer tools in your browser and check the console and network tab to see if there are any helpful error messages.
+Open the handler's health endpoint. With the default Next.js route it is
+[http://localhost:3000/api/edgestore/health](http://localhost:3000/api/edgestore/health).
+Use your backend origin and mounted path for other adapters.
 
-## Try to run one of the example apps
+For a 404 or 405, check the catch-all route and GET/POST exports. Match the React
+provider's `basePath` to the mounted endpoint, including any proxy prefix.
 
-You can try to run one of the example apps on your local machine to see if it works.
+## Credentials or access denied
 
-- clone the repo
-  - `git clone https://github.com/edgestorejs/edgestore.git`
-- cd into the example app
-  - `cd examples/next-basic`
-- install dependencies
-  - `npm install`
-- add your environment variables
-  - `examples/next-basic/.env.local`
-- run the app
-  - `npm run dev`
-- access the app
-  - [http://localhost:3000](http://localhost:3000)
+Confirm the backend loads the expected env file before creating the storage
+provider, and that the keys belong to the intended project.
 
-There are [other example apps](https://github.com/edgestorejs/edgestore/tree/main/examples) that you can try. Try to find the one that is closer to your use case.
+For protected buckets, check the application's authentication context and access
+rules.
 
-## Tried everything and still not working?
+## Browser upload failures
 
-If you tried everything and still can't figure out what is wrong, you can reach for support in the [Discord server](https://discord.gg/HvrnhRTfgQ) or [open an issue](https://github.com/edgestorejs/edgestore/issues) in the GitHub repo.
+Check the browser console for errors and the failing request and response in the
+Network panel, then use
+[Error handling](/docs/error-handling) to identify validation, size, or access
+errors. Confirm that the React provider wraps the upload component.
+
+For separate frontend and backend origins, allow the intended frontend origin in
+CORS and check the adapter's cookie and deployment requirements.
+
+## Enable server debug logging
+
+Enable [debug logging](/docs/logging) to inspect server-side failures. Debug output
+includes application context and cookies. Remove those values before sharing logs.
+
+## Inspect the application with the CLI
+
+```sh
+edgestore --cwd <app> agent context --json
+edgestore --cwd <app> doctor --offline --json
+```
+
+Use the backend directory for server checks in a split workspace. `agent context`
+reports installed versions and local references. `doctor --offline` inspects
+configuration without authenticating or running the application.
+
+## Try an example app
+
+Run an [example close to your framework](https://github.com/edgestorejs/edgestore/tree/main/examples)
+to compare with your application.
+
+For Next.js:
+
+```sh
+npx degit edgestorejs/edgestore/examples/next-basic#main edgestore-example
+cd edgestore-example
+npm install
+```
+
+Add your EdgeStore keys to `.env.local` as shown in
+[Quick start](/docs/quick-start#environment-variables), then run:
+
+```sh
+npm run dev
+```
+
+## Still blocked?
+
+Ask in [Discord](https://discord.gg/HvrnhRTfgQ) or
+[open an issue](https://github.com/edgestorejs/edgestore/issues) with your framework,
+installed EdgeStore versions, and the error.

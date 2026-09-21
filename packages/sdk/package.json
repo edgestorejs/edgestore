@@ -31,7 +31,9 @@
     "edge-store"
   ],
   "scripts": {
-    "build": "pnpm codegen:check && rollup --config rollup.config.ts --configPlugin rollup-plugin-swc3",
+    "build": "pnpm agent-docs:build && pnpm codegen:check && rollup --config rollup.config.ts --configPlugin rollup-plugin-swc3",
+    "agent-docs:build": "node --import tsx ../../scripts/agentDocs/build.ts sdk",
+    "prepack": "pnpm agent-docs:build",
     "dev": "pnpm build --watch",
     "codegen:api": "openapi-typescript ./src/generated/openapi-v2.json -o ./src/generated/api-v2.ts --export-type",
     "codegen:check": "openapi-typescript ./src/generated/openapi-v2.json -o ./src/generated/api-v2.ts --export-type --check",
@@ -54,6 +56,7 @@
     "src",
     "README.md",
     "LICENSE",
+    "agent-docs",
     "package.json",
     "!**/*.test.*",
     "!**/__tests__"

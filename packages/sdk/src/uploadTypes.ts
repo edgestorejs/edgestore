@@ -1,4 +1,5 @@
 import type {
+  RuntimeBucketGetResult,
   RuntimeUploadGetResult,
   RuntimeUploadRequestInput,
   RuntimeUploadRequestResult,
@@ -65,6 +66,8 @@ export type RuntimeUploadInput = Omit<
   | 'multipart'
   | 'signal'
 > & {
+  /** Bucket settings used when uploading from a code-defined router. Allows the first upload to create the bucket; omitted settings are read from an existing bucket. */
+  bucketConfig?: Pick<RuntimeBucketGetResult['bucket'], 'type' | 'visibility'>;
   /** File data to upload. */
   source: UploadSource;
   /** Custom metadata stored with the file. */

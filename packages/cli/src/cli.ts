@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 import { Command, CommanderError } from 'commander';
 import {
   accountBillingCommand,
@@ -7,6 +8,8 @@ import {
   accountSwitchCommand,
   accountUsageCommand,
 } from './commands/account';
+import { agentContextCommand } from './commands/agent';
+import { agentAssetsCommand } from './commands/agentAssets';
 import { loginCommand, logoutCommand, whoamiCommand } from './commands/auth';
 import {
   bucketCreateCommand,
@@ -28,6 +31,7 @@ import {
   fileListCommand,
 } from './commands/file';
 import { initCommand } from './commands/init';
+import { mcpCommand } from './commands/mcp';
 import {
   invitationActionCommand,
   invitationListCommand,
@@ -189,9 +193,76 @@ Common workflows:
   program
     .command('doctor')
     .description('Check local configuration and API connectivity')
-    .action(async () => {
-      await doctorCommand(runtime, globalFlags(program), version);
+    .option(
+      '--offline',
+      'inspect locally without credentials, OAuth, or API requests',
+    )
+    .action(async (options) => {
+      await doctorCommand(runtime, globalFlags(program), {
+        version,
+        offline: options.offline,
+      });
     });
+
+  const agent = program
+    .command('agent')
+    .description('Manage coding-agent integrations');
+  const assetFile = fileURLToPath(
+    new URL('../agent-assets/skills.json', import.meta.url),
+  );
+  agent
+    .command('context')
+    .description('Show application versions and local documentation paths')
+    .action(async () => {
+      await agentContextCommand(runtime, globalFlags(program), {
+        cliVersion: version,
+        assetFile,
+      });
+    });
+
+  const agentDescriptions = {
+    setup: 'Install the EdgeStore skill and configure MCP',
+    update: 'Update the skill from this CLI and configure MCP',
+    status: 'Show installed skill and MCP configuration',
+  };
+  for (const action of ['setup', 'update', 'status'] as const) {
+    agent
+      .command(action)
+      .description(agentDescriptions[action])
+      .option('--client <client>', 'codex, claude, or cursor')
+      .option('--global', 'use user-level skill and MCP configuration')
+      .option('--skills-only', 'manage only the skill')
+      .option('--dry-run', 'preview changes without writing')
+      .option('--yes', 'skip confirmation prompts')
+      .action(async (options) =>
+        agentAssetsCommand(runtime, globalFlags(program), {
+          ...options,
+          action,
+          assetFile,
+        }),
+      );
+  }
+
+  const mcp = program
+    .command('mcp')
+    .description('Manage the EdgeStore MCP configuration');
+  const mcpDescriptions = {
+    setup: 'Configure the EdgeStore MCP connection',
+    status: 'Show the saved MCP configuration, not connection status',
+    remove: 'Remove the EdgeStore MCP connection',
+  };
+  for (const action of ['setup', 'status', 'remove'] as const) {
+    mcp
+      .command(action)
+      .description(mcpDescriptions[action])
+      .option('--client <client>', 'codex, claude, or cursor')
+      .option('--global', 'use the user-level client configuration')
+      .option('--dry-run', 'preview changes without writing')
+      .option('--yes', 'skip confirmation prompts')
+      .action(async (options) =>
+        mcpCommand(runtime, globalFlags(program), { ...options, action }),
+      );
+  }
 
   program
     .command('init')

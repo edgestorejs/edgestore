@@ -153,15 +153,23 @@ function EdgeStoreProviderInner<TRouter extends AnyRouter>({
         const json = (await res.json()) as Omit<SharedInitRes, 'newCookies'>;
 
         if (json.clientInit) {
-          const innerRes = await fetch(
-            joinUrl(json.baseUrl, json.clientInit.path),
-            {
-              method: 'GET',
-              credentials: 'include',
-              headers: json.clientInit.headers,
-            },
+          const { clientInit } = json;
+          const urls = clientInit.urls ?? [
+            joinUrl(json.baseUrl, clientInit.path),
+          ];
+          if (urls.length === 0) {
+            throw new EdgeStoreClientError('Missing file initialization URL.');
+          }
+          const responses = await Promise.all(
+            [...new Set(urls)].map((url) =>
+              fetch(url, {
+                method: 'GET',
+                credentials: 'include',
+                headers: clientInit.headers,
+              }),
+            ),
           );
-          if (innerRes.ok) {
+          if (responses.every((response) => response.ok)) {
             // update state
             setState({
               loading: false,
