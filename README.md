@@ -1,8 +1,7 @@
 <p align="center">
-  <a href="https://edgestore.dev"><img src="docs/public/img/logo.png" alt="EdgeStore home" width="48" height="48" align="middle" /></a>
   <a href="https://edgestore.dev"><picture>
-      <source media="(prefers-color-scheme: dark)" srcset="docs/public/img/edgestore.svg" />
-      <img src="docs/public/img/edgestore-light.svg" alt="EdgeStore" width="240" align="middle" />
+      <source media="(prefers-color-scheme: dark)" srcset="docs/public/img/edgestore-lockup.svg" />
+      <img src="docs/public/img/edgestore-lockup-light.svg" alt="EdgeStore" width="322" height="48" />
   </picture></a>
 </p>
 
