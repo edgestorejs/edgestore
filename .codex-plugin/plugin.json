@@ -1,7 +1,7 @@
 {
   "name": "edgestore",
   "version": "0.1.0",
-  "description": "Add EdgeStore file uploads to TypeScript and React apps.",
+  "description": "Use when adding or troubleshooting EdgeStore file uploads in TypeScript and React apps.",
   "author": { "name": "EdgeStore" },
   "homepage": "https://edgestore.dev/docs/agents",
   "repository": "https://github.com/edgestorejs/edgestore",
@@ -10,8 +10,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "EdgeStore",
-    "shortDescription": "Add EdgeStore file uploads to your app.",
-    "longDescription": "Includes the EdgeStore setup skill, which uses API references from your installed packages. Configure MCP separately for account and project tools.",
+    "shortDescription": "Use when adding or troubleshooting EdgeStore file uploads.",
+    "longDescription": "Use when adding or troubleshooting EdgeStore file uploads. Includes the setup skill with API references from your installed packages. Configure MCP separately for account and project tools.",
     "developerName": "EdgeStore",
     "category": "Developer Tools",
     "capabilities": [],

@@ -1,6 +1,6 @@
 ---
 name: edgestore-setup
-description: Set up, extend, or troubleshoot EdgeStore file uploads in a TypeScript/React application. Use for an EdgeStore integration, upload UI, bucket access policy, or failing upload; not unrelated storage migrations or account administration.
+description: Use when adding, extending, or troubleshooting EdgeStore file uploads, upload UI, or bucket access policies in a TypeScript/React application. Not for unrelated storage migrations or account administration.
 license: MIT
 ---
 
