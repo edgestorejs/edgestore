@@ -21,14 +21,14 @@ EdgeStore handles file uploads and storage for TypeScript and React applications
 
 ## Features
 
-- 🧩 **End-to-end type safety.** Define your server router once and get inferred types in your React client.
-- ☁️ **Your choice of storage.** Use [EdgeStore's hosted storage](https://edgestore.dev/docs/providers/edgestore), [S3-compatible storage](https://edgestore.dev/docs/providers/s3), or [Azure Blob Storage](https://edgestore.dev/docs/providers/azure-blob). Connect other storage services with a [custom provider](https://edgestore.dev/docs/providers/custom).
-- 🔒 **Validation and authorization.** Set file size and type limits, and use your existing authentication to control uploads and deletions.
-- 🎨 **Ready-made upload components.** Customizable dropzones, image previews, and progress indicators for React.
-- 📤 **Upload controls.** Track progress, cancel uploads, and limit parallel uploads.
-- 🏷️ **Metadata and file paths.** Organize files using typed input and application context.
-- 🔌 **Framework adapters.** Integrate with Next.js, TanStack Start, Remix / React Router, Astro, Hono, Express, or Fastify.
-- 🤖 **Coding-agent support.** Skills, plugins, MCP tools, and API references bundled with your installed packages.
+- ✅ **End-to-end type safety.** Define your server router once and get inferred types in your React client.
+- ✅ **Your choice of storage.** Use [EdgeStore's hosted storage](https://edgestore.dev/docs/providers/edgestore), [S3-compatible storage](https://edgestore.dev/docs/providers/s3), or [Azure Blob Storage](https://edgestore.dev/docs/providers/azure-blob). Connect other storage services with a [custom provider](https://edgestore.dev/docs/providers/custom).
+- ✅ **Validation and authorization.** Set file size and type limits, and use your existing authentication to control uploads and deletions.
+- ✅ **Ready-made upload components.** Customizable dropzones, image previews, and progress indicators for React.
+- ✅ **Upload controls.** Track progress, cancel uploads, and limit parallel uploads.
+- ✅ **Metadata and file paths.** Organize files using typed input and application context.
+- ✅ **Framework adapters.** Integrate with Next.js, TanStack Start, Remix / React Router, Astro, Hono, Express, or Fastify.
+- ✅ **Coding-agent support.** Skills, plugins, MCP tools, and API references bundled with your installed packages.
 
 ## Use with an agent
 
