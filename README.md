@@ -1,178 +1,43 @@
-# Docs
+<img src="docs/public/img/logo.png" alt="EdgeStore" width="80" />
 
-Check the official [documentation](https://edgestore.dev) for more information.
+# EdgeStore
 
-## Agent plugin
+Type-safe file uploads for TypeScript and React.
 
-This repository bundles the EdgeStore setup skill and hosted MCP connection.
-Codex and Cursor use the portable `plugin.json` and `mcp.json`; Claude Code uses
-`.claude-plugin/plugin.json`. All clients use the same `skills/` directory.
-See [agent setup](https://edgestore.dev/docs/agents) for installation and sign-in.
+[Website](https://edgestore.dev) · [Documentation](https://edgestore.dev/docs/quick-start) · [Dashboard](https://dashboard.edgestore.dev) · [Discord](https://discord.gg/HvrnhRTfgQ)
 
-# Quick Start
+## What is EdgeStore?
 
-## Next.js Setup
+EdgeStore connects your upload UI to your backend with end-to-end type safety.
+Define file validation, metadata, and authorization in your server router, then
+upload and manage files from React with types inferred from that router.
 
-### Install
+Use [EdgeStore's hosted storage](https://edgestore.dev/docs/providers/edgestore)
+for managed file delivery and access control, or connect your own
+[S3-compatible storage](https://edgestore.dev/docs/providers/s3) or
+[Azure Blob Storage](https://edgestore.dev/docs/providers/azure-blob).
 
-Let's start by installing the required packages.
+## Use with an agent
 
-```shell
-npm install @edgestore/server @edgestore/react
+Give your coding agent this prompt:
+
+```text
+Read https://edgestore.dev/SKILL.md and add file uploads to this application.
 ```
 
-### Environment Variables
+For skills, plugins, and MCP connections, see [agent setup](https://edgestore.dev/docs/agents).
 
-Then go to your [Dashboard](https://dashboard.edgestore.dev), create a new project and copy the keys to your environment variables.
+## Documentation
 
-```shell title=".env"
-EDGE_STORE_ACCESS_KEY=your-access-key
-EDGE_STORE_SECRET_KEY=your-secret-key
-```
+- [Quick start](https://edgestore.dev/docs/quick-start)
+- Framework guides: [Next.js](https://edgestore.dev/docs/adapters/next), [TanStack Start](https://edgestore.dev/docs/adapters/tanstack-start), [Remix / React Router](https://edgestore.dev/docs/adapters/remix), [Astro](https://edgestore.dev/docs/adapters/astro), [Hono](https://edgestore.dev/docs/adapters/hono), [Express](https://edgestore.dev/docs/adapters/express), and [Fastify](https://edgestore.dev/docs/adapters/fastify)
+- [Upload components](https://edgestore.dev/docs/components/multi-file)
+- [Example applications](./examples)
 
-### Backend
+## Community
 
-Now we can create the backend code for our Next.js app.<br/>
-EdgeStore is compatible with both types of Next.js apps (`pages router` and `app router`).
+Questions and ideas are welcome on [Discord](https://discord.gg/HvrnhRTfgQ).
+For bugs and contributions, [open an issue](https://github.com/edgestorejs/edgestore/issues)
+or [submit a pull request](https://github.com/edgestorejs/edgestore/pulls).
 
-The example below is the simplest bucket you can create with EdgeStore. Just a simple file bucket with no validation that will be accessible by anyone with the link.
-
-You can have multiple buckets in your app, each with its own configuration.
-
-```ts title="src/app/api/edgestore/[...edgestore]/route.ts"
-import { createEdgeStore, initEdgeStore } from '@edgestore/server';
-import { createEdgeStoreNextHandler } from '@edgestore/server/adapters/next/app';
-import { edgestore } from '@edgestore/server/providers/edgestore';
-
-const es = initEdgeStore.create();
-
-/**
- * This is the main router for the EdgeStore buckets.
- */
-const router = es.router({
-  publicFiles: es.fileBucket(),
-});
-
-const configuredEdgeStore = createEdgeStore({
-  router,
-  provider: edgestore(),
-});
-
-const handler = createEdgeStoreNextHandler({
-  edgestore: configuredEdgeStore,
-});
-
-export { handler as GET, handler as POST };
-
-/**
- * This type is used to create the type-safe client for the frontend.
- */
-export type EdgeStoreRouter = typeof router;
-```
-
-### Frontend
-
-Now let's initiate our context provider.
-
-```tsx title="src/lib/edgestore.ts"
-'use client';
-
-import { createEdgeStoreProvider } from '@edgestore/react';
-import { type EdgeStoreRouter } from '../app/api/edgestore/[...edgestore]/route';
-
-const { EdgeStoreProvider, useEdgeStore } =
-  createEdgeStoreProvider<EdgeStoreRouter>();
-
-export { EdgeStoreProvider, useEdgeStore };
-```
-
-And then wrap our app with the provider.
-
-```tsx title="src/app/layout.tsx"
-import { EdgeStoreProvider } from '../lib/edgestore';
-import './globals.css';
-
-// ...
-
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return (
-    <html lang="en">
-      <body>
-        <EdgeStoreProvider>{children}</EdgeStoreProvider>
-      </body>
-    </html>
-  );
-}
-```
-
-### Upload file
-
-You can use the `useEdgeStore` hook to access a typesafe frontend client and use it to upload files.
-
-```tsx
-import * as React from 'react';
-import { useEdgeStore } from '../lib/edgestore';
-
-export default function Page() {
-  const [file, setFile] = React.useState<File>();
-  const { edgestore } = useEdgeStore();
-
-  return (
-    <div>
-      <input
-        type="file"
-        onChange={(e) => {
-          setFile(e.target.files?.[0]);
-        }}
-      />
-      <button
-        onClick={async () => {
-          if (file) {
-            const res = await edgestore.publicFiles.upload({
-              file,
-              onProgressChange: (progress) => {
-                // you can use this to show a progress bar
-                console.log(progress);
-              },
-            });
-            // you can run some server action or api here
-            // to add the necessary data to your database
-            console.log(res);
-          }
-        }}
-      >
-        Upload
-      </button>
-    </div>
-  );
-}
-```
-
-### Replace file
-
-By passing the `replaceTargetUrl` option, you can replace an existing file with a new one.
-It will automatically delete the old file after the upload is complete.
-
-You can also upload the file using the same file name, but in that case, you might still see the old file for a while because of the CDN cache.
-
-```tsx
-const res = await edgestore.publicFiles.upload({
-  file,
-  options: {
-    replaceTargetUrl: oldFileUrl,
-  },
-  // ...
-});
-```
-
-### Delete file
-
-```tsx
-await edgestore.publicFiles.delete({
-  url: urlToDelete,
-});
-```
+[Release notes](https://github.com/edgestorejs/edgestore/releases) · [MIT license](./LICENSE)
