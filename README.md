@@ -1,10 +1,21 @@
-<img src="docs/public/img/logo.png" alt="EdgeStore" width="80" />
+<h1 align="center">
+  <a href="https://edgestore.dev">
+    <img src="docs/public/img/logo.png" alt="" width="48" height="48" align="middle" />
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/public/img/edgestore.svg" />
+      <img src="docs/public/img/edgestore-light.svg" alt="EdgeStore" width="240" align="middle" />
+    </picture>
+  </a>
+</h1>
 
-# EdgeStore
+<p align="center">Type-safe file uploads for TypeScript and React.</p>
 
-Type-safe file uploads for TypeScript and React.
-
-[Website](https://edgestore.dev) · [Documentation](https://edgestore.dev/docs/quick-start) · [Dashboard](https://dashboard.edgestore.dev) · [Discord](https://discord.gg/HvrnhRTfgQ)
+<p align="center">
+  <a href="https://edgestore.dev">Website</a> ·
+  <a href="https://edgestore.dev/docs/quick-start">Documentation</a> ·
+  <a href="https://dashboard.edgestore.dev">Dashboard</a> ·
+  <a href="https://discord.gg/HvrnhRTfgQ">Discord</a>
+</p>
 
 ## What is EdgeStore?
 
