@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { Writable } from 'node:stream';
 import { detect } from 'package-manager-detector/detect';
+import { applicationKind } from './applicationKind';
 import { renderShellCommand } from './command';
 import { findGitRoot } from './config';
 import { CliError } from './errors';
@@ -9,7 +10,7 @@ import type { CliRuntime } from './runtime';
 import { findWorkspaceRoot } from './workspace';
 
 export type PackagePlan = {
-  framework: 'next' | 'react' | 'node' | 'unknown';
+  framework: ReturnType<typeof applicationKind>['framework'] | 'node';
   manager?: 'pnpm' | 'npm' | 'yarn' | 'bun';
   missing: string[];
   installAtWorkspaceRoot?: boolean;
@@ -73,17 +74,15 @@ export async function detectPackages(
     ...manifest.dependencies,
     ...manifest.devDependencies,
   };
-  const framework = dependencies.next
-    ? 'next'
-    : dependencies.react
-      ? 'react'
-      : 'node';
+  const { framework, role } = applicationKind(dependencies);
   const wanted =
-    framework === 'next' || framework === 'react'
+    role === 'fullstack'
       ? ['@edgestore/server', '@edgestore/react']
-      : ['@edgestore/server'];
+      : role === 'frontend'
+        ? ['@edgestore/react']
+        : ['@edgestore/server'];
   return {
-    framework,
+    framework: framework === 'unknown' ? 'node' : framework,
     manager: await detectPackageManager(cwd),
     missing: wanted.filter((name) => !dependencies[name]),
     installAtWorkspaceRoot: options.installAtWorkspaceRoot,
@@ -214,17 +213,17 @@ export function renderInstallCommand(
 export function packageNextSteps(
   framework: PackagePlan['framework'],
 ): string[] {
-  if (framework === 'next') {
+  if (framework === 'next' || framework === 'tanstack-start') {
     return [
       'Next steps:',
-      '  Configure an EdgeStore router in your Next.js app.',
+      `  Configure an EdgeStore router using the ${framework} adapter.`,
       '  Add the EdgeStore provider to your client layout.',
     ];
   }
-  if (framework === 'react') {
+  if (framework === 'react' || framework === 'vite') {
     return [
       'Next steps:',
-      '  Configure an EdgeStore server endpoint.',
+      '  Reuse or choose a separate backend for the EdgeStore server endpoint.',
       '  Add the EdgeStore provider to your React app.',
     ];
   }
@@ -260,7 +259,7 @@ function isMissingPathError(error: unknown): error is NodeJS.ErrnoException {
   );
 }
 
-async function detectPackageManager(
+export async function detectPackageManager(
   cwd: string,
 ): Promise<'pnpm' | 'npm' | 'yarn' | 'bun'> {
   const start = path.resolve(cwd);

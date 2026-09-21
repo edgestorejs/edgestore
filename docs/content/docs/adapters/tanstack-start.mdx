@@ -1,43 +1,38 @@
 ---
 title: TanStack Start
-description: Learn how to integrate EdgeStore with your TanStack Start applications for type-safe, full-stack React file management.
+description: Add EdgeStore uploads to TanStack Start.
 ---
-
-TanStack Start integrates seamlessly with EdgeStore, enabling you to build type-safe, full-stack React applications with robust file management capabilities.
 
 ## Setup
 
 ### Install
 
-Let's start by installing the required packages.
-
 ```package-install
 @edgestore/server @edgestore/react
 ```
 
-### Environment Variables
+### Environment variables
 
-Then go to your [Dashboard](https://dashboard.edgestore.dev), create a new project and copy the keys to your environment variables.
+Copy your project's keys from the [dashboard](https://dashboard.edgestore.dev) to the backend env file:
 
-```sh title=".env"
+```sh title=".env.local"
 EDGE_STORE_ACCESS_KEY=your-access-key
 EDGE_STORE_SECRET_KEY=your-secret-key
 ```
 
 <Callout type="warning">
-  Make sure you add `.env` to your `.gitignore` file. <br />
-  You don't want to commit your secret keys to your repository.
+  Use the app's existing env file, or `.env.local` for a new app. Keep it gitignored.
 </Callout>
 
 ### Backend
 
-In your TanStack Start application, create an API route for EdgeStore with the following content:
+Create the EdgeStore API route:
 
-```ts title="app/routes/api/edgestore.$.ts"
+```ts title="src/routes/api/edgestore.$.ts"
 import { createEdgeStore, initEdgeStore } from '@edgestore/server';
 import { createEdgeStoreStartHandler } from '@edgestore/server/adapters/start';
 import { edgestore } from '@edgestore/server/providers/edgestore';
-import { createAPIFileRoute } from '@tanstack/start/api';
+import { createFileRoute } from '@tanstack/react-router';
 
 const es = initEdgeStore.create();
 const router = es.router({
@@ -55,17 +50,21 @@ const handler = createEdgeStoreStartHandler({
   edgestore: configuredEdgeStore,
 });
 
-export const APIRoute = createAPIFileRoute('/api/edgestore/$')({
-  GET: handler,
-  POST: handler,
+export const Route = createFileRoute('/api/edgestore/$')({
+  server: {
+    handlers: {
+      GET: handler,
+      POST: handler,
+    },
+  },
 });
 ```
 
 ### Frontend
 
-Now let's initiate our context provider in the frontend app.
+Create the React provider:
 
-```tsx title="app/utils/edgestore.ts"
+```tsx title="src/utils/edgestore.ts"
 import { createEdgeStoreProvider } from '@edgestore/react';
 import { type EdgeStoreRouter } from '../routes/api/edgestore.$';
 
@@ -75,9 +74,9 @@ const { EdgeStoreProvider, useEdgeStore } =
 export { EdgeStoreProvider, useEdgeStore };
 ```
 
-And then wrap our app with the provider.
+Wrap your app with the provider:
 
-```tsx title="app/routes/__root.tsx"
+```tsx title="src/routes/__root.tsx"
 // [!code ++]
 import { EdgeStoreProvider } from '~/utils/edgestore';
 
@@ -85,10 +84,8 @@ import { EdgeStoreProvider } from '~/utils/edgestore';
 
 function RootComponent() {
   return (
-    {/* [!code ++] */}
     <EdgeStoreProvider>
       <Outlet />
-    {/* [!code ++] */}
     </EdgeStoreProvider>
   );
 }
@@ -96,4 +93,4 @@ function RootComponent() {
 
 ## Usage
 
-To upload or use the other functionalities of EdgeStore, you can look the main [Quick Start](/docs/quick-start) guide. The usage should be the same.
+See [Quick start](/docs/quick-start) for the upload UI.
