@@ -32,8 +32,9 @@ type UploadResponse<TBucket extends AnyBuilder> =
         metadata: InferMetadataObject<TBucket>;
         path: InferBucketPathObject<TBucket>;
         pathOrder: InferBucketPathOrder<TBucket>;
-      }) &
-    (undefined extends TBucket['_def']['autoSignedUrls']
+      }) & {
+    key?: string;
+  } & (undefined extends TBucket['_def']['autoSignedUrls']
       ? unknown
       : {
           signedUrl: string;
@@ -254,6 +255,7 @@ async function uploadFile(
       await uploadFileInner({
         file: uploadFileInfo.file,
         uploadUrl: json.uploadUrl,
+        headers: json.uploadHeaders,
         onProgressChange,
         signal,
       });
@@ -261,9 +263,18 @@ async function uploadFile(
       throw new EdgeStoreClientError('An error occurred');
     }
     return {
-      url: getUrl(json.accessUrl, apiPath, disableDevProxy),
+      key: json.key,
+      url: getUrl(
+        json.accessUrl,
+        apiPath,
+        disableDevProxy || json.disableDevProxy,
+      ),
       thumbnailUrl: json.thumbnailUrl
-        ? getUrl(json.thumbnailUrl, apiPath, disableDevProxy)
+        ? getUrl(
+            json.thumbnailUrl,
+            apiPath,
+            disableDevProxy || json.disableDevProxy,
+          )
         : null,
       ...mapSignedUploadAccess(json),
       size: json.size,
@@ -381,10 +392,11 @@ function getUrl(url: string, apiPath: string, disableDevProxy?: boolean) {
 async function uploadFileInner(props: {
   file: File | Blob;
   uploadUrl: string;
+  headers?: Record<string, string>;
   onProgressChange?: OnProgressChangeHandler;
   signal?: AbortSignal;
 }) {
-  const { file, uploadUrl, onProgressChange, signal } = props;
+  const { file, uploadUrl, headers, onProgressChange, signal } = props;
   const promise = new Promise<string | null>((resolve, reject) => {
     if (signal?.aborted) {
       reject(new UploadAbortedError('File upload aborted'));
@@ -393,8 +405,9 @@ async function uploadFileInner(props: {
 
     const request = new XMLHttpRequest();
     request.open('PUT', uploadUrl);
-    // This is for Azure provider. Specifies the blob type
-    request.setRequestHeader('x-ms-blob-type', 'BlockBlob');
+    for (const [name, value] of Object.entries(headers ?? {})) {
+      request.setRequestHeader(name, value);
+    }
     request.addEventListener('loadstart', () => {
       onProgressChange?.(0);
     });
@@ -427,9 +440,13 @@ async function uploadFileInner(props: {
     });
 
     if (signal) {
-      signal.addEventListener('abort', () => {
-        request.abort();
-      });
+      const abort = () => request.abort();
+      signal.addEventListener('abort', abort, { once: true });
+      request.addEventListener(
+        'loadend',
+        () => signal.removeEventListener('abort', abort),
+        { once: true },
+      );
     }
 
     request.send(file);
@@ -450,37 +467,41 @@ async function multipartUpload(params: {
 }) {
   const { bucketName, multipartInfo, onProgressChange, file, signal, apiPath } =
     params;
-  const { partSize, parts, totalParts, uploadId, key } = multipartInfo;
+  const { partSize, parts, uploadId, key } = multipartInfo;
   const uploadingParts: {
     partNumber: number;
     progress: number;
   }[] = [];
-  const uploadPart = async (params: {
-    part: (typeof parts)[number];
-    chunk: Blob;
-  }) => {
+  const uploadPart = async (
+    params: {
+      part: (typeof parts)[number];
+      chunk: Blob;
+    },
+    partSignal: AbortSignal,
+  ) => {
     const { part, chunk } = params;
     const { uploadUrl } = part;
     const eTag = await uploadFileInner({
       file: chunk,
       uploadUrl,
-      signal,
+      signal: partSignal,
       onProgressChange: (progress) => {
         const uploadingPart = uploadingParts.find(
           (p) => p.partNumber === part.partNumber,
         );
         if (uploadingPart) {
-          uploadingPart.progress = progress;
+          uploadingPart.progress = (progress * chunk.size) / 100;
         } else {
           uploadingParts.push({
             partNumber: part.partNumber,
-            progress,
+            progress: (progress * chunk.size) / 100,
           });
         }
         const totalProgress =
           Math.round(
-            uploadingParts.reduce((acc, p) => acc + p.progress * 100, 0) /
-              totalParts,
+            (uploadingParts.reduce((acc, p) => acc + p.progress, 0) /
+              (file.size || 1)) *
+              10000,
           ) / 100;
         onProgressChange?.(totalProgress);
       },
@@ -496,36 +517,52 @@ async function multipartUpload(params: {
     };
   };
 
-  // Upload the parts in parallel
-  const completedParts = await queuedPromises({
-    items: parts.map((part) => ({
-      part,
-      chunk: file.slice(
-        (part.partNumber - 1) * partSize,
-        part.partNumber * partSize,
-      ),
-    })),
-    fn: uploadPart,
-    maxParallel: 5,
-    maxRetries: 10, // retry 10 times per part
-  });
+  try {
+    // Upload the parts in parallel
+    const completedParts = await queuedPromises({
+      items: parts.map((part) => ({
+        part,
+        chunk: file.slice(
+          (part.partNumber - 1) * partSize,
+          part.partNumber * partSize,
+        ),
+      })),
+      fn: uploadPart,
+      signal,
+      maxParallel: 5,
+      maxRetries: 10, // retry 10 times per part
+    });
 
-  // Complete multipart upload
-  const res = await fetch(`${apiPath}/complete-multipart-upload`, {
-    method: 'POST',
-    credentials: 'include',
-    body: JSON.stringify({
-      bucketName,
-      uploadId,
-      key,
-      parts: completedParts,
-    }),
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-  if (!res.ok) {
-    await handleError(res);
+    if (signal?.aborted) throw new UploadAbortedError('File upload aborted');
+    // Complete multipart upload
+    const res = await fetch(`${apiPath}/complete-multipart-upload`, {
+      method: 'POST',
+      credentials: 'include',
+      body: JSON.stringify({
+        bucketName,
+        uploadId,
+        key,
+        parts: completedParts,
+      }),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    if (!res.ok) {
+      await handleError(res);
+    }
+  } catch (error) {
+    if (multipartInfo.abortSupported) {
+      // Cleanup is independent of the canceled transfer signal. Bucket lifecycle
+      // rules must cover disconnected browsers and failed cleanup requests.
+      await fetch(`${apiPath}/abort-multipart-upload`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bucketName, uploadId, key }),
+      }).catch(() => undefined);
+    }
+    throw error;
   }
 }
 
@@ -563,59 +600,62 @@ async function queuedPromises<TType, TRes>({
   fn,
   maxParallel,
   maxRetries = 0,
+  signal,
 }: {
   items: TType[];
-  fn: (item: TType) => Promise<TRes>;
+  fn: (item: TType, signal: AbortSignal) => Promise<TRes>;
   maxParallel: number;
   maxRetries?: number;
+  signal?: AbortSignal;
 }): Promise<TRes[]> {
+  const controller = new AbortController();
+  const abort = () => controller.abort();
+  signal?.addEventListener('abort', abort, { once: true });
+  if (signal?.aborted) abort();
   const results: TRes[] = new Array(items.length);
-
-  const executeWithRetry = async (
-    func: () => Promise<TRes>,
-    retries: number,
-  ): Promise<TRes> => {
-    try {
-      return await func();
-    } catch (error) {
-      if (error instanceof UploadAbortedError) {
-        throw error;
-      }
-      if (retries > 0) {
-        await new Promise((resolve) => setTimeout(resolve, 5000));
-        return executeWithRetry(func, retries - 1);
-      } else {
-        throw error;
+  let next = 0;
+  const worker = async () => {
+    while (next < items.length) {
+      const index = next++;
+      for (let attempt = 0; ; attempt++) {
+        if (controller.signal.aborted)
+          throw new UploadAbortedError('File upload aborted');
+        try {
+          results[index] = await fn(items[index]!, controller.signal);
+          break;
+        } catch (error) {
+          if (
+            controller.signal.aborted ||
+            error instanceof UploadAbortedError ||
+            attempt >= maxRetries
+          )
+            throw error;
+          await new Promise<void>((resolve) => {
+            const finish = () => {
+              clearTimeout(timer);
+              controller.signal.removeEventListener('abort', finish);
+              resolve();
+            };
+            const timer = setTimeout(finish, 5000);
+            controller.signal.addEventListener('abort', finish, { once: true });
+            if (controller.signal.aborted) finish();
+          });
+        }
       }
     }
   };
-
-  const semaphore = {
-    count: maxParallel,
-    async wait() {
-      // If we've reached our maximum concurrency, or it's the last item, wait
-      while (this.count <= 0)
-        await new Promise((resolve) => setTimeout(resolve, 500));
-      this.count--;
-    },
-    signal() {
-      this.count++;
-    },
-  };
-
-  const tasks: Promise<void>[] = items.map((item, i) =>
-    (async () => {
-      await semaphore.wait();
-
-      try {
-        const result = await executeWithRetry(() => fn(item), maxRetries);
-        results[i] = result;
-      } finally {
-        semaphore.signal();
-      }
-    })(),
+  const workers = Array.from(
+    { length: Math.min(maxParallel, items.length) },
+    worker,
   );
-
-  await Promise.all(tasks);
-  return results;
+  try {
+    await Promise.all(workers);
+    return results;
+  } catch (error) {
+    controller.abort();
+    await Promise.allSettled(workers);
+    throw error;
+  } finally {
+    signal?.removeEventListener('abort', abort);
+  }
 }

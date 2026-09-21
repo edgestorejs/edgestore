@@ -206,7 +206,7 @@ describe('createNextProxy upload', () => {
     const xhr = MockXMLHttpRequest.instances[0]!;
     expect(xhr.method).toBe('PUT');
     expect(xhr.url).toBe('https://uploads.example/file');
-    expect(xhr.headers.get('x-ms-blob-type')).toBe('BlockBlob');
+    expect(xhr.headers.has('x-ms-blob-type')).toBe(false);
     expect(xhr.body).toBe(file);
 
     xhr.progress(3, 12);
@@ -413,9 +413,111 @@ describe('createNextProxy upload', () => {
     expect(progress).toHaveBeenCalledWith(100);
   });
 
+  it('sends provider-specific headers and preserves a stable key', async () => {
+    createFetchMock([
+      jsonResponse(
+        uploadResponse({
+          key: 'assets/report.txt',
+          uploadHeaders: {
+            'Content-Type': 'text/plain',
+            'Cache-Control': 'private',
+          },
+        }),
+      ),
+    ]);
+    const { assets } = createProxy();
+    const upload = assets.upload({ file: new File(['abc'], 'report.txt') });
+    await waitForXhrs(1);
+    const xhr = MockXMLHttpRequest.instances[0]!;
+    expect(Object.fromEntries(xhr.headers)).toEqual({
+      'Content-Type': 'text/plain',
+      'Cache-Control': 'private',
+    });
+    xhr.load();
+    await expect(upload).resolves.toMatchObject({ key: 'assets/report.txt' });
+  });
+
+  it('cancels active and queued parts before requesting provider cleanup', async () => {
+    const { calls } = createFetchMock([
+      jsonResponse(
+        uploadResponse({
+          uploadUrl: undefined,
+          multipart: {
+            key: 'assets/video',
+            uploadId: 'signed-session',
+            partSize: 1,
+            totalParts: 6,
+            abortSupported: true,
+            parts: Array.from({ length: 6 }, (_, i) => ({
+              partNumber: i + 1,
+              uploadUrl: `https://uploads.example/${i + 1}`,
+            })),
+          },
+        }),
+      ),
+      jsonResponse({}),
+    ]);
+    const controller = new AbortController();
+    const { assets } = createProxy();
+    const upload = assets.upload({
+      file: new File(['abcdef'], 'video'),
+      signal: controller.signal,
+    });
+    const rejected = expect(upload).rejects.toBeInstanceOf(UploadAbortedError);
+    await waitForXhrs(5);
+    controller.abort();
+    await rejected;
+    expect(MockXMLHttpRequest.instances).toHaveLength(5);
+    expect(calls.map((call) => call.url)).toEqual([
+      '/api/edgestore/request-upload',
+      '/api/edgestore/abort-multipart-upload',
+    ]);
+    expect(getBody(calls[1]!)).toEqual({
+      bucketName: 'assets',
+      uploadId: 'signed-session',
+      key: 'assets/video',
+    });
+    expect(calls[1]!.init?.signal).toBeUndefined();
+  });
+
+  it('cleans up on completion failure while preserving the original error', async () => {
+    const { calls } = createFetchMock([
+      jsonResponse(
+        uploadResponse({
+          uploadUrl: undefined,
+          multipart: {
+            key: 'assets/file',
+            uploadId: 'session',
+            partSize: 2,
+            totalParts: 1,
+            abortSupported: true,
+            parts: [{ partNumber: 1, uploadUrl: 'https://uploads.example/1' }],
+          },
+        }),
+      ),
+      jsonResponse({ code: 'BAD_REQUEST', message: 'Completion failed' }, 400),
+      jsonResponse({}, 500),
+    ]);
+    const { assets } = createProxy();
+    const upload = assets.upload({ file: new File(['ab'], 'file') });
+    const rejected = expect(upload).rejects.toThrow('Completion failed');
+    await waitForXhrs(1);
+    MockXMLHttpRequest.instances[0]!.load(200, 'etag');
+    await rejected;
+    expect(calls[2]?.url).toBe('/api/edgestore/abort-multipart-upload');
+  });
+
   it('rewrites protected URLs in development, but not public URLs or disabled proxies', async () => {
     vi.stubEnv('NODE_ENV', 'development');
     const cases = [
+      {
+        response: uploadResponse({
+          accessUrl: 'https://s3.example/documents/file.txt',
+          disableDevProxy: true,
+        }),
+        disableDevProxy: false,
+        expected: 'https://s3.example/documents/file.txt',
+      },
       {
         response: uploadResponse({
           accessUrl: 'https://files.example/protected/file.txt',

@@ -97,7 +97,10 @@ void s3EdgeStore.client.files
     expectError(file.path);
     expectError(file.metadata);
   });
-expectError(s3EdgeStore.client.files.upload);
+void s3EdgeStore.client.files.upload({
+  content: { blob: new Blob(['hello']), extension: 'txt' },
+});
+void s3EdgeStore.client.files.get({ key: 'files/example.txt' });
 expectError(s3EdgeStore.client.files.list);
 expectError(s3EdgeStore.client.files.confirm);
 

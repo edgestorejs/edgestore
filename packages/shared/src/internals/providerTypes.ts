@@ -230,6 +230,8 @@ export type CompleteMultipartUploadParams = {
 };
 
 type RequestUploadAccess = {
+  /** Stable object key, when provided by the storage provider. */
+  key?: string;
   accessUrl: string;
   thumbnailUrl?: string | null;
   accessSignedUrl?: string;
@@ -240,10 +242,14 @@ type RequestUploadAccess = {
 
 export type SinglePartRequestUploadRes = RequestUploadAccess & {
   uploadUrl: string;
+  /** Headers required by this provider when uploading the body. */
+  uploadHeaders?: Record<string, string>;
 };
 
 export type MultipartRequestUploadRes = RequestUploadAccess & {
   multipart: {
+    /** Allows clients to clean up failed or canceled multipart transfers. */
+    abortSupported?: boolean;
     key: string;
     uploadId: string;
     partSize: number;
@@ -286,6 +292,9 @@ export type ProviderMultipartUploads = {
     params: RequestUploadPartsParams,
   ) => MaybePromise<RequestUploadPartsRes>;
   complete: (params: CompleteMultipartUploadParams) => MaybePromise<void>;
+  abort?: (
+    params: Pick<CompleteMultipartUploadParams, 'uploadId' | 'key'>,
+  ) => MaybePromise<void>;
 };
 
 export type ProviderUploads<
@@ -345,6 +354,8 @@ export type EdgeStoreProvider<
   > = ProviderFiles<StandardSchemaV1.InferOutput<TReferenceSchema>, TCursor>,
 > = {
   name: string;
+  /** Direct-storage providers can opt out of the hosted cookie proxy in development. */
+  disableDevProxy?: boolean;
   baseUrl: string | (() => MaybePromise<string>);
   init: <TCtx extends AnyContext>(
     params: InitParams<TCtx>,

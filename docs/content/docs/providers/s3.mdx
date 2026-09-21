@@ -1,163 +1,296 @@
 ---
 title: S3
-description: Learn how to use your own AWS S3 bucket or an S3-compatible service with EdgeStore.
+description: Upload to your own AWS S3 bucket or S3-compatible service.
 ---
 
-You can also use the EdgeStore package with your own AWS S3 bucket. You might want to do that in case you have strict company policies that require you to have all the data in your own AWS account.
+The S3 provider supports direct browser uploads, automatic multipart uploads,
+backend uploads, signed downloads, object lookup, and deletion. Your application
+owns the bucket's IAM, CORS, read permissions, and lifecycle configuration.
 
-You can also use the S3 provider with other S3-compatible storage services like [MinIO](https://min.io/).
+## Setup
 
-By using this provider, you will be able to use most of the basic features of EdgeStore. However, for some of the more advanced features like access control with protected files, you will have to create your own infrastructure and logic from scratch.
-
-## Installation
-
-You need to install some peer dependencies to use this provider.
+Install the optional AWS dependencies:
 
 ```package-install
 @aws-sdk/client-s3 @aws-sdk/s3-request-presigner
 ```
 
-Then configure the provider together with the router and pass the resulting
-`configuredEdgeStore` instance to the adapter.
-
-```ts
-import { createEdgeStore, initEdgeStore } from '@edgestore/server';
-import {
-  createEdgeStoreNextHandler,
-  type CreateContextOptions,
-} from '@edgestore/server/adapters/next/pages';
-// [!code ++]
-import { s3 } from '@edgestore/server/providers/s3';
-import { z } from 'zod';
-
-// ...
-
-const configuredEdgeStore = createEdgeStore({
-  router,
-  // [!code ++]
-  provider: s3(),
-});
-
-export default createEdgeStoreNextHandler<Context>({
-  edgestore: configuredEdgeStore,
-  createContext,
-});
-```
-
-## Options
-
-```ts
-export type S3ProviderOptions = {
-  /**
-   * AWS SDK credentials (or credentials provider) to use for S3 requests.
-   *
-   * If unset, the AWS SDK will use its default credential provider chain
-   * (environment variables, shared config files, instance/task roles, etc).
-   */
-  credentials?: S3ClientConfig['credentials'];
-  /**
-   * AWS region to use.
-   * Can also be set via the `ES_AWS_REGION` environment variable.
-   */
-  region?: string;
-  /**
-   * Name of the S3 bucket to use.
-   * Can also be set via the `ES_AWS_BUCKET_NAME` environment variable.
-   */
-  bucketName?: string;
-  /**
-   * Custom endpoint for S3-compatible storage providers (e.g., MinIO).
-   * Can also be set via the `ES_AWS_ENDPOINT` environment variable.
-   */
-  endpoint?: string;
-  /**
-   * Force path style for S3-compatible storage providers.
-   * Can also be set via the `ES_AWS_FORCE_PATH_STYLE` environment variable.
-   * Defaults to false for AWS S3, but should be true for most S3-compatible providers.
-   */
-  forcePathStyle?: boolean;
-  /**
-   * Base URL to use for accessing files.
-   * Only needed if you are using a custom domain or cloudfront.
-   *
-   * Can also be set via the `EDGE_STORE_BASE_URL` environment variable.
-   */
-  baseUrl?: string;
-  /**
-   * Secret to use for encrypting JWT tokens.
-   * Can be generated with `openssl rand -base64 32`.
-   *
-   * Can also be set via the `EDGE_STORE_JWT_SECRET` environment variable.
-   */
-  jwtSecret?: string;
-  /**
-   * Customizes the object path beneath the logical EdgeStore bucket prefix.
-   *
-   * The logical bucket prefix is always preserved so router authorization for
-   * one bucket cannot access objects from another.
-   */
-  path?: (args: {
-    edgestoreBucketName: string;
-    fileInfo: FileInfo;
-    defaultPath: string;
-  }) => Promise<string> | string;
-};
-```
-
-## Customizing S3 Object Paths
-
-By default, the S3 provider uses the same path-generation logic as the hosted
-provider. The first object-key segment is always the logical EdgeStore router
-bucket. This lets multiple logical buckets safely share one physical S3 bucket:
-
-```text
-documents/_public/acme/invoice.pdf
-avatars/_public/user-123/profile.png
-```
-
-Use `path` to customize everything beneath that protected prefix. For example,
-this removes `_public` while keeping the remaining generated path:
+Configure a provider alongside your router:
 
 ```ts title="src/server/edgestore.ts"
-const configuredEdgeStore = createEdgeStore({
+import { createEdgeStore, initEdgeStore } from '@edgestore/server';
+import { s3 } from '@edgestore/server/providers/s3';
+
+const es = initEdgeStore.create();
+const router = es.router({
+  documents: es.fileBucket().accessControl('private'),
+});
+
+export const configuredEdgeStore = createEdgeStore({
   router,
   provider: s3({
-    path: ({ defaultPath }) => {
-      // `documents/_public/acme/invoice.pdf`
-      // becomes `documents/acme/invoice.pdf`
-      return defaultPath.replace(/^_public\//, '');
-    },
+    region: 'us-east-1',
+    bucketName: 'my-storage-bucket',
   }),
 });
 
-const handler = createEdgeStoreNextHandler({
-  edgestore: configuredEdgeStore,
-  createContext,
+export type EdgeStoreRouter = typeof router;
+```
+
+Pass `configuredEdgeStore` to your framework adapter as its `edgestore` option.
+Set `EDGE_STORE_JWT_SECRET` to a stable random secret, for example one generated
+with `openssl rand -base64 32`. All application instances must share it. The
+adapter uses it for context cookies and S3 uses it for multipart sessions.
+
+Credentials use the AWS SDK's default provider chain, including environment
+variables, shared config, and instance/task roles. You can also pass
+`credentials` with an AWS credentials object or provider function.
+
+| Option                     | Default / environment variable                                                           |
+| -------------------------- | ---------------------------------------------------------------------------------------- |
+| `bucketName`               | `ES_AWS_BUCKET_NAME`                                                                     |
+| `region`                   | `ES_AWS_REGION`, then AWS SDK region resolution                                          |
+| `endpoint`                 | `ES_AWS_ENDPOINT`                                                                        |
+| `forcePathStyle`           | `ES_AWS_FORCE_PATH_STYLE === 'true'`                                                     |
+| `baseUrl`                  | `EDGE_STORE_BASE_URL`, otherwise the storage URL                                         |
+| `uploadUrlExpiresIn`       | 3600 seconds                                                                             |
+| `signedUrlExpiresIn`       | 3600 seconds                                                                             |
+| `multipart.thresholdBytes` | 100 MiB                                                                                  |
+| `multipart.partSizeBytes`  | 16 MiB; minimum 5 MiB                                                                    |
+| `jwtSecret`                | Multipart signing override; otherwise `EDGE_STORE_JWT_SECRET` or `EDGE_STORE_SECRET_KEY` |
+
+`jwtSecret` only overrides multipart signing. The adapter still needs the
+environment secret for context cookies. Signed URL lifetimes must be between
+1 and 604800 seconds; temporary AWS credentials can expire sooner.
+
+## Paths and filenames
+
+The default key is the logical router bucket, an optional `_public` segment,
+router path values, and a generated UUID plus extension:
+
+```text
+documents/acme/generated-id.pdf
+avatars/_public/user-123/generated-id.webp
+```
+
+Use the router's `.path(...)` for context/input-derived folders. Use
+`options: { manualFileName: file.name }` on a browser upload to preserve the
+original filename. A repeated key overwrites the existing object (or creates a
+new version if bucket versioning is enabled). Generated names avoid accidental
+collisions; use manual names only when overwrite behavior is intentional.
+
+For custom layouts, the async `path` callback can rewrite everything beneath the
+logical bucket prefix:
+
+```ts
+s3({
+  path: ({ defaultPath }) => defaultPath.replace(/^_public\//, ''),
 });
 ```
 
-The callback returns a path relative to the logical bucket and cannot escape
-that boundary. It also receives `edgestoreBucketName` and `fileInfo` when you
-need provider-specific naming logic.
+The callback receives `edgestoreBucketName`, `fileInfo` (including router path
+values and metadata), and `defaultPath`. It cannot remove the logical bucket
+prefix or use `.` / `..` path segments. For example, it can produce
+`documents/acme/invoices/report.pdf`, but cannot place that file outside
+`documents/`.
 
-If you remove `_public`, you might also want to disable the development proxy
-in `createEdgeStoreProvider`.
+The S3 provider disables the hosted cookie proxy automatically, so custom paths
+and private files keep their canonical URLs in development. Use signed URLs to
+read private files; the canonical URL is their stable identity.
+
+Browser upload results include an optional `key`; S3 supplies it for both single
+and multipart uploads. Save this stable key in your database. Backend lookup,
+deletion, and signed URL creation accept `{ key }` or `{ url }`. Key references
+continue to work when you change CDN domains. URL references must match the
+currently configured `baseUrl`.
+
+## Large files and cancellation
+
+Keep using the normal React `upload({ file, onProgressChange, signal })` call.
+Files above the threshold automatically use multipart transfer. The browser
+uploads up to five parts concurrently and retries failed parts. Canceling via
+`AbortController` stops active/queued transfers and attempts to abort the S3
+upload. Failed transfers also attempt cleanup.
 
 ```ts
-const { EdgeStoreProvider, useEdgeStore } =
-  createEdgeStoreProvider<EdgeStoreRouter>({
-    disableDevProxy: true,
-  });
+s3({
+  multipart: {
+    thresholdBytes: 100 * 1024 * 1024,
+    partSizeBytes: 16 * 1024 * 1024,
+  },
+});
 ```
 
-## Using with Minio
+Part sizes grow automatically to stay within 10,000 parts. Files exceeding the
+single PUT limit always use multipart, even with a larger configured threshold.
+The provider returns a signed, 24-hour multipart session token scoped to one
+physical bucket and object key. Treat it like a credential. Raw AWS upload IDs
+cannot be used on the adapter's multipart routes.
 
-You can use the S3 provider with MinIO or other S3-compatible storage providers
-by setting the `endpoint` and `forcePathStyle` options.
+The provider supports refreshing part URLs, but the React client does not yet
+refresh them automatically or resume across page reloads. Choose an upload URL
+lifetime suitable for your expected transfer duration. Browser shutdowns,
+network loss, and failed cleanup still require an S3 lifecycle rule:
+
+```json
+{
+  "Rules": [{
+    "ID": "abort-incomplete-uploads",
+    "Status": "Enabled",
+    "Filter": { "Prefix": "" },
+    "AbortIncompleteMultipartUpload": { "DaysAfterInitiation": 1 }
+  }]
+}
+```
+
+Merge this rule into your existing lifecycle configuration.
+
+## Private downloads
+
+Keep the physical bucket private and use `.accessControl('private')`. Your
+backend must authorize the caller before issuing a signed URL:
 
 ```ts
-provider: s3({
-  endpoint: 'http://localhost:9000', // can be set via the `ES_AWS_ENDPOINT` environment variable
-  forcePathStyle: true, // can be set via the `ES_AWS_FORCE_PATH_STYLE` environment variable
-}),
+// After checking that the current user can read this database file record:
+const download = await configuredEdgeStore.client.documents.createSignedUrl({
+  url: { key: storedFileKey },
+  expiresIn: 300,
+});
+// Send download.signedUrl to the browser.
 ```
+
+The backend client is privileged; it does not authenticate application users for
+you. Cookie-based access-control schemas are unsupported and rejected at adapter
+initialization. A logical bucket's public/private setting does not configure S3
+permissions. `_public` is a naming convention, not a bucket policy.
+
+Add `.autoSignedUrls({ expiresIn: 300 })` to a private router bucket to receive a
+signed read URL with upload results. Save the key or canonical URL, not the
+expiring signed URL. Request a fresh signed URL when needed; the client does not
+refresh private download URLs automatically. Browser upload read URLs begin
+expiring when the upload is requested, so allow enough time for the transfer.
+
+For public files, configure public reads or a CDN separately. `baseUrl` changes
+canonical file URLs, but signed downloads still use the S3 endpoint; it does not
+create CloudFront signed URLs.
+
+## Backend uploads and object settings
+
+Use the same configured router for generated files and background jobs:
+
+```ts
+const uploaded = await configuredEdgeStore.client.documents.upload({
+  content: {
+    blob: new Blob([pdfBytes], { type: 'application/pdf' }),
+    extension: 'pdf',
+  },
+  options: { manualFileName: 'report.pdf' },
+});
+```
+
+Backend uploads reuse path/object settings and multipart thresholds. Multipart
+transfers send one bounded chunk at a time, report progress after each part, use
+AWS SDK retries, and abort on failure/cancellation. The existing backend API
+accepts Blob, text, or URL content; it is not a streaming-source API.
+
+Use `objectOptions` for cache policy, download filenames, metadata, tags, storage
+class, and S3/KMS encryption settings. It accepts a static object or an async
+callback with the same arguments as `path`:
+
+```ts
+s3({
+  objectOptions: ({ fileInfo }) => ({
+    CacheControl: 'private, max-age=60',
+    ContentDisposition: 'attachment',
+    Metadata: { category: fileInfo.metadata.category ?? 'general' },
+  }),
+});
+```
+
+The provider sets `ContentType` from the file and signs its expected length.
+Object settings are applied consistently to browser and backend uploads; the
+browser receives the required PUT headers. MIME type is declared metadata, not
+verification of file contents. Single-part browser uploads have no server-side
+finalization hook or content scanning.
+
+For custom AWS retry/transport behavior, pass `client: new S3Client(...)`.
+Configure that client with `requestChecksumCalculation: 'WHEN_REQUIRED'` for
+browser uploads, so presigning a bodyless request does not sign an empty-body
+checksum. Browser requests reject incorrectly configured injected clients.
+When injecting a client with a custom endpoint, also set `baseUrl` explicitly.
+
+## IAM and CORS
+
+A baseline application role policy is below. Replace the bucket name and narrow
+object prefixes to your logical buckets where appropriate. KMS encryption needs
+additional key permissions.
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Effect": "Allow",
+    "Action": ["s3:PutObject", "s3:GetObject", "s3:DeleteObject", "s3:AbortMultipartUpload"],
+    "Resource": "arn:aws:s3:::my-storage-bucket/*"
+  }]
+}
+```
+
+Configure bucket CORS for your actual application origins. Exposing `ETag` is
+required for browser multipart completion:
+
+```json
+[{
+  "AllowedOrigins": ["http://localhost:3000", "https://app.example.com"],
+  "AllowedMethods": ["PUT", "GET", "HEAD"],
+  "AllowedHeaders": ["*"],
+  "ExposeHeaders": ["ETag"],
+  "MaxAgeSeconds": 3600
+}]
+```
+
+## S3-compatible services
+
+For local MinIO:
+
+```ts
+s3({
+  bucketName: 'edgestore',
+  region: 'us-east-1',
+  endpoint: 'http://localhost:9000',
+  forcePathStyle: true,
+});
+```
+
+The endpoint must be reachable from both the application server and browser.
+Set `baseUrl` explicitly for custom domains or virtual-hosted endpoint layouts.
+S3-compatible services may differ in support for KMS, storage classes, tags,
+checksums, and lifecycle policies; only enable settings your service supports.
+
+## Limitations
+
+- `temporary` and `replaceTargetUrl` are rejected. Track application-owned files
+  in your database and delete old files after successful replacement.
+- Confirmation, listing/filtering, restore, and provider-generated thumbnails are
+  unsupported. Thumbnail options do not generate thumbnails.
+- Router path/metadata values are returned at upload time but are not persisted
+  as an EdgeStore index. `get()` returns key, URL, size, and S3 timestamps. Persist
+  application metadata in your database or explicitly set S3 `Metadata`.
+- No collision-prevention mode, automatic CDN invalidation, or version-specific
+  object references. Standard S3 overwrite/delete and versioning rules apply.
+- Browser multipart cleanup is best effort, not a substitute for lifecycle rules.
+
+## Testing a provider change
+
+The opt-in storage contract tests create and remove a fresh bucket on an isolated
+S3-compatible endpoint:
+
+```bash
+ES_S3_SMOKE_ENDPOINT=http://127.0.0.1:19000 \
+  pnpm --filter @edgestore/server test:smoke src/providers/s3/s3.smoke.test.ts
+```
+
+The default test credentials are `edgestore-test` / `edgestore-test-password`.
+Override them with `ES_S3_SMOKE_ACCESS_KEY` and `ES_S3_SMOKE_SECRET_KEY`.
+CI runs these tests against MinIO. They are not a substitute for validating your
+production AWS IAM, CORS, KMS, and CDN configuration.
