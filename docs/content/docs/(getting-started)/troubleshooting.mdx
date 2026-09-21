@@ -95,36 +95,24 @@ projects. Review granted permissions if one action works but another is denied.
 ## Try an example app
 
 Run an [example close to your framework](https://github.com/edgestorejs/edgestore/tree/main/examples)
-to help isolate the problem. If it works with the same project, compare its route,
-provider, and environment setup with your application.
+to compare with your application.
 
-For the basic Next.js example, clone the repository:
-
-```sh
-git clone https://github.com/edgestorejs/edgestore.git
-cd edgestore
-```
-
-Choose a repository revision matching the EdgeStore version you are debugging.
-Use the Node.js and pnpm versions required by that revision's root `package.json`.
-Install dependencies and build the local packages from the repository root:
+For Next.js:
 
 ```sh
-pnpm install
-pnpm build
+npx degit edgestorejs/edgestore/examples/next-basic#main edgestore-example
+cd edgestore-example
+npm install
 ```
 
-Configure `examples/next-basic/.env.local` with credentials for a project you are
-authorized to test, following [Quick start](/docs/quick-start#environment-variables).
-Keep the file gitignored and use a harmless test file. Then start the example:
+Add your EdgeStore keys to `.env.local` as shown in
+[Quick start](/docs/quick-start#environment-variables), then run:
 
 ```sh
-pnpm --filter next-basic dev
+npm run dev
 ```
 
-Open the URL printed by Next.js, usually [http://localhost:3000](http://localhost:3000),
-and try an upload. Compare results using the same EdgeStore version and file;
-an example on a different version does not isolate the cause.
+Open the URL printed in the terminal and try an upload.
 
 ## Still blocked?
 
