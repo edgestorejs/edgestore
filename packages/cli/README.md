@@ -1,6 +1,6 @@
 # EdgeStore CLI
 
-The official command-line interface for EdgeStore accounts and projects.
+Manage EdgeStore accounts, projects, and agent setup from the terminal.
 
 ## Install and log in
 
@@ -20,8 +20,7 @@ edgestore init
 Remix/React Router, and TanStack Start receive server and React packages. Astro,
 Hono, Express, and Fastify receive the server package, plus the React package
 when React is declared. React-only frontends receive the React package.
-Already-declared EdgeStore packages are left unchanged. Framework detection
-does not distinguish Next.js App Router from Pages Router.
+Already-declared EdgeStore packages are left unchanged.
 
 Use `edgestore login --device` when a local browser callback is unavailable.
 Use `edgestore login --token` or `EDGESTORE_TOKEN` for automation. Persisted
@@ -36,18 +35,15 @@ Inspect installed EdgeStore versions and local reference paths without logging i
 edgestore --cwd apps/web agent context --json
 ```
 
-`agent context` reads the application's packages, not the CLI's dependencies.
 At an unlinked workspace root with child packages, it lists them and returns exit
-code 2, even if the root declares a framework for tooling. Select an application
-with `--cwd`, or use `--cwd .` to explicitly select the root. The JSON uses schema
-version 1 and includes per-client skill and
-MCP configuration status. It excludes env values, secrets, and raw config.
+code 2. Select an application with `--cwd`, or use `--cwd .` to select the root.
+The JSON uses schema
+version 1 and includes installed versions, reference paths, and skill and MCP
+configuration status.
 
 Yarn Plug'n'Play resolution is not supported. When a PnP loader is present,
 declared packages report `unsupported-resolution` and compatibility is
-`unresolved`, not `not-installed`. The CLI does not execute the loader or infer
-installed versions from version ranges. Inspect exact versions and references
-through the project's Yarn environment.
+`unresolved`. Use the project's Yarn environment to inspect installed versions.
 
 ## Agent setup and updates
 
@@ -79,7 +75,6 @@ Keep `.edgestore/skill-assets.json` with the installed skill. Updates stop on
 user edits, extra files, or symlinks, even with `--yes`. If a write fails, the error
 lists files already changed. Restart the client or open a new task after updating.
 
-To list the skill from this checkout, run `npx skills add ./skills --list` in this repo.
 The repository plugin includes the same skill. The CLI leaves skills installed
 through other tools untouched.
 
@@ -105,7 +100,6 @@ for user configuration. Automated writes require `--yes`.
 | Cursor | `.cursor/mcp.json` | `~/.cursor/mcp.json` |
 
 Setup preserves existing connections, unrelated settings, and JSONC comments.
-The CLI cannot inspect every plugin. Check your client for duplicate connections.
 
 Keep `.edgestore/agent-assets.json` with the config. Global setup stores this
 metadata in the CLI's user config directory. Removal requires an unchanged entry
@@ -116,7 +110,7 @@ Setup uses `https://api.edgestore.dev/mcp`; `--api-url` does not change it.
 `status` checks configuration only. Sign in and grant permissions through your
 client. Codex also requires project trust for project-local configuration.
 
-Adapter contracts: [Codex MCP](https://learn.chatgpt.com/docs/extend/mcp?surface=cli),
+Client documentation: [Codex MCP](https://learn.chatgpt.com/docs/extend/mcp?surface=cli),
 [Claude Code MCP](https://code.claude.com/docs/en/mcp), and
 [Cursor MCP](https://prod.cursor.com/help/customization/mcp).
 
@@ -135,10 +129,7 @@ Doctor checks adapter and provider imports, CORS, and env file locations without
 running application code or returning env values. It cannot verify route mounting,
 provider ancestry, custom env loading, or remote bucket mappings.
 
-Source inspection stops at 200 files, 2 MB, 2,000 directory entries, or ten levels.
-Nested packages, build outputs, dependencies, symlinks, tests, and unparseable
-files are skipped. Test uploads through the application to check what static
-inspection cannot.
+The output lists skipped checks and scan limits.
 
 ## Project keys and tokens
 

@@ -2,4 +2,7 @@
 '@edgestore/cli': minor
 ---
 
-Add `edgestore agent context --json` to report the selected application's framework, installed EdgeStore versions, matching bundled references, environment-file names and nonsecret project linkage without authentication. Ambiguous workspace roots require explicit application selection. Client agent/MCP configuration inspection is reported as not inspected until configuration adapters are available.
+Add `edgestore agent context --json` to report the application's framework,
+installed EdgeStore versions, bundled references, env-file names, project link,
+and skill/MCP configuration without logging in. Ambiguous workspace roots require
+explicit application selection.

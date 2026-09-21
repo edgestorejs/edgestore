@@ -10,15 +10,13 @@ React Router application needs a separate backend; this route runs on the server
 
 ### Install
 
-Let's start by installing the required packages.
-
 ```package-install
 @edgestore/server @edgestore/react
 ```
 
-### Environment Variables
+### Environment variables
 
-Then go to your [Dashboard](https://dashboard.edgestore.dev), create a new project and copy the keys to your environment variables.
+Copy your project's keys from the [dashboard](https://dashboard.edgestore.dev) to the backend env file:
 
 ```sh title=".env"
 EDGE_STORE_ACCESS_KEY=your-access-key
@@ -26,13 +24,12 @@ EDGE_STORE_SECRET_KEY=your-secret-key
 ```
 
 <Callout type="warning">
-  Make sure you add `.env` to your `.gitignore` file. <br />
-  You don't want to commit your secret keys to your repository.
+  Add `.env` to `.gitignore`.
 </Callout>
 
 ### Backend
 
-In your Remix application, create an API route for EdgeStore with the following content:
+Create the EdgeStore API route:
 
 ```ts title="app/routes/api/edgestore.ts"
 import { createEdgeStore, initEdgeStore } from '@edgestore/server';
@@ -72,14 +69,13 @@ export default [
 ```
 
 For Remix v2's default file-based routing, put the same handler in
-`app/routes/api.edgestore.$.ts` instead. Do not add a React Router `app/routes.ts`
-to a Remix application. Keep a custom route configuration if the app already uses
-one. See [Remix route conventions](https://v2.remix.run/docs/file-conventions/routes/)
+`app/routes/api.edgestore.$.ts` instead. For custom routing, see
+[Remix route conventions](https://v2.remix.run/docs/file-conventions/routes/)
 and [React Router routing](https://reactrouter.com/start/framework/routing).
 
 ### Frontend
 
-Now let's initiate our context provider in the frontend app.
+Create the React provider:
 
 ```tsx title="app/lib/edgestore.ts"
 import { createEdgeStoreProvider } from '@edgestore/react';
@@ -94,7 +90,7 @@ export { EdgeStoreProvider, useEdgeStore };
 Point the type-only import at your actual route module; for the Remix filename
 above, use `~/routes/api.edgestore.$`.
 
-And then wrap your app with the provider in your root component.
+Wrap the root component with the provider:
 
 ```tsx title="app/root.tsx"
 // [!code ++]
@@ -113,4 +109,4 @@ export default function App() {
 
 ## Usage
 
-To upload or use the other functionalities of EdgeStore, you can look the main [Quick Start](/docs/quick-start) guide. The usage should be the same.
+See [Quick start](/docs/quick-start) for the upload UI.

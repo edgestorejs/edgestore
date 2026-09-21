@@ -1,25 +1,21 @@
 ---
 title: Hono
-description: Learn how to integrate EdgeStore with your Hono backend and React frontend.
+description: Add EdgeStore uploads to a Hono backend and React frontend.
 ---
-
-Some applications are built with React on the frontend (e.g. using `create-react-app` or `vite`) and have a `hono` backend.
-
-You can use EdgeStore in these cases, even without using Next.js.
 
 ## Setup
 
 ### Install
 
-Install `@edgestore/server` in the backend and `@edgestore/react` in the frontend. In a workspace, run the package installation in the corresponding package directories.
+Install `@edgestore/server` in the backend and `@edgestore/react` in the frontend.
 
 ```package-install
 @edgestore/server @edgestore/react
 ```
 
-### Environment Variables
+### Environment variables
 
-Then go to your [Dashboard](https://dashboard.edgestore.dev), create a new project and copy the keys to your environment variables.
+Copy your project's keys from the [dashboard](https://dashboard.edgestore.dev) to the backend env file:
 
 ```sh title=".env.local (backend only)"
 EDGE_STORE_ACCESS_KEY=your-access-key
@@ -27,17 +23,13 @@ EDGE_STORE_SECRET_KEY=your-secret-key
 ```
 
 <Callout type="warning">
-  Reuse the backend's existing environment-file convention and loader. The maintained Hono example loads `.env.local` in its development command; add that file to `.gitignore`. Never put these keys in frontend `VITE_*` variables. <br />
-  You don't want to commit your secret keys to your repository.
+  Load the env file in the backend before creating the provider, and keep it gitignored.
+  The [Hono example](https://github.com/edgestorejs/edgestore/tree/main/examples/hono-basic) loads `.env.local` in its dev command.
 </Callout>
 
 ### Backend
 
-Now we can create the backend code in our Hono app.
-
-The example below is the simplest bucket you can create with EdgeStore. Just a simple file bucket with no validation that will be accessible by anyone with the link.
-
-You can have multiple buckets in your app, each with its own configuration.
+This bucket's files are accessible to anyone with the link.
 
 ```ts
 import { createEdgeStore, initEdgeStore } from '@edgestore/server';
@@ -47,16 +39,10 @@ import { serve } from '@hono/node-server';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 
-// --- HONO CONFIG ---
-
 const PORT = process.env.PORT ?? 3001;
 const frontendOrigin = process.env.FRONTEND_ORIGIN ?? 'http://localhost:5173';
 const app = new Hono();
 
-/**
- * Your Hono app is probably running in a different port than your frontend app.
- * To avoid CORS issues, we should use the cors middleware.
- */
 app.use(
   '/edgestore/*',
   cors({
@@ -64,8 +50,6 @@ app.use(
     credentials: true,
   }),
 );
-
-// --- EDGESTORE ROUTER CONFIG ---
 
 const es = initEdgeStore.create();
 
@@ -84,33 +68,25 @@ const handler = createEdgeStoreHonoHandler({
   edgestore: configuredEdgeStore,
 });
 
-// --- HONO ROUTES ---
-
-app.get('/', (c) => {
-  return c.text('Hello from Hono server!');
-});
-
-// Route for EdgeStore
 app.all('/edgestore/*', handler);
 
-// Start the server
 serve(
   {
     fetch: app.fetch,
     port: Number(PORT),
   },
   (info) => {
-    console.log(`⚡Server is running here 👉 http://localhost:${info.port}`);
+    console.log(`Server running at http://localhost:${info.port}`);
   },
 );
 ```
 
 ### Frontend
 
-Now let's initiate our context provider in the frontend app.
+Create the React provider:
 
 ```tsx title="src/lib/edgestore.ts"
-// Use a type-only import from your actual Hono backend, not another adapter's example.
+// Import the router type from your backend.
 import { type EdgeStoreRouter } from '../../../path/to/hono-backend/src';
 import { createEdgeStoreProvider } from '@edgestore/react';
 
@@ -120,7 +96,7 @@ const { EdgeStoreProvider, useEdgeStore } =
 export { EdgeStoreProvider, useEdgeStore };
 ```
 
-And then wrap our app with the provider.
+Wrap your app with the provider:
 
 ```tsx title="src/App.tsx"
 // [!code ++]
@@ -128,27 +104,29 @@ import { EdgeStoreProvider } from '../lib/edgestore';
 
 function App() {
   return (
-    {/* [!code ++] */}
     <EdgeStoreProvider basePath={import.meta.env.VITE_EDGESTORE_BASE_PATH ?? '/edgestore'}>
       {/* Rest of your app */}
-    {/* [!code ++] */}
     </EdgeStoreProvider>
   );
 }
 ```
 
-For Vite development with separate origins, set `VITE_EDGESTORE_BASE_PATH=http://localhost:3001/edgestore` in the frontend environment and `FRONTEND_ORIGIN=http://localhost:5173` in the backend environment. Use your actual ports. The base path is public configuration, not a credential. Across separate repositories, publish or otherwise share the backend router's types without importing backend runtime code into the browser bundle.
+For separate Vite and Hono dev servers, set these values to match your ports:
+
+- Frontend: `VITE_EDGESTORE_BASE_PATH=http://localhost:3001/edgestore`
+- Backend: `FRONTEND_ORIGIN=http://localhost:5173`
+
+Across repositories, share the backend router's type through a package.
 
 ## Usage
 
-To upload or use the other functionalities of EdgeStore, you can look at the main [Quick Start](/docs/quick-start) guide. The usage should be the same.
+See [Quick start](/docs/quick-start) for the upload UI.
 
 ## Limitations
 
 <Callout type="warning">
 
-For EdgeStore to work properly in your deployed production app, Your frontend and backend should be in the same domain.
-
-If you are deploying to Vercel, you can take a look at the [Rewrites settings](https://vercel.com/docs/edge-network/rewrites). In case you are using Apache or Nginx, you can set up a reverse proxy to make sure your frontend and backend are in the same domain.
+In production, serve the frontend and backend on the same domain. Use
+[Vercel rewrites](https://vercel.com/docs/edge-network/rewrites) or a reverse proxy.
 
 </Callout>

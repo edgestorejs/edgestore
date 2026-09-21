@@ -3,18 +3,13 @@ title: Agents
 description: Set up EdgeStore with a coding agent.
 ---
 
-Ask your agent to add uploads, reuse your application's architecture, and verify
-an upload through the app. Give it the skill for a single task, install the skill
-for ongoing use, or [connect MCP only](#mcp-only) for account and project tools.
-
 ## Give your agent the skill
 
 Ask your coding agent:
 
 > Read https://edgestore.dev/SKILL.md and add file uploads to this application.
 
-The skill guides implementation using your installed package versions. Reading it
-does not install the skill or connect MCP. For ongoing use, install it with the CLI.
+For ongoing use, install the skill with the CLI.
 
 ## Set up with the CLI
 
@@ -40,9 +35,7 @@ The skill reads API references bundled with your installed EdgeStore packages. A
 edgestore mcp setup --client codex
 ```
 
-MCP provides remote account and project tools; it does not install implementation
-instructions. If your CLI release does not have `mcp setup`, use manual
-configuration below.
+This configures account and project tools without installing the skill.
 
 ## Configure manually
 
@@ -86,28 +79,11 @@ Restart your client after saving the config, then connect EdgeStore:
 - In Claude Code, approve the project's MCP configuration, then use `/mcp` to select EdgeStore and sign in.
 - In Cursor, open MCP settings and connect the EdgeStore server.
 
-Review the requested permissions before approving. This server connects to production accounts. MCP sign-in is separate from `edgestore login`; no project keys belong in these configs.
+MCP sign-in is separate from `edgestore login`.
 
 After signing in, ask your agent to list your EdgeStore projects to check tool access.
 
 Client instructions: [Codex](https://learn.chatgpt.com/docs/extend/mcp), [Claude Code](https://code.claude.com/docs/en/mcp), and [Cursor](https://prod.cursor.com/help/customization/mcp).
-
-## Check what is ready
-
-| Check | What it establishes |
-| --- | --- |
-| `edgestore agent status --client codex` | Whether the skill is installed and matches your CLI's bundled copy. |
-| `edgestore mcp status --client codex` | Whether the saved MCP configuration is valid, not whether the connection works. |
-| Sign in and list projects through your client's MCP tools | Whether that connection can perform an authenticated read. Other actions may need additional permissions. |
-| `edgestore --cwd <app> doctor --offline` | Static checks of the selected application; warnings and skipped checks still need attention. |
-| Upload through your app, then retrieve the file | Whether the application's upload path works. For protected files, also test that unauthorized access is denied. |
-
-MCP permissions are enforced by the server and your authorization grants, not by
-the skill. Review requests to create resources or change access policies. A
-successful MCP connection does not verify your application's backend credentials.
-
-If setup stalls, check [Troubleshooting](/docs/troubleshooting) before creating
-another project or replacing keys.
 
 ## Give your agent the docs
 

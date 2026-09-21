@@ -156,8 +156,15 @@ test('server references cover every shipped framework adapter, including both Ne
   assert.ok(files.has('troubleshooting.md'));
 });
 
-test('newly packaged adapter examples contain valid TypeScript and JSX syntax', async () => {
-  for (const adapter of ['remix', 'astro', 'express', 'fastify']) {
+test('adapter examples contain valid TypeScript and JSX syntax', async () => {
+  for (const adapter of [
+    'remix',
+    'astro',
+    'express',
+    'fastify',
+    'hono',
+    'tanstack-start',
+  ]) {
     const source = await readFile(
       path.join(repoRoot, `docs/content/docs/adapters/${adapter}.mdx`),
       'utf8',

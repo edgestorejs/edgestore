@@ -1,14 +1,10 @@
 # Hosted setup and credential handoff
 
-Use this reference only for EdgeStore's hosted provider. Custom/S3/Azure providers
-keep their existing credential and infrastructure workflows.
-
 Use MCP first for supported account/project/bucket discovery and authorized
-changes. Confirm the actual account and project in the tool's metadata; a local
-project link is not proof that an MCP connection selects the same resources.
-Tool schemas and consent determine capabilities, not the existence of a plugin.
+changes; otherwise use the CLI. Confirm the account and project in the tool's
+metadata before making changes.
 
-When no connection is configured, the independent CLI path is:
+To configure MCP:
 
 ```sh
 edgestore mcp setup --client codex --dry-run --json
@@ -19,10 +15,8 @@ Use `claude` or `cursor` for those clients. Setup configures
 `https://api.edgestore.dev/mcp`. Sign in through your client and review the
 requested permissions.
 
-Check the installed CLI's `--help` before using it: a separately installed older
-CLI may not include agent-safe commands. Use JSON metadata and protected file
-delivery, not commands that display a secret once in the terminal. If the CLI
-needs a login, let the user complete it without returning tokens to the model.
+Check `--help` for the installed CLI's available commands. Use `--json` and file
+delivery to keep secrets out of tool output. Let the user complete any required login.
 
 After MCP creates/selects a project, link the backend to that same project and
 existing env convention:
@@ -37,16 +31,11 @@ Reuse an existing valid backend key when possible. When a new key is authorized:
 edgestore --cwd <backend> project key create <project-base-path> --name local --output <env-file> --json
 ```
 
-Delivery validates a gitignored backend destination before creating a key. A
-collision is a reason to inspect the existing configuration, not to add `--update`
-automatically. Confirm only key presence, destination protection, and project
-association. Do not read the generated values back into agent context. On partial
-failure, follow the returned recovery status and inspect metadata before retrying.
+The destination must be gitignored. If values already exist, inspect the
+configuration before considering `--update`. Check key presence and project
+association without reading secret values into agent context. If file delivery is
+unavailable, ask the user to configure the key locally, not paste it into chat.
+On partial failure, follow the returned recovery status before retrying.
 
-If MCP cannot perform the needed remote operation, use the corresponding CLI
-command after checking its help and resource selection. `init` provisions/links
-resources. Never rerun provisioning merely because agent configuration completed.
-
-Test uploads in the user's authorized EdgeStore project using the normal service.
-Keep track of test files so cleanup targets only those files. Do not infer
-permission to delete existing files, projects, or buckets.
+`init` provisions or links resources. Use `project link` when MCP has already
+created the project.

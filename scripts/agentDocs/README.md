@@ -6,8 +6,7 @@ directories are ignored by Git and included in npm tarballs.
 
 Run `pnpm agent-docs:build` to regenerate all references, `pnpm agent-docs:check`
 to detect stale/missing artifacts, and `pnpm agent-docs:test` for renderer tests.
-Package builds and prepack hooks regenerate their own references. No docs site
-build, credentials, network fetch, or MDX execution is involved.
+Package builds and prepack hooks regenerate their own references.
 
 Run `pnpm build && pnpm agent-docs:pack-check` to inspect real npm tarballs on
 macOS/Linux (requires `tar`). It verifies every generated file byte-for-byte,
@@ -19,7 +18,7 @@ if needed. Section selection fails when a selected heading is missing or ambiguo
 Unsupported MDX fails rather than silently losing instructions. Add a tested
 conversion only when a selected page needs it; do not evaluate arbitrary MDX.
 
-The generated index identifies the exact package version. Source links are online
-navigation aids, not a claim that moving online documentation is version-pinned.
+The generated index identifies the exact package version. Online source links
+follow the release branch.
 Read references relative to the application's installed package metadata, never
 relative to a global CLI's dependency tree.
