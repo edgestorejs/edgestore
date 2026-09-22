@@ -1,0 +1,307 @@
+.ya-section {
+  padding-block: 100px;
+}
+.ya-section-heading {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 60px;
+  align-items: end;
+  margin-bottom: 38px;
+}
+.ya-section-heading p {
+  color: var(--ya-muted);
+  font-size: 17px;
+  line-height: 1.75;
+  max-width: 560px;
+}
+.ya-text-link {
+  color: var(--ya-accent);
+  font-size: 14px;
+  font-weight: 500;
+  display: inline-block;
+  margin-top: 18px;
+  text-decoration: underline !important;
+  text-decoration-color: transparent !important;
+  text-underline-offset: 5px;
+}
+.ya-text-link:hover {
+  text-decoration-color: currentColor !important;
+}
+.ya-code-pair {
+  border: 1px solid var(--ya-line);
+  border-radius: 12px;
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  background: color-mix(in srgb, var(--ya-panel) 45%, var(--ya-bg));
+  overflow: hidden;
+}
+.ya-code-pane {
+  min-width: 0;
+}
+.ya-code-pane + .ya-code-pane {
+  border-left: 1px solid var(--ya-line);
+}
+.ya-code-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--ya-line);
+  padding: 16px 20px;
+  font-size: 13px;
+}
+.ya-code-heading span:last-child {
+  color: var(--ya-muted);
+}
+.ya-code-pane figure {
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.ya-code-pane pre {
+  padding: 24px 20px;
+  font-size: 12px;
+  min-height: 0;
+}
+.ya-code-pane .ya-code-note {
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--ya-muted);
+  border-top: 1px solid var(--ya-line);
+  padding: 22px;
+}
+.ya-site .ya-footnote {
+  margin-top: 18px;
+  color: var(--ya-muted);
+  font-size: 12px;
+  line-height: 1.7;
+  max-width: 900px;
+}
+.ya-feature-section {
+  padding-block: 84px;
+  border-block: 1px solid var(--ya-line);
+  background: color-mix(in srgb, var(--ya-panel) 25%, var(--ya-bg));
+}
+.ya-feature-layout {
+  display: grid;
+  grid-template-columns: 1fr 1.15fr;
+  gap: 72px;
+  align-items: start;
+}
+.ya-feature-intro {
+  position: sticky;
+  top: 40px;
+}
+.ya-feature-list {
+  display: grid;
+}
+.ya-feature {
+  display: flex;
+  gap: 22px;
+  padding-block: 30px;
+  border-top: 1px solid var(--ya-line);
+}
+.ya-feature:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+.ya-feature:last-child {
+  padding-bottom: 0;
+}
+.ya-feature > svg {
+  color: var(--ya-accent);
+  margin-top: 3px;
+}
+.ya-feature h3 {
+  font-size: 21px;
+  line-height: 1.3;
+}
+.ya-feature p {
+  font-size: 15px;
+  line-height: 1.75;
+  color: var(--ya-muted);
+  margin-top: 12px;
+}
+.ya-feature-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  list-style: none;
+  padding: 0;
+  margin: 14px 0 0;
+  font-size: 12px;
+  color: var(--ya-muted);
+}
+.ya-feature-details li::before {
+  content: '✓';
+  color: var(--ya-accent);
+  margin-right: 7px;
+}
+.ya-storage-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border: 1px solid var(--ya-line);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.ya-hosted {
+  padding: 36px;
+  background: color-mix(in srgb, var(--ya-accent) 7%, var(--ya-bg));
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.ya-hosted > svg {
+  color: var(--ya-accent);
+  margin-bottom: 25px;
+}
+.ya-hosted h3 {
+  font-size: 24px;
+}
+.ya-hosted p {
+  color: var(--ya-muted);
+  font-size: 15px;
+  line-height: 1.8;
+  margin-top: 14px;
+  max-width: 440px;
+}
+.ya-hosted .ya-button {
+  margin-top: 30px;
+}
+.ya-provider-list {
+  border-left: 1px solid var(--ya-line);
+}
+.ya-provider-list > a {
+  display: flex;
+  gap: 20px;
+  padding: 30px;
+  border-bottom: 1px solid var(--ya-line);
+}
+.ya-provider-list > a:last-child {
+  border-bottom: 0;
+}
+.ya-provider-list > a:hover {
+  background: var(--ya-panel);
+}
+.ya-provider-list svg {
+  color: var(--ya-accent);
+}
+.ya-provider-list h3 {
+  font-size: 18px;
+}
+.ya-provider-list p {
+  color: var(--ya-muted);
+  font-size: 14px;
+  line-height: 1.7;
+  margin-top: 7px;
+}
+.ya-frameworks {
+  padding-block: 65px 90px;
+  border-top: 1px solid var(--ya-line);
+}
+.ya-framework-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 36px;
+}
+.ya-framework-grid a {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  padding-block: 12px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.ya-framework-grid a:hover {
+  color: var(--ya-accent);
+}
+.ya-framework-icon {
+  width: 32px;
+  height: 32px;
+}
+.ya-faq {
+  padding-block: 70px;
+  border-top: 1px solid var(--ya-line);
+  display: grid;
+  grid-template-columns: 1fr 1.15fr;
+  gap: 72px;
+}
+.ya-faq details {
+  border-bottom: 1px solid var(--ya-line);
+  padding-block: 20px;
+}
+.ya-faq details:first-child {
+  padding-top: 0;
+}
+.ya-faq summary {
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 550;
+  line-height: 1.6;
+  padding-right: 10px;
+}
+.ya-faq details p {
+  color: var(--ya-muted);
+  font-size: 14px;
+  line-height: 1.8;
+  margin-top: 14px;
+  max-width: 560px;
+}
+.ya-closing {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 40px;
+  padding-block: 74px;
+  border-top: 1px solid var(--ya-line);
+}
+.ya-closing h2 {
+  font-size: clamp(28px, 2.7vw, 36px);
+}
+.ya-closing p {
+  margin-top: 12px;
+  color: var(--ya-muted);
+  font-size: 15px;
+}
+.ya-closing .ya-actions {
+  flex-shrink: 0;
+  margin-top: 0;
+}
+.ya-footer {
+  border-top: 1px solid var(--ya-line);
+  padding-block: 56px;
+}
+.ya-footer-grid {
+  display: grid;
+  grid-template-columns: 1.7fr 1fr 1fr 1fr;
+  gap: 40px;
+}
+.ya-footer-brand p {
+  color: var(--ya-muted);
+  line-height: 1.75;
+  font-size: 14px;
+  margin-block: 20px;
+}
+.ya-footer-brand > a:last-child {
+  color: var(--ya-muted);
+  font-size: 12px;
+}
+.ya-footer h3 {
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+.ya-footer ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--ya-muted);
+}
+.ya-footer a:hover {
+  color: var(--ya-accent);
+}
