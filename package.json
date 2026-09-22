@@ -41,7 +41,7 @@
     "test": "turbo run test --filter=@edgestore/*",
     "test:types": "turbo run test:types --filter=edgestore-tests",
     "test:smoke": "turbo run test:smoke --filter=@edgestore/server",
-    "check:dependencies": "node scripts/checkDependencyVersions.ts",
+    "check:dependencies": "node scripts/checkDependencyVersions.ts && node --import tsx --test scripts/dropzoneTypes.test.ts",
     "lint": "turbo lint",
     "typecheck": "turbo run typecheck --filter=@edgestore/*",
     "lint-fix": "turbo lint -- --fix && manypkg fix && pnpm format:write",

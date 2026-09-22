@@ -76,6 +76,8 @@ overrides:
   '@edgestore/shared': workspace:*
   '@edgestore/react': workspace:*
 
+packageExtensionsChecksum: sha256-U2rRLMEVH4ecKckO8pR4cGjFMIZ8UipNr9aKVYee4k4=
+
 importers:
 
   .:
@@ -262,7 +264,7 @@ importers:
         version: 19.2.7(react@19.2.7)
       react-dropzone:
         specifier: 'catalog:'
-        version: 14.4.1(react@19.2.7)
+        version: 14.4.1(@types/react@19.2.17)(react@19.2.7)
       remark:
         specifier: 15.0.1
         version: 15.0.1(supports-color@9.4.0)
@@ -439,7 +441,7 @@ importers:
         version: 19.2.7(react@19.2.7)
       react-dropzone:
         specifier: 14.4.1
-        version: 14.4.1(react@19.2.7)
+        version: 14.4.1(@types/react@19.2.17)(react@19.2.7)
       react-hook-form:
         specifier: 7.82.0
         version: 7.82.0(react@19.2.7)
@@ -735,7 +737,7 @@ importers:
         version: 19.2.7(react@19.2.7)
       react-dropzone:
         specifier: 14.4.1
-        version: 14.4.1(react@19.2.7)
+        version: 14.4.1(@types/react@19.2.17)(react@19.2.7)
       tailwind-merge:
         specifier: 3.6.0
         version: 3.6.0
@@ -8328,7 +8330,11 @@ packages:
     resolution: {integrity: sha512-QDuV76v3uKbHiH34SpwifZ+gOLi1+RdsCO1kl5vxMT4wW8R82+sthjvBw4th3NHF/XX6FBsqDYZVNN+pnhaw0g==}
     engines: {node: '>= 10.13'}
     peerDependencies:
+      '@types/react': '*'
       react: '>= 16.8 || 18.0.0'
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
 
   react-hook-form@7.82.0:
     resolution: {integrity: sha512-Zw/uFZ2dO+02GHlBn7JFGn8kZJ7LdM33B/0BXOovzFay+CMhf94JMw5BVu+F1tVkUKjNvBuaE3fz5BJhga10Tg==}
@@ -17174,12 +17180,14 @@ snapshots:
       react: 19.2.7
       scheduler: 0.27.0
 
-  react-dropzone@14.4.1(react@19.2.7):
+  react-dropzone@14.4.1(@types/react@19.2.17)(react@19.2.7):
     dependencies:
       attr-accept: 2.2.5
       file-selector: 2.1.2
       prop-types: 15.8.1
       react: 19.2.7
+    optionalDependencies:
+      '@types/react': 19.2.17
 
   react-hook-form@7.82.0(react@19.2.7):
     dependencies:

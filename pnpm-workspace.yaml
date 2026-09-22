@@ -35,6 +35,16 @@ savePrefix: ''
 catalogMode: manual
 cleanupUnusedCatalogs: true
 
+packageExtensions:
+  # Dropzone's declarations import React types without declaring the peer.
+  # Resolve them beside dropzone instead of relying on a hoisted @types/react.
+  'react-dropzone@14.4.1':
+    peerDependencies:
+      '@types/react': '*'
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+
 overrides:
   '@edgestore/server': 'workspace:*'
   '@edgestore/sdk': 'workspace:*'
