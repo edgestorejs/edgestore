@@ -1,0 +1,628 @@
+/* Review tools stay outside each proposed page design. URLs preserve both choices. */
+.ll-review-bar {
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.ll-review-bar nav {
+  align-items: center;
+}
+.ll-review-bar nav a,
+.ll-review-actions a {
+  display: inline-flex;
+  gap: 7px;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+}
+.ll-review-bar select {
+  font: inherit;
+  font-weight: 600;
+  color: var(--ll-ink);
+  background: var(--ll-panel);
+  border: 1px solid var(--ll-rule);
+  border-radius: 6px;
+  min-height: 36px;
+  padding: 5px 28px 5px 12px;
+}
+.ll-review-actions {
+  display: flex;
+  gap: 24px;
+}
+.ll-hero-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 24px;
+  align-items: center;
+  margin-top: 28px;
+  font-size: 13px;
+  font-weight: 650;
+}
+.ll-hero-links a:first-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--ll-accent);
+  color: var(--ll-on-accent);
+  padding: 12px 18px;
+  border-radius: 6px;
+}
+.ll-hero-links a:hover {
+  text-decoration: underline;
+}
+.ll-start {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: 80px;
+  padding-block: 70px;
+  border-block: 1px solid var(--ll-rule);
+}
+.ll-start h2 {
+  font-size: clamp(2rem, 3vw, 2.8rem);
+}
+.ll-start p:not(.ll-prompt-text) {
+  color: var(--ll-muted);
+  max-width: 38ch;
+  margin-top: 18px;
+}
+.ll-start .ll-prompt {
+  max-width: 480px;
+  justify-self: end;
+}
+.ll-new-details {
+  padding-block: 100px;
+}
+.ll-new-details .ll-section-intro h2 {
+  max-width: 18ch;
+}
+.ll-new-details .ll-code-pair {
+  margin-top: 56px;
+}
+.ll-reference-code {
+  margin-top: 70px;
+}
+.ll-studio-hero {
+  grid-template-columns: 1fr auto;
+}
+.ll-studio-hero .ll-hero-links {
+  max-width: 220px;
+}
+
+/* Canvas: a broad centered composition and a full-width asset workspace. */
+.ll-canvas-hero {
+  padding-block: 36px 50px;
+}
+.ll-canvas-title {
+  text-align: center;
+}
+.ll-canvas-title h1 {
+  font-size: clamp(3rem, 5.5vw, 5.2rem);
+}
+.ll-canvas-title h1 span {
+  color: var(--ll-accent);
+}
+.ll-canvas-title .ll-lead {
+  margin-inline: auto;
+  max-width: 56ch;
+}
+.ll-canvas-title .ll-hero-links {
+  justify-content: center;
+}
+.ll-canvas-demo {
+  background: var(--ll-field);
+  padding: 26px;
+  border-radius: 16px;
+  margin-top: 42px;
+}
+[data-design='canvas'] .ll-file-art {
+  height: 170px;
+}
+[data-design='canvas'] .ll-document {
+  transform: rotate(-3deg) translateY(30px);
+}
+[data-design='canvas'] .ll-notes strong {
+  font-size: 32px;
+}
+[data-design='canvas'] .ll-file-brand .ll-file-art {
+  background: #b5dad4;
+}
+[data-design='canvas'] .ll-file-notes .ll-file-art {
+  background: #20514c;
+}
+
+/* Relay: two full-height fields, connected by the upload workflow below. */
+.ll-relay-hero {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+.ll-relay-copy {
+  padding: 64px 48px 64px max(48px, calc((100vw - 1200px) / 2));
+  background: var(--ll-field);
+}
+.ll-relay-copy h1 {
+  font-family: var(--lab-sans), sans-serif;
+  font-size: clamp(3rem, 4.8vw, 4.6rem);
+  line-height: 1.12;
+  font-weight: 700;
+}
+.ll-relay-copy h1 span {
+  color: var(--ll-accent);
+}
+.ll-relay-demo {
+  padding: 50px max(48px, calc((100vw - 1200px) / 2)) 36px 48px;
+  background: var(--ll-accent);
+  color: var(--ll-on-accent);
+}
+.ll-relay-demo .ll-list {
+  color: var(--ll-ink);
+  margin-top: 30px;
+}
+.ll-relay-caption {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+}
+.ll-relay-foot {
+  margin-top: 20px !important;
+  font-size: 13px;
+}
+.ll-relay-flow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-bottom: 1px solid var(--ll-rule);
+  padding-block: 38px;
+  gap: 30px;
+}
+.ll-relay-flow > span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  font-weight: 600;
+}
+[data-design='relay'] .ll-new-details .ll-feature-rows {
+  border-block: 1px solid var(--ll-rule);
+  padding-block: 32px;
+}
+
+/* Index: an aligned manifest, with orange used for the active controls. */
+.ll-index-hero {
+  padding-block: 46px 64px;
+}
+.ll-index-heading {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 0 100px;
+  align-items: center;
+}
+.ll-index-heading h1 {
+  grid-row: span 2;
+  font-size: clamp(3.5rem, 5.5vw, 5.5rem);
+}
+.ll-index-heading h1 span {
+  color: var(--ll-accent);
+}
+.ll-index-heading .ll-lead {
+  margin-top: 0 !important;
+}
+.ll-index-heading .ll-hero-links {
+  margin-top: 18px;
+}
+.ll-index-demo {
+  margin-top: 50px;
+}
+.ll-index-path {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--ll-rule);
+  padding: 14px 0;
+  font-size: 13px;
+}
+.ll-index-path > span:last-child {
+  margin-left: auto;
+  color: var(--ll-muted);
+}
+[data-design='index'] .ll-list {
+  padding: 0;
+  background: transparent;
+}
+[data-design='index'] .ll-preview-header {
+  padding-block: 18px;
+}
+[data-design='index'] .ll-file-info > span {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+[data-design='index'] .ll-list .ll-file {
+  padding-block: 13px;
+}
+[data-design='index'] .ll-list .ll-file input,
+[data-design='index'] .ll-list .ll-check-box {
+  top: 24px;
+}
+[data-design='index'] .ll-list .ll-upload-controls {
+  flex-direction: row;
+  align-items: center;
+}
+.ll-index-features {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  padding-block: 90px;
+}
+.ll-index-features .ll-feature-rows {
+  grid-template-columns: 1fr;
+  gap: 30px;
+}
+.ll-index-api {
+  padding-block: 20px 90px;
+}
+.ll-index-api h2 {
+  margin-bottom: 32px;
+}
+[data-design='index'] .ll-closing {
+  border-radius: 0;
+}
+
+/* Orbit: a centered product stage, flanked by two quiet product explanations. */
+.ll-orbit-hero {
+  padding-block: 30px 58px;
+}
+.ll-orbit-title {
+  text-align: center;
+}
+.ll-orbit-title h1 {
+  font-size: clamp(3rem, 5.2vw, 5rem);
+}
+.ll-orbit-title h1 span {
+  color: var(--ll-accent);
+}
+.ll-orbit-title .ll-lead {
+  margin-inline: auto;
+}
+.ll-orbit-title .ll-hero-links {
+  justify-content: center;
+}
+.ll-orbit-stage {
+  display: grid;
+  grid-template-columns: 1fr 1.8fr 1fr;
+  align-items: center;
+  gap: 50px;
+  margin-top: 44px;
+  padding: 32px;
+  background: var(--ll-field);
+  border-radius: 16px;
+}
+.ll-orbit-side p {
+  color: var(--ll-muted);
+  margin-top: 14px;
+  font-size: 14px;
+}
+[data-design='orbit'] .ll-list {
+  padding: 26px;
+}
+[data-design='orbit'] .ll-new-details .ll-feature-rows {
+  grid-template-columns: 1fr;
+  max-width: 680px;
+  margin-inline: auto;
+}
+[data-design='orbit'] .ll-new-details .ll-section-intro {
+  display: block;
+  text-align: center;
+}
+[data-design='orbit'] .ll-new-details .ll-section-intro h2,
+[data-design='orbit'] .ll-new-details .ll-section-intro p {
+  margin-inline: auto;
+}
+[data-design='orbit'] .ll-new-details .ll-section-intro p {
+  margin-top: 24px;
+  max-width: 52ch;
+}
+
+/* Mono: open typography, no enclosing upload panel. */
+[data-design='mono'] {
+  --ll-display: var(--lab-sans);
+}
+.ll-mono-hero {
+  padding-block: 45px 64px;
+}
+.ll-mono-hero h1 {
+  font-weight: 550;
+  font-size: clamp(3rem, 6.5vw, 6rem);
+}
+.ll-mono-hero h1 span {
+  color: var(--ll-muted);
+}
+.ll-mono-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 100px;
+  margin-top: 44px;
+  align-items: start;
+}
+.ll-mono-body .ll-lead {
+  margin-top: 0 !important;
+  max-width: 35ch;
+}
+.ll-mono-capabilities {
+  display: grid;
+  gap: 12px;
+  margin-top: 38px;
+  font-size: 13px;
+  color: var(--ll-muted);
+}
+.ll-mono-capabilities > span {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+[data-design='mono'] .ll-list {
+  background: transparent;
+  padding: 0;
+}
+[data-design='mono'] .ll-closing {
+  background: transparent;
+  border-block: 1px solid var(--ll-rule);
+  border-radius: 0;
+}
+[data-design='mono'] .ll-code-pair {
+  border-radius: 0;
+}
+
+/* Signal: files and their honest local-preview metadata share one console. */
+[data-design='signal'] {
+  --ll-display: var(--lab-sans);
+}
+.ll-signal-hero {
+  padding-block: 40px 56px;
+}
+.ll-signal-heading {
+  display: grid;
+  grid-template-columns: 1.25fr 1fr;
+  gap: 70px;
+  align-items: end;
+}
+.ll-signal-heading h1 {
+  font-size: clamp(3rem, 5vw, 4.8rem);
+  font-weight: 600;
+}
+.ll-signal-heading h1 span {
+  color: var(--ll-accent);
+}
+.ll-signal-heading .ll-lead {
+  margin-top: 0 !important;
+  font-size: 17px;
+}
+.ll-signal-console {
+  display: grid;
+  grid-template-columns: 1.7fr 1fr;
+  margin-top: 42px;
+  border: 1px solid var(--ll-rule);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.ll-signal-console .ll-list {
+  padding: 28px;
+  border-radius: 0;
+}
+.ll-signal-inspector {
+  background: var(--ll-field);
+  padding: 30px;
+}
+.ll-signal-inspector h3 {
+  font-size: 16px;
+}
+.ll-signal-inspector dl {
+  margin-block: 24px;
+  font-size: 13px;
+}
+.ll-signal-inspector dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding-block: 12px;
+  border-bottom: 1px solid var(--ll-rule);
+}
+.ll-signal-inspector dt {
+  color: var(--ll-muted);
+}
+.ll-signal-inspector dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+.ll-signal-inspector p {
+  font-size: 13px;
+  color: var(--ll-muted);
+  max-width: 36ch;
+}
+.ll-signal-contract {
+  padding-block: 90px;
+}
+.ll-signal-contract > div:first-child {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: end;
+  margin-bottom: 40px;
+}
+.ll-signal-contract p {
+  color: var(--ll-muted);
+  max-width: 42ch;
+}
+
+@media (max-width: 1050px) {
+  .ll-start,
+  .ll-mono-body,
+  .ll-index-heading,
+  .ll-signal-heading {
+    gap: 36px;
+  }
+  .ll-orbit-stage {
+    gap: 24px;
+    grid-template-columns: 1fr 2fr;
+  }
+  .ll-orbit-side:last-child {
+    display: none;
+  }
+  .ll-relay-copy,
+  .ll-relay-demo {
+    padding: 40px 32px;
+  }
+}
+@media (max-width: 760px) {
+  .ll-review-bar {
+    display: grid;
+    grid-template-columns: 1fr auto;
+  }
+  .ll-review-bar > span {
+    display: none;
+  }
+  .ll-review-bar nav {
+    width: auto;
+    order: 0;
+  }
+  .ll-review-bar nav a {
+    padding: 6px;
+    flex: none;
+  }
+  .ll-review-bar select {
+    max-width: 172px;
+  }
+  .ll-review-actions .ll-current-site {
+    display: none;
+  }
+  .ll-review-actions a {
+    font-size: 12px;
+  }
+  .ll-start {
+    grid-template-columns: 1fr;
+    gap: 28px;
+    padding-block: 44px;
+  }
+  .ll-start .ll-prompt {
+    max-width: none;
+  }
+  .ll-start h2 {
+    font-size: 2.1rem;
+  }
+  .ll-new-details {
+    padding-block: 60px;
+  }
+  .ll-studio-hero {
+    grid-template-columns: 1fr;
+  }
+  .ll-studio-hero .ll-hero-links {
+    max-width: none;
+    margin-top: 0;
+  }
+  .ll-canvas-hero,
+  .ll-orbit-hero,
+  .ll-mono-hero,
+  .ll-signal-hero,
+  .ll-index-hero {
+    padding-block: 24px 40px;
+  }
+  .ll-canvas-demo {
+    padding: 16px;
+    margin-top: 32px;
+  }
+  [data-design='canvas'] .ll-file-art {
+    height: 120px;
+  }
+  [data-design='canvas'] .ll-notes strong {
+    font-size: 17px;
+  }
+  .ll-relay-hero {
+    grid-template-columns: 1fr;
+  }
+  .ll-relay-copy,
+  .ll-relay-demo {
+    padding: 32px 20px;
+  }
+  .ll-relay-copy h1 {
+    font-size: 3rem;
+  }
+  .ll-relay-flow {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  .ll-relay-flow > span {
+    justify-content: start;
+  }
+  .ll-index-heading {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .ll-index-heading h1 {
+    grid-row: auto;
+  }
+  .ll-index-heading .ll-hero-links {
+    margin-top: 0;
+  }
+  .ll-index-path > span:last-child {
+    display: none;
+  }
+  .ll-index-demo {
+    margin-top: 32px;
+  }
+  [data-design='index'] .ll-file-info > span {
+    display: block;
+  }
+  [data-design='index'] .ll-list .ll-upload-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .ll-index-features {
+    grid-template-columns: 1fr;
+    gap: 30px;
+    padding-block: 60px;
+  }
+  .ll-index-api {
+    padding-block: 0 60px;
+  }
+  .ll-orbit-stage {
+    grid-template-columns: 1fr;
+    padding: 18px;
+    margin-top: 32px;
+  }
+  .ll-orbit-side {
+    display: none;
+  }
+  [data-design='orbit'] .ll-list {
+    padding: 20px;
+  }
+  .ll-mono-body {
+    grid-template-columns: 1fr;
+    gap: 36px;
+    margin-top: 28px;
+  }
+  .ll-mono-capabilities {
+    margin-top: 28px;
+  }
+  .ll-signal-heading {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .ll-signal-console {
+    grid-template-columns: 1fr;
+    margin-top: 30px;
+  }
+  .ll-signal-console .ll-list,
+  .ll-signal-inspector {
+    padding: 22px;
+  }
+  .ll-signal-contract {
+    padding-block: 60px;
+  }
+  .ll-signal-contract > div:first-child {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .ll-reference-code {
+    margin-top: 40px;
+  }
+}

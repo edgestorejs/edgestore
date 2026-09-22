@@ -3,12 +3,21 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { CopyPrompt } from './copy-prompt';
 
-export function Navigation({ light = false }: { light?: boolean }) {
+export function Navigation() {
   return (
     <header className="ll-nav ll-width">
       <Link href="/" aria-label="EdgeStore home">
         <Image
-          src={`/img/edgestore-lockup${light ? '' : '-light'}.svg`}
+          className="ll-logo-light"
+          src="/img/edgestore-lockup-light.svg"
+          alt="EdgeStore"
+          width={188}
+          height={28}
+          priority
+        />
+        <Image
+          className="ll-logo-dark"
+          src="/img/edgestore-lockup.svg"
           alt="EdgeStore"
           width={188}
           height={28}
@@ -30,6 +39,33 @@ export function Navigation({ light = false }: { light?: boolean }) {
         </a>
       </nav>
     </header>
+  );
+}
+
+export function StartWithAgent() {
+  return (
+    <section id="get-started" className="ll-start ll-width">
+      <div>
+        <h2>
+          Add uploads.
+          <br />
+          Start with a prompt.
+        </h2>
+        <p>Your agent handles the integration. You decide what to build.</p>
+      </div>
+      <Prompt />
+    </section>
+  );
+}
+
+export function HeroLinks() {
+  return (
+    <div className="ll-hero-links">
+      <a href="#get-started">
+        Get started <ArrowUpRight size={17} />
+      </a>
+      <Link href="/docs/components/multi-file">Explore components</Link>
+    </div>
   );
 }
 

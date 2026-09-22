@@ -20,11 +20,11 @@
   box-sizing: border-box;
 }
 .landing-lab ::selection {
-  background: #d3c9ff;
-  color: #23125b;
+  background: var(--ll-accent);
+  color: var(--ll-on-accent);
 }
 .landing-lab :focus-visible {
-  outline: 3px solid #9e6cff;
+  outline: 3px solid var(--ll-accent);
   outline-offset: 5px;
 }
 .landing-lab a {
@@ -95,8 +95,8 @@
   left: 20px;
   z-index: 30;
   padding: 12px 20px;
-  background: white;
-  color: #241b43;
+  background: var(--ll-panel);
+  color: var(--ll-ink);
 }
 .ll-skip:focus {
   top: 64px;
@@ -107,10 +107,10 @@
   justify-content: space-between;
   gap: 20px;
   align-items: center;
-  background: #f3f2f7;
-  color: #342c48;
+  background: var(--ll-panel);
+  color: var(--ll-ink);
   padding: 8px 28px;
-  border-bottom: 1px solid #dedbe5;
+  border-bottom: 1px solid var(--ll-rule);
   font-size: 12px;
 }
 .ll-review-bar > span {
@@ -126,11 +126,11 @@
   transition: background 0.15s;
 }
 .ll-review-bar nav a:hover {
-  background: #e4e0ef;
+  background: var(--ll-field);
 }
 .ll-review-bar nav a[aria-current] {
-  background: #342c48;
-  color: white;
+  background: var(--ll-ink);
+  color: var(--ll-on-accent);
 }
 .ll-current-site {
   display: inline-flex;
@@ -201,7 +201,7 @@
   border: 0;
   border-radius: 8px;
   background: var(--ll-accent);
-  color: white;
+  color: var(--ll-on-accent);
   font-weight: 700 !important;
   margin-top: 10px;
   transition:
@@ -209,8 +209,7 @@
     box-shadow 0.18s;
 }
 .ll-primary:hover {
-  background: #35209e;
-  box-shadow: 0 6px 18px #35209e20;
+  background: var(--ll-accent-hover);
 }
 .ll-prompt-help {
   color: var(--ll-muted);
@@ -229,7 +228,7 @@
 }
 .ll-copy-error {
   display: block;
-  color: #a72a24;
+  color: var(--ll-error);
   margin-top: 8px;
   font-size: 13px;
 }
@@ -326,7 +325,7 @@
 .ll-closing {
   padding: 72px 48px;
   text-align: center;
-  background: #e0f0e8;
+  background: var(--ll-field);
   border-radius: 16px;
 }
 .ll-closing h2 {
@@ -356,7 +355,7 @@
 
 /* Shared interactive specimen: state is local and labeled as a preview. */
 .ll-file-preview {
-  --ll-preview-rule: #c2d2c8;
+  --ll-preview-rule: var(--ll-rule);
 }
 .ll-preview-header {
   display: flex;
@@ -379,7 +378,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #38705a;
+  background: var(--ll-accent);
 }
 .ll-file-items {
   display: grid;
@@ -408,18 +407,18 @@
   height: 23px;
   width: 23px;
   background: #fff;
-  border: 1px solid #82978d;
+  border: 1px solid var(--ll-muted);
   border-radius: 5px;
   z-index: 1;
   color: transparent;
 }
 .ll-file input:checked + .ll-check-box {
-  color: white;
-  background: #264d40;
-  border-color: #264d40;
+  color: var(--ll-on-accent);
+  background: var(--ll-accent);
+  border-color: var(--ll-accent);
 }
 .ll-file input:focus-visible + .ll-check-box {
-  outline: 3px solid #754bfa;
+  outline: 3px solid var(--ll-accent);
   outline-offset: 3px;
 }
 .ll-file input:disabled ~ .ll-file-art {
@@ -517,7 +516,7 @@
   font-size: 10px;
 }
 .ll-file-done {
-  color: #31765c;
+  color: var(--ll-accent);
   margin-left: auto;
 }
 .ll-upload-controls {
@@ -545,11 +544,11 @@
   font-weight: 600 !important;
 }
 .ll-secondary:hover:not(:disabled) {
-  background: #fff8;
+  background: var(--ll-field);
 }
 .ll-progress {
   height: 3px;
-  background: #b9cdc0;
+  background: var(--ll-rule);
   margin-top: 16px;
   border-radius: 3px;
   overflow: hidden;
@@ -559,7 +558,7 @@
   height: 100%;
   width: 100%;
   transform-origin: left;
-  background: #315d49;
+  background: var(--ll-accent);
   transition: transform 0.18s ease-out;
 }
 .ll-demo-note {
@@ -570,10 +569,10 @@
 
 /* Studio: a contact sheet with broad mint fields and tactile type. */
 .landing-lab[data-design='studio'] {
-  background: #fdfefa;
+  background: var(--ll-paper);
 }
 .ll-studio-opening {
-  background: #e0f0e8;
+  background: var(--ll-field);
 }
 .ll-studio-hero {
   padding-block: 54px 58px;
@@ -590,14 +589,14 @@
   font-size: 17px;
 }
 .ll-studio-hero .ll-prompt-text {
-  background: #f4faf6;
-  border-color: #b9cfc1;
+  background: var(--ll-panel);
+  border-color: var(--ll-rule);
 }
 .ll-studio-hero .ll-primary {
-  background: #203f35;
+  background: var(--ll-accent);
 }
 .ll-studio-hero .ll-primary:hover {
-  background: #102d22;
+  background: var(--ll-accent-hover);
 }
 .ll-studio-gallery {
   padding-bottom: 35px;
@@ -648,20 +647,20 @@
   line-height: 1.9;
   margin: 0;
   scrollbar-width: thin;
-  scrollbar-color: #9eafad transparent;
+  scrollbar-color: var(--ll-muted) transparent;
 }
 .ll-code-key {
-  color: #7138a5;
+  color: var(--ll-syntax-key);
 }
 .ll-code-value {
-  color: #a15428;
+  color: var(--ll-syntax-value);
 }
 .ll-code-string {
-  color: #286753;
+  color: var(--ll-syntax-string);
 }
 .ll-code-pair mark {
-  background: #e4dafb;
-  color: #503281;
+  background: var(--ll-field);
+  color: var(--ll-ink);
   border-radius: 2px;
   padding-block: 2px;
 }
@@ -705,7 +704,7 @@
   line-height: 1.12;
 }
 .ll-workbench-hero h1 span {
-  color: #796996;
+  color: var(--ll-muted);
 }
 .ll-workbench-hero .ll-lead {
   font-size: 16px;
@@ -715,11 +714,11 @@
   margin-top: 28px;
 }
 .ll-workbench-hero .ll-prompt-text {
-  background: #f9f7ff;
+  background: var(--ll-panel);
 }
 .ll-workbench-demo {
   padding: 24px;
-  background: #f0ebfc;
+  background: var(--ll-field);
   border-radius: 16px;
 }
 .ll-demo-title {
@@ -737,11 +736,10 @@
   font-size: 11px;
 }
 .ll-list {
-  --ll-preview-rule: #e3ddeb;
-  background: white;
+  --ll-preview-rule: var(--ll-rule);
+  background: var(--ll-panel);
   border-radius: 12px;
   padding: 22px;
-  box-shadow: 0 14px 32px #3520600d;
 }
 .ll-list .ll-file-items {
   display: flex;
@@ -750,7 +748,7 @@
 }
 .ll-list .ll-file {
   padding: 18px 0 18px 34px;
-  border-top: 1px solid #eeeaf4;
+  border-top: 1px solid var(--ll-rule);
 }
 .ll-list .ll-file-art {
   display: none;
@@ -763,8 +761,8 @@
   height: 19px;
 }
 .ll-list .ll-file input:checked + .ll-check-box {
-  background: #7751d4;
-  border-color: #7751d4;
+  background: var(--ll-accent);
+  border-color: var(--ll-accent);
 }
 .ll-list .ll-file-info {
   padding: 0;
@@ -772,9 +770,9 @@
 .ll-list .ll-file-info > svg:first-child {
   width: 34px;
   height: 42px;
-  color: #77678d;
+  color: var(--ll-muted);
   padding: 7px;
-  background: #f1edf9;
+  background: var(--ll-field);
   border-radius: 6px;
 }
 .ll-list .ll-file-info strong {
@@ -790,18 +788,18 @@
   margin-top: 4px;
 }
 .ll-list .ll-secondary {
-  background: #f0eafa;
+  background: var(--ll-field);
   border-color: transparent;
-  color: #50318c;
+  color: var(--ll-ink);
 }
 .ll-list .ll-secondary:hover:not(:disabled) {
-  background: #e5daf8;
+  background: var(--ll-panel);
 }
 .ll-list .ll-progress {
-  background: #e8e1f4;
+  background: var(--ll-rule);
 }
 .ll-list .ll-progress > span {
-  background: #7950d0;
+  background: var(--ll-accent);
 }
 .ll-demo-bottom {
   padding-top: 22px;
@@ -809,13 +807,13 @@
   flex-direction: column;
   gap: 5px;
   font-size: 11px;
-  color: #60546f;
+  color: var(--ll-muted);
 }
 .ll-demo-bottom a {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  color: #442c71;
+  color: var(--ll-ink);
   font-weight: 650;
 }
 .ll-demo-bottom a:hover {
@@ -824,7 +822,7 @@
 .ll-workbench-code {
   margin-top: 90px;
   padding-block: 88px;
-  background: #f7f4fc;
+  background: var(--ll-field);
 }
 .ll-workbench-code .ll-feature-rows {
   margin-top: 50px;
@@ -833,23 +831,12 @@
   border-top: 0;
 }
 [data-design='workbench'] .ll-closing {
-  background: #eee7fb;
+  background: var(--ll-field);
 }
 
 /* Reference: a navy technical folio with an open, aligned feature index. */
 .landing-lab[data-design='reference'] {
-  --ll-ink: #e7eff8;
-  --ll-muted: #b1bed0;
-  --ll-paper: #122036;
-  --ll-rule: #35435a;
-  --ll-accent: #ffc18c;
   --ll-display: var(--lab-sans);
-  background: #122036;
-  color-scheme: dark;
-}
-[data-design='reference'] ::selection {
-  background: #ffc18c;
-  color: #122036;
 }
 .ll-reference-hero {
   display: grid;
@@ -863,7 +850,7 @@
   font-weight: 550;
 }
 .ll-reference-hero h1 span {
-  color: #9dbcea;
+  color: var(--ll-muted);
 }
 .ll-reference-hero .ll-prompt {
   justify-self: end;
@@ -873,45 +860,45 @@
   font-size: 16px;
 }
 [data-design='reference'] .ll-primary {
-  background: #ffc18c;
-  color: #17253b;
+  background: var(--ll-accent);
+  color: var(--ll-on-accent);
 }
 [data-design='reference'] .ll-primary:hover {
-  background: #ffaf6c;
+  background: var(--ll-accent-hover);
   box-shadow: none;
 }
 [data-design='reference'] .ll-prompt-text {
-  background: #1b2b44;
+  background: var(--ll-panel);
 }
 [data-design='reference'] .ll-copy-error {
-  color: #ffb8b0;
+  color: var(--ll-error);
 }
 .ll-reference-code .ll-code-pair {
   border-radius: 0;
-  background: #182a44;
+  background: var(--ll-panel);
 }
 .ll-reference-code .ll-code-label {
-  background: #1e324f;
+  background: var(--ll-field);
 }
 .ll-reference-code .ll-code-key {
-  color: #bfb2ff;
+  color: var(--ll-syntax-key);
 }
 .ll-reference-code .ll-code-string {
-  color: #b3dcc6;
+  color: var(--ll-syntax-string);
 }
 .ll-reference-code .ll-code-value {
-  color: #ffc18c;
+  color: var(--ll-accent);
 }
 .ll-reference-code .ll-code-pair mark {
-  background: #315176;
-  color: #deedff;
+  background: var(--ll-field);
+  color: var(--ll-ink);
 }
 .ll-reference-code .ll-code-pair pre {
   font-size: 14px;
   padding: 30px;
 }
 .ll-reference-code .ll-code-caption {
-  background: #1e324f;
+  background: var(--ll-field);
 }
 .ll-reference-proof {
   display: flex;
@@ -978,7 +965,7 @@
   margin-bottom: 22px;
 }
 [data-design='reference'] .ll-closing {
-  background: #203753;
+  background: var(--ll-field);
   border-radius: 0;
 }
 [data-design='reference'] .ll-closing h2 {
@@ -1137,7 +1124,7 @@
     font-size: 5px;
   }
   .ll-document strong {
-    font-size: 15px;
+    font-size: 11px;
     margin-top: 12px;
   }
   .ll-document-rule {

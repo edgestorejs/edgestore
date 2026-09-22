@@ -1,11 +1,13 @@
-import { ArrowUpRight } from 'lucide-react';
 import { type Metadata } from 'next';
 import { Bricolage_Grotesque, Manrope } from 'next/font/google';
-import Link from 'next/link';
+import { Canvas, Index, Mono, Orbit, Relay, Signal } from './new-designs';
 import { Reference } from './reference';
+import { ReviewControls } from './review-controls';
 import { Studio } from './studio';
 import { Workbench } from './workbench';
 import './landing-lab.css';
+import './themes.css';
+import './new-designs.css';
 
 const manrope = Manrope({ subsets: ['latin'], variable: '--lab-sans' });
 const bricolage = Bricolage_Grotesque({
@@ -19,6 +21,12 @@ export const metadata: Metadata = {
 };
 
 const designs = [
+  { id: 'canvas', name: 'Canvas', component: Canvas },
+  { id: 'relay', name: 'Relay', component: Relay },
+  { id: 'index', name: 'Index', component: Index },
+  { id: 'orbit', name: 'Orbit', component: Orbit },
+  { id: 'mono', name: 'Mono', component: Mono },
+  { id: 'signal', name: 'Signal', component: Signal },
   { id: 'studio', name: 'Studio', component: Studio },
   { id: 'workbench', name: 'Workbench', component: Workbench },
   { id: 'reference', name: 'Reference', component: Reference },
@@ -27,9 +35,13 @@ const designs = [
 export default async function LandingLab({
   searchParams,
 }: {
-  searchParams: Promise<{ design?: string | string[] }>;
+  searchParams: Promise<{
+    design?: string | string[];
+    theme?: string | string[];
+  }>;
 }) {
-  const { design } = await searchParams;
+  const { design, theme: themeParam } = await searchParams;
+  const theme = themeParam === 'dark' ? 'dark' : 'light';
   const selected = designs.find(({ id }) => id === design) ?? designs[0]!;
   const Page = selected.component;
 
@@ -37,24 +49,13 @@ export default async function LandingLab({
     <div
       className={`landing-lab ${manrope.variable} ${bricolage.variable}`}
       data-design={selected.id}
+      data-theme={theme}
     >
-      <div className="ll-review-bar">
-        <span>Landing exploration</span>
-        <nav aria-label="Design options">
-          {designs.map(({ id, name }) => (
-            <Link
-              key={id}
-              href={`/landing-lab?design=${id}`}
-              aria-current={selected.id === id ? 'page' : undefined}
-            >
-              {name}
-            </Link>
-          ))}
-        </nav>
-        <Link href="/" className="ll-current-site">
-          Current site <ArrowUpRight size={13} aria-hidden="true" />
-        </Link>
-      </div>
+      <ReviewControls
+        designs={designs.map(({ id, name }) => ({ id, name }))}
+        selected={selected.id}
+        theme={theme}
+      />
       <a href="#landing-content" className="ll-skip">
         Skip to content
       </a>

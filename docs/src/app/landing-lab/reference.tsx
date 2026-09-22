@@ -1,20 +1,22 @@
 import { ArrowUpRight } from 'lucide-react';
 import Link from 'next/link';
 import { CodeExample } from './code-example';
+import { FilePreview } from './file-preview';
 import {
   Closing,
   FeatureRows,
   Footer,
   Frameworks,
+  HeroLinks,
   Navigation,
-  Prompt,
+  StartWithAgent,
   StorageChoices,
 } from './shared';
 
 export function Reference() {
   return (
     <>
-      <Navigation light />
+      <Navigation />
       <main id="landing-content">
         <section className="ll-reference-hero ll-width">
           <div>
@@ -27,9 +29,11 @@ export function Reference() {
               File uploads for TypeScript and React, with validation,
               authorization and storage under your control.
             </p>
+            <HeroLinks />
           </div>
-          <Prompt />
+          <FilePreview />
         </section>
+        <StartWithAgent />
         <section
           className="ll-reference-code ll-width"
           aria-label="Typed upload API example"

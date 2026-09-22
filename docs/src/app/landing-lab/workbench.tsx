@@ -7,8 +7,9 @@ import {
   FeatureRows,
   Footer,
   Frameworks,
+  HeroLinks,
   Navigation,
-  Prompt,
+  StartWithAgent,
   StorageChoices,
 } from './shared';
 
@@ -28,7 +29,7 @@ export function Workbench() {
               Add uploads that look and work the way you want. Type-safe APIs,
               customizable React components, and your choice of storage.
             </p>
-            <Prompt />
+            <HeroLinks />
           </div>
           <div className="ll-workbench-demo">
             <div className="ll-demo-title">
@@ -44,6 +45,7 @@ export function Workbench() {
             </div>
           </div>
         </section>
+        <StartWithAgent />
         <Frameworks />
         <section className="ll-workbench-code">
           <div className="ll-width">

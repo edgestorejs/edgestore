@@ -5,8 +5,9 @@ import {
   FeatureRows,
   Footer,
   Frameworks,
+  HeroLinks,
   Navigation,
-  Prompt,
+  StartWithAgent,
   StorageChoices,
 } from './shared';
 
@@ -30,12 +31,13 @@ export function Studio() {
                 dropzone to the storage behind it.
               </p>
             </div>
-            <Prompt />
+            <HeroLinks />
           </section>
           <div className="ll-width ll-studio-gallery">
             <FilePreview gallery />
           </div>
         </div>
+        <StartWithAgent />
         <Frameworks />
         <section className="ll-studio-details ll-width">
           <div className="ll-section-intro">
