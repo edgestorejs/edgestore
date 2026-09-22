@@ -1,5 +1,29 @@
 # @edgestore/cli
 
+## 1.0.0-next.4
+
+### Major Changes
+
+- [#248](https://github.com/edgestorejs/edgestore/pull/248) [`7061756`](https://github.com/edgestorejs/edgestore/commit/7061756406e16388663c445ab6fc1472b72bf5e2) Thanks [@raviships](https://github.com/raviships)! - Add coding-agent setup for Codex, Claude Code, and Cursor, including skill
+  installation and updates, hosted MCP configuration, application context, and
+  offline diagnostics. Automated provisioning delivers credentials to protected
+  files instead of returning secrets in structured output.
+
+  Bundle version-matched Markdown API references with the server, React, and SDK
+  packages so agents can use documentation for the application's installed versions.
+
+### Minor Changes
+
+- [#233](https://github.com/edgestorejs/edgestore/pull/233) [`89555c5`](https://github.com/edgestorejs/edgestore/commit/89555c5c9f97a192be2a3612cb1bbbe1e5129e7c) Thanks [@raviships](https://github.com/raviships)! - Upload up to three files concurrently and report all file-level failures after
+  the active batch settles.
+
+### Patch Changes
+
+- [#233](https://github.com/edgestorejs/edgestore/pull/233) [`cd209e0`](https://github.com/edgestorejs/edgestore/commit/cd209e0036bad76bf8c59f8e19f9c468ef947de7) Thanks [@raviships](https://github.com/raviships)! - Report byte-level upload transfer progress and render stable, in-place upload
+  rows in interactive terminals instead of appending one line for every update.
+- Updated dependencies [[`7061756`](https://github.com/edgestorejs/edgestore/commit/7061756406e16388663c445ab6fc1472b72bf5e2), [`cd209e0`](https://github.com/edgestorejs/edgestore/commit/cd209e0036bad76bf8c59f8e19f9c468ef947de7), [`9dfc9fe`](https://github.com/edgestorejs/edgestore/commit/9dfc9fe8cea705a03d51d8a0fec39f3fb6189467), [`cee2e96`](https://github.com/edgestorejs/edgestore/commit/cee2e961d404959fb7adfddaa9c0ab74dbd7f88e)]:
+  - @edgestore/sdk@1.0.0-next.4
+
 ## 1.0.0-next.3
 
 ### Minor Changes
