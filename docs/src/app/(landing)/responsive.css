@@ -36,9 +36,6 @@
   .ya-hero .ya-lead {
     max-width: 580px;
   }
-  .ya-section-heading {
-    gap: 30px;
-  }
   .ya-section {
     padding-block: 72px;
   }
@@ -164,8 +161,6 @@
     padding-block: 56px;
   }
   .ya-section-heading {
-    grid-template-columns: 1fr;
-    gap: 20px;
     margin-bottom: 26px;
   }
   .ya-section-heading p {
@@ -219,6 +214,14 @@
   .ya-faq {
     padding-block: 44px;
     gap: 30px;
+  }
+  .ya-faq summary {
+    padding: 18px;
+    gap: 18px;
+    font-size: 15px;
+  }
+  .ya-faq details p {
+    padding: 0 18px 18px;
   }
   .ya-closing {
     padding-block: 48px;

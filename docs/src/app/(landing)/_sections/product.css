@@ -3,16 +3,15 @@
 }
 .ya-section-heading {
   display: grid;
-  grid-template-columns: 1.1fr 1fr;
-  gap: 60px;
-  align-items: end;
+  gap: 18px;
+  max-width: 720px;
   margin-bottom: 38px;
 }
 .ya-section-heading p {
   color: var(--ya-muted);
   font-size: 17px;
   line-height: 1.75;
-  max-width: 560px;
+  max-width: 660px;
 }
 .ya-text-link {
   color: var(--ya-accent);
@@ -70,13 +69,6 @@
   color: var(--ya-muted);
   border-top: 1px solid var(--ya-line);
   padding: 22px;
-}
-.ya-site .ya-footnote {
-  margin-top: 18px;
-  color: var(--ya-muted);
-  font-size: 12px;
-  line-height: 1.7;
-  max-width: 900px;
 }
 .ya-feature-section {
   padding-block: 84px;
@@ -249,27 +241,72 @@
   display: grid;
   grid-template-columns: 1fr 1.15fr;
   gap: 72px;
+  align-items: start;
+}
+.ya-faq-list {
+  border: 1px solid var(--ya-line);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--ya-panel) 25%, var(--ya-bg));
 }
 .ya-faq details {
   border-bottom: 1px solid var(--ya-line);
-  padding-block: 20px;
 }
-.ya-faq details:first-child {
-  padding-top: 0;
+.ya-faq details:last-child {
+  border-bottom: 0;
 }
 .ya-faq summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 22px 24px;
+  border-radius: 8px;
+  list-style: none;
   cursor: pointer;
   font-size: 16px;
   font-weight: 550;
   line-height: 1.6;
-  padding-right: 10px;
+}
+.ya-faq summary::-webkit-details-marker {
+  display: none;
+}
+.ya-faq summary::after {
+  content: '';
+  flex: 0 0 20px;
+  height: 20px;
+  color: var(--ya-accent);
+  background-image:
+    linear-gradient(currentColor, currentColor),
+    linear-gradient(currentColor, currentColor);
+  background-size:
+    14px 1.5px,
+    1.5px 14px;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+.ya-faq details[open] summary::after {
+  background-size:
+    14px 1.5px,
+    1.5px 0;
+}
+.ya-faq summary:hover {
+  background: color-mix(in srgb, var(--ya-accent) 5%, transparent);
+}
+.ya-faq details[open] summary {
+  padding-bottom: 12px;
 }
 .ya-faq details p {
   color: var(--ya-muted);
   font-size: 14px;
   line-height: 1.8;
-  margin-top: 14px;
-  max-width: 560px;
+  margin: 0;
+  padding: 0 24px 24px;
+  max-width: 600px;
+}
+.ya-faq details p a {
+  color: var(--ya-accent);
+  text-decoration: underline !important;
+  text-underline-offset: 3px;
 }
 .ya-closing {
   display: flex;

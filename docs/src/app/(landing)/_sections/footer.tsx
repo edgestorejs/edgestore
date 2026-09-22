@@ -13,13 +13,23 @@ export function Faq() {
   return (
     <section className="ya-faq ya-container" aria-labelledby="faq-title">
       <h2 id="faq-title">Frequently asked questions</h2>
-      <div>
+      <div className="ya-faq-list">
         <details>
-          <summary>Do I need a coding agent?</summary>
+          <summary>Can I use EdgeStore for free?</summary>
           <p>
-            No. Follow the <Link href="/docs/quick-start">quick start</Link> to
-            set up EdgeStore yourself. The agent uses the same packages and
-            APIs.
+            Yes. Hosted storage has a free plan, with no credit card required.
+            See <Link href="/pricing">plans and limits</Link>.
+          </p>
+        </details>
+        <details>
+          <summary>What file types and sizes are supported?</summary>
+          <p>
+            Set allowed file types and maximum file sizes per bucket with{' '}
+            <code>accept</code> and <code>maxSize</code>. See the{' '}
+            <Link href="/docs/configuration#basic-file-validation">
+              file validation options
+            </Link>
+            .
           </p>
         </details>
         <details>
@@ -29,8 +39,6 @@ export function Faq() {
             <Link href="/docs/providers/s3">S3-compatible storage</Link>,{' '}
             <Link href="/docs/providers/azure-blob">Azure Blob Storage</Link>,
             or a <Link href="/docs/providers/custom">custom provider</Link>.
-            Check the provider guide for supported features and setup
-            requirements.
           </p>
         </details>
         <details>
@@ -52,13 +60,6 @@ export function Faq() {
               protected file access
             </Link>
             .
-          </p>
-        </details>
-        <details>
-          <summary>Does the demo upload my files?</summary>
-          <p>
-            No. The desktop demo previews images in your browser. Your files are
-            not sent to a server. On phones, it is a visual preview only.
           </p>
         </details>
       </div>

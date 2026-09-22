@@ -97,15 +97,6 @@ export function TypedExample() {
     <section className="ya-section ya-container" aria-labelledby="types-title">
       <div className="ya-section-heading">
         <h2 id="types-title">End-to-end type safety</h2>
-        <div>
-          <p>
-            The React client infers bucket names, inputs, and file paths from
-            your server router.
-          </p>
-          <Link className="ya-text-link" href="/docs/quick-start">
-            See the full setup
-          </Link>
-        </div>
       </div>
       <div className="ya-code-pair">
         <div className="ya-code-pane">
@@ -127,10 +118,6 @@ export function TypedExample() {
           </p>
         </div>
       </div>
-      <p className="ya-footnote">
-        Router and upload excerpts. The quick start includes the storage
-        provider, framework handler, and React provider.
-      </p>
     </section>
   );
 }
@@ -275,10 +262,6 @@ export function StorageOptions() {
           </Link>
         </div>
       </div>
-      <p className="ya-footnote">
-        Provider capabilities differ. Protected reads and image processing may
-        need additional infrastructure when you bring your own storage.
-      </p>
     </section>
   );
 }
