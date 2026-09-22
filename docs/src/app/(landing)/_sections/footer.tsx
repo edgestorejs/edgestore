@@ -12,7 +12,7 @@ import { Brand } from '../_components/site-header';
 export function Faq() {
   return (
     <section className="ya-faq ya-container" aria-labelledby="faq-title">
-      <h2 id="faq-title">A few things to know.</h2>
+      <h2 id="faq-title">Frequently asked questions</h2>
       <div>
         <details>
           <summary>Do I need a coding agent?</summary>
@@ -57,8 +57,8 @@ export function Faq() {
         <details>
           <summary>Does the demo upload my files?</summary>
           <p>
-            No. The examples on this page preview images in your browser. Your
-            files are not sent to a server.
+            No. The desktop demo previews images in your browser. Your files are
+            not sent to a server. On phones, it is a visual preview only.
           </p>
         </details>
       </div>
@@ -110,9 +110,6 @@ export function SiteFooter() {
             <br />
             for TypeScript and React.
           </p>
-          <a href={`${GITHUB_URL}/blob/main/LICENSE`}>
-            Open source. MIT licensed.
-          </a>
         </div>
         {groups.map((group) => (
           <nav aria-label={group.title} key={group.title}>

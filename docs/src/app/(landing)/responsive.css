@@ -78,8 +78,8 @@
     position: static;
   }
   .ya-framework-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 24px;
+    --framework-columns: 4;
+    --framework-gap: 24px;
   }
   .ya-footer-grid {
     grid-template-columns: repeat(3, 1fr);
@@ -88,10 +88,7 @@
     grid-column: 1 / -1;
   }
 }
-@media (max-width: 600px) {
-  .ya-container {
-    width: calc(100% - 40px);
-  }
+@media (max-width: 760px) {
   .ya-header-inner {
     position: relative;
     height: 70px;
@@ -99,7 +96,6 @@
     gap: 12px;
   }
   .ya-brand img {
-    width: 174px;
     height: 26px;
   }
   .ya-menu-toggle {
@@ -110,8 +106,8 @@
     position: absolute;
     z-index: 5;
     top: 70px;
-    left: -20px;
-    right: -20px;
+    left: calc((100% - 100vw) / 2);
+    right: calc((100% - 100vw) / 2);
     padding: 16px 20px;
     background: var(--ya-bg);
     border-bottom: 1px solid var(--ya-line);
@@ -121,6 +117,11 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 8px;
+  }
+}
+@media (max-width: 600px) {
+  .ya-container {
+    width: calc(100% - 40px);
   }
   .ya-hero {
     padding-block: 36px;
@@ -208,19 +209,12 @@
     padding-block: 44px;
   }
   .ya-framework-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 16px 24px;
+    --framework-columns: 3;
+    --framework-gap: 12px;
     margin-top: 25px;
   }
   .ya-framework-grid a {
-    flex-direction: row;
-    align-items: center;
-    gap: 12px;
     font-size: 12px;
-  }
-  .ya-framework-icon {
-    width: 26px;
-    height: 26px;
   }
   .ya-faq {
     padding-block: 44px;

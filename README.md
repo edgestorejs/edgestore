@@ -1,7 +1,7 @@
 <p align="center">
   <a href="https://edgestore.dev"><picture>
       <source media="(prefers-color-scheme: dark)" srcset="docs/public/img/edgestore-lockup.svg" />
-      <img src="docs/public/img/edgestore-lockup-light.svg" alt="EdgeStore" width="322" height="48" />
+      <img src="docs/public/img/edgestore-lockup-light.svg" alt="EdgeStore" width="330" height="48" />
   </picture></a>
 </p>
 

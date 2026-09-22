@@ -11,7 +11,7 @@ import {
   X,
 } from 'lucide-react';
 import Image from 'next/image';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { formatFileSize, selectPreviewImages } from './preview-files';
 
 type PreviewFile = {
@@ -58,7 +58,24 @@ const documents = [
   },
 ];
 
+const mobilePreviewQuery = '(max-width: 600px)';
+
+function subscribeToViewport(onChange: () => void) {
+  const query = window.matchMedia(mobilePreviewQuery);
+  query.addEventListener('change', onChange);
+  return () => query.removeEventListener('change', onChange);
+}
+
+function isMobilePreview() {
+  return window.matchMedia(mobilePreviewQuery).matches;
+}
+
 export function UploadShowcase() {
+  const readOnly = useSyncExternalStore(
+    subscribeToViewport,
+    isMobilePreview,
+    () => true,
+  );
   const [files, setFiles] = useState(sampleFiles);
   const [avatar, setAvatar] = useState('/img/home/avatar.jpg');
   const [message, setMessage] = useState(
@@ -120,196 +137,210 @@ export function UploadShowcase() {
   }
 
   return (
-    <div className="ya-showcase" aria-label="Try the upload components">
-      <section
-        className="ya-project ya-panel"
-        aria-labelledby="ya-project-title"
+    <div
+      className="ya-showcase"
+      role={readOnly ? 'img' : undefined}
+      aria-label={
+        readOnly
+          ? 'Upload component examples: project images, a profile photo, and private documents.'
+          : 'Try the upload components'
+      }
+    >
+      <div
+        className="ya-showcase-scene"
+        inert={readOnly}
+        aria-hidden={readOnly}
       >
-        <div className="ya-window-dots" aria-hidden="true">
-          <i />
-          <i />
-          <i />
-        </div>
-        <div className="ya-project-content">
-          <div className="ya-panel-heading">
-            <h2 id="ya-project-title">Project assets</h2>
+        <section
+          className="ya-project ya-panel"
+          aria-labelledby="ya-project-title"
+        >
+          <div className="ya-window-dots" aria-hidden="true">
+            <i />
+            <i />
+            <i />
+          </div>
+          <div className="ya-project-content">
+            <div className="ya-panel-heading">
+              <h2 id="ya-project-title">Project assets</h2>
+              <button
+                type="button"
+                className="ya-add-files"
+                onClick={() => fileInput.current?.click()}
+              >
+                <Upload size={16} />
+                Choose images
+              </button>
+            </div>
+            <input
+              ref={fileInput}
+              className="ya-hidden-input"
+              type="file"
+              multiple
+              accept="image/jpeg,image/png,image/webp"
+              aria-label="Choose project images"
+              onChange={(event) => {
+                previewImages(event.target.files);
+                event.target.value = '';
+              }}
+            />
             <button
               type="button"
-              className="ya-add-files"
+              className="ya-dropzone"
+              data-dragging={dragging}
               onClick={() => fileInput.current?.click()}
+              onDragOver={(event) => {
+                event.preventDefault();
+                setDragging(true);
+              }}
+              onDragLeave={() => setDragging(false)}
+              onDrop={(event) => {
+                event.preventDefault();
+                setDragging(false);
+                previewImages(event.dataTransfer.files);
+              }}
             >
-              <Upload size={16} />
-              Choose images
+              <CloudUpload size={37} strokeWidth={1.6} />
+              <strong>
+                {dragging
+                  ? 'Drop to preview your images'
+                  : 'Drag & drop images here'}
+              </strong>
+              <span>JPG, PNG or WebP. Up to 4 images, 5 MB each.</span>
             </button>
+            <ul className="ya-file-grid">
+              {files.map((file) => (
+                <li className="ya-file-tile" key={file.id}>
+                  <div
+                    className={`ya-thumbnail ${file.art ? `ya-art-${file.art}` : ''}`}
+                  >
+                    {file.image && (
+                      <Image
+                        src={file.image}
+                        alt=""
+                        fill
+                        unoptimized
+                        sizes="150px"
+                      />
+                    )}
+                    {file.art === 'code' && (
+                      <CodeXml size={33} strokeWidth={1.5} />
+                    )}
+                    {file.art === 'wave' && (
+                      <svg
+                        viewBox="0 0 180 120"
+                        preserveAspectRatio="none"
+                        aria-hidden="true"
+                      >
+                        <defs>
+                          <linearGradient
+                            id="ya-wave"
+                            x1="0"
+                            y1="0"
+                            x2="1"
+                            y2="1"
+                          >
+                            <stop stopColor="#402e93" />
+                            <stop offset=".5" stopColor="#a08bf9" />
+                            <stop offset="1" stopColor="#5534c1" />
+                          </linearGradient>
+                        </defs>
+                        <path
+                          d="M0 96C45 1 84 146 180 27V120H0Z"
+                          fill="url(#ya-wave)"
+                        />
+                        <path
+                          d="M0 97C45 2 84 147 180 28"
+                          fill="none"
+                          stroke="#bfaaff"
+                          strokeWidth="1"
+                        />
+                      </svg>
+                    )}
+                    <button
+                      type="button"
+                      className="ya-remove-file"
+                      aria-label={`Remove ${file.name}`}
+                      onClick={() => remove(file)}
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                  <span className="ya-file-name" title={file.name}>
+                    {file.name}
+                  </span>
+                  <span className="ya-file-size">{file.size}</span>
+                </li>
+              ))}
+              {!files.length && (
+                <li className="ya-empty-files">
+                  No images. Choose an image to preview it.
+                </li>
+              )}
+            </ul>
+          </div>
+        </section>
+        <section
+          className="ya-profile ya-panel"
+          aria-labelledby="ya-profile-title"
+        >
+          <h2 id="ya-profile-title">Profile photo</h2>
+          <div className="ya-avatar">
+            <Image
+              src={avatar}
+              alt="Sample profile preview"
+              fill
+              unoptimized
+              sizes="100px"
+            />
+            <span className="ya-avatar-edit" aria-hidden="true">
+              <Pencil size={13} />
+            </span>
           </div>
           <input
-            ref={fileInput}
+            ref={avatarInput}
             className="ya-hidden-input"
             type="file"
-            multiple
             accept="image/jpeg,image/png,image/webp"
-            aria-label="Choose project images"
+            aria-label="Choose profile photo"
             onChange={(event) => {
-              previewImages(event.target.files);
+              previewImages(event.target.files, true);
               event.target.value = '';
             }}
           />
           <button
             type="button"
-            className="ya-dropzone"
-            data-dragging={dragging}
-            onClick={() => fileInput.current?.click()}
-            onDragOver={(event) => {
-              event.preventDefault();
-              setDragging(true);
-            }}
-            onDragLeave={() => setDragging(false)}
-            onDrop={(event) => {
-              event.preventDefault();
-              setDragging(false);
-              previewImages(event.dataTransfer.files);
-            }}
+            className="ya-change-photo"
+            onClick={() => avatarInput.current?.click()}
           >
-            <CloudUpload size={37} strokeWidth={1.6} />
-            <strong>
-              {dragging
-                ? 'Drop to preview your images'
-                : 'Drag & drop images here'}
-            </strong>
-            <span>JPG, PNG or WebP. Up to 4 images, 5 MB each.</span>
+            <Upload size={15} />
+            Change photo
           </button>
-          <ul className="ya-file-grid">
-            {files.map((file) => (
-              <li className="ya-file-tile" key={file.id}>
-                <div
-                  className={`ya-thumbnail ${file.art ? `ya-art-${file.art}` : ''}`}
-                >
-                  {file.image && (
-                    <Image
-                      src={file.image}
-                      alt=""
-                      fill
-                      unoptimized
-                      sizes="150px"
-                    />
-                  )}
-                  {file.art === 'code' && (
-                    <CodeXml size={33} strokeWidth={1.5} />
-                  )}
-                  {file.art === 'wave' && (
-                    <svg
-                      viewBox="0 0 180 120"
-                      preserveAspectRatio="none"
-                      aria-hidden="true"
-                    >
-                      <defs>
-                        <linearGradient
-                          id="ya-wave"
-                          x1="0"
-                          y1="0"
-                          x2="1"
-                          y2="1"
-                        >
-                          <stop stopColor="#402e93" />
-                          <stop offset=".5" stopColor="#a08bf9" />
-                          <stop offset="1" stopColor="#5534c1" />
-                        </linearGradient>
-                      </defs>
-                      <path
-                        d="M0 96C45 1 84 146 180 27V120H0Z"
-                        fill="url(#ya-wave)"
-                      />
-                      <path
-                        d="M0 97C45 2 84 147 180 28"
-                        fill="none"
-                        stroke="#bfaaff"
-                        strokeWidth="1"
-                      />
-                    </svg>
-                  )}
-                  <button
-                    type="button"
-                    className="ya-remove-file"
-                    aria-label={`Remove ${file.name}`}
-                    onClick={() => remove(file)}
-                  >
-                    <X size={12} />
-                  </button>
-                </div>
-                <span className="ya-file-name" title={file.name}>
-                  {file.name}
+          <p>JPG, PNG or WebP. Max 5 MB.</p>
+        </section>
+        <section
+          className="ya-documents ya-panel"
+          aria-labelledby="ya-documents-title"
+        >
+          <h2 id="ya-documents-title">Private documents</h2>
+          <ul>
+            {documents.map(({ name, meta, icon: Icon, color }) => (
+              <li key={name}>
+                <span className={`ya-document-icon ya-document-${color}`}>
+                  <Icon size={23} strokeWidth={1.5} />
                 </span>
-                <span className="ya-file-size">{file.size}</span>
+                <div>
+                  <strong>{name}</strong>
+                  <span>{meta}</span>
+                </div>
+                <LockKeyhole size={15} aria-label="Private file example" />
               </li>
             ))}
-            {!files.length && (
-              <li className="ya-empty-files">
-                Your canvas is clear. Add an image to try it.
-              </li>
-            )}
           </ul>
-        </div>
-      </section>
-      <section
-        className="ya-profile ya-panel"
-        aria-labelledby="ya-profile-title"
-      >
-        <h2 id="ya-profile-title">Profile photo</h2>
-        <div className="ya-avatar">
-          <Image
-            src={avatar}
-            alt="Sample profile preview"
-            fill
-            unoptimized
-            sizes="100px"
-          />
-          <span className="ya-avatar-edit" aria-hidden="true">
-            <Pencil size={13} />
-          </span>
-        </div>
-        <input
-          ref={avatarInput}
-          className="ya-hidden-input"
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          aria-label="Choose profile photo"
-          onChange={(event) => {
-            previewImages(event.target.files, true);
-            event.target.value = '';
-          }}
-        />
-        <button
-          type="button"
-          className="ya-change-photo"
-          onClick={() => avatarInput.current?.click()}
-        >
-          <Upload size={15} />
-          Change photo
-        </button>
-        <p>JPG, PNG or WebP. Max 5 MB.</p>
-      </section>
-      <section
-        className="ya-documents ya-panel"
-        aria-labelledby="ya-documents-title"
-      >
-        <h2 id="ya-documents-title">Private documents</h2>
-        <ul>
-          {documents.map(({ name, meta, icon: Icon, color }) => (
-            <li key={name}>
-              <span className={`ya-document-icon ya-document-${color}`}>
-                <Icon size={23} strokeWidth={1.5} />
-              </span>
-              <div>
-                <strong>{name}</strong>
-                <span>{meta}</span>
-              </div>
-              <LockKeyhole size={15} aria-label="Private file example" />
-            </li>
-          ))}
-        </ul>
-      </section>
-      <p className="ya-demo-note" role="status">
-        {message}
+        </section>
+      </div>
+      <p className="ya-demo-note" role={readOnly ? undefined : 'status'}>
+        {readOnly ? 'Upload component examples' : message}
       </p>
     </div>
   );

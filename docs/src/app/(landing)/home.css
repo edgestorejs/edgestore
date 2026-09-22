@@ -75,7 +75,7 @@
   flex-shrink: 0;
 }
 .ya-brand img {
-  width: 201px;
+  width: auto;
   height: 30px;
 }
 .ya-header {

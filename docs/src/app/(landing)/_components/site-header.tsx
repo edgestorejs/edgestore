@@ -12,16 +12,16 @@ export function Brand() {
       <Image
         src="/img/edgestore-lockup-light.svg"
         alt=""
-        width={201}
-        height={30}
+        width={220}
+        height={32}
         className="ya-logo-light"
         priority
       />
       <Image
         src="/img/edgestore-lockup.svg"
         alt=""
-        width={201}
-        height={30}
+        width={220}
+        height={32}
         className="ya-logo-dark"
         priority
       />

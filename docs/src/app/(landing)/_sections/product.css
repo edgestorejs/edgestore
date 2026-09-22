@@ -201,22 +201,43 @@
   border-top: 1px solid var(--ya-line);
 }
 .ya-framework-grid {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 12px;
+  --framework-columns: 7;
+  --framework-gap: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px var(--framework-gap);
   margin-top: 36px;
 }
 .ya-framework-grid a {
+  flex: 0 0
+    calc(
+      (100% - (var(--framework-columns) - 1) * var(--framework-gap)) /
+        var(--framework-columns)
+    );
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 16px;
-  padding-block: 12px;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 4px;
+  border-radius: 8px;
   font-size: 13px;
   line-height: 1.5;
+  text-align: center;
 }
 .ya-framework-grid a:hover {
   color: var(--ya-accent);
+  background: var(--ya-panel);
+}
+.ya-framework-logo {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+}
+.ya-framework-grid a > span:last-child {
+  min-height: 3em;
+  text-wrap: balance;
 }
 .ya-framework-icon {
   width: 32px;
@@ -284,10 +305,6 @@
   line-height: 1.75;
   font-size: 14px;
   margin-block: 20px;
-}
-.ya-footer-brand > a:last-child {
-  color: var(--ya-muted);
-  font-size: 12px;
 }
 .ya-footer h3 {
   font-size: 14px;

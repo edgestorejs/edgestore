@@ -96,15 +96,11 @@ export function TypedExample() {
   return (
     <section className="ya-section ya-container" aria-labelledby="types-title">
       <div className="ya-section-heading">
-        <h2 id="types-title">
-          Define it once.
-          <br />
-          Use it with confidence.
-        </h2>
+        <h2 id="types-title">End-to-end type safety</h2>
         <div>
           <p>
-            Your buckets, inputs, and file paths flow from the server to your
-            React client. TypeScript keeps them in sync.
+            The React client infers bucket names, inputs, and file paths from
+            your server router.
           </p>
           <Link className="ya-text-link" href="/docs/quick-start">
             See the full setup
@@ -141,7 +137,7 @@ export function TypedExample() {
 
 const features = [
   {
-    title: 'Validate before the upload.',
+    title: 'File validation',
     description:
       'Set file size and type limits per bucket. Validate application input with Zod, Valibot, or another Standard Schema library.',
     icon: ShieldCheck,
@@ -150,7 +146,7 @@ const features = [
     detail: ['File types', 'Size limits', 'Validated input'],
   },
   {
-    title: 'Keep your access rules in code.',
+    title: 'Access control',
     description:
       'Use your existing authentication to decide who can upload or delete files. Add protected reads with hosted EdgeStore storage.',
     icon: Fingerprint,
@@ -163,16 +159,16 @@ const features = [
     ],
   },
   {
-    title: 'Give users control of their uploads.',
+    title: 'Upload controls',
     description:
-      'Show progress, cancel a transfer, and control parallel uploads. Start with our React components and make them your own.',
+      'Show progress, cancel a transfer, and control parallel uploads. Customize our React components or use your own UI.',
     icon: SlidersHorizontal,
     href: '/docs/components/multi-file',
     link: 'Browse upload components',
     detail: ['Progress', 'Cancellation', 'Concurrency'],
   },
   {
-    title: 'Organize files around your app.',
+    title: 'File paths and metadata',
     description:
       'Build file paths and metadata from typed input and user context. Work with files from your backend as well as the browser.',
     icon: FolderTree,
@@ -188,15 +184,10 @@ export function ProductFeatures() {
       <div className="ya-container ya-feature-layout">
         <div className="ya-feature-intro">
           <h2 id="features-title">
-            The details that make
-            <br />
-            uploads feel finished.
+            Validation, permissions, and upload controls
           </h2>
-          <p className="ya-section-lead">
-            From the first file selection to the rules behind it.
-          </p>
           <Link className="ya-text-link" href="/docs/components/dropzone">
-            Find a component for your app
+            Browse upload components
           </Link>
         </div>
         <div className="ya-feature-list">
@@ -232,11 +223,7 @@ export function StorageOptions() {
       aria-labelledby="storage-title"
     >
       <div className="ya-section-heading">
-        <h2 id="storage-title">
-          Your files.
-          <br />
-          Your choice of storage.
-        </h2>
+        <h2 id="storage-title">Hosted or bring your own storage</h2>
         <p>
           Use EdgeStore’s hosted storage, connect your own cloud account, or
           build a provider for another service.
@@ -245,10 +232,10 @@ export function StorageOptions() {
       <div className="ya-storage-grid">
         <article className="ya-hosted">
           <Cloud size={32} strokeWidth={1.5} aria-hidden="true" />
-          <h3>Let EdgeStore handle storage.</h3>
+          <h3>EdgeStore hosted storage</h3>
           <p>
             File hosting, a management dashboard, protected access, and image
-            thumbnails. No storage infrastructure to assemble.
+            thumbnails.
           </p>
           <Link
             className="ya-button ya-primary"
@@ -312,7 +299,7 @@ export function Frameworks() {
       className="ya-frameworks ya-container"
       aria-labelledby="frameworks-title"
     >
-      <h2 id="frameworks-title">Fits the stack you already use.</h2>
+      <h2 id="frameworks-title">Supported frameworks</h2>
       <p className="ya-section-lead">
         Choose your framework to get started. React-only apps can connect to any
         supported backend.
@@ -320,7 +307,9 @@ export function Frameworks() {
       <div className="ya-framework-grid">
         {frameworks.map(({ name, slug, icon: Icon }) => (
           <Link href={`/docs/adapters/${slug}`} key={slug}>
-            <Icon className="ya-framework-icon" />
+            <span className="ya-framework-logo" aria-hidden="true">
+              <Icon className="ya-framework-icon" />
+            </span>
             <span>{name}</span>
           </Link>
         ))}

@@ -44,6 +44,11 @@ export const metadata: Metadata = {
 };
 
 export default function HomePage() {
+  const signUpUrl = new URL(
+    '/sign-up',
+    env.NEXT_PUBLIC_DASHBOARD_URL,
+  ).toString();
+
   return (
     <div className="ya-site">
       <SiteHeader dashboardUrl={env.NEXT_PUBLIC_DASHBOARD_URL} />
@@ -58,20 +63,18 @@ export default function HomePage() {
               Your rules.
             </h1>
             <p className="ya-lead">
-              Type-safe file uploads for TypeScript and React. Built for your
-              stack, your storage, and your coding agent.
+              Type-safe file uploads for TypeScript and React. Customizable
+              components with hosted storage or your own provider.
             </p>
             <div className="ya-actions">
-              <a href="#get-started" className="ya-button ya-primary">
-                Build with your agent
+              <a href={signUpUrl} className="ya-button ya-primary">
+                Start for free
               </a>
-              <Link href="/docs/quick-start" className="ya-button ya-secondary">
-                Read the docs
-              </Link>
+              <a href="#get-started" className="ya-button ya-secondary">
+                Set up with your agent
+              </a>
             </div>
-            <p className="ya-hero-note">
-              Use our components or bring your own UI.
-            </p>
+            <p className="ya-hero-note">No credit card required.</p>
           </div>
           <UploadShowcase />
         </section>
@@ -82,14 +85,13 @@ export default function HomePage() {
           aria-labelledby="agent-title"
         >
           <div className="ya-container">
-            <h2 id="agent-title">One prompt to make it yours.</h2>
+            <h2 id="agent-title">Add uploads with your agent</h2>
             <p className="ya-section-lead">
-              Copy it into your coding agent to add uploads that fit your app.
+              Copy this prompt into your coding agent.
             </p>
             <SetupPrompt />
             <p className="ya-manual-link">
-              Prefer to write the code?{' '}
-              <Link href="/docs/quick-start">Follow the quick start</Link>.
+              Or <Link href="/docs/quick-start">follow the quick start</Link>.
             </p>
             <AgentTools />
           </div>
@@ -106,18 +108,15 @@ export default function HomePage() {
           aria-labelledby="closing-title"
         >
           <div>
-            <h2 id="closing-title">Make uploads part of your app.</h2>
-            <p>Start with a prompt. Keep control of the code.</p>
+            <h2 id="closing-title">Add file uploads to your app</h2>
+            <p>Start for free. No credit card required.</p>
           </div>
           <div className="ya-actions">
-            <a href="#get-started" className="ya-button ya-primary">
-              Get the setup prompt
+            <a href={signUpUrl} className="ya-button ya-primary">
+              Start for free
             </a>
-            <a
-              href={env.NEXT_PUBLIC_DASHBOARD_URL}
-              className="ya-button ya-secondary"
-            >
-              Open dashboard
+            <a href="#get-started" className="ya-button ya-secondary">
+              Set up with your agent
             </a>
           </div>
         </section>
