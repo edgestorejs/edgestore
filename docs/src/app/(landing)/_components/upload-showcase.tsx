@@ -78,9 +78,8 @@ export function UploadShowcase() {
   );
   const [files, setFiles] = useState(sampleFiles);
   const [avatar, setAvatar] = useState('/img/home/avatar.jpg');
-  const [message, setMessage] = useState(
-    'Interactive preview. Files stay in your browser.',
-  );
+  const [message, setMessage] = useState('');
+  const [hasError, setHasError] = useState(false);
   const [dragging, setDragging] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
   const avatarInput = useRef<HTMLInputElement>(null);
@@ -101,11 +100,13 @@ export function UploadShowcase() {
     if (!selected?.length) return;
     const accepted = selectPreviewImages(Array.from(selected), profile ? 1 : 4);
     if (!accepted.length) {
+      setHasError(true);
       setMessage(
         'Choose a JPG, PNG or WebP image up to 5 MB. Nothing was uploaded.',
       );
       return;
     }
+    setHasError(false);
     const previews = accepted.map((file) => {
       const url = URL.createObjectURL(file);
       objectUrls.current.add(url);
@@ -131,6 +132,7 @@ export function UploadShowcase() {
   }
 
   function remove(file: PreviewFile) {
+    setHasError(false);
     release(file.image);
     setFiles((current) => current.filter((item) => item.id !== file.id));
     setMessage(`${file.name} removed from this preview.`);
@@ -339,9 +341,14 @@ export function UploadShowcase() {
           </ul>
         </section>
       </div>
-      <p className="ya-demo-note" role={readOnly ? undefined : 'status'}>
-        {readOnly ? 'Upload component examples' : message}
-      </p>
+      {!readOnly && (
+        <p
+          className={hasError ? 'ya-preview-error' : 'ya-sr-only'}
+          role="status"
+        >
+          {message}
+        </p>
+      )}
     </div>
   );
 }

@@ -1,15 +1,26 @@
 /* The layered product composition is the single visual focal point. */
 .ya-showcase {
   position: relative;
-  height: 566px;
+  width: 100%;
+  max-width: 660px;
+  aspect-ratio: 640 / 566;
+  container-type: inline-size;
   isolation: isolate;
   min-width: 0;
 }
-.ya-showcase::before {
+.ya-showcase-scene {
+  position: relative;
+  width: 640px;
+  height: 566px;
+  /* Scale layout, not just paint. tan(atan2()) gives container width / 640px
+     as a number, including in browsers without CSS typed division. */
+  zoom: tan(atan2(100cqw, 640px));
+}
+.ya-showcase-scene::before {
   position: absolute;
   z-index: -1;
   content: '';
-  inset: 20% -5% 8%;
+  inset: 20% 0 8%;
   border-radius: 50%;
   background: radial-gradient(ellipse, #8260ff24, #8260ff00 68%);
   pointer-events: none;
@@ -189,7 +200,7 @@
 .ya-profile {
   position: absolute;
   bottom: 16px;
-  left: -10px;
+  left: 0;
   width: 32%;
   padding: 17px 16px 12px;
   backdrop-filter: blur(18px);
@@ -244,7 +255,7 @@
 .ya-documents {
   position: absolute;
   bottom: 0;
-  right: -12px;
+  right: 0;
   width: 56%;
   padding: 17px 16px 13px;
   backdrop-filter: blur(18px);
@@ -302,221 +313,28 @@
 .ya-documents li > svg {
   color: var(--ya-muted);
 }
-.ya-demo-note {
-  position: absolute;
-  bottom: -29px;
-  right: 0;
-  left: 0;
+.ya-showcase .ya-preview-error {
+  margin-top: 12px;
   color: var(--ya-muted);
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.5;
-  text-align: right;
 }
 .ya-hidden-input {
   display: none;
 }
 
-@media (max-width: 1190px) and (min-width: 981px) {
-  .ya-showcase {
-    height: 525px;
-  }
-  .ya-project {
-    width: 93%;
-    right: 0;
-    padding-inline: 9px;
-  }
-  .ya-project-content {
-    padding: 12px;
-  }
-  .ya-profile {
-    width: 37%;
-    left: -10px;
-    bottom: 25px;
-    padding-inline: 12px;
-  }
-  .ya-documents {
-    width: 61%;
-    right: -5px;
-    bottom: 9px;
-    padding-inline: 12px;
-  }
-  .ya-avatar {
-    width: 76px;
-    height: 76px;
-  }
-  .ya-panel h2 {
-    font-size: 14px;
-  }
-  .ya-documents li {
-    gap: 7px;
-    padding: 7px;
-  }
-}
 @media (max-width: 980px) {
   .ya-showcase {
-    width: min(660px, 100%);
     justify-self: center;
     margin-top: 12px;
   }
-  .ya-profile {
-    left: 0;
-  }
-  .ya-documents {
-    right: 0;
-  }
 }
-/* On phones this composition is a read-only illustration, so the panels can
-   retain their overlap without shrinking interactive touch targets. */
 @media (max-width: 600px) {
   .ya-showcase {
-    width: min(460px, 100%);
-    height: clamp(405px, 108vw, 455px);
-    margin-block: 4px 20px;
+    margin-top: 4px;
   }
   .ya-showcase-scene {
     pointer-events: none;
     user-select: none;
-  }
-  .ya-panel {
-    border-radius: 11px;
-  }
-  .ya-panel h2 {
-    font-size: 12px;
-  }
-  .ya-project {
-    right: 0;
-    width: 94%;
-    min-height: 0;
-    padding: 0 8px 9px;
-  }
-  .ya-window-dots {
-    height: 22px;
-    gap: 4px;
-  }
-  .ya-window-dots i {
-    width: 6px;
-    height: 6px;
-  }
-  .ya-project-content {
-    padding: 10px;
-  }
-  .ya-panel-heading {
-    gap: 8px;
-    margin-bottom: 11px;
-  }
-  .ya-add-files {
-    gap: 4px;
-    padding: 6px;
-    font-size: 9px !important;
-  }
-  .ya-add-files svg {
-    width: 11px;
-    height: 11px;
-  }
-  .ya-dropzone {
-    min-height: 100px;
-    padding: 12px 5px;
-  }
-  .ya-dropzone > svg {
-    width: 28px;
-    height: 28px;
-    margin-bottom: 8px;
-  }
-  .ya-dropzone strong {
-    font-size: 10px;
-  }
-  .ya-dropzone > span {
-    font-size: 8px;
-  }
-  .ya-file-grid {
-    gap: 6px;
-    min-height: 0;
-    margin-top: 10px;
-  }
-  .ya-thumbnail {
-    height: clamp(44px, 14vw, 72px);
-  }
-  .ya-remove-file {
-    padding: 2px;
-    top: 3px;
-    right: 3px;
-  }
-  .ya-remove-file svg {
-    width: 8px;
-    height: 8px;
-  }
-  .ya-file-name {
-    font-size: 8px;
-  }
-  .ya-file-size {
-    font-size: 7px;
-  }
-  .ya-profile {
-    width: 36%;
-    left: 0;
-    bottom: 16px;
-    padding: 12px 10px;
-  }
-  .ya-avatar {
-    width: 60px;
-    height: 60px;
-    margin: 12px auto;
-  }
-  .ya-avatar-edit {
-    width: 22px;
-    height: 22px;
-  }
-  .ya-avatar-edit svg {
-    width: 10px;
-    height: 10px;
-  }
-  .ya-change-photo {
-    min-height: 26px;
-    gap: 4px;
-    font-size: 9px !important;
-  }
-  .ya-change-photo svg {
-    width: 11px;
-    height: 11px;
-  }
-  .ya-profile > p {
-    display: none;
-  }
-  .ya-documents {
-    width: 62%;
-    right: 0;
-    bottom: 0;
-    padding: 12px 10px 10px;
-  }
-  .ya-documents ul {
-    gap: 5px;
-    margin-top: 10px;
-  }
-  .ya-documents li {
-    gap: 6px;
-    padding: 6px;
-  }
-  .ya-document-icon {
-    width: 22px;
-    height: 27px;
-  }
-  .ya-document-icon svg {
-    width: 17px;
-    height: 17px;
-  }
-  .ya-documents li strong {
-    font-size: 9px;
-  }
-  .ya-documents li > div > span {
-    font-size: 7px;
-    margin-top: 2px;
-  }
-  .ya-documents li > svg {
-    width: 11px;
-    height: 11px;
-    flex-shrink: 0;
-  }
-  .ya-demo-note {
-    text-align: center;
   }
 }
