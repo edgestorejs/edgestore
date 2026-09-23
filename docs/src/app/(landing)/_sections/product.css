@@ -83,7 +83,7 @@
 }
 .ya-feature-intro {
   position: sticky;
-  top: 40px;
+  top: calc(var(--ya-header-height) + 24px);
 }
 .ya-feature-list {
   display: grid;

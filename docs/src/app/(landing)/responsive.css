@@ -85,10 +85,12 @@
     grid-column: 1 / -1;
   }
 }
-@media (max-width: 760px) {
+@media (max-width: 820px) {
+  .ya-site {
+    --ya-header-height: 70px;
+  }
   .ya-header-inner {
     position: relative;
-    height: 70px;
     justify-content: space-between;
     gap: 12px;
   }
@@ -102,7 +104,7 @@
     display: none;
     position: absolute;
     z-index: 5;
-    top: 70px;
+    top: var(--ya-header-height);
     left: calc((100% - 100vw) / 2);
     right: calc((100% - 100vw) / 2);
     padding: 16px 20px;

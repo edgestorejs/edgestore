@@ -1,6 +1,7 @@
 'use client';
 
-import { Menu, Moon, Sun, X } from 'lucide-react';
+import { useAppContext } from '@/components/app-context-provider';
+import { Menu, Moon, Star, Sun, X } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -33,6 +34,7 @@ export function SiteHeader({ dashboardUrl }: { dashboardUrl: string }) {
   const [open, setOpen] = useState(false);
   const toggle = useRef<HTMLButtonElement>(null);
   const { setTheme, resolvedTheme } = useTheme();
+  const { githubStars } = useAppContext();
 
   return (
     <header className="ya-header">
@@ -61,7 +63,24 @@ export function SiteHeader({ dashboardUrl }: { dashboardUrl: string }) {
           <Link href="/pricing" onClick={() => setOpen(false)}>
             Pricing
           </Link>
-          <a href="https://github.com/edgestorejs/edgestore">GitHub</a>
+          <a
+            className="ya-github-link"
+            href="https://github.com/edgestorejs/edgestore"
+          >
+            GitHub
+            {githubStars !== undefined && (
+              <span
+                className="ya-star-count"
+                aria-label={`${githubStars.toLocaleString('en-US')} stars`}
+              >
+                <Star size={13} aria-hidden="true" />
+                {new Intl.NumberFormat('en-US', {
+                  notation: 'compact',
+                  maximumFractionDigits: 1,
+                }).format(githubStars)}
+              </span>
+            )}
+          </a>
           <a href={dashboardUrl}>Dashboard</a>
         </nav>
         <div className="ya-header-controls">

@@ -1,4 +1,5 @@
 .ya-site {
+  --ya-header-height: 76px;
   --ya-bg: #fcfcff;
   --ya-panel: #f3f2fb;
   --ya-text: #11152b;
@@ -79,10 +80,18 @@
   height: 30px;
 }
 .ya-header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: color-mix(in srgb, var(--ya-bg) 90%, transparent);
+  backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--ya-line);
 }
+.ya-site [id] {
+  scroll-margin-top: calc(var(--ya-header-height) + 24px);
+}
 .ya-header-inner {
-  height: 76px;
+  height: var(--ya-header-height);
   display: flex;
   align-items: center;
   gap: 28px;
@@ -100,6 +109,18 @@
 }
 .ya-nav a:hover {
   color: var(--ya-text);
+}
+.ya-github-link,
+.ya-star-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+}
+.ya-star-count {
+  gap: 4px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
 }
 .ya-header-controls {
   display: flex;
@@ -202,7 +223,6 @@
   border-block: 1px solid var(--ya-line);
   padding-block: 54px 48px;
   background: color-mix(in srgb, var(--ya-panel) 30%, var(--ya-bg));
-  scroll-margin-top: 24px;
 }
 .ya-site .ya-section-lead {
   margin-top: 15px;
