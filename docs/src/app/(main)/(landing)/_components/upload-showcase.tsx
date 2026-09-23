@@ -11,7 +11,7 @@ import {
   X,
 } from 'lucide-react';
 import Image from 'next/image';
-import { useRef, useState, useSyncExternalStore } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useDemoUpload, type DemoFile } from './use-demo-upload';
 
 const sampleFiles: DemoFile[] = [
@@ -86,9 +86,27 @@ export function UploadShowcase() {
   const [dragging, setDragging] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
   const avatarInput = useRef<HTMLInputElement>(null);
+  const showcase = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const element = showcase.current;
+    if (!element) return;
+    // Scale actual lengths rather than zooming a composited layer. Safari can
+    // lose that layer after resizing or scrolling it out of view.
+    const resize = (width: number) => {
+      element.style.setProperty('--showcase-unit', `${width / 640}px`);
+    };
+    resize(element.getBoundingClientRect().width);
+    const observer = new ResizeObserver(([entry]) => {
+      if (entry) resize(entry.contentRect.width);
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <div
+      ref={showcase}
       className="ya-showcase"
       role={readOnly ? 'img' : undefined}
       aria-label={

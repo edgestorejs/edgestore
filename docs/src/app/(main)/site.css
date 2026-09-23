@@ -15,7 +15,7 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  min-height: 100svh;
+  min-height: 100vh;
   -webkit-font-smoothing: antialiased;
 }
 .dark .ya-site {
@@ -59,8 +59,7 @@
   position: sticky;
   top: 0;
   z-index: 30;
-  background: color-mix(in srgb, var(--ya-bg) 90%, transparent);
-  backdrop-filter: blur(16px);
+  background: var(--ya-bg);
   border-bottom: 1px solid var(--ya-line);
 }
 .ya-site [id] {
