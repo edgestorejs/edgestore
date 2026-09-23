@@ -78,6 +78,7 @@
   align-items: center;
   gap: 30px;
   font-size: 14px;
+  line-height: 20px;
   color: var(--ya-muted);
 }
 .ya-nav a {
@@ -94,9 +95,12 @@
   white-space: nowrap;
 }
 .ya-star-count {
-  gap: 4px;
-  font-size: 12px;
+  gap: 5px;
   font-variant-numeric: tabular-nums;
+}
+.ya-star-count svg {
+  display: block;
+  flex: none;
 }
 .ya-header-controls {
   display: flex;

@@ -78,7 +78,7 @@ export function SiteHeader({ dashboardUrl }: { dashboardUrl: string }) {
                 className="ya-star-count"
                 aria-label={`${githubStars.toLocaleString('en-US')} stars`}
               >
-                <Star size={13} aria-hidden="true" />
+                <Star size={14} aria-hidden="true" />
                 {new Intl.NumberFormat('en-US', {
                   notation: 'compact',
                   maximumFractionDigits: 1,
