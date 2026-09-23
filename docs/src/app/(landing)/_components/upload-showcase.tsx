@@ -11,17 +11,10 @@ import {
   X,
 } from 'lucide-react';
 import Image from 'next/image';
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import { formatFileSize, selectPreviewImages } from './preview-files';
+import { useRef, useState, useSyncExternalStore } from 'react';
+import { useDemoUpload, type DemoFile } from './use-demo-upload';
 
-type PreviewFile = {
-  id: string;
-  name: string;
-  size: string;
-  image?: string;
-  art?: 'wave' | 'code';
-};
-const sampleFiles: PreviewFile[] = [
+const sampleFiles: DemoFile[] = [
   {
     id: 'mountain',
     name: 'mountains.jpg',
@@ -76,67 +69,23 @@ export function UploadShowcase() {
     isMobilePreview,
     () => true,
   );
-  const [files, setFiles] = useState(sampleFiles);
-  const [avatar, setAvatar] = useState('/img/home/avatar.jpg');
-  const [message, setMessage] = useState('');
-  const [hasError, setHasError] = useState(false);
+  const gallery = useDemoUpload(sampleFiles, 4);
+  const profile = useDemoUpload(
+    [
+      {
+        id: 'avatar',
+        name: 'Profile photo',
+        size: '',
+        image: '/img/home/avatar.jpg',
+      },
+    ],
+    1,
+  );
+  const avatar = profile.files[0]!;
+  const files = gallery.files;
   const [dragging, setDragging] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
   const avatarInput = useRef<HTMLInputElement>(null);
-  const objectUrls = useRef(new Set<string>());
-
-  useEffect(() => {
-    const urls = objectUrls.current;
-    return () => {
-      for (const url of urls) URL.revokeObjectURL(url);
-    };
-  }, []);
-
-  function release(url: string | undefined) {
-    if (url && objectUrls.current.delete(url)) URL.revokeObjectURL(url);
-  }
-
-  function previewImages(selected: FileList | null, profile = false) {
-    if (!selected?.length) return;
-    const accepted = selectPreviewImages(Array.from(selected), profile ? 1 : 4);
-    if (!accepted.length) {
-      setHasError(true);
-      setMessage(
-        'Choose a JPG, PNG or WebP image up to 5 MB. Nothing was uploaded.',
-      );
-      return;
-    }
-    setHasError(false);
-    const previews = accepted.map((file) => {
-      const url = URL.createObjectURL(file);
-      objectUrls.current.add(url);
-      return {
-        id: url,
-        name: file.name,
-        size: formatFileSize(file.size),
-        image: url,
-      };
-    });
-    if (profile) {
-      release(avatar);
-      setAvatar(previews[0]!.image);
-    } else {
-      files.forEach((file) => release(file.image));
-      setFiles(previews);
-    }
-    setMessage(
-      profile
-        ? 'Profile photo updated locally. Nothing was uploaded.'
-        : `Previewing ${previews.length} image${previews.length === 1 ? '' : 's'} locally.${accepted.length < selected.length ? ' Up to 4 JPG, PNG or WebP files under 5 MB are supported.' : ''} Nothing was uploaded.`,
-    );
-  }
-
-  function remove(file: PreviewFile) {
-    setHasError(false);
-    release(file.image);
-    setFiles((current) => current.filter((item) => item.id !== file.id));
-    setMessage(`${file.name} removed from this preview.`);
-  }
 
   return (
     <div
@@ -171,7 +120,7 @@ export function UploadShowcase() {
                 onClick={() => fileInput.current?.click()}
               >
                 <Upload size={16} />
-                Choose images
+                Upload images
               </button>
             </div>
             <input
@@ -182,7 +131,7 @@ export function UploadShowcase() {
               accept="image/jpeg,image/png,image/webp"
               aria-label="Choose project images"
               onChange={(event) => {
-                previewImages(event.target.files);
+                gallery.upload(event.target.files);
                 event.target.value = '';
               }}
             />
@@ -199,16 +148,17 @@ export function UploadShowcase() {
               onDrop={(event) => {
                 event.preventDefault();
                 setDragging(false);
-                previewImages(event.dataTransfer.files);
+                gallery.upload(event.dataTransfer.files);
               }}
             >
               <CloudUpload size={37} strokeWidth={1.6} />
               <strong>
                 {dragging
-                  ? 'Drop to preview your images'
+                  ? 'Drop to upload your images'
                   : 'Drag & drop images here'}
               </strong>
               <span>JPG, PNG or WebP. Up to 4 images, 5 MB each.</span>
+              <span>Public demo uploads. Deleted after 24 hours.</span>
             </button>
             <ul className="ya-file-grid">
               {files.map((file) => (
@@ -259,24 +209,53 @@ export function UploadShowcase() {
                         />
                       </svg>
                     )}
+                    {file.url && (
+                      <a
+                        className="ya-open-upload"
+                        href={file.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        aria-label={`Open uploaded ${file.name}`}
+                      />
+                    )}
                     <button
                       type="button"
                       className="ya-remove-file"
-                      aria-label={`Remove ${file.name}`}
-                      onClick={() => remove(file)}
+                      aria-label={`${file.progress !== undefined ? 'Cancel upload of' : 'Remove preview of'} ${file.name}`}
+                      onClick={() => gallery.remove(file.id)}
                     >
                       <X size={12} />
                     </button>
                   </div>
-                  <span className="ya-file-name" title={file.name}>
-                    {file.name}
+                  {file.url ? (
+                    <a
+                      className="ya-file-name ya-uploaded-file"
+                      href={file.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      title={`Open ${file.name}`}
+                    >
+                      {file.name}
+                    </a>
+                  ) : (
+                    <span className="ya-file-name" title={file.name}>
+                      {file.name}
+                    </span>
+                  )}
+                  <span className="ya-file-size" role="status">
+                    {file.failed
+                      ? 'Upload failed'
+                      : file.progress !== undefined
+                        ? `Uploading ${Math.round(file.progress)}%`
+                        : file.url
+                          ? 'Uploaded'
+                          : file.size}
                   </span>
-                  <span className="ya-file-size">{file.size}</span>
                 </li>
               ))}
               {!files.length && (
                 <li className="ya-empty-files">
-                  No images. Choose an image to preview it.
+                  Choose an image to upload it.
                 </li>
               )}
             </ul>
@@ -289,7 +268,7 @@ export function UploadShowcase() {
           <h2 id="ya-profile-title">Profile photo</h2>
           <div className="ya-avatar">
             <Image
-              src={avatar}
+              src={avatar.image!}
               alt="Sample profile preview"
               fill
               unoptimized
@@ -306,7 +285,7 @@ export function UploadShowcase() {
             accept="image/jpeg,image/png,image/webp"
             aria-label="Choose profile photo"
             onChange={(event) => {
-              previewImages(event.target.files, true);
+              profile.upload(event.target.files);
               event.target.value = '';
             }}
           />
@@ -316,9 +295,21 @@ export function UploadShowcase() {
             onClick={() => avatarInput.current?.click()}
           >
             <Upload size={15} />
-            Change photo
+            {avatar.progress !== undefined
+              ? `Uploading ${Math.round(avatar.progress)}%`
+              : 'Upload photo'}
           </button>
-          <p>JPG, PNG or WebP. Max 5 MB.</p>
+          <p>Public demo. Deleted after 24 hours.</p>
+          {avatar.url && (
+            <a
+              className="ya-profile-link"
+              href={avatar.url}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Open uploaded photo
+            </a>
+          )}
         </section>
         <section
           className="ya-documents ya-panel"
@@ -342,11 +333,8 @@ export function UploadShowcase() {
         </section>
       </div>
       {!readOnly && (
-        <p
-          className={hasError ? 'ya-preview-error' : 'ya-sr-only'}
-          role="status"
-        >
-          {message}
+        <p className="ya-preview-error" role="status">
+          {gallery.error || profile.error}
         </p>
       )}
     </div>

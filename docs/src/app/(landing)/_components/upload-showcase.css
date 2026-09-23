@@ -172,6 +172,10 @@
   display: grid;
   place-items: center;
 }
+.ya-open-upload {
+  position: absolute;
+  inset: 0;
+}
 .ya-remove-file:hover {
   background: #453775;
 }
@@ -188,6 +192,18 @@
   font-size: 9px;
   color: var(--ya-muted);
   margin-top: 2px;
+}
+.ya-uploaded-file,
+.ya-profile-link {
+  color: var(--ya-accent);
+  text-decoration: underline !important;
+  text-underline-offset: 2px;
+}
+.ya-profile-link {
+  display: block;
+  text-align: center;
+  font-size: 9px;
+  margin-top: 6px;
 }
 .ya-empty-files {
   grid-column: 1 / -1;

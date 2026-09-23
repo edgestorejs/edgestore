@@ -18,6 +18,7 @@ import {
   ShieldCheck,
   SlidersHorizontal,
   Terminal,
+  Timer,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -123,6 +124,15 @@ export function TypedExample() {
 }
 
 const features = [
+  {
+    title: 'Temporary files',
+    description:
+      'With hosted storage, unconfirmed uploads are deleted after 24 hours. Confirm files when the user saves.',
+    icon: Timer,
+    href: '/docs/quick-start#temporary-files',
+    link: 'Use temporary uploads',
+    detail: ['Automatic cleanup', 'Confirm on save'],
+  },
   {
     title: 'File validation',
     description:

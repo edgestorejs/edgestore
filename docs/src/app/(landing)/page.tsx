@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { SetupPrompt } from './_components/setup-prompt';
 import { SiteHeader } from './_components/site-header';
 import { UploadShowcase } from './_components/upload-showcase';
+import { DeveloperQuotes, UploadComponents } from './_sections/community';
 import { Faq, SiteFooter } from './_sections/footer';
 import {
   AgentTools,
@@ -15,6 +16,7 @@ import {
 } from './_sections/product';
 import './home.css';
 import './_sections/product.css';
+import './_sections/community.css';
 import './_components/upload-showcase.css';
 import './responsive.css';
 
@@ -99,8 +101,10 @@ export default function HomePage() {
 
         <TypedExample />
         <ProductFeatures />
+        <UploadComponents />
         <StorageOptions />
         <Frameworks />
+        <DeveloperQuotes />
         <Faq />
 
         <section

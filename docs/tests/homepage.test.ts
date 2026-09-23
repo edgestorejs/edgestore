@@ -9,7 +9,7 @@ function file(name: string, type = 'image/png', size = 16) {
   return new File([new Uint8Array(size)], name, { type });
 }
 
-test('local demo accepts only supported image types', () => {
+test('upload demo accepts only supported image types', () => {
   const files = [
     file('photo.jpg', 'image/jpeg'),
     file('image.png'),
@@ -23,7 +23,7 @@ test('local demo accepts only supported image types', () => {
   );
 });
 
-test('local demo accepts the size limit and rejects larger files', () => {
+test('upload demo accepts the size limit and rejects larger files', () => {
   const files = [
     file('limit.png', 'image/png', 5 * 1024 * 1024),
     file('large.png', 'image/png', 5 * 1024 * 1024 + 1),
