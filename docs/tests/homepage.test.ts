@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import {
   formatFileSize,
   selectPreviewImages,
-} from '../src/app/(landing)/_components/preview-files';
+} from '../src/app/(main)/(landing)/_components/preview-files';
 
 function file(name: string, type = 'image/png', size = 16) {
   return new File([new Uint8Array(size)], name, { type });

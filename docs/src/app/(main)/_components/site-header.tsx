@@ -7,9 +7,14 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRef, useState } from 'react';
 
-export function Brand() {
+export function Brand({ onNavigate }: { onNavigate?: () => void }) {
   return (
-    <Link href="/" className="ya-brand" aria-label="EdgeStore home">
+    <Link
+      href="/"
+      className="ya-brand"
+      aria-label="EdgeStore home"
+      onClick={onNavigate}
+    >
       <Image
         src="/img/edgestore-lockup-light.svg"
         alt=""
@@ -50,7 +55,7 @@ export function SiteHeader({ dashboardUrl }: { dashboardUrl: string }) {
           }
         }}
       >
-        <Brand />
+        <Brand onNavigate={() => setOpen(false)} />
         <nav
           id="home-navigation"
           className="ya-nav"
