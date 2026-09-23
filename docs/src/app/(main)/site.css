@@ -59,7 +59,8 @@
   position: sticky;
   top: 0;
   z-index: 30;
-  background: var(--ya-bg);
+  background: color-mix(in srgb, var(--ya-bg) 90%, transparent);
+  backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--ya-line);
 }
 .ya-site [id] {
