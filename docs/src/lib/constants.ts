@@ -13,6 +13,7 @@ const deployment = getDocsDeployment({
 export const DOCS_ORIGIN = deployment.origin;
 export const DOCS_GIT_REF = deployment.gitRef;
 export const GITHUB_URL = `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}`;
+export const SITE_URL = new URL('https://edgestore.dev');
 export const SPONSOR_URL = 'https://github.com/sponsors/perfectbase';
 export const YOUTUBE_URL = 'https://youtube.com/@perfectbase';
 export const X_URL = 'https://x.com/edgestorejs';
