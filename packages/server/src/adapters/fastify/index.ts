@@ -7,7 +7,7 @@ import {
   toNodeDispatchResponse,
   type CreateContextConfig,
 } from '../dispatcher';
-import type { CookieConfig, HandlerEdgeStore } from '../shared';
+import type { CookieConfig, HandlerRouter } from '../shared';
 
 export type CreateContextOptions = {
   req: FastifyRequest;
@@ -15,7 +15,7 @@ export type CreateContextOptions = {
 };
 
 export type Config<TCtx extends AnyContext> = {
-  edgestore: HandlerEdgeStore<TCtx>;
+  router: HandlerRouter<TCtx>;
   logLevel?: LogLevel;
   cookieConfig?: CookieConfig;
 } & CreateContextConfig<TCtx, CreateContextOptions>;
@@ -29,7 +29,7 @@ export function createEdgeStoreFastifyHandler<TCtx extends AnyContext>(
   return async (req: FastifyRequest, reply: FastifyReply): Promise<void> => {
     const url = new URL(req.url, 'http://edgestore.local');
     const response = await dispatchEdgeStoreRequest<TCtx>({
-      edgestore: config.edgestore,
+      router: config.router,
       logger: log,
       cookieConfig: config.cookieConfig,
       request: {

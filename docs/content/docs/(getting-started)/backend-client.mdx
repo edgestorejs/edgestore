@@ -7,15 +7,15 @@ Sometimes you might want to use the EdgeStore functionality directly from your b
 
 ## Setup
 
-Configure the router and hosted provider once. The resulting `configuredEdgeStore`
-instance is used by the HTTP handler and exposes the type-safe backend client.
+The router exposes a type-safe backend client through `router.client`. The HTTP
+handler and backend client share the same provider. EdgeStore is the default;
+chain `.provider(myProvider)` on the router to use a different provider.
 
 Since Next.js doesn't allow exports in the api route, you will need to move your router to an external file.
 
 ```ts title="src/lib/edgestore-server.ts"
-import { createEdgeStore, initEdgeStore } from '@edgestore/server';
+import { initEdgeStore } from '@edgestore/server';
 import { createEdgeStoreNextHandler } from '@edgestore/server/adapters/next/app';
-import { edgestore } from '@edgestore/server/providers/edgestore';
 
 const es = initEdgeStore.create();
 
@@ -23,16 +23,11 @@ export const router = es.router({
   publicFiles: es.fileBucket(),
 });
 
-export const configuredEdgeStore = createEdgeStore({
-  router,
-  provider: edgestore(),
-});
-
 export const handler = createEdgeStoreNextHandler({
-  edgestore: configuredEdgeStore,
+  router,
 });
 
-export const backendClient = configuredEdgeStore.client;
+export const backendClient = router.client;
 ```
 
 Then you will need to update your api route to use the exported handler.
@@ -247,11 +242,11 @@ client:
 
 ```ts
 type UploadInput = Parameters<
-  typeof configuredEdgeStore.client.publicFiles.upload
+  typeof router.client.publicFiles.upload
 >[0];
 
 type UploadOutput = Awaited<
-  ReturnType<typeof configuredEdgeStore.client.publicFiles.upload>
+  ReturnType<typeof router.client.publicFiles.upload>
 >;
 ```
 
@@ -274,14 +269,8 @@ type UploadInput = BackendInputs['publicFiles']['upload'];
 type UploadOutput = BackendOutputs['publicFiles']['upload'];
 ```
 
-The default represents the hosted provider. Pass a custom provider as the
-second generic when its capabilities or associated types differ:
-
-```ts
-type BackendOutputs = InferClientOutputs<
-  typeof router,
-  typeof customProvider
->;
-```
+The helpers infer capabilities and provider-specific types directly from the
+router, including custom providers. Use `EdgeStoreClient<typeof router>` for
+the complete backend client type.
 
 `InferClientResponse` remains as a deprecated alias of `InferClientOutputs`.

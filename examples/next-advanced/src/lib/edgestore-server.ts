@@ -1,9 +1,8 @@
-import { createEdgeStore, initEdgeStore } from '@edgestore/server';
+import { initEdgeStore } from '@edgestore/server';
 import {
   createEdgeStoreNextHandler,
   type CreateContextOptions,
 } from '@edgestore/server/adapters/next/app';
-import { edgestore } from '@edgestore/server/providers/edgestore';
 import { z } from 'zod';
 
 type Context = {
@@ -45,13 +44,8 @@ const router = es.router({
   publicImages: es.imageBucket(),
 });
 
-export const configuredEdgeStore = createEdgeStore({
-  router,
-  provider: edgestore(),
-});
-
 export const handler = createEdgeStoreNextHandler({
-  edgestore: configuredEdgeStore,
+  router,
   createContext,
 });
 
@@ -60,4 +54,4 @@ export const handler = createEdgeStoreNextHandler({
  */
 export type EdgeStoreRouter = typeof router;
 
-export const backendClient = configuredEdgeStore.client;
+export const backendClient = router.client;

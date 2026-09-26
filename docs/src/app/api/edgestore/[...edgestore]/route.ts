@@ -1,6 +1,5 @@
-import { createEdgeStore, initEdgeStore } from '@edgestore/server';
+import { initEdgeStore } from '@edgestore/server';
 import { createEdgeStoreNextHandler } from '@edgestore/server/adapters/next/app';
-import { edgestore } from '@edgestore/server/providers/edgestore';
 
 const es = initEdgeStore.create();
 
@@ -11,13 +10,8 @@ const router = es.router({
   myPublicFiles: es.fileBucket(),
 });
 
-const configuredEdgeStore = createEdgeStore({
-  router,
-  provider: edgestore(),
-});
-
 const handler = createEdgeStoreNextHandler({
-  edgestore: configuredEdgeStore,
+  router,
 });
 
 export { handler as GET, handler as POST };

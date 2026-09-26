@@ -1,16 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import { EdgeStoreError } from '../errors';
-import { initEdgeStore } from './bucketBuilder';
+import { initBucket } from './bucketBuilder';
 import { type AnySchema } from './schema';
 
 describe('bucketBuilder path validation', () => {
   it('rejects path params with multiple keys', () => {
-    const es = initEdgeStore
-      .context<{ author: string; type: string; userId: string }>()
-      .create();
+    const bucket = initBucket<
+      { author: string; type: string; userId: string },
+      'FILE'
+    >('FILE');
 
     expect(() =>
-      es.fileBucket().path(({ ctx }) => [
+      bucket.path(({ ctx }) => [
         {
           author: ctx.author,
           type: ctx.type,
@@ -20,21 +21,23 @@ describe('bucketBuilder path validation', () => {
   });
 
   it('rejects duplicate path param keys', () => {
-    const es = initEdgeStore
-      .context<{ author: string; type: string; userId: string }>()
-      .create();
+    const bucket = initBucket<
+      { author: string; type: string; userId: string },
+      'FILE'
+    >('FILE');
 
     expect(() =>
-      es
-        .fileBucket()
-        .path(({ ctx }) => [{ author: ctx.author }, { author: ctx.userId }]),
+      bucket.path(({ ctx }) => [
+        { author: ctx.author },
+        { author: ctx.userId },
+      ]),
     ).toThrow(EdgeStoreError);
   });
 });
 
 describe('bucketBuilder input validation', () => {
   it('rejects unsupported Standard Schema versions when configured', () => {
-    const es = initEdgeStore.create();
+    const bucket = initBucket<Record<string, never>, 'FILE'>('FILE');
     const unsupportedSchema = {
       '~standard': {
         version: 2,
@@ -45,7 +48,7 @@ describe('bucketBuilder input validation', () => {
 
     let error: unknown;
     try {
-      es.fileBucket().input(unsupportedSchema);
+      bucket.input(unsupportedSchema);
     } catch (caught) {
       error = caught;
     }

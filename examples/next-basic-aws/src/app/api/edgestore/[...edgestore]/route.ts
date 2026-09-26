@@ -1,4 +1,4 @@
-import { createEdgeStore, initEdgeStore } from '@edgestore/server';
+import { initEdgeStore } from '@edgestore/server';
 import {
   createEdgeStoreNextHandler,
   type CreateContextOptions,
@@ -20,22 +20,21 @@ function createContext(opts: CreateContextOptions) {
 /**
  * This is the main router for the EdgeStore buckets.
  */
-const router = es.router({
-  publicFiles: es.fileBucket().path(({ ctx }) => [{ author: ctx.userId }]),
-});
-
-const configuredEdgeStore = createEdgeStore({
-  router,
-  provider: s3({
-    path: ({ defaultPath }) => {
-      // `publicFiles/_public/123/test.png` -> `publicFiles/123/test.png`
-      return defaultPath.replace(/^_public\//, '');
-    },
-  }),
-});
+const router = es
+  .router({
+    publicFiles: es.fileBucket().path(({ ctx }) => [{ author: ctx.userId }]),
+  })
+  .provider(
+    s3({
+      path: ({ defaultPath }) => {
+        // `publicFiles/_public/123/test.png` -> `publicFiles/123/test.png`
+        return defaultPath.replace(/^_public\//, '');
+      },
+    }),
+  );
 
 const handler = createEdgeStoreNextHandler({
-  edgestore: configuredEdgeStore,
+  router,
   createContext,
 });
 

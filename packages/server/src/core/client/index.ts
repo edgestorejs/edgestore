@@ -3,7 +3,6 @@ import {
   type AnyEdgeStoreProvider,
   type AnyRouter,
   type BackendFile,
-  type DefaultEdgeStoreProvider,
   type FileReference,
   type InferBucketPathKeys,
   type InferBucketPathObject,
@@ -367,9 +366,9 @@ export type BucketClient<
   ListBucketClient<TBucket, TProvider> &
   SignedUrlBucketClient<TBucket, TProvider>;
 
-export type EdgeStoreClient<
+type BackendClient<
   TRouter extends AnyRouter,
-  TProvider extends AnyBackendProvider = DefaultEdgeStoreProvider,
+  TProvider extends AnyBackendProvider,
 > = {
   [K in keyof TRouter['buckets']]: BucketClient<
     TRouter['buckets'][K],
@@ -384,7 +383,7 @@ export function createBackendClient<
   router: TRouter,
   provider: TProvider,
   baseUrl?: string,
-): EdgeStoreClient<TRouter, TProvider> {
+): BackendClient<TRouter, TProvider> {
   const bucketNames = Object.keys(router.buckets) as (keyof TRouter['buckets'] &
     string)[];
   const entries = bucketNames.map((bucketName) => [
@@ -392,7 +391,7 @@ export function createBackendClient<
     createBucketClient(router, bucketName, { provider, baseUrl }),
   ]);
 
-  return Object.fromEntries(entries) as EdgeStoreClient<TRouter, TProvider>;
+  return Object.fromEntries(entries) as BackendClient<TRouter, TProvider>;
 }
 
 type ClientMethodInput<TMethod> = TMethod extends (
@@ -407,43 +406,28 @@ type ClientMethodOutput<TMethod> = TMethod extends (
   ? Simplify<Awaited<TResult>>
   : never;
 
-/**
- * Infers the input accepted by every method on a router-derived backend client.
- */
-export type InferClientInputs<
-  TRouter extends AnyRouter,
-  TProvider extends AnyBackendProvider = DefaultEdgeStoreProvider,
-> = {
-  [TBucketName in keyof TRouter['buckets']]: {
-    [
-      TClientFn in keyof EdgeStoreClient<TRouter, TProvider>[TBucketName]
-    ]: ClientMethodInput<
-      EdgeStoreClient<TRouter, TProvider>[TBucketName][TClientFn]
+/** The backend client exposed by a configured router. */
+export type EdgeStoreClient<TRouter extends { readonly client: object }> =
+  TRouter['client'];
+
+/** Infers the input accepted by every method on the router's backend client. */
+export type InferClientInputs<TRouter extends { readonly client: object }> = {
+  [TBucket in keyof TRouter['client']]: {
+    [TMethod in keyof TRouter['client'][TBucket]]: ClientMethodInput<
+      TRouter['client'][TBucket][TMethod]
     >;
   };
 };
 
-/**
- * Infers the resolved output of every method on a router-derived backend
- * client.
- */
-export type InferClientOutputs<
-  TRouter extends AnyRouter,
-  TProvider extends AnyBackendProvider = DefaultEdgeStoreProvider,
-> = {
-  [TBucketName in keyof TRouter['buckets']]: {
-    [
-      TClientFn in keyof EdgeStoreClient<TRouter, TProvider>[TBucketName]
-    ]: ClientMethodOutput<
-      EdgeStoreClient<TRouter, TProvider>[TBucketName][TClientFn]
+/** Infers the resolved output of every method on the router's backend client. */
+export type InferClientOutputs<TRouter extends { readonly client: object }> = {
+  [TBucket in keyof TRouter['client']]: {
+    [TMethod in keyof TRouter['client'][TBucket]]: ClientMethodOutput<
+      TRouter['client'][TBucket][TMethod]
     >;
   };
 };
 
-/**
- * @deprecated Use {@link InferClientOutputs} instead.
- */
-export type InferClientResponse<
-  TRouter extends AnyRouter,
-  TProvider extends AnyBackendProvider = DefaultEdgeStoreProvider,
-> = InferClientOutputs<TRouter, TProvider>;
+/** @deprecated Use {@link InferClientOutputs} instead. */
+export type InferClientResponse<TRouter extends { readonly client: object }> =
+  InferClientOutputs<TRouter>;

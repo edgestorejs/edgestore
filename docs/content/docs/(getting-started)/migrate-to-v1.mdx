@@ -9,8 +9,10 @@ semantics without a runtime v1 fallback.
 
 ## Configure EdgeStore once
 
-The router, provider, HTTP handler, and backend client now share one configured
-instance. This is a semantic migration, so there is no rename codemod.
+The HTTP handler and backend client now share the router's provider. The hosted
+provider is the default, so the basic handler setup stays the same. Replace
+`initEdgeStoreClient({ router })` with `router.client`, and configure custom
+providers by chaining `.provider(myProvider)` on `es.router(...)`.
 
 ```ts title="Before"
 import { initEdgeStore } from '@edgestore/server';
@@ -32,33 +34,27 @@ export const backendClient = initEdgeStoreClient({
 ```
 
 ```ts title="After"
-import { createEdgeStore, initEdgeStore } from '@edgestore/server';
+import { initEdgeStore } from '@edgestore/server';
 import { createEdgeStoreNextHandler } from '@edgestore/server/adapters/next/app';
-import { edgestore } from '@edgestore/server/providers/edgestore';
 
 const es = initEdgeStore.create();
 const router = es.router({
   documents: es.fileBucket(),
 });
 
-export const configuredEdgeStore = createEdgeStore({
-  router,
-  provider: edgestore(),
-});
-
 export const handler = createEdgeStoreNextHandler({
-  edgestore: configuredEdgeStore,
+  router,
 });
 
-export const backendClient = configuredEdgeStore.client;
+export const backendClient = router.client;
 ```
 
 ## Breaking changes
 
 | v0.7                                        | v1                                | Required change                                            |
 | ------------------------------------------- | --------------------------------- | ---------------------------------------------------------- |
-| Separate handler and client config          | `createEdgeStore`                 | Configure the router and provider once.                    |
-| `initEdgeStoreClient`                       | `configuredEdgeStore.client`      | Read the client from the configured hosted provider.       |
+| Separate handler and client config          | `es.router(...).provider(...)`    | Configure the router and provider once.                    |
+| `initEdgeStoreClient`                       | `router.client`      | Read the client from the configured hosted provider.       |
 | URL-only identity                           | `{ id }`, `{ key }`, or `{ url }` | Prefer stable IDs in new code.                             |
 | Predicted upload result                     | Canonical processed file          | Use `sizeBytes`, `id`, `key`, and the returned timestamps. |
 | `{ pagination: { currentPage, pageSize } }` | `{ cursor, limit }`               | Replace page numbers with explicit cursor continuation.    |

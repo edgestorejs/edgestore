@@ -419,7 +419,7 @@ function getUrl(url: string, baseUrl?: string) {
   if (isDev() && !url.includes('/_public/')) {
     if (!baseUrl) {
       throw new Error(
-        'Missing baseUrl. Pass the baseUrl to `createEdgeStore` to get protected files in development.',
+        'Missing baseUrl. Pass baseUrl in the second argument to `es.router` to get protected files in development.',
       );
     }
     const proxyUrl = new URL(baseUrl);

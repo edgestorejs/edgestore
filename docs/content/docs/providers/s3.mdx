@@ -17,11 +17,10 @@ You need to install some peer dependencies to use this provider.
 @aws-sdk/client-s3 @aws-sdk/s3-request-presigner
 ```
 
-Then configure the provider together with the router and pass the resulting
-`configuredEdgeStore` instance to the adapter.
+Chain `.provider()` when defining your router, then pass the router to the adapter.
 
 ```ts
-import { createEdgeStore, initEdgeStore } from '@edgestore/server';
+import { initEdgeStore } from '@edgestore/server';
 import {
   createEdgeStoreNextHandler,
   type CreateContextOptions,
@@ -32,14 +31,13 @@ import { z } from 'zod';
 
 // ...
 
-const configuredEdgeStore = createEdgeStore({
-  router,
-  // [!code ++]
-  provider: s3(),
-});
+const es = initEdgeStore.context<Context>().create();
+const router = es.router({
+  publicFiles: es.fileBucket(),
+}).provider(s3());
 
 export default createEdgeStoreNextHandler<Context>({
-  edgestore: configuredEdgeStore,
+  router,
   createContext,
 });
 ```
@@ -119,19 +117,20 @@ Use `path` to customize everything beneath that protected prefix. For example,
 this removes `_public` while keeping the remaining generated path:
 
 ```ts title="src/server/edgestore.ts"
-const configuredEdgeStore = createEdgeStore({
-  router,
-  provider: s3({
+const router = es.router({
+  documents: es.fileBucket(),
+}).provider(
+  s3({
     path: ({ defaultPath }) => {
       // `documents/_public/acme/invoice.pdf`
       // becomes `documents/acme/invoice.pdf`
       return defaultPath.replace(/^_public\//, '');
     },
   }),
-});
+);
 
 const handler = createEdgeStoreNextHandler({
-  edgestore: configuredEdgeStore,
+  router,
   createContext,
 });
 ```

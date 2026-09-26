@@ -6,14 +6,14 @@ import {
   resolveContext,
   type CreateContextConfig,
 } from '../../dispatcher';
-import { type CookieConfig, type HandlerEdgeStore } from '../../shared';
+import { type CookieConfig, type HandlerRouter } from '../../shared';
 
 export type CreateContextOptions = {
   req: NextRequest;
 };
 
 export type Config<TCtx extends AnyContext> = {
-  edgestore: HandlerEdgeStore<TCtx>;
+  router: HandlerRouter<TCtx>;
   logLevel?: LogLevel;
   cookieConfig?: CookieConfig;
 } & CreateContextConfig<TCtx, CreateContextOptions>;
@@ -36,7 +36,7 @@ export function createEdgeStoreNextHandler<TCtx extends AnyContext>(
     }
 
     return await dispatchEdgeStoreRequest<TCtx>({
-      edgestore: config.edgestore,
+      router: config.router,
       logger: log,
       cookieConfig,
       request: {

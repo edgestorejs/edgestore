@@ -32,9 +32,8 @@ env file before constructing the provider; Express does not load it automaticall
 This bucket's files are accessible to anyone with the link.
 
 ```ts
-import { createEdgeStore, initEdgeStore } from '@edgestore/server';
+import { initEdgeStore } from '@edgestore/server';
 import { createEdgeStoreExpressHandler } from '@edgestore/server/adapters/express';
-import { edgestore } from '@edgestore/server/providers/edgestore';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
@@ -61,13 +60,8 @@ const router = es.router({
 
 export type EdgeStoreRouter = typeof router;
 
-const configuredEdgeStore = createEdgeStore({
-  router,
-  provider: edgestore(),
-});
-
 const handler = createEdgeStoreExpressHandler({
-  edgestore: configuredEdgeStore,
+  router,
 });
 
 app.get('/edgestore/*splat', handler);

@@ -1,9 +1,7 @@
-import { initEdgeStore } from '@edgestore/shared';
 import { parseCookie } from 'cookie';
 import express from 'express';
 import { describe, expect, it } from 'vitest';
-import { createEdgeStore } from '../core';
-import { edgestore } from '../providers/edgestore';
+import { initEdgeStore } from '../core/router';
 import {
   createSmokeFileName,
   getSmokeBucketName,
@@ -68,7 +66,7 @@ async function createSmokeServer() {
     [smokeImageBucketName]: es.imageBucket(),
   });
   const handler = createEdgeStoreExpressHandler({
-    edgestore: createEdgeStore({ router, provider: edgestore() }),
+    router,
   });
   const app = express();
   app.use(express.json());

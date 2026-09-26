@@ -6,14 +6,14 @@ import {
   resolveContext,
   type CreateContextConfig,
 } from '../dispatcher';
-import { type CookieConfig, type HandlerEdgeStore } from '../shared';
+import { type CookieConfig, type HandlerRouter } from '../shared';
 
 export type CreateContextOptions = {
   c: HonoContext;
 };
 
 export type Config<TCtx extends AnyContext> = {
-  edgestore: HandlerEdgeStore<TCtx>;
+  router: HandlerRouter<TCtx>;
   logLevel?: LogLevel;
   cookieConfig?: CookieConfig;
 } & CreateContextConfig<TCtx, CreateContextOptions>;
@@ -27,7 +27,7 @@ export function createEdgeStoreHonoHandler<TCtx extends AnyContext>(
 
   return async (c: HonoContext): Promise<Response> =>
     await dispatchEdgeStoreRequest<TCtx>({
-      edgestore: config.edgestore,
+      router: config.router,
       logger: log,
       cookieConfig,
       request: {

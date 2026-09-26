@@ -32,9 +32,8 @@ EDGE_STORE_SECRET_KEY=your-secret-key
 This bucket's files are accessible to anyone with the link.
 
 ```ts
-import { createEdgeStore, initEdgeStore } from '@edgestore/server';
+import { initEdgeStore } from '@edgestore/server';
 import { createEdgeStoreHonoHandler } from '@edgestore/server/adapters/hono';
-import { edgestore } from '@edgestore/server/providers/edgestore';
 import { serve } from '@hono/node-server';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
@@ -59,13 +58,8 @@ const router = es.router({
 
 export type EdgeStoreRouter = typeof router;
 
-const configuredEdgeStore = createEdgeStore({
-  router,
-  provider: edgestore(),
-});
-
 const handler = createEdgeStoreHonoHandler({
-  edgestore: configuredEdgeStore,
+  router,
 });
 
 app.all('/edgestore/*', handler);
