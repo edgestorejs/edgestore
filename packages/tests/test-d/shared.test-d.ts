@@ -1,5 +1,5 @@
+import { initEdgeStore } from '@edgestore/server';
 import {
-  initEdgeStore,
   type AccessControlSchema,
   type AnyBuilder,
   type AnyContext,

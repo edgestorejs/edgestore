@@ -269,14 +269,8 @@ type UploadInput = BackendInputs['publicFiles']['upload'];
 type UploadOutput = BackendOutputs['publicFiles']['upload'];
 ```
 
-The default represents the hosted provider. Pass a custom provider as the
-second generic when its capabilities or associated types differ:
-
-```ts
-type BackendOutputs = InferClientOutputs<
-  typeof router,
-  typeof customProvider
->;
-```
+The helpers infer capabilities and provider-specific types directly from the
+router, including custom providers. Use `EdgeStoreClient<typeof router>` for
+the complete backend client type.
 
 `InferClientResponse` remains as a deprecated alias of `InferClientOutputs`.

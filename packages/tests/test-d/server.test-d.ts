@@ -192,12 +192,14 @@ expectError(
   }),
 );
 
-const syntheticClient = publicRouter.provider(syntheticProvider).client;
-const syntheticProtectedRouter = publicEs.router({
-  files: publicEs.fileBucket().accessControl('private'),
-});
-const syntheticProtectedClient =
-  syntheticProtectedRouter.provider(syntheticProvider).client;
+const syntheticRouter = publicRouter.provider(syntheticProvider);
+const syntheticClient = syntheticRouter.client;
+const syntheticProtectedRouter = publicEs
+  .router({
+    files: publicEs.fileBucket().accessControl('private'),
+  })
+  .provider(syntheticProvider);
+const syntheticProtectedClient = syntheticProtectedRouter.client;
 
 expectError(syntheticClient.files.restore);
 expectError(syntheticClient.files.get({ id: 'file-id' }));
@@ -441,21 +443,13 @@ expectType<EdgeStoreFileReference>(
 expectAssignable<ClientOutputs>({} as DeprecatedClientResponses);
 expectAssignable<DeprecatedClientResponses>({} as ClientOutputs);
 
-type SyntheticInputs = InferClientInputs<
-  typeof publicRouter,
-  typeof syntheticProvider
->;
-type SyntheticOutputs = InferClientOutputs<
-  typeof publicRouter,
-  typeof syntheticProvider
->;
+type SyntheticInputs = InferClientInputs<typeof syntheticRouter>;
+type SyntheticOutputs = InferClientOutputs<typeof syntheticRouter>;
 type SyntheticProtectedInputs = InferClientInputs<
-  typeof syntheticProtectedRouter,
-  typeof syntheticProvider
+  typeof syntheticProtectedRouter
 >;
 type SyntheticProtectedOutputs = InferClientOutputs<
-  typeof syntheticProtectedRouter,
-  typeof syntheticProvider
+  typeof syntheticProtectedRouter
 >;
 
 expectType<{ objectKey: string }>({} as SyntheticInputs['files']['get']);

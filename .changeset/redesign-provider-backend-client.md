@@ -5,9 +5,9 @@
 ---
 
 Redesign providers, HTTP handlers, and the router-derived backend client for
-EdgeStore API v2. Configure a router and provider once with `createEdgeStore`,
-pass the resulting instance to adapters through `edgestore`, and access its
-eagerly created, type-safe backend client through `.client`.
+EdgeStore API v2. Configure the router with `es.router(...)`, optionally chain
+`.provider(...)`, and pass it to adapters through `router`. Access its lazily
+created, type-safe backend client through `router.client`.
 
 Providers now use the resource-oriented `EdgeStoreProvider` contract and the
 public `defineProvider` helper. File references, cursors, capabilities, inputs,

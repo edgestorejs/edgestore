@@ -1,15 +1,16 @@
 import {
-  initEdgeStore as initSharedEdgeStore,
+  initBucket,
   type AnyContext,
   type AnyEdgeStoreProvider,
   type AnyRouter,
+  type BucketConfig,
   type EdgeStoreRouter,
 } from '@edgestore/shared';
 import {
   edgestore,
   type EdgeStoreBackendProvider,
 } from '../providers/edgestore';
-import { createBackendClient, type EdgeStoreClient } from './client';
+import { createBackendClient } from './client';
 
 export type RouterOptions = {
   /** Application handler URL used to proxy protected files in development. */
@@ -25,7 +26,7 @@ export type ConfiguredRouter<
     provider: TNewProvider,
   ): ConfiguredRouter<TRouter, TNewProvider>;
   /** The backend client, with methods supported by this router's provider. */
-  readonly client: EdgeStoreClient<TRouter, TProvider>;
+  readonly client: ReturnType<typeof createBackendClient<TRouter, TProvider>>;
   /** @internal */
   readonly _def: RouterOptions & { readonly provider: TProvider };
 };
@@ -39,7 +40,8 @@ function configureRouter<
   options: RouterOptions,
 ): ConfiguredRouter<TRouter, TProvider> {
   let provider: TProvider | undefined;
-  let client: EdgeStoreClient<TRouter, TProvider> | undefined;
+  let client:
+    ReturnType<typeof createBackendClient<TRouter, TProvider>> | undefined;
   const definition = {
     baseUrl: options.baseUrl,
     get provider() {
@@ -63,14 +65,13 @@ function configureRouter<
   };
 }
 
-type SharedBuilder<TCtx extends AnyContext> = ReturnType<
-  ReturnType<typeof initSharedEdgeStore.context<TCtx>>['create']
->;
-
-type RouterBuilder<TCtx extends AnyContext> = Omit<
-  SharedBuilder<TCtx>,
-  'router'
-> & {
+type RouterBuilder<TCtx extends AnyContext> = {
+  imageBucket(
+    config?: BucketConfig,
+  ): ReturnType<typeof initBucket<TCtx, 'IMAGE'>>;
+  fileBucket(
+    config?: BucketConfig,
+  ): ReturnType<typeof initBucket<TCtx, 'FILE'>>;
   router<TBuckets extends EdgeStoreRouter<TCtx>['buckets']>(
     buckets: TBuckets,
     options?: RouterOptions,
@@ -86,14 +87,22 @@ class EdgeStoreBuilder<TCtx extends AnyContext = Record<string, never>> {
   }
 
   create(): RouterBuilder<TCtx> {
-    const builder = initSharedEdgeStore.context<TCtx>().create();
     return {
-      ...builder,
+      imageBucket(config) {
+        return initBucket<TCtx, 'IMAGE'>('IMAGE', config);
+      },
+      fileBucket(config) {
+        return initBucket<TCtx, 'FILE'>('FILE', config);
+      },
       router<TBuckets extends EdgeStoreRouter<TCtx>['buckets']>(
         buckets: TBuckets,
         options: RouterOptions = {},
       ) {
-        return configureRouter(builder.router(buckets), edgestore, options);
+        return configureRouter(
+          { $config: { ctx: undefined as unknown as TCtx }, buckets },
+          edgestore,
+          options,
+        );
       },
     };
   }
