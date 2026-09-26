@@ -49,6 +49,12 @@ export const handler = createEdgeStoreNextHandler({
 export const backendClient = router.client;
 ```
 
+If you used an earlier v1 prerelease, remove `createEdgeStore` and
+`ConfiguredEdgeStore`. Use `router.client` for backend operations and pass
+`{ router }` to your handler instead of `{ edgestore: configuredEdgeStore }`.
+Move provider configuration to `.provider(...)` and any `baseUrl` option to the
+second argument of `es.router(buckets, { baseUrl })`.
+
 ## Breaking changes
 
 | v0.7                                        | v1                                | Required change                                            |

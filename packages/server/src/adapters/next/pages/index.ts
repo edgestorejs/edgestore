@@ -1,14 +1,13 @@
 import { EdgeStoreError, type AnyContext } from '@edgestore/shared';
 import { type NextApiRequest, type NextApiResponse } from 'next/types';
 import Logger, { type LogLevel } from '../../../libs/logger';
-import { resolveHandlerConfig, type HandlerConfig } from '../../config';
 import {
   dispatchEdgeStoreRequest,
   resolveContext,
   toNodeDispatchResponse,
   type CreateContextConfig,
 } from '../../dispatcher';
-import type { CookieConfig } from '../../shared';
+import type { CookieConfig, HandlerRouter } from '../../shared';
 
 export type CreateContextOptions = {
   req: NextApiRequest;
@@ -16,15 +15,14 @@ export type CreateContextOptions = {
 };
 
 export type Config<TCtx extends AnyContext> = {
+  router: HandlerRouter<TCtx>;
   logLevel?: LogLevel;
   cookieConfig?: CookieConfig;
-} & HandlerConfig<TCtx> &
-  CreateContextConfig<TCtx, CreateContextOptions>;
+} & CreateContextConfig<TCtx, CreateContextOptions>;
 
 export function createEdgeStoreNextHandler<TCtx extends AnyContext>(
   config: Config<TCtx>,
 ) {
-  const edgestore = resolveHandlerConfig<TCtx>(config);
   const log = new Logger(config.logLevel);
   log.debug('Creating EdgeStore Next handler (pages adapter)');
 
@@ -41,7 +39,7 @@ export function createEdgeStoreNextHandler<TCtx extends AnyContext>(
 
     const url = new URL(req.url ?? '', 'http://edgestore.local');
     const response = await dispatchEdgeStoreRequest<TCtx>({
-      edgestore,
+      router: config.router,
       logger: log,
       cookieConfig: config.cookieConfig,
       request: {

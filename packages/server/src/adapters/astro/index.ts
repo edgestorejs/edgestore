@@ -1,24 +1,22 @@
 import { type AnyContext } from '@edgestore/shared';
 import type { APIContext } from 'astro';
 import Logger, { type LogLevel } from '../../libs/logger';
-import { resolveHandlerConfig, type HandlerConfig } from '../config';
 import {
   dispatchEdgeStoreRequest,
   resolveContext,
   type CreateContextConfig,
 } from '../dispatcher';
-import type { CookieConfig } from '../shared';
+import type { CookieConfig, HandlerRouter } from '../shared';
 
 export type Config<TCtx extends AnyContext> = {
+  router: HandlerRouter<TCtx>;
   logLevel?: LogLevel;
   cookieConfig?: CookieConfig;
-} & HandlerConfig<TCtx> &
-  CreateContextConfig<TCtx, APIContext>;
+} & CreateContextConfig<TCtx, APIContext>;
 
 export function createEdgeStoreAstroHandler<TCtx extends AnyContext>(
   config: Config<TCtx>,
 ) {
-  const edgestore = resolveHandlerConfig<TCtx>(config);
   const log = new Logger(config.logLevel);
   log.debug('Creating EdgeStore Astro handler');
 
@@ -26,7 +24,7 @@ export function createEdgeStoreAstroHandler<TCtx extends AnyContext>(
     const { request } = context;
     const url = new URL(request.url);
     return await dispatchEdgeStoreRequest<TCtx>({
-      edgestore,
+      router: config.router,
       logger: log,
       cookieConfig: config.cookieConfig,
       request: {

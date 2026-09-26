@@ -4,9 +4,7 @@ export {
   type RouterOptions,
 } from './core/router';
 export {
-  createEdgeStore,
   defineProvider,
-  type ConfiguredEdgeStore,
   type EdgeStoreClient,
   type InferClientInputs,
   type InferClientOutputs,

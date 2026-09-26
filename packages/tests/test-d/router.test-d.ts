@@ -1,5 +1,6 @@
 import { createEdgeStoreProvider } from '@edgestore/react';
 import { initEdgeStore } from '@edgestore/server';
+import * as server from '@edgestore/server';
 import { createEdgeStoreExpressHandler } from '@edgestore/server/adapters/express';
 import { createEdgeStoreFastifyHandler } from '@edgestore/server/adapters/fastify';
 import { createEdgeStoreHonoHandler } from '@edgestore/server/adapters/hono';
@@ -7,10 +8,15 @@ import { createEdgeStoreNextHandler } from '@edgestore/server/adapters/next/app'
 import { createEdgeStoreNextHandler as createPagesHandler } from '@edgestore/server/adapters/next/pages';
 import { createEdgeStoreRemixHandler } from '@edgestore/server/adapters/remix';
 import { createEdgeStoreStartHandler } from '@edgestore/server/adapters/start';
+import * as core from '@edgestore/server/core';
 import { edgestore } from '@edgestore/server/providers/edgestore';
 import { s3 } from '@edgestore/server/providers/s3';
 import { expectError, expectType } from 'tsd';
 import { z } from 'zod';
+
+expectError(server.createEdgeStore);
+expectError(core.createEdgeStore);
+expectError(core.createBackendClient);
 
 const es = initEdgeStore.context<{ userId: string }>().create();
 const router = es.router({
@@ -85,6 +91,12 @@ expectError(
 expectError(
   createEdgeStoreNextHandler({
     router,
+    edgestore: { router, provider: edgestore() },
+    createContext,
+  }),
+);
+expectError(
+  createEdgeStoreNextHandler({
     edgestore: { router, provider: edgestore() },
     createContext,
   }),

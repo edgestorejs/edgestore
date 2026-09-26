@@ -1,6 +1,5 @@
 import { EdgeStoreFileMutationError as SdkFileMutationError } from '@edgestore/sdk';
 import {
-  initEdgeStore,
   type BackendFileMutationOperation,
   type BackendGetFileOperation,
   type BackendGetSignedUrlsOperation,
@@ -10,8 +9,8 @@ import {
 } from '@edgestore/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
-import { createEdgeStore } from '../index';
 import { defineProvider } from '../provider';
+import { initEdgeStore, type RouterOptions } from '../router';
 import { EdgeStoreFileMutationError } from './index';
 
 const backend = {
@@ -81,33 +80,35 @@ function createFile(overrides: Partial<ProviderFile> = {}): ProviderFile {
   };
 }
 
-function createRouter() {
+function createRouter(options: RouterOptions = {}) {
   const es = initEdgeStore.context<{ userId: string }>().create();
-  return es.router({
-    documents: es
-      .fileBucket()
-      .input(z.object({ type: z.string() }))
-      .path(({ ctx, input }) => [{ author: ctx.userId }, { type: input.type }])
-      .metadata(({ ctx, input }) => ({
-        userId: ctx.userId,
-        type: input.type,
-      }))
-      .accessControl({
-        userId: { path: 'author' },
-      }),
-    publicFiles: es.fileBucket(),
-  });
+  return es.router(
+    {
+      documents: es
+        .fileBucket()
+        .input(z.object({ type: z.string() }))
+        .path(({ ctx, input }) => [
+          { author: ctx.userId },
+          { type: input.type },
+        ])
+        .metadata(({ ctx, input }) => ({
+          userId: ctx.userId,
+          type: input.type,
+        }))
+        .accessControl({
+          userId: { path: 'author' },
+        }),
+      publicFiles: es.fileBucket(),
+    },
+    options,
+  );
 }
 
 function createClient(config: { baseUrl?: string } = {}) {
-  return createEdgeStore({
-    router: createRouter(),
-    provider,
-    ...config,
-  }).client;
+  return createRouter(config).provider(provider).client;
 }
 
-describe('createEdgeStore', () => {
+describe('router backend client', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     fetchMock.mockResolvedValue({
@@ -132,7 +133,7 @@ describe('createEdgeStore', () => {
     vi.unstubAllEnvs();
   });
 
-  it('eagerly creates an inspectable client with stable bucket objects', async () => {
+  it('creates an inspectable client with stable bucket objects', async () => {
     const client = createClient();
 
     expect(Object.keys(client)).toEqual(['documents', 'publicFiles']);
@@ -167,10 +168,7 @@ describe('createEdgeStore', () => {
         get: backend.getFile,
       },
     });
-    const client = createEdgeStore({
-      router: createRouter(),
-      provider: getOnlyProvider,
-    }).client;
+    const client = createRouter().provider(getOnlyProvider).client;
 
     expect(Object.keys(client.documents)).toEqual(['get']);
     backend.getFile.mockResolvedValue(createFile());
@@ -404,10 +402,7 @@ describe('createEdgeStore', () => {
         .path(({ input }) => [{ type: input.type }])
         .metadata(({ input }) => ({ type: input.type })),
     });
-    const client = createEdgeStore({
-      router,
-      provider,
-    }).client;
+    const client = router.provider(provider).client;
 
     await client.documents.upload({
       content: 'invoice',
@@ -434,7 +429,7 @@ describe('createEdgeStore', () => {
         .path(({ input }) => [{ type: input.type }])
         .metadata(({ input }) => ({ type: input.type })),
     });
-    const client = createEdgeStore({ router, provider }).client;
+    const client = router.provider(provider).client;
 
     await client.documents.upload({
       content: 'invoice',
@@ -462,10 +457,7 @@ describe('createEdgeStore', () => {
         }, 'Token is not allowed'),
       ),
     });
-    const client = createEdgeStore({
-      router,
-      provider,
-    }).client;
+    const client = router.provider(provider).client;
 
     await expect(
       client.documents.upload({
@@ -504,7 +496,7 @@ describe('createEdgeStore', () => {
         .beforeUpload(beforeUpload)
         .beforeDelete(beforeDelete),
     });
-    const client = createEdgeStore({ router, provider }).client;
+    const client = router.provider(provider).client;
 
     await expect(
       client.documents.upload({
@@ -705,7 +697,7 @@ describe('createEdgeStore', () => {
         url: 'https://files.example.com/_protected/file.txt',
       }),
     ).rejects.toThrow(
-      'Missing baseUrl. Pass baseUrl in the second argument to `es.router` (or to `createEdgeStore`) to get protected files in development.',
+      'Missing baseUrl. Pass baseUrl in the second argument to `es.router` to get protected files in development.',
     );
   });
 

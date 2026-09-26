@@ -33,7 +33,7 @@ options, while leaving existing routers, clients, and handlers bound to their
 original provider. The backend client exposes only methods supported by the
 selected provider.
 
-The default hosted provider is initialized when a handler is created or
+The default hosted provider is initialized when handling requests or when
 `router.client` is first accessed. Defining a router or overriding its provider
 does not require hosted EdgeStore credentials. Each router reuses its provider
 and backend client after initialization.
@@ -49,8 +49,6 @@ const router = es.router(
 ```
 
 Keep the router object on the server; import only its type into frontend code.
-Existing `createEdgeStore({ router, provider })` and `{ edgestore }` handler
-configurations remain supported.
 
 ## Bucket Types
 

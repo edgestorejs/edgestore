@@ -1,34 +1,32 @@
 import { type AnyContext } from '@edgestore/shared';
 import Logger, { type LogLevel } from '../../libs/logger';
-import { resolveHandlerConfig, type HandlerConfig } from '../config';
 import {
   dispatchEdgeStoreRequest,
   resolveContext,
   type CreateContextConfig,
 } from '../dispatcher';
-import type { CookieConfig } from '../shared';
+import type { CookieConfig, HandlerRouter } from '../shared';
 
 export type CreateContextOptions = {
   req: Request;
 };
 
 export type Config<TCtx extends AnyContext> = {
+  router: HandlerRouter<TCtx>;
   logLevel?: LogLevel;
   cookieConfig?: CookieConfig;
-} & HandlerConfig<TCtx> &
-  CreateContextConfig<TCtx, CreateContextOptions>;
+} & CreateContextConfig<TCtx, CreateContextOptions>;
 
 export function createEdgeStoreStartHandler<TCtx extends AnyContext>(
   config: Config<TCtx>,
 ) {
-  const edgestore = resolveHandlerConfig<TCtx>(config);
   const log = new Logger(config.logLevel);
   log.debug('Creating EdgeStore TanStack Start handler');
 
   return async ({ request }: { request: Request }) => {
     const url = new URL(request.url);
     return await dispatchEdgeStoreRequest<TCtx>({
-      edgestore,
+      router: config.router,
       logger: log,
       cookieConfig: config.cookieConfig,
       request: {

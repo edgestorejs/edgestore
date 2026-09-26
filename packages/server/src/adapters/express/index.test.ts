@@ -71,7 +71,7 @@ function createRequest(url: string, overrides: Partial<Request> = {}): Request {
   } as Request;
 }
 
-describe.each(['router', 'edgestore'])('Express (%s)', (configStyle) => {
+describe('Express adapter conformance', () => {
   beforeEach(setupAdapterTestEnv);
 
   afterEach(() => {
@@ -83,9 +83,7 @@ describe.each(['router', 'edgestore'])('Express (%s)', (configStyle) => {
     const provider = createConformanceProvider();
     const router = createConformanceRouter();
     const handler = createEdgeStoreExpressHandler({
-      ...(configStyle === 'router'
-        ? { router: router.provider(provider) }
-        : { edgestore: { provider, router } }),
+      router: router.provider(provider),
       cookieConfig: testCookieConfig,
       createContext,
     });

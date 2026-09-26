@@ -33,7 +33,7 @@ function jsonRequestInit(body: unknown, cookie?: string): NextRequestInit {
   };
 }
 
-describe.each(['router', 'edgestore'])('Next app (%s)', (configStyle) => {
+describe('Next app adapter conformance', () => {
   beforeEach(setupAdapterTestEnv);
 
   afterEach(() => {
@@ -45,9 +45,7 @@ describe.each(['router', 'edgestore'])('Next app (%s)', (configStyle) => {
     const provider = createConformanceProvider();
     const router = createConformanceRouter();
     const handler = createEdgeStoreNextHandler({
-      ...(configStyle === 'router'
-        ? { router: router.provider(provider) }
-        : { edgestore: { provider, router } }),
+      router: router.provider(provider),
       cookieConfig: testCookieConfig,
       createContext,
     });

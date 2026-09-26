@@ -1,29 +1,27 @@
 import { EdgeStoreError, type AnyContext } from '@edgestore/shared';
 import { type NextRequest } from 'next/server';
 import Logger, { type LogLevel } from '../../../libs/logger';
-import { resolveHandlerConfig, type HandlerConfig } from '../../config';
 import {
   dispatchEdgeStoreRequest,
   resolveContext,
   type CreateContextConfig,
 } from '../../dispatcher';
-import { type CookieConfig } from '../../shared';
+import { type CookieConfig, type HandlerRouter } from '../../shared';
 
 export type CreateContextOptions = {
   req: NextRequest;
 };
 
 export type Config<TCtx extends AnyContext> = {
+  router: HandlerRouter<TCtx>;
   logLevel?: LogLevel;
   cookieConfig?: CookieConfig;
-} & HandlerConfig<TCtx> &
-  CreateContextConfig<TCtx, CreateContextOptions>;
+} & CreateContextConfig<TCtx, CreateContextOptions>;
 
 export function createEdgeStoreNextHandler<TCtx extends AnyContext>(
   config: Config<TCtx>,
 ) {
   const { cookieConfig } = config;
-  const edgestore = resolveHandlerConfig<TCtx>(config);
   const log = new Logger(config.logLevel);
   log.debug('Creating EdgeStore Next handler (app adapter)');
 
@@ -38,7 +36,7 @@ export function createEdgeStoreNextHandler<TCtx extends AnyContext>(
     }
 
     return await dispatchEdgeStoreRequest<TCtx>({
-      edgestore,
+      router: config.router,
       logger: log,
       cookieConfig,
       request: {

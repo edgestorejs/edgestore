@@ -1,5 +1,4 @@
 import {
-  createEdgeStore,
   defineProvider,
   initEdgeStore,
   type InferClientInputs,
@@ -58,48 +57,33 @@ const router = es.router({
     })),
 });
 
-const client = createEdgeStore({
-  router,
-  provider: edgestore(),
-}).client;
-const transformedClient = createEdgeStore({
-  router: es.router({
-    transformed: es
-      .fileBucket()
-      .input(z.object({ count: z.string().transform(Number) })),
-  }),
-  provider: edgestore(),
+const client = router.client;
+const transformedClient = es.router({
+  transformed: es
+    .fileBucket()
+    .input(z.object({ count: z.string().transform(Number) })),
 }).client;
 
 const publicEs = initEdgeStore.create();
 const publicRouter = publicEs.router({ files: publicEs.fileBucket() });
-const publicClient = createEdgeStore({
-  router: publicRouter,
-  provider: edgestore(),
+const publicClient = publicRouter.client;
+const protectedClient = publicEs.router({
+  privateFiles: publicEs.fileBucket().accessControl('private'),
+  privateImages: publicEs
+    .imageBucket()
+    .accessControl('private')
+    .autoSignedUrls({ expiresIn: 300 }),
 }).client;
-const protectedClient = createEdgeStore({
-  provider: edgestore(),
-  router: publicEs.router({
-    privateFiles: publicEs.fileBucket().accessControl('private'),
-    privateImages: publicEs
-      .imageBucket()
-      .accessControl('private')
-      .autoSignedUrls({ expiresIn: 300 }),
-  }),
-}).client;
-const s3EdgeStore = createEdgeStore({
-  router: publicRouter,
-  provider: s3(),
-});
-void s3EdgeStore.client.files
+const s3Router = publicRouter.provider(s3());
+void s3Router.client.files
   .get({ url: 'https://s3.example/file' })
   .then((file) => {
     expectError(file.path);
     expectError(file.metadata);
   });
-expectError(s3EdgeStore.client.files.upload);
-expectError(s3EdgeStore.client.files.list);
-expectError(s3EdgeStore.client.files.confirm);
+expectError(s3Router.client.files.upload);
+expectError(s3Router.client.files.list);
+expectError(s3Router.client.files.confirm);
 
 const syntheticProvider = defineProvider({
   name: 'synthetic',
@@ -208,17 +192,12 @@ expectError(
   }),
 );
 
-const syntheticClient = createEdgeStore({
-  router: publicRouter,
-  provider: syntheticProvider,
-}).client;
+const syntheticClient = publicRouter.provider(syntheticProvider).client;
 const syntheticProtectedRouter = publicEs.router({
   files: publicEs.fileBucket().accessControl('private'),
 });
-const syntheticProtectedClient = createEdgeStore({
-  router: syntheticProtectedRouter,
-  provider: syntheticProvider,
-}).client;
+const syntheticProtectedClient =
+  syntheticProtectedRouter.provider(syntheticProvider).client;
 
 expectError(syntheticClient.files.restore);
 expectError(syntheticClient.files.get({ id: 'file-id' }));

@@ -1,6 +1,6 @@
-import { initEdgeStore, type EdgeStoreRouter } from '@edgestore/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
+import { initEdgeStore } from '../core/router';
 import Logger, { type LoggerLike } from '../libs/logger';
 import {
   completeMultipartUploadBody,
@@ -24,13 +24,11 @@ describe('adapter dispatcher', () => {
 
   function createDispatcher(
     logger: LoggerLike = new Logger(),
-    router: EdgeStoreRouter<typeof testCtx> = createConformanceRouter(),
+    router: ReturnType<
+      typeof createConformanceRouter
+    > = createConformanceRouter(),
   ) {
     const provider = createConformanceProvider();
-    const edgestore = {
-      provider,
-      router,
-    };
     const dispatch = (
       pathname: string,
       options: {
@@ -41,7 +39,7 @@ describe('adapter dispatcher', () => {
       } = {},
     ) =>
       dispatchEdgeStoreRequest({
-        edgestore,
+        router: router.provider(provider),
         logger,
         cookieConfig: testCookieConfig,
         request: {
