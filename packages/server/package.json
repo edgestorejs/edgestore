@@ -7,7 +7,7 @@
   "sideEffects": false,
   "type": "module",
   "engines": {
-    "node": ">=24"
+    "node": ">=22.22.0"
   },
   "repository": {
     "type": "git",

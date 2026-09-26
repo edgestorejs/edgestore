@@ -18,7 +18,7 @@
     "edgestore": "dist/bin.mjs"
   },
   "engines": {
-    "node": ">=24"
+    "node": ">=22.22.0"
   },
   "keywords": [
     "cli",
