@@ -10,8 +10,6 @@
 ## Setup
 
 - Use Node.js `>=24`.
-- Published packages support Node.js `>=22.22.0`; build on Node.js 24 and run
-  compatibility tests on the minimum supported Node.js 22 version.
 - Install dependencies with `pnpm install`.
 - Prefer existing workspace scripts over ad hoc commands.
 
