@@ -2,6 +2,8 @@
 '@edgestore/react': major
 '@edgestore/server': major
 '@edgestore/shared': major
+'@edgestore/sdk': minor
+'@edgestore/cli': minor
 ---
 
 Publish the EdgeStore packages as ESM-only packages and require Node.js 22.22.0 or
