@@ -17,6 +17,13 @@ export const linkItems: LinkItemType[] = [
         >
           Docs
         </Link>
+        <Link
+          className="inline-flex items-center gap-1 p-2 text-sm text-fd-muted-foreground transition-colors hover:text-fd-accent-foreground data-[active=true]:text-fd-primary [&_svg]:size-4"
+          href="/blog"
+          aria-label="Go to blog"
+        >
+          Blog
+        </Link>
         <div className="grow max-sm:hidden" />
         <Link
           className="inline-flex items-center gap-1 p-2 text-sm text-fd-muted-foreground transition-colors hover:text-fd-accent-foreground data-[active=true]:text-fd-primary [&_svg]:size-4"
