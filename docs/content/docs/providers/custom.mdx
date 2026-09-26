@@ -8,13 +8,12 @@ implementation. The same provider instance powers the EdgeStore HTTP handler
 and the router-derived backend client:
 
 ```ts
-const configuredEdgeStore = createEdgeStore({
-  router,
-  provider: myProvider,
-});
+const router = es.router({
+  files: es.fileBucket(),
+}).provider(myProvider);
 
-createEdgeStoreNextHandler({ edgestore: configuredEdgeStore });
-configuredEdgeStore.client.files.get({ key: 'files/report.pdf' });
+createEdgeStoreNextHandler({ router });
+router.client.files.get({ key: 'files/report.pdf' });
 ```
 
 Method inputs are contextually typed. File references, cursors, returned file

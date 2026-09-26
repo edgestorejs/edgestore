@@ -1,10 +1,11 @@
 import {
-  initEdgeStore,
   type AnyEdgeStoreProvider,
   type EdgeStoreRouter,
 } from '@edgestore/shared';
 import { expect, vi } from 'vitest';
 import { z } from 'zod';
+import { initEdgeStore, type ConfiguredRouter } from '../core/router';
+import type { EdgeStoreBackendProvider } from '../providers/edgestore';
 
 export type AdapterTestContext = {
   userId: string;
@@ -122,7 +123,10 @@ export function createConformanceProvider(
   };
 }
 
-export function createConformanceRouter(): EdgeStoreRouter<AdapterTestContext> {
+export function createConformanceRouter(): ConfiguredRouter<
+  EdgeStoreRouter<AdapterTestContext>,
+  EdgeStoreBackendProvider
+> {
   const es = initEdgeStore.context<AdapterTestContext>().create();
 
   return es.router({

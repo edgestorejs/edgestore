@@ -1,4 +1,8 @@
-export { initEdgeStore } from '@edgestore/shared';
+export {
+  initEdgeStore,
+  type ConfiguredRouter,
+  type RouterOptions,
+} from './core/router';
 export {
   createEdgeStore,
   defineProvider,

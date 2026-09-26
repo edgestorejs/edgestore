@@ -18,7 +18,7 @@ import { createEdgeStoreHonoHandler } from './index';
 
 const baseUrl = 'https://app.example.com/api/edgestore';
 
-describe('Hono adapter conformance', () => {
+describe.each(['router', 'edgestore'])('Hono (%s)', (configStyle) => {
   beforeEach(setupAdapterTestEnv);
 
   afterEach(() => {
@@ -30,7 +30,9 @@ describe('Hono adapter conformance', () => {
     const provider = createConformanceProvider();
     const router = createConformanceRouter();
     const handler = createEdgeStoreHonoHandler({
-      edgestore: { provider, router },
+      ...(configStyle === 'router'
+        ? { router: router.provider(provider) }
+        : { edgestore: { provider, router } }),
       cookieConfig: testCookieConfig,
       createContext,
     });

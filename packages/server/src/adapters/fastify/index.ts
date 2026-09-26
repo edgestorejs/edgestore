@@ -1,13 +1,14 @@
 import { type AnyContext } from '@edgestore/shared';
 import { type FastifyReply, type FastifyRequest } from 'fastify';
 import Logger, { type LogLevel } from '../../libs/logger';
+import { resolveHandlerConfig, type HandlerConfig } from '../config';
 import {
   dispatchEdgeStoreRequest,
   resolveContext,
   toNodeDispatchResponse,
   type CreateContextConfig,
 } from '../dispatcher';
-import type { CookieConfig, HandlerEdgeStore } from '../shared';
+import type { CookieConfig } from '../shared';
 
 export type CreateContextOptions = {
   req: FastifyRequest;
@@ -15,21 +16,22 @@ export type CreateContextOptions = {
 };
 
 export type Config<TCtx extends AnyContext> = {
-  edgestore: HandlerEdgeStore<TCtx>;
   logLevel?: LogLevel;
   cookieConfig?: CookieConfig;
-} & CreateContextConfig<TCtx, CreateContextOptions>;
+} & HandlerConfig<TCtx> &
+  CreateContextConfig<TCtx, CreateContextOptions>;
 
 export function createEdgeStoreFastifyHandler<TCtx extends AnyContext>(
   config: Config<TCtx>,
 ) {
+  const edgestore = resolveHandlerConfig<TCtx>(config);
   const log = new Logger(config.logLevel);
   log.debug('Creating EdgeStore Fastify handler');
 
   return async (req: FastifyRequest, reply: FastifyReply): Promise<void> => {
     const url = new URL(req.url, 'http://edgestore.local');
     const response = await dispatchEdgeStoreRequest<TCtx>({
-      edgestore: config.edgestore,
+      edgestore,
       logger: log,
       cookieConfig: config.cookieConfig,
       request: {

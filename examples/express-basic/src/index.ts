@@ -1,6 +1,5 @@
-import { createEdgeStore, initEdgeStore } from '@edgestore/server';
+import { initEdgeStore } from '@edgestore/server';
 import { createEdgeStoreExpressHandler } from '@edgestore/server/adapters/express';
-import { edgestore } from '@edgestore/server/providers/edgestore';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
@@ -42,12 +41,8 @@ const router = es.router({
 
 export type EdgeStoreRouter = typeof router;
 
-const configuredEdgeStore = createEdgeStore({
-  router,
-  provider: edgestore(),
-});
 const handler = createEdgeStoreExpressHandler({
-  edgestore: configuredEdgeStore,
+  router,
 });
 
 // --- EXPRESS ROUTES ---

@@ -1,6 +1,5 @@
-import { createEdgeStore, initEdgeStore } from '@edgestore/server';
+import { initEdgeStore } from '@edgestore/server';
 import { createEdgeStoreFastifyHandler } from '@edgestore/server/adapters/fastify';
-import { edgestore } from '@edgestore/server/providers/edgestore';
 import fastifyCookie from '@fastify/cookie';
 import fastifyCors from '@fastify/cors';
 import fastify from 'fastify';
@@ -38,12 +37,8 @@ const router = es.router({
 
 export type EdgeStoreRouter = typeof router;
 
-const configuredEdgeStore = createEdgeStore({
-  router,
-  provider: edgestore(),
-});
 const handler = createEdgeStoreFastifyHandler({
-  edgestore: configuredEdgeStore,
+  router,
 });
 
 // --- FASTIFY ROUTES ---

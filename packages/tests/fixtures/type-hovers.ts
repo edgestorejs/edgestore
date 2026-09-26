@@ -1,9 +1,8 @@
 import { createEdgeStoreProvider } from '@edgestore/react';
-import { createEdgeStore } from '@edgestore/server';
+import { initEdgeStore } from '@edgestore/server';
+import { createEdgeStoreAstroHandler } from '@edgestore/server/adapters/astro';
 import { createEdgeStoreFastifyHandler } from '@edgestore/server/adapters/fastify';
 import { createEdgeStoreHonoHandler } from '@edgestore/server/adapters/hono';
-import { edgestore as createHostedProvider } from '@edgestore/server/providers/edgestore';
-import { initEdgeStore } from '@edgestore/shared';
 import { z } from 'zod';
 
 type Context = {
@@ -46,24 +45,32 @@ const router = es.router({
     .autoSignedUrls({ includeThumbnails: true }),
 });
 
-const configuredEdgeStore = createEdgeStore({
-  router,
-  provider: createHostedProvider(),
-});
-const backendClient = configuredEdgeStore.client;
+const backendClient = router.client;
 const { useEdgeStore } = createEdgeStoreProvider<typeof router>();
 const { edgestore, state: providerState } = useEdgeStore();
 const backendSignedUploadMethod = backendClient.privateFiles.upload;
 const reactSignedUploadMethod = edgestore.privateFiles.upload;
 
 const honoHandler = createEdgeStoreHonoHandler({
-  edgestore: configuredEdgeStore,
+  router,
   createContext: () => ({ userId: 'user-1', role: 'admin' }),
 });
 
 const fastifyHandler = createEdgeStoreFastifyHandler({
-  edgestore: configuredEdgeStore,
+  router,
   createContext: () => ({ userId: 'user-1', role: 'admin' }),
+});
+
+// Astro's ESM-only declarations need the Bundler resolution used by this fixture.
+createEdgeStoreAstroHandler({
+  router,
+  createContext: () => ({ userId: 'user-1', role: 'admin' }),
+});
+// @ts-expect-error A router with context requires createContext.
+createEdgeStoreAstroHandler({ router });
+const publicEs = initEdgeStore.create();
+createEdgeStoreAstroHandler({
+  router: publicEs.router({ files: publicEs.fileBucket() }),
 });
 
 async function inspectOperationResults() {

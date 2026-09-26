@@ -705,7 +705,7 @@ describe('createEdgeStore', () => {
         url: 'https://files.example.com/_protected/file.txt',
       }),
     ).rejects.toThrow(
-      'Missing baseUrl. Pass the baseUrl to `createEdgeStore` to get protected files in development.',
+      'Missing baseUrl. Pass baseUrl in the second argument to `es.router` (or to `createEdgeStore`) to get protected files in development.',
     );
   });
 
