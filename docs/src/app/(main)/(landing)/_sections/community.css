@@ -1,0 +1,85 @@
+.ya-components {
+  border-bottom: 1px solid var(--ya-line);
+}
+.ya-install-command {
+  max-width: 800px;
+  min-width: 0;
+}
+.ya-install-command figure {
+  margin: 0;
+  border-color: var(--ya-line);
+  background: var(--ya-panel);
+  box-shadow: none;
+}
+.ya-install-command pre {
+  width: 100%;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  padding: 24px 48px 24px 24px;
+  font-size: 13px;
+}
+.ya-component-links,
+.ya-video-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  margin-top: 24px;
+}
+.ya-video-links {
+  gap: 18px 30px;
+}
+.ya-video-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--ya-accent);
+}
+.ya-video-links a:hover,
+.ya-quote-grid a:hover {
+  text-decoration: underline !important;
+  text-underline-offset: 4px;
+}
+.ya-testimonials {
+  border-top: 1px solid var(--ya-line);
+}
+.ya-quote-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 32px;
+}
+.ya-quote-grid figure {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin: 0;
+  padding-top: 24px;
+  border-top: 2px solid var(--ya-accent);
+}
+.ya-quote-grid blockquote {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.8;
+}
+.ya-quote-grid figcaption {
+  margin-top: auto;
+}
+.ya-quote-grid a {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--ya-muted);
+}
+.ya-quote-grid img {
+  border-radius: 50%;
+}
+@media (max-width: 760px) {
+  .ya-quote-grid {
+    grid-template-columns: 1fr;
+  }
+  .ya-quote-grid figure {
+    gap: 18px;
+  }
+}

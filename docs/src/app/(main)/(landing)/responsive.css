@@ -1,0 +1,195 @@
+@media (max-width: 1190px) {
+  .ya-hero h1 {
+    font-size: 62px;
+  }
+  .ya-hero .ya-actions {
+    gap: 10px;
+  }
+  .ya-hero .ya-button {
+    padding-inline: 17px;
+    font-size: 14px;
+  }
+  .ya-closing {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 26px;
+  }
+}
+@media (max-width: 980px) {
+  .ya-hero {
+    grid-template-columns: 1fr;
+    padding-block: 54px 65px;
+    gap: 32px;
+  }
+  .ya-hero-copy {
+    padding: 0;
+  }
+  .ya-hero h1 {
+    font-size: clamp(58px, 9vw, 80px);
+  }
+  .ya-hero .ya-lead {
+    max-width: 580px;
+  }
+  .ya-section {
+    padding-block: 72px;
+  }
+  .ya-code-pair {
+    grid-template-columns: 1fr;
+  }
+  .ya-code-pane + .ya-code-pane {
+    border-left: 0;
+    border-top: 1px solid var(--ya-line);
+  }
+  .ya-prompt {
+    align-items: stretch;
+    flex-direction: column;
+    padding: 16px;
+    gap: 16px;
+  }
+  .ya-prompt > p {
+    padding: 0;
+  }
+  .ya-prompt .ya-button {
+    align-self: flex-end;
+  }
+  .ya-agent-tools {
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+  }
+  .ya-agent-tool {
+    border: 0;
+    padding: 0;
+  }
+  .ya-feature-layout,
+  .ya-faq {
+    grid-template-columns: 1fr;
+    gap: 38px;
+  }
+  .ya-feature-intro {
+    position: static;
+  }
+  .ya-framework-grid {
+    --framework-columns: 4;
+    --framework-gap: 24px;
+  }
+}
+@media (max-width: 600px) {
+  .ya-hero {
+    padding-block: 36px;
+    gap: 32px;
+  }
+  .ya-hero h1 {
+    font-size: clamp(42px, 12.9vw, 70px);
+    line-height: 1.08;
+    letter-spacing: -0.055em;
+  }
+  .ya-hero .ya-lead {
+    margin-top: 24px;
+    font-size: 17px;
+  }
+  .ya-hero .ya-actions {
+    margin-top: 26px;
+  }
+  .ya-hero .ya-button {
+    padding-inline: 16px;
+    font-size: 13px;
+  }
+  .ya-agent {
+    padding-block: 38px;
+  }
+  .ya-home .ya-section-lead {
+    font-size: 15px;
+  }
+  .ya-prompt > p {
+    font-size: 12px;
+  }
+  .ya-prompt .ya-button {
+    width: 100%;
+    font-size: 14px;
+  }
+  .ya-agent-tools {
+    gap: 26px 20px;
+    margin-top: 32px;
+  }
+  .ya-section {
+    padding-block: 56px;
+  }
+  .ya-section-heading {
+    margin-bottom: 26px;
+  }
+  .ya-section-heading p {
+    font-size: 15px;
+  }
+  .ya-code-pane pre {
+    font-size: 11px;
+  }
+  .ya-feature-section {
+    padding-block: 50px;
+  }
+  .ya-feature {
+    gap: 16px;
+  }
+  .ya-feature h3 {
+    font-size: 19px;
+  }
+  .ya-feature p {
+    font-size: 14px;
+  }
+  .ya-feature-details {
+    gap: 5px 12px;
+  }
+  .ya-storage-grid {
+    grid-template-columns: 1fr;
+  }
+  .ya-hosted {
+    padding: 26px;
+  }
+  .ya-hosted h3 {
+    font-size: 22px;
+  }
+  .ya-provider-list {
+    border-left: 0;
+    border-top: 1px solid var(--ya-line);
+  }
+  .ya-provider-list > a {
+    padding: 24px;
+  }
+  .ya-frameworks {
+    padding-block: 44px;
+  }
+  .ya-framework-grid {
+    --framework-columns: 3;
+    --framework-gap: 12px;
+    margin-top: 25px;
+  }
+  .ya-framework-grid a {
+    font-size: 12px;
+  }
+  .ya-faq {
+    padding-block: 44px;
+    gap: 30px;
+  }
+  .ya-faq summary {
+    padding: 18px;
+    gap: 18px;
+    font-size: 15px;
+  }
+  .ya-faq details p {
+    padding: 0 18px 18px;
+  }
+  .ya-closing {
+    padding-block: 48px;
+  }
+  .ya-closing .ya-button {
+    font-size: 13px;
+    padding-inline: 18px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ya-home *,
+  .ya-home *::before,
+  .ya-home *::after {
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -251,6 +251,9 @@ importers:
       next:
         specifier: 'catalog:'
         version: 16.2.10(@babel/core@7.29.7(supports-color@9.4.0))(@opentelemetry/api@1.9.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      next-themes:
+        specifier: 0.4.6
+        version: 0.4.6(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       posthog-js:
         specifier: 1.249.5
         version: 1.249.5

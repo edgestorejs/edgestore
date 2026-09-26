@@ -1,0 +1,208 @@
+.ya-home h1,
+.ya-home h2,
+.ya-home h3,
+.ya-home p {
+  margin: 0;
+}
+.ya-home h2 {
+  font-size: clamp(28px, 3.3vw, 44px);
+  line-height: 1.16;
+  font-weight: 650;
+  letter-spacing: -0.045em;
+  text-wrap: balance;
+}
+.ya-home h3 {
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+.ya-home a {
+  text-decoration: none;
+}
+.ya-home button {
+  font: inherit;
+  cursor: pointer;
+}
+.ya-home svg {
+  flex-shrink: 0;
+}
+.ya-hero {
+  display: grid;
+  grid-template-columns: 0.94fr 1.06fr;
+  align-items: center;
+  gap: 26px;
+  padding-block: 56px 68px;
+  min-height: 690px;
+}
+.ya-hero-copy {
+  padding-block: 20px 40px;
+}
+.ya-hero h1 {
+  font-size: clamp(58px, 6.15vw, 88px);
+  font-weight: 750;
+  line-height: 1.065;
+  letter-spacing: -0.058em;
+}
+.ya-hero .ya-lead {
+  max-width: 500px;
+  margin-top: 30px;
+  font-size: clamp(18px, 1.55vw, 21px);
+  line-height: 1.6;
+  color: var(--ya-muted);
+  letter-spacing: -0.025em;
+}
+.ya-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 32px;
+}
+.ya-button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  border-radius: 9px;
+  min-height: 50px;
+  padding: 13px 23px;
+  border: 1px solid transparent;
+  font-size: 15px;
+  font-weight: 550;
+  text-align: center;
+  transition:
+    background-color 150ms,
+    box-shadow 150ms;
+}
+.ya-primary {
+  background: linear-gradient(
+    120deg,
+    var(--ya-button-start),
+    var(--ya-button-end)
+  );
+  border-color: #bcabff66;
+  box-shadow:
+    inset 0 1px 1px #ffffff26,
+    0 2px 5px #0002;
+  color: #fff;
+}
+.ya-primary:hover {
+  box-shadow:
+    inset 0 1px 1px #ffffff26,
+    0 0 22px #8866ee45;
+}
+.ya-secondary {
+  border-color: var(--ya-line);
+  background: color-mix(in srgb, var(--ya-panel) 35%, transparent);
+}
+.ya-secondary:hover {
+  border-color: var(--ya-accent);
+}
+.ya-hero .ya-hero-note {
+  margin-top: 17px;
+  font-size: 13px;
+  color: var(--ya-muted);
+}
+.ya-agent {
+  border-block: 1px solid var(--ya-line);
+  padding-block: 54px 48px;
+  background: color-mix(in srgb, var(--ya-panel) 30%, var(--ya-bg));
+}
+.ya-home .ya-section-lead {
+  margin-top: 15px;
+  font-size: 17px;
+  line-height: 1.65;
+  color: var(--ya-muted);
+  max-width: 650px;
+}
+.ya-prompt {
+  margin-top: 24px;
+  padding: 8px;
+  border-radius: 11px;
+  border: 1px solid color-mix(in srgb, var(--ya-accent) 45%, var(--ya-line));
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: var(--ya-bg);
+}
+.ya-prompt > p {
+  flex: 1;
+  font:
+    13px/1.8 ui-monospace,
+    SFMono-Regular,
+    Consolas,
+    monospace;
+  padding-inline: 16px;
+  overflow-wrap: anywhere;
+}
+.ya-prompt .ya-button {
+  flex-shrink: 0;
+}
+.ya-home .ya-manual-link {
+  color: var(--ya-muted);
+  font-size: 13px;
+  margin-top: 16px;
+}
+.ya-manual-link a,
+.ya-faq p a {
+  color: var(--ya-accent);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.ya-agent-tools {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-top: 40px;
+}
+.ya-agent-tool {
+  padding-inline: 24px;
+  border-left: 1px solid var(--ya-line);
+}
+.ya-agent-tool:first-child {
+  padding-left: 0;
+  border-left: 0;
+}
+.ya-agent-tool:last-child {
+  padding-right: 0;
+}
+.ya-agent-tool > svg {
+  color: var(--ya-accent);
+  margin-bottom: 14px;
+}
+.ya-agent-tool h3 {
+  font-size: 16px;
+}
+.ya-agent-tool p {
+  margin-top: 8px;
+  color: var(--ya-muted);
+  font-size: 13px;
+  line-height: 1.7;
+}
+.ya-agent-tool:hover h3 {
+  color: var(--ya-accent);
+}
+.ya-copy-feedback {
+  font-size: 13px;
+  color: var(--ya-muted);
+  padding-top: 12px;
+}
+.ya-prompt-fallback {
+  margin-top: 12px;
+  width: 100%;
+  padding: 16px;
+  background: var(--ya-panel);
+  color: var(--ya-text);
+  border: 1px solid var(--ya-accent);
+  border-radius: 8px;
+  font: 13px/1.7 monospace;
+  resize: vertical;
+}
+.ya-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
