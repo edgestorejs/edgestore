@@ -236,7 +236,16 @@ file reference or calculate counts.
 Multipart support is optional. A single-part provider defines only
 `uploads.request`. When `uploads.multipart` is present, `uploads.request` may
 return a multipart plan and EdgeStore exposes the matching part-request and
-completion routes.
+completion routes. Providers may also implement `uploads.multipart.abort` and
+return `multipart.abortSupported: true` to enable cleanup after a failed or
+canceled browser transfer. Multipart operations must validate an upload session
+scoped to its authorized object; do not trust a client-supplied key or raw upload
+ID alone.
+
+Single-part upload plans can include `uploadHeaders` for provider-required PUT
+headers and `key` for a stable object reference. Set `disableDevProxy: true` on
+a direct-storage provider to keep canonical URLs in development instead of
+using the hosted provider's cookie proxy.
 
 `uploads.request` and `uploads.upload` remain separate because they perform
 different work: the former creates signed instructions for a browser transfer,

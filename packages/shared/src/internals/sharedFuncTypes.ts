@@ -14,6 +14,7 @@ export type SharedInitRes = {
 };
 export type SharedRequestUploadRes = Simplify<
   RequestUploadRes & {
+    disableDevProxy?: boolean;
     size: number;
     uploadedAt: string;
     path: Record<string, string>;

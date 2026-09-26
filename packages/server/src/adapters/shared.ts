@@ -325,6 +325,7 @@ export async function requestUpload<TCtx extends AnyContext>(params: {
 
   return {
     ...requestUploadRes,
+    ...(provider.disableDevProxy ? { disableDevProxy: true } : {}),
     size: fileInfo.size,
     uploadedAt: new Date().toISOString(), // TODO: maybe delete this field since it's not the actual upload time
     path: parsedPath,
@@ -452,6 +453,40 @@ export async function completeMultipartUpload<TCtx extends AnyContext>(params: {
   });
 
   logger.debug('Finished [completeMultipartUpload]');
+}
+
+export const abortMultipartUploadBodySchema =
+  completeMultipartUploadBodySchema.omit({ parts: true });
+
+export async function abortMultipartUpload<TCtx extends AnyContext>({
+  provider,
+  router,
+  ctxToken,
+  body,
+}: {
+  provider: AnyEdgeStoreProvider;
+  router: EdgeStoreRouter<TCtx>;
+  ctxToken: string | undefined;
+  body: z.infer<typeof abortMultipartUploadBodySchema>;
+}) {
+  if (!ctxToken)
+    throw new EdgeStoreError({
+      code: 'UNAUTHORIZED',
+      message: 'Missing edgestore-ctx cookie',
+    });
+  await getContext(ctxToken);
+  if (!router.buckets[body.bucketName])
+    throw new EdgeStoreError({
+      code: 'BAD_REQUEST',
+      message: `Bucket ${body.bucketName} not found`,
+    });
+  const abort = provider.uploads.multipart?.abort;
+  if (!abort)
+    throw new EdgeStoreError({
+      code: 'BAD_REQUEST',
+      message: `Provider ${provider.name} does not support multipart cancellation.`,
+    });
+  await abort({ uploadId: body.uploadId, key: body.key });
 }
 
 export const confirmUploadsBodySchema = z.object({

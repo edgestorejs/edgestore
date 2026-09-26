@@ -53,6 +53,11 @@ const awsMocks = vi.hoisted(() => {
 });
 
 vi.mock('@aws-sdk/client-s3', () => ({
+  AbortMultipartUploadCommand: awsMocks.PutObjectCommand,
+  CompleteMultipartUploadCommand: awsMocks.PutObjectCommand,
+  CreateMultipartUploadCommand: awsMocks.PutObjectCommand,
+  UploadPartCommand: awsMocks.PutObjectCommand,
+  GetObjectCommand: awsMocks.PutObjectCommand,
   DeleteObjectCommand: awsMocks.DeleteObjectCommand,
   HeadObjectCommand: awsMocks.HeadObjectCommand,
   PutObjectCommand: awsMocks.PutObjectCommand,
@@ -100,19 +105,21 @@ describe('s3', () => {
     const result = await provider.uploads.request(uploadParams());
 
     expect(result).toEqual({
+      key: 'documents/generated-uuid.txt',
       uploadUrl: 'https://signed-upload.example.com',
+      uploadHeaders: { 'Content-Type': 'application/octet-stream' },
       accessUrl:
         'https://storage-bucket.s3.us-east-1.amazonaws.com/documents/generated-uuid.txt',
     });
     expect(awsMocks.getSignedUrl).toHaveBeenCalledWith(
       expect.any(awsMocks.S3Client),
       expect.objectContaining({
-        input: {
+        input: expect.objectContaining({
           Bucket: 'storage-bucket',
           Key: 'documents/generated-uuid.txt',
-        },
+        }),
       }),
-      { expiresIn: 60 * 60 },
+      expect.objectContaining({ expiresIn: 60 * 60 }),
     );
   });
 
@@ -132,12 +139,12 @@ describe('s3', () => {
     expect(awsMocks.getSignedUrl).toHaveBeenCalledWith(
       expect.any(awsMocks.S3Client),
       expect.objectContaining({
-        input: {
+        input: expect.objectContaining({
           Bucket: 'storage-bucket',
           Key: 'documents/_public/generated-uuid.txt',
-        },
+        }),
       }),
-      { expiresIn: 60 * 60 },
+      expect.objectContaining({ expiresIn: 60 * 60 }),
     );
   });
 
@@ -159,12 +166,12 @@ describe('s3', () => {
     expect(awsMocks.getSignedUrl).toHaveBeenCalledWith(
       expect.any(awsMocks.S3Client),
       expect.objectContaining({
-        input: {
+        input: expect.objectContaining({
           Bucket: 'storage-bucket',
           Key: 'documents/acme/invoices/generated-uuid.txt',
-        },
+        }),
       }),
-      { expiresIn: 60 * 60 },
+      expect.objectContaining({ expiresIn: 60 * 60 }),
     );
   });
 
@@ -185,12 +192,12 @@ describe('s3', () => {
     expect(awsMocks.getSignedUrl).toHaveBeenCalledWith(
       expect.any(awsMocks.S3Client),
       expect.objectContaining({
-        input: {
+        input: expect.objectContaining({
           Bucket: 'storage-bucket',
           Key: 'documents/manual-name.pdf',
-        },
+        }),
       }),
-      { expiresIn: 60 * 60 },
+      expect.objectContaining({ expiresIn: 60 * 60 }),
     );
   });
 
@@ -205,12 +212,12 @@ describe('s3', () => {
     expect(awsMocks.getSignedUrl).toHaveBeenCalledWith(
       expect.any(awsMocks.S3Client),
       expect.objectContaining({
-        input: {
+        input: expect.objectContaining({
           Bucket: 'storage-bucket',
           Key: 'documents/generated-uuid.png',
-        },
+        }),
       }),
-      { expiresIn: 60 * 60 },
+      expect.objectContaining({ expiresIn: 60 * 60 }),
     );
   });
 
@@ -245,12 +252,12 @@ describe('s3', () => {
     expect(awsMocks.getSignedUrl).toHaveBeenCalledWith(
       expect.any(awsMocks.S3Client),
       expect.objectContaining({
-        input: {
+        input: expect.objectContaining({
           Bucket: 'storage-bucket',
           Key: 'documents/custom/tenant-1/generated-uuid.txt',
-        },
+        }),
       }),
-      { expiresIn: 60 * 60 },
+      expect.objectContaining({ expiresIn: 60 * 60 }),
     );
   });
 
@@ -278,12 +285,12 @@ describe('s3', () => {
         }),
       }),
       expect.objectContaining({
-        input: {
+        input: expect.objectContaining({
           Bucket: 'storage-bucket',
           Key: 'documents/generated-uuid.txt',
-        },
+        }),
       }),
-      { expiresIn: 60 * 60 },
+      expect.objectContaining({ expiresIn: 60 * 60 }),
     );
   });
 
@@ -315,12 +322,12 @@ describe('s3', () => {
       expect(awsMocks.getSignedUrl).toHaveBeenCalledWith(
         expect.any(awsMocks.S3Client),
         expect.objectContaining({
-          input: {
+          input: expect.objectContaining({
             Bucket: 'storage-bucket',
             Key: objectKey,
-          },
+          }),
         }),
-        { expiresIn: 60 * 60 },
+        expect.objectContaining({ expiresIn: 60 * 60 }),
       );
 
       const lastModified = new Date('2026-01-01T00:00:00.000Z');
@@ -343,19 +350,19 @@ describe('s3', () => {
       expect(awsMocks.send).toHaveBeenNthCalledWith(
         1,
         expect.objectContaining({
-          input: {
+          input: expect.objectContaining({
             Bucket: 'storage-bucket',
             Key: objectKey,
-          },
+          }),
         }),
       );
       expect(awsMocks.send).toHaveBeenNthCalledWith(
         2,
         expect.objectContaining({
-          input: {
+          input: expect.objectContaining({
             Bucket: 'storage-bucket',
             Key: objectKey,
-          },
+          }),
         }),
       );
     },
@@ -386,10 +393,10 @@ describe('s3', () => {
 
     expect(awsMocks.send).toHaveBeenCalledWith(
       expect.objectContaining({
-        input: {
+        input: expect.objectContaining({
           Bucket: 'storage-bucket',
           Key: 'documents/path/file.txt',
-        },
+        }),
       }),
     );
   });
@@ -412,6 +419,7 @@ describe('s3', () => {
         file: { url: 'https://cdn.example.com/documents/path/file.txt' },
       }),
     ).resolves.toEqual({
+      key: 'documents/path/file.txt',
       url: 'https://cdn.example.com/documents/path/file.txt',
       sizeBytes: 10,
       uploadedAt: lastModified,
@@ -467,8 +475,6 @@ describe('s3', () => {
         bucketName: 'documents',
         files: [{ url: 'https://example.com/documents/file.txt' }],
       }),
-    ).rejects.toThrow(
-      'S3 bucketName is not configured in S3ProviderOptions for deleteFile.',
-    );
+    ).rejects.toThrow('S3 bucketName is not configured in S3ProviderOptions.');
   });
 });

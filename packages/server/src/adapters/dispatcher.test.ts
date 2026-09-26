@@ -100,6 +100,54 @@ describe('adapter dispatcher', () => {
     expect(provider.uploads.multipart?.complete).toHaveBeenCalledOnce();
   });
 
+  it('authenticates multipart cancellation and dispatches only supported operations', async () => {
+    const { dispatch, provider } = createDispatcher(createSilentLogger());
+    const abort = vi.fn();
+    provider.uploads.multipart!.abort = abort;
+    const body = {
+      bucketName: requestUploadBody.bucketName,
+      key: 'documents/file',
+      uploadId: 'session',
+    };
+    expect(
+      (await dispatch('/api/edgestore/abort-multipart-upload', { body }))
+        .status,
+    ).toBe(401);
+    expect(abort).not.toHaveBeenCalled();
+    const init = await dispatch('/api/edgestore/init');
+    const cookieHeader = `${testCookieConfig.ctx.name}=${extractCookieValue(init.headers.getSetCookie())}`;
+    expect(
+      (
+        await dispatch('/api/edgestore/abort-multipart-upload', {
+          body: { ...body, bucketName: 'missing' },
+          cookieHeader,
+        })
+      ).status,
+    ).toBe(400);
+    expect(abort).not.toHaveBeenCalled();
+    expect(
+      (
+        await dispatch('/api/edgestore/abort-multipart-upload', {
+          body,
+          cookieHeader,
+        })
+      ).status,
+    ).toBe(200);
+    expect(abort).toHaveBeenCalledWith({
+      key: body.key,
+      uploadId: body.uploadId,
+    });
+    delete provider.uploads.multipart!.abort;
+    expect(
+      (
+        await dispatch('/api/edgestore/abort-multipart-upload', {
+          body,
+          cookieHeader,
+        })
+      ).status,
+    ).toBe(400);
+  });
+
   it('normalizes context creation failures', async () => {
     const { dispatch } = createDispatcher();
 
@@ -120,6 +168,7 @@ describe('adapter dispatcher', () => {
     '/api/edgestore/request-upload',
     '/api/edgestore/request-upload-parts',
     '/api/edgestore/complete-multipart-upload',
+    '/api/edgestore/abort-multipart-upload',
     '/api/edgestore/confirm-uploads',
     '/api/edgestore/delete-files',
   ])('rejects malformed bodies for %s', async (pathname) => {

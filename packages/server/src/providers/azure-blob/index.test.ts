@@ -169,6 +169,7 @@ describe('azureBlob', () => {
       expect(mocks.getBlobClient).toHaveBeenCalledWith(expectedBlobName);
       expect(mocks.randomUUID).toHaveBeenCalledTimes(expectedUuidCalls);
       expect(res).toEqual({
+        uploadHeaders: { 'x-ms-blob-type': 'BlockBlob' },
         accessUrl: `${containerUrl}/${encodeBlobName(expectedBlobName)}`,
         accessSignedUrl: fileInfo.isPublic
           ? undefined
@@ -209,6 +210,7 @@ describe('azureBlob', () => {
       accessSignedUrlExpiresAt: undefined,
       accessSignedUrlExpiresIn: undefined,
       uploadUrl: `${containerUrl}/documents/_public/public.txt?sig=cw`,
+      uploadHeaders: { 'x-ms-blob-type': 'BlockBlob' },
     });
     expect(mocks.generateBlobSASQueryParameters).toHaveBeenCalledWith(
       {

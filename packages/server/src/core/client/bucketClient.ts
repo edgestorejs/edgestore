@@ -146,7 +146,11 @@ function createUploadMethods<
 
       const { parsedPath, pathOrder } = parsePath<TBucket>(path);
       return {
-        ...mapFileRecord(uploadResult.file, context.baseUrl),
+        ...mapFileRecord(
+          uploadResult.file,
+          context.baseUrl,
+          context.provider.disableDevProxy,
+        ),
         ...mapSignedReadAccess(uploadResult.signedReadUrl),
         metadata,
         path: parsedPath,
@@ -169,7 +173,11 @@ function createGetMethods<
         bucketName: context.bucketName,
         file: await validateProviderReference(context.provider, ref),
       });
-      return mapBucketFileRecord(file, context.baseUrl);
+      return mapFileRecord(
+        file,
+        context.baseUrl,
+        context.provider.disableDevProxy,
+      );
     },
   };
 }
@@ -237,7 +245,7 @@ function createListMethods<
     return {
       ...result,
       items: result.items.map((file) =>
-        mapBucketFileRecord(file, context.baseUrl),
+        mapFileRecord(file, context.baseUrl, context.provider.disableDevProxy),
       ),
     };
   };
@@ -394,20 +402,14 @@ function mapSignedUrl<TSignedUrl extends { expiresAt: Date | string }>(
 function mapFileRecord<TFile extends BackendFile>(
   file: TFile,
   baseUrl?: string,
+  disableDevProxy?: boolean,
 ) {
   return {
     ...file,
-    url: getUrl(file.url, baseUrl),
+    url: disableDevProxy ? file.url : getUrl(file.url, baseUrl),
     uploadedAt: new Date(file.uploadedAt),
     updatedAt: new Date(file.updatedAt),
   };
-}
-
-function mapBucketFileRecord<TFile extends BackendFile>(
-  file: TFile,
-  baseUrl?: string,
-) {
-  return mapFileRecord(file, baseUrl);
 }
 
 /**

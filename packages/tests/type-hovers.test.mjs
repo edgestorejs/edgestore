@@ -144,6 +144,7 @@ const expectedHovers = {
         owner: string;
     };
     pathOrder: ("category" | "owner")[];
+    key?: string | undefined;
     signedUrl: string;
     expiresAt: Date;
     expiresIn: number;
@@ -282,6 +283,7 @@ const expectedHovers = {
     metadata: Record<string, never>;
     path: Record<string, never>;
     pathOrder: [];
+    key?: string | undefined;
 }`,
   reactSignedFileUpload: `const reactSignedFileUpload: {
     url: string;
@@ -296,6 +298,7 @@ const expectedHovers = {
         owner: string;
     };
     pathOrder: ("category" | "owner")[];
+    key?: string | undefined;
     signedUrl: string;
     expiresAt: Date;
     expiresIn: number;
@@ -309,6 +312,7 @@ const expectedHovers = {
     metadata: Record<string, never>;
     path: Record<string, never>;
     pathOrder: [];
+    key?: string | undefined;
     signedUrl: string;
     expiresAt: Date;
     expiresIn: number;

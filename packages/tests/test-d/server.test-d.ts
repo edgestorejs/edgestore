@@ -97,9 +97,27 @@ void s3EdgeStore.client.files
     expectError(file.path);
     expectError(file.metadata);
   });
-expectError(s3EdgeStore.client.files.upload);
+void s3EdgeStore.client.files.upload({
+  content: { blob: new Blob(['hello']), extension: 'txt' },
+});
+void s3EdgeStore.client.files.get({ key: 'files/example.txt' });
 expectError(s3EdgeStore.client.files.list);
 expectError(s3EdgeStore.client.files.confirm);
+
+const s3PrivateClient = createEdgeStore({
+  router: publicEs.router({
+    documents: publicEs.fileBucket().accessControl('private'),
+  }),
+  provider: s3(),
+}).client;
+void s3PrivateClient.documents.createSignedUrl({
+  url: { key: 'documents/report.pdf' },
+  expiresIn: 300,
+});
+expectError(
+  s3PrivateClient.documents.createSignedUrl({ url: { id: 'unsupported-id' } }),
+);
+expectError(s3PrivateClient.documents.restore);
 
 const syntheticProvider = defineProvider({
   name: 'synthetic',
