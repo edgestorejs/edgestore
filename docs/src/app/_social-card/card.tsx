@@ -9,13 +9,6 @@ type SocialCardOptions = {
   title: string;
 };
 
-const assetsPromise = Promise.all([
-  readFile(new URL('./assets/nunito-bold.ttf', import.meta.url)),
-  readFile(new URL('./assets/geist-regular.ttf', import.meta.url)),
-  readFile(new URL('../../../public/img/logo-sm.png', import.meta.url)),
-  readFile(new URL('../../../public/img/edgestore.svg', import.meta.url)),
-]);
-
 function toArrayBuffer(buffer: Buffer): ArrayBuffer {
   return buffer.buffer.slice(
     buffer.byteOffset,
@@ -44,7 +37,12 @@ export async function createSocialCard({
   footerRight,
   title,
 }: SocialCardOptions): Promise<ImageResponse> {
-  const [nunito, geist, logo, wordmark] = await assetsPromise;
+  const [nunito, geist, logo, wordmark] = await Promise.all([
+    readFile(new URL('./assets/nunito-bold.ttf', import.meta.url)),
+    readFile(new URL('./assets/geist-regular.ttf', import.meta.url)),
+    readFile(new URL('../../../public/img/logo-sm.png', import.meta.url)),
+    readFile(new URL('./assets/wordmark.svg', import.meta.url)),
+  ]);
 
   return new ImageResponse(
     <div

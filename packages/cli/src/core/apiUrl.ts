@@ -19,7 +19,7 @@ export function resolveApiUrl(
   } catch {
     throw usageError(
       'invalid_api_url',
-      `Invalid EdgeStore API URL: ${rawValue}`,
+      'Invalid EdgeStore API URL. Supply an http or https origin.',
     );
   }
 

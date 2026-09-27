@@ -1,10 +1,11 @@
 import {
-  initEdgeStore,
   type AnyEdgeStoreProvider,
   type EdgeStoreRouter,
 } from '@edgestore/shared';
 import { expect, vi } from 'vitest';
 import { z } from 'zod';
+import { initEdgeStore, type ConfiguredRouter } from '../core/router';
+import type { EdgeStoreBackendProvider } from '../providers/edgestore';
 
 export type AdapterTestContext = {
   userId: string;
@@ -21,9 +22,6 @@ export const testCookieConfig = {
       path: '/api/edgestore',
       sameSite: 'lax' as const,
     },
-  },
-  token: {
-    name: 'edgestore-test-token',
   },
 };
 
@@ -76,7 +74,7 @@ export function createConformanceProvider(
   const provider: AnyEdgeStoreProvider = {
     name: 'test-provider',
     baseUrl: 'https://files.example.com',
-    init: vi.fn(() => ({ token: 'provider-token' })),
+    init: vi.fn(() => ({})),
     reference: {
       schema: z.object({ url: z.string() }),
       fromUrl: (url) => ({ url }),
@@ -88,13 +86,9 @@ export function createConformanceProvider(
         thumbnailUrl: null,
       })),
       multipart: {
-        requestParts: vi.fn(() => ({
-          multipart: {
-            uploadId: 'upload-id',
-            parts: [],
-          },
-        })),
+        requestParts: vi.fn(() => ({ parts: [] })),
         complete: vi.fn(),
+        abort: vi.fn(),
       },
     },
     files: {
@@ -122,7 +116,10 @@ export function createConformanceProvider(
   };
 }
 
-export function createConformanceRouter(): EdgeStoreRouter<AdapterTestContext> {
+export function createConformanceRouter(): ConfiguredRouter<
+  EdgeStoreRouter<AdapterTestContext>,
+  EdgeStoreBackendProvider
+> {
   const es = initEdgeStore.context<AdapterTestContext>().create();
 
   return es.router({
@@ -162,22 +159,6 @@ export function expectRequestUploadCalledWithContext(
       },
     },
   });
-}
-
-export function stubProxyFetch() {
-  const fetchMock = vi.fn(async (url: string | URL | Request) => {
-    return new Response('proxied body', {
-      status: 202,
-      headers: {
-        'Content-Type': 'text/custom',
-        'X-Received-Url': String(url),
-      },
-    });
-  });
-
-  vi.stubGlobal('fetch', fetchMock);
-
-  return fetchMock;
 }
 
 export function asJsonRequestInit(body: unknown): RequestInit {

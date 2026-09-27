@@ -26,8 +26,8 @@ export function getBlogPosts() {
     : blog.getPages();
 }
 
-export function getBlogPost(slug: string) {
-  const page = blog.getPage([slug]);
+export function getBlogPost(slug: string[]) {
+  const page = blog.getPage(slug);
 
   if (!page || (process.env.NODE_ENV === 'production' && page.data.draft)) {
     return undefined;

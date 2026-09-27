@@ -11,7 +11,10 @@ import {
   type RequestUploadRes,
 } from '@edgestore/shared';
 import { z } from 'zod';
-import { defineProvider } from '../../core/provider';
+import {
+  defineProvider,
+  INITIAL_MULTIPART_PART_URLS,
+} from '../../core/provider';
 import { getEnv } from '../../libs/env';
 import EdgeStoreCredentialsError from '../../libs/errors/EdgeStoreCredentialsError';
 
@@ -83,7 +86,7 @@ export function edgestore(options?: EdgeStoreProviderOptions) {
       );
       if (!requiresFileAccessCookie) return {};
 
-      const { token } = await runtime.accessTokens.create({
+      const { token, delivery } = await runtime.accessTokens.create({
         context: Object.fromEntries(
           Object.entries(ctx).filter(
             (entry): entry is [string, string] => entry[1] !== undefined,
@@ -109,9 +112,11 @@ export function edgestore(options?: EdgeStoreProviderOptions) {
           ]),
         ),
       });
+      const overrideBaseUrl = getEnv('EDGE_STORE_BASE_URL');
       return {
-        token,
+        baseUrl: overrideBaseUrl ?? delivery?.baseUrl ?? baseUrl,
         clientInit: {
+          ...(delivery && !overrideBaseUrl ? { urls: delivery.initUrls } : {}),
           path: '/_init',
           headers: {
             'x-edgestore-token': token,
@@ -135,7 +140,10 @@ export function edgestore(options?: EdgeStoreProviderOptions) {
               bucket: bucketName,
               ...mapRawUploadRequest(bucketType, fileInfo, autoSignedUrls),
               multipart: {
-                partNumbers: multipartPlan.partNumbers,
+                partNumbers: multipartPlan.partNumbers.slice(
+                  0,
+                  INITIAL_MULTIPART_PART_URLS,
+                ),
               },
             }),
             {
@@ -152,19 +160,16 @@ export function edgestore(options?: EdgeStoreProviderOptions) {
         );
       },
       multipart: {
-        requestParts: async ({ multipart }) => {
+        requestParts: async ({ uploadId, parts }) => {
           const res = await runtime.uploads.createParts({
-            uploadId: multipart.uploadId,
-            partNumbers: multipart.parts,
+            uploadId,
+            partNumbers: parts,
           });
           return {
-            multipart: {
-              uploadId: multipart.uploadId,
-              parts: res.parts.map((part) => ({
-                partNumber: part.partNumber,
-                uploadUrl: part.signedUrl,
-              })),
-            },
+            parts: res.parts.map((part) => ({
+              partNumber: part.partNumber,
+              uploadUrl: part.signedUrl,
+            })),
           };
         },
         complete: async ({ uploadId, parts }) => {
@@ -173,9 +178,13 @@ export function edgestore(options?: EdgeStoreProviderOptions) {
             parts,
           });
         },
+        abort: async ({ uploadId }) => {
+          await runtime.uploads.cancel({ uploadId });
+        },
       },
       upload: async ({
         bucketName,
+        bucketType,
         fileInfo,
         autoSignedUrls,
         source,
@@ -184,6 +193,10 @@ export function edgestore(options?: EdgeStoreProviderOptions) {
       }) => {
         const result = await runtime.uploads.upload({
           bucket: bucketName,
+          bucketConfig: {
+            type: bucketType.toLowerCase() as 'file' | 'image',
+            visibility: fileInfo.isPublic ? 'public' : 'protected',
+          },
           source,
           ...mapHighLevelUploadOptions(fileInfo, autoSignedUrls),
           signal,
@@ -440,6 +453,7 @@ function mapUploadResponse(
 ): RequestUploadRes {
   const signed = res.signedReadUrl;
   const access = {
+    key: res.file.key,
     accessUrl: res.file.url,
     thumbnailUrl: res.file.thumbnailUrl,
     accessSignedUrl: signed?.signedUrl,
