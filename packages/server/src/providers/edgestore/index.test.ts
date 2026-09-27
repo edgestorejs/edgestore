@@ -1,8 +1,8 @@
 import { createEdgeStoreSdk } from '@edgestore/sdk';
 import type * as EdgeStoreSdkModule from '@edgestore/sdk';
-import { initEdgeStore } from '@edgestore/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { edgestore } from '.';
+import { initEdgeStore } from '../../core/router';
 
 const runtime = vi.hoisted(() => ({
   accessTokens: { create: vi.fn() },

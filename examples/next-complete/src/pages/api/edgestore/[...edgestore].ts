@@ -1,9 +1,8 @@
-import { createEdgeStore, initEdgeStore } from '@edgestore/server';
+import { initEdgeStore } from '@edgestore/server';
 import {
   createEdgeStoreNextHandler,
   type CreateContextOptions,
 } from '@edgestore/server/adapters/next/pages';
-import { edgestore } from '@edgestore/server/providers/edgestore';
 import { z } from 'zod';
 
 type Context = {
@@ -59,25 +58,24 @@ const filesBucket = es
     ],
   });
 
-const router = es.router({
-  myPublicImages: imagesBucket,
-  myProtectedFiles: filesBucket,
-});
+const router = es.router(
+  {
+    myPublicImages: imagesBucket,
+    myProtectedFiles: filesBucket,
+  },
+  {
+    baseUrl: 'http://localhost:3000/api/edgestore',
+  },
+);
 
 export type EdgeStoreRouter = typeof router;
 
-export const configuredEdgeStore = createEdgeStore({
-  router,
-  provider: edgestore(),
-  baseUrl: 'http://localhost:3000/api/edgestore',
-});
-
 export default createEdgeStoreNextHandler<Context>({
-  edgestore: configuredEdgeStore,
+  router,
   createContext,
 });
 
 /**
  * Use this to easily access the EdgeStore API from your backend.
  */
-export const edgestoreClient = configuredEdgeStore.client;
+export const edgestoreClient = router.client;

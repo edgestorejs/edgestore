@@ -15,29 +15,24 @@ Install the optional AWS dependencies:
 @aws-sdk/client-s3 @aws-sdk/s3-request-presigner
 ```
 
-Configure a provider alongside your router:
+Configure the provider on your router:
 
 ```ts title="src/server/edgestore.ts"
-import { createEdgeStore, initEdgeStore } from '@edgestore/server';
+import { initEdgeStore } from '@edgestore/server';
 import { s3 } from '@edgestore/server/providers/s3';
 
 const es = initEdgeStore.create();
-const router = es.router({
+export const router = es.router({
   documents: es.fileBucket().accessControl('private'),
-});
-
-export const configuredEdgeStore = createEdgeStore({
-  router,
-  provider: s3({
-    region: 'us-east-1',
-    bucketName: 'my-storage-bucket',
-  }),
-});
+}).provider(s3({
+  region: 'us-east-1',
+  bucketName: 'my-storage-bucket',
+}));
 
 export type EdgeStoreRouter = typeof router;
 ```
 
-Pass `configuredEdgeStore` to your framework adapter as its `edgestore` option.
+Pass `router` to your framework adapter as its `router` option.
 Set `EDGE_STORE_JWT_SECRET` to a stable random secret, for example one generated
 with `openssl rand -base64 32`. All application instances must share it. The
 adapter uses it for context cookies and S3 uses it for multipart sessions.
@@ -152,7 +147,7 @@ backend must authorize the caller before issuing a signed URL:
 
 ```ts
 // After checking that the current user can read this database file record:
-const download = await configuredEdgeStore.client.documents.createSignedUrl({
+const download = await router.client.documents.createSignedUrl({
   url: { key: storedFileKey },
   expiresIn: 300,
 });
@@ -179,7 +174,7 @@ create CloudFront signed URLs.
 Use the same configured router for generated files and background jobs:
 
 ```ts
-const uploaded = await configuredEdgeStore.client.documents.upload({
+const uploaded = await router.client.documents.upload({
   content: {
     blob: new Blob([pdfBytes], { type: 'application/pdf' }),
     extension: 'pdf',

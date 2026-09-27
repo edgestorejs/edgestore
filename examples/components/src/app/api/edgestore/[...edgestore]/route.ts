@@ -1,6 +1,5 @@
-import { createEdgeStore, initEdgeStore } from '@edgestore/server';
+import { initEdgeStore } from '@edgestore/server';
 import { createEdgeStoreNextHandler } from '@edgestore/server/adapters/next/app';
-import { edgestore } from '@edgestore/server/providers/edgestore';
 
 const es = initEdgeStore.create();
 
@@ -27,10 +26,6 @@ export type EdgeStoreRouter = typeof router;
 /**
  * The next handler is used to create the API route.
  */
-const configuredEdgeStore = createEdgeStore({
-  router,
-  provider: edgestore(),
-});
-const handler = createEdgeStoreNextHandler({ edgestore: configuredEdgeStore });
+const handler = createEdgeStoreNextHandler({ router });
 
 export { handler as GET, handler as POST };

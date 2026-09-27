@@ -1,5 +1,5 @@
-import { initEdgeStore } from '@edgestore/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { initEdgeStore } from '../core/router';
 import {
   completeMultipartUpload,
   confirmUploads,

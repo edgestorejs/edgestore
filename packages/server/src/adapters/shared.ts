@@ -23,9 +23,8 @@ import type { LoggerLike } from '../libs/logger';
 // TODO: change it to 1 hour when we have a way to refresh the token
 const DEFAULT_MAX_AGE = 30 * 24 * 60 * 60; // 30 days
 
-export type HandlerEdgeStore<TCtx extends AnyContext> = {
-  provider: AnyEdgeStoreProvider;
-  router: EdgeStoreRouter<TCtx>;
+export type HandlerRouter<TCtx extends AnyContext> = EdgeStoreRouter<TCtx> & {
+  readonly _def: { readonly provider: AnyEdgeStoreProvider };
 };
 
 const NO_BODY_STATUSES = new Set([204, 205, 304]);

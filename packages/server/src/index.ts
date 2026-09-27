@@ -1,8 +1,10 @@
-export { initEdgeStore } from '@edgestore/shared';
 export {
-  createEdgeStore,
+  initEdgeStore,
+  type ConfiguredRouter,
+  type RouterOptions,
+} from './core/router';
+export {
   defineProvider,
-  type ConfiguredEdgeStore,
   type EdgeStoreClient,
   type InferClientInputs,
   type InferClientOutputs,

@@ -32,9 +32,8 @@ load it automatically. Reuse existing cookie and CORS registrations.
 This bucket's files are accessible to anyone with the link.
 
 ```ts
-import { createEdgeStore, initEdgeStore } from '@edgestore/server';
+import { initEdgeStore } from '@edgestore/server';
 import { createEdgeStoreFastifyHandler } from '@edgestore/server/adapters/fastify';
-import { edgestore } from '@edgestore/server/providers/edgestore';
 import cors from '@fastify/cors';
 import cookie from '@fastify/cookie';
 import fastify from 'fastify';
@@ -59,13 +58,8 @@ const router = es.router({
 
 export type EdgeStoreRouter = typeof router;
 
-const configuredEdgeStore = createEdgeStore({
-  router,
-  provider: edgestore(),
-});
-
 const handler = createEdgeStoreFastifyHandler({
-  edgestore: configuredEdgeStore,
+  router,
 });
 
 app.get('/edgestore/*', handler);

@@ -1,6 +1,6 @@
 {
   "name": "@edgestore/sdk",
-  "version": "1.0.0-next.3",
+  "version": "1.0.0-next.4",
   "description": "Official low-level TypeScript SDK for the EdgeStore API",
   "homepage": "https://edgestore.dev",
   "license": "MIT",
@@ -18,7 +18,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "engines": {
-    "node": ">=24"
+    "node": ">=22.22.0"
   },
   "keywords": [
     "nodejs",

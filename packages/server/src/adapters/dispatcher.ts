@@ -26,7 +26,7 @@ import {
   requestUploadParts,
   requestUploadPartsBodySchema,
   type CookieConfig,
-  type HandlerEdgeStore,
+  type HandlerRouter,
 } from './shared';
 
 export type EdgeStoreDispatchRequest<TCtx extends AnyContext> = {
@@ -69,13 +69,12 @@ function hasCreateContext<TCtx extends AnyContext, TOptions>(
 export async function dispatchEdgeStoreRequest<
   TCtx extends AnyContext,
 >(params: {
-  edgestore: HandlerEdgeStore<TCtx>;
+  router: HandlerRouter<TCtx>;
   request: EdgeStoreDispatchRequest<TCtx>;
   logger: LoggerLike;
   cookieConfig?: CookieConfig;
 }): Promise<Response> {
-  const { edgestore, request, logger, cookieConfig } = params;
-  const { provider, router } = edgestore;
+  const { router, request, logger, cookieConfig } = params;
   const resolvedCookieConfig = getCookieConfig(cookieConfig);
   const cookieHeader =
     request.cookieHeader ??
@@ -93,6 +92,8 @@ export async function dispatchEdgeStoreRequest<
     if (matchPath(request.pathname, '/health')) {
       return new Response('OK');
     }
+
+    const { provider } = router._def;
 
     if (matchPath(request.pathname, '/init')) {
       let ctx: TCtx;

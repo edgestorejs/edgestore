@@ -1,5 +1,5 @@
 import { createEdgeStoreProvider } from '@edgestore/react';
-import { initEdgeStore } from '@edgestore/shared';
+import { initEdgeStore } from '@edgestore/server';
 import { expectAssignable, expectNotAssignable, expectType } from 'tsd';
 import { z } from 'zod';
 

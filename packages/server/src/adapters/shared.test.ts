@@ -1,11 +1,11 @@
 import {
-  initEdgeStore,
   type AnyContext,
   type EdgeStoreProvider,
   type EdgeStoreRouter,
 } from '@edgestore/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
+import { initEdgeStore } from '../core/router';
 import { getCookieConfig, init, requestUpload } from './shared';
 import {
   createContextToken,
@@ -142,9 +142,11 @@ describe('init', () => {
       init: vi.fn(() => ({})),
     });
     const es = initEdgeStore.create();
-    const router = es.router({
-      documents: es.fileBucket(),
-    });
+    const router = es
+      .router({
+        documents: es.fileBucket(),
+      })
+      .provider(provider);
 
     const res = await init({
       provider,
@@ -175,9 +177,11 @@ describe('init', () => {
       init: vi.fn(() => ({})),
     });
     const es = initEdgeStore.create();
-    const router = es.router({
-      documents: es.fileBucket(),
-    });
+    const router = es
+      .router({
+        documents: es.fileBucket(),
+      })
+      .provider(provider);
 
     const res = await init({
       provider,
@@ -202,10 +206,12 @@ describe('init', () => {
       init: vi.fn(() => ({})),
     });
     const es = initEdgeStore.create();
-    const router = es.router({
-      documents: es.fileBucket(),
-      avatars: es.imageBucket(),
-    });
+    const router = es
+      .router({
+        documents: es.fileBucket(),
+        avatars: es.imageBucket(),
+      })
+      .provider(provider);
 
     const res = await init({
       provider,
@@ -237,11 +243,13 @@ describe('init', () => {
       })),
     });
     const es = initEdgeStore.context<{ userId: string }>().create();
-    const router = es.router({
-      documents: es.fileBucket().accessControl({
-        userId: 'user-1',
-      }),
-    });
+    const router = es
+      .router({
+        documents: es.fileBucket().accessControl({
+          userId: 'user-1',
+        }),
+      })
+      .provider(provider);
 
     const res = await init({
       provider,
@@ -270,9 +278,11 @@ describe('init', () => {
   it('keeps running init for custom providers', async () => {
     const provider = createProvider({ name: 'custom-provider' });
     const es = initEdgeStore.create();
-    const router = es.router({
-      documents: es.fileBucket(),
-    });
+    const router = es
+      .router({
+        documents: es.fileBucket(),
+      })
+      .provider(provider);
 
     const res = await init({
       provider,

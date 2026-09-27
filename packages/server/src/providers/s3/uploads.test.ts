@@ -9,9 +9,9 @@ import {
   UploadPartCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { initEdgeStore, type RequestUploadParams } from '@edgestore/shared';
+import { type RequestUploadParams } from '@edgestore/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createEdgeStore } from '../../core';
+import { initEdgeStore } from '../../core/router';
 import { s3 } from './index';
 
 vi.mock('@aws-sdk/s3-request-presigner', () => ({ getSignedUrl: vi.fn() }));
@@ -210,12 +210,9 @@ describe('S3 backend and private files', () => {
     const { provider, send } = setup();
     send.mockResolvedValue({ ContentLength: 3, LastModified: new Date() });
     const es = initEdgeStore.create();
-    const configured = createEdgeStore({
-      provider,
-      router: es.router({
-        documents: es.fileBucket().accessControl('private'),
-      }),
-    });
+    const configured = es.router({
+      documents: es.fileBucket().accessControl('private'),
+    }).provider(provider);
     const result = await configured.client.documents.upload({ content: 'abc' });
     expect(result.url).toMatch(
       /^https:\/\/storage.s3.us-east-1.amazonaws.com\/documents\//,
