@@ -224,12 +224,14 @@ export function s3(options: S3ProviderOptions = {}) {
         const read = await readForUpload(prepared.key, params);
         const access = {
           key: prepared.key,
-          accessUrl: prepared.url,
+          url: prepared.url,
           ...(read
             ? {
-                accessSignedUrl: read.signedUrl,
-                accessSignedUrlExpiresAt: read.expiresAt,
-                accessSignedUrlExpiresIn: read.expiresIn,
+                signedReadUrl: {
+                  signedUrl: read.signedUrl,
+                  expiresAt: read.expiresAt,
+                  expiresIn: read.expiresIn,
+                },
               }
             : {}),
         };

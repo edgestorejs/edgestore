@@ -203,13 +203,10 @@ describe('edgestore provider', () => {
       }),
     ).resolves.toEqual({
       key: 'files/file',
-      accessUrl: 'https://files.example/file',
+      url: 'https://files.example/file',
       thumbnailUrl: null,
       uploadUrl: 'https://upload.example/file',
-      accessSignedUrl: undefined,
-      accessSignedThumbnailUrl: undefined,
-      accessSignedUrlExpiresAt: undefined,
-      accessSignedUrlExpiresIn: undefined,
+      signedReadUrl: undefined,
     });
     expect(runtime.uploads.request).toHaveBeenCalledWith({
       bucket: 'files',

@@ -107,7 +107,7 @@ const lookupProvider = defineProvider({
   },
   uploads: {
     async request() {
-      return { uploadUrl: '', accessUrl: '' };
+      return { uploadUrl: '', url: '' };
     },
   },
   files: {

@@ -134,7 +134,7 @@ describe('Express adapter conformance', () => {
 
     expect(uploadRes.statusCode).toBe(200);
     expect(uploadRes.body).toMatchObject({
-      accessUrl: 'https://files.example.com/file.txt',
+      url: 'https://files.example.com/file.txt',
       path: { author: testCtx.userId },
       metadata: {
         userId: testCtx.userId,

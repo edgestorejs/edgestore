@@ -184,14 +184,16 @@ describe('azureBlob', () => {
       expect(mocks.getBlobClient).toHaveBeenCalledWith(expectedBlobName);
       expect(mocks.randomUUID).toHaveBeenCalledTimes(expectedUuidCalls);
       expect(res).toEqual({
-        accessUrl: `${containerUrl}/${encodeBlobName(expectedBlobName)}`,
-        accessSignedUrl: fileInfo.isPublic
-          ? undefined
-          : expect.stringContaining('?sig=r'),
-        accessSignedUrlExpiresAt: fileInfo.isPublic
-          ? undefined
-          : expect.any(Date),
-        accessSignedUrlExpiresIn: fileInfo.isPublic ? undefined : 60 * 60,
+        url: `${containerUrl}/${encodeBlobName(expectedBlobName)}`,
+        ...(fileInfo.isPublic
+          ? {}
+          : {
+              signedReadUrl: {
+                signedUrl: expect.stringContaining('?sig=r'),
+                expiresAt: expect.any(Date),
+                expiresIn: 60 * 60,
+              },
+            }),
         uploadUrl: `${containerUrl}/${encodeBlobName(expectedBlobName)}?sig=cw`,
         uploadHeaders: { 'x-ms-blob-type': 'BlockBlob' },
       });
@@ -220,10 +222,7 @@ describe('azureBlob', () => {
     );
 
     expect(res).toEqual({
-      accessUrl: `${containerUrl}/documents/_public/public.txt`,
-      accessSignedUrl: undefined,
-      accessSignedUrlExpiresAt: undefined,
-      accessSignedUrlExpiresIn: undefined,
+      url: `${containerUrl}/documents/_public/public.txt`,
       uploadUrl: `${containerUrl}/documents/_public/public.txt?sig=cw`,
       uploadHeaders: { 'x-ms-blob-type': 'BlockBlob' },
     });

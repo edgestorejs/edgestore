@@ -496,7 +496,7 @@ describe('requestUpload', () => {
       },
     });
     expect(res).toMatchObject({
-      accessUrl: 'https://files.example.com/file.txt',
+      url: 'https://files.example.com/file.txt',
       size: 10,
       path: {
         author: 'user-1',

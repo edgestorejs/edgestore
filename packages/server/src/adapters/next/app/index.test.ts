@@ -92,7 +92,7 @@ describe('Next app adapter conformance', () => {
 
     expect(uploadRes.status).toBe(200);
     await expect(uploadRes.json()).resolves.toMatchObject({
-      accessUrl: 'https://files.example.com/file.txt',
+      url: 'https://files.example.com/file.txt',
       path: { author: testCtx.userId },
       metadata: {
         userId: testCtx.userId,

@@ -13,7 +13,6 @@ export type SharedInitRes = {
 export type SharedRequestUploadRes = Simplify<
   RequestUploadRes & {
     size: number;
-    uploadedAt: string;
     path: Record<string, string>;
     pathOrder: string[];
     metadata: AnyMetadata;

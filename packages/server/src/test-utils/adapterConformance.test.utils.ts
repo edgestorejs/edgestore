@@ -81,7 +81,7 @@ export function createConformanceProvider(
     uploads: {
       request: vi.fn(() => ({
         uploadUrl: 'https://upload.example.com/file.txt',
-        accessUrl: 'https://files.example.com/file.txt',
+        url: 'https://files.example.com/file.txt',
         thumbnailUrl: null,
       })),
       multipart: {

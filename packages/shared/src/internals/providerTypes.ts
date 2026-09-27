@@ -135,14 +135,17 @@ export type BackendUploadParams = {
   }) => void;
 };
 
+/** A signed URL for reading a file that is not publicly accessible. */
+export type SignedReadUrl = {
+  signedUrl: string;
+  signedThumbnailUrl?: string | null;
+  expiresAt: Date | string;
+  expiresIn: number;
+};
+
 export type BackendUploadResult<TFile extends BackendFile = ProviderFile> = {
   file: TFile;
-  signedReadUrl?: {
-    signedUrl: string;
-    signedThumbnailUrl?: string | null;
-    expiresAt: Date | string;
-    expiresIn: number;
-  };
+  signedReadUrl?: SignedReadUrl;
 };
 
 export type BackendUploadOperation<TFile extends BackendFile = ProviderFile> = (
@@ -226,12 +229,11 @@ export type CompleteMultipartUploadParams = MultipartUploadSession & {
 type RequestUploadAccess = {
   /** Stable object key, when the provider exposes one. */
   key?: string;
-  accessUrl: string;
+  /** The file URL once the upload completes. */
+  url: string;
   thumbnailUrl?: string | null;
-  accessSignedUrl?: string;
-  accessSignedThumbnailUrl?: string | null;
-  accessSignedUrlExpiresAt?: Date | string;
-  accessSignedUrlExpiresIn?: number;
+  /** Returned when the bucket requests signed URLs for uploaded files. */
+  signedReadUrl?: SignedReadUrl;
 };
 
 export type SinglePartRequestUploadRes = RequestUploadAccess & {

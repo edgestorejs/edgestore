@@ -152,12 +152,12 @@ describe('EdgeStore adapter live smoke test', () => {
           await expectOk(requestUploadRes);
 
           const uploadInfo = (await requestUploadRes.json()) as {
-            accessUrl?: string;
+            url?: string;
             size?: number;
             uploadUrl?: string;
           };
 
-          if (!uploadInfo.uploadUrl || !uploadInfo.accessUrl) {
+          if (!uploadInfo.uploadUrl || !uploadInfo.url) {
             throw new Error(
               'Upload URL or access URL missing from upload response',
             );
@@ -174,7 +174,7 @@ describe('EdgeStore adapter live smoke test', () => {
 
           return {
             size: uploadInfo.size ?? 0,
-            url: uploadInfo.accessUrl,
+            url: uploadInfo.url,
           };
         },
         confirmUpload: async (url) => {

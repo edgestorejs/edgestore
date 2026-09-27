@@ -24,7 +24,6 @@ type UploadResponse<TBucket extends AnyBuilder> =
         url: string;
         thumbnailUrl: string | null;
         size: number;
-        uploadedAt: Date;
         metadata: InferMetadataObject<TBucket>;
         path: InferBucketPathObject<TBucket>;
         pathOrder: InferBucketPathOrder<TBucket>;
@@ -32,7 +31,6 @@ type UploadResponse<TBucket extends AnyBuilder> =
     : {
         url: string;
         size: number;
-        uploadedAt: Date;
         metadata: InferMetadataObject<TBucket>;
         path: InferBucketPathObject<TBucket>;
         pathOrder: InferBucketPathOrder<TBucket>;
@@ -270,11 +268,10 @@ async function uploadFile(
     }
     return {
       key: json.key,
-      url: json.accessUrl,
+      url: json.url,
       thumbnailUrl: json.thumbnailUrl ?? null,
-      ...mapSignedUploadAccess(json),
+      ...mapSignedReadUrl(json.signedReadUrl),
       size: json.size,
-      uploadedAt: new Date(json.uploadedAt),
       path: json.path as any,
       pathOrder: json.pathOrder as any,
       metadata: json.metadata as any,
@@ -344,17 +341,15 @@ function getFileNameExtension(fileName?: string) {
   return fileName.slice(extensionIndex + 1);
 }
 
-function mapSignedUploadAccess(res: SharedRequestUploadRes) {
-  if (!res.accessSignedUrl) {
+function mapSignedReadUrl(signed: SharedRequestUploadRes['signedReadUrl']) {
+  if (!signed) {
     return {};
   }
   return {
-    signedUrl: res.accessSignedUrl,
-    expiresAt: res.accessSignedUrlExpiresAt
-      ? new Date(res.accessSignedUrlExpiresAt)
-      : new Date(),
-    expiresIn: res.accessSignedUrlExpiresIn ?? 0,
-    signedThumbnailUrl: res.accessSignedThumbnailUrl ?? null,
+    signedUrl: signed.signedUrl,
+    expiresAt: new Date(signed.expiresAt),
+    expiresIn: signed.expiresIn,
+    signedThumbnailUrl: signed.signedThumbnailUrl ?? null,
   };
 }
 async function mutateFiles(

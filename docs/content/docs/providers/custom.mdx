@@ -53,7 +53,7 @@ export const myProvider = defineProvider({
       const key = storage.createKey({ bucketName, fileInfo });
       return {
         uploadUrl: await storage.signUpload(key),
-        accessUrl: `${baseUrl}/${key}`,
+        url: `${baseUrl}/${key}`,
       };
     },
   },

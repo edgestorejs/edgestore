@@ -444,15 +444,11 @@ function mapUploadResponse(
   res: Awaited<ReturnType<ProjectRuntimeClient['uploads']['request']>>,
   multipartConfig?: { partSize: number; totalParts: number },
 ): RequestUploadRes {
-  const signed = res.signedReadUrl;
   const access = {
     key: res.file.key,
-    accessUrl: res.file.url,
+    url: res.file.url,
     thumbnailUrl: res.file.thumbnailUrl,
-    accessSignedUrl: signed?.signedUrl,
-    accessSignedThumbnailUrl: signed?.signedThumbnailUrl,
-    accessSignedUrlExpiresAt: signed?.expiresAt,
-    accessSignedUrlExpiresIn: signed?.expiresIn,
+    signedReadUrl: res.signedReadUrl,
   };
   if (res.upload.kind === 'single') {
     return { ...access, uploadUrl: res.upload.signedUrl };

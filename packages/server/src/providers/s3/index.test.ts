@@ -108,7 +108,7 @@ describe('s3', () => {
       key: 'documents/generated-uuid.txt',
       uploadUrl: 'https://signed-upload.example.com',
       uploadHeaders: { 'Content-Type': 'application/octet-stream' },
-      accessUrl:
+      url:
         'https://storage-bucket.s3.us-east-1.amazonaws.com/documents/generated-uuid.txt',
     });
     expect(awsMocks.getSignedUrl).toHaveBeenCalledWith(
@@ -133,7 +133,7 @@ describe('s3', () => {
       uploadParams({ isPublic: true }),
     );
 
-    expect(result.accessUrl).toBe(
+    expect(result.url).toBe(
       'https://storage-bucket.s3.eu-west-1.amazonaws.com/documents/_public/generated-uuid.txt',
     );
     expect(awsMocks.getSignedUrl).toHaveBeenCalledWith(
@@ -185,7 +185,7 @@ describe('s3', () => {
       uploadParams({ fileName: 'manual-name.pdf', extension: 'txt' }),
     );
 
-    expect(result.accessUrl).toBe(
+    expect(result.url).toBe(
       'https://storage-bucket.s3.us-east-1.amazonaws.com/documents/manual-name.pdf',
     );
     expect(awsMocks.randomUUID).not.toHaveBeenCalled();
@@ -246,7 +246,7 @@ describe('s3', () => {
       fileInfo,
       defaultPath: '_public/tenant-1/generated-uuid.txt',
     });
-    expect(result.accessUrl).toBe(
+    expect(result.url).toBe(
       'https://storage-bucket.s3.us-east-1.amazonaws.com/documents/custom/tenant-1/generated-uuid.txt',
     );
     expect(awsMocks.getSignedUrl).toHaveBeenCalledWith(
@@ -312,7 +312,7 @@ describe('s3', () => {
 
     const result = await provider.uploads.request(uploadParams());
 
-    expect(result.accessUrl).toBe(
+    expect(result.url).toBe(
       'https://cdn.example.com/assets/documents/generated-uuid.txt',
     );
     expect(awsMocks.getSignedUrl).toHaveBeenCalledWith(
@@ -355,7 +355,7 @@ describe('s3', () => {
       );
       const objectKey = `documents/${fileName}`;
 
-      expect(result.accessUrl).toBe(
+      expect(result.url).toBe(
         `https://cdn.example.com/assets/documents/${encodedFileName}`,
       );
       expect(awsMocks.getSignedUrl).toHaveBeenCalledWith(
@@ -379,11 +379,11 @@ describe('s3', () => {
 
       await provider.files.get({
         bucketName: 'documents',
-        file: { url: result.accessUrl },
+        file: { url: result.url },
       });
       await provider.files.delete?.({
         bucketName: 'documents',
-        files: [{ url: result.accessUrl }],
+        files: [{ url: result.url }],
       });
 
       expect(awsMocks.send).toHaveBeenNthCalledWith(
@@ -415,7 +415,7 @@ describe('s3', () => {
 
     const result = await provider.uploads.request(uploadParams());
 
-    expect(result.accessUrl).toBe(
+    expect(result.url).toBe(
       'http://localhost:9000/storage-bucket/documents/generated-uuid.txt',
     );
   });

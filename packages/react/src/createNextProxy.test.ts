@@ -14,10 +14,9 @@ import {
 function uploadResponse(overrides: Partial<Record<string, unknown>> = {}) {
   return {
     uploadUrl: 'https://uploads.example/file',
-    accessUrl: 'https://files.example/protected/file.txt',
+    url: 'https://files.example/protected/file.txt',
     thumbnailUrl: null,
     size: 12,
-    uploadedAt: '2024-01-02T03:04:05.000Z',
     path: {},
     pathOrder: [],
     metadata: {},
@@ -122,9 +121,7 @@ describe('createNextProxy upload', () => {
       pathOrder: [],
       metadata: {},
     });
-    expect((await upload).uploadedAt).toEqual(
-      new Date('2024-01-02T03:04:05.000Z'),
-    );
+    expect(await upload).not.toHaveProperty('uploadedAt');
     expect(progress).toHaveBeenCalledWith(40);
   });
 
@@ -319,7 +316,7 @@ describe('createNextProxy upload', () => {
   it('returns protected URLs unchanged in development', async () => {
     vi.stubEnv('NODE_ENV', 'development');
     const accessUrl = 'https://files.example/protected/file.txt';
-    createFetchMock([jsonResponse(uploadResponse({ accessUrl }))]);
+    createFetchMock([jsonResponse(uploadResponse({ url: accessUrl }))]);
     const { assets } = createProxy();
     const upload = assets.upload({
       file: new File(['hello'], 'hello.txt'),
@@ -329,6 +326,34 @@ describe('createNextProxy upload', () => {
     MockXMLHttpRequest.instances[0]!.load();
 
     await expect(upload).resolves.toMatchObject({ url: accessUrl });
+  });
+
+  it('returns the signed read URL when the bucket requests one', async () => {
+    createFetchMock([
+      jsonResponse(
+        uploadResponse({
+          signedReadUrl: {
+            signedUrl: 'https://files.example/protected/file.txt?sig=1',
+            expiresAt: '2026-01-02T04:04:05.000Z',
+            expiresIn: 3600,
+          },
+        }),
+      ),
+    ]);
+    const { assets } = createProxy();
+    const upload = assets.upload({
+      file: new File(['hello'], 'hello.txt'),
+    });
+
+    await waitForXhrs(1);
+    MockXMLHttpRequest.instances[0]!.load();
+
+    await expect(upload).resolves.toMatchObject({
+      signedUrl: 'https://files.example/protected/file.txt?sig=1',
+      expiresAt: new Date('2026-01-02T04:04:05.000Z'),
+      expiresIn: 3600,
+      signedThumbnailUrl: null,
+    });
   });
 });
 

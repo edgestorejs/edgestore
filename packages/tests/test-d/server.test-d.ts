@@ -213,7 +213,7 @@ expectError(
     ...syntheticProvider,
     uploads: {
       request: async () => ({
-        accessUrl: 'https://s3.example/files/uploaded.txt',
+        url: 'https://s3.example/files/uploaded.txt',
         multipart: {
           key: 'files/uploaded.txt',
           uploadId: 'upload-id',
