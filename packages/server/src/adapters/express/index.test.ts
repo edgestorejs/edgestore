@@ -8,7 +8,6 @@ import {
   extractCookieValue,
   requestUploadBody,
   setupAdapterTestEnv,
-  stubProxyFetch,
   testCookieConfig,
   testCtx,
 } from '../../test-utils/adapterConformance.test.utils';
@@ -83,7 +82,7 @@ describe('Express adapter conformance', () => {
     const provider = createConformanceProvider();
     const router = createConformanceRouter();
     const handler = createEdgeStoreExpressHandler({
-      edgestore: { provider, router },
+      router: router.provider(provider),
       cookieConfig: testCookieConfig,
       createContext,
     });
@@ -173,36 +172,6 @@ describe('Express adapter conformance', () => {
     });
   });
 
-  it('/proxy-file forwards request cookies and preserves content type', async () => {
-    const fetchMock = stubProxyFetch();
-    const { handler } = createHandler();
-    const res = createMockResponse();
-
-    await handler(
-      createRequest(
-        '/api/edgestore/proxy-file?url=https://target.example/file',
-        {
-          headers: {
-            cookie: 'session=abc; theme=dark',
-          },
-          query: {
-            url: 'https://target.example/file',
-          },
-        },
-      ),
-      res,
-    );
-
-    expect(fetchMock).toHaveBeenCalledWith('https://target.example/file', {
-      headers: {
-        cookie: 'session=abc; theme=dark',
-      },
-    });
-    expect(res.statusCode).toBe(202);
-    expect(res.headers['Content-Type']).toBe('text/custom');
-    expect(res.body).toBe('proxied body');
-  });
-
   it('createContext failure maps to CREATE_CONTEXT_ERROR status/body', async () => {
     const { handler } = createHandler(
       vi.fn(() => {
@@ -227,14 +196,5 @@ describe('Express adapter conformance', () => {
     await handler(createRequest('/api/edgestore/missing'), res);
 
     expect(res.statusCode).toBe(404);
-  });
-
-  it('returns 400 for /proxy-file without a url', async () => {
-    const { handler } = createHandler();
-    const res = createMockResponse();
-
-    await handler(createRequest('/api/edgestore/proxy-file'), res);
-
-    expect(res.statusCode).toBe(400);
   });
 });

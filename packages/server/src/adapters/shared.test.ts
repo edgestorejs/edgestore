@@ -1,11 +1,11 @@
 import {
-  initEdgeStore,
   type AnyContext,
   type EdgeStoreProvider,
   type EdgeStoreRouter,
 } from '@edgestore/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
+import { initEdgeStore } from '../core/router';
 import { getCookieConfig, init, requestUpload } from './shared';
 import {
   createContextToken,
@@ -73,13 +73,6 @@ describe('getCookieConfig', () => {
           maxAge: 30 * 24 * 60 * 60,
         },
       },
-      token: {
-        name: 'edgestore-token',
-        options: {
-          path: '/',
-          maxAge: 30 * 24 * 60 * 60,
-        },
-      },
     });
   });
 
@@ -95,13 +88,6 @@ describe('getCookieConfig', () => {
             httpOnly: undefined,
           },
         },
-        token: {
-          name: 'custom-token',
-          options: {
-            path: '/app',
-            maxAge: 60,
-          },
-        },
       }),
     ).toEqual({
       ctx: {
@@ -112,13 +98,6 @@ describe('getCookieConfig', () => {
           domain: 'example.com',
           sameSite: 'lax',
           secure: true,
-        },
-      },
-      token: {
-        name: 'custom-token',
-        options: {
-          path: '/app',
-          maxAge: 60,
         },
       },
     });
@@ -142,9 +121,11 @@ describe('init', () => {
       init: vi.fn(() => ({})),
     });
     const es = initEdgeStore.create();
-    const router = es.router({
-      documents: es.fileBucket(),
-    });
+    const router = es
+      .router({
+        documents: es.fileBucket(),
+      })
+      .provider(provider);
 
     const res = await init({
       provider,
@@ -175,9 +156,11 @@ describe('init', () => {
       init: vi.fn(() => ({})),
     });
     const es = initEdgeStore.create();
-    const router = es.router({
-      documents: es.fileBucket(),
-    });
+    const router = es
+      .router({
+        documents: es.fileBucket(),
+      })
+      .provider(provider);
 
     const res = await init({
       provider,
@@ -202,10 +185,12 @@ describe('init', () => {
       init: vi.fn(() => ({})),
     });
     const es = initEdgeStore.create();
-    const router = es.router({
-      documents: es.fileBucket(),
-      avatars: es.imageBucket(),
-    });
+    const router = es
+      .router({
+        documents: es.fileBucket(),
+        avatars: es.imageBucket(),
+      })
+      .provider(provider);
 
     const res = await init({
       provider,
@@ -228,7 +213,6 @@ describe('init', () => {
     const provider = createProvider({
       name: 'custom-provider',
       init: vi.fn(() => ({
-        token: 'provider-token',
         baseUrl: 'https://discovered.example.test',
         clientInit: {
           path: '/_init',
@@ -237,11 +221,13 @@ describe('init', () => {
       })),
     });
     const es = initEdgeStore.context<{ userId: string }>().create();
-    const router = es.router({
-      documents: es.fileBucket().accessControl({
-        userId: 'user-1',
-      }),
-    });
+    const router = es
+      .router({
+        documents: es.fileBucket().accessControl({
+          userId: 'user-1',
+        }),
+      })
+      .provider(provider);
 
     const res = await init({
       provider,
@@ -262,17 +248,18 @@ describe('init', () => {
         headers: { 'x-provider-token': 'provider-token' },
       },
     });
-    expect(
-      res.newCookies.some((value) => value.startsWith('edgestore-token=')),
-    ).toBe(true);
+    // The token reaches the file origin only through clientInit headers.
+    expect(res.newCookies).toEqual([expect.stringMatching(/^edgestore-ctx=/)]);
   });
 
   it('keeps running init for custom providers', async () => {
     const provider = createProvider({ name: 'custom-provider' });
     const es = initEdgeStore.create();
-    const router = es.router({
-      documents: es.fileBucket(),
-    });
+    const router = es
+      .router({
+        documents: es.fileBucket(),
+      })
+      .provider(provider);
 
     const res = await init({
       provider,

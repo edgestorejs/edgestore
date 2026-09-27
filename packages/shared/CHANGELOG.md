@@ -1,5 +1,7 @@
 # @edgestore/shared
 
+## 1.0.0-next.5
+
 ## 1.0.0-next.4
 
 ### Minor Changes

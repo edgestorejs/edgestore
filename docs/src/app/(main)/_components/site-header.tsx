@@ -79,6 +79,13 @@ export function SiteHeader({ dashboardUrl }: { dashboardUrl: string }) {
           </Link>
           <Link
             className="py-3 no-underline hover:text-site-text"
+            href="/blog"
+            onClick={() => setOpen(false)}
+          >
+            Blog
+          </Link>
+          <Link
+            className="py-3 no-underline hover:text-site-text"
             href="/pricing"
             onClick={() => setOpen(false)}
           >

@@ -1,5 +1,12 @@
 # @edgestore/cli
 
+## 1.0.0-next.5
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @edgestore/sdk@1.0.0-next.5
+
 ## 1.0.0-next.4
 
 ### Major Changes

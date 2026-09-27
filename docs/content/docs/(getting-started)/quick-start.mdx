@@ -43,9 +43,8 @@ Choose your router below. This bucket's files are accessible to anyone with the 
 <Tabs items={['app', 'pages']} groupId="next-router">
 
 ```ts tab="app" title="src/app/api/edgestore/[...edgestore]/route.ts"
-import { createEdgeStore, initEdgeStore } from '@edgestore/server';
+import { initEdgeStore } from '@edgestore/server';
 import { createEdgeStoreNextHandler } from '@edgestore/server/adapters/next/app';
-import { edgestore } from '@edgestore/server/providers/edgestore';
 
 const es = initEdgeStore.create();
 
@@ -56,13 +55,8 @@ const router = es.router({
   publicFiles: es.fileBucket(),
 });
 
-const configuredEdgeStore = createEdgeStore({
-  router,
-  provider: edgestore(),
-});
-
 const handler = createEdgeStoreNextHandler({
-  edgestore: configuredEdgeStore,
+  router,
 });
 
 export { handler as GET, handler as POST };
@@ -74,9 +68,8 @@ export type EdgeStoreRouter = typeof router;
 ```
 
 ```ts tab="pages" title="src/pages/api/edgestore/[...edgestore].ts"
-import { createEdgeStore, initEdgeStore } from '@edgestore/server';
+import { initEdgeStore } from '@edgestore/server';
 import { createEdgeStoreNextHandler } from '@edgestore/server/adapters/next/pages';
-import { edgestore } from '@edgestore/server/providers/edgestore';
 
 const es = initEdgeStore.create();
 
@@ -87,13 +80,8 @@ const router = es.router({
   publicFiles: es.fileBucket(),
 });
 
-const configuredEdgeStore = createEdgeStore({
-  router,
-  provider: edgestore(),
-});
-
 export default createEdgeStoreNextHandler({
-  edgestore: configuredEdgeStore,
+  router,
 });
 
 /**

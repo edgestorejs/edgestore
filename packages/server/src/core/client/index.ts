@@ -3,7 +3,6 @@ import {
   type AnyEdgeStoreProvider,
   type AnyRouter,
   type BackendFile,
-  type DefaultEdgeStoreProvider,
   type FileReference,
   type InferBucketPathKeys,
   type InferBucketPathObject,
@@ -21,6 +20,7 @@ import {
   type ProviderMutationError,
   type ProviderReference,
   type ProviderReferenceInput,
+  type ProviderUploadOptions,
   type Simplify,
 } from '@edgestore/shared';
 import { createBucketClient } from './bucketClient';
@@ -96,16 +96,16 @@ export type UploadOptions = {
    * But it might take some time for the CDN cache to be cleared.
    * So maybe you will keep seeing the old file for a while.
    *
-   * If you want to replace an existing file, immediately leave the `manualFileName` option empty and use the `replaceTargetUrl` option.
+   * For providers that support managed replacement, leave `manualFileName` empty and use `replaceTargetUrl`.
    */
   manualFileName?: string;
   /**
-   * Use this to replace an existing file.
+   * Replace an existing file, when supported by the provider.
    * It will automatically delete the existing file when the upload is complete.
    */
   replaceTargetUrl?: string;
   /**
-   * If true, the file needs to be confirmed by using the `confirm` function.
+   * When supported by the provider, the file needs to be confirmed by using the `confirm` function.
    * If the file is not confirmed within 24 hours, it will be deleted.
    *
    * This is useful for pages where the file is uploaded as soon as it is selected,
@@ -145,7 +145,10 @@ export type ServerUploadTransform = (params: {
   extension: string;
 }>;
 
-export type UploadFileRequest<TBucket extends AnyBuilder> = {
+export type UploadFileRequest<
+  TBucket extends AnyBuilder,
+  TProvider = unknown,
+> = {
   /**
    * Can be a string, a blob or an url.
    *
@@ -170,7 +173,7 @@ export type UploadFileRequest<TBucket extends AnyBuilder> = {
    * }
    */
   content: UploadContent;
-  options?: UploadOptions;
+  options?: ProviderUploadOptions<UploadOptions, TProvider>;
   signal?: AbortSignal;
   onProgress?: (progress: {
     transferredBytes: number;
@@ -279,7 +282,7 @@ type UploadBucketClient<TBucket extends AnyBuilder, TProvider> = [
   : {
       /** Upload a file directly from the backend. */
       upload: (
-        params: Prettify<UploadFileRequest<TBucket>>,
+        params: Prettify<UploadFileRequest<TBucket, TProvider>>,
       ) => Promise<
         Prettify<
           UploadFileRes<TBucket, ProviderCapabilityFile<TProvider, 'upload'>>
@@ -367,9 +370,9 @@ export type BucketClient<
   ListBucketClient<TBucket, TProvider> &
   SignedUrlBucketClient<TBucket, TProvider>;
 
-export type EdgeStoreClient<
+type BackendClient<
   TRouter extends AnyRouter,
-  TProvider extends AnyBackendProvider = DefaultEdgeStoreProvider,
+  TProvider extends AnyBackendProvider,
 > = {
   [K in keyof TRouter['buckets']]: BucketClient<
     TRouter['buckets'][K],
@@ -380,19 +383,15 @@ export type EdgeStoreClient<
 export function createBackendClient<
   TRouter extends AnyRouter,
   TProvider extends AnyBackendProvider,
->(
-  router: TRouter,
-  provider: TProvider,
-  baseUrl?: string,
-): EdgeStoreClient<TRouter, TProvider> {
+>(router: TRouter, provider: TProvider): BackendClient<TRouter, TProvider> {
   const bucketNames = Object.keys(router.buckets) as (keyof TRouter['buckets'] &
     string)[];
   const entries = bucketNames.map((bucketName) => [
     bucketName,
-    createBucketClient(router, bucketName, { provider, baseUrl }),
+    createBucketClient(router, bucketName, { provider }),
   ]);
 
-  return Object.fromEntries(entries) as EdgeStoreClient<TRouter, TProvider>;
+  return Object.fromEntries(entries) as BackendClient<TRouter, TProvider>;
 }
 
 type ClientMethodInput<TMethod> = TMethod extends (
@@ -407,43 +406,28 @@ type ClientMethodOutput<TMethod> = TMethod extends (
   ? Simplify<Awaited<TResult>>
   : never;
 
-/**
- * Infers the input accepted by every method on a router-derived backend client.
- */
-export type InferClientInputs<
-  TRouter extends AnyRouter,
-  TProvider extends AnyBackendProvider = DefaultEdgeStoreProvider,
-> = {
-  [TBucketName in keyof TRouter['buckets']]: {
-    [
-      TClientFn in keyof EdgeStoreClient<TRouter, TProvider>[TBucketName]
-    ]: ClientMethodInput<
-      EdgeStoreClient<TRouter, TProvider>[TBucketName][TClientFn]
+/** The backend client exposed by a configured router. */
+export type EdgeStoreClient<TRouter extends { readonly client: object }> =
+  TRouter['client'];
+
+/** Infers the input accepted by every method on the router's backend client. */
+export type InferClientInputs<TRouter extends { readonly client: object }> = {
+  [TBucket in keyof TRouter['client']]: {
+    [TMethod in keyof TRouter['client'][TBucket]]: ClientMethodInput<
+      TRouter['client'][TBucket][TMethod]
     >;
   };
 };
 
-/**
- * Infers the resolved output of every method on a router-derived backend
- * client.
- */
-export type InferClientOutputs<
-  TRouter extends AnyRouter,
-  TProvider extends AnyBackendProvider = DefaultEdgeStoreProvider,
-> = {
-  [TBucketName in keyof TRouter['buckets']]: {
-    [
-      TClientFn in keyof EdgeStoreClient<TRouter, TProvider>[TBucketName]
-    ]: ClientMethodOutput<
-      EdgeStoreClient<TRouter, TProvider>[TBucketName][TClientFn]
+/** Infers the resolved output of every method on the router's backend client. */
+export type InferClientOutputs<TRouter extends { readonly client: object }> = {
+  [TBucket in keyof TRouter['client']]: {
+    [TMethod in keyof TRouter['client'][TBucket]]: ClientMethodOutput<
+      TRouter['client'][TBucket][TMethod]
     >;
   };
 };
 
-/**
- * @deprecated Use {@link InferClientOutputs} instead.
- */
-export type InferClientResponse<
-  TRouter extends AnyRouter,
-  TProvider extends AnyBackendProvider = DefaultEdgeStoreProvider,
-> = InferClientOutputs<TRouter, TProvider>;
+/** @deprecated Use {@link InferClientOutputs} instead. */
+export type InferClientResponse<TRouter extends { readonly client: object }> =
+  InferClientOutputs<TRouter>;

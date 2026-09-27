@@ -35,6 +35,7 @@ const groups = [
   {
     title: 'Resources',
     links: [
+      ['Blog', '/blog'],
       ['Troubleshooting', '/docs/troubleshooting'],
       ['Releases', `${GITHUB_URL}/releases`],
       ['Terms', '/legal/terms'],

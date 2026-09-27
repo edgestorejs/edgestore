@@ -10,13 +10,14 @@ import { type z } from 'zod';
 import type { LoggerLike } from '../libs/logger';
 import { matchPath } from '../libs/utils';
 import {
+  abortMultipartUpload,
+  abortMultipartUploadBodySchema,
   completeMultipartUpload,
   completeMultipartUploadBodySchema,
   confirmUploads,
   confirmUploadsBodySchema,
   deleteFiles,
   deleteFilesBodySchema,
-  fetchProxyFile,
   getCookieConfig,
   init,
   requestUpload,
@@ -24,13 +25,12 @@ import {
   requestUploadParts,
   requestUploadPartsBodySchema,
   type CookieConfig,
-  type HandlerEdgeStore,
+  type HandlerRouter,
 } from './shared';
 
 export type EdgeStoreDispatchRequest<TCtx extends AnyContext> = {
   pathname: string;
   readJson: () => Promise<unknown>;
-  getQuery: (name: string) => string | undefined;
   cookieHeader?: string;
   cookies?: Readonly<Record<string, string | undefined>>;
   createContext: () => MaybePromise<TCtx>;
@@ -67,30 +67,25 @@ function hasCreateContext<TCtx extends AnyContext, TOptions>(
 export async function dispatchEdgeStoreRequest<
   TCtx extends AnyContext,
 >(params: {
-  edgestore: HandlerEdgeStore<TCtx>;
+  router: HandlerRouter<TCtx>;
   request: EdgeStoreDispatchRequest<TCtx>;
   logger: LoggerLike;
   cookieConfig?: CookieConfig;
 }): Promise<Response> {
-  const { edgestore, request, logger, cookieConfig } = params;
-  const { provider, router } = edgestore;
+  const { router, request, logger, cookieConfig } = params;
   const resolvedCookieConfig = getCookieConfig(cookieConfig);
-  const cookieHeader =
-    request.cookieHeader ??
-    Object.entries(request.cookies ?? {})
-      .filter((entry): entry is [string, string] => entry[1] !== undefined)
-      .map(([name, value]) => `${name}=${value}`)
-      .join('; ');
   const ctxToken =
     request.cookies?.[resolvedCookieConfig.ctx.name] ??
-    (cookieHeader
-      ? parseCookie(cookieHeader)[resolvedCookieConfig.ctx.name]
+    (request.cookieHeader
+      ? parseCookie(request.cookieHeader)[resolvedCookieConfig.ctx.name]
       : undefined);
 
   try {
     if (matchPath(request.pathname, '/health')) {
       return new Response('OK');
     }
+
+    const { provider } = router._def;
 
     if (matchPath(request.pathname, '/init')) {
       let ctx: TCtx;
@@ -153,6 +148,17 @@ export async function dispatchEdgeStoreRequest<
       return new Response(null, { status: 200 });
     }
 
+    if (matchPath(request.pathname, '/abort-multipart-upload')) {
+      await abortMultipartUpload({
+        provider,
+        router,
+        body: await parseRequestBody(request, abortMultipartUploadBodySchema),
+        ctxToken,
+        logger,
+      });
+      return new Response(null, { status: 200 });
+    }
+
     if (matchPath(request.pathname, '/confirm-uploads')) {
       return jsonResponse(
         await confirmUploads({
@@ -175,19 +181,6 @@ export async function dispatchEdgeStoreRequest<
           logger,
         }),
       );
-    }
-
-    if (matchPath(request.pathname, '/proxy-file')) {
-      const url = request.getQuery('url');
-      if (url === undefined) return new Response(null, { status: 400 });
-      const result = await fetchProxyFile({
-        cookieHeader,
-        url,
-      });
-      return new Response(result.body, {
-        status: result.status,
-        headers: { 'Content-Type': result.contentType },
-      });
     }
 
     return new Response(null, { status: 404 });
@@ -232,9 +225,7 @@ export async function toNodeDispatchResponse(response: Response) {
         ? undefined
         : contentType.includes('application/json')
           ? await response.json()
-          : contentType.startsWith('text/')
-            ? await response.text()
-            : Buffer.from(await response.arrayBuffer()),
+          : await response.text(),
   };
 }
 
