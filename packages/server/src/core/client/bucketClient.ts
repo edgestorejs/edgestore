@@ -24,8 +24,11 @@ import type {
   UploadContent,
   UploadFileRequest,
 } from '.';
-import { isDev } from '../../libs/env';
-import { validateProviderCursor, validateProviderReference } from '../provider';
+import {
+  assertSupportedUploadOptions,
+  validateProviderCursor,
+  validateProviderReference,
+} from '../provider';
 import { buildPath, parseBucketInput, parsePath } from '../routerRules';
 import { validateFileForBucket } from '../validateFile';
 
@@ -36,13 +39,12 @@ type BucketContext<
   bucket: TBucket;
   bucketName: string;
   provider: TProvider;
-  baseUrl?: string;
 };
 
 type UploadImplementationParams = {
   content: UploadContent;
   ctx?: Record<string, unknown>;
-  input?: Record<string, unknown>;
+  input?: unknown;
 };
 
 export function createBucketClient<
@@ -54,7 +56,6 @@ export function createBucketClient<
   bucketName: TName,
   options: {
     provider: TProvider;
-    baseUrl?: string;
   },
 ): BucketClient<TRouter['buckets'][TName], TProvider> {
   type TBucket = TRouter['buckets'][TName];
@@ -93,11 +94,8 @@ function createUploadMethods<
 
   return {
     upload: async (params: Prettify<UploadFileRequest<TBucket>>) => {
-      const {
-        content,
-        ctx = {},
-        input = {},
-      }: UploadImplementationParams = params;
+      const { content, ctx = {}, input }: UploadImplementationParams = params;
+      assertSupportedUploadOptions(context.provider, params.options ?? {});
       let { blob, extension } = await resolveUploadContent(
         content,
         params.signal,
@@ -123,10 +121,11 @@ function createUploadMethods<
         bucket: context.bucket,
         pathAttrs: { ctx, input: parsedInput },
       });
-      const metadata = await context.bucket._def.metadata({
-        ctx,
-        input: parsedInput,
-      });
+      const metadata =
+        (await context.bucket._def.metadata?.({
+          ctx,
+          input: parsedInput,
+        })) ?? {};
       const uploadResult = await upload({
         bucketName: context.bucketName,
         bucketType: context.bucket._def.type,
@@ -149,7 +148,7 @@ function createUploadMethods<
 
       const { parsedPath, pathOrder } = parsePath<TBucket>(path);
       return {
-        ...mapFileRecord(uploadResult.file, context.baseUrl),
+        ...mapFileRecord(uploadResult.file),
         ...mapSignedReadAccess(uploadResult.signedReadUrl),
         metadata,
         path: parsedPath,
@@ -172,7 +171,7 @@ function createGetMethods<
         bucketName: context.bucketName,
         file: await validateProviderReference(context.provider, ref),
       });
-      return mapBucketFileRecord(file, context.baseUrl);
+      return mapFileRecord(file);
     },
   };
 }
@@ -239,9 +238,7 @@ function createListMethods<
     });
     return {
       ...result,
-      items: result.items.map((file) =>
-        mapBucketFileRecord(file, context.baseUrl),
-      ),
+      items: result.items.map((file) => mapFileRecord(file)),
     };
   };
 
@@ -394,43 +391,12 @@ function mapSignedUrl<TSignedUrl extends { expiresAt: Date | string }>(
   };
 }
 
-function mapFileRecord<TFile extends BackendFile>(
-  file: TFile,
-  baseUrl?: string,
-) {
+function mapFileRecord<TFile extends BackendFile>(file: TFile) {
   return {
     ...file,
-    url: getUrl(file.url, baseUrl),
     uploadedAt: new Date(file.uploadedAt),
     updatedAt: new Date(file.updatedAt),
   };
-}
-
-function mapBucketFileRecord<TFile extends BackendFile>(
-  file: TFile,
-  baseUrl?: string,
-) {
-  return mapFileRecord(file, baseUrl);
-}
-
-/**
- * Protected files need third-party cookies to work.
- * Since third party cookies don't work on localhost,
- * we need to proxy the file through the server.
- */
-function getUrl(url: string, baseUrl?: string) {
-  if (isDev() && !url.includes('/_public/')) {
-    if (!baseUrl) {
-      throw new Error(
-        'Missing baseUrl. Pass the baseUrl to `createEdgeStore` to get protected files in development.',
-      );
-    }
-    const proxyUrl = new URL(baseUrl);
-    proxyUrl.pathname = `${proxyUrl.pathname}/proxy-file`;
-    proxyUrl.search = new URLSearchParams({ url }).toString();
-    return proxyUrl.toString();
-  }
-  return url;
 }
 
 function mapMutationResult<TFileReference, TErrorCode extends string>(

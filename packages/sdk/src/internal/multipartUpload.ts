@@ -5,8 +5,8 @@ import type { Transport } from './transport';
 import { throwIfAborted } from './uploadRetry';
 import { putWithRetry } from './uploadTransfer';
 
-type CompletedPart = { partNumber: number; eTag: string };
-type UploadPart = { partNumber: number; signedUrl: string };
+export type CompletedUploadPart = { partNumber: number; eTag: string };
+export type SignedUploadPart = { partNumber: number; signedUrl: string };
 type ProgressHandler = RuntimeUploadInput['onProgress'];
 
 export async function uploadParts(
@@ -14,15 +14,16 @@ export async function uploadParts(
   options: {
     body: Blob;
     uploadId: string;
-    parts: UploadPart[];
+    parts: SignedUploadPart[];
     partSizeBytes: number;
     concurrency: number;
     signal?: AbortSignal;
     onProgress?: ProgressHandler;
   },
-): Promise<CompletedPart[]> {
-  const completed: CompletedPart[] = Array(options.parts.length);
+): Promise<CompletedUploadPart[]> {
+  const completed: CompletedUploadPart[] = Array(options.parts.length);
   let nextIndex = 0;
+  const transferredByPart = Array<number>(options.parts.length).fill(0);
   let transferredBytes = 0;
   const workerCount = Math.min(options.concurrency, options.parts.length);
   const controller = new AbortController();
@@ -45,11 +46,28 @@ export async function uploadParts(
         url: part.signedUrl,
         body: chunk,
         signal,
+        onProgress: options.onProgress
+          ? (partBytes) => {
+              const previousPartBytes = transferredByPart[index] ?? 0;
+              const nextPartBytes = Math.max(previousPartBytes, partBytes);
+              transferredByPart[index] = nextPartBytes;
+              transferredBytes += nextPartBytes - previousPartBytes;
+              reportProgress(
+                options.onProgress,
+                transferredBytes,
+                options.body.size,
+              );
+            }
+          : undefined,
         requireETag: true,
       });
       completed[index] = { partNumber: part.partNumber, eTag };
-      transferredBytes += chunk.size;
-      reportProgress(options.onProgress, transferredBytes, options.body.size);
+      const previousPartBytes = transferredByPart[index] ?? 0;
+      if (previousPartBytes < chunk.size) {
+        transferredByPart[index] = chunk.size;
+        transferredBytes += chunk.size - previousPartBytes;
+        reportProgress(options.onProgress, transferredBytes, options.body.size);
+      }
     }
   });
 
@@ -70,14 +88,14 @@ export async function uploadStreamParts(
     stream: ReadableStream<Uint8Array>;
     totalBytes: number;
     uploadId: string;
-    parts: UploadPart[];
+    parts: SignedUploadPart[];
     partSizeBytes: number;
     signal?: AbortSignal;
     onProgress?: ProgressHandler;
   },
-): Promise<CompletedPart[]> {
+): Promise<CompletedUploadPart[]> {
   const reader = createSizedStreamReader(options.stream);
-  const completed: CompletedPart[] = [];
+  const completed: CompletedUploadPart[] = [];
   let transferredBytes = 0;
 
   try {
@@ -94,16 +112,34 @@ export async function uploadStreamParts(
           options.uploadId,
         );
       }
+      let partTransferredBytes = 0;
       const eTag = await putWithRetry(transport, {
         uploadId: options.uploadId,
         url: part.signedUrl,
         body: new Blob([Uint8Array.from(chunk)]),
         signal: options.signal,
+        onProgress: options.onProgress
+          ? (partBytes) => {
+              partTransferredBytes = Math.max(partTransferredBytes, partBytes);
+              reportProgress(
+                options.onProgress,
+                transferredBytes +
+                  Math.min(partTransferredBytes, chunk.byteLength),
+                options.totalBytes,
+              );
+            }
+          : undefined,
         requireETag: true,
       });
       completed.push({ partNumber: part.partNumber, eTag });
       transferredBytes += chunk.byteLength;
-      reportProgress(options.onProgress, transferredBytes, options.totalBytes);
+      if (partTransferredBytes < chunk.byteLength) {
+        reportProgress(
+          options.onProgress,
+          transferredBytes,
+          options.totalBytes,
+        );
+      }
     }
 
     if (

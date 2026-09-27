@@ -12,6 +12,7 @@ on:
         required: true
         type: choice
         options:
+          - release
           - maintenance
           - canary
       npm-tag:
@@ -25,7 +26,7 @@ concurrency:
 
 jobs:
   release:
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.operation == 'release')
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -53,9 +54,16 @@ jobs:
         shell: bash
         run: |
           if [[ "$GITHUB_REF_NAME" == "next" ]]; then
-            jq -e '.mode == "pre" and .tag == "next"' .changeset/pre.json
-          elif [[ -f .changeset/pre.json ]]; then
-            echo 'main must not contain a Changesets prerelease state'
+            jq -e \
+              '.mode == "pre" and (.tag == "next" or .tag == "rc")' \
+              .changeset/pre.json
+          elif [[ "$GITHUB_REF_NAME" == "main" ]]; then
+            if [[ -f .changeset/pre.json ]]; then
+              echo 'main must not contain a Changesets prerelease state'
+              exit 1
+            fi
+          else
+            echo 'Normal releases must run from main or next.'
             exit 1
           fi
 

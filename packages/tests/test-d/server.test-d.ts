@@ -1,5 +1,4 @@
 import {
-  createEdgeStore,
   defineProvider,
   initEdgeStore,
   type InferClientInputs,
@@ -58,35 +57,76 @@ const router = es.router({
     })),
 });
 
-const client = createEdgeStore({
-  router,
-  provider: edgestore(),
+const client = router.client;
+const transformedClient = es.router({
+  transformed: es
+    .fileBucket()
+    .input(z.object({ count: z.string().transform(Number) })),
 }).client;
 
 const publicEs = initEdgeStore.create();
 const publicRouter = publicEs.router({ files: publicEs.fileBucket() });
-const publicClient = createEdgeStore({
-  router: publicRouter,
-  provider: edgestore(),
+const publicClient = publicRouter.client;
+const protectedClient = publicEs.router({
+  privateFiles: publicEs.fileBucket().accessControl('private'),
+  privateImages: publicEs
+    .imageBucket()
+    .accessControl('private')
+    .autoSignedUrls({ expiresIn: 300 }),
 }).client;
-const protectedClient = createEdgeStore({
-  provider: edgestore(),
-  router: publicEs.router({
-    privateFiles: publicEs.fileBucket().accessControl('private'),
-    privateImages: publicEs
-      .imageBucket()
-      .accessControl('private')
-      .autoSignedUrls({ expiresIn: 300 }),
-  }),
-}).client;
-const s3EdgeStore = createEdgeStore({
-  router: publicRouter,
-  provider: s3(),
+const s3Router = publicRouter.provider(s3());
+void s3Router.client.files
+  .get({ url: 'https://s3.example/file' })
+  .then((file) => {
+    expectError(file.path);
+    expectError(file.metadata);
+  });
+void s3Router.client.files.upload({
+  content: { blob: new Blob(['hello']), extension: 'txt' },
 });
-void s3EdgeStore.client.files.get({ url: 'https://s3.example/file' });
-expectError(s3EdgeStore.client.files.upload);
-expectError(s3EdgeStore.client.files.list);
-expectError(s3EdgeStore.client.files.confirm);
+void s3Router.client.files.get({ key: 'files/example.txt' });
+expectError(s3Router.client.files.list);
+expectError(s3Router.client.files.confirm);
+
+type S3UploadInput = InferClientInputs<typeof s3Router>['files']['upload'];
+expectAssignable<S3UploadInput>({
+  content: 'hello',
+  options: {
+    manualFileName: 'report.txt',
+    transform: ({ blob, extension }) => ({ blob, extension }),
+  },
+});
+expectNotAssignable<S3UploadInput>({
+  content: 'hello',
+  options: { temporary: true },
+});
+expectNotAssignable<S3UploadInput>({
+  content: 'hello',
+  options: { replaceTargetUrl: 'https://files.example/old' },
+});
+const unsupportedOptions = { manualFileName: 'report.txt', temporary: true };
+expectNotAssignable<S3UploadInput>({
+  content: 'hello',
+  options: unsupportedOptions,
+});
+expectAssignable<InferClientInputs<typeof publicRouter>['files']['upload']>({
+  content: 'hello',
+  options: { temporary: true, replaceTargetUrl: 'https://files.example/old' },
+});
+
+const s3PrivateClient = publicEs
+  .router({
+    documents: publicEs.fileBucket().accessControl('private'),
+  })
+  .provider(s3()).client;
+void s3PrivateClient.documents.createSignedUrl({
+  url: { key: 'documents/report.pdf' },
+  expiresIn: 300,
+});
+expectError(
+  s3PrivateClient.documents.createSignedUrl({ url: { id: 'unsupported-id' } }),
+);
+expectError(s3PrivateClient.documents.restore);
 
 const syntheticProvider = defineProvider({
   name: 'synthetic',
@@ -117,8 +157,8 @@ const syntheticProvider = defineProvider({
     get: async ({ file }) => ({
       url: `https://s3.example/${file.objectKey}`,
       sizeBytes: 5,
-      path: { storageRegion: 'us-east-1' as const },
-      metadata: { storageClass: 'archive' as const },
+      path: {},
+      metadata: {},
       uploadedAt: new Date(),
       updatedAt: new Date(),
       eTag: 'etag',
@@ -128,8 +168,6 @@ const syntheticProvider = defineProvider({
         {
           url: 'https://s3.example/files/file.txt',
           sizeBytes: 5,
-          path: { storageRegion: 'us-east-1' as const },
-          metadata: { storageClass: 'archive' as const },
           uploadedAt: new Date(),
           updatedAt: new Date(),
           eTag: 'etag',
@@ -197,37 +235,61 @@ expectError(
   }),
 );
 
-const syntheticClient = createEdgeStore({
-  router: publicRouter,
-  provider: syntheticProvider,
-}).client;
-const syntheticProtectedRouter = publicEs.router({
-  files: publicEs.fileBucket().accessControl('private'),
-});
-const syntheticProtectedClient = createEdgeStore({
-  router: syntheticProtectedRouter,
-  provider: syntheticProvider,
-}).client;
+const syntheticRouter = publicRouter.provider(syntheticProvider);
+const syntheticClient = syntheticRouter.client;
+const syntheticProtectedRouter = publicEs
+  .router({
+    files: publicEs.fileBucket().accessControl('private'),
+  })
+  .provider(syntheticProvider);
+const syntheticProtectedClient = syntheticProtectedRouter.client;
 
 expectError(syntheticClient.files.restore);
 expectError(syntheticClient.files.get({ id: 'file-id' }));
 void syntheticClient.files.get({ objectKey: 'files/file.txt' }).then((file) => {
   expectType<string>(file.eTag);
-  expectType<'us-east-1'>(file.path.storageRegion);
-  expectType<'archive'>(file.metadata.storageClass);
+  expectType<Record<string, never>>(file.path);
+  expectType<Record<string, never>>(file.metadata);
   expectError(file.accountId);
 });
 expectError(syntheticClient.files.list({ cursor: 'next' }));
 void syntheticClient.files.list({ cursor: 1 }).then((page) => {
   expectType<number | null>(page.nextCursor);
   expectType<string>(page.items[0]!.eTag);
-  expectType<'us-east-1'>(page.items[0]!.path.storageRegion);
-  expectType<'archive'>(page.items[0]!.metadata.storageClass);
+  expectError(page.items[0]!.path);
+  expectError(page.items[0]!.metadata);
   expectError(page.items[0]!.accountId);
 });
 void syntheticClient.files.upload({ content: 'hello' }).then((file) => {
   expectType<string>(file.eTag);
   expectError(file.accountId);
+});
+
+const keyOnlyProvider = defineProvider({
+  ...syntheticProvider,
+  uploads: {
+    ...syntheticProvider.uploads,
+    supportedOptions: { temporary: false, replaceTargetUrl: false },
+  },
+});
+const keyOnlyClient = publicRouter.provider(keyOnlyProvider).client;
+void keyOnlyClient.files.upload({
+  content: 'hello',
+  options: { manualFileName: 'hello.txt' },
+});
+expectError(
+  keyOnlyClient.files.upload({
+    content: 'hello',
+    options: { temporary: true },
+  }),
+);
+const replaceOptions = { replaceTargetUrl: 'https://s3.example/old.txt' };
+expectError(
+  keyOnlyClient.files.upload({ content: 'hello', options: replaceOptions }),
+);
+void syntheticClient.files.upload({
+  content: 'hello',
+  options: { temporary: true },
 });
 expectError(syntheticClient.files.delete({ id: 'file-id' }));
 void syntheticClient.files
@@ -279,13 +341,31 @@ expectNotAssignable<Parameters<typeof client.avatars.upload>[0]>({
   content: 'hello',
   input: { type: 'profile' },
 });
-expectNotAssignable<Parameters<typeof client.documents.upload>[0]>({
+expectNotAssignable<Parameters<typeof client.avatars.upload>[0]>({
   content: 'hello',
+  ctx: {
+    userId: 'user-1',
+    role: 'admin',
+  },
+  input: {
+    type: 'other',
+  },
 });
 
 void client.documents.upload({
   content: 'hello',
   ctx: { userId: 'user-1', role: 'visitor' },
+});
+void transformedClient.transformed.upload({
+  content: 'hello',
+  ctx: {
+    userId: 'user-1',
+    role: 'visitor',
+  },
+  input: { count: '2' },
+});
+expectNotAssignable<Parameters<typeof client.documents.upload>[0]>({
+  content: 'hello',
 });
 void publicClient.files.upload({ content: 'hello' });
 
@@ -433,21 +513,13 @@ expectType<EdgeStoreFileReference>(
 expectAssignable<ClientOutputs>({} as DeprecatedClientResponses);
 expectAssignable<DeprecatedClientResponses>({} as ClientOutputs);
 
-type SyntheticInputs = InferClientInputs<
-  typeof publicRouter,
-  typeof syntheticProvider
->;
-type SyntheticOutputs = InferClientOutputs<
-  typeof publicRouter,
-  typeof syntheticProvider
->;
+type SyntheticInputs = InferClientInputs<typeof syntheticRouter>;
+type SyntheticOutputs = InferClientOutputs<typeof syntheticRouter>;
 type SyntheticProtectedInputs = InferClientInputs<
-  typeof syntheticProtectedRouter,
-  typeof syntheticProvider
+  typeof syntheticProtectedRouter
 >;
 type SyntheticProtectedOutputs = InferClientOutputs<
-  typeof syntheticProtectedRouter,
-  typeof syntheticProvider
+  typeof syntheticProtectedRouter
 >;
 
 expectType<{ objectKey: string }>({} as SyntheticInputs['files']['get']);

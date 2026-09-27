@@ -92,6 +92,41 @@
       }
     },
     "schemas": {
+      "BillingMaintenanceError": {
+        "type": "object",
+        "description": "Billing changes are temporarily unavailable while we perform maintenance. Please try again shortly.",
+        "properties": {
+          "error": {
+            "type": "object",
+            "description": "A structured EdgeStore API error.",
+            "properties": {
+              "code": {
+                "const": "billing_maintenance",
+                "description": "Stable machine-readable error code."
+              },
+              "message": {
+                "type": "string",
+                "default": "Billing changes are temporarily unavailable while we perform maintenance. Please try again shortly.",
+                "description": "Human-readable explanation of the error."
+              },
+              "status": {
+                "const": 503,
+                "description": "HTTP status code returned with the error."
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "status"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "additionalProperties": false
+      },
       "InvalidRequestError": {
         "type": "object",
         "description": "Invalid request",
@@ -410,6 +445,41 @@
               },
               "status": {
                 "const": 404,
+                "description": "HTTP status code returned with the error."
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "status"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "additionalProperties": false
+      },
+      "ProjectNotEmptyError": {
+        "type": "object",
+        "description": "The project contains files",
+        "properties": {
+          "error": {
+            "type": "object",
+            "description": "A structured EdgeStore API error.",
+            "properties": {
+              "code": {
+                "const": "project_not_empty",
+                "description": "Stable machine-readable error code."
+              },
+              "message": {
+                "type": "string",
+                "default": "The project contains files",
+                "description": "Human-readable explanation of the error."
+              },
+              "status": {
+                "const": 409,
                 "description": "HTTP status code returned with the error."
               }
             },
@@ -1578,7 +1648,7 @@
               "protected"
             ],
             "type": "string",
-            "description": "Read visibility. Protected buckets require signed read URLs."
+            "description": "Whether reads are public or require signed URLs."
           },
           "usageBytes": {
             "type": "integer",
@@ -1848,6 +1918,7 @@
                                       "bucket:empty",
                                       "file:read",
                                       "file:write",
+                                      "file:delete",
                                       "project-key:read",
                                       "project-key:create",
                                       "project-key:revoke",
@@ -1894,6 +1965,7 @@
                                       "bucket:empty",
                                       "file:read",
                                       "file:write",
+                                      "file:delete",
                                       "project-key:read",
                                       "project-key:create",
                                       "project-key:revoke",
@@ -1981,6 +2053,185 @@
                                 "kind",
                                 "tokenId",
                                 "scopes",
+                                "user"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "kind": {
+                                  "const": "oauth_user",
+                                  "description": "OAuth user principal."
+                                },
+                                "subject": {
+                                  "type": "string",
+                                  "description": "OAuth subject identifier."
+                                },
+                                "clientId": {
+                                  "type": "string",
+                                  "description": "OAuth client identifier."
+                                },
+                                "scopes": {
+                                  "type": "array",
+                                  "items": {
+                                    "enum": [
+                                      "account:read",
+                                      "project:read",
+                                      "project:create",
+                                      "project:delete",
+                                      "bucket:read",
+                                      "bucket:write",
+                                      "bucket:delete",
+                                      "bucket:empty",
+                                      "file:read",
+                                      "file:write",
+                                      "file:delete",
+                                      "project-key:read",
+                                      "project-key:create",
+                                      "project-key:revoke",
+                                      "member:read",
+                                      "member:write",
+                                      "token:read",
+                                      "token:create",
+                                      "token:revoke"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  "description": "Effective management permissions."
+                                },
+                                "access": {
+                                  "type": "object",
+                                  "properties": {
+                                    "accounts": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "object",
+                                        "properties": {
+                                          "accountId": {
+                                            "type": "string"
+                                          },
+                                          "projects": {
+                                            "anyOf": [
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "mode": {
+                                                    "const": "all"
+                                                  }
+                                                },
+                                                "required": [
+                                                  "mode"
+                                                ]
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "mode": {
+                                                    "const": "selected"
+                                                  },
+                                                  "projectIds": {
+                                                    "type": "array",
+                                                    "items": {
+                                                      "type": "string"
+                                                    }
+                                                  }
+                                                },
+                                                "required": [
+                                                  "mode",
+                                                  "projectIds"
+                                                ]
+                                              }
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "accountId",
+                                          "projects"
+                                        ]
+                                      }
+                                    }
+                                  },
+                                  "required": [
+                                    "accounts"
+                                  ],
+                                  "description": "Accounts and projects this OAuth grant may access."
+                                },
+                                "user": {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": {
+                                      "type": "string",
+                                      "description": "Unique EdgeStore user ID."
+                                    },
+                                    "clerkUserId": {
+                                      "type": "string",
+                                      "description": "User ID from the identity provider."
+                                    },
+                                    "accountId": {
+                                      "type": "string",
+                                      "description": "User's personal account ID."
+                                    },
+                                    "email": {
+                                      "type": "string",
+                                      "description": "Primary email address."
+                                    },
+                                    "username": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string"
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ],
+                                      "description": "Username when configured."
+                                    },
+                                    "firstName": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string"
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ],
+                                      "description": "First name when configured."
+                                    },
+                                    "lastName": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string"
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ],
+                                      "description": "Last name when configured."
+                                    },
+                                    "picture": {
+                                      "type": "string",
+                                      "description": "Profile image URL."
+                                    }
+                                  },
+                                  "required": [
+                                    "id",
+                                    "clerkUserId",
+                                    "accountId",
+                                    "email",
+                                    "username",
+                                    "firstName",
+                                    "lastName",
+                                    "picture"
+                                  ],
+                                  "description": "Authenticated user identity."
+                                }
+                              },
+                              "required": [
+                                "kind",
+                                "subject",
+                                "clientId",
+                                "scopes",
+                                "access",
                                 "user"
                               ]
                             }
@@ -2085,6 +2336,21 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
                 }
               }
             },
@@ -2323,6 +2589,21 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
                 }
               }
             },
@@ -2593,6 +2874,21 @@
                 "$ref": "#/components/headers/RequestId"
               }
             }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
           }
         },
         "security": [
@@ -2772,6 +3068,21 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
                 }
               }
             },
@@ -2991,6 +3302,21 @@
                 "$ref": "#/components/headers/RequestId"
               }
             }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
           }
         },
         "security": [
@@ -3031,6 +3357,11 @@
                     "minLength": 1,
                     "maxLength": 100,
                     "description": "Human-readable project name."
+                  },
+                  "useProjectDomain": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Use a project subdomain. Requires EdgeStore server and React packages 1.0 or later. Defaults to shared delivery for compatibility."
                   },
                   "createKey": {
                     "type": "boolean",
@@ -3318,6 +3649,21 @@
                 "$ref": "#/components/headers/RequestId"
               }
             }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
           }
         },
         "security": [
@@ -3526,6 +3872,21 @@
                 "$ref": "#/components/headers/RequestId"
               }
             }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
           }
         },
         "security": [
@@ -3658,7 +4019,14 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/BucketEmptyInProgressError"
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/ProjectNotEmptyError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/BucketEmptyInProgressError"
+                    }
+                  ]
                 }
               }
             },
@@ -3689,6 +4057,21 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
                 }
               }
             },
@@ -3859,6 +4242,21 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
                 }
               }
             },
@@ -4115,6 +4513,21 @@
                 "$ref": "#/components/headers/RequestId"
               }
             }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
           }
         },
         "security": [
@@ -4293,6 +4706,21 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
                 }
               }
             },
@@ -4525,6 +4953,21 @@
                 "$ref": "#/components/headers/RequestId"
               }
             }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
           }
         },
         "security": [
@@ -4718,6 +5161,21 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
                 }
               }
             },
@@ -4931,6 +5389,21 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
                 }
               }
             },
@@ -5297,6 +5770,21 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
                 }
               }
             },
@@ -5678,6 +6166,21 @@
                 "$ref": "#/components/headers/RequestId"
               }
             }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
           }
         },
         "security": [
@@ -5912,6 +6415,21 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
                 }
               }
             },
@@ -6157,6 +6675,21 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
                 }
               }
             },
@@ -6432,6 +6965,21 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
                 }
               }
             },
@@ -6836,6 +7384,21 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
                 }
               }
             },
@@ -7344,6 +7907,21 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
                 }
               }
             },
@@ -7876,6 +8454,21 @@
                 "$ref": "#/components/headers/RequestId"
               }
             }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
           }
         },
         "security": [
@@ -8157,6 +8750,21 @@
                 "$ref": "#/components/headers/RequestId"
               }
             }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
           }
         },
         "security": [
@@ -8368,6 +8976,21 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
                 }
               }
             },
@@ -8621,6 +9244,21 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
                 }
               }
             },
@@ -8888,6 +9526,21 @@
                 "$ref": "#/components/headers/RequestId"
               }
             }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
           }
         },
         "security": [
@@ -9102,6 +9755,21 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
                 }
               }
             },
@@ -9354,6 +10022,21 @@
                 "$ref": "#/components/headers/RequestId"
               }
             }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
           }
         },
         "security": [
@@ -9538,6 +10221,21 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
                 }
               }
             },
@@ -9787,6 +10485,21 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
                 }
               }
             },
@@ -10073,6 +10786,21 @@
                 "$ref": "#/components/headers/RequestId"
               }
             }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
           }
         },
         "security": [
@@ -10262,6 +10990,21 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
                 }
               }
             },
@@ -10517,6 +11260,21 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
                 }
               }
             },
@@ -10808,6 +11566,21 @@
                 "$ref": "#/components/headers/RequestId"
               }
             }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
           }
         },
         "security": [
@@ -10999,6 +11772,21 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
                 }
               }
             },
@@ -11266,6 +12054,21 @@
                 "$ref": "#/components/headers/RequestId"
               }
             }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
           }
         },
         "security": [
@@ -11373,6 +12176,7 @@
                                     "bucket:empty",
                                     "file:read",
                                     "file:write",
+                                    "file:delete",
                                     "project-key:read",
                                     "project-key:create",
                                     "project-key:revoke",
@@ -11590,6 +12394,21 @@
                 "$ref": "#/components/headers/RequestId"
               }
             }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
           }
         },
         "security": [
@@ -11635,6 +12454,7 @@
                   "preset": {
                     "enum": [
                       "deploy",
+                      "storage-management",
                       "read-only",
                       "full-access"
                     ],
@@ -11656,6 +12476,7 @@
                         "bucket:empty",
                         "file:read",
                         "file:write",
+                        "file:delete",
                         "project-key:read",
                         "project-key:create",
                         "project-key:revoke",
@@ -11739,6 +12560,7 @@
                                   "bucket:empty",
                                   "file:read",
                                   "file:write",
+                                  "file:delete",
                                   "project-key:read",
                                   "project-key:create",
                                   "project-key:revoke",
@@ -11952,6 +12774,21 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
                 }
               }
             },
@@ -12056,6 +12893,7 @@
                                     "bucket:empty",
                                     "file:read",
                                     "file:write",
+                                    "file:delete",
                                     "project-key:read",
                                     "project-key:create",
                                     "project-key:revoke",
@@ -12258,6 +13096,21 @@
                 "$ref": "#/components/headers/RequestId"
               }
             }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
           }
         },
         "security": [
@@ -12290,6 +13143,7 @@
                   "preset": {
                     "enum": [
                       "deploy",
+                      "storage-management",
                       "read-only",
                       "full-access"
                     ],
@@ -12311,6 +13165,7 @@
                         "bucket:empty",
                         "file:read",
                         "file:write",
+                        "file:delete",
                         "project-key:read",
                         "project-key:create",
                         "project-key:revoke",
@@ -12394,6 +13249,7 @@
                                   "bucket:empty",
                                   "file:read",
                                   "file:write",
+                                  "file:delete",
                                   "project-key:read",
                                   "project-key:create",
                                   "project-key:revoke",
@@ -12592,6 +13448,21 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
                 }
               }
             },
@@ -12759,6 +13630,21 @@
                 "$ref": "#/components/headers/RequestId"
               }
             }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingMaintenanceError"
+                }
+              }
+            },
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
           }
         },
         "security": [
@@ -12881,6 +13767,30 @@
                         "token": {
                           "type": "string",
                           "description": "Encrypted runtime bearer token; store it securely."
+                        },
+                        "delivery": {
+                          "type": "object",
+                          "properties": {
+                            "baseUrl": {
+                              "type": "string",
+                              "format": "uri",
+                              "description": "Origin used for returned file URLs."
+                            },
+                            "initUrls": {
+                              "type": "array",
+                              "minItems": 1,
+                              "maxItems": 2,
+                              "items": {
+                                "type": "string",
+                                "format": "uri"
+                              },
+                              "description": "File origins to initialize for protected access, including preserved legacy links."
+                            }
+                          },
+                          "required": [
+                            "baseUrl",
+                            "initUrls"
+                          ]
                         },
                         "basePath": {
                           "type": "string",
@@ -13057,6 +13967,30 @@
                         "project": {
                           "type": "object",
                           "properties": {
+                            "delivery": {
+                              "type": "object",
+                              "properties": {
+                                "baseUrl": {
+                                  "type": "string",
+                                  "format": "uri",
+                                  "description": "Origin used for returned file URLs."
+                                },
+                                "initUrls": {
+                                  "type": "array",
+                                  "minItems": 1,
+                                  "maxItems": 2,
+                                  "items": {
+                                    "type": "string",
+                                    "format": "uri"
+                                  },
+                                  "description": "File origins to initialize for protected access, including preserved legacy links."
+                                }
+                              },
+                              "required": [
+                                "baseUrl",
+                                "initUrls"
+                              ]
+                            },
                             "id": {
                               "type": "string",
                               "description": "Unique project ID."
@@ -14202,8 +15136,12 @@
                                             "between": {
                                               "type": "array",
                                               "prefixItems": [
-                                                {},
-                                                {}
+                                                {
+                                                  "type": "string"
+                                                },
+                                                {
+                                                  "type": "string"
+                                                }
                                               ],
                                               "description": "Inclusive lower and upper bounds."
                                             }
@@ -14272,8 +15210,12 @@
                                             "between": {
                                               "type": "array",
                                               "prefixItems": [
-                                                {},
-                                                {}
+                                                {
+                                                  "type": "string"
+                                                },
+                                                {
+                                                  "type": "string"
+                                                }
                                               ],
                                               "description": "Inclusive lower and upper bounds."
                                             }
@@ -14425,8 +15367,12 @@
                                             "between": {
                                               "type": "array",
                                               "prefixItems": [
-                                                {},
-                                                {}
+                                                {
+                                                  "type": "string"
+                                                },
+                                                {
+                                                  "type": "string"
+                                                }
                                               ],
                                               "description": "Inclusive lower and upper bounds."
                                             }
@@ -14495,8 +15441,12 @@
                                             "between": {
                                               "type": "array",
                                               "prefixItems": [
-                                                {},
-                                                {}
+                                                {
+                                                  "type": "string"
+                                                },
+                                                {
+                                                  "type": "string"
+                                                }
                                               ],
                                               "description": "Inclusive lower and upper bounds."
                                             }
@@ -14873,8 +15823,12 @@
                                             "between": {
                                               "type": "array",
                                               "prefixItems": [
-                                                {},
-                                                {}
+                                                {
+                                                  "type": "string"
+                                                },
+                                                {
+                                                  "type": "string"
+                                                }
                                               ],
                                               "description": "Inclusive lower and upper bounds."
                                             }
@@ -14943,8 +15897,12 @@
                                             "between": {
                                               "type": "array",
                                               "prefixItems": [
-                                                {},
-                                                {}
+                                                {
+                                                  "type": "string"
+                                                },
+                                                {
+                                                  "type": "string"
+                                                }
                                               ],
                                               "description": "Inclusive lower and upper bounds."
                                             }
@@ -15096,8 +16054,12 @@
                                             "between": {
                                               "type": "array",
                                               "prefixItems": [
-                                                {},
-                                                {}
+                                                {
+                                                  "type": "string"
+                                                },
+                                                {
+                                                  "type": "string"
+                                                }
                                               ],
                                               "description": "Inclusive lower and upper bounds."
                                             }
@@ -15166,8 +16128,12 @@
                                             "between": {
                                               "type": "array",
                                               "prefixItems": [
-                                                {},
-                                                {}
+                                                {
+                                                  "type": "string"
+                                                },
+                                                {
+                                                  "type": "string"
+                                                }
                                               ],
                                               "description": "Inclusive lower and upper bounds."
                                             }
@@ -17137,6 +18103,9 @@
                     },
                     {
                       "$ref": "#/components/schemas/RestoreNotAllowedError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/StorageLimitExceededError"
                     }
                   ]
                 }

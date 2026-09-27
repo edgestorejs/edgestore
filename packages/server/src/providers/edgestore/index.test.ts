@@ -1,7 +1,8 @@
 import { createEdgeStoreSdk } from '@edgestore/sdk';
-import { initEdgeStore } from '@edgestore/shared';
+import type * as EdgeStoreSdkModule from '@edgestore/sdk';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { edgestore } from '.';
+import { initEdgeStore } from '../../core/router';
 
 const runtime = vi.hoisted(() => ({
   accessTokens: { create: vi.fn() },
@@ -21,21 +22,24 @@ const runtime = vi.hoisted(() => ({
     request: vi.fn(),
     createParts: vi.fn(),
     completeMultipart: vi.fn(),
+    cancel: vi.fn(),
   },
 }));
 
 const forProject = vi.hoisted(() => vi.fn(() => runtime));
 
-vi.mock('@edgestore/sdk', () => ({
-  createEdgeStoreSdk: vi.fn(
-    (options: { credentials: Record<string, string> }) =>
-      'token' in options.credentials
-        ? { runtime: { forProject } }
-        : { runtime },
-  ),
-  DEFAULT_MULTIPART_PART_SIZE_BYTES: 16 * 1024 * 1024,
-  DEFAULT_MULTIPART_THRESHOLD_BYTES: 100 * 1024 * 1024,
-}));
+vi.mock('@edgestore/sdk', async (importOriginal) => {
+  const sdk = await importOriginal<typeof EdgeStoreSdkModule>();
+  return {
+    ...sdk,
+    createEdgeStoreSdk: vi.fn(
+      (options: { credentials: Record<string, string> }) =>
+        'token' in options.credentials
+          ? { runtime: { forProject } }
+          : { runtime },
+    ),
+  };
+});
 
 const fileInfo = {
   type: 'text/plain',
@@ -50,6 +54,7 @@ const fileInfo = {
 describe('edgestore provider', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.unstubAllEnvs();
   });
 
   it('uses project credentials without changing their configuration shape', () => {
@@ -122,7 +127,7 @@ describe('edgestore provider', () => {
         router,
       }),
     ).resolves.toEqual({
-      token: 'token',
+      baseUrl: 'https://files.edgestore.dev',
       clientInit: {
         path: '/_init',
         headers: {
@@ -139,6 +144,30 @@ describe('edgestore provider', () => {
         },
       },
     });
+  });
+
+  it('discovers both protected file aliases and preserves explicit overrides', async () => {
+    const delivery = {
+      baseUrl: 'https://project.content.test',
+      initUrls: [
+        'https://project.content.test/_init',
+        'https://files.edgestore.dev/_init',
+      ],
+    };
+    runtime.accessTokens.create.mockResolvedValue({ token: 'token', delivery });
+    const es = initEdgeStore.create();
+    const router = es.router({
+      files: es.fileBucket().accessControl({ userId: 'user-1' }),
+    });
+    const provider = edgestore({ accessKey: 'access', secretKey: 'secret' });
+    expect(await provider.init({ ctx: {}, router })).toMatchObject({
+      baseUrl: delivery.baseUrl,
+      clientInit: { urls: delivery.initUrls },
+    });
+    vi.stubEnv('EDGE_STORE_BASE_URL', 'http://localhost:4444');
+    const overridden = await provider.init({ ctx: {}, router });
+    expect(overridden.baseUrl).toBe('http://localhost:4444');
+    expect(overridden.clientInit?.urls).toBeUndefined();
   });
 
   it('does not create an access token for public-only buckets', async () => {
@@ -174,6 +203,7 @@ describe('edgestore provider', () => {
         fileInfo,
       }),
     ).resolves.toEqual({
+      key: 'files/file',
       accessUrl: 'https://files.example/file',
       thumbnailUrl: null,
       uploadUrl: 'https://upload.example/file',
@@ -196,6 +226,28 @@ describe('edgestore provider', () => {
       replaceTarget: undefined,
       signedReadUrl: undefined,
     });
+  });
+
+  it('signs only the first multipart part URLs up front', async () => {
+    runtime.uploads.request.mockResolvedValue({
+      file: { url: 'https://files.example/file', key: 'files/file' },
+      upload: { kind: 'multipart', id: 'upload-1', parts: [] },
+    });
+    const provider = edgestore({ accessKey: 'access', secretKey: 'secret' });
+
+    await provider.uploads.request({
+      bucketName: 'files',
+      bucketType: 'FILE',
+      fileInfo: { ...fileInfo, size: 20 * 16 * 1024 * 1024 },
+    });
+
+    expect(runtime.uploads.request).toHaveBeenCalledWith(
+      expect.objectContaining({
+        multipart: {
+          partNumbers: Array.from({ length: 10 }, (_, index) => index + 1),
+        },
+      }),
+    );
   });
 
   it('requests multipart uploads above the shared threshold', async () => {
@@ -236,7 +288,7 @@ describe('edgestore provider', () => {
     });
   });
 
-  it('delegates multipart part requests and completion to the SDK', async () => {
+  it('delegates multipart part requests, completion and cancellation to the SDK', async () => {
     runtime.uploads.createParts.mockResolvedValue({
       parts: [{ partNumber: 2, signedUrl: 'https://upload.example/2' }],
     });
@@ -244,14 +296,12 @@ describe('edgestore provider', () => {
 
     await expect(
       provider.uploads.multipart.requestParts({
-        multipart: { uploadId: 'upload-1', parts: [2] },
-        path: 'files/file.txt',
+        uploadId: 'upload-1',
+        key: 'files/file.txt',
+        parts: [2],
       }),
     ).resolves.toEqual({
-      multipart: {
-        uploadId: 'upload-1',
-        parts: [{ partNumber: 2, uploadUrl: 'https://upload.example/2' }],
-      },
+      parts: [{ partNumber: 2, uploadUrl: 'https://upload.example/2' }],
     });
     await expect(
       provider.uploads.multipart.complete({
@@ -268,6 +318,13 @@ describe('edgestore provider', () => {
     expect(runtime.uploads.completeMultipart).toHaveBeenCalledWith({
       uploadId: 'upload-1',
       parts: [{ partNumber: 2, eTag: 'etag-2' }],
+    });
+    await provider.uploads.multipart.abort({
+      uploadId: 'upload-1',
+      key: 'files/file.txt',
+    });
+    expect(runtime.uploads.cancel).toHaveBeenCalledWith({
+      uploadId: 'upload-1',
     });
   });
 
@@ -417,6 +474,7 @@ describe('edgestore provider', () => {
     expect(runtime.uploads.upload).toHaveBeenCalledWith(
       expect.objectContaining({
         bucket: 'files',
+        bucketConfig: { type: 'file', visibility: 'public' },
         source,
         metadata: { owner: 'user-1' },
       }),

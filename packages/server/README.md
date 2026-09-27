@@ -11,7 +11,7 @@ Check the official [documentation](https://edgestore.dev) for more information.
 Let's start by installing the required packages.
 
 ```shell
-npm install @edgestore/server @edgestore/react zod
+npm install @edgestore/server @edgestore/react
 ```
 
 ### Environment Variables
@@ -33,9 +33,8 @@ The example below is the simplest bucket you can create with EdgeStore. Just a s
 You can have multiple buckets in your app, each with its own configuration.
 
 ```ts title="src/app/api/edgestore/[...edgestore]/route.ts"
-import { createEdgeStore, initEdgeStore } from '@edgestore/server';
+import { initEdgeStore } from '@edgestore/server';
 import { createEdgeStoreNextHandler } from '@edgestore/server/adapters/next/app';
-import { edgestore } from '@edgestore/server/providers/edgestore';
 
 const es = initEdgeStore.create();
 
@@ -46,13 +45,8 @@ const router = es.router({
   publicFiles: es.fileBucket(),
 });
 
-const configuredEdgeStore = createEdgeStore({
-  router,
-  provider: edgestore(),
-});
-
 const handler = createEdgeStoreNextHandler({
-  edgestore: configuredEdgeStore,
+  router,
 });
 
 export { handler as GET, handler as POST };

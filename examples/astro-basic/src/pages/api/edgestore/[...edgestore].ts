@@ -1,6 +1,5 @@
-import { createEdgeStore, initEdgeStore } from '@edgestore/server';
+import { initEdgeStore } from '@edgestore/server';
 import { createEdgeStoreAstroHandler } from '@edgestore/server/adapters/astro';
-import { edgestore } from '@edgestore/server/providers/edgestore';
 
 export const prerender = false;
 
@@ -13,11 +12,7 @@ const router = es.router({
   publicFiles: es.fileBucket(),
 });
 
-const configuredEdgeStore = createEdgeStore({
-  router,
-  provider: edgestore(),
-});
-const handler = createEdgeStoreAstroHandler({ edgestore: configuredEdgeStore });
+const handler = createEdgeStoreAstroHandler({ router });
 
 export { handler as GET, handler as POST };
 

@@ -1,6 +1,7 @@
-import { initEdgeStore } from '@edgestore/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { initEdgeStore } from '../core/router';
 import {
+  abortMultipartUpload,
   completeMultipartUpload,
   confirmUploads,
   deleteFiles,
@@ -16,17 +17,10 @@ const originalUrls = [
   'https://files.example.com/protected/one.txt',
   'https://files.example.com/protected/two.txt',
 ];
-const proxiedUrls = originalUrls.map(
-  (url) =>
-    `http://localhost:3000/api/edgestore/proxy-file?${new URLSearchParams({
-      url,
-    }).toString()}`,
-);
 
 describe('frontend file mutations', () => {
   beforeEach(() => {
     vi.stubEnv('EDGE_STORE_JWT_SECRET', 'test-secret');
-    vi.stubEnv('NODE_ENV', 'development');
     vi.clearAllMocks();
   });
 
@@ -43,7 +37,7 @@ describe('frontend file mutations', () => {
         provider,
         router: es.router({ documents: es.fileBucket() }),
         ctxToken: undefined,
-        body: { bucketName: 'documents', urls: proxiedUrls },
+        body: { bucketName: 'documents', urls: originalUrls },
         logger,
       }),
     ).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
@@ -70,14 +64,14 @@ describe('frontend file mutations', () => {
         provider,
         router,
         ctxToken,
-        body: { bucketName: 'documents', urls: proxiedUrls },
+        body: { bucketName: 'documents', urls: originalUrls },
         logger,
       }),
     ).resolves.toEqual({
-      succeeded: [proxiedUrls[0]],
+      succeeded: [originalUrls[0]],
       failed: [
         {
-          url: proxiedUrls[1],
+          url: originalUrls[1],
           error: { code: 'NOT_CONFIRMABLE', message: 'Already permanent' },
         },
       ],
@@ -103,7 +97,7 @@ describe('frontend file mutations', () => {
         provider,
         router,
         ctxToken,
-        body: { bucketName: 'documents', urls: proxiedUrls },
+        body: { bucketName: 'documents', urls: originalUrls },
         logger,
       }),
     ).rejects.toThrow('The provider returned 1 mutation results for 2 files.');
@@ -120,11 +114,120 @@ describe('frontend file mutations', () => {
         provider,
         router,
         ctxToken,
-        body: { bucketName: 'documents', urls: proxiedUrls },
+        body: { bucketName: 'documents', urls: originalUrls },
         logger,
       }),
     ).rejects.toMatchObject({ code: 'SERVER_ERROR' });
     expect(provider.files.get).not.toHaveBeenCalled();
+    expect(provider.files.delete).not.toHaveBeenCalled();
+  });
+
+  it('uses empty router fields when none are configured', async () => {
+    const beforeDelete = vi.fn(() => true);
+    const es = initEdgeStore.create();
+    const router = es.router({
+      documents: es.fileBucket().beforeDelete(beforeDelete),
+    });
+    const provider = createProvider();
+    const ctxToken = await createContextToken({ router, ctx: {} });
+    vi.mocked(provider.files.get!).mockResolvedValue({
+      url: originalUrls[0]!,
+      sizeBytes: 10,
+      uploadedAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    await expect(
+      deleteFiles({
+        provider,
+        router,
+        ctxToken,
+        body: { bucketName: 'documents', urls: [originalUrls[0]!] },
+        logger,
+      }),
+    ).resolves.toEqual({ succeeded: [originalUrls[0]], failed: [] });
+    expect(beforeDelete).toHaveBeenCalledWith({
+      ctx: {},
+      fileInfo: {
+        url: originalUrls[0],
+        size: 10,
+        uploadedAt: expect.any(Date),
+        path: {},
+        metadata: {},
+      },
+    });
+    expect(provider.files.delete).toHaveBeenCalledOnce();
+  });
+
+  it('requires stored path when the router configures path fields', async () => {
+    const beforeDelete = vi.fn(() => true);
+    const es = initEdgeStore.context<{ userId: string }>().create();
+    const router = es.router({
+      documents: es
+        .fileBucket()
+        .path(({ ctx }) => [{ author: ctx.userId }])
+        .beforeDelete(beforeDelete),
+    });
+    const provider = createProvider();
+    const ctxToken = await createContextToken({
+      router,
+      ctx: { userId: 'user-1' },
+    });
+    vi.mocked(provider.files.get!).mockResolvedValue({
+      url: originalUrls[0]!,
+      sizeBytes: 10,
+      uploadedAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    await expect(
+      deleteFiles({
+        provider,
+        router,
+        ctxToken,
+        body: { bucketName: 'documents', urls: [originalUrls[0]!] },
+        logger,
+      }),
+    ).rejects.toThrow(
+      'Provider test-provider must return path from files.get to authorize frontend deletion for a bucket with configured path fields.',
+    );
+    expect(beforeDelete).not.toHaveBeenCalled();
+    expect(provider.files.delete).not.toHaveBeenCalled();
+  });
+
+  it('requires stored metadata when the router configures metadata fields', async () => {
+    const beforeDelete = vi.fn(() => true);
+    const es = initEdgeStore.context<{ userId: string }>().create();
+    const router = es.router({
+      documents: es
+        .fileBucket()
+        .metadata(({ ctx }) => ({ author: ctx.userId }))
+        .beforeDelete(beforeDelete),
+    });
+    const provider = createProvider();
+    const ctxToken = await createContextToken({
+      router,
+      ctx: { userId: 'user-1' },
+    });
+    vi.mocked(provider.files.get!).mockResolvedValue({
+      url: originalUrls[0]!,
+      sizeBytes: 10,
+      uploadedAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    await expect(
+      deleteFiles({
+        provider,
+        router,
+        ctxToken,
+        body: { bucketName: 'documents', urls: [originalUrls[0]!] },
+        logger,
+      }),
+    ).rejects.toThrow(
+      'Provider test-provider must return metadata from files.get to authorize frontend deletion for a bucket with configured metadata fields.',
+    );
+    expect(beforeDelete).not.toHaveBeenCalled();
     expect(provider.files.delete).not.toHaveBeenCalled();
   });
 
@@ -148,7 +251,7 @@ describe('frontend file mutations', () => {
         provider,
         router,
         ctxToken,
-        body: { bucketName: 'documents', urls: proxiedUrls },
+        body: { bucketName: 'documents', urls: originalUrls },
         logger,
       }),
     ).rejects.toMatchObject({ code: 'DELETE_NOT_ALLOWED' });
@@ -183,14 +286,14 @@ describe('frontend file mutations', () => {
         provider,
         router,
         ctxToken,
-        body: { bucketName: 'documents', urls: proxiedUrls },
+        body: { bucketName: 'documents', urls: originalUrls },
         logger,
       }),
     ).resolves.toEqual({
-      succeeded: [proxiedUrls[0]],
+      succeeded: [originalUrls[0]],
       failed: [
         {
-          url: proxiedUrls[1],
+          url: originalUrls[1],
           error: { code: 'DELETE_FAILED', message: 'Storage unavailable' },
         },
       ],
@@ -214,94 +317,96 @@ describe('multipart lifecycle', () => {
     vi.unstubAllEnvs();
   });
 
-  it('checks context before requesting parts', async () => {
-    const es = initEdgeStore.create();
-    const provider = createProvider();
-
-    await expect(
-      requestUploadParts({
-        provider,
-        router: es.router({ documents: es.fileBucket() }),
-        ctxToken: undefined,
-        body: {
-          multipart: { uploadId: 'upload-id', parts: [1, 2] },
-          path: 'documents/file.txt',
-        },
-        logger,
-      }),
-    ).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
-    expect(provider.uploads.multipart?.requestParts).not.toHaveBeenCalled();
-  });
-
-  it('forwards part requests after context validation', async () => {
-    const es = initEdgeStore.create();
-    const router = es.router({ documents: es.fileBucket() });
-    const provider = createProvider();
-    const ctxToken = await createContextToken({ router, ctx: {} });
-    const body = {
-      multipart: { uploadId: 'upload-id', parts: [1, 2] },
-      path: 'documents/file.txt',
-    };
-
-    await requestUploadParts({ provider, router, ctxToken, body, logger });
-
-    expect(provider.uploads.multipart?.requestParts).toHaveBeenCalledWith(body);
-  });
-
-  it('rejects multipart routes for single-part providers', async () => {
-    const es = initEdgeStore.create();
-    const router = es.router({ documents: es.fileBucket() });
-    const provider = createProvider({
-      uploads: {
-        request: vi.fn(() => ({
-          uploadUrl: 'https://upload.example.com/file.txt',
-          accessUrl: 'https://files.example.com/file.txt',
-        })),
+  const session = {
+    bucketName: 'documents',
+    uploadId: 'upload-id',
+    key: 'documents/file.txt',
+  };
+  const operations = [
+    {
+      name: 'requestParts',
+      run: requestUploadParts,
+      body: { ...session, parts: [1, 2] },
+      forwarded: { uploadId: 'upload-id', key: session.key, parts: [1, 2] },
+    },
+    {
+      name: 'complete',
+      run: completeMultipartUpload,
+      body: { ...session, parts: [{ partNumber: 1, eTag: 'etag-1' }] },
+      forwarded: {
+        uploadId: 'upload-id',
+        key: session.key,
+        parts: [{ partNumber: 1, eTag: 'etag-1' }],
       },
-    });
-    const ctxToken = await createContextToken({ router, ctx: {} });
+    },
+    {
+      name: 'abort',
+      run: abortMultipartUpload,
+      body: session,
+      forwarded: { uploadId: 'upload-id', key: session.key },
+    },
+  ] as const;
 
-    await expect(
-      requestUploadParts({
-        provider,
-        router,
-        ctxToken,
-        body: {
-          multipart: { uploadId: 'upload-id', parts: [1] },
-          path: 'documents/file.txt',
-        },
-        logger,
-      }),
-    ).rejects.toMatchObject({
-      code: 'BAD_REQUEST',
-      message: 'Provider test-provider does not support multipart uploads.',
-    });
-  });
-
-  it('checks context and bucket before completing multipart uploads', async () => {
+  function setup(provider = createProvider()) {
     const es = initEdgeStore.create();
     const router = es.router({ documents: es.fileBucket() });
-    const provider = createProvider();
-    const ctxToken = await createContextToken({ router, ctx: {} });
-    const body = {
-      bucketName: 'documents',
-      uploadId: 'upload-id',
-      key: 'documents/file.txt',
-      parts: [{ partNumber: 1, eTag: 'etag-1' }],
-    };
+    return { provider, router };
+  }
 
-    await completeMultipartUpload({
-      provider,
-      router,
-      ctxToken,
-      body,
-      logger,
-    });
+  it.each(operations)(
+    '$name forwards the session after context and bucket checks',
+    async ({ name, run, body, forwarded }) => {
+      const { provider, router } = setup();
+      const ctxToken = await createContextToken({ router, ctx: {} });
+      const operation = provider.uploads.multipart![name];
 
-    expect(provider.uploads.multipart?.complete).toHaveBeenCalledWith({
-      uploadId: body.uploadId,
-      key: body.key,
-      parts: body.parts,
-    });
-  });
+      await expect(
+        run({
+          provider,
+          router,
+          ctxToken: undefined,
+          body: body as never,
+          logger,
+        }),
+      ).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
+      await expect(
+        run({
+          provider,
+          router,
+          ctxToken,
+          body: { ...body, bucketName: 'missing' } as never,
+          logger,
+        }),
+      ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+      expect(operation).not.toHaveBeenCalled();
+
+      await run({ provider, router, ctxToken, body: body as never, logger });
+
+      expect(operation).toHaveBeenCalledWith(forwarded);
+    },
+  );
+
+  it.each(operations)(
+    'rejects $name for single-part providers',
+    async ({ run, body }) => {
+      const { provider, router } = setup(
+        createProvider({
+          uploads: {
+            request: vi.fn(() => ({
+              uploadUrl: 'https://upload.example.com/file.txt',
+              accessUrl: 'https://files.example.com/file.txt',
+            })),
+          },
+        }),
+      );
+      const ctxToken = await createContextToken({ router, ctx: {} });
+
+      await expect(
+        run({ provider, router, ctxToken, body: body as never, logger }),
+      ).rejects.toMatchObject({
+        code: 'BAD_REQUEST',
+        message: 'Provider test-provider does not support multipart uploads.',
+      });
+    },
+  );
 });
