@@ -9,6 +9,7 @@ import {
   rollbackCredentialAfterFailure,
   type SecretDeliveryOptions,
 } from '../core/secretDelivery';
+import { protectSecretFile } from '../core/secretFile';
 
 type KeyOptions = SecretDeliveryOptions & {
   name: string;
@@ -44,7 +45,7 @@ export async function projectKeyCreateCommand(
   flags: GlobalFlags,
   input: KeyOptions & { project: string },
 ): Promise<void> {
-  requirePlainSecretDelivery(flags, input);
+  requireSecretDelivery(runtime, flags, input);
   await preflightKeyDelivery(runtime, input);
   const sdk = await sdkFor(runtime, flags);
   const { result, delivered } = await createAndDeliverKey(
@@ -53,7 +54,7 @@ export async function projectKeyCreateCommand(
   );
   const values = keyValues(result.key.accessKey, result.secretKey);
   outputFor(runtime, flags).result(
-    result,
+    { key: result.key, delivery: delivered },
     [
       `Created project key "${result.key.name}".`,
       ...(delivered.length ? ['', ...delivered] : ['', ...envLines(values)]),
@@ -141,7 +142,7 @@ export async function projectKeyRotateCommand(
     );
   }
 
-  requirePlainSecretDelivery(flags, input);
+  requireSecretDelivery(runtime, flags, input);
   const sdk = await sdkFor(runtime, flags);
   const listed = await sdk.management.projectKeys.list({
     project: input.project,
@@ -278,7 +279,10 @@ export async function projectKeyRotateCommand(
     );
   }
   output.result(
-    { replacement: result, revokedKeyId: input.keyId },
+    {
+      replacement: { key: result.key, delivery: delivered },
+      revokedKeyId: input.keyId,
+    },
     input.yes
       ? [secretMessage, '', `Revoked old project key ${input.keyId}.`].join(
           '\n',
@@ -335,16 +339,18 @@ async function preflightKeyDelivery(
     ['EDGE_STORE_ACCESS_KEY', 'EDGE_STORE_SECRET_KEY'],
     options,
   );
+  if (options.output) await protectSecretFile(runtime.cwd, options.output);
 }
 
-function requirePlainSecretDelivery(
+function requireSecretDelivery(
+  runtime: CliRuntime,
   flags: GlobalFlags,
   options: SecretDeliveryOptions,
 ): void {
-  if (flags.plain && !options.copy && !options.output) {
+  if (!isInteractive(runtime, flags) && !options.output) {
     throw usageError(
       'secret_delivery_required',
-      'Plain output requires --copy or --output for the one-time key.',
+      'Automated project-key commands require --output to deliver the one-time key to a protected env file.',
     );
   }
 }

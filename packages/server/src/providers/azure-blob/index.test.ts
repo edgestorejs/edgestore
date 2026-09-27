@@ -89,6 +89,19 @@ describe('azureBlob', () => {
     }));
   });
 
+  it('declares temporary and replacement uploads as unsupported', () => {
+    const provider = azureBlob({
+      storageAccountName: 'storageacct',
+      storageAccountKey: 'account-key',
+      containerName: 'documents',
+    });
+
+    expect(provider.uploads.supportedOptions).toEqual({
+      temporary: false,
+      replaceTargetUrl: false,
+    });
+  });
+
   it('constructs a base URL from the storage account', () => {
     const provider = azureBlob({
       storageAccountName: 'storageacct',
@@ -178,6 +191,7 @@ describe('azureBlob', () => {
           : expect.any(Date),
         accessSignedUrlExpiresIn: fileInfo.isPublic ? undefined : 60 * 60,
         uploadUrl: `${containerUrl}/${encodeBlobName(expectedBlobName)}?sig=cw`,
+        uploadHeaders: { 'x-ms-blob-type': 'BlockBlob' },
       });
       expect(mocks.blobSasPermissionsParse).toHaveBeenCalledWith('cw');
       if (fileInfo.isPublic) {
@@ -209,6 +223,7 @@ describe('azureBlob', () => {
       accessSignedUrlExpiresAt: undefined,
       accessSignedUrlExpiresIn: undefined,
       uploadUrl: `${containerUrl}/documents/_public/public.txt?sig=cw`,
+      uploadHeaders: { 'x-ms-blob-type': 'BlockBlob' },
     });
     expect(mocks.generateBlobSASQueryParameters).toHaveBeenCalledWith(
       {

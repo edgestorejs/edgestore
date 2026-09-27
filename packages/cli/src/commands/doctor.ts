@@ -1,39 +1,52 @@
-import { readFile } from 'node:fs/promises';
+import { readdir, readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
+import { validatePath } from '../core/agent/files';
+import { resolveApiUrl } from '../core/apiUrl';
 import {
   activeAccountFor,
   apiOriginForRepoConfig,
   type LocatedRepoConfig,
 } from '../core/config';
 import { resolveCredential } from '../core/credentials';
+import { localApplicationChecks, type DoctorCheck } from '../core/doctorLocal';
 import { dotenvValue } from '../core/dotenv';
+import { CliError } from '../core/errors';
 import { renderTable } from '../core/output';
 import type { CliRuntime, GlobalFlags } from '../core/runtime';
 import { apiUrlFor, outputFor } from '../core/runtime';
 import { selectWorkspaceContext } from '../core/workspace';
 
-type Check = {
-  name: string;
-  status: 'pass' | 'warn' | 'fail';
-  detail: string;
-};
+type Check = DoctorCheck;
 
 export async function doctorCommand(
   runtime: CliRuntime,
   flags: GlobalFlags,
-  version: string,
+  options: { version: string; offline?: boolean },
 ): Promise<void> {
   await selectWorkspaceContext(runtime, flags, 'read');
-  const checks: Check[] = [{ name: 'CLI', status: 'pass', detail: version }];
+  const checks: Check[] = [
+    { name: 'CLI', status: 'pass', detail: options.version },
+  ];
+  checks.push(...(await localApplicationChecks(runtime.workspaceCwd)));
   const apiUrl = apiUrlFor(runtime, flags);
 
   const globalConfig = await checkGlobalConfig(runtime, checks);
   const activeAccount = activeAccountFor(globalConfig, apiUrl.displayUrl);
   const localConfig = await checkLocalConfig(runtime, checks);
   const linkedApiOrigin = localConfig
-    ? apiOriginForRepoConfig(localConfig.config)
+    ? resolveApiUrl(apiOriginForRepoConfig(localConfig.config), undefined)
+        .displayUrl
     : undefined;
   const envKeys = await checkEnvFile(runtime, localConfig, checks);
+  if (options.offline) {
+    checks.push({
+      name: 'Remote checks',
+      status: 'skip',
+      detail: 'Offline: no credential-store access, OAuth, or API requests.',
+    });
+    report(runtime, flags, checks);
+    return;
+  }
   const keychainAvailable = await runtime.credentials.available();
   checks.push({
     name: 'Credential store',
@@ -50,8 +63,6 @@ export async function doctorCommand(
       runtime.credentials,
       {
         apiOrigin: apiUrl.displayUrl,
-        oauth: runtime.oauth,
-        signal: runtime.signal,
       },
     );
     checks.push({
@@ -59,108 +70,118 @@ export async function doctorCommand(
       status: credential ? 'pass' : 'warn',
       detail: credential ? credential.source : 'Not configured',
     });
-  } catch (error) {
+  } catch {
     rethrowIfAborted(runtime.signal);
     checks.push({
       name: 'Credential',
-      status: 'fail',
+      status: 'warn',
       detail:
-        error instanceof Error ? error.message : 'Could not read credential',
+        'No usable credential. Login or refresh explicitly; doctor does not change credentials.',
     });
   }
 
+  if (!credential) {
+    checks.push({
+      name: 'Remote checks',
+      status: 'skip',
+      detail: 'No usable existing credential; no network requests were made.',
+    });
+    report(runtime, flags, checks);
+    return;
+  }
+
   const sdk = runtime.sdkFactory({
-    token: credential?.token ?? 'edgestore-doctor',
+    token: credential.token,
     baseUrl: apiUrl.sdkBaseUrl,
   });
   try {
     await sdk.system.health({ signal: runtime.signal });
     checks.push({ name: 'API', status: 'pass', detail: apiUrl.displayUrl });
-  } catch (error) {
+  } catch {
     rethrowIfAborted(runtime.signal);
     checks.push({
       name: 'API',
       status: 'fail',
-      detail: error instanceof Error ? error.message : 'Health check failed',
+      detail: 'Health check failed; verify the API endpoint and network.',
     });
   }
 
-  if (credential) {
-    let authenticated = false;
-    try {
-      const identity = await sdk.management.whoami({ signal: runtime.signal });
-      authenticated = true;
-      const scopeDetail =
-        'scopes' in identity.actor
-          ? ` (${identity.actor.scopes.join(', ')})`
-          : '';
-      checks.push({
-        name: 'Authentication',
-        status: 'pass',
-        detail: `${identity.actor.kind}${scopeDetail}`,
-      });
-    } catch (error) {
-      rethrowIfAborted(runtime.signal);
-      checks.push({
-        name: 'Authentication',
-        status: 'fail',
-        detail: error instanceof Error ? error.message : 'Validation failed',
-      });
-    }
+  let authenticated = false;
+  try {
+    const identity = await sdk.management.whoami({ signal: runtime.signal });
+    authenticated = true;
+    const scopeDetail =
+      'scopes' in identity.actor
+        ? ` (${identity.actor.scopes.join(', ')})`
+        : '';
+    checks.push({
+      name: 'Authentication',
+      status: 'pass',
+      detail: `${identity.actor.kind}${scopeDetail}`,
+    });
+  } catch {
+    rethrowIfAborted(runtime.signal);
+    checks.push({
+      name: 'Authentication',
+      status: 'fail',
+      detail:
+        'Credential validation failed; inspect the login and granted scopes.',
+    });
+  }
 
-    if (authenticated && activeAccount) {
-      try {
-        const account = await sdk.management.accounts.get({
-          account: activeAccount,
-          signal: runtime.signal,
-        });
-        checks.push({
-          name: 'Active account',
-          status: 'pass',
-          detail: `${account.account.displayName} (${account.account.id})`,
-        });
-      } catch (error) {
-        rethrowIfAborted(runtime.signal);
-        checks.push({
-          name: 'Active account',
-          status: 'fail',
-          detail:
-            error instanceof Error ? error.message : 'Account is inaccessible',
-        });
-      }
-    } else if (authenticated) {
+  if (authenticated && activeAccount) {
+    try {
+      const account = await sdk.management.accounts.get({
+        account: activeAccount,
+        signal: runtime.signal,
+      });
       checks.push({
         name: 'Active account',
-        status: 'warn',
-        detail: 'Not selected',
+        status: 'pass',
+        detail: `${account.account.displayName} (${account.account.id})`,
+      });
+    } catch {
+      rethrowIfAborted(runtime.signal);
+      checks.push({
+        name: 'Active account',
+        status: 'fail',
+        detail: 'Account is inaccessible with the current credential.',
       });
     }
+  } else if (authenticated) {
+    checks.push({
+      name: 'Active account',
+      status: 'warn',
+      detail: 'Not selected',
+    });
+  }
 
-    if (authenticated && localConfig && linkedApiOrigin !== apiUrl.displayUrl) {
+  if (authenticated && localConfig && linkedApiOrigin !== apiUrl.displayUrl) {
+    checks.push({
+      name: 'Linked project',
+      status: 'fail',
+      detail: `Linked to ${linkedApiOrigin}, current API is ${apiUrl.displayUrl}`,
+    });
+  } else if (authenticated && localConfig) {
+    try {
+      await checkLinkedProject(runtime, sdk, {
+        local: localConfig,
+        envKeys,
+        checks,
+      });
+    } catch {
+      rethrowIfAborted(runtime.signal);
       checks.push({
         name: 'Linked project',
         status: 'fail',
-        detail: `Linked to ${linkedApiOrigin}, current API is ${apiUrl.displayUrl}`,
+        detail: 'Project is inaccessible with the current credential.',
       });
-    } else if (authenticated && localConfig) {
-      try {
-        await checkLinkedProject(runtime, sdk, {
-          local: localConfig,
-          envKeys,
-          checks,
-        });
-      } catch (error) {
-        rethrowIfAborted(runtime.signal);
-        checks.push({
-          name: 'Linked project',
-          status: 'fail',
-          detail:
-            error instanceof Error ? error.message : 'Project is inaccessible',
-        });
-      }
     }
   }
+  report(runtime, flags, checks);
+}
 
+function report(runtime: CliRuntime, flags: GlobalFlags, checks: Check[]) {
   if (checks.some((check) => check.status === 'fail')) {
     runtime.exitCode = 1;
   }
@@ -186,12 +207,12 @@ async function checkGlobalConfig(
       detail: runtime.globalConfig.path,
     });
     return config;
-  } catch (error) {
+  } catch {
     rethrowIfAborted(runtime.signal);
     checks.push({
       name: 'Global config',
       status: 'fail',
-      detail: error instanceof Error ? error.message : 'Could not read config',
+      detail: 'Could not read global config; inspect its format locally.',
     });
     return { version: 2, activeAccounts: {} };
   }
@@ -209,13 +230,12 @@ async function checkLocalConfig(
       detail: located?.path ?? 'No linked project',
     });
     return located;
-  } catch (error) {
+  } catch {
     rethrowIfAborted(runtime.signal);
     checks.push({
       name: 'Local config',
       status: 'fail',
-      detail:
-        error instanceof Error ? error.message : 'Could not read local config',
+      detail: 'Could not read local config; inspect its format locally.',
     });
     return undefined;
   }
@@ -232,13 +252,28 @@ async function checkEnvFile(
   localConfig: LocatedRepoConfig | undefined,
   checks: Check[],
 ): Promise<EnvKeys> {
-  const label = localConfig?.config.envFile ?? '.env.local';
+  const existing = (await readdir(runtime.workspaceCwd).catch(() => [])).filter(
+    (file) => /^\.env(?:\.(?:local|development)(?:\.local)?)?$/.test(file),
+  );
+  const label =
+    localConfig?.config.envFile ??
+    (existing.length === 1 ? existing[0]! : '.env.local');
+  if (!localConfig?.config.envFile && existing.length > 1) {
+    checks.push({
+      name: 'Environment selection',
+      status: 'skip',
+      detail:
+        'Multiple env files exist. Inspect the backend loader; only .env.local key presence is checked here.',
+    });
+  }
   const configRoot = localConfig?.config.envFile
     ? path.dirname(path.dirname(localConfig.path))
     : runtime.workspaceCwd;
   const envPath = path.resolve(configRoot, label);
   let contents = '';
   try {
+    await validatePath(envPath, configRoot);
+    if ((await stat(envPath)).size > 128_000) throw new Error();
     contents = await readFile(envPath, 'utf8');
   } catch (error) {
     rethrowIfAborted(runtime.signal);
@@ -250,10 +285,14 @@ async function checkEnvFile(
         detail: 'Configured env file not found',
       });
     } else if (code !== 'ENOENT') {
+      const unsafePath =
+        error instanceof CliError && error.code === 'unsafe_agent_path';
       checks.push({
         name: label,
-        status: 'fail',
-        detail: 'Could not read file',
+        status: unsafePath ? 'skip' : 'fail',
+        detail: unsafePath
+          ? 'Symlinked or out-of-scope env file was not inspected.'
+          : 'Could not read file',
       });
     }
     return { hasSecretKey: false, label };

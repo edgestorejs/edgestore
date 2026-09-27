@@ -9,6 +9,7 @@ import {
   preflightEnvSecret,
   type SecretDeliveryOptions,
 } from '../core/secretDelivery';
+import { protectSecretFile } from '../core/secretFile';
 import { activeAccount } from './account';
 
 type TokenScope = NonNullable<
@@ -122,13 +123,14 @@ export async function tokenCreateCommand(
       'Token creation requires --preset or at least one --scope.',
     );
   }
-  if (flags.plain && !options.copy && !options.output) {
+  if (!isInteractive(runtime, flags) && !options.output) {
     throw usageError(
       'secret_delivery_required',
-      'Plain output requires --copy or --output for the one-time token.',
+      'Automated token creation requires --output to deliver the one-time token to a protected env file.',
     );
   }
   await preflightEnvSecret(runtime.cwd, ['EDGESTORE_TOKEN'], options);
+  if (options.output) await protectSecretFile(runtime.cwd, options.output);
   const sdk = await sdkFor(runtime, flags);
   const permissions = options.preset
     ? { preset: options.preset }
@@ -167,7 +169,7 @@ export async function tokenCreateCommand(
     ],
   });
   outputFor(runtime, flags).result(
-    result,
+    { token: result.token, delivery: delivered },
     [
       `Created ${result.token.kind.toLowerCase()} token "${result.token.name}".`,
       ...(delivered.length

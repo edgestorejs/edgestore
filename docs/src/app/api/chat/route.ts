@@ -82,7 +82,7 @@ Before writing your final answer, call the "provideLinks" tool exactly once with
     },
     async () => {
       const result = streamText({
-        model: 'openai/gpt-5.6-luna',
+        model: 'openai/gpt-6-luna',
         providerOptions: {
           openai: {
             reasoningEffort: 'none',
@@ -108,7 +108,23 @@ Before writing your final answer, call the "provideLinks" tool exactly once with
           ignoreIncompleteToolCalls: true,
         }),
         toolChoice: 'auto',
-        stopWhen: isStepCount(5),
+        // Reserve the last two steps for links and a text-only answer.
+        stopWhen: isStepCount(6),
+        prepareStep: ({ steps, stepNumber }) => {
+          if (
+            steps.some((step) =>
+              step.toolCalls.some((call) => call.toolName === 'provideLinks'),
+            )
+          ) {
+            return { toolChoice: 'none' };
+          }
+          if (stepNumber >= 4) {
+            return {
+              activeTools: ['provideLinks'],
+              toolChoice: { type: 'tool', toolName: 'provideLinks' },
+            };
+          }
+        },
         telemetry: {
           functionId: 'docs-chat',
         },
