@@ -30,5 +30,11 @@ EDGESTORE_SMOKE_PROJECT=your-project-base-path \
 pnpm --filter @edgestore/cli test:smoke:dev
 ```
 
-The runner refuses the production API and hosts that do not clearly look like
-development, staging, test, preview, or loopback environments.
+The runner only targets `api-dev.edgestore.dev`, loopback hosts (`localhost`,
+`*.localhost`, `127.0.0.1`, `[::1]`), and `*.test` hosts. Add another
+development API host to `DEVELOPMENT_API_HOSTS` in `smoke.dev.mjs` before
+running against it.
+
+Cleanup finds the bucket and temporary credentials by their run-unique names,
+so it also removes resources whose create command failed after the server
+created them.

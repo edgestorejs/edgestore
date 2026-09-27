@@ -12,11 +12,21 @@ import { tmpdir } from 'node:os';
 import { basename, isAbsolute, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+// Exact hosts only: production shares the edgestore.dev domain, so substring
+// or suffix checks cannot tell environments apart.
+const DEVELOPMENT_API_HOSTS = new Set([
+  'api-dev.edgestore.dev',
+  'localhost',
+  '127.0.0.1',
+  '[::1]',
+]);
+
 const { apiUrl, projectRef } = configuration();
 const packageRoot = fileURLToPath(new URL('.', import.meta.url));
 const cli = resolveCli(process.env.EDGESTORE_SMOKE_CLI, packageRoot);
 const runId = `${Date.now().toString(36)}_${randomBytes(3).toString('hex')}`;
 const bucketName = `cli_smoke_${runId}`;
+const credentialName = `cli-smoke-${runId}`;
 const projectArgs = ['--project', projectRef];
 const bucketArgs = ['--bucket', bucketName, ...projectArgs];
 const remotePath = `smoke/${runId}.txt`;
@@ -25,14 +35,10 @@ const sourcePath = join(workDir, 'source.txt');
 const downloadPath = join(workDir, 'download.txt');
 const projectKeyPath = join(workDir, 'project-key.env');
 const accountTokenPath = join(workDir, 'account-token.env');
-const ledger = {
-  bucket: undefined,
-  projectKeyId: undefined,
-  accountTokenId: undefined,
-};
 const cleanupFailures = [];
 let checks = 0;
 let failure;
+let accountId;
 let projectKeySecrets = [];
 let accountTokenSecrets = [];
 
@@ -77,7 +83,7 @@ function smoke() {
       assert.ok(value.project.accountId, 'project omitted accountId');
     },
   );
-  const accountId = shown.project.accountId;
+  accountId = shown.project.accountId;
 
   json('Read the project account context', ['account', 'list'], (accounts) => {
     assert.ok(
@@ -101,7 +107,6 @@ function smoke() {
       assert.equal(value.bucket?.name, bucketName);
       assert.equal(value.bucket?.visibility, 'protected');
     },
-    { onSuccess: () => (ledger.bucket = bucketName) },
   );
 
   const uploaded = json(
@@ -146,7 +151,7 @@ function smoke() {
     'bucket_not_empty',
   );
 
-  plain(
+  const projectKeyId = plain(
     'Create a project key with file-only delivery',
     [
       'project',
@@ -154,7 +159,7 @@ function smoke() {
       'create',
       projectRef,
       '--name',
-      `cli-smoke-${runId}`,
+      credentialName,
       '--output',
       projectKeyPath,
     ],
@@ -167,15 +172,12 @@ function smoke() {
       projectKeySecrets = [values.EDGE_STORE_SECRET_KEY];
       assert.ok(!result.stdout.includes('EDGE_STORE_SECRET_KEY='));
     },
-    { onValue: (id) => (ledger.projectKeyId = id) },
   );
   json(
     'List project-key metadata without secrets',
     ['project', 'key', 'list', projectRef],
     (projectKeys) => {
-      const key = projectKeys.keys?.find(
-        (item) => item.id === ledger.projectKeyId,
-      );
+      const key = projectKeys.keys?.find((item) => item.id === projectKeyId);
       assert.ok(key, 'created project key was absent from listing');
       assert.ok(!('secretKey' in key));
       assertNoSecretValues(projectKeys, projectKeySecrets);
@@ -183,18 +185,17 @@ function smoke() {
   );
   plain(
     'Revoke the temporary project key',
-    ['project', 'key', 'revoke', projectRef, ledger.projectKeyId, '--yes'],
-    (id) => assert.equal(id, ledger.projectKeyId),
+    ['project', 'key', 'revoke', projectRef, projectKeyId, '--yes'],
+    (id) => assert.equal(id, projectKeyId),
   );
-  ledger.projectKeyId = undefined;
 
-  plain(
+  const accountTokenId = plain(
     'Create an account token with file-only delivery',
     [
       'token',
       'create',
       '--name',
-      `cli-smoke-${runId}`,
+      credentialName,
       '--account',
       accountId,
       '--preset',
@@ -208,14 +209,13 @@ function smoke() {
       accountTokenSecrets = [values.EDGESTORE_TOKEN];
       assert.ok(!result.stdout.includes('EDGESTORE_TOKEN='));
     },
-    { onValue: (id) => (ledger.accountTokenId = id) },
   );
   json(
     'List account-token metadata without secrets',
     ['token', 'list', '--account', accountId],
     (accountTokens) => {
       const token = accountTokens.tokens?.find(
-        (item) => item.id === ledger.accountTokenId,
+        (item) => item.id === accountTokenId,
       );
       assert.ok(token, 'created account token was absent from listing');
       assert.ok(!('secret' in token));
@@ -224,10 +224,9 @@ function smoke() {
   );
   plain(
     'Revoke the temporary account token',
-    ['token', 'revoke', ledger.accountTokenId, '--yes'],
-    (id) => assert.equal(id, ledger.accountTokenId),
+    ['token', 'revoke', accountTokenId, '--yes'],
+    (id) => assert.equal(id, accountTokenId),
   );
-  ledger.accountTokenId = undefined;
 
   json(
     'Empty the protected bucket and wait for completion',
@@ -240,7 +239,6 @@ function smoke() {
     ['bucket', 'delete', bucketName, ...projectArgs, '--yes'],
     (deleted) => assert.equal(deleted, bucketName),
   );
-  ledger.bucket = undefined;
 }
 
 function json(label, args, validate, options = {}) {
@@ -259,7 +257,6 @@ function json(label, args, validate, options = {}) {
 function plain(label, args, validate, options = {}) {
   const result = invoke(label, ['--plain', ...args], options);
   const value = result.stdout.trim();
-  options.onValue?.(value);
   validate(value, result);
   pass(label);
   return value;
@@ -296,7 +293,6 @@ function invoke(label, args, options = {}) {
       `${label} exited ${status}; expected ${expectedStatus}.${detail ? `\n${detail}` : ''}`,
     );
   }
-  options.onSuccess?.(result);
   return result;
 }
 
@@ -355,35 +351,60 @@ function assertNoSecretValues(value, secrets) {
   }
 }
 
+// Find leftovers by their run-unique names rather than by IDs returned from
+// create commands, so resources are still removed when a create request
+// succeeds remotely but the CLI fails before reporting it.
 function cleanupRemoteResources() {
-  if (ledger.accountTokenId) {
-    cleanup('revoke account token', [
-      '--plain',
+  if (accountId) {
+    for (const token of listForCleanup('account tokens', 'tokens', [
       'token',
-      'revoke',
-      ledger.accountTokenId,
-      '--yes',
-    ]);
+      'list',
+      '--account',
+      accountId,
+      '--all',
+    ])) {
+      if (token.name === credentialName && !token.revokedAt) {
+        cleanup('revoke account token', [
+          '--plain',
+          'token',
+          'revoke',
+          token.id,
+          '--yes',
+        ]);
+      }
+    }
   }
-  if (ledger.projectKeyId) {
-    cleanup('revoke project key', [
-      '--plain',
-      'project',
-      'key',
-      'revoke',
-      projectRef,
-      ledger.projectKeyId,
-      '--yes',
-    ]);
+  for (const key of listForCleanup('project keys', 'keys', [
+    'project',
+    'key',
+    'list',
+    projectRef,
+  ])) {
+    if (key.name === credentialName && !key.revokedAt) {
+      cleanup('revoke project key', [
+        '--plain',
+        'project',
+        'key',
+        'revoke',
+        projectRef,
+        key.id,
+        '--yes',
+      ]);
+    }
   }
-  if (ledger.bucket) {
+  const buckets = listForCleanup('buckets', 'buckets', [
+    'bucket',
+    'list',
+    ...projectArgs,
+  ]);
+  if (buckets.some((bucket) => bucket.name === bucketName)) {
     cleanup(
       'empty bucket',
       [
         '--json',
         'bucket',
         'empty',
-        ledger.bucket,
+        bucketName,
         ...projectArgs,
         '--wait',
         '--yes',
@@ -394,11 +415,26 @@ function cleanupRemoteResources() {
       '--plain',
       'bucket',
       'delete',
-      ledger.bucket,
+      bucketName,
       ...projectArgs,
       '--yes',
     ]);
   }
+}
+
+function listForCleanup(label, field, args) {
+  const result = spawnCli(['--json', ...args]);
+  if (result.status === 0) {
+    try {
+      return JSON.parse(result.stdout)[field] ?? [];
+    } catch {
+      // Report below.
+    }
+  }
+  cleanupFailures.push(
+    `list ${label} exited ${result.status}: ${redact(result.stderr || result.stdout).trim()}`,
+  );
+  return [];
 }
 
 function cleanup(label, args, timeout = 120_000) {
@@ -444,20 +480,20 @@ function developmentApiUrl(value) {
     configurationError('EDGESTORE_SMOKE_API_URL must use HTTP or HTTPS.');
   }
   const hostname = url.hostname.toLowerCase().replace(/\.$/, '');
-  const developmentHost =
-    hostname === '127.0.0.1' ||
-    hostname === '::1' ||
-    hostname === 'localhost' ||
-    hostname.includes('dev') ||
-    hostname.includes('staging') ||
-    hostname.includes('preview') ||
-    hostname.endsWith('.test');
-  if (!developmentHost || hostname === 'api.edgestore.dev') {
+  if (!isDevelopmentHost(hostname)) {
     configurationError(
       `Refusing to run mutations against non-development API host ${hostname}.`,
     );
   }
   return value;
+}
+
+function isDevelopmentHost(hostname) {
+  return (
+    DEVELOPMENT_API_HOSTS.has(hostname) ||
+    hostname.endsWith('.localhost') ||
+    hostname.endsWith('.test')
+  );
 }
 
 function configurationError(message) {
