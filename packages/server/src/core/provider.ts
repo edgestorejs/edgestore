@@ -51,14 +51,6 @@ export function assertSupportedUploadOptions(
   }
 }
 
-export async function getProviderBaseUrl(
-  provider: AnyEdgeStoreProvider,
-): Promise<string> {
-  return typeof provider.baseUrl === 'function'
-    ? await provider.baseUrl()
-    : provider.baseUrl;
-}
-
 export async function referenceFromUrl<TProvider extends AnyEdgeStoreProvider>(
   provider: TProvider,
   url: string,

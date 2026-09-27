@@ -3,6 +3,7 @@ import {
   type EdgeStoreProvider,
   type EdgeStoreRouter,
 } from '@edgestore/shared';
+import { EncryptJWT } from 'jose';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import { initEdgeStore } from '../core/router';
@@ -138,9 +139,6 @@ describe('init', () => {
       ctx: {},
       router,
     });
-    expect(res).toMatchObject({
-      providerName: 's3',
-    });
     expect(res.clientInit).toBeUndefined();
     expect(
       res.newCookies.some((value) => value.startsWith('edgestore-ctx=')),
@@ -173,9 +171,6 @@ describe('init', () => {
       ctx: {},
       router,
     });
-    expect(res).toMatchObject({
-      providerName: 'azure-blob',
-    });
     expect(res.clientInit).toBeUndefined();
   });
 
@@ -200,9 +195,6 @@ describe('init', () => {
     });
 
     expect(provider.init).toHaveBeenCalledWith({ ctx: {}, router });
-    expect(res).toMatchObject({
-      providerName: 'edgestore',
-    });
     expect(res.clientInit).toBeUndefined();
     expect(
       res.newCookies.some((value) => value.startsWith('edgestore-ctx=')),
@@ -213,9 +205,8 @@ describe('init', () => {
     const provider = createProvider({
       name: 'custom-provider',
       init: vi.fn(() => ({
-        baseUrl: 'https://discovered.example.test',
         clientInit: {
-          path: '/_init',
+          urls: ['https://discovered.example.test/_init'],
           headers: { 'x-provider-token': 'provider-token' },
         },
       })),
@@ -240,13 +231,9 @@ describe('init', () => {
       ctx: { userId: 'user-1' },
       router,
     });
-    expect(res).toMatchObject({
-      providerName: 'custom-provider',
-      baseUrl: 'https://discovered.example.test',
-      clientInit: {
-        path: '/_init',
-        headers: { 'x-provider-token': 'provider-token' },
-      },
+    expect(res.clientInit).toEqual({
+      urls: ['https://discovered.example.test/_init'],
+      headers: { 'x-provider-token': 'provider-token' },
     });
     // The token reaches the file origin only through clientInit headers.
     expect(res.newCookies).toEqual([expect.stringMatching(/^edgestore-ctx=/)]);
@@ -271,9 +258,6 @@ describe('init', () => {
     expect(provider.init).toHaveBeenCalledWith({
       ctx: {},
       router,
-    });
-    expect(res).toMatchObject({
-      providerName: 'custom-provider',
     });
     expect(res.clientInit).toBeUndefined();
   });
@@ -513,7 +497,7 @@ describe('requestUpload', () => {
       },
     });
     expect(res).toMatchObject({
-      accessUrl: 'https://files.example.com/file.txt',
+      url: 'https://files.example.com/file.txt',
       size: 10,
       path: {
         author: 'user-1',
@@ -578,6 +562,50 @@ describe('requestUpload', () => {
         ctx,
       }),
     );
+  });
+
+  it('accepts context cookies encrypted with the stable derived key', async () => {
+    // HKDF-SHA256 of `test-secret` with an empty salt and the EdgeStore info
+    // string. Changing the derivation would invalidate existing cookies.
+    const key = Buffer.from(
+      'd1227f3a10d8409ad144378edb28139e0cae0fe2a1545473d90881afdf107b23',
+      'hex',
+    );
+    const ctxToken = await new EncryptJWT({ ctx: { userId: 'user-1' } })
+      .setProtectedHeader({ alg: 'dir', enc: 'A256GCM' })
+      .setExpirationTime('1h')
+      .encrypt(key);
+    const es = initEdgeStore.context<{ userId: string }>().create();
+    const router = es.router({ documents: es.fileBucket() });
+    const provider = createProvider();
+
+    await requestUpload({
+      provider,
+      router,
+      ctxToken,
+      body: uploadBody(),
+      logger,
+    });
+
+    expect(provider.uploads.request).toHaveBeenCalled();
+  });
+
+  it('rejects a context cookie that cannot be decrypted', async () => {
+    const es = initEdgeStore.create();
+    const router = es.router({ documents: es.fileBucket() });
+
+    await expect(
+      requestUpload({
+        provider: createProvider(),
+        router,
+        ctxToken: 'not-a-token',
+        body: uploadBody(),
+        logger,
+      }),
+    ).rejects.toMatchObject({
+      code: 'UNAUTHORIZED',
+      message: 'Invalid edgestore-ctx cookie',
+    });
   });
 
   it('rejects non-flat application context from the encrypted cookie', async () => {

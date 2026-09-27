@@ -127,9 +127,8 @@ describe('edgestore provider', () => {
         router,
       }),
     ).resolves.toEqual({
-      baseUrl: 'https://files.edgestore.dev',
       clientInit: {
-        path: '/_init',
+        urls: ['https://files.edgestore.dev/_init'],
         headers: {
           'x-edgestore-token': 'token',
         },
@@ -161,13 +160,13 @@ describe('edgestore provider', () => {
     });
     const provider = edgestore({ accessKey: 'access', secretKey: 'secret' });
     expect(await provider.init({ ctx: {}, router })).toMatchObject({
-      baseUrl: delivery.baseUrl,
       clientInit: { urls: delivery.initUrls },
     });
-    vi.stubEnv('EDGE_STORE_BASE_URL', 'http://localhost:4444');
+    vi.stubEnv('EDGE_STORE_BASE_URL', 'http://localhost:4444/');
     const overridden = await provider.init({ ctx: {}, router });
-    expect(overridden.baseUrl).toBe('http://localhost:4444');
-    expect(overridden.clientInit?.urls).toBeUndefined();
+    expect(overridden.clientInit?.urls).toEqual([
+      'http://localhost:4444/_init',
+    ]);
   });
 
   it('does not create an access token for public-only buckets', async () => {
@@ -204,13 +203,10 @@ describe('edgestore provider', () => {
       }),
     ).resolves.toEqual({
       key: 'files/file',
-      accessUrl: 'https://files.example/file',
+      url: 'https://files.example/file',
       thumbnailUrl: null,
       uploadUrl: 'https://upload.example/file',
-      accessSignedUrl: undefined,
-      accessSignedThumbnailUrl: undefined,
-      accessSignedUrlExpiresAt: undefined,
-      accessSignedUrlExpiresIn: undefined,
+      signedReadUrl: undefined,
     });
     expect(runtime.uploads.request).toHaveBeenCalledWith({
       bucket: 'files',

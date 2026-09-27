@@ -13,6 +13,7 @@ import {
   type UploadOptions,
 } from '@edgestore/shared';
 import EdgeStoreClientError from './libs/errors/EdgeStoreClientError';
+import { EdgeStoreFileMutationError } from './libs/errors/EdgeStoreFileMutationError';
 import { handleError } from './libs/errors/handleError';
 import { UploadAbortedError } from './libs/errors/uploadAbortedError';
 import { putBlob } from './libs/putBlob';
@@ -24,7 +25,6 @@ type UploadResponse<TBucket extends AnyBuilder> =
         url: string;
         thumbnailUrl: string | null;
         size: number;
-        uploadedAt: Date;
         metadata: InferMetadataObject<TBucket>;
         path: InferBucketPathObject<TBucket>;
         pathOrder: InferBucketPathOrder<TBucket>;
@@ -32,7 +32,6 @@ type UploadResponse<TBucket extends AnyBuilder> =
     : {
         url: string;
         size: number;
-        uploadedAt: Date;
         metadata: InferMetadataObject<TBucket>;
         path: InferBucketPathObject<TBucket>;
         pathOrder: InferBucketPathOrder<TBucket>;
@@ -153,10 +152,7 @@ export function createNextProxy<TRouter extends AnyRouter>({
             bucketName: bucketName as string,
             apiPath,
           });
-          const failure = result.failed[0];
-          if (failure) {
-            throw new EdgeStoreClientError(failure.error.message);
-          }
+          throwSingularFailure(result);
         },
         confirmMany: async (params: { urls: string[] }) =>
           await mutateFiles('confirm', params.urls, {
@@ -168,10 +164,7 @@ export function createNextProxy<TRouter extends AnyRouter>({
             bucketName: bucketName as string,
             apiPath,
           });
-          const failure = result.failed[0];
-          if (failure) {
-            throw new EdgeStoreClientError(failure.error.message);
-          }
+          throwSingularFailure(result);
         },
         deleteMany: async (params: { urls: string[] }) =>
           await mutateFiles('delete', params.urls, {
@@ -270,11 +263,10 @@ async function uploadFile(
     }
     return {
       key: json.key,
-      url: json.accessUrl,
+      url: json.url,
       thumbnailUrl: json.thumbnailUrl ?? null,
-      ...mapSignedUploadAccess(json),
+      ...mapSignedReadUrl(json.signedReadUrl),
       size: json.size,
-      uploadedAt: new Date(json.uploadedAt),
       path: json.path as any,
       pathOrder: json.pathOrder as any,
       metadata: json.metadata as any,
@@ -344,19 +336,28 @@ function getFileNameExtension(fileName?: string) {
   return fileName.slice(extensionIndex + 1);
 }
 
-function mapSignedUploadAccess(res: SharedRequestUploadRes) {
-  if (!res.accessSignedUrl) {
+function mapSignedReadUrl(signed: SharedRequestUploadRes['signedReadUrl']) {
+  if (!signed) {
     return {};
   }
   return {
-    signedUrl: res.accessSignedUrl,
-    expiresAt: res.accessSignedUrlExpiresAt
-      ? new Date(res.accessSignedUrlExpiresAt)
-      : new Date(),
-    expiresIn: res.accessSignedUrlExpiresIn ?? 0,
-    signedThumbnailUrl: res.accessSignedThumbnailUrl ?? null,
+    signedUrl: signed.signedUrl,
+    expiresAt: new Date(signed.expiresAt),
+    expiresIn: signed.expiresIn,
+    signedThumbnailUrl: signed.signedThumbnailUrl ?? null,
   };
 }
+function throwSingularFailure(result: SharedFileMutationRes) {
+  const failure = result.failed[0];
+  if (failure) {
+    throw new EdgeStoreFileMutationError(
+      failure.error.code,
+      failure.error.message,
+      { url: failure.url },
+    );
+  }
+}
+
 async function mutateFiles(
   operation: 'confirm' | 'delete',
   urls: string[],

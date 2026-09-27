@@ -101,8 +101,10 @@ describe.skipIf(!endpoint)('S3 live storage contract', () => {
       body: 'abc',
     });
     expect(upload.status, await upload.text()).toBe(200);
-    expect((await fetch(result.accessUrl)).status).toBe(403);
-    expect(await (await fetch(result.accessSignedUrl!)).text()).toBe('abc');
+    expect((await fetch(result.url)).status).toBe(403);
+    expect(await (await fetch(result.signedReadUrl!.signedUrl)).text()).toBe(
+      'abc',
+    );
     const file = await provider.files.get({
       bucketName: 'documents',
       file: { key: result.key! },
@@ -149,7 +151,7 @@ describe.skipIf(!endpoint)('S3 live storage contract', () => {
       });
     }
     await provider.uploads.multipart.complete({ ...multipart, parts });
-    const read = await fetch(result.accessSignedUrl!);
+    const read = await fetch(result.signedReadUrl!.signedUrl);
     expect(new Uint8Array(await read.arrayBuffer())).toEqual(body);
     const abandoned = await provider.uploads.request(request(body.length));
     if (!('multipart' in abandoned))

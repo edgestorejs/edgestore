@@ -992,9 +992,6 @@ importers:
       '@edgestore/shared':
         specifier: workspace:*
         version: link:../shared
-      '@panva/hkdf':
-        specifier: ^1.2.1
-        version: 1.2.1
       '@standard-schema/spec':
         specifier: ^1.1.0
         version: 1.1.0
@@ -1005,8 +1002,8 @@ importers:
         specifier: ^6.2.3
         version: 6.2.3
       zod:
-        specifier: 3.25.76
-        version: 3.25.76
+        specifier: 4.3.5
+        version: 4.3.5
     devDependencies:
       '@aws-sdk/client-s3':
         specifier: 'catalog:'
@@ -1066,12 +1063,6 @@ importers:
       arktype:
         specifier: 2.2.3
         version: 2.2.3
-      react:
-        specifier: 'catalog:'
-        version: 19.2.7
-      react-dom:
-        specifier: 'catalog:'
-        version: 19.2.7(react@19.2.7)
       tsx:
         specifier: 'catalog:'
         version: 4.23.1
@@ -3186,9 +3177,6 @@ packages:
 
   '@oxc-project/types@0.140.0':
     resolution: {integrity: sha512-h5LUOzGArYemnW1NMz/DuuQhBi96J6JL2Bk8zE4kvqxB5Sg3jxmCiH4uyOWHDkiKSt5vWlG4FIwCR/DbstcNRQ==}
-
-  '@panva/hkdf@1.2.1':
-    resolution: {integrity: sha512-6oclG6Y3PiDFcoyk8srjLfVKyMfVCKJ27JwNPViuXziFpmdz+MZnZN/aKY0JGXgYuO/VghU0jcOAZgWXZ1Dmrw==}
 
   '@parcel/watcher-android-arm64@2.6.0':
     resolution: {integrity: sha512-trgpLSCKRC/huFjXX/Smh+0sWe4+YtKfktIToiMl59ghz7z+qkH6kMvNnUbLyRs9N11t8l4svSCs1+5B3rOAhA==}
@@ -11899,8 +11887,6 @@ snapshots:
   '@oxc-project/types@0.139.0': {}
 
   '@oxc-project/types@0.140.0': {}
-
-  '@panva/hkdf@1.2.1': {}
 
   '@parcel/watcher-android-arm64@2.6.0':
     optional: true

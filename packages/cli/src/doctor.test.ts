@@ -193,13 +193,12 @@ it('recognizes direct and aliased CORS calls without claiming dynamic policies a
   ).toEqual([]);
 });
 
-it('identifies legacy handler wiring and provider JSX as observations only', () => {
+it('records v1 handler wiring and provider JSX without warnings', () => {
   const facts = inspectSource(
     'import { createEdgeStoreNextHandler as handler } from "@edgestore/server/adapters/next/app"; handler({ router }); const UI = <EdgeStoreProvider><App /></EdgeStoreProvider>;',
     false,
   );
-  expect(facts).toMatchObject({ adapter: true, provider: true });
-  expect(facts?.warnings).toHaveLength(1);
+  expect(facts).toMatchObject({ adapter: true, provider: true, warnings: [] });
 });
 
 it.each([

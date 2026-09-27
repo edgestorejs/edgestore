@@ -78,7 +78,7 @@ export async function inspectApplication(directory: string) {
     );
   if (compatibility === 'legacy')
     warnings.push(
-      'Choose whether to maintain 0.2 or migrate before changing APIs. Do not upgrade implicitly.',
+      'Choose whether to maintain 0.x or migrate to v1 before changing APIs. Do not upgrade implicitly.',
     );
   if (compatibility === 'mixed' || compatibility === 'unsupported')
     warnings.push(
@@ -113,8 +113,10 @@ export async function inspectApplication(directory: string) {
 export function versionFamily(
   version: string,
 ): 'v1' | 'legacy' | 'unsupported' {
-  if (/^1\.\d+\.\d+(?:[-+].*)?$/.test(version)) return 'v1';
-  if (/^0\.2\.\d+(?:[-+].*)?$/.test(version)) return 'legacy';
+  // Canary snapshots (`0.0.0-canary-<timestamp>`) are built from v1 branches.
+  if (/^(?:1\.\d+\.\d+(?:[-+].*)?|0\.0\.0-canary-.*)$/.test(version))
+    return 'v1';
+  if (/^0\.\d+\.\d+(?:[-+].*)?$/.test(version)) return 'legacy';
   return 'unsupported';
 }
 
@@ -169,10 +171,9 @@ async function inspectPackage(
     : {
         kind: 'online-fallback' as const,
         version,
-        // Update the 0.2 URL to its archive as part of stable v1 docs promotion.
         url:
           family === 'legacy'
-            ? 'https://edgestore.dev/docs/quick-start'
+            ? 'https://edgestore.dev/docs/migrate-to-v1'
             : family === 'v1'
               ? `${version.includes('-') ? 'https://next.edgestore.dev' : 'https://edgestore.dev'}/docs/agents`
               : undefined,

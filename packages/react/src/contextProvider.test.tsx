@@ -84,12 +84,7 @@ describe('createEdgeStoreProvider initialization', () => {
   });
 
   it('skips client initialization when the server returns no instruction', async () => {
-    const { calls } = createFetchMock([
-      jsonResponse({
-        baseUrl: 'https://files.example.com',
-        providerName: 'edgestore',
-      }),
-    ]);
+    const { calls } = createFetchMock([jsonResponse({})]);
     const { EdgeStoreProvider, useEdgeStore } = createEdgeStoreProvider<any>();
     const states: unknown[] = [];
 
@@ -117,13 +112,11 @@ describe('createEdgeStoreProvider initialization', () => {
     expect(calls.map((call) => call.url)).toEqual(['/api/edgestore/init']);
   });
 
-  it('executes the returned client-init instruction against the provider base URL', async () => {
+  it('executes the returned client-init instruction', async () => {
     const { calls } = createFetchMock([
       jsonResponse({
-        baseUrl: 'https://files.example.com/storage',
-        providerName: 'custom-provider',
         clientInit: {
-          path: '/_init',
+          urls: ['https://files.example.com/storage/_init'],
           headers: {
             'x-provider-token': 'token_1',
           },
@@ -176,9 +169,7 @@ describe('createEdgeStoreProvider initialization', () => {
     ];
     const { calls } = createFetchMock([
       jsonResponse({
-        baseUrl: 'https://project.content.test',
         clientInit: {
-          path: '/_init',
           urls,
           headers: { 'x-edgestore-token': 'token' },
         },
@@ -219,11 +210,9 @@ describe('createEdgeStoreProvider initialization', () => {
 
   it('does not report ready when an alias fails during reset', async () => {
     createFetchMock([
-      jsonResponse({ baseUrl: 'https://files.example.com' }),
+      jsonResponse({}),
       jsonResponse({
-        baseUrl: 'https://project.content.test',
         clientInit: {
-          path: '/_init',
           urls: [
             'https://project.content.test/_init',
             'https://files.example.com/_init',
@@ -260,16 +249,7 @@ describe('createEdgeStoreProvider initialization', () => {
   });
 
   it('reset reruns initialization', async () => {
-    const { calls } = createFetchMock([
-      jsonResponse({
-        baseUrl: 'https://files.example.com',
-        providerName: 'edgestore',
-      }),
-      jsonResponse({
-        baseUrl: 'https://files.example.com',
-        providerName: 'edgestore',
-      }),
-    ]);
+    const { calls } = createFetchMock([jsonResponse({}), jsonResponse({})]);
     const { EdgeStoreProvider, useEdgeStore } = createEdgeStoreProvider<any>();
     let reset: (() => Promise<void>) | undefined;
 

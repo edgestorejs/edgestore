@@ -71,10 +71,7 @@ describe('Next app adapter conformance', () => {
     expect(provider.init).toHaveBeenCalledWith(
       expect.objectContaining({ ctx: testCtx }),
     );
-    await expect(res.json()).resolves.toMatchObject({
-      baseUrl: 'https://files.example.com',
-      providerName: 'test-provider',
-    });
+    await expect(res.json()).resolves.toEqual({});
     expect(extractCookieValue(res.headers.get('set-cookie'))).toBeTruthy();
   });
 
@@ -95,7 +92,7 @@ describe('Next app adapter conformance', () => {
 
     expect(uploadRes.status).toBe(200);
     await expect(uploadRes.json()).resolves.toMatchObject({
-      accessUrl: 'https://files.example.com/file.txt',
+      url: 'https://files.example.com/file.txt',
       path: { author: testCtx.userId },
       metadata: {
         userId: testCtx.userId,

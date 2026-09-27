@@ -98,7 +98,6 @@ createEdgeStoreStartHandler({ router: publicRouter });
 // Capability inference should follow the provider, independently of S3 features.
 const lookupProvider = defineProvider({
   name: 'lookup-only',
-  baseUrl: 'https://files.example.com',
   reference: {
     schema: z.object({ key: z.string() }),
     fromUrl: (url) => ({ key: url }),
@@ -108,7 +107,7 @@ const lookupProvider = defineProvider({
   },
   uploads: {
     async request() {
-      return { uploadUrl: '', accessUrl: '' };
+      return { uploadUrl: '', url: '' };
     },
   },
   files: {

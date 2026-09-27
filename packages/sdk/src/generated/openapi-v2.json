@@ -84,7 +84,7 @@
         }
       },
       "RetryAfter": {
-        "description": "Seconds to wait before checking the asynchronous operation again.",
+        "description": "Seconds to wait before retrying a rate-limited request or checking an asynchronous operation again.",
         "schema": {
           "type": "integer",
           "minimum": 1
@@ -92,6 +92,58 @@
       }
     },
     "schemas": {
+      "RateLimitedError": {
+        "type": "object",
+        "description": "Too many invitation attempts. Wait before retrying.",
+        "properties": {
+          "error": {
+            "type": "object",
+            "description": "A structured EdgeStore API error.",
+            "properties": {
+              "code": {
+                "const": "rate_limited",
+                "description": "Stable machine-readable error code."
+              },
+              "message": {
+                "type": "string",
+                "default": "Too many invitation attempts. Wait before retrying.",
+                "description": "Human-readable explanation of the error."
+              },
+              "status": {
+                "const": 429,
+                "description": "HTTP status code returned with the error."
+              },
+              "details": {
+                "type": "object",
+                "properties": {
+                  "retryAfterSeconds": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991,
+                    "exclusiveMinimum": 0,
+                    "description": "Seconds to wait before retrying."
+                  }
+                },
+                "required": [
+                  "retryAfterSeconds"
+                ],
+                "description": "Structured details specific to this error code."
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "status",
+              "details"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "additionalProperties": false
+      },
       "BillingMaintenanceError": {
         "type": "object",
         "description": "Billing changes are temporarily unavailable while we perform maintenance. Please try again shortly.",
@@ -3579,6 +3631,9 @@
                     },
                     {
                       "$ref": "#/components/schemas/MissingScopeError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AccountPausedError"
                     }
                   ]
                 }
@@ -4443,6 +4498,9 @@
                     },
                     {
                       "$ref": "#/components/schemas/MissingScopeError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AccountPausedError"
                     }
                   ]
                 }
@@ -11489,6 +11547,9 @@
                     },
                     {
                       "$ref": "#/components/schemas/MissingScopeError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AccountPausedError"
                     }
                   ]
                 }
@@ -11547,6 +11608,24 @@
               }
             },
             "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "429": {
+            "description": "429",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimitedError"
+                }
+              }
+            },
+            "headers": {
+              "retry-after": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
               "x-request-id": {
                 "$ref": "#/components/headers/RequestId"
               }
@@ -12035,6 +12114,24 @@
               }
             },
             "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "429": {
+            "description": "429",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimitedError"
+                }
+              }
+            },
+            "headers": {
+              "retry-after": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
               "x-request-id": {
                 "$ref": "#/components/headers/RequestId"
               }

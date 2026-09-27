@@ -956,6 +956,32 @@ export type paths = {
 export type webhooks = Record<string, never>;
 export type components = {
     schemas: {
+        /** @description Too many invitation attempts. Wait before retrying. */
+        RateLimitedError: {
+            /** @description A structured EdgeStore API error. */
+            error: {
+                /**
+                 * @description Stable machine-readable error code.
+                 * @constant
+                 */
+                code: "rate_limited";
+                /**
+                 * @description Human-readable explanation of the error.
+                 * @default Too many invitation attempts. Wait before retrying.
+                 */
+                message: string;
+                /**
+                 * @description HTTP status code returned with the error.
+                 * @constant
+                 */
+                status: 429;
+                /** @description Structured details specific to this error code. */
+                details: {
+                    /** @description Seconds to wait before retrying. */
+                    retryAfterSeconds: number;
+                };
+            };
+        };
         /** @description Billing changes are temporarily unavailable while we perform maintenance. Please try again shortly. */
         BillingMaintenanceError: {
             /** @description A structured EdgeStore API error. */
@@ -1849,7 +1875,7 @@ export type components = {
     headers: {
         /** @description Identifier for correlating the request with EdgeStore logs. */
         RequestId: string;
-        /** @description Seconds to wait before checking the asynchronous operation again. */
+        /** @description Seconds to wait before retrying a rate-limited request or checking an asynchronous operation again. */
         RetryAfter: number;
     };
     pathItems: never;
@@ -2705,7 +2731,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"] | components["schemas"]["AccountPausedError"];
                 };
             };
             /** @description 404 */
@@ -3155,7 +3181,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"] | components["schemas"]["AccountPausedError"];
                 };
             };
             /** @description 404 */
@@ -6280,7 +6306,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"] | components["schemas"]["AccountPausedError"];
                 };
             };
             /** @description 404 */
@@ -6311,6 +6337,17 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PayloadTooLargeError"];
+                };
+            };
+            /** @description 429 */
+            429: {
+                headers: {
+                    "retry-after": components["headers"]["RetryAfter"];
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RateLimitedError"];
                 };
             };
             /** @description 500 */
@@ -6552,6 +6589,17 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PayloadTooLargeError"];
+                };
+            };
+            /** @description 429 */
+            429: {
+                headers: {
+                    "retry-after": components["headers"]["RetryAfter"];
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RateLimitedError"];
                 };
             };
             /** @description 500 */
