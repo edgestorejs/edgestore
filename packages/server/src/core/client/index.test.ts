@@ -40,6 +40,7 @@ const provider = defineProvider({
     multipart: {
       requestParts: vi.fn(),
       complete: vi.fn(),
+      abort: vi.fn(),
     },
     upload: backend.upload,
   },
@@ -174,6 +175,30 @@ describe('router backend client', () => {
       bucketName: 'documents',
       file: { id: 'file-id' },
     });
+  });
+
+  it.each([
+    { temporary: true },
+    { replaceTargetUrl: 'https://files.example.com/old.txt' },
+  ])('rejects %o when the provider does not support it', async (options) => {
+    const client = createRouter().provider(
+      defineProvider({
+        ...provider,
+        uploads: {
+          ...provider.uploads,
+          supportedOptions: { temporary: false, replaceTargetUrl: false },
+        },
+      }),
+    ).client;
+
+    await expect(
+      client.publicFiles.upload({
+        content: 'plain text',
+        ctx: { userId: 'user-1' },
+        options: options as never,
+      }),
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+    expect(backend.upload).not.toHaveBeenCalled();
   });
 
   it('uploads string content as a text/plain txt blob', async () => {

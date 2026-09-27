@@ -22,7 +22,8 @@ the router without a second provider generic.
 Providers now use the resource-oriented `EdgeStoreProvider` contract and the
 public `defineProvider` helper. File references, cursors, capabilities, inputs,
 and results are inferred from each provider definition, and unsupported
-backend methods remain absent. Provider `get` and `list` operations can return
+backend methods remain absent. Multipart providers implement `requestParts`,
+`complete`, and `abort` over the same `{ uploadId, key }` session. Provider `get` and `list` operations can return
 router path and metadata fields independently; their presence and optionality
 are reflected in the generated backend client. The hosted `edgestore()`
 provider uses the new API v2 SDK and supports project credentials or a Bearer

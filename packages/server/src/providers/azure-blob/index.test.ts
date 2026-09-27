@@ -178,6 +178,7 @@ describe('azureBlob', () => {
           : expect.any(Date),
         accessSignedUrlExpiresIn: fileInfo.isPublic ? undefined : 60 * 60,
         uploadUrl: `${containerUrl}/${encodeBlobName(expectedBlobName)}?sig=cw`,
+        uploadHeaders: { 'x-ms-blob-type': 'BlockBlob' },
       });
       expect(mocks.blobSasPermissionsParse).toHaveBeenCalledWith('cw');
       if (fileInfo.isPublic) {
@@ -209,6 +210,7 @@ describe('azureBlob', () => {
       accessSignedUrlExpiresAt: undefined,
       accessSignedUrlExpiresIn: undefined,
       uploadUrl: `${containerUrl}/documents/_public/public.txt?sig=cw`,
+      uploadHeaders: { 'x-ms-blob-type': 'BlockBlob' },
     });
     expect(mocks.generateBlobSASQueryParameters).toHaveBeenCalledWith(
       {

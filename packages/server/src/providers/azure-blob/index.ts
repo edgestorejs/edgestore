@@ -199,6 +199,7 @@ export function azureBlob(options?: AzureBlobProviderOptions) {
             });
         return {
           uploadUrl: uploadAccess.signedUrl,
+          uploadHeaders: { 'x-ms-blob-type': 'BlockBlob' },
           accessUrl: uploadAccess.url,
           accessSignedUrl: readAccess?.signedUrl,
           accessSignedUrlExpiresAt: readAccess?.expiresAt,

@@ -24,7 +24,11 @@ import type {
   UploadContent,
   UploadFileRequest,
 } from '.';
-import { validateProviderCursor, validateProviderReference } from '../provider';
+import {
+  assertSupportedUploadOptions,
+  validateProviderCursor,
+  validateProviderReference,
+} from '../provider';
 import { buildPath, parseBucketInput, parsePath } from '../routerRules';
 import { validateFileForBucket } from '../validateFile';
 
@@ -91,6 +95,7 @@ function createUploadMethods<
   return {
     upload: async (params: Prettify<UploadFileRequest<TBucket>>) => {
       const { content, ctx = {}, input }: UploadImplementationParams = params;
+      assertSupportedUploadOptions(context.provider, params.options ?? {});
       let { blob, extension } = await resolveUploadContent(
         content,
         params.signal,

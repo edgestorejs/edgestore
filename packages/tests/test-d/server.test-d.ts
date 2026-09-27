@@ -221,6 +221,33 @@ void syntheticClient.files.upload({ content: 'hello' }).then((file) => {
   expectType<string>(file.eTag);
   expectError(file.accountId);
 });
+
+const keyOnlyProvider = defineProvider({
+  ...syntheticProvider,
+  uploads: {
+    ...syntheticProvider.uploads,
+    supportedOptions: { temporary: false, replaceTargetUrl: false },
+  },
+});
+const keyOnlyClient = publicRouter.provider(keyOnlyProvider).client;
+void keyOnlyClient.files.upload({
+  content: 'hello',
+  options: { manualFileName: 'hello.txt' },
+});
+expectError(
+  keyOnlyClient.files.upload({
+    content: 'hello',
+    options: { temporary: true },
+  }),
+);
+const replaceOptions = { replaceTargetUrl: 'https://s3.example/old.txt' };
+expectError(
+  keyOnlyClient.files.upload({ content: 'hello', options: replaceOptions }),
+);
+void syntheticClient.files.upload({
+  content: 'hello',
+  options: { temporary: true },
+});
 expectError(syntheticClient.files.delete({ id: 'file-id' }));
 void syntheticClient.files
   .deleteMany({ refs: [{ objectKey: 'files/file.txt' }] })

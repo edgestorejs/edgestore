@@ -206,27 +206,24 @@ export type BackendGetSignedUrlsOperation<
   includeThumbnails?: boolean;
 }) => MaybePromise<TResult[]>;
 
-export type RequestUploadPartsParams = {
-  multipart: {
-    uploadId: string;
-    parts: number[];
-  };
-  path: string;
+/** Identifies one multipart upload session created by `uploads.request`. */
+export type MultipartUploadSession = {
+  uploadId: string;
+  key: string;
+};
+
+export type RequestUploadPartsParams = MultipartUploadSession & {
+  parts: number[];
 };
 
 export type RequestUploadPartsRes = {
-  multipart: {
-    uploadId: string;
-    parts: {
-      partNumber: number;
-      uploadUrl: string;
-    }[];
-  };
+  parts: {
+    partNumber: number;
+    uploadUrl: string;
+  }[];
 };
 
-export type CompleteMultipartUploadParams = {
-  uploadId: string;
-  key: string;
+export type CompleteMultipartUploadParams = MultipartUploadSession & {
   parts: {
     partNumber: number;
     eTag: string;
@@ -234,6 +231,8 @@ export type CompleteMultipartUploadParams = {
 };
 
 type RequestUploadAccess = {
+  /** Stable object key, when the provider exposes one. */
+  key?: string;
   accessUrl: string;
   thumbnailUrl?: string | null;
   accessSignedUrl?: string;
@@ -244,6 +243,8 @@ type RequestUploadAccess = {
 
 export type SinglePartRequestUploadRes = RequestUploadAccess & {
   uploadUrl: string;
+  /** Headers the browser must send with the upload request. */
+  uploadHeaders?: Record<string, string>;
 };
 
 export type MultipartRequestUploadRes = RequestUploadAccess & {
@@ -252,6 +253,10 @@ export type MultipartRequestUploadRes = RequestUploadAccess & {
     uploadId: string;
     partSize: number;
     totalParts: number;
+    /**
+     * Signed URLs for some or all parts. Clients request missing or expired
+     * part URLs through `uploads.multipart.requestParts`.
+     */
     parts: {
       partNumber: number;
       uploadUrl: string;
@@ -283,6 +288,11 @@ type ProviderUploadBase<
     BackendUploadOperation<BackendFile> | undefined,
 > = {
   upload?: TUpload;
+  /**
+   * Upload options this provider cannot honor. Options set to `false` are
+   * rejected by the upload types and at runtime.
+   */
+  supportedOptions?: { temporary?: boolean; replaceTargetUrl?: boolean };
 };
 
 export type ProviderMultipartUploads = {
@@ -290,6 +300,8 @@ export type ProviderMultipartUploads = {
     params: RequestUploadPartsParams,
   ) => MaybePromise<RequestUploadPartsRes>;
   complete: (params: CompleteMultipartUploadParams) => MaybePromise<void>;
+  /** Cancels an incomplete upload and releases its uploaded parts. */
+  abort: (params: MultipartUploadSession) => MaybePromise<void>;
 };
 
 export type ProviderUploads<

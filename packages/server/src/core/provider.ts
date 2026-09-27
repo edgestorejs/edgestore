@@ -1,8 +1,9 @@
-import type {
-  AnyEdgeStoreProvider,
-  EdgeStoreProvider,
-  ProviderCursor,
-  ProviderReference,
+import {
+  EdgeStoreError,
+  type AnyEdgeStoreProvider,
+  type EdgeStoreProvider,
+  type ProviderCursor,
+  type ProviderReference,
 } from '@edgestore/shared';
 import type { StandardSchemaV1 } from '@standard-schema/spec';
 
@@ -26,6 +27,28 @@ export function defineProvider<
   },
 ): TProvider {
   return provider;
+}
+
+/**
+ * Part URLs signed when a browser multipart upload starts. Clients request the
+ * rest in batches as they go, so URLs stay fresh during long transfers.
+ */
+export const INITIAL_MULTIPART_PART_URLS = 10;
+
+/** Rejects upload options that the provider declares as unsupported. */
+export function assertSupportedUploadOptions(
+  provider: AnyEdgeStoreProvider,
+  options: { temporary?: boolean; replaceTargetUrl?: string },
+) {
+  const supported = provider.uploads.supportedOptions;
+  for (const option of ['temporary', 'replaceTargetUrl'] as const) {
+    if (options[option] && supported?.[option] === false) {
+      throw new EdgeStoreError({
+        message: `Provider ${provider.name} does not support the ${option} upload option.`,
+        code: 'BAD_REQUEST',
+      });
+    }
+  }
 }
 
 export async function getProviderBaseUrl(
