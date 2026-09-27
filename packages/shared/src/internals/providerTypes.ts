@@ -21,7 +21,6 @@ export type ClientInit = {
 export type InitRes = {
   /** Delivery origin discovered during initialization. */
   baseUrl?: string;
-  token?: string;
   clientInit?: ClientInit;
 };
 

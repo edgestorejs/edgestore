@@ -17,7 +17,7 @@ import { z } from 'zod';
 import { getProviderBaseUrl, referenceFromUrl } from '../core/provider';
 import { buildPath, parseBucketInput, parsePath } from '../core/routerRules';
 import { validateFileForBucket } from '../core/validateFile';
-import { getEnv, isDev } from '../libs/env';
+import { getEnv } from '../libs/env';
 import type { LoggerLike } from '../libs/logger';
 
 // TODO: change it to 1 hour when we have a way to refresh the token
@@ -26,33 +26,6 @@ const DEFAULT_MAX_AGE = 30 * 24 * 60 * 60; // 30 days
 export type HandlerRouter<TCtx extends AnyContext> = EdgeStoreRouter<TCtx> & {
   readonly _def: { readonly provider: AnyEdgeStoreProvider };
 };
-
-const NO_BODY_STATUSES = new Set([204, 205, 304]);
-
-export async function fetchProxyFile({
-  cookieHeader,
-  url,
-}: {
-  cookieHeader?: string;
-  url: string;
-}) {
-  const proxyRes = await fetch(url, {
-    headers: {
-      cookie: cookieHeader ?? '',
-    },
-  });
-
-  const body = NO_BODY_STATUSES.has(proxyRes.status)
-    ? null
-    : await proxyRes.arrayBuffer();
-
-  return {
-    body,
-    contentType:
-      proxyRes.headers.get('Content-Type') ?? 'application/octet-stream',
-    status: proxyRes.status,
-  };
-}
 
 export type CookieOptions = {
   /**
@@ -98,28 +71,10 @@ export type CookieConfig = {
      */
     options?: CookieOptions;
   };
-  /**
-   * Token cookie configuration
-   */
-  token?: {
-    /**
-     * Name of the token cookie
-     * @default "edgestore-token"
-     */
-    name?: string;
-    /**
-     * Cookie options for token cookie
-     */
-    options?: CookieOptions;
-  };
 };
 
 type ResolvedCookieConfig = {
   ctx: {
-    name: string;
-    options: CookieOptions;
-  };
-  token: {
     name: string;
     options: CookieOptions;
   };
@@ -157,10 +112,6 @@ export function getCookieConfig(
       name: cookieConfig?.ctx?.name ?? 'edgestore-ctx',
       options: mergeOptions(cookieConfig?.ctx?.options),
     },
-    token: {
-      name: cookieConfig?.token?.name ?? 'edgestore-token',
-      options: mergeOptions(cookieConfig?.token?.options),
-    },
   };
 }
 
@@ -185,15 +136,6 @@ export async function init<TCtx extends AnyContext>(params: {
       ...resolvedCookieConfig.ctx.options,
     }),
   ];
-  if (initRes.token) {
-    newCookies.push(
-      stringifySetCookie({
-        name: resolvedCookieConfig.token.name,
-        value: initRes.token,
-        ...resolvedCookieConfig.token.options,
-      }),
-    );
-  }
   const baseUrl = initRes.baseUrl ?? (await getProviderBaseUrl(provider));
 
   logger.debug('Finished [init]', {
@@ -499,7 +441,7 @@ export async function confirmUploads<TCtx extends AnyContext>(params: {
     });
   }
   const files = await Promise.all(
-    urls.map((url) => referenceFromUrl(provider, unproxyUrl(url))),
+    urls.map((url) => referenceFromUrl(provider, url)),
   );
   const result = await provider.files.confirm({
     bucketName,
@@ -564,7 +506,7 @@ export async function deleteFiles<TCtx extends AnyContext>(params: {
     });
   }
   const files = await Promise.all(
-    urls.map((url) => referenceFromUrl(provider, unproxyUrl(url))),
+    urls.map((url) => referenceFromUrl(provider, url)),
   );
   const fileRecords = await Promise.all(
     files.map((file) =>
@@ -688,22 +630,4 @@ async function getDerivedEncryptionKey(secret: string) {
 
 async function getContext(token: string) {
   return await decryptJWT(token);
-}
-
-/**
- * On local development, protected files are proxied to the server,
- * which changes the original URL.
- *
- * This function is used to get the original URL,
- * so that we can delete or confirm the upload.
- */
-function unproxyUrl(url: string) {
-  if (isDev() && url.startsWith('http://')) {
-    // get the url param from the query string
-    const urlParam = new URL(url).searchParams.get('url');
-    if (urlParam) {
-      return urlParam;
-    }
-  }
-  return url;
 }

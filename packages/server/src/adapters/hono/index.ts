@@ -33,7 +33,6 @@ export function createEdgeStoreHonoHandler<TCtx extends AnyContext>(
       request: {
         pathname: new URL(c.req.url).pathname,
         readJson: () => c.req.json(),
-        getQuery: (name) => c.req.query(name),
         cookieHeader: c.req.header('cookie'),
         createContext: () =>
           resolveContext<TCtx, CreateContextOptions>(config, {

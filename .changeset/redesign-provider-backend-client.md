@@ -13,7 +13,12 @@ Import the single `initEdgeStore` initializer from `@edgestore/server`; shared
 contains bucket primitives and cross-package types. Routers use the hosted
 provider by default, and `.provider(...)` returns a new router without changing
 existing handlers or clients. Each router caches its provider and backend
-client. Pass development proxy options to `es.router(buckets, { baseUrl })`.
+client. Protected files load directly from their file origin in development,
+so the `/proxy-file` route, development proxy URLs, and the React
+`disableDevProxy` option are removed. Adapters no longer set the
+`edgestore-token` cookie on the application domain, so `cookieConfig.token` and
+the provider `init` result's `token` are removed; file origins receive the token
+through `clientInit` headers.
 Public backend client type helpers infer the selected provider directly from
 the router without a second provider generic.
 
@@ -34,8 +39,8 @@ scoped to the selected router bucket. Router context is a flat map of optional
 string values shared by hooks, path and metadata builders, and provider
 initialization.
 
-Framework adapters now delegate routing, cookies, proxying, response
-normalization, and error formatting to a shared dispatcher. Provider browser
+Framework adapters now delegate routing, cookies, response normalization,
+and error formatting to a shared dispatcher. Provider browser
 initialization is capability-driven rather than selected by provider name.
 The S3 provider reserves the router bucket as the first key segment, and Azure
 Blob Storage generates short-lived blob-scoped upload and read credentials.

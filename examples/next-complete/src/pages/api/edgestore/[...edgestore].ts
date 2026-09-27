@@ -58,15 +58,10 @@ const filesBucket = es
     ],
   });
 
-const router = es.router(
-  {
-    myPublicImages: imagesBucket,
-    myProtectedFiles: filesBucket,
-  },
-  {
-    baseUrl: 'http://localhost:3000/api/edgestore',
-  },
-);
+const router = es.router({
+  myPublicImages: imagesBucket,
+  myProtectedFiles: filesBucket,
+});
 
 export type EdgeStoreRouter = typeof router;
 

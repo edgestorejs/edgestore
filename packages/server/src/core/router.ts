@@ -12,11 +12,6 @@ import {
 } from '../providers/edgestore';
 import { createBackendClient } from './client';
 
-export type RouterOptions = {
-  /** Application handler URL used to proxy protected files in development. */
-  baseUrl?: string;
-};
-
 export type ConfiguredRouter<
   TRouter extends AnyRouter,
   TProvider extends AnyEdgeStoreProvider,
@@ -28,7 +23,7 @@ export type ConfiguredRouter<
   /** The backend client, with methods supported by this router's provider. */
   readonly client: ReturnType<typeof createBackendClient<TRouter, TProvider>>;
   /** @internal */
-  readonly _def: RouterOptions & { readonly provider: TProvider };
+  readonly _def: { readonly provider: TProvider };
 };
 
 function configureRouter<
@@ -37,13 +32,11 @@ function configureRouter<
 >(
   router: TRouter,
   createProvider: () => TProvider,
-  options: RouterOptions,
 ): ConfiguredRouter<TRouter, TProvider> {
   let provider: TProvider | undefined;
   let client:
     ReturnType<typeof createBackendClient<TRouter, TProvider>> | undefined;
   const definition = {
-    baseUrl: options.baseUrl,
     get provider() {
       return (provider ??= createProvider());
     },
@@ -53,14 +46,10 @@ function configureRouter<
     ...router,
     _def: definition,
     provider(newProvider) {
-      return configureRouter(router, () => newProvider, definition);
+      return configureRouter(router, () => newProvider);
     },
     get client() {
-      return (client ??= createBackendClient(
-        router,
-        definition.provider,
-        definition.baseUrl,
-      ));
+      return (client ??= createBackendClient(router, definition.provider));
     },
   };
 }
@@ -74,7 +63,6 @@ type RouterBuilder<TCtx extends AnyContext> = {
   ): ReturnType<typeof initBucket<TCtx, 'FILE'>>;
   router<TBuckets extends EdgeStoreRouter<TCtx>['buckets']>(
     buckets: TBuckets,
-    options?: RouterOptions,
   ): ConfiguredRouter<
     EdgeStoreRouter<TCtx, TBuckets>,
     EdgeStoreBackendProvider
@@ -96,12 +84,10 @@ class EdgeStoreBuilder<TCtx extends AnyContext = Record<string, never>> {
       },
       router<TBuckets extends EdgeStoreRouter<TCtx>['buckets']>(
         buckets: TBuckets,
-        options: RouterOptions = {},
       ) {
         return configureRouter(
           { $config: { ctx: undefined as unknown as TCtx }, buckets },
           edgestore,
-          options,
         );
       },
     };

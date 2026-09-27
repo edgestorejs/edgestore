@@ -111,7 +111,6 @@ export function edgestore(options?: EdgeStoreProviderOptions) {
       });
       const overrideBaseUrl = getEnv('EDGE_STORE_BASE_URL');
       return {
-        token,
         baseUrl: overrideBaseUrl ?? delivery?.baseUrl ?? baseUrl,
         clientInit: {
           ...(delivery && !overrideBaseUrl ? { urls: delivery.initUrls } : {}),

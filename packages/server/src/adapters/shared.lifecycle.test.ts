@@ -16,17 +16,10 @@ const originalUrls = [
   'https://files.example.com/protected/one.txt',
   'https://files.example.com/protected/two.txt',
 ];
-const proxiedUrls = originalUrls.map(
-  (url) =>
-    `http://localhost:3000/api/edgestore/proxy-file?${new URLSearchParams({
-      url,
-    }).toString()}`,
-);
 
 describe('frontend file mutations', () => {
   beforeEach(() => {
     vi.stubEnv('EDGE_STORE_JWT_SECRET', 'test-secret');
-    vi.stubEnv('NODE_ENV', 'development');
     vi.clearAllMocks();
   });
 
@@ -43,7 +36,7 @@ describe('frontend file mutations', () => {
         provider,
         router: es.router({ documents: es.fileBucket() }),
         ctxToken: undefined,
-        body: { bucketName: 'documents', urls: proxiedUrls },
+        body: { bucketName: 'documents', urls: originalUrls },
         logger,
       }),
     ).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
@@ -70,14 +63,14 @@ describe('frontend file mutations', () => {
         provider,
         router,
         ctxToken,
-        body: { bucketName: 'documents', urls: proxiedUrls },
+        body: { bucketName: 'documents', urls: originalUrls },
         logger,
       }),
     ).resolves.toEqual({
-      succeeded: [proxiedUrls[0]],
+      succeeded: [originalUrls[0]],
       failed: [
         {
-          url: proxiedUrls[1],
+          url: originalUrls[1],
           error: { code: 'NOT_CONFIRMABLE', message: 'Already permanent' },
         },
       ],
@@ -103,7 +96,7 @@ describe('frontend file mutations', () => {
         provider,
         router,
         ctxToken,
-        body: { bucketName: 'documents', urls: proxiedUrls },
+        body: { bucketName: 'documents', urls: originalUrls },
         logger,
       }),
     ).rejects.toThrow('The provider returned 1 mutation results for 2 files.');
@@ -120,7 +113,7 @@ describe('frontend file mutations', () => {
         provider,
         router,
         ctxToken,
-        body: { bucketName: 'documents', urls: proxiedUrls },
+        body: { bucketName: 'documents', urls: originalUrls },
         logger,
       }),
     ).rejects.toMatchObject({ code: 'SERVER_ERROR' });
@@ -148,10 +141,10 @@ describe('frontend file mutations', () => {
         provider,
         router,
         ctxToken,
-        body: { bucketName: 'documents', urls: [proxiedUrls[0]!] },
+        body: { bucketName: 'documents', urls: [originalUrls[0]!] },
         logger,
       }),
-    ).resolves.toEqual({ succeeded: [proxiedUrls[0]], failed: [] });
+    ).resolves.toEqual({ succeeded: [originalUrls[0]], failed: [] });
     expect(beforeDelete).toHaveBeenCalledWith({
       ctx: {},
       fileInfo: {
@@ -191,7 +184,7 @@ describe('frontend file mutations', () => {
         provider,
         router,
         ctxToken,
-        body: { bucketName: 'documents', urls: [proxiedUrls[0]!] },
+        body: { bucketName: 'documents', urls: [originalUrls[0]!] },
         logger,
       }),
     ).rejects.toThrow(
@@ -227,7 +220,7 @@ describe('frontend file mutations', () => {
         provider,
         router,
         ctxToken,
-        body: { bucketName: 'documents', urls: [proxiedUrls[0]!] },
+        body: { bucketName: 'documents', urls: [originalUrls[0]!] },
         logger,
       }),
     ).rejects.toThrow(
@@ -257,7 +250,7 @@ describe('frontend file mutations', () => {
         provider,
         router,
         ctxToken,
-        body: { bucketName: 'documents', urls: proxiedUrls },
+        body: { bucketName: 'documents', urls: originalUrls },
         logger,
       }),
     ).rejects.toMatchObject({ code: 'DELETE_NOT_ALLOWED' });
@@ -292,14 +285,14 @@ describe('frontend file mutations', () => {
         provider,
         router,
         ctxToken,
-        body: { bucketName: 'documents', urls: proxiedUrls },
+        body: { bucketName: 'documents', urls: originalUrls },
         logger,
       }),
     ).resolves.toEqual({
-      succeeded: [proxiedUrls[0]],
+      succeeded: [originalUrls[0]],
       failed: [
         {
-          url: proxiedUrls[1],
+          url: originalUrls[1],
           error: { code: 'DELETE_FAILED', message: 'Storage unavailable' },
         },
       ],

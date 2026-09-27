@@ -35,12 +35,6 @@ export function createEdgeStoreExpressHandler<TCtx extends AnyContext>(
       request: {
         pathname: url.pathname,
         readJson: async () => req.body,
-        getQuery: (name) => {
-          const value = req.query[name];
-          return typeof value === 'string'
-            ? value
-            : (url.searchParams.get(name) ?? undefined);
-        },
         cookieHeader: req.headers.cookie,
         cookies: req.cookies as Record<string, string>,
         createContext: () =>

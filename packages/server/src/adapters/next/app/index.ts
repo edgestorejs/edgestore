@@ -42,7 +42,6 @@ export function createEdgeStoreNextHandler<TCtx extends AnyContext>(
       request: {
         pathname: req.nextUrl.pathname,
         readJson: () => req.json(),
-        getQuery: (name) => req.nextUrl.searchParams.get(name) ?? undefined,
         cookieHeader:
           req.headers?.get('cookie') ?? (req.cookies.toString() || undefined),
         createContext: () =>

@@ -86,10 +86,7 @@ expectError(
   createEdgeStoreNextHandler({ router, createContext: () => ({ userId: 1 }) }),
 );
 const publicEs = initEdgeStore.create();
-const publicRouter = publicEs.router(
-  { files: publicEs.fileBucket() },
-  { baseUrl: 'http://localhost:3000/api/edgestore' },
-);
+const publicRouter = publicEs.router({ files: publicEs.fileBucket() });
 createEdgeStoreNextHandler({ router: publicRouter });
 createPagesHandler({ router: publicRouter });
 createEdgeStoreExpressHandler({ router: publicRouter });

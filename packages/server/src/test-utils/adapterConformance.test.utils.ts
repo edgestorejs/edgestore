@@ -23,9 +23,6 @@ export const testCookieConfig = {
       sameSite: 'lax' as const,
     },
   },
-  token: {
-    name: 'edgestore-test-token',
-  },
 };
 
 export const requestUploadBody = {
@@ -77,7 +74,7 @@ export function createConformanceProvider(
   const provider: AnyEdgeStoreProvider = {
     name: 'test-provider',
     baseUrl: 'https://files.example.com',
-    init: vi.fn(() => ({ token: 'provider-token' })),
+    init: vi.fn(() => ({})),
     reference: {
       schema: z.object({ url: z.string() }),
       fromUrl: (url) => ({ url }),
@@ -166,22 +163,6 @@ export function expectRequestUploadCalledWithContext(
       },
     },
   });
-}
-
-export function stubProxyFetch() {
-  const fetchMock = vi.fn(async (url: string | URL | Request) => {
-    return new Response('proxied body', {
-      status: 202,
-      headers: {
-        'Content-Type': 'text/custom',
-        'X-Received-Url': String(url),
-      },
-    });
-  });
-
-  vi.stubGlobal('fetch', fetchMock);
-
-  return fetchMock;
 }
 
 export function asJsonRequestInit(body: unknown): RequestInit {
