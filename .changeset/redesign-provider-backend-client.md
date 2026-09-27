@@ -56,4 +56,5 @@ Single-part upload plans can return `uploadHeaders` for the browser to send,
 and upload responses include the object `key` when the provider exposes one.
 Providers can declare unsupported upload options with
 `uploads.supportedOptions`; the browser and backend upload types omit them and
-EdgeStore rejects them at runtime.
+EdgeStore rejects them at runtime. The S3 and Azure Blob providers declare
+`temporary` and `replaceTargetUrl` as unsupported.
