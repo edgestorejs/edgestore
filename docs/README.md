@@ -2,6 +2,15 @@
 
 Run `pnpm docs:dev` from the repository root.
 
+The main site now documents the v1 prerelease. Installation commands use `@next`
+until the first RC is published, then switch to `@rc` as described in
+[RELEASING.md](../RELEASING.md). The v1 release blog post remains a draft.
+
+`content/v0` and `public/v0/r` preserve the v0 docs and component registry from
+main at `4e7669ef`. They are available at `/v0/docs` and `/v0/r`, with version-local
+links and v0 package pins. Historical examples do not run Twoslash against v1;
+the archive omits the v1 AI assistant and search.
+
 ## Hosted skill
 
 `/SKILL.md` serves the canonical `skills/edgestore-setup/SKILL.md` from the repo

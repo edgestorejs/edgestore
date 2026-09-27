@@ -1,0 +1,168 @@
+---
+title: Backend Client
+description: Interact with EdgeStore from your backend.
+---
+
+Sometimes you might want to use the EdgeStore functionality directly from your backend. Things like deleting, uploading or even listing files can be done with the use of the backend client.
+
+## Setup
+
+You can use your EdgeStore router to initialize the backend client.
+
+Since Next.js doesn't allow exports in the api route, you will need to move your router to an external file.
+
+```ts title="src/lib/edgestore-server.ts"
+import { initEdgeStoreClient } from '@edgestore/server/core';
+
+// ...
+
+export const handler = createEdgeStoreNextHandler({
+  router: edgeStoreRouter,
+});
+
+// ...
+
+// [!code ++:3]
+export const backendClient = initEdgeStoreClient({
+  router: edgeStoreRouter,
+});
+```
+
+Then you will need to update your api route to use the exported handler.
+
+```ts title="src/app/api/edgestore/[...edgestore]/route.ts"
+import { handler } from '@/lib/edgestore-server';
+
+export { handler as GET, handler as POST };
+```
+
+<Callout>
+  You can find an example of the backend client usage in the
+  [next-advanced](https://github.com/edgestorejs/edgestore/tree/main/examples/next-advanced)
+  example.
+</Callout>
+
+## Backend Upload
+
+You can use the `upload` function to upload files from your backend.
+
+### Upload a text file
+
+The simplest use case would be to just upload a `txt` file:
+
+```ts
+const res = await backendClient.publicFiles.upload({
+  content: 'some text content',
+});
+```
+
+### Upload a blob
+
+You can also upload a more complex file using the Blob object. And there are also all the other options available in the normal upload.
+
+```ts
+const res = await backendClient.publicFiles.upload({
+  content: {
+    blob: new Blob(['col1,col2,col2'], { type: 'text/csv' }),
+    extension: 'csv',
+  },
+  options: {
+    temporary: true,
+  },
+  ctx: {
+    userId: '123',
+    userRole: 'admin',
+  },
+  input: {
+    type: 'post',
+  },
+});
+```
+
+### Copy an existing file
+
+You can use an existing file's URL to copy it into the EdgeStore bucket. This can be an external file (from outside of EdgeStore) or an existing EdgeStore file.
+
+```ts
+const res = await backendClient.publicFiles.upload({
+  content: {
+    url: 'https://some-url.com/file.txt',
+    extension: 'txt',
+  },
+});
+```
+
+### Confirm a temporary file upload
+
+If you upload a temporary file, you can confirm it by using the `confirmUpload` function.
+
+```ts
+const res = await backendClient.publicFiles.confirmUpload({
+  url: fileUrl,
+});
+```
+
+## Backend Delete
+
+You can use the `deleteFile` function to delete files from your backend.
+
+```ts
+const res = await backendClient.publicFiles.deleteFile({
+  url: fileUrl,
+});
+```
+
+## Backend List Files (search)
+
+You can use the `listFiles` function to list files from your backend. It's also possible to filter the results by path, metadata or upload timing.
+
+```ts
+// simple usage
+// get the first page (20 files) of all files in the bucket
+const res = await backendClient.publicFiles.listFiles();
+
+// with filter and pagination
+const res = await backendClient.publicFiles.listFiles({
+  filter: {
+    metadata: {
+      role: 'admin',
+    },
+    path: {
+      type: 'post',
+    },
+    uploadedAt: {
+      gt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7), // past 7 days
+    },
+  },
+  pagination: {
+    currentPage: 1, // default: 1
+    pageSize: 50, // default: 20 (max: 100)
+  },
+});
+```
+
+## TypeScript Helpers
+
+Sometimes you might want to have the response type of the backend client functions, so you can use it to build your own functions. You can use the `InferClientResponse` helper type to infer the response type of the backend client.
+
+```ts title="src/lib/edgestore.ts"
+import { type InferClientResponse } from '@edgestore/server/core';
+
+// ...
+
+/**
+ * This helper type can be used to infer the response type of the backend client
+ */
+export type ClientResponse = InferClientResponse<EdgeStoreRouter>;
+```
+
+And you can use it like this:
+
+```ts
+export const getServerSideProps: GetServerSideProps<{
+  files: ClientResponse['publicFiles']['listFiles']['data'];
+}> = async () => {
+  const res = await backendClient.publicFiles.listFiles();
+  return { props: { files: res.data } };
+};
+```

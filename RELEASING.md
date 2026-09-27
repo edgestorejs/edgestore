@@ -1,140 +1,41 @@
-# Releasing
+# Releases from main
 
-EdgeStore uses separate release lanes for stable, upcoming, maintenance, and
-optional canary packages. Vercel continues to deploy production from `main`;
-package publication does not change the documentation deployment model.
+`main` is the normal release branch. The v1 integration keeps the published
+`1.0.0-next.5` package versions and changes `.changeset/pre.json` to `rc`.
+It includes a pending changeset, so the release action opens a version PR.
+Merging the integration does not itself version the packages.
 
-## Choose the target branch
+## Release candidate
 
-| Change                                 | Target branch | npm tag          |
-| -------------------------------------- | ------------- | ---------------- |
-| Stable fix or release infrastructure   | `main`        | `latest`         |
-| Work for the upcoming breaking release | `next`        | `next` or `rc`   |
-| Backport for a supported major         | `<major>.x`   | `legacy-v<major>` |
-| Temporary snapshot from a PR branch    | PR branch     | `canary`         |
+1. Merge the full v1 integration with a **merge commit**, preserving the existing
+   `next` history. Stop using `next` as a separate publishing lane.
+2. Review the Changesets version PR against `main`. Changesets continues the
+   prerelease counter, so the first candidate is expected to be `1.0.0-rc.6`,
+   not `1.0.0-rc.0`. Check all five packages, internal dependencies, lockfile,
+   changelogs, and generated version constants.
+3. Merge the version PR to publish under `rc`. Check the Release workflow and
+   the npm tags for server, react, shared, sdk, and cli. Verify that the stable
+   server/react/shared `latest` tags remain `0.8.0`.
+4. Once publishing succeeds, change the public docs' installation instructions,
+   registry dependencies (both `registry.json` and `docs/public/r`), setup prompts,
+   and version notices from `@next` to `@rc`. Keep the v0 archive unchanged.
 
-Forward-merge stable fixes from `main` into `next`. Do not routinely merge
-`next` into `main`. A forward merge does not need an immediate prerelease; a
-later Changeset release can include it.
+Until step 4 the site deliberately uses the already published `@next` tag.
+The docs source and package source now share one branch; normal version syncing
+updates the docs app's workspace dependencies in the version PR.
 
-All published `@edgestore/*` behavior and public API changes require a
-Changeset. Use `patch` for fixes, `minor` for backward-compatible features, and
-`major` for breaking changes.
+Do not manually bump package manifests on a normal feature PR: when there are no
+pending changesets, the release action can publish any unpublished manifest
+versions. The version PR is the intended publication approval point, not a
+blanket guarantee that every other merge is unable to publish.
 
-Version, RC handoff, and promotion PRs opened by GitHub Actions may require a
-maintainer to select **Approve workflows to run** before CI starts.
+## Stable v1
 
-## Stable releases
-
-Changes merged to `main` keep the existing Changesets release-PR flow:
-
-1. Merge changes containing Changesets into `main`.
-2. Review and merge the generated **Version Packages** PR.
-3. The release workflow publishes stable versions to npm's `latest` tag.
-
-The local equivalent is:
-
-```sh
-pnpm version
-pnpm release
-```
-
-Normal stable releases should use the automated PR rather than running these
-commands locally.
-
-## The `next` prerelease lane
-
-Create `next` from `main` after the release-lane infrastructure is available:
-
-```sh
-git switch main
-git pull --ff-only
-git switch -c next
-pnpm changeset pre enter next
-git add .changeset/pre.json
-git commit -m "chore: enter next prerelease mode"
-git push -u origin next
-```
-
-Feature PRs for the upcoming breaking release target `next` and include normal
-Changesets. The release workflow creates a **Version Packages (next)** PR.
-Merging it publishes versions such as `2.0.0-next.0` to npm's `next` tag.
-
-The local equivalent for the first prerelease is:
-
-```sh
-pnpm changeset pre enter next
-pnpm version
-pnpm release
-```
-
-Do not run `changeset pre exit` directly on `next`.
-
-## Start the RC phase
-
-RC releases stay on `next`; they are the final prerelease phase, not a stable
-promotion. Run the **Start RC cycle** workflow from GitHub Actions. It opens a
-PR into `next` that changes only `.changeset/pre.json`:
-
-```diff
--  "tag": "next",
-+  "tag": "rc",
-```
-
-The PR keeps `"mode": "pre"`. Do not run `changeset pre exit` when starting
-RC. After the PR is merged, pending Changesets produce a **Version Packages
-(rc)** PR. If no Changesets are pending, the release PR is created after the
-next Changeset reaches `next`.
-
-Changesets preserves the numeric prerelease counter when the tag changes. For
-example, `1.0.0-next.0` is followed by `1.0.0-rc.1`; subsequent releases use
-`rc.2`, `rc.3`, and so on. Merging the version PR publishes the generated
-version to npm's `rc` tag.
-
-Optionally move npm's `next` tag to the published RC so existing `@next`
-consumers follow the RC phase:
-
-```sh
-for package_dir in server react shared; do
-  package_name="@edgestore/$package_dir"
-  rc_version="$(pnpm view "$package_name" dist-tags.rc)"
-  npm dist-tag add "$package_name@$rc_version" next
-done
-```
-
-Run the dist-tag verification commands below after moving the aliases.
-
-## Promote `next` to stable
-
-Run the **Promote next** workflow from GitHub Actions. The workflow:
-
-1. Verifies that `main` is contained in `next` and that `next` is in the
-   `next` or `rc` prerelease phase.
-2. Runs `changeset pre exit` and the repository version command.
-3. Opens a promotion PR into `main`.
-
-The promotion PR runs the normal CI checks. Merge it with a **merge commit**
-when those checks pass. If `next` advances after the workflow starts, those
-later changes remain on `next`.
-
-Merging the promotion PR publishes to `latest`. When work on the following
-release begins, merge `main` back into `next` and enter prerelease mode again.
-This is intentionally manual because it happens only when starting a new major
-release cycle:
-
-```sh
-git switch next
-git pull --ff-only
-git fetch origin main
-git merge origin/main
-pnpm changeset pre enter next
-git add .changeset/pre.json
-git commit -m "chore: start next prerelease cycle"
-git push
-```
-
-If `next` advanced after the promotion PR was created, resolve the merge and
-prerelease-state conflict while preserving those later changes.
+Run **Promote stable** after the RC is accepted. It checks out `main`, exits
+Changesets prerelease mode, generates stable versions, and opens a PR against
+`main`. Review and merge that PR to publish v1 under `latest`. Then update the
+docs' install commands and prerelease notices, and publish the release blog post
+with the actual release date. Keep `/v0/docs` and `/v0/r` available for v0 users.
 
 ## Maintenance releases
 
@@ -189,6 +90,8 @@ After a release, inspect every public package:
 pnpm view @edgestore/server dist-tags --json
 pnpm view @edgestore/react dist-tags --json
 pnpm view @edgestore/shared dist-tags --json
+pnpm view @edgestore/sdk dist-tags --json
+pnpm view @edgestore/cli dist-tags --json
 ```
 
 Expected tags are `latest` for stable, `next` or `rc` for prereleases,
@@ -210,5 +113,5 @@ If a tag should not exist, remove only the tag:
 npm dist-tag rm @edgestore/server canary
 ```
 
-Repeat the repair for all three fixed `@edgestore/*` packages, then rerun the
+Repeat the repair for all five fixed `@edgestore/*` packages, then rerun the
 dist-tag verification commands above.

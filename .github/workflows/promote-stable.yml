@@ -1,10 +1,10 @@
-name: Promote next
+name: Promote stable
 
 on:
   workflow_dispatch:
 
 concurrency:
-  group: promote-next
+  group: promote-stable
   cancel-in-progress: false
 
 permissions:
@@ -18,10 +18,10 @@ jobs:
     timeout-minutes: 15
 
     steps:
-      - name: Checkout next
+      - name: Checkout main
         uses: actions/checkout@v7
         with:
-          ref: next
+          ref: main
           fetch-depth: 0
 
       - name: Setup pnpm
@@ -36,13 +36,11 @@ jobs:
       - name: Install
         run: pnpm install --frozen-lockfile
 
-      - name: Validate next
+      - name: Validate release candidate
         id: source
         run: |
-          git fetch origin main
-          git merge-base --is-ancestor origin/main HEAD
           jq -e \
-            '.mode == "pre" and (.tag == "next" or .tag == "rc")' \
+            '.mode == "pre" and .tag == "rc"' \
             .changeset/pre.json
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
@@ -56,19 +54,17 @@ jobs:
       - name: Open promotion PR
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NEXT_SHA: ${{ steps.source.outputs.sha }}
+          SOURCE_SHA: ${{ steps.source.outputs.sha }}
           PR_BODY: |
-            Promotes `next` to a stable release.
+            Promotes the release candidate on `main` to stable v1.
 
             - Exits Changesets prerelease mode.
             - Generates stable package versions and changelogs.
             - Publishes to npm `latest` after this PR is merged.
 
-            Merge this PR with a merge commit so `next` can be synchronized cleanly afterward.
-
-            Changes merged into `next` after this workflow ran remain available for a future promotion.
+            Review and merge this version PR only when the release candidate is ready for stable v1.
         run: |
-          branch="release/promote-next-$NEXT_SHA"
+          branch="release/promote-stable-$SOURCE_SHA"
           existing_url="$(gh pr list \
             --base main \
             --head "$branch" \
@@ -85,11 +81,11 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
-          git commit -m 'chore: promote next to stable'
+          git commit -m 'chore: promote v1 to stable'
           git push -u origin "$branch"
 
           gh pr create \
             --base main \
             --head "$branch" \
-            --title 'chore: promote next to stable' \
+            --title 'chore: promote v1 to stable' \
             --body "$PR_BODY"

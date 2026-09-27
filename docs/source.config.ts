@@ -22,6 +22,15 @@ export const docs = defineDocs({
   },
 });
 
+export const v0Docs = defineDocs({
+  dir: 'content/v0',
+  docs: {
+    schema: frontmatterSchema,
+    postprocess: { includeProcessedMarkdown: true },
+  },
+  meta: { schema: metaSchema },
+});
+
 export const blogPosts = defineCollections({
   type: 'doc',
   dir: 'content/blog',

@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - next
   workflow_dispatch:
     inputs:
       operation:
@@ -53,17 +52,12 @@ jobs:
       - name: Validate release mode
         shell: bash
         run: |
-          if [[ "$GITHUB_REF_NAME" == "next" ]]; then
-            jq -e \
-              '.mode == "pre" and (.tag == "next" or .tag == "rc")' \
-              .changeset/pre.json
-          elif [[ "$GITHUB_REF_NAME" == "main" ]]; then
+          if [[ "$GITHUB_REF_NAME" == "main" ]]; then
             if [[ -f .changeset/pre.json ]]; then
-              echo 'main must not contain a Changesets prerelease state'
-              exit 1
+              jq -e '.mode == "pre" and .tag == "rc"' .changeset/pre.json
             fi
           else
-            echo 'Normal releases must run from main or next.'
+            echo 'Normal releases must run from main.'
             exit 1
           fi
 

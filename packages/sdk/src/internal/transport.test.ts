@@ -104,6 +104,8 @@ describe('createTransport', () => {
       controlTimeoutMs: 1,
       fetch: async (input) => {
         const request = input instanceof Request ? input : new Request(input);
+        // The 1ms deadline can expire before the mock fetch starts on a busy runner.
+        request.signal.throwIfAborted();
         await new Promise((_, reject) => {
           request.signal.addEventListener(
             'abort',
