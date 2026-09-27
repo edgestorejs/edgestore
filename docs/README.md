@@ -32,3 +32,18 @@ cache key. Deployment settings do not change links in published package referenc
 those follow the package version.
 
 Run `pnpm --filter docs test:agents` to check both channels and the production guard.
+
+## Blog drafts
+
+Posts with `draft: true` are visible in local development and all Vercel preview
+deployments (`VERCEL_ENV=preview`), regardless of branch. They remain hidden on
+production deployments, even if `DOCS_RELEASE_CHANNEL=next` is set.
+
+Draft article metadata uses `VERCEL_URL` for preview-local canonical and social
+image URLs and requests `noindex, nofollow`. Drafts never enter the sitemap.
+Preview visibility is not authentication: anyone with access to the preview can
+read the drafts. Vercel deployment protection may still prevent external social
+preview tools from fetching the page or its image.
+
+Before publishing a release post, update its date to the actual release date and
+set `draft: false`. Run `pnpm --filter docs test:blog` to check the visibility rules.

@@ -1,4 +1,4 @@
-import { getBlogPost, getBlogPosts } from '@/lib/source';
+import { blogDeployment, getBlogPost, getBlogPosts } from '@/lib/source';
 import { getMDXComponents } from '@/mdx-components';
 import { InlineTOC } from 'fumadocs-ui/components/inline-toc';
 import { ArrowLeftIcon } from 'lucide-react';
@@ -85,6 +85,10 @@ export async function generateMetadata({
   };
 
   return {
+    ...(page.data.draft && {
+      metadataBase: blogDeployment.metadataBase,
+      robots: { index: false, follow: false },
+    }),
     title: page.data.title,
     description: page.data.description,
     alternates: {
