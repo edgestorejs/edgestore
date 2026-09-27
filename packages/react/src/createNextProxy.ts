@@ -6,6 +6,8 @@ import {
   type InferMetadataObject,
   type InferSchemaInput,
   type Prettify,
+  type ProviderUploadOptions,
+  type RouterProvider,
   type SharedFileMutationRes,
   type SharedRequestUploadRes,
   type UploadOptions,
@@ -56,8 +58,8 @@ export type BucketFunctions<TRouter extends AnyRouter> = {
      *  input: {...} // if the bucket has an input schema
      *  options: {
      *   manualFileName: file.name, // if you want to use a custom file name
-     *   replaceTargetUrl: url, // if you want to replace an existing file
-     *   temporary: true, // if you want to delete the file after 24 hours
+     *   replaceTargetUrl: url, // managed replacement, when supported by the provider
+     *   temporary: true, // temporary files, when supported by the provider
      *  }
      * })
      */
@@ -67,14 +69,20 @@ export type BucketFunctions<TRouter extends AnyRouter> = {
             file: File;
             signal?: AbortSignal;
             onProgressChange?: (progress: number) => void;
-            options?: UploadOptions;
+            options?: ProviderUploadOptions<
+              UploadOptions,
+              RouterProvider<TRouter>
+            >;
           }
         : {
             file: File;
             signal?: AbortSignal;
             input: InferSchemaInput<TRouter['buckets'][K]['_def']['input']>;
             onProgressChange?: (progress: number) => void;
-            options?: UploadOptions;
+            options?: ProviderUploadOptions<
+              UploadOptions,
+              RouterProvider<TRouter>
+            >;
           },
     ) => Promise<Prettify<UploadResponse<TRouter['buckets'][K]>>>;
     confirm: (params: { url: string }) => Promise<void>;
@@ -389,6 +397,8 @@ function getUrl(url: string, apiPath: string, disableDevProxy?: boolean) {
   return url;
 }
 
+class RetryableUploadError extends EdgeStoreClientError {}
+
 async function uploadFileInner(props: {
   file: File | Blob;
   uploadUrl: string;
@@ -426,14 +436,13 @@ async function uploadFileInner(props: {
         resolve(request.getResponseHeader('ETag'));
         return;
       }
-      reject(
-        new EdgeStoreClientError(
-          `Error uploading file (HTTP ${request.status})`,
-        ),
-      );
+      const ErrorClass = [408, 429, 500, 502, 503, 504].includes(request.status)
+        ? RetryableUploadError
+        : EdgeStoreClientError;
+      reject(new ErrorClass(`Error uploading file (HTTP ${request.status})`));
     });
     request.addEventListener('error', () => {
-      reject(new Error('Error uploading file'));
+      reject(new RetryableUploadError('Error uploading file'));
     });
     request.addEventListener('abort', () => {
       reject(new UploadAbortedError('File upload aborted'));
@@ -508,7 +517,7 @@ async function multipartUpload(params: {
     });
     if (!eTag) {
       throw new EdgeStoreClientError(
-        'Could not get ETag from multipart response',
+        'Could not get ETag from multipart response. Check that storage CORS exposes the ETag header.',
       );
     }
     return {
@@ -556,12 +565,19 @@ async function multipartUpload(params: {
     if (multipartInfo.abortSupported) {
       // Cleanup is independent of the canceled transfer signal. Bucket lifecycle
       // rules must cover disconnected browsers and failed cleanup requests.
-      await fetch(`${apiPath}/abort-multipart-upload`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ bucketName, uploadId, key }),
-      }).catch(() => undefined);
+      const cleanup = new AbortController();
+      const timeout = setTimeout(() => cleanup.abort(), 5000);
+      try {
+        await fetch(`${apiPath}/abort-multipart-upload`, {
+          method: 'POST',
+          credentials: 'include',
+          signal: cleanup.signal,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ bucketName, uploadId, key }),
+        }).catch(() => undefined);
+      } finally {
+        clearTimeout(timeout);
+      }
     }
     throw error;
   }
@@ -627,7 +643,7 @@ async function queuedPromises<TType, TRes>({
         } catch (error) {
           if (
             controller.signal.aborted ||
-            error instanceof UploadAbortedError ||
+            !(error instanceof RetryableUploadError) ||
             attempt >= maxRetries
           )
             throw error;

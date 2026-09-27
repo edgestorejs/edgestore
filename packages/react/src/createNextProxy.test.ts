@@ -74,6 +74,22 @@ function jsonResponse(body: unknown, status = 200) {
   });
 }
 
+function multipartResponse() {
+  return jsonResponse(
+    uploadResponse({
+      uploadUrl: undefined,
+      multipart: {
+        key: 'assets/file',
+        uploadId: 'session',
+        partSize: 2,
+        totalParts: 1,
+        abortSupported: true,
+        parts: [{ partNumber: 1, uploadUrl: 'https://uploads.example/1' }],
+      },
+    }),
+  );
+}
+
 function urlToString(url: string | URL | Request) {
   return typeof url === 'string'
     ? url
@@ -477,7 +493,8 @@ describe('createNextProxy upload', () => {
       uploadId: 'signed-session',
       key: 'assets/video',
     });
-    expect(calls[1]!.init?.signal).toBeUndefined();
+    expect(calls[1]!.init?.signal).not.toBe(controller.signal);
+    expect(calls[1]!.init?.signal?.aborted).toBe(false);
   });
 
   it('keeps cancellation active while multipart completion is pending', async () => {
@@ -526,7 +543,8 @@ describe('createNextProxy upload', () => {
     expect(fetchMock.mock.calls[2]?.[0]).toBe(
       '/api/edgestore/abort-multipart-upload',
     );
-    expect(fetchMock.mock.calls[2]?.[1]?.signal).toBeUndefined();
+    expect(fetchMock.mock.calls[2]?.[1]?.signal).not.toBe(controller.signal);
+    expect(fetchMock.mock.calls[2]?.[1]?.signal?.aborted).toBe(false);
   });
 
   it('cleans up on completion failure while preserving the original error', async () => {
@@ -555,6 +573,121 @@ describe('createNextProxy upload', () => {
     await rejected;
     expect(calls[2]?.url).toBe('/api/edgestore/abort-multipart-upload');
   });
+
+  it.each([400, 401, 403, 404, 413, 501, 505, 'missing-etag'])(
+    'does not retry a permanent multipart failure: %s',
+    async (failure) => {
+      vi.useFakeTimers();
+      const { calls } = createFetchMock([
+        multipartResponse(),
+        jsonResponse({}),
+      ]);
+      const { assets } = createProxy();
+      const upload = assets.upload({ file: new File(['ab'], 'file') });
+      const rejected = expect(upload).rejects.toThrow(
+        failure === 'missing-etag'
+          ? 'CORS exposes the ETag'
+          : `HTTP ${failure}`,
+      );
+      await waitForXhrs(1);
+      MockXMLHttpRequest.instances[0]!.load(
+        typeof failure === 'number' ? failure : 200,
+      );
+      await rejected;
+      expect(MockXMLHttpRequest.instances).toHaveLength(1);
+      expect(calls[1]?.url).toBe('/api/edgestore/abort-multipart-upload');
+      expect(vi.getTimerCount()).toBe(0);
+    },
+  );
+
+  it.each([408, 429, 500, 502, 503, 504, 'network'])(
+    'retries a transient multipart failure: %s',
+    async (failure) => {
+      vi.useFakeTimers();
+      const { calls } = createFetchMock([
+        multipartResponse(),
+        jsonResponse({}),
+      ]);
+      const { assets } = createProxy();
+      const upload = assets.upload({ file: new File(['ab'], 'file') });
+      await waitForXhrs(1);
+      const first = MockXMLHttpRequest.instances[0]!;
+      if (typeof failure === 'number') first.load(failure);
+      else first.dispatchEvent(new Event('error'));
+      await vi.advanceTimersByTimeAsync(4999);
+      expect(MockXMLHttpRequest.instances).toHaveLength(1);
+      await vi.advanceTimersByTimeAsync(1);
+      await waitForXhrs(2);
+      MockXMLHttpRequest.instances[1]!.load(200, 'etag');
+      await upload;
+      expect(calls[1]?.url).toBe('/api/edgestore/complete-multipart-upload');
+    },
+  );
+
+  it('cancels while waiting to retry without starting another part', async () => {
+    vi.useFakeTimers();
+    const { calls } = createFetchMock([multipartResponse(), jsonResponse({})]);
+    const controller = new AbortController();
+    const { assets } = createProxy();
+    const upload = assets.upload({
+      file: new File(['ab'], 'file'),
+      signal: controller.signal,
+    });
+    const rejected = expect(upload).rejects.toBeInstanceOf(UploadAbortedError);
+    await waitForXhrs(1);
+    MockXMLHttpRequest.instances[0]!.load(503);
+    await vi.advanceTimersByTimeAsync(1000);
+    controller.abort();
+    await rejected;
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(MockXMLHttpRequest.instances).toHaveLength(1);
+    expect(calls[1]?.url).toBe('/api/edgestore/abort-multipart-upload');
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it.each(['cancel', 'failure'])(
+    'bounds stalled cleanup after %s and preserves the original error',
+    async (reason) => {
+      vi.useFakeTimers();
+      const { fetchMock } = createFetchMock([multipartResponse()]);
+      const controller = new AbortController();
+      const { assets } = createProxy();
+      const upload = assets.upload({
+        file: new File(['ab'], 'file'),
+        signal: controller.signal,
+      });
+      const rejected =
+        reason === 'cancel'
+          ? expect(upload).rejects.toBeInstanceOf(UploadAbortedError)
+          : expect(upload).rejects.toThrow('HTTP 403');
+      await waitForXhrs(1);
+      fetchMock.mockImplementationOnce(
+        (_url, init) =>
+          new Promise<Response>((_resolve, reject) => {
+            init?.signal?.addEventListener(
+              'abort',
+              () => reject(new DOMException('Cleanup timed out', 'AbortError')),
+              { once: true },
+            );
+          }),
+      );
+      if (reason === 'cancel') controller.abort();
+      else MockXMLHttpRequest.instances[0]!.load(403);
+      await vi.advanceTimersByTimeAsync(0);
+      expect(fetchMock.mock.calls[1]?.[0]).toBe(
+        '/api/edgestore/abort-multipart-upload',
+      );
+      const cleanupSignal = fetchMock.mock.calls[1]?.[1]?.signal;
+      expect(cleanupSignal).toBeDefined();
+      expect(cleanupSignal).not.toBe(controller.signal);
+      await vi.advanceTimersByTimeAsync(4999);
+      expect(cleanupSignal?.aborted).toBe(false);
+      await vi.advanceTimersByTimeAsync(1);
+      await rejected;
+      expect(cleanupSignal?.aborted).toBe(true);
+      expect(vi.getTimerCount()).toBe(0);
+    },
+  );
 
   it('rewrites protected URLs in development, but not public URLs or disabled proxies', async () => {
     vi.stubEnv('NODE_ENV', 'development');

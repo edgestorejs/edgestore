@@ -289,6 +289,8 @@ type ProviderUploadBase<
     BackendUploadOperation<BackendFile> | undefined,
 > = {
   upload?: TUpload;
+  /** Set unsupported lifecycle options to false. Omitted flags preserve the existing API. */
+  supportedOptions?: { temporary?: boolean; replaceTargetUrl?: boolean };
 };
 
 export type ProviderMultipartUploads = {

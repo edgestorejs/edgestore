@@ -122,6 +122,12 @@ The provider returns a signed, 24-hour multipart session token scoped to one
 physical bucket and object key. Treat it like a credential. Raw AWS upload IDs
 cannot be used on the adapter's multipart routes.
 
+Cleanup requests from the browser have a five-second deadline so a failed
+cleanup cannot leave cancellation pending indefinitely. Multipart transfers
+retry network errors and transient HTTP responses (408, 429, 500, 502, 503,
+and 504). Other HTTP failures and missing ETags fail immediately; expose `ETag`
+in storage CORS if that header is missing.
+
 The provider supports refreshing part URLs, but the React client does not yet
 refresh them automatically or resume across page reloads. Choose an upload URL
 lifetime suitable for your expected transfer duration. Browser shutdowns,
@@ -157,7 +163,14 @@ const download = await router.client.documents.createSignedUrl({
 The backend client is privileged; it does not authenticate application users for
 you. Cookie-based access-control schemas are unsupported and rejected at adapter
 initialization. A logical bucket's public/private setting does not configure S3
-permissions. `_public` is a naming convention, not a bucket policy.
+permissions. `_public` is a naming convention that you can use in infrastructure
+rules. For example, an S3 policy can grant public reads to
+`avatars/_public/*`, or a CloudFront behavior can allow public viewing of that
+path while other behaviors require signed access. These are wildcard patterns,
+not regular expressions. S3 public-access settings and CloudFront behavior order
+still apply; the prefix alone grants no access. With CloudFront origin access
+control, the S3 bucket can remain private. If you customize the path, keep these
+rules aligned with the resulting keys.
 
 Add `.autoSignedUrls({ expiresIn: 300 })` to a private router bucket to receive a
 signed read URL with upload results. Save the key or canonical URL, not the
@@ -263,6 +276,11 @@ S3-compatible services may differ in support for KMS, storage classes, tags,
 checksums, and lifecycle policies; only enable settings your service supports.
 
 ## Limitations
+
+The configured router carries its provider type into both the React and backend
+clients. S3 uploads reject `temporary` and `replaceTargetUrl` in TypeScript as
+well as at runtime. Keep the concrete `typeof router` when configuring the React
+provider to preserve that inference.
 
 - `temporary` and `replaceTargetUrl` are rejected. Track application-owned files
   in your database and delete old files after successful replacement.

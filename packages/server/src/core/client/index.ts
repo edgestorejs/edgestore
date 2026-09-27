@@ -20,6 +20,7 @@ import {
   type ProviderMutationError,
   type ProviderReference,
   type ProviderReferenceInput,
+  type ProviderUploadOptions,
   type Simplify,
 } from '@edgestore/shared';
 import { createBucketClient } from './bucketClient';
@@ -95,16 +96,16 @@ export type UploadOptions = {
    * But it might take some time for the CDN cache to be cleared.
    * So maybe you will keep seeing the old file for a while.
    *
-   * If you want to replace an existing file, immediately leave the `manualFileName` option empty and use the `replaceTargetUrl` option.
+   * For providers supporting managed replacement, leave `manualFileName` empty and use `replaceTargetUrl`.
    */
   manualFileName?: string;
   /**
-   * Use this to replace an existing file.
+   * Replace an existing file when supported by the provider (not supported by S3).
    * It will automatically delete the existing file when the upload is complete.
    */
   replaceTargetUrl?: string;
   /**
-   * If true, the file needs to be confirmed by using the `confirm` function.
+   * For providers supporting temporary files (not S3), the file needs to be confirmed using `confirm`.
    * If the file is not confirmed within 24 hours, it will be deleted.
    *
    * This is useful for pages where the file is uploaded as soon as it is selected,
@@ -144,7 +145,10 @@ export type ServerUploadTransform = (params: {
   extension: string;
 }>;
 
-export type UploadFileRequest<TBucket extends AnyBuilder> = {
+export type UploadFileRequest<
+  TBucket extends AnyBuilder,
+  TProvider = unknown,
+> = {
   /**
    * Can be a string, a blob or an url.
    *
@@ -169,7 +173,7 @@ export type UploadFileRequest<TBucket extends AnyBuilder> = {
    * }
    */
   content: UploadContent;
-  options?: UploadOptions;
+  options?: ProviderUploadOptions<UploadOptions, TProvider>;
   signal?: AbortSignal;
   onProgress?: (progress: {
     transferredBytes: number;
@@ -278,7 +282,7 @@ type UploadBucketClient<TBucket extends AnyBuilder, TProvider> = [
   : {
       /** Upload a file directly from the backend. */
       upload: (
-        params: Prettify<UploadFileRequest<TBucket>>,
+        params: Prettify<UploadFileRequest<TBucket, TProvider>>,
       ) => Promise<
         Prettify<
           UploadFileRes<TBucket, ProviderCapabilityFile<TProvider, 'upload'>>

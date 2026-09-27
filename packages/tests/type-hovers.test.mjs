@@ -130,7 +130,7 @@ const expectedHovers = {
         category: "invoice" | "contract";
     };
     onProgressChange?: (progress: number) => void;
-    options?: UploadOptions;
+    options?: UploadOptions | undefined;
 }) => Promise<{
     url: string;
     size: number;

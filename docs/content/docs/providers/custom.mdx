@@ -80,6 +80,25 @@ export const myProvider = defineProvider({
 The resulting backend client exposes `get`, but not `upload`, `list`, or
 mutations, because those optional capabilities were not defined.
 
+## Upload option support
+
+A provider can declare unsupported lifecycle options without changing the
+standard upload API:
+
+```ts
+uploads: {
+  supportedOptions: { temporary: false, replaceTargetUrl: false },
+  // request, upload, and multipart implementations...
+}
+```
+
+The configured router carries these flags into browser and backend upload types.
+Explicit `false` flags reject the corresponding options, including options
+passed through variables. Omitted flags preserve the existing option types.
+Providers must still validate requests at runtime: type declarations do not
+validate JavaScript clients or HTTP requests. Declare these flags through
+`defineProvider` so their literal values are preserved.
+
 ## Complete provider
 
 A complete provider can add direct backend uploads, pagination, mutations, and

@@ -23,16 +23,16 @@ export type UploadOptions = {
    * But it might take some time for the CDN cache to be cleared.
    * So maybe you will keep seeing the old file for a while.
    *
-   * If you want to replace an existing file, immediately leave the `manualFileName` option empty and use the `replaceTargetUrl` option.
+   * For providers supporting managed replacement, leave `manualFileName` empty and use `replaceTargetUrl`.
    */
   manualFileName?: string;
   /**
-   * Use this to replace an existing file.
+   * Replace an existing file when supported by the provider (not supported by S3).
    * It will automatically delete the existing file when the upload is complete.
    */
   replaceTargetUrl?: string;
   /**
-   * If true, the file needs to be confirmed by using the `confirm` function.
+   * For providers supporting temporary files (not S3), the file needs to be confirmed using `confirm`.
    * If the file is not confirmed within 24 hours, it will be deleted.
    *
    * This is useful for pages where the file is uploaded as soon as it is selected,

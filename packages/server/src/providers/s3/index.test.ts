@@ -261,6 +261,46 @@ describe('s3', () => {
     );
   });
 
+  it.each([
+    '',
+    '/',
+    '.',
+    '..',
+    '../escape.txt',
+    'folder/../escape.txt',
+    'folder/./file.txt',
+  ])(
+    'rejects invalid custom paths before signing or contacting storage: %s',
+    async (path) => {
+      const provider = s3({
+        bucketName: 'storage',
+        region: 'us-east-1',
+        path: async () => path,
+      });
+      await expect(provider.uploads.request(uploadParams())).rejects.toThrow(
+        'stay within',
+      );
+      expect(awsMocks.getSignedUrl).not.toHaveBeenCalled();
+      expect(awsMocks.send).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([
+    'documents/../escape.txt',
+    'documents/./file.txt',
+    '/documents/file.txt',
+    'documents/file.txt/',
+  ])(
+    'rejects noncanonical key references before contacting storage: %s',
+    async (key) => {
+      const provider = s3({ bucketName: 'storage', region: 'us-east-1' });
+      await expect(
+        provider.files.get({ bucketName: 'documents', file: { key } }),
+      ).rejects.toThrow();
+      expect(awsMocks.send).not.toHaveBeenCalled();
+    },
+  );
+
   it('uses custom endpoint and baseUrl settings', async () => {
     const provider = s3({
       bucketName: 'storage-bucket',

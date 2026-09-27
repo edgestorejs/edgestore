@@ -210,9 +210,11 @@ describe('S3 backend and private files', () => {
     const { provider, send } = setup();
     send.mockResolvedValue({ ContentLength: 3, LastModified: new Date() });
     const es = initEdgeStore.create();
-    const configured = es.router({
-      documents: es.fileBucket().accessControl('private'),
-    }).provider(provider);
+    const configured = es
+      .router({
+        documents: es.fileBucket().accessControl('private'),
+      })
+      .provider(provider);
     const result = await configured.client.documents.upload({ content: 'abc' });
     expect(result.url).toMatch(
       /^https:\/\/storage.s3.us-east-1.amazonaws.com\/documents\//,

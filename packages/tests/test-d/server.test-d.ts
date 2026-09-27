@@ -88,9 +88,37 @@ void s3Router.client.files.get({ key: 'files/example.txt' });
 expectError(s3Router.client.files.list);
 expectError(s3Router.client.files.confirm);
 
-const s3PrivateClient = publicEs.router({
-  documents: publicEs.fileBucket().accessControl('private'),
-}).provider(s3()).client;
+type S3UploadInput = InferClientInputs<typeof s3Router>['files']['upload'];
+expectAssignable<S3UploadInput>({
+  content: 'hello',
+  options: {
+    manualFileName: 'report.txt',
+    transform: ({ blob, extension }) => ({ blob, extension }),
+  },
+});
+expectNotAssignable<S3UploadInput>({
+  content: 'hello',
+  options: { temporary: true },
+});
+expectNotAssignable<S3UploadInput>({
+  content: 'hello',
+  options: { replaceTargetUrl: 'https://files.example/old' },
+});
+const unsupportedOptions = { manualFileName: 'report.txt', temporary: true };
+expectNotAssignable<S3UploadInput>({
+  content: 'hello',
+  options: unsupportedOptions,
+});
+expectAssignable<InferClientInputs<typeof publicRouter>['files']['upload']>({
+  content: 'hello',
+  options: { temporary: true, replaceTargetUrl: 'https://files.example/old' },
+});
+
+const s3PrivateClient = publicEs
+  .router({
+    documents: publicEs.fileBucket().accessControl('private'),
+  })
+  .provider(s3()).client;
 void s3PrivateClient.documents.createSignedUrl({
   url: { key: 'documents/report.pdf' },
   expiresIn: 300,
