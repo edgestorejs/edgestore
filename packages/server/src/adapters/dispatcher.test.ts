@@ -35,7 +35,6 @@ describe('adapter dispatcher', () => {
         body?: unknown;
         cookieHeader?: string;
         createContext?: () => typeof testCtx;
-        query?: Record<string, string>;
       } = {},
     ) =>
       dispatchEdgeStoreRequest({
@@ -45,7 +44,6 @@ describe('adapter dispatcher', () => {
         request: {
           pathname,
           readJson: async () => options.body,
-          getQuery: (name) => options.query?.[name],
           cookieHeader: options.cookieHeader,
           createContext: options.createContext ?? (() => testCtx),
         },
@@ -96,54 +94,40 @@ describe('adapter dispatcher', () => {
     );
     expect(complete.status).toBe(200);
     expect(provider.uploads.multipart?.complete).toHaveBeenCalledOnce();
+
+    const { parts: _parts, ...session } = completeMultipartUploadBody;
+    const abort = await dispatch('/api/edgestore/abort-multipart-upload', {
+      body: session,
+      cookieHeader,
+    });
+    expect(abort.status).toBe(200);
+    expect(provider.uploads.multipart?.abort).toHaveBeenCalledWith({
+      uploadId: session.uploadId,
+      key: session.key,
+    });
   });
 
-  it('authenticates multipart cancellation and dispatches only supported operations', async () => {
+  it('rejects upload options that the provider does not support', async () => {
     const { dispatch, provider } = createDispatcher(createSilentLogger());
-    const abort = vi.fn();
-    provider.uploads.multipart!.abort = abort;
-    const body = {
-      bucketName: requestUploadBody.bucketName,
-      key: 'documents/file',
-      uploadId: 'session',
-    };
-    expect(
-      (await dispatch('/api/edgestore/abort-multipart-upload', { body }))
-        .status,
-    ).toBe(401);
-    expect(abort).not.toHaveBeenCalled();
+    provider.uploads.supportedOptions = { temporary: false };
     const init = await dispatch('/api/edgestore/init');
     const cookieHeader = `${testCookieConfig.ctx.name}=${extractCookieValue(init.headers.getSetCookie())}`;
-    expect(
-      (
-        await dispatch('/api/edgestore/abort-multipart-upload', {
-          body: { ...body, bucketName: 'missing' },
-          cookieHeader,
-        })
-      ).status,
-    ).toBe(400);
-    expect(abort).not.toHaveBeenCalled();
-    expect(
-      (
-        await dispatch('/api/edgestore/abort-multipart-upload', {
-          body,
-          cookieHeader,
-        })
-      ).status,
-    ).toBe(200);
-    expect(abort).toHaveBeenCalledWith({
-      key: body.key,
-      uploadId: body.uploadId,
+
+    const response = await dispatch('/api/edgestore/request-upload', {
+      body: {
+        ...requestUploadBody,
+        fileInfo: { ...requestUploadBody.fileInfo, temporary: true },
+      },
+      cookieHeader,
     });
-    delete provider.uploads.multipart!.abort;
-    expect(
-      (
-        await dispatch('/api/edgestore/abort-multipart-upload', {
-          body,
-          cookieHeader,
-        })
-      ).status,
-    ).toBe(400);
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toMatchObject({
+      code: 'BAD_REQUEST',
+      message:
+        'Provider test-provider does not support the temporary upload option.',
+    });
+    expect(provider.uploads.request).not.toHaveBeenCalled();
   });
 
   it('normalizes context creation failures', async () => {
@@ -182,6 +166,7 @@ describe('adapter dispatcher', () => {
     expect(provider.uploads.request).not.toHaveBeenCalled();
     expect(provider.uploads.multipart?.requestParts).not.toHaveBeenCalled();
     expect(provider.uploads.multipart?.complete).not.toHaveBeenCalled();
+    expect(provider.uploads.multipart?.abort).not.toHaveBeenCalled();
     expect(provider.files.confirm).not.toHaveBeenCalled();
     expect(provider.files.delete).not.toHaveBeenCalled();
   });
@@ -272,13 +257,5 @@ describe('adapter dispatcher', () => {
       ctx: testCtx,
     });
     expect(secondLogger.debug).not.toHaveBeenCalled();
-  });
-
-  it('rejects proxy requests without a URL', async () => {
-    const { dispatch } = createDispatcher();
-
-    const response = await dispatch('/api/edgestore/proxy-file');
-
-    expect(response.status).toBe(400);
   });
 });

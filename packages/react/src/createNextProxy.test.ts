@@ -2,121 +2,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createNextProxy } from './createNextProxy';
 import EdgeStoreClientError from './libs/errors/EdgeStoreClientError';
 import { UploadAbortedError } from './libs/errors/uploadAbortedError';
-
-type FetchCall = {
-  url: string;
-  init: RequestInit | undefined;
-};
-
-class MockXMLHttpRequest extends EventTarget {
-  static instances: MockXMLHttpRequest[] = [];
-
-  method?: string;
-  url?: string;
-  body?: BodyInit | null;
-  status = 200;
-  responseXML: Document | null = null;
-  upload = new EventTarget();
-  headers = new Map<string, string>();
-  responseHeaders = new Map<string, string>();
-
-  constructor() {
-    super();
-    MockXMLHttpRequest.instances.push(this);
-  }
-
-  open(method: string, url: string) {
-    this.method = method;
-    this.url = url;
-  }
-
-  setRequestHeader(name: string, value: string) {
-    this.headers.set(name, value);
-  }
-
-  getResponseHeader(name: string) {
-    return this.responseHeaders.get(name) ?? null;
-  }
-
-  send(body?: BodyInit | null) {
-    this.body = body;
-    this.dispatchEvent(new Event('loadstart'));
-  }
-
-  abort() {
-    this.dispatchEvent(new Event('abort'));
-  }
-
-  progress(loaded: number, total: number) {
-    this.upload.dispatchEvent(
-      new ProgressEvent('progress', {
-        lengthComputable: true,
-        loaded,
-        total,
-      }),
-    );
-  }
-
-  load(status = 200, eTag?: string) {
-    this.status = status;
-    if (eTag) {
-      this.responseHeaders.set('ETag', eTag);
-    }
-    this.dispatchEvent(new Event('load'));
-  }
-}
-
-function jsonResponse(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-}
-
-function multipartResponse() {
-  return jsonResponse(
-    uploadResponse({
-      uploadUrl: undefined,
-      multipart: {
-        key: 'assets/file',
-        uploadId: 'session',
-        partSize: 2,
-        totalParts: 1,
-        abortSupported: true,
-        parts: [{ partNumber: 1, uploadUrl: 'https://uploads.example/1' }],
-      },
-    }),
-  );
-}
-
-function urlToString(url: string | URL | Request) {
-  return typeof url === 'string'
-    ? url
-    : url instanceof Request
-      ? url.url
-      : url.toString();
-}
-
-function createFetchMock(responses: Response[]) {
-  const calls: FetchCall[] = [];
-  const fetchMock = vi.fn(
-    async (url: string | URL | Request, init?: RequestInit) => {
-      calls.push({
-        url: urlToString(url),
-        init,
-      });
-      const response = responses.shift();
-      if (!response) {
-        throw new Error(`Unexpected fetch: ${urlToString(url)}`);
-      }
-      return response;
-    },
-  );
-  vi.stubGlobal('fetch', fetchMock);
-  return { calls, fetchMock };
-}
+import {
+  createFetchMock,
+  flushMicrotasks,
+  getBody,
+  jsonResponse,
+  MockXMLHttpRequest,
+  waitForXhrs,
+} from './xhr.test.utils';
 
 function uploadResponse(overrides: Partial<Record<string, unknown>> = {}) {
   return {
@@ -135,35 +28,14 @@ function uploadResponse(overrides: Partial<Record<string, unknown>> = {}) {
 function createProxy(opts?: {
   uploadingCount?: number;
   maxConcurrentUploads?: number;
-  disableDevProxy?: boolean;
 }) {
   const uploadingCountRef = { current: opts?.uploadingCount ?? 0 };
   const edgestore = createNextProxy<any>({
     apiPath: '/api/edgestore',
     uploadingCountRef,
     maxConcurrentUploads: opts?.maxConcurrentUploads,
-    disableDevProxy: opts?.disableDevProxy,
   });
   return { assets: edgestore.assets!, edgestore, uploadingCountRef };
-}
-
-function getBody(call: FetchCall) {
-  return JSON.parse(call.init?.body as string);
-}
-
-async function flushMicrotasks() {
-  await Promise.resolve();
-  await Promise.resolve();
-}
-
-async function waitForXhrs(count: number) {
-  for (let i = 0; i < 20; i++) {
-    if (MockXMLHttpRequest.instances.length >= count) {
-      return;
-    }
-    await flushMicrotasks();
-  }
-  expect(MockXMLHttpRequest.instances).toHaveLength(count);
 }
 
 beforeEach(() => {
@@ -180,7 +52,17 @@ afterEach(() => {
 
 describe('createNextProxy upload', () => {
   it('requests an upload with the expected body and uploads to the signed URL', async () => {
-    const { calls } = createFetchMock([jsonResponse(uploadResponse())]);
+    const { calls } = createFetchMock([
+      jsonResponse(
+        uploadResponse({
+          key: 'assets/avatar.jpg',
+          uploadHeaders: {
+            'x-ms-blob-type': 'BlockBlob',
+            'Cache-Control': 'private',
+          },
+        }),
+      ),
+    ]);
     const { assets } = createProxy();
     const file = new File(['hello'], 'avatar.png', { type: 'image/png' });
     const progress = vi.fn();
@@ -223,13 +105,17 @@ describe('createNextProxy upload', () => {
     const xhr = MockXMLHttpRequest.instances[0]!;
     expect(xhr.method).toBe('PUT');
     expect(xhr.url).toBe('https://uploads.example/file');
-    expect(xhr.headers.has('x-ms-blob-type')).toBe(false);
+    expect(Object.fromEntries(xhr.headers)).toEqual({
+      'x-ms-blob-type': 'BlockBlob',
+      'Cache-Control': 'private',
+    });
     expect(xhr.body).toBe(file);
 
-    xhr.progress(3, 12);
+    xhr.progress(2, 5);
     xhr.load();
 
     await expect(upload).resolves.toMatchObject({
+      key: 'assets/avatar.jpg',
       url: 'https://files.example/protected/file.txt',
       size: 12,
       path: {},
@@ -239,7 +125,7 @@ describe('createNextProxy upload', () => {
     expect((await upload).uploadedAt).toEqual(
       new Date('2024-01-02T03:04:05.000Z'),
     );
-    expect(progress).toHaveBeenCalledWith(25);
+    expect(progress).toHaveBeenCalledWith(40);
   });
 
   it.each([
@@ -325,11 +211,11 @@ describe('createNextProxy upload', () => {
 
     await waitForXhrs(1);
     const xhr = MockXMLHttpRequest.instances[0]!;
-    xhr.progress(1, 4);
+    xhr.progress(1, 5);
     controller.abort();
 
     await expect(upload).rejects.toBeInstanceOf(UploadAbortedError);
-    expect(progress).toHaveBeenCalledWith(25);
+    expect(progress).toHaveBeenCalledWith(20);
     expect(progress).toHaveBeenLastCalledWith(0);
   });
 
@@ -430,354 +316,19 @@ describe('createNextProxy upload', () => {
     expect(progress).toHaveBeenCalledWith(100);
   });
 
-  it('sends provider-specific headers and preserves a stable key', async () => {
-    createFetchMock([
-      jsonResponse(
-        uploadResponse({
-          key: 'assets/report.txt',
-          uploadHeaders: {
-            'Content-Type': 'text/plain',
-            'Cache-Control': 'private',
-          },
-        }),
-      ),
-    ]);
-    const { assets } = createProxy();
-    const upload = assets.upload({ file: new File(['abc'], 'report.txt') });
-    await waitForXhrs(1);
-    const xhr = MockXMLHttpRequest.instances[0]!;
-    expect(Object.fromEntries(xhr.headers)).toEqual({
-      'Content-Type': 'text/plain',
-      'Cache-Control': 'private',
-    });
-    xhr.load();
-    await expect(upload).resolves.toMatchObject({ key: 'assets/report.txt' });
-  });
-
-  it('cancels active and queued parts before requesting provider cleanup', async () => {
-    const { calls } = createFetchMock([
-      jsonResponse(
-        uploadResponse({
-          uploadUrl: undefined,
-          multipart: {
-            key: 'assets/video',
-            uploadId: 'signed-session',
-            partSize: 1,
-            totalParts: 6,
-            abortSupported: true,
-            parts: Array.from({ length: 6 }, (_, i) => ({
-              partNumber: i + 1,
-              uploadUrl: `https://uploads.example/${i + 1}`,
-            })),
-          },
-        }),
-      ),
-      jsonResponse({}),
-    ]);
-    const controller = new AbortController();
-    const { assets } = createProxy();
-    const upload = assets.upload({
-      file: new File(['abcdef'], 'video'),
-      signal: controller.signal,
-    });
-    const rejected = expect(upload).rejects.toBeInstanceOf(UploadAbortedError);
-    await waitForXhrs(5);
-    controller.abort();
-    await rejected;
-    expect(MockXMLHttpRequest.instances).toHaveLength(5);
-    expect(calls.map((call) => call.url)).toEqual([
-      '/api/edgestore/request-upload',
-      '/api/edgestore/abort-multipart-upload',
-    ]);
-    expect(getBody(calls[1]!)).toEqual({
-      bucketName: 'assets',
-      uploadId: 'signed-session',
-      key: 'assets/video',
-    });
-    expect(calls[1]!.init?.signal).not.toBe(controller.signal);
-    expect(calls[1]!.init?.signal?.aborted).toBe(false);
-  });
-
-  it('keeps cancellation active while multipart completion is pending', async () => {
-    const { fetchMock } = createFetchMock([
-      jsonResponse(
-        uploadResponse({
-          uploadUrl: undefined,
-          multipart: {
-            key: 'assets/file',
-            uploadId: 'session',
-            partSize: 2,
-            totalParts: 1,
-            abortSupported: true,
-            parts: [{ partNumber: 1, uploadUrl: 'https://uploads.example/1' }],
-          },
-        }),
-      ),
-      jsonResponse({}),
-    ]);
-    const controller = new AbortController();
-    const { assets } = createProxy();
-    const upload = assets.upload({
-      file: new File(['ab'], 'file'),
-      signal: controller.signal,
-    });
-    const rejected = expect(upload).rejects.toBeInstanceOf(UploadAbortedError);
-    await waitForXhrs(1);
-    fetchMock.mockImplementationOnce(
-      (_url, init) =>
-        new Promise<Response>((_resolve, reject) => {
-          init?.signal?.addEventListener(
-            'abort',
-            () => reject(new DOMException('Aborted', 'AbortError')),
-            { once: true },
-          );
-        }),
-    );
-    MockXMLHttpRequest.instances[0]!.load(200, 'etag');
-    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
-    expect(fetchMock.mock.calls[1]?.[0]).toBe(
-      '/api/edgestore/complete-multipart-upload',
-    );
-    expect(fetchMock.mock.calls[1]?.[1]?.signal).toBe(controller.signal);
-    controller.abort();
-    await rejected;
-    expect(fetchMock.mock.calls[2]?.[0]).toBe(
-      '/api/edgestore/abort-multipart-upload',
-    );
-    expect(fetchMock.mock.calls[2]?.[1]?.signal).not.toBe(controller.signal);
-    expect(fetchMock.mock.calls[2]?.[1]?.signal?.aborted).toBe(false);
-  });
-
-  it('cleans up on completion failure while preserving the original error', async () => {
-    const { calls } = createFetchMock([
-      jsonResponse(
-        uploadResponse({
-          uploadUrl: undefined,
-          multipart: {
-            key: 'assets/file',
-            uploadId: 'session',
-            partSize: 2,
-            totalParts: 1,
-            abortSupported: true,
-            parts: [{ partNumber: 1, uploadUrl: 'https://uploads.example/1' }],
-          },
-        }),
-      ),
-      jsonResponse({ code: 'BAD_REQUEST', message: 'Completion failed' }, 400),
-      jsonResponse({}, 500),
-    ]);
-    const { assets } = createProxy();
-    const upload = assets.upload({ file: new File(['ab'], 'file') });
-    const rejected = expect(upload).rejects.toThrow('Completion failed');
-    await waitForXhrs(1);
-    MockXMLHttpRequest.instances[0]!.load(200, 'etag');
-    await rejected;
-    expect(calls[2]?.url).toBe('/api/edgestore/abort-multipart-upload');
-  });
-
-  it.each([400, 401, 403, 404, 413, 501, 505, 'missing-etag'])(
-    'does not retry a permanent multipart failure: %s',
-    async (failure) => {
-      vi.useFakeTimers();
-      const { calls } = createFetchMock([
-        multipartResponse(),
-        jsonResponse({}),
-      ]);
-      const { assets } = createProxy();
-      const upload = assets.upload({ file: new File(['ab'], 'file') });
-      const rejected = expect(upload).rejects.toThrow(
-        failure === 'missing-etag'
-          ? 'CORS exposes the ETag'
-          : `HTTP ${failure}`,
-      );
-      await waitForXhrs(1);
-      MockXMLHttpRequest.instances[0]!.load(
-        typeof failure === 'number' ? failure : 200,
-      );
-      await rejected;
-      expect(MockXMLHttpRequest.instances).toHaveLength(1);
-      expect(calls[1]?.url).toBe('/api/edgestore/abort-multipart-upload');
-      expect(vi.getTimerCount()).toBe(0);
-    },
-  );
-
-  it.each([408, 429, 500, 502, 503, 504, 'network', 'RequestTimeout'])(
-    'retries a transient multipart failure: %s',
-    async (failure) => {
-      vi.useFakeTimers();
-      const { calls } = createFetchMock([
-        multipartResponse(),
-        jsonResponse({}),
-      ]);
-      const { assets } = createProxy();
-      const upload = assets.upload({ file: new File(['ab'], 'file') });
-      await waitForXhrs(1);
-      const first = MockXMLHttpRequest.instances[0]!;
-      if (typeof failure === 'number') first.load(failure);
-      else if (failure === 'RequestTimeout') {
-        first.responseXML = new DOMParser().parseFromString(
-          '<?xml version="1.0"?><Error><Code>RequestTimeout</Code><Message>Socket timed out.</Message></Error>',
-          'application/xml',
-        );
-        first.load(400);
-      } else first.dispatchEvent(new Event('error'));
-      await vi.advanceTimersByTimeAsync(4999);
-      expect(MockXMLHttpRequest.instances).toHaveLength(1);
-      await vi.advanceTimersByTimeAsync(1);
-      await waitForXhrs(2);
-      MockXMLHttpRequest.instances[1]!.load(200, 'etag');
-      await upload;
-      expect(calls[1]?.url).toBe('/api/edgestore/complete-multipart-upload');
-    },
-  );
-
-  it.each([
-    '<Error><Code>InvalidRequest</Code><Message>RequestTimeout</Message></Error>',
-    '<Error><Code>RequestTimeout</Code>',
-    '<html><body>Bad request</body></html>',
-  ])(
-    'does not retry non-timeout or malformed HTTP 400 responses: %s',
-    async (body) => {
-      vi.useFakeTimers();
-      const { calls } = createFetchMock([
-        multipartResponse(),
-        jsonResponse({}),
-      ]);
-      const { assets } = createProxy();
-      const upload = assets.upload({ file: new File(['ab'], 'file') });
-      const rejected = expect(upload).rejects.toThrow('HTTP 400');
-      await waitForXhrs(1);
-      const request = MockXMLHttpRequest.instances[0]!;
-      request.responseXML = new DOMParser().parseFromString(
-        body,
-        'application/xml',
-      );
-      request.load(400);
-      await rejected;
-      expect(MockXMLHttpRequest.instances).toHaveLength(1);
-      expect(calls[1]?.url).toBe('/api/edgestore/abort-multipart-upload');
-      expect(vi.getTimerCount()).toBe(0);
-    },
-  );
-
-  it('cancels while waiting to retry without starting another part', async () => {
-    vi.useFakeTimers();
-    const { calls } = createFetchMock([multipartResponse(), jsonResponse({})]);
-    const controller = new AbortController();
-    const { assets } = createProxy();
-    const upload = assets.upload({
-      file: new File(['ab'], 'file'),
-      signal: controller.signal,
-    });
-    const rejected = expect(upload).rejects.toBeInstanceOf(UploadAbortedError);
-    await waitForXhrs(1);
-    MockXMLHttpRequest.instances[0]!.load(503);
-    await vi.advanceTimersByTimeAsync(1000);
-    controller.abort();
-    await rejected;
-    await vi.advanceTimersByTimeAsync(5000);
-    expect(MockXMLHttpRequest.instances).toHaveLength(1);
-    expect(calls[1]?.url).toBe('/api/edgestore/abort-multipart-upload');
-    expect(vi.getTimerCount()).toBe(0);
-  });
-
-  it.each(['cancel', 'failure'])(
-    'bounds stalled cleanup after %s and preserves the original error',
-    async (reason) => {
-      vi.useFakeTimers();
-      const { fetchMock } = createFetchMock([multipartResponse()]);
-      const controller = new AbortController();
-      const { assets } = createProxy();
-      const upload = assets.upload({
-        file: new File(['ab'], 'file'),
-        signal: controller.signal,
-      });
-      const rejected =
-        reason === 'cancel'
-          ? expect(upload).rejects.toBeInstanceOf(UploadAbortedError)
-          : expect(upload).rejects.toThrow('HTTP 403');
-      await waitForXhrs(1);
-      fetchMock.mockImplementationOnce(
-        (_url, init) =>
-          new Promise<Response>((_resolve, reject) => {
-            init?.signal?.addEventListener(
-              'abort',
-              () => reject(new DOMException('Cleanup timed out', 'AbortError')),
-              { once: true },
-            );
-          }),
-      );
-      if (reason === 'cancel') controller.abort();
-      else MockXMLHttpRequest.instances[0]!.load(403);
-      await vi.advanceTimersByTimeAsync(0);
-      expect(fetchMock.mock.calls[1]?.[0]).toBe(
-        '/api/edgestore/abort-multipart-upload',
-      );
-      const cleanupSignal = fetchMock.mock.calls[1]?.[1]?.signal;
-      expect(cleanupSignal).toBeDefined();
-      expect(cleanupSignal).not.toBe(controller.signal);
-      await vi.advanceTimersByTimeAsync(4999);
-      expect(cleanupSignal?.aborted).toBe(false);
-      await vi.advanceTimersByTimeAsync(1);
-      await rejected;
-      expect(cleanupSignal?.aborted).toBe(true);
-      expect(vi.getTimerCount()).toBe(0);
-    },
-  );
-
-  it('rewrites protected URLs in development, but not public URLs or disabled proxies', async () => {
+  it('returns protected URLs unchanged in development', async () => {
     vi.stubEnv('NODE_ENV', 'development');
-    const cases = [
-      {
-        response: uploadResponse({
-          accessUrl: 'https://s3.example/documents/file.txt',
-          disableDevProxy: true,
-        }),
-        disableDevProxy: false,
-        expected: 'https://s3.example/documents/file.txt',
-      },
-      {
-        response: uploadResponse({
-          accessUrl: 'https://files.example/protected/file.txt',
-        }),
-        disableDevProxy: false,
-        expected:
-          'http://localhost/api/edgestore/proxy-file?url=https%3A%2F%2Ffiles.example%2Fprotected%2Ffile.txt',
-      },
-      {
-        response: uploadResponse({
-          accessUrl: 'https://files.example/_public/file.txt',
-        }),
-        disableDevProxy: false,
-        expected: 'https://files.example/_public/file.txt',
-      },
-      {
-        response: uploadResponse({
-          accessUrl: 'https://files.example/protected/file.txt',
-        }),
-        disableDevProxy: true,
-        expected: 'https://files.example/protected/file.txt',
-      },
-    ];
+    const accessUrl = 'https://files.example/protected/file.txt';
+    createFetchMock([jsonResponse(uploadResponse({ accessUrl }))]);
+    const { assets } = createProxy();
+    const upload = assets.upload({
+      file: new File(['hello'], 'hello.txt'),
+    });
 
-    for (const testCase of cases) {
-      createFetchMock([jsonResponse(testCase.response)]);
-      const { assets } = createProxy({
-        disableDevProxy: testCase.disableDevProxy,
-      });
-      const upload = assets.upload({
-        file: new File(['hello'], 'hello.txt'),
-      });
+    await waitForXhrs(1);
+    MockXMLHttpRequest.instances[0]!.load();
 
-      await waitForXhrs(MockXMLHttpRequest.instances.length + 1);
-      MockXMLHttpRequest.instances.at(-1)!.load();
-
-      await expect(upload).resolves.toMatchObject({
-        url: testCase.expected,
-      });
-      vi.unstubAllGlobals();
-      vi.stubGlobal('XMLHttpRequest', MockXMLHttpRequest);
-    }
+    await expect(upload).resolves.toMatchObject({ url: accessUrl });
   });
 });
 

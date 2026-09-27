@@ -96,16 +96,16 @@ export type UploadOptions = {
    * But it might take some time for the CDN cache to be cleared.
    * So maybe you will keep seeing the old file for a while.
    *
-   * For providers supporting managed replacement, leave `manualFileName` empty and use `replaceTargetUrl`.
+   * For providers that support managed replacement, leave `manualFileName` empty and use `replaceTargetUrl`.
    */
   manualFileName?: string;
   /**
-   * Replace an existing file when supported by the provider (not supported by S3).
+   * Replace an existing file, when supported by the provider.
    * It will automatically delete the existing file when the upload is complete.
    */
   replaceTargetUrl?: string;
   /**
-   * For providers supporting temporary files (not S3), the file needs to be confirmed using `confirm`.
+   * When supported by the provider, the file needs to be confirmed by using the `confirm` function.
    * If the file is not confirmed within 24 hours, it will be deleted.
    *
    * This is useful for pages where the file is uploaded as soon as it is selected,
@@ -383,16 +383,12 @@ type BackendClient<
 export function createBackendClient<
   TRouter extends AnyRouter,
   TProvider extends AnyBackendProvider,
->(
-  router: TRouter,
-  provider: TProvider,
-  baseUrl?: string,
-): BackendClient<TRouter, TProvider> {
+>(router: TRouter, provider: TProvider): BackendClient<TRouter, TProvider> {
   const bucketNames = Object.keys(router.buckets) as (keyof TRouter['buckets'] &
     string)[];
   const entries = bucketNames.map((bucketName) => [
     bucketName,
-    createBucketClient(router, bucketName, { provider, baseUrl }),
+    createBucketClient(router, bucketName, { provider }),
   ]);
 
   return Object.fromEntries(entries) as BackendClient<TRouter, TProvider>;

@@ -15,6 +15,8 @@ import {
 import EdgeStoreClientError from './libs/errors/EdgeStoreClientError';
 import { handleError } from './libs/errors/handleError';
 import { UploadAbortedError } from './libs/errors/uploadAbortedError';
+import { putBlob } from './libs/putBlob';
+import { multipartUpload } from './multipartUpload';
 
 type UploadResponse<TBucket extends AnyBuilder> =
   (TBucket['_def']['type'] extends 'IMAGE'
@@ -35,6 +37,7 @@ type UploadResponse<TBucket extends AnyBuilder> =
         path: InferBucketPathObject<TBucket>;
         pathOrder: InferBucketPathOrder<TBucket>;
       }) & {
+    /** Stable object key, when the provider exposes one. */
     key?: string;
   } & (undefined extends TBucket['_def']['autoSignedUrls']
       ? unknown
@@ -58,8 +61,8 @@ export type BucketFunctions<TRouter extends AnyRouter> = {
      *  input: {...} // if the bucket has an input schema
      *  options: {
      *   manualFileName: file.name, // if you want to use a custom file name
-     *   replaceTargetUrl: url, // managed replacement, when supported by the provider
-     *   temporary: true, // temporary files, when supported by the provider
+     *   replaceTargetUrl: url, // replace an existing file, when the provider supports it
+     *   temporary: true, // delete the file unless confirmed within 24 hours, when the provider supports it
      *  }
      * })
      */
@@ -98,12 +101,10 @@ export function createNextProxy<TRouter extends AnyRouter>({
   apiPath,
   uploadingCountRef,
   maxConcurrentUploads = 5,
-  disableDevProxy,
 }: {
   apiPath: string;
   uploadingCountRef: React.MutableRefObject<number>;
   maxConcurrentUploads?: number;
-  disableDevProxy?: boolean;
 }) {
   return new Proxy<BucketFunctions<TRouter>>({} as BucketFunctions<TRouter>, {
     get(_, prop) {
@@ -138,14 +139,10 @@ export function createNextProxy<TRouter extends AnyRouter>({
             }
 
             uploadingCountRef.current++;
-            const fileInfo = await uploadFile(
-              params,
-              {
-                bucketName: bucketName as string,
-                apiPath,
-              },
-              disableDevProxy,
-            );
+            const fileInfo = await uploadFile(params, {
+              bucketName: bucketName as string,
+              apiPath,
+            });
             return fileInfo;
           } finally {
             uploadingCountRef.current--;
@@ -208,7 +205,6 @@ async function uploadFile(
     apiPath: string;
     bucketName: string;
   },
-  disableDevProxy?: boolean,
 ) {
   try {
     onProgressChange?.(0);
@@ -248,42 +244,34 @@ async function uploadFile(
       await handleError(res);
     }
     const json = (await res.json()) as SharedRequestUploadRes;
+    const blob = uploadFileInfo.file;
     if ('multipart' in json) {
       await multipartUpload({
-        bucketName,
-        multipartInfo: json.multipart,
-        onProgressChange,
-        signal,
-        file: uploadFileInfo.file,
         apiPath,
+        bucketName,
+        multipart: json.multipart,
+        file: blob,
+        signal,
+        onProgressChange,
       });
     } else if ('uploadUrl' in json) {
-      // Single part upload
-      // Upload the file to the signed URL and get the progress
-      await uploadFileInner({
-        file: uploadFileInfo.file,
-        uploadUrl: json.uploadUrl,
+      await putBlob({
+        blob,
+        url: json.uploadUrl,
         headers: json.uploadHeaders,
-        onProgressChange,
         signal,
+        onProgress: (loadedBytes) =>
+          onProgressChange?.(
+            Math.round((loadedBytes / (blob.size || 1)) * 10000) / 100,
+          ),
       });
     } else {
       throw new EdgeStoreClientError('An error occurred');
     }
     return {
       key: json.key,
-      url: getUrl(
-        json.accessUrl,
-        apiPath,
-        disableDevProxy || json.disableDevProxy,
-      ),
-      thumbnailUrl: json.thumbnailUrl
-        ? getUrl(
-            json.thumbnailUrl,
-            apiPath,
-            disableDevProxy || json.disableDevProxy,
-          )
-        : null,
+      url: json.accessUrl,
+      thumbnailUrl: json.thumbnailUrl ?? null,
       ...mapSignedUploadAccess(json),
       size: json.size,
       uploadedAt: new Date(json.uploadedAt),
@@ -369,230 +357,6 @@ function mapSignedUploadAccess(res: SharedRequestUploadRes) {
     signedThumbnailUrl: res.accessSignedThumbnailUrl ?? null,
   };
 }
-/**
- * Protected files need third-party cookies to work.
- * Since third party cookies don't work on localhost,
- * we need to proxy the file through the server.
- */
-function getUrl(url: string, apiPath: string, disableDevProxy?: boolean) {
-  const mode =
-    typeof process !== 'undefined'
-      ? process.env.NODE_ENV
-      : // @ts-expect-error - DEV is injected by Vite
-        import.meta.env?.DEV
-        ? 'development'
-        : 'production';
-  if (
-    mode === 'development' &&
-    !url.includes('/_public/') &&
-    !disableDevProxy
-  ) {
-    const proxyUrl = new URL(window.location.origin);
-    proxyUrl.pathname = `${apiPath}/proxy-file`;
-    proxyUrl.search = new URLSearchParams({
-      url,
-    }).toString();
-    return proxyUrl.toString();
-  }
-  return url;
-}
-
-class RetryableUploadError extends EdgeStoreClientError {}
-
-function isRetryableUploadResponse(request: XMLHttpRequest) {
-  if ([408, 429, 500, 502, 503, 504].includes(request.status)) return true;
-  // S3 reports socket timeouts as HTTP 400 with an XML error code.
-  return (
-    request.status === 400 &&
-    request.responseXML?.querySelector('Error > Code')?.textContent?.trim() ===
-      'RequestTimeout'
-  );
-}
-
-async function uploadFileInner(props: {
-  file: File | Blob;
-  uploadUrl: string;
-  headers?: Record<string, string>;
-  onProgressChange?: OnProgressChangeHandler;
-  signal?: AbortSignal;
-}) {
-  const { file, uploadUrl, headers, onProgressChange, signal } = props;
-  const promise = new Promise<string | null>((resolve, reject) => {
-    if (signal?.aborted) {
-      reject(new UploadAbortedError('File upload aborted'));
-      return;
-    }
-
-    const request = new XMLHttpRequest();
-    request.open('PUT', uploadUrl);
-    for (const [name, value] of Object.entries(headers ?? {})) {
-      request.setRequestHeader(name, value);
-    }
-    request.addEventListener('loadstart', () => {
-      onProgressChange?.(0);
-    });
-    request.upload.addEventListener('progress', (e) => {
-      if (e.lengthComputable) {
-        // 2 decimal progress
-        const progress = Math.round((e.loaded / e.total) * 10000) / 100;
-        onProgressChange?.(progress);
-      }
-    });
-    request.addEventListener('load', () => {
-      // `error` event is not fired for HTTP errors (e.g. 403).
-      // So we must check the status code here.
-      if (request.status >= 200 && request.status < 300) {
-        // Return the ETag header (needed to complete multipart upload)
-        resolve(request.getResponseHeader('ETag'));
-        return;
-      }
-      const ErrorClass = isRetryableUploadResponse(request)
-        ? RetryableUploadError
-        : EdgeStoreClientError;
-      reject(new ErrorClass(`Error uploading file (HTTP ${request.status})`));
-    });
-    request.addEventListener('error', () => {
-      reject(new RetryableUploadError('Error uploading file'));
-    });
-    request.addEventListener('abort', () => {
-      reject(new UploadAbortedError('File upload aborted'));
-    });
-
-    if (signal) {
-      const abort = () => request.abort();
-      signal.addEventListener('abort', abort, { once: true });
-      request.addEventListener(
-        'loadend',
-        () => signal.removeEventListener('abort', abort),
-        { once: true },
-      );
-    }
-
-    request.send(file);
-  });
-  return promise;
-}
-
-async function multipartUpload(params: {
-  bucketName: string;
-  multipartInfo: Extract<
-    SharedRequestUploadRes,
-    { multipart: any }
-  >['multipart'];
-  onProgressChange: OnProgressChangeHandler | undefined;
-  file: File | Blob;
-  signal: AbortSignal | undefined;
-  apiPath: string;
-}) {
-  const { bucketName, multipartInfo, onProgressChange, file, signal, apiPath } =
-    params;
-  const { partSize, parts, uploadId, key } = multipartInfo;
-  const uploadingParts: {
-    partNumber: number;
-    progress: number;
-  }[] = [];
-  const uploadPart = async (
-    params: {
-      part: (typeof parts)[number];
-      chunk: Blob;
-    },
-    partSignal: AbortSignal,
-  ) => {
-    const { part, chunk } = params;
-    const { uploadUrl } = part;
-    const eTag = await uploadFileInner({
-      file: chunk,
-      uploadUrl,
-      signal: partSignal,
-      onProgressChange: (progress) => {
-        const uploadingPart = uploadingParts.find(
-          (p) => p.partNumber === part.partNumber,
-        );
-        if (uploadingPart) {
-          uploadingPart.progress = (progress * chunk.size) / 100;
-        } else {
-          uploadingParts.push({
-            partNumber: part.partNumber,
-            progress: (progress * chunk.size) / 100,
-          });
-        }
-        const totalProgress =
-          Math.round(
-            (uploadingParts.reduce((acc, p) => acc + p.progress, 0) /
-              (file.size || 1)) *
-              10000,
-          ) / 100;
-        onProgressChange?.(totalProgress);
-      },
-    });
-    if (!eTag) {
-      throw new EdgeStoreClientError(
-        'Could not get ETag from multipart response. Check that storage CORS exposes the ETag header.',
-      );
-    }
-    return {
-      partNumber: part.partNumber,
-      eTag,
-    };
-  };
-
-  try {
-    // Upload the parts in parallel
-    const completedParts = await queuedPromises({
-      items: parts.map((part) => ({
-        part,
-        chunk: file.slice(
-          (part.partNumber - 1) * partSize,
-          part.partNumber * partSize,
-        ),
-      })),
-      fn: uploadPart,
-      signal,
-      maxParallel: 5,
-      maxRetries: 10, // retry 10 times per part
-    });
-
-    if (signal?.aborted) throw new UploadAbortedError('File upload aborted');
-    // Complete multipart upload
-    const res = await fetch(`${apiPath}/complete-multipart-upload`, {
-      method: 'POST',
-      signal,
-      credentials: 'include',
-      body: JSON.stringify({
-        bucketName,
-        uploadId,
-        key,
-        parts: completedParts,
-      }),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-    if (!res.ok) {
-      await handleError(res);
-    }
-  } catch (error) {
-    if (multipartInfo.abortSupported) {
-      // Cleanup is independent of the canceled transfer signal. Bucket lifecycle
-      // rules must cover disconnected browsers and failed cleanup requests.
-      const cleanup = new AbortController();
-      const timeout = setTimeout(() => cleanup.abort(), 5000);
-      try {
-        await fetch(`${apiPath}/abort-multipart-upload`, {
-          method: 'POST',
-          credentials: 'include',
-          signal: cleanup.signal,
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ bucketName, uploadId, key }),
-        }).catch(() => undefined);
-      } finally {
-        clearTimeout(timeout);
-      }
-    }
-    throw error;
-  }
-}
-
 async function mutateFiles(
   operation: 'confirm' | 'delete',
   urls: string[],
@@ -620,69 +384,4 @@ async function mutateFiles(
     await handleError(res);
   }
   return (await res.json()) as SharedFileMutationRes;
-}
-
-async function queuedPromises<TType, TRes>({
-  items,
-  fn,
-  maxParallel,
-  maxRetries = 0,
-  signal,
-}: {
-  items: TType[];
-  fn: (item: TType, signal: AbortSignal) => Promise<TRes>;
-  maxParallel: number;
-  maxRetries?: number;
-  signal?: AbortSignal;
-}): Promise<TRes[]> {
-  const controller = new AbortController();
-  const abort = () => controller.abort();
-  signal?.addEventListener('abort', abort, { once: true });
-  if (signal?.aborted) abort();
-  const results: TRes[] = new Array(items.length);
-  let next = 0;
-  const worker = async () => {
-    while (next < items.length) {
-      const index = next++;
-      for (let attempt = 0; ; attempt++) {
-        if (controller.signal.aborted)
-          throw new UploadAbortedError('File upload aborted');
-        try {
-          results[index] = await fn(items[index]!, controller.signal);
-          break;
-        } catch (error) {
-          if (
-            controller.signal.aborted ||
-            !(error instanceof RetryableUploadError) ||
-            attempt >= maxRetries
-          )
-            throw error;
-          await new Promise<void>((resolve) => {
-            const finish = () => {
-              clearTimeout(timer);
-              controller.signal.removeEventListener('abort', finish);
-              resolve();
-            };
-            const timer = setTimeout(finish, 5000);
-            controller.signal.addEventListener('abort', finish, { once: true });
-            if (controller.signal.aborted) finish();
-          });
-        }
-      }
-    }
-  };
-  const workers = Array.from(
-    { length: Math.min(maxParallel, items.length) },
-    worker,
-  );
-  try {
-    await Promise.all(workers);
-    return results;
-  } catch (error) {
-    controller.abort();
-    await Promise.allSettled(workers);
-    throw error;
-  } finally {
-    signal?.removeEventListener('abort', abort);
-  }
 }

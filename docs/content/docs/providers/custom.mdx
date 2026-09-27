@@ -80,22 +80,6 @@ export const myProvider = defineProvider({
 The resulting backend client exposes `get`, but not `upload`, `list`, or
 mutations, because those optional capabilities were not defined.
 
-## Upload option support
-
-A provider can declare unsupported lifecycle options without changing the
-standard upload API:
-
-```ts
-uploads: {
-  supportedOptions: { temporary: false, replaceTargetUrl: false },
-  // request, upload, and multipart implementations...
-}
-```
-
-Set a flag to `false` to reject that option in browser and backend upload types.
-Omitted flags leave the option available. Providers must also reject unsupported
-options at runtime.
-
 ## Complete provider
 
 A complete provider can add direct backend uploads, pagination, mutations, and
@@ -141,11 +125,14 @@ export const myProvider = defineProvider({
       return storage.createUploadPlan({ bucketName, fileInfo });
     },
     multipart: {
-      async requestParts({ multipart, path }) {
-        return storage.createUploadParts({ multipart, path });
+      async requestParts({ uploadId, key, parts }) {
+        return { parts: await storage.signUploadParts({ uploadId, key, parts }) };
       },
       async complete({ uploadId, key, parts }) {
         await storage.completeMultipart({ uploadId, key, parts });
+      },
+      async abort({ uploadId, key }) {
+        await storage.abortMultipart({ uploadId, key });
       },
     },
     async upload({ bucketName, fileInfo, source, signal, onProgress }) {
@@ -250,17 +237,21 @@ file reference or calculate counts.
 
 Multipart support is optional. A single-part provider defines only
 `uploads.request`. When `uploads.multipart` is present, `uploads.request` may
-return a multipart plan and EdgeStore exposes the matching part-request and
-completion routes. Providers may also implement `uploads.multipart.abort` and
-return `multipart.abortSupported: true` to enable cleanup after a failed or
-canceled browser transfer. Multipart operations must validate an upload session
-scoped to its authorized object; do not trust a client-supplied key or raw upload
-ID alone.
+return a multipart plan and EdgeStore exposes the matching part-request,
+completion, and cancellation routes. The plan only needs signed URLs for the
+first parts: the browser requests the rest through `requestParts` in batches as
+it reaches them, and requests a fresh URL once when storage rejects one. The
+browser calls `abort` after a failed or canceled transfer. Cleanup is best
+effort, so storage lifecycle rules should still remove abandoned uploads.
 
-Single-part upload plans can include `uploadHeaders` for provider-required PUT
-headers and `key` for a stable object reference. Set `disableDevProxy: true` on
-a direct-storage provider to keep canonical URLs in development instead of
-using the hosted provider's cookie proxy.
+A single-part plan can include `uploadHeaders`. The browser sends them with the
+upload request, which lets a provider sign headers such as `Content-Type` or
+storage metadata into the URL.
+
+Set `uploads.supportedOptions` to reject upload options your storage cannot
+honor. For example, `supportedOptions: { temporary: false }` removes
+`temporary` from the browser and backend upload types, and EdgeStore rejects it
+at runtime before calling the provider.
 
 `uploads.request` and `uploads.upload` remain separate because they perform
 different work: the former creates signed instructions for a browser transfer,

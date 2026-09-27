@@ -169,7 +169,6 @@ describe('azureBlob', () => {
       expect(mocks.getBlobClient).toHaveBeenCalledWith(expectedBlobName);
       expect(mocks.randomUUID).toHaveBeenCalledTimes(expectedUuidCalls);
       expect(res).toEqual({
-        uploadHeaders: { 'x-ms-blob-type': 'BlockBlob' },
         accessUrl: `${containerUrl}/${encodeBlobName(expectedBlobName)}`,
         accessSignedUrl: fileInfo.isPublic
           ? undefined
@@ -179,6 +178,7 @@ describe('azureBlob', () => {
           : expect.any(Date),
         accessSignedUrlExpiresIn: fileInfo.isPublic ? undefined : 60 * 60,
         uploadUrl: `${containerUrl}/${encodeBlobName(expectedBlobName)}?sig=cw`,
+        uploadHeaders: { 'x-ms-blob-type': 'BlockBlob' },
       });
       expect(mocks.blobSasPermissionsParse).toHaveBeenCalledWith('cw');
       if (fileInfo.isPublic) {

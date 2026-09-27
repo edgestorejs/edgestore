@@ -89,13 +89,9 @@ export function createConformanceProvider(
         thumbnailUrl: null,
       })),
       multipart: {
-        requestParts: vi.fn(() => ({
-          multipart: {
-            uploadId: 'upload-id',
-            parts: [],
-          },
-        })),
+        requestParts: vi.fn(() => ({ parts: [] })),
         complete: vi.fn(),
+        abort: vi.fn(),
       },
     },
     files: {
@@ -166,22 +162,6 @@ export function expectRequestUploadCalledWithContext(
       },
     },
   });
-}
-
-export function stubProxyFetch() {
-  const fetchMock = vi.fn(async (url: string | URL | Request) => {
-    return new Response('proxied body', {
-      status: 202,
-      headers: {
-        'Content-Type': 'text/custom',
-        'X-Received-Url': String(url),
-      },
-    });
-  });
-
-  vi.stubGlobal('fetch', fetchMock);
-
-  return fetchMock;
 }
 
 export function asJsonRequestInit(body: unknown): RequestInit {

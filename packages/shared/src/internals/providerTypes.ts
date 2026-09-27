@@ -206,27 +206,24 @@ export type BackendGetSignedUrlsOperation<
   includeThumbnails?: boolean;
 }) => MaybePromise<TResult[]>;
 
-export type RequestUploadPartsParams = {
-  multipart: {
-    uploadId: string;
-    parts: number[];
-  };
-  path: string;
+/** Identifies one multipart upload session created by `uploads.request`. */
+export type MultipartUploadSession = {
+  uploadId: string;
+  key: string;
+};
+
+export type RequestUploadPartsParams = MultipartUploadSession & {
+  parts: number[];
 };
 
 export type RequestUploadPartsRes = {
-  multipart: {
-    uploadId: string;
-    parts: {
-      partNumber: number;
-      uploadUrl: string;
-    }[];
-  };
+  parts: {
+    partNumber: number;
+    uploadUrl: string;
+  }[];
 };
 
-export type CompleteMultipartUploadParams = {
-  uploadId: string;
-  key: string;
+export type CompleteMultipartUploadParams = MultipartUploadSession & {
   parts: {
     partNumber: number;
     eTag: string;
@@ -234,7 +231,7 @@ export type CompleteMultipartUploadParams = {
 };
 
 type RequestUploadAccess = {
-  /** Stable object key, when provided by the storage provider. */
+  /** Stable object key, when the provider exposes one. */
   key?: string;
   accessUrl: string;
   thumbnailUrl?: string | null;
@@ -246,18 +243,20 @@ type RequestUploadAccess = {
 
 export type SinglePartRequestUploadRes = RequestUploadAccess & {
   uploadUrl: string;
-  /** Headers required by this provider when uploading the body. */
+  /** Headers the browser must send with the upload request. */
   uploadHeaders?: Record<string, string>;
 };
 
 export type MultipartRequestUploadRes = RequestUploadAccess & {
   multipart: {
-    /** Allows clients to clean up failed or canceled multipart transfers. */
-    abortSupported?: boolean;
     key: string;
     uploadId: string;
     partSize: number;
     totalParts: number;
+    /**
+     * Signed URLs for some or all parts. Clients request missing or expired
+     * part URLs through `uploads.multipart.requestParts`.
+     */
     parts: {
       partNumber: number;
       uploadUrl: string;
@@ -289,7 +288,10 @@ type ProviderUploadBase<
     BackendUploadOperation<BackendFile> | undefined,
 > = {
   upload?: TUpload;
-  /** Set unsupported lifecycle options to false. Omitted flags preserve the existing API. */
+  /**
+   * Upload options this provider cannot honor. Options set to `false` are
+   * rejected by the upload types and at runtime.
+   */
   supportedOptions?: { temporary?: boolean; replaceTargetUrl?: boolean };
 };
 
@@ -298,9 +300,8 @@ export type ProviderMultipartUploads = {
     params: RequestUploadPartsParams,
   ) => MaybePromise<RequestUploadPartsRes>;
   complete: (params: CompleteMultipartUploadParams) => MaybePromise<void>;
-  abort?: (
-    params: Pick<CompleteMultipartUploadParams, 'uploadId' | 'key'>,
-  ) => MaybePromise<void>;
+  /** Cancels an incomplete upload and releases its uploaded parts. */
+  abort: (params: MultipartUploadSession) => MaybePromise<void>;
 };
 
 export type ProviderUploads<
@@ -360,8 +361,6 @@ export type EdgeStoreProvider<
   > = ProviderFiles<StandardSchemaV1.InferOutput<TReferenceSchema>, TCursor>,
 > = {
   name: string;
-  /** Direct-storage providers can opt out of the hosted cookie proxy in development. */
-  disableDevProxy?: boolean;
   baseUrl: string | (() => MaybePromise<string>);
   init: <TCtx extends AnyContext>(
     params: InitParams<TCtx>,

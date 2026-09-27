@@ -18,7 +18,6 @@ import {
   confirmUploadsBodySchema,
   deleteFiles,
   deleteFilesBodySchema,
-  fetchProxyFile,
   getCookieConfig,
   init,
   requestUpload,
@@ -32,7 +31,6 @@ import {
 export type EdgeStoreDispatchRequest<TCtx extends AnyContext> = {
   pathname: string;
   readJson: () => Promise<unknown>;
-  getQuery: (name: string) => string | undefined;
   cookieHeader?: string;
   cookies?: Readonly<Record<string, string | undefined>>;
   createContext: () => MaybePromise<TCtx>;
@@ -76,16 +74,10 @@ export async function dispatchEdgeStoreRequest<
 }): Promise<Response> {
   const { router, request, logger, cookieConfig } = params;
   const resolvedCookieConfig = getCookieConfig(cookieConfig);
-  const cookieHeader =
-    request.cookieHeader ??
-    Object.entries(request.cookies ?? {})
-      .filter((entry): entry is [string, string] => entry[1] !== undefined)
-      .map(([name, value]) => `${name}=${value}`)
-      .join('; ');
   const ctxToken =
     request.cookies?.[resolvedCookieConfig.ctx.name] ??
-    (cookieHeader
-      ? parseCookie(cookieHeader)[resolvedCookieConfig.ctx.name]
+    (request.cookieHeader
+      ? parseCookie(request.cookieHeader)[resolvedCookieConfig.ctx.name]
       : undefined);
 
   try {
@@ -160,8 +152,9 @@ export async function dispatchEdgeStoreRequest<
       await abortMultipartUpload({
         provider,
         router,
-        ctxToken,
         body: await parseRequestBody(request, abortMultipartUploadBodySchema),
+        ctxToken,
+        logger,
       });
       return new Response(null, { status: 200 });
     }
@@ -188,19 +181,6 @@ export async function dispatchEdgeStoreRequest<
           logger,
         }),
       );
-    }
-
-    if (matchPath(request.pathname, '/proxy-file')) {
-      const url = request.getQuery('url');
-      if (url === undefined) return new Response(null, { status: 400 });
-      const result = await fetchProxyFile({
-        cookieHeader,
-        url,
-      });
-      return new Response(result.body, {
-        status: result.status,
-        headers: { 'Content-Type': result.contentType },
-      });
     }
 
     return new Response(null, { status: 404 });
@@ -245,9 +225,7 @@ export async function toNodeDispatchResponse(response: Response) {
         ? undefined
         : contentType.includes('application/json')
           ? await response.json()
-          : contentType.startsWith('text/')
-            ? await response.text()
-            : Buffer.from(await response.arrayBuffer()),
+          : await response.text(),
   };
 }
 

@@ -5,14 +5,14 @@ import type {
   ProviderFileMutationResult,
 } from './providerTypes';
 
-/** The concrete provider carried by a configured router. */
+/** The provider carried by a configured router. */
 export type RouterProvider<TRouter> = TRouter extends {
   readonly _def: { readonly provider: infer TProvider };
 }
   ? TProvider
   : unknown;
 
-/** Reject explicitly unsupported upload options, including options passed via variables. */
+/** Removes upload options that the provider declares as unsupported. */
 export type ProviderUploadOptions<TOptions, TProvider> = TProvider extends {
   uploads: { supportedOptions: infer TSupported };
 }
