@@ -47,3 +47,12 @@ preview tools from fetching the page or its image.
 
 Before publishing a release post, update its date to the actual release date and
 set `draft: false`. Run `pnpm --filter docs test:blog` to check the visibility rules.
+
+## Blog social images
+
+Posts use generated social cards by default. Bespoke PNGs are registered by full
+post slug in `src/app/_social-card/blog-images.ts`, with their actual dimensions.
+Keep these files in `_social-card/assets`, not `public`: the existing OG route
+checks draft visibility before serving either a custom or generated image.
+Custom images contain baked-in text; update the image if the post's title or
+description changes.

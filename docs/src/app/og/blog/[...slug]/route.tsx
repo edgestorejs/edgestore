@@ -1,3 +1,4 @@
+import { getBlogSocialImage } from '@/app/_social-card/blog-images';
 import { createSocialCard } from '@/app/_social-card/card';
 import { getBlogPost } from '@/lib/source';
 
@@ -16,6 +17,13 @@ export async function GET(
   const { slug } = await params;
   const post = getBlogPost(slug);
   if (!post) return new Response(null, { status: 404 });
+
+  const image = getBlogSocialImage(post.slugs);
+  if (image) {
+    return new Response(new Uint8Array(await image.read()), {
+      headers: { 'Content-Type': 'image/png' },
+    });
+  }
 
   return createSocialCard({
     badge: post.data.category,
