@@ -15,7 +15,10 @@ provider by default, and `.provider(...)` returns a new router without changing
 existing handlers or clients. Each router caches its provider and backend
 client. Protected files load directly from their file origin in development,
 so the `/proxy-file` route, development proxy URLs, and the React
-`disableDevProxy` option are removed.
+`disableDevProxy` option are removed. Adapters no longer set the
+`edgestore-token` cookie on the application domain, so `cookieConfig.token` and
+the provider `init` result's `token` are removed; file origins receive the token
+through `clientInit` headers.
 Public backend client type helpers infer the selected provider directly from
 the router without a second provider generic.
 

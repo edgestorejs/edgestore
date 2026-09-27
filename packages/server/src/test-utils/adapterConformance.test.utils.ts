@@ -23,9 +23,6 @@ export const testCookieConfig = {
       sameSite: 'lax' as const,
     },
   },
-  token: {
-    name: 'edgestore-test-token',
-  },
 };
 
 export const requestUploadBody = {
@@ -77,7 +74,7 @@ export function createConformanceProvider(
   const provider: AnyEdgeStoreProvider = {
     name: 'test-provider',
     baseUrl: 'https://files.example.com',
-    init: vi.fn(() => ({ token: 'provider-token' })),
+    init: vi.fn(() => ({})),
     reference: {
       schema: z.object({ url: z.string() }),
       fromUrl: (url) => ({ url }),

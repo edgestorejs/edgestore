@@ -75,28 +75,10 @@ export type CookieConfig = {
      */
     options?: CookieOptions;
   };
-  /**
-   * Token cookie configuration
-   */
-  token?: {
-    /**
-     * Name of the token cookie
-     * @default "edgestore-token"
-     */
-    name?: string;
-    /**
-     * Cookie options for token cookie
-     */
-    options?: CookieOptions;
-  };
 };
 
 type ResolvedCookieConfig = {
   ctx: {
-    name: string;
-    options: CookieOptions;
-  };
-  token: {
     name: string;
     options: CookieOptions;
   };
@@ -134,10 +116,6 @@ export function getCookieConfig(
       name: cookieConfig?.ctx?.name ?? 'edgestore-ctx',
       options: mergeOptions(cookieConfig?.ctx?.options),
     },
-    token: {
-      name: cookieConfig?.token?.name ?? 'edgestore-token',
-      options: mergeOptions(cookieConfig?.token?.options),
-    },
   };
 }
 
@@ -162,15 +140,6 @@ export async function init<TCtx extends AnyContext>(params: {
       ...resolvedCookieConfig.ctx.options,
     }),
   ];
-  if (initRes.token) {
-    newCookies.push(
-      stringifySetCookie({
-        name: resolvedCookieConfig.token.name,
-        value: initRes.token,
-        ...resolvedCookieConfig.token.options,
-      }),
-    );
-  }
   const baseUrl = initRes.baseUrl ?? (await getProviderBaseUrl(provider));
 
   logger.debug('Finished [init]', {
