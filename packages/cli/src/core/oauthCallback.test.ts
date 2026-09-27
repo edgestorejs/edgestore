@@ -1,3 +1,5 @@
+import { once } from 'node:events';
+import { connect } from 'node:net';
 import { describe, expect, it } from 'vitest';
 import {
   isReusableOAuthRedirectUri,
@@ -75,5 +77,35 @@ describe('OAuth loopback callback', () => {
     await expect(callback.callback).rejects.toMatchObject({
       name: 'AbortError',
     });
+  });
+
+  it('closes connections held open by late browser requests', async () => {
+    const callback = await openOAuthCallbackServer(
+      'expected-state',
+      new AbortController().signal,
+    );
+    const redirectUri = new URL(callback.redirectUri);
+    redirectUri.searchParams.set('state', 'expected-state');
+    await (await fetch(redirectUri)).text();
+    await callback.callback;
+
+    // Browsers can request assets such as the favicon after the callback page
+    // renders. Nothing answers them once the callback has settled.
+    const socket = connect(Number(redirectUri.port), redirectUri.hostname);
+
+    try {
+      await once(socket, 'connect');
+      const disconnected = new Promise<void>((resolve) => {
+        socket.once('close', resolve);
+        socket.once('error', () => resolve());
+      });
+      socket.write('GET /favicon.ico HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n');
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      await callback.close();
+      await disconnected;
+    } finally {
+      socket.destroy();
+    }
   });
 });

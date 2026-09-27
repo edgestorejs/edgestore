@@ -178,6 +178,7 @@ function closeServer(server: Server): Promise<void> {
       return;
     }
     server.close((error) => (error ? reject(error) : resolve()));
+    server.closeAllConnections();
   });
 }
 
