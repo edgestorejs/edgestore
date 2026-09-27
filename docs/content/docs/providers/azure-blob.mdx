@@ -116,8 +116,20 @@ a read URL with each upload response.
 
 ## Container configuration
 
-Keep the container private. Configure blob service CORS for your application
-origins so browsers can upload:
+Keep the container private. Azure grants anonymous read access to a whole
+container, not to a prefix, so public buckets need their own read path.
+Public uploads return an unsigned URL under `_public/`, which a private
+container answers with 403. Either:
+
+- serve `_public/` through a CDN or proxy that can read the private container,
+  such as Azure Front Door with a private origin, and set `baseUrl` to it; or
+- if the container holds only public buckets, set its public access level to
+  **Blob** (anonymous reads of individual blobs, no listing). Every file in
+  that container is then readable by URL, so never combine this with private
+  buckets.
+
+Configure blob service CORS for your application origins so browsers can
+upload:
 
 ```json
 [{
