@@ -7,12 +7,15 @@ export class RetryableUploadError extends EdgeStoreClientError {}
 /** Storage rejected the signed URL, usually because it expired. */
 export class RejectedUploadUrlError extends EdgeStoreClientError {}
 
-const RETRYABLE_STATUSES = new Set([408, 429, 500, 502, 503, 504]);
+/** Timeouts, throttling, and server or proxy errors other than 501 Not Implemented. */
+function isRetryableStatus(status: number) {
+  return status === 408 || status === 429 || (status >= 500 && status !== 501);
+}
 
 function uploadError(request: XMLHttpRequest) {
   const message = `Error uploading file (HTTP ${request.status})`;
   if (request.status === 403) return new RejectedUploadUrlError(message);
-  if (RETRYABLE_STATUSES.has(request.status) || isS3RequestTimeout(request)) {
+  if (isRetryableStatus(request.status) || isS3RequestTimeout(request)) {
     return new RetryableUploadError(message);
   }
   return new EdgeStoreClientError(message);

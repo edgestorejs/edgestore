@@ -167,6 +167,10 @@ describe('multipartUpload', () => {
       respond: (xhr: MockXMLHttpRequest) => xhr.load(503),
     },
     {
+      name: 'proxy errors',
+      respond: (xhr: MockXMLHttpRequest) => xhr.load(522),
+    },
+    {
       name: 'network errors',
       respond: (xhr: MockXMLHttpRequest) => xhr.fail(),
     },
@@ -204,6 +208,11 @@ describe('multipartUpload', () => {
           '<Error><Code>InvalidArgument</Code><Message>RequestTimeout</Message></Error>',
         ),
       error: 'HTTP 400',
+    },
+    {
+      name: 'unimplemented requests',
+      respond: (xhr: MockXMLHttpRequest) => xhr.load(501),
+      error: 'HTTP 501',
     },
     {
       name: 'missing ETags',
