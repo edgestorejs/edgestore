@@ -59,17 +59,11 @@ jobs:
       - name: Build packages
         run: pnpm build
 
-      - name: Release workflow contracts
-        run: pnpm test:release-workflow
-
       - name: Runtime tests
         run: pnpm test
 
       - name: Agent documentation contracts
         run: pnpm --filter docs test:agents
-
-      - name: Docs release channel and archive contracts
-        run: pnpm --filter docs test:release
 
       - name: Blog draft visibility tests
         run: pnpm --filter docs test:blog

@@ -2,8 +2,8 @@ import { AppContextProvider } from '@/components/app-context-provider';
 import { GITHUB_OWNER, GITHUB_REPO, SITE_URL } from '@/lib/constants';
 import { EdgeStoreProvider } from '@/lib/edgestore';
 import './global.css';
-import { DocsProvider } from '@/components/docs-provider';
 import { env } from '@/env';
+import { RootProvider } from 'fumadocs-ui/provider/next';
 import { type Metadata } from 'next';
 import { unstable_cache } from 'next/cache';
 import { Inter } from 'next/font/google';
@@ -32,7 +32,7 @@ export default async function Layout({ children }: { children: ReactNode }) {
       <body className="flex min-h-screen flex-col">
         <EdgeStoreProvider>
           <AppContextProvider githubStars={githubStars}>
-            <DocsProvider>{children}</DocsProvider>
+            <RootProvider>{children}</RootProvider>
           </AppContextProvider>
         </EdgeStoreProvider>
       </body>

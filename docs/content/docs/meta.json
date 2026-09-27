@@ -4,7 +4,6 @@
   "pages": [
     "---Getting Started---",
     "(getting-started)/quick-start",
-    "(getting-started)/migrate-to-v1",
     "(getting-started)/configuration",
     "(getting-started)/backend-client",
     "(getting-started)/sdk",

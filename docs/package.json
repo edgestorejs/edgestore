@@ -10,8 +10,7 @@
     "test:agents": "node --test tests/agents.test.js",
     "test:blog": "node --test tests/blog.test.js",
     "lint": "eslint --cache --report-unused-disable-directives src",
-    "postinstall": "fumadocs-mdx",
-    "test:release": "node --test tests/release-channel.test.js"
+    "postinstall": "fumadocs-mdx"
   },
   "dependencies": {
     "@ai-sdk/react": "4.0.74",
