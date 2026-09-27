@@ -9,7 +9,7 @@ async function markdownFiles(directory) {
     recursive: true,
   });
   return files
-    .filter((file) => file.endsWith('.mdx'))
+    .filter((file) => /\.mdx?$/.test(file))
     .map((file) => `${directory}/${file}`);
 }
 
@@ -33,7 +33,10 @@ test('v0 archive keeps documentation and registry links on the archived version'
     const content = await read(path);
     assert.doesNotMatch(content, /\]\(\/docs\//, path);
     assert.doesNotMatch(content, /https:\/\/edgestore.dev\/r\//, path);
-    assert.doesNotMatch(content, /@rc|@next|@latest/, path);
+    assert.doesNotMatch(content, /@edgestore\/[\w-]+@(?:rc|next|latest)/, path);
+    assert.doesNotMatch(content, /https:\/\/vercel\.com\/v0\//, path);
+    assert.doesNotMatch(content, /\]\(\/llms(?:-full)?\.txt\)/, path);
+    assert.doesNotMatch(content, /(?:shadcn|vibestack)@0\.8\.0/, path);
     assert.doesNotMatch(
       content,
       /github\.com\/edgestorejs\/edgestore\/(?:tree|blob)\/(?:main|next|dev)\//,
@@ -55,6 +58,21 @@ test('RC and archived registries install matching package versions', async () =>
           if (dependency.startsWith('@edgestore/'))
             assert.ok(dependency.endsWith(tag), `${name}: ${dependency}`);
         }
+      }
+    }
+  }
+});
+
+test('archived setup assets pin EdgeStore installs to v0', async () => {
+  for (const path of await markdownFiles('../public/v0/r/vibestack')) {
+    const content = await read(path);
+    for (const [fence] of content.matchAll(
+      /```(?:bash|sh|package-install)[^\n]*\n[\s\S]*?```/g,
+    )) {
+      for (const [specifier] of fence.matchAll(
+        /@edgestore\/[\w-]+(?:@[\w.^-]+)?/g,
+      )) {
+        assert.ok(specifier.endsWith('@0.8.0'), `${path}: ${specifier}`);
       }
     }
   }
