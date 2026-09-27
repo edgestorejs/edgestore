@@ -1,23 +1,12 @@
+'use client';
+
 import { createEdgeStoreProvider } from '@edgestore/react';
-import { type InferClientOutputs } from '@edgestore/server';
-import { type EdgeStoreRouter } from '../pages/api/edgestore/[...edgestore]';
+import type { EdgeStoreRouter } from './edgestore-server';
 
 const { EdgeStoreProvider, useEdgeStore } =
-  createEdgeStoreProvider<EdgeStoreRouter>();
+  createEdgeStoreProvider<EdgeStoreRouter>({
+    // Keep this low so queued uploads are easy to see.
+    maxConcurrentUploads: 2,
+  });
 
 export { EdgeStoreProvider, useEdgeStore };
-
-/**
- * This helper type can be used to infer the output types of the backend client
- *
- * @example
- * ```ts
- * export const getServerSideProps: GetServerSideProps<{
- *   files: ClientOutputs['images']['list']['items'];
- * }> = async () => {
- *   const res = await edgestoreClient.images.list();
- *   return { props: { files: res.items } };
- * };
- * ```
- */
-export type ClientOutputs = InferClientOutputs<EdgeStoreRouter>;
