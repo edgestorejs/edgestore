@@ -64,7 +64,8 @@ export function Playground({ initialUser }: { initialUser: UserId }) {
         </Row>
       </div>
 
-      <div className="mt-6 space-y-4">
+      {/* Remount the steps per user so no user-scoped state carries over. */}
+      <div key={user} className="mt-6 space-y-4">
         <UploadFileStep onUploaded={onUploaded} />
         <ValidationStep />
         <TemporaryStep onUploaded={onUploaded} />

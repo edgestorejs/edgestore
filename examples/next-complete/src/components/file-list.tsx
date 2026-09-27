@@ -9,7 +9,7 @@ import {
 import { useEdgeStore } from '@/lib/edgestore';
 import type { BucketName } from '@/lib/edgestore-server';
 import { formatFileSize } from '@edgestore/react/utils';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button, OutcomeLine, Row, Step, unwrap, useScenario } from './ui';
 
 const buckets: BucketName[] = ['publicFiles', 'publicImages', 'privateImages'];
@@ -28,9 +28,13 @@ export function FileListStep({ version }: { version: number }) {
   const [onlyMine, setOnlyMine] = useState(false);
   const [page, setPage] = useState<Page>();
   const [deletedIds, setDeletedIds] = useState<string[]>([]);
+  const latestRequest = useRef(0);
 
   async function load(cursor?: string) {
+    const request = ++latestRequest.current;
     const next = unwrap(await listFiles({ bucket, onlyMine, cursor }));
+    // Ignore responses for filters that have changed since the request.
+    if (request !== latestRequest.current) return;
     setPage((current) =>
       cursor && current
         ? { ...next, items: [...current.items, ...next.items] }
