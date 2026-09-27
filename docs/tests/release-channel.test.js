@@ -34,6 +34,11 @@ test('v0 archive keeps documentation and registry links on the archived version'
     assert.doesNotMatch(content, /\]\(\/docs\//, path);
     assert.doesNotMatch(content, /https:\/\/edgestore.dev\/r\//, path);
     assert.doesNotMatch(content, /@rc|@next|@latest/, path);
+    assert.doesNotMatch(
+      content,
+      /github\.com\/edgestorejs\/edgestore\/(?:tree|blob)\/(?:main|next|dev)\//,
+      path,
+    );
   }
 });
 

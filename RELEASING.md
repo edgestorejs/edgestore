@@ -7,8 +7,9 @@ Merging the integration does not itself version the packages.
 
 ## Release candidate
 
-1. Merge the full v1 integration with a **merge commit**, preserving the existing
-   `next` history. Stop using `next` as a separate publishing lane.
+1. Merge the RC preparation PR into `next`, then merge the `next` → `main`
+   handoff with a **merge commit**, preserving the existing `next` history.
+   Stop using `next` as a separate publishing lane.
 2. Review the Changesets version PR against `main`. Changesets continues the
    prerelease counter, so the first candidate is expected to be `1.0.0-rc.6`,
    not `1.0.0-rc.0`. Check all five packages, internal dependencies, lockfile,
