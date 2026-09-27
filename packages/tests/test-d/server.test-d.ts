@@ -1,13 +1,10 @@
 import {
   defineProvider,
   initEdgeStore,
+  type EdgeStoreFileReference,
   type InferClientInputs,
   type InferClientOutputs,
 } from '@edgestore/server';
-import {
-  type EdgeStoreFileReference,
-  type InferClientResponse,
-} from '@edgestore/server/core';
 import { edgestore } from '@edgestore/server/providers/edgestore';
 import { s3 } from '@edgestore/server/providers/s3';
 import { type InitParams } from '@edgestore/shared';
@@ -489,7 +486,6 @@ void client.documents
 
 type ClientInputs = InferClientInputs<typeof router>;
 type ClientOutputs = InferClientOutputs<typeof router>;
-type DeprecatedClientResponses = InferClientResponse<typeof router>;
 
 expectType<Context>({} as ClientInputs['avatars']['upload']['ctx']);
 expectType<{ type: 'profile' | 'post' }>(
@@ -510,8 +506,6 @@ expectType<{ author: string; type: string }>(
 expectType<EdgeStoreFileReference>(
   {} as ClientOutputs['documents']['delete']['ref'],
 );
-expectAssignable<ClientOutputs>({} as DeprecatedClientResponses);
-expectAssignable<DeprecatedClientResponses>({} as ClientOutputs);
 
 type SyntheticInputs = InferClientInputs<typeof syntheticRouter>;
 type SyntheticOutputs = InferClientOutputs<typeof syntheticRouter>;

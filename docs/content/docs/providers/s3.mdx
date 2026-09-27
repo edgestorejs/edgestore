@@ -36,9 +36,10 @@ Pass `router` to your framework adapter as its `router` option.
 Set `EDGE_STORE_JWT_SECRET` to a stable random secret, for example one generated
 with `openssl rand -base64 32`. All application instances must share it.
 
-Credentials use the AWS SDK's default provider chain, including environment
-variables, shared config, and instance/task roles. You can also pass
-`credentials` with an AWS credentials object or provider function.
+Pass `credentials` with an AWS credentials object or provider function. If it
+is unset, `ES_AWS_ACCESS_KEY_ID` and `ES_AWS_SECRET_ACCESS_KEY` are used when
+both are set; otherwise the AWS SDK's default provider chain applies, including
+environment variables, shared config, and instance/task roles.
 
 | Option                       | Default / environment variable                                                           |
 | ---------------------------- | ---------------------------------------------------------------------------------------- |

@@ -25,10 +25,6 @@ export type InitRes = {
 };
 
 export type RequestUploadParams = {
-  multipart?: {
-    uploadId?: string;
-    parts: number[];
-  };
   bucketName: string;
   bucketType: string;
   fileInfo: {

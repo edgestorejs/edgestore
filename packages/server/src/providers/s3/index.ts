@@ -50,13 +50,13 @@ function sessionLifetime(value: number) {
 export function s3(options: S3ProviderOptions = {}) {
   const {
     credentials: configuredCredentials,
-    accessKeyId = getEnv('ES_AWS_ACCESS_KEY_ID'),
-    secretAccessKey = getEnv('ES_AWS_SECRET_ACCESS_KEY'),
     region = getEnv('ES_AWS_REGION'),
     bucketName = getEnv('ES_AWS_BUCKET_NAME'),
     endpoint = getEnv('ES_AWS_ENDPOINT'),
     forcePathStyle = getEnv('ES_AWS_FORCE_PATH_STYLE') === 'true',
   } = options;
+  const accessKeyId = getEnv('ES_AWS_ACCESS_KEY_ID');
+  const secretAccessKey = getEnv('ES_AWS_SECRET_ACCESS_KEY');
   const client =
     options.client ??
     new S3Client({

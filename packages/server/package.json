@@ -93,11 +93,6 @@
       "import": "./dist/adapters/start/index.js",
       "default": "./dist/adapters/start/index.js"
     },
-    "./core": {
-      "types": "./dist/core/index.d.ts",
-      "import": "./dist/core/index.js",
-      "default": "./dist/core/index.js"
-    },
     "./providers/azure-blob": {
       "types": "./dist/providers/azure-blob/index.d.ts",
       "import": "./dist/providers/azure-blob/index.js",
@@ -122,7 +117,6 @@
     "agent-docs",
     "package.json",
     "adapters",
-    "core",
     "providers",
     "!**/*.test.*",
     "!**/__tests__"
