@@ -3,7 +3,6 @@ import {
   CompleteMultipartUploadCommand,
   CreateMultipartUploadCommand,
   GetObjectCommand,
-  HeadObjectCommand,
   PutObjectCommand,
   S3Client,
   UploadPartCommand,
@@ -257,14 +256,11 @@ describe('S3 backend and private files', () => {
   });
 
   it('uploads a small backend file using the same paths and object settings', async () => {
-    const now = new Date();
     const { provider, send } = setup({
       path: () => 'custom/report.txt',
       objectOptions: { CacheControl: 'private', Metadata: { tenant: 'acme' } },
     });
-    send
-      .mockResolvedValueOnce({})
-      .mockResolvedValueOnce({ ContentLength: 3, LastModified: now });
+    send.mockResolvedValueOnce({});
     const result = await provider.uploads.upload({
       ...request({ size: 3 }),
       source: new Blob(['abc'], { type: 'text/plain' }),
@@ -286,7 +282,7 @@ describe('S3 backend and private files', () => {
       file: {
         key: 'documents/custom/report.txt',
         sizeBytes: 3,
-        uploadedAt: now,
+        uploadedAt: expect.any(Date),
       },
       signedReadUrl: { expiresIn: 300 },
     });
@@ -298,11 +294,7 @@ describe('S3 backend and private files', () => {
       .mockResolvedValueOnce({ UploadId: 'backend-id' })
       .mockResolvedValueOnce({ ETag: 'one' })
       .mockResolvedValueOnce({ ETag: 'two' })
-      .mockResolvedValueOnce({})
-      .mockResolvedValueOnce({
-        ContentLength: partSize + 3,
-        LastModified: new Date(),
-      });
+      .mockResolvedValueOnce({});
     const onProgress = vi.fn();
     await provider.uploads.upload({
       ...request(),
@@ -314,7 +306,6 @@ describe('S3 backend and private files', () => {
       UploadPartCommand,
       UploadPartCommand,
       CompleteMultipartUploadCommand,
-      HeadObjectCommand,
     ]);
     expect(onProgress.mock.calls.map(([p]) => p.transferredBytes)).toEqual([
       0,
@@ -367,17 +358,12 @@ describe('S3 backend and private files', () => {
     );
   });
 
-  it('returns a committed upload even if canceled during the metadata lookup', async () => {
+  it('returns a committed upload without depending on a follow-up request', async () => {
     const { provider, send } = setup();
     const controller = new AbortController();
-    const lastModified = new Date();
-    send.mockImplementation(async (command, options) => {
-      if (command instanceof PutObjectCommand) {
-        controller.abort();
-        return {};
-      }
-      expect(options).toBeUndefined();
-      return { ContentLength: 3, LastModified: lastModified };
+    send.mockImplementation(async () => {
+      controller.abort();
+      return {};
     });
 
     await expect(
@@ -386,7 +372,13 @@ describe('S3 backend and private files', () => {
         source: new Blob(['abc']),
         signal: controller.signal,
       }),
-    ).resolves.toMatchObject({ file: { sizeBytes: 3 } });
+    ).resolves.toMatchObject({
+      file: { key: expect.any(String), sizeBytes: 3 },
+    });
+    expect(send).toHaveBeenCalledOnce();
+    expect(send).toHaveBeenCalledWith(expect.any(PutObjectCommand), {
+      abortSignal: controller.signal,
+    });
   });
 
   it('signs private reads from keys or URLs and rejects cross-bucket references', async () => {

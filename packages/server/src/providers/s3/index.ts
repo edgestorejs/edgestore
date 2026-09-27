@@ -266,19 +266,16 @@ export function s3(options: S3ProviderOptions = {}) {
           signal: params.signal,
           onProgress: params.onProgress,
         });
-        // The object is committed, so finish describing it even if canceled.
-        const { ContentLength, LastModified } = await client.send(
-          new HeadObjectCommand({ Bucket: bucket(), Key: prepared.key }),
-        );
-        if (ContentLength === undefined || !LastModified)
-          throw new Error('File not found');
+        // The object is committed. Describe it from what we sent, so a failed
+        // or canceled follow-up request cannot turn success into an error.
+        const uploadedAt = new Date();
         return {
           file: {
             key: prepared.key,
             url: prepared.url,
-            sizeBytes: ContentLength,
-            uploadedAt: LastModified,
-            updatedAt: LastModified,
+            sizeBytes: params.source.size,
+            uploadedAt,
+            updatedAt: uploadedAt,
           },
           signedReadUrl: await readForUpload(prepared.key, params),
         };
