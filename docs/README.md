@@ -2,9 +2,10 @@
 
 Run `pnpm docs:dev` from the repository root.
 
-The main site now documents the v1 prerelease. Installation commands use `@next`
-until the first RC is published, then switch to `@rc` as described in
-[RELEASING.md](../RELEASING.md). The v1 release blog post remains a draft.
+The main site documents stable v1. Installation commands use `@latest`; publish
+stable v1 before deploying this documentation transition. The v0 archive remains
+available below. The release blog post stays a draft until its publication date
+is set and the announcement is approved. See [RELEASING.md](../RELEASING.md).
 
 `content/v0` and `public/v0/r` preserve the v0 docs and component registry from
 main at `4e7669ef`. They are available at `/v0/docs` and `/v0/r`, with version-local

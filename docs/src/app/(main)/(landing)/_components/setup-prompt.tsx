@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { siteButton, sitePrimaryButton } from '../../_components/styles';
 
 export const SETUP_PROMPT =
-  'Read https://edgestore.dev/SKILL.md and add file uploads to this application using the EdgeStore v1 prerelease (@next).';
+  'Read https://edgestore.dev/SKILL.md and add file uploads to this application using EdgeStore v1 (@latest).';
 
 export function SetupPrompt() {
   const [status, setStatus] = useState<'idle' | 'copied' | 'failed'>('idle');

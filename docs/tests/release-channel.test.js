@@ -13,7 +13,7 @@ async function markdownFiles(directory) {
     .map((file) => `${directory}/${file}`);
 }
 
-test('all v1 package-install and shell instructions explicitly select next during the RC handoff', async () => {
+test('all v1 package-install and shell instructions explicitly select latest for stable v1', async () => {
   for (const path of await markdownFiles('../content/docs')) {
     const content = await read(path);
     for (const [fence] of content.matchAll(
@@ -22,7 +22,7 @@ test('all v1 package-install and shell instructions explicitly select next durin
       for (const [specifier] of fence.matchAll(
         /@edgestore\/[\w-]+(?:@[\w.^-]+)?/g,
       )) {
-        assert.ok(specifier.endsWith('@next'), `${path}: ${specifier}`);
+        assert.ok(specifier.endsWith('@latest'), `${path}: ${specifier}`);
       }
     }
   }
@@ -42,9 +42,9 @@ test('v0 archive keeps documentation and registry links on the archived version'
   }
 });
 
-test('RC and archived registries install matching package versions', async () => {
+test('Stable and archived registries install matching package versions', async () => {
   for (const [directory, tag] of [
-    ['../public/r', '@next'],
+    ['../public/r', '@latest'],
     ['../public/v0/r', '@0.8.0'],
   ]) {
     for (const name of await readdir(new URL(directory, import.meta.url))) {
