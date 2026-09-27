@@ -6,252 +6,347 @@ import {
   SASProtocol,
   StorageSharedKeyCredential,
 } from '@azure/storage-blob';
-import { type RequestUploadParams } from '@edgestore/shared';
+import { planMultipartUpload } from '@edgestore/sdk';
+import type {
+  MaybePromise,
+  RequestUploadParams,
+  RequestUploadRes,
+} from '@edgestore/shared';
 import { z } from 'zod';
 import { defineProvider } from '../../core/provider';
 import { getEnv } from '../../libs/env';
+import { createMultipartSessions } from '../storage/multipartSession';
+import {
+  createObjectKeys,
+  type ObjectPathFn,
+  type ObjectPathFnArgs,
+} from '../storage/objectKeys';
+import {
+  assertSignedUrlAccessControl,
+  runConcurrently,
+  signedUrlLifetime,
+} from '../storage/transfer';
+import {
+  createBlockUploads,
+  uploadBlob,
+  type BlobCommitOptions,
+} from './blocks';
 
-/**
- * Options for the Azure provider. Compatible with Azure Blob Storage and Azurite.
- * Use Azure Storage Explorer for local development with Azurite.
- * @see https://azure.microsoft.com/de-de/products/storage/storage-explorer
- * @category Providers
- * @example
- *  azureBlob({
- *      storageAccountName: 'devstoreaccount1',
- *      storageAccountKey: 'some-account-key',
- *      containerName: 'some-container-name',
- *      customBaseUrl: 'http://localhost:10000/devstoreaccount1',
- *  })
- */
+/** Blob settings shared by browser and backend uploads. */
+export type AzureBlobObjectOptions = {
+  cacheControl?: string;
+  contentDisposition?: string;
+  metadata?: Record<string, string>;
+};
+
 export type AzureBlobProviderOptions = {
   /**
-   * The storage account name for Azure Blob Storage
-   * Can also be set via the `ES_AZURE_ACCOUNT_NAME` environment variable.
+   * Storage account name. Can also be set via `ES_AZURE_ACCOUNT_NAME`.
    */
   storageAccountName?: string;
   /**
-   * Account key used to authenticate server-side operations and sign
-   * short-lived, blob-scoped URLs.
-   * Can also be set via the `ES_AZURE_ACCOUNT_KEY` environment variable.
+   * Account key used for server-side operations and for signing short-lived,
+   * blob-scoped URLs. Can also be set via `ES_AZURE_ACCOUNT_KEY`.
    */
   storageAccountKey?: string;
-  /**
-   * Azure Blob Storage container name
-   * Can also be set via the `ES_AZURE_CONTAINER_NAME` environment variable.
-   */
+  /** Container name. Can also be set via `ES_AZURE_CONTAINER_NAME`. */
   containerName?: string;
   /**
-   * Optional base URL for the Azure Blob Storage.
-   * Useful for local development with Azurite. For example: `http://localhost:10000/devstoreaccount1`
-   * Can also be set via the `ES_AZURE_BASE_URL` environment variable.
+   * Blob service endpoint, for example Azurite at
+   * `http://127.0.0.1:10000/devstoreaccount1`. Defaults to
+   * `https://<account>.blob.core.windows.net`. Can also be set via
+   * `ES_AZURE_ENDPOINT`.
    */
-  customBaseUrl?: string;
+  endpoint?: string;
   /**
-   * Lifetime of generated upload URLs in seconds.
-   * @default 3600
+   * Base URL for file URLs, such as a CDN in front of the container. Defaults
+   * to `<endpoint>/<container>`. Can also be set via `EDGE_STORE_BASE_URL`.
+   * Signed URLs always use the endpoint.
    */
+  baseUrl?: string;
+  /**
+   * Secret used to sign multipart upload sessions. Defaults to
+   * `EDGE_STORE_JWT_SECRET` or `EDGE_STORE_SECRET_KEY`.
+   */
+  jwtSecret?: string;
+  /**
+   * Customizes the blob path beneath the logical EdgeStore bucket prefix.
+   * The logical bucket prefix is always preserved.
+   */
+  path?: ObjectPathFn;
+  /** Blob settings shared by browser and backend uploads. */
+  objectOptions?:
+    | AzureBlobObjectOptions
+    | ((args: ObjectPathFnArgs) => MaybePromise<AzureBlobObjectOptions>);
+  /** Upload URL lifetime in seconds. Default: 3600. */
   uploadUrlExpiresIn?: number;
-  /**
-   * Default lifetime of generated private read URLs in seconds.
-   * @default 3600
-   */
+  /** Signed read URL lifetime in seconds. Default: 3600. */
   signedUrlExpiresIn?: number;
+  /** Automatic multipart upload configuration. */
+  multipart?: {
+    /** Size above which uploads use blocks. Default: 100 MiB. */
+    thresholdBytes?: number;
+    /** Preferred block size. Default: 16 MiB; maximum 4000 MiB. */
+    partSizeBytes?: number;
+    /**
+     * How long a browser multipart session can request URLs and complete, in
+     * seconds. Default: 86400 (24 hours).
+     */
+    sessionExpiresIn?: number;
+  };
 };
 
-export function azureBlob(options?: AzureBlobProviderOptions) {
+const MiB = 1024 ** 2;
+/** Largest single Put Blob request. */
+const MAX_SINGLE_UPLOAD_BYTES = 5000 * MiB;
+/** Largest Put Block request. */
+const MAX_BLOCK_BYTES = 4000 * MiB;
+
+const expiration = (value: number) => signedUrlLifetime('Azure Blob', value);
+
+export function azureBlob(options: AzureBlobProviderOptions = {}) {
   const {
     storageAccountName = getEnv('ES_AZURE_ACCOUNT_NAME'),
     storageAccountKey = getEnv('ES_AZURE_ACCOUNT_KEY'),
     containerName = getEnv('ES_AZURE_CONTAINER_NAME'),
-    customBaseUrl = getEnv('ES_AZURE_BASE_URL'),
-    uploadUrlExpiresIn = 60 * 60,
-    signedUrlExpiresIn = 60 * 60,
-  } = options ?? {};
-
-  if (!storageAccountName) {
-    throw new Error(
-      'Azure storageAccountName is not configured in AzureBlobProviderOptions.',
-    );
-  }
-  if (!storageAccountKey) {
-    throw new Error(
-      'Azure storageAccountKey is not configured in AzureBlobProviderOptions.',
-    );
-  }
-  if (!containerName) {
-    throw new Error(
-      'Azure containerName is not configured in AzureBlobProviderOptions.',
-    );
-  }
-  const resolvedContainerName = containerName;
-
+  } = options;
+  const endpoint = (
+    options.endpoint ??
+    getEnv('ES_AZURE_ENDPOINT') ??
+    `https://${storageAccountName}.blob.core.windows.net`
+  ).replace(/\/+$/, '');
   const baseUrl =
-    customBaseUrl ?? `https://${storageAccountName}.blob.core.windows.net`;
-  const sharedKeyCredential = new StorageSharedKeyCredential(
-    storageAccountName,
-    storageAccountKey,
-  );
-  const blobServiceClient = new BlobServiceClient(baseUrl, sharedKeyCredential);
-  const containerClient = blobServiceClient.getContainerClient(
-    resolvedContainerName,
-  );
+    options.baseUrl ??
+    getEnv('EDGE_STORE_BASE_URL') ??
+    `${endpoint}/${containerName}`;
+  const keys = createObjectKeys('Azure Blob', baseUrl);
+  const uploadExpiresIn = expiration(options.uploadUrlExpiresIn ?? 3600);
+  const readExpiresIn = expiration(options.signedUrlExpiresIn ?? 3600);
 
-  function createSignedBlobUrl(params: {
-    blobName: string;
-    permissions: string;
-    expiresIn: number;
-  }) {
-    const expiresAt = new Date(Date.now() + params.expiresIn * 1000);
-    const sas = generateBlobSASQueryParameters(
+  function plan(sizeBytes: number) {
+    if (!Number.isSafeInteger(sizeBytes) || sizeBytes < 0)
+      throw new RangeError(
+        'Azure Blob upload size must be a nonnegative safe integer.',
+      );
+    const result = planMultipartUpload({
+      sizeBytes,
+      thresholdBytes: options.multipart?.thresholdBytes,
+      preferredPartSizeBytes: options.multipart?.partSizeBytes,
+      forceMultipart: sizeBytes > MAX_SINGLE_UPLOAD_BYTES,
+    });
+    if (result && result.partSizeBytes > MAX_BLOCK_BYTES)
+      throw new RangeError('Azure blocks cannot exceed 4000 MiB.');
+    return result;
+  }
+  // Validate multipart settings even before the first large upload.
+  plan(0);
+
+  // Credentials are resolved on first use, so defining a router needs none.
+  let resolved:
+    | {
+        containerName: string;
+        credential: StorageSharedKeyCredential;
+        container: ReturnType<BlobServiceClient['getContainerClient']>;
+      }
+    | undefined;
+  function storage() {
+    if (!storageAccountName || !storageAccountKey || !containerName) {
+      throw new Error(
+        'Azure Blob requires storageAccountName, storageAccountKey, and containerName (or ES_AZURE_ACCOUNT_NAME, ES_AZURE_ACCOUNT_KEY, and ES_AZURE_CONTAINER_NAME).',
+      );
+    }
+    if (!resolved) {
+      const credential = new StorageSharedKeyCredential(
+        storageAccountName,
+        storageAccountKey,
+      );
+      resolved = {
+        containerName,
+        credential,
+        container: new BlobServiceClient(
+          endpoint,
+          credential,
+        ).getContainerClient(containerName),
+      };
+    }
+    return resolved;
+  }
+  const blob = (key: string) => storage().container.getBlockBlobClient(key);
+
+  function sas(key: string, permissions: string, expiresIn: number) {
+    const expiresAt = new Date(Date.now() + expiresIn * 1000);
+    const { containerName: container, credential } = storage();
+    const query = generateBlobSASQueryParameters(
       {
-        containerName: resolvedContainerName,
-        blobName: params.blobName,
-        permissions: BlobSASPermissions.parse(params.permissions),
-        protocol: baseUrl.startsWith('https:')
+        containerName: container,
+        blobName: key,
+        permissions: BlobSASPermissions.parse(permissions),
+        protocol: endpoint.startsWith('https:')
           ? SASProtocol.Https
           : SASProtocol.HttpsAndHttp,
+        // Tolerate clock skew between this server and Azure.
         startsOn: new Date(Date.now() - 5 * 60 * 1000),
         expiresOn: expiresAt,
       },
-      sharedKeyCredential,
+      credential,
     ).toString();
-    const blobClient = containerClient.getBlobClient(params.blobName);
+    return { query, expiresAt };
+  }
+
+  function signedRead(key: string, expiresIn = readExpiresIn) {
+    const ttl = expiration(expiresIn);
+    const { query, expiresAt } = sas(key, 'r', ttl);
     return {
-      url: blobClient.url.split('?')[0]!,
-      signedUrl: `${blobClient.url.split('?')[0]}?${sas}`,
+      url: keys.toUrl(key),
+      signedUrl: `${blob(key).url}?${query}`,
       expiresAt,
-      expiresIn: params.expiresIn,
+      expiresIn: ttl,
     };
   }
 
-  function getBlobNameFromUrl(url: string) {
-    try {
-      const blobUrl = new URL(url);
-      const containerUrl = new URL(containerClient.url);
-      const containerPath = containerUrl.pathname.replace(/\/$/, '');
-
-      if (blobUrl.origin !== containerUrl.origin) {
-        throw new Error();
-      }
-
-      if (!blobUrl.pathname.startsWith(`${containerPath}/`)) {
-        throw new Error();
-      }
-
-      return decodeURIComponent(
-        blobUrl.pathname.slice(containerPath.length + 1),
-      );
-    } catch {
-      throw new Error('File URL does not belong to this Azure Blob provider.');
-    }
+  function readForUpload(key: string, params: RequestUploadParams) {
+    if (params.fileInfo.isPublic || !params.autoSignedUrls) return undefined;
+    return signedRead(key, params.autoSignedUrls.expiresIn);
   }
 
-  function getBucketBlobName(edgestoreBucketName: string, url: string) {
-    const blobName = getBlobNameFromUrl(url);
-    if (!blobName.startsWith(`${edgestoreBucketName}/`)) {
-      throw new Error(
-        `File does not belong to EdgeStore bucket "${edgestoreBucketName}".`,
-      );
-    }
-    return blobName;
-  }
+  const blocks = createBlockUploads({
+    blob,
+    sessions: createMultipartSessions({
+      providerName: 'Azure Blob',
+      audience: `edgestore:azure-blob:${endpoint}:${containerName}`,
+      secret: options.jwtSecret,
+      expiresIn: options.multipart?.sessionExpiresIn ?? 86400,
+    }),
+    signPartUrl: (key, id) =>
+      `${blob(key).url}?comp=block&blockid=${encodeURIComponent(id)}&${
+        sas(key, 'w', uploadExpiresIn).query
+      }`,
+  });
 
-  function getBlobName(params: RequestUploadParams) {
-    const { bucketName: esBucketName, fileInfo } = params;
-    const extension = fileInfo.extension
-      ? `.${fileInfo.extension.replace('.', '')}`
-      : '';
-    const fileName = fileInfo.fileName ?? `${crypto.randomUUID()}${extension}`;
-
-    return [
-      esBucketName,
-      ...(fileInfo.isPublic ? ['_public'] : []),
-      ...fileInfo.path.map((item) => item.value),
-      fileName,
-    ].join('/');
+  async function prepare({ bucketName, fileInfo }: RequestUploadParams) {
+    const { key, pathArgs } = await keys.forUpload(
+      bucketName,
+      fileInfo,
+      options.path,
+    );
+    const objectOptions =
+      typeof options.objectOptions === 'function'
+        ? await options.objectOptions(pathArgs)
+        : options.objectOptions;
+    const commit: BlobCommitOptions = {
+      blobHTTPHeaders: {
+        blobContentType: fileInfo.type || 'application/octet-stream',
+        blobCacheControl: objectOptions?.cacheControl,
+        blobContentDisposition: objectOptions?.contentDisposition,
+      },
+      metadata: objectOptions?.metadata,
+    };
+    return { key, commit, plan: plan(fileInfo.size) };
   }
 
   return defineProvider({
     name: 'azure-blob',
     reference: {
-      schema: z.object({ url: z.string() }),
+      schema: z.union([
+        z.object({ key: z.string().min(1) }),
+        z.object({ url: z.string().url() }),
+      ]),
       fromUrl: (url) => ({ url }),
     },
-    async init() {
+    async init({ router }) {
+      storage();
+      assertSignedUrlAccessControl('Azure Blob', router);
       return {};
     },
     uploads: {
       supportedOptions: { temporary: false, replaceTargetUrl: false },
-      async request(params) {
-        const blobName = getBlobName(params);
-        const uploadAccess = createSignedBlobUrl({
-          blobName,
-          permissions: 'cw',
-          expiresIn: uploadUrlExpiresIn,
-        });
-        const readAccess = params.fileInfo.isPublic
-          ? undefined
-          : createSignedBlobUrl({
-              blobName,
-              permissions: 'r',
-              expiresIn: signedUrlExpiresIn,
-            });
+      async request(params): Promise<RequestUploadRes> {
+        const { key, commit, plan } = await prepare(params);
+        const signedReadUrl = readForUpload(key, params);
+        const access = {
+          key,
+          url: keys.toUrl(key),
+          ...(signedReadUrl ? { signedReadUrl } : {}),
+        };
+        if (plan) {
+          return {
+            ...access,
+            multipart: await blocks.request({
+              key,
+              size: params.fileInfo.size,
+              plan,
+              commit,
+            }),
+          };
+        }
         return {
-          uploadUrl: uploadAccess.signedUrl,
-          uploadHeaders: { 'x-ms-blob-type': 'BlockBlob' },
-          url: uploadAccess.url,
-          ...(readAccess
-            ? {
-                signedReadUrl: {
-                  signedUrl: readAccess.signedUrl,
-                  expiresAt: readAccess.expiresAt,
-                  expiresIn: readAccess.expiresIn,
-                },
-              }
-            : {}),
+          ...access,
+          uploadUrl: `${blob(key).url}?${sas(key, 'cw', uploadExpiresIn).query}`,
+          uploadHeaders: blobUploadHeaders(commit),
+        };
+      },
+      multipart: blocks.operations,
+      async upload(params) {
+        const { key, commit, plan } = await prepare({
+          ...params,
+          fileInfo: {
+            ...params.fileInfo,
+            size: params.source.size,
+            type: params.source.type || params.fileInfo.type,
+          },
+        });
+        // Sign before sending bytes: nothing fallible runs after the commit.
+        const signedReadUrl = readForUpload(key, params);
+        await uploadBlob({
+          client: blob(key),
+          commit,
+          plan,
+          source: params.source,
+          signal: params.signal,
+          onProgress: params.onProgress,
+        });
+        const uploadedAt = new Date();
+        return {
+          file: {
+            key,
+            url: keys.toUrl(key),
+            sizeBytes: params.source.size,
+            uploadedAt,
+            updatedAt: uploadedAt,
+          },
+          signedReadUrl,
         };
       },
     },
     files: {
       async get({ bucketName, file }) {
-        const blobClient = containerClient.getBlobClient(
-          getBucketBlobName(bucketName, file.url),
-        );
-        const { contentLength, lastModified } =
-          await blobClient.getProperties();
-        const timestamp = lastModified ?? new Date();
+        const key = keys.fromReference(bucketName, file);
+        const { contentLength, lastModified } = await blob(key).getProperties();
+        if (contentLength === undefined || !lastModified)
+          throw new Error('File not found');
         return {
-          url: blobClient.url.split('?')[0]!,
-          sizeBytes: contentLength ?? 0,
-          uploadedAt: timestamp,
-          updatedAt: timestamp,
+          key,
+          url: keys.toUrl(key),
+          sizeBytes: contentLength,
+          uploadedAt: lastModified,
+          updatedAt: lastModified,
         };
       },
       async getSignedUrls({ bucketName, files, expiresIn }) {
-        return files.map((file) => {
-          const access = createSignedBlobUrl({
-            blobName: getBucketBlobName(bucketName, file.url),
-            permissions: 'r',
-            expiresIn: expiresIn ?? signedUrlExpiresIn,
-          });
-          return {
-            url: access.url,
-            signedUrl: access.signedUrl,
-            expiresAt: access.expiresAt,
-            expiresIn: access.expiresIn,
-          };
-        });
+        return files.map((file) =>
+          signedRead(keys.fromReference(bucketName, file), expiresIn),
+        );
       },
       async delete({ bucketName, files }) {
-        const blobNames = files.map((file) =>
-          getBucketBlobName(bucketName, file.url),
+        const blobKeys = files.map((file) =>
+          keys.fromReference(bucketName, file),
         );
-        const results = await Promise.all(
-          blobNames.map(async (blobName) => {
+        const results = await runConcurrently(
+          blobKeys,
+          undefined,
+          async (key) => {
             try {
-              const blobClient = containerClient.getBlobClient(blobName);
-              await blobClient.delete();
+              await blob(key).deleteIfExists();
               return { success: true as const };
             } catch (error) {
               return {
@@ -263,10 +358,28 @@ export function azureBlob(options?: AzureBlobProviderOptions) {
                 },
               };
             }
-          }),
+          },
         );
         return { results };
       },
     },
   });
+}
+
+/** Headers a browser Put Blob request must send to apply the blob settings. */
+function blobUploadHeaders({ blobHTTPHeaders, metadata }: BlobCommitOptions) {
+  const headers: Record<string, string> = { 'x-ms-blob-type': 'BlockBlob' };
+  const fields = {
+    blobContentType: 'x-ms-blob-content-type',
+    blobCacheControl: 'x-ms-blob-cache-control',
+    blobContentDisposition: 'x-ms-blob-content-disposition',
+  } as const;
+  for (const [field, header] of Object.entries(fields)) {
+    const value = blobHTTPHeaders[field as keyof typeof fields];
+    if (value !== undefined) headers[header] = value;
+  }
+  for (const [name, value] of Object.entries(metadata ?? {})) {
+    headers[`x-ms-meta-${name}`] = value;
+  }
+  return headers;
 }

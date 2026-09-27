@@ -15,8 +15,13 @@ import {
 import { z } from 'zod';
 import { defineProvider } from '../../core/provider';
 import { getEnv } from '../../libs/env';
+import { createMultipartSessions } from '../storage/multipartSession';
+import { createObjectKeys } from '../storage/objectKeys';
+import {
+  assertSignedUrlAccessControl,
+  signedUrlLifetime,
+} from '../storage/transfer';
 import { uploadObject } from './backendUpload';
-import { createObjectKeys } from './keys';
 import { createMultipartUploads } from './multipart';
 import { objectUploadHeaders } from './objectHeaders';
 import type { S3ProviderOptions } from './options';
@@ -28,24 +33,7 @@ export type {
   S3ProviderOptions,
 } from './options';
 
-function expiration(value: number) {
-  if (!Number.isInteger(value) || value < 1 || value > 604800) {
-    throw new RangeError(
-      'S3 signed URL expiration must be an integer between 1 and 604800 seconds.',
-    );
-  }
-  return value;
-}
-
-/** Multipart sessions are EdgeStore JWTs, not S3 URLs, so S3's cap does not apply. */
-function sessionLifetime(value: number) {
-  if (!Number.isSafeInteger(value) || value < 1) {
-    throw new RangeError(
-      'S3 multipart session lifetime must be a positive integer number of seconds.',
-    );
-  }
-  return value;
-}
+const expiration = (value: number) => signedUrlLifetime('S3', value);
 
 export function s3(options: S3ProviderOptions = {}) {
   const {
@@ -81,7 +69,10 @@ export function s3(options: S3ProviderOptions = {}) {
         : async () =>
             `https://${bucketName}.s3.${await client.config.region()}.amazonaws.com`);
   const keys = async () =>
-    createObjectKeys(typeof baseUrl === 'function' ? await baseUrl() : baseUrl);
+    createObjectKeys(
+      'S3',
+      typeof baseUrl === 'function' ? await baseUrl() : baseUrl,
+    );
   const uploadExpiresIn = expiration(options.uploadUrlExpiresIn ?? 3600);
   const readExpiresIn = expiration(options.signedUrlExpiresIn ?? 3600);
 
@@ -111,14 +102,12 @@ export function s3(options: S3ProviderOptions = {}) {
     client,
     bucket,
     partUrlExpiresIn: uploadExpiresIn,
-    sessionExpiresIn: sessionLifetime(
-      options.multipart?.sessionExpiresIn ?? 86400,
-    ),
-    audience: `edgestore:s3:${endpoint ?? region ?? 'aws'}:${bucketName}`,
-    secret: () =>
-      options.jwtSecret ??
-      getEnv('EDGE_STORE_JWT_SECRET') ??
-      getEnv('EDGE_STORE_SECRET_KEY'),
+    sessions: createMultipartSessions({
+      providerName: 'S3',
+      audience: `edgestore:s3:${endpoint ?? region ?? 'aws'}:${bucketName}`,
+      secret: options.jwtSecret,
+      expiresIn: options.multipart?.sessionExpiresIn ?? 86400,
+    }),
   });
 
   async function prepare({
@@ -127,22 +116,14 @@ export function s3(options: S3ProviderOptions = {}) {
   }: RequestUploadParams) {
     const physicalBucket = bucket();
     const objectKeys = await keys();
-    const extension = fileInfo.extension
-      ? `.${fileInfo.extension.replace(/^\./, '')}`
-      : '';
-    const defaultPath = [
-      ...(fileInfo.isPublic ? ['_public'] : []),
-      ...fileInfo.path.map((part) => part.value),
-      fileInfo.fileName ?? `${crypto.randomUUID()}${extension}`,
-    ].join('/');
-    const args = { edgestoreBucketName: logicalBucket, fileInfo, defaultPath };
-    const relativePath = objectKeys.normalizeRelativePath(
-      options.path ? await options.path(args) : defaultPath,
+    const { key, pathArgs } = await objectKeys.forUpload(
+      logicalBucket,
+      fileInfo,
+      options.path,
     );
-    const key = `${logicalBucket}/${relativePath}`;
     const objectOptions =
       typeof options.objectOptions === 'function'
-        ? await options.objectOptions(args)
+        ? await options.objectOptions(pathArgs)
         : options.objectOptions;
     const input: PutObjectCommandInput = {
       ...objectOptions,
@@ -204,16 +185,7 @@ export function s3(options: S3ProviderOptions = {}) {
     },
     async init({ router }) {
       bucket();
-      for (const logicalBucket of Object.values(router.buckets)) {
-        if (
-          logicalBucket._def.accessControl !== undefined &&
-          logicalBucket._def.accessControl !== 'private'
-        ) {
-          throw new Error(
-            'S3 supports accessControl("private") with backend signed URLs, not cookie-based access-control rules.',
-          );
-        }
-      }
+      assertSignedUrlAccessControl('S3', router);
       return {};
     },
     uploads: {

@@ -222,7 +222,11 @@ export type RequestUploadPartsRes = {
 export type CompleteMultipartUploadParams = MultipartUploadSession & {
   parts: {
     partNumber: number;
-    eTag: string;
+    /**
+     * The part's `ETag` response header, when storage returns one. Providers
+     * that need it (S3) reject completion without it.
+     */
+    eTag?: string;
   }[];
 };
 

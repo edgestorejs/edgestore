@@ -1,359 +1,245 @@
-import { type RequestUploadParams } from '@edgestore/shared';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { azureBlob } from './index';
+import type { RequestUploadParams } from '@edgestore/shared';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { initEdgeStore } from '../../core/router';
+import { blockId } from './blocks';
+import { azureBlob, type AzureBlobProviderOptions } from './index';
 
-const mocks = vi.hoisted(() => ({
-  blobServiceClient: vi.fn(),
-  blobSasPermissionsParse: vi.fn((value: string) => ({ value })),
-  deleteBlob: vi.fn(),
-  generateBlobSASQueryParameters: vi.fn(
-    (options: { permissions: { value: string } }) => ({
-      toString: () => `sig=${options.permissions.value}`,
-    }),
-  ),
-  getBlobClient: vi.fn(),
-  getContainerClient: vi.fn(),
-  getProperties: vi.fn(),
-  randomUUID: vi.fn(
-    () => 'generated-id' as ReturnType<typeof crypto.randomUUID>,
-  ),
-  storageSharedKeyCredential: vi.fn(),
-}));
+// SAS signing is local, so these tests use the real SDK without a network.
+const config = {
+  storageAccountName: 'account',
+  storageAccountKey: Buffer.from('test-key').toString('base64'),
+  containerName: 'files',
+  jwtSecret: 'test-secret',
+} satisfies AzureBlobProviderOptions;
+const partSize = 5 * 1024 ** 2;
 
-vi.mock('@azure/storage-blob', () => ({
-  BlobSASPermissions: {
-    parse: mocks.blobSasPermissionsParse,
-  },
-  BlobServiceClient: class {
-    getContainerClient = mocks.getContainerClient;
-
-    constructor(...args: unknown[]) {
-      mocks.blobServiceClient(...args);
-    }
-  },
-  generateBlobSASQueryParameters: mocks.generateBlobSASQueryParameters,
-  SASProtocol: {
-    Https: 'https',
-    HttpsAndHttp: 'https,http',
-  },
-  StorageSharedKeyCredential: class {
-    constructor(...args: unknown[]) {
-      mocks.storageSharedKeyCredential(...args);
-    }
-  },
-}));
-
-function encodeBlobName(blobName: string) {
-  return blobName.split('/').map(encodeURIComponent).join('/');
-}
-
-function createUploadParams(
-  overrides: Partial<RequestUploadParams['fileInfo']> = {},
+function request(
+  fileInfo: Partial<RequestUploadParams['fileInfo']> = {},
+  autoSignedUrls?: RequestUploadParams['autoSignedUrls'],
 ): RequestUploadParams {
   return {
     bucketName: 'documents',
-    bucketType: 'file',
+    bucketType: 'FILE',
+    autoSignedUrls,
     fileInfo: {
+      size: 3,
+      type: 'text/plain',
       extension: 'txt',
-      fileName: undefined,
+      fileName: 'a b.txt',
       isPublic: false,
-      metadata: {},
-      path: [],
-      size: 10,
       temporary: false,
-      ...overrides,
+      path: [],
+      metadata: {},
+      ...fileInfo,
     },
   };
 }
 
-describe('azureBlob', () => {
-  const containerUrl = 'http://localhost:10000/devstoreaccount1/files';
+afterEach(() => {
+  vi.unstubAllEnvs();
+  vi.useRealTimers();
+});
 
-  beforeEach(() => {
-    vi.restoreAllMocks();
-    vi.clearAllMocks();
-    vi.spyOn(crypto, 'randomUUID').mockImplementation(mocks.randomUUID);
-    mocks.getProperties.mockResolvedValue({
-      contentLength: 123,
-      lastModified: new Date('2026-01-02T03:04:05.000Z'),
-    });
-    mocks.deleteBlob.mockResolvedValue(undefined);
-    mocks.getContainerClient.mockImplementation((containerName: string) => ({
-      getBlobClient: mocks.getBlobClient,
-      url: `http://localhost:10000/devstoreaccount1/${containerName}`,
-    }));
-    mocks.getBlobClient.mockImplementation((blobName: string) => ({
-      delete: mocks.deleteBlob,
-      getProperties: mocks.getProperties,
-      url: `${containerUrl}/${encodeBlobName(blobName)}`,
-    }));
+describe('azureBlob', () => {
+  it('defers credential checks until the provider is used', async () => {
+    vi.stubEnv('ES_AZURE_ACCOUNT_NAME', '');
+    const provider = azureBlob();
+    const es = initEdgeStore.create();
+
+    await expect(
+      provider.init({ ctx: {}, router: es.router({ files: es.fileBucket() }) }),
+    ).rejects.toThrow('requires storageAccountName');
   });
 
-  it('declares temporary and replacement uploads as unsupported', () => {
-    const provider = azureBlob({
-      storageAccountName: 'storageacct',
-      storageAccountKey: 'account-key',
-      containerName: 'documents',
+  it('derives file URLs from the endpoint, or from a separate base URL', async () => {
+    const hosted = azureBlob(config);
+    const cdn = azureBlob({
+      ...config,
+      endpoint: 'http://127.0.0.1:10000/devstoreaccount1/',
+      baseUrl: 'https://cdn.example.com/assets',
     });
+
+    await expect(hosted.uploads.request(request())).resolves.toMatchObject({
+      url: 'https://account.blob.core.windows.net/files/documents/a%20b.txt',
+    });
+    const res = await cdn.uploads.request(request({}, { expiresIn: 60 }));
+    expect(res).toMatchObject({
+      key: 'documents/a b.txt',
+      url: 'https://cdn.example.com/assets/documents/a%20b.txt',
+    });
+    expect(res.signedReadUrl?.signedUrl).toMatch(
+      /^http:\/\/127\.0\.0\.1:10000\/devstoreaccount1\/files\/documents\/a%20b\.txt\?.*sp=r/,
+    );
+  });
+
+  it('signs single uploads with the headers Azure applies to the blob', async () => {
+    const provider = azureBlob({
+      ...config,
+      path: ({ defaultPath }) => `tenant/${defaultPath}`,
+      objectOptions: {
+        cacheControl: 'private',
+        contentDisposition: 'attachment',
+        metadata: { tenant: 'acme' },
+      },
+    });
+
+    const res = await provider.uploads.request(request());
+
+    if (!('uploadUrl' in res)) throw new Error('Expected single upload');
+    expect(new URL(res.uploadUrl).searchParams.get('sp')).toBe('cw');
+    expect(res.uploadHeaders).toEqual({
+      'x-ms-blob-type': 'BlockBlob',
+      'x-ms-blob-content-type': 'text/plain',
+      'x-ms-blob-cache-control': 'private',
+      'x-ms-blob-content-disposition': 'attachment',
+      'x-ms-meta-tenant': 'acme',
+    });
+    expect(res.key).toBe('documents/tenant/a b.txt');
+  });
+
+  it('returns signed read URLs only for private buckets that ask for them', async () => {
+    const provider = azureBlob(config);
+
+    const plain = await provider.uploads.request(request());
+    const signed = await provider.uploads.request(
+      request({}, { expiresIn: 60 }),
+    );
+    const publicFile = await provider.uploads.request(
+      request({ isPublic: true }, { expiresIn: 60 }),
+    );
+
+    expect(plain.signedReadUrl).toBeUndefined();
+    expect(signed.signedReadUrl).toMatchObject({ expiresIn: 60 });
+    expect(publicFile.signedReadUrl).toBeUndefined();
+    expect(publicFile.key).toBe('documents/_public/a b.txt');
+  });
+
+  it('starts block uploads with scoped sessions and part URLs', async () => {
+    const provider = azureBlob({
+      ...config,
+      multipart: { thresholdBytes: partSize, partSizeBytes: partSize },
+    });
+
+    const res = await provider.uploads.request(
+      request({ size: partSize * 12 }),
+    );
+
+    if (!('multipart' in res)) throw new Error('Expected multipart upload');
+    const { multipart } = res;
+    expect(multipart).toMatchObject({ totalParts: 12, partSize });
+    expect(multipart.parts.map((part) => part.partNumber)).toEqual(
+      Array.from({ length: 10 }, (_, index) => index + 1),
+    );
+    const url = new URL(multipart.parts[0]!.uploadUrl);
+    expect(url.searchParams.get('comp')).toBe('block');
+    expect(url.searchParams.get('sp')).toBe('w');
+
+    await expect(
+      provider.uploads.multipart.requestParts({ ...multipart, parts: [12] }),
+    ).resolves.toMatchObject({ parts: [{ partNumber: 12 }] });
+    for (const session of [
+      { ...multipart, key: 'documents/other.txt' },
+      { ...multipart, uploadId: `${multipart.uploadId}x` },
+    ]) {
+      await expect(
+        provider.uploads.multipart.requestParts({ ...session, parts: [1] }),
+      ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+    }
+    await expect(
+      provider.uploads.multipart.requestParts({ ...multipart, parts: [13] }),
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+    await expect(
+      provider.uploads.multipart.abort(multipart),
+    ).resolves.toBeUndefined();
+  });
+
+  it('uses equal-length block IDs that differ between sessions', () => {
+    const ids = [
+      blockId('aaaa', 1),
+      blockId('aaaa', 10_000),
+      blockId('bbbb', 1),
+    ];
+
+    expect(new Set(ids.map((id) => id.length)).size).toBe(1);
+    expect(new Set(ids).size).toBe(3);
+  });
+
+  it('rejects block sizes and session lifetimes Azure cannot use', async () => {
+    const provider = azureBlob({
+      ...config,
+      multipart: { partSizeBytes: 4001 * 1024 ** 2 },
+    });
+
+    await expect(
+      provider.uploads.request(request({ size: 5001 * 1024 ** 2 })),
+    ).rejects.toThrow('4000 MiB');
+    await expect(
+      provider.uploads.request(request({ size: 200 * 1024 ** 2 + 0.5 })),
+    ).rejects.toThrow('safe integer');
+    expect(() =>
+      azureBlob({ ...config, multipart: { sessionExpiresIn: 0 } }),
+    ).toThrow('positive integer');
+  });
+
+  it('accepts key and URL references within the logical bucket only', async () => {
+    const provider = azureBlob(config);
+
+    const [byKey, byUrl] = await provider.files.getSignedUrls({
+      bucketName: 'documents',
+      files: [
+        { key: 'documents/a.txt' },
+        {
+          url: 'https://account.blob.core.windows.net/files/documents/b%20c.txt',
+        },
+      ],
+      expiresIn: 120,
+    });
+
+    expect(byKey).toMatchObject({
+      url: 'https://account.blob.core.windows.net/files/documents/a.txt',
+      expiresIn: 120,
+    });
+    expect(byUrl!.url).toBe(
+      'https://account.blob.core.windows.net/files/documents/b%20c.txt',
+    );
+    for (const [file, message] of [
+      [{ key: 'avatars/a.txt' }, 'does not belong to EdgeStore bucket'],
+      [{ key: 'documents/../avatars/a.txt' }, 'Azure Blob paths must stay'],
+      [
+        { url: 'https://evil.example.com/files/documents/a.txt' },
+        'does not belong to this Azure Blob provider',
+      ],
+    ] as const) {
+      await expect(
+        provider.files.getSignedUrls({
+          bucketName: 'documents',
+          files: [file],
+        }),
+      ).rejects.toThrow(message);
+    }
+  });
+
+  it('declares unsupported options and rejects cookie-based access control', async () => {
+    const provider = azureBlob(config);
+    const es = initEdgeStore.create();
 
     expect(provider.uploads.supportedOptions).toEqual({
       temporary: false,
       replaceTargetUrl: false,
     });
-  });
-
-  it('constructs a base URL from the storage account', () => {
-    azureBlob({
-      storageAccountName: 'storageacct',
-      storageAccountKey: 'account-key',
-      containerName: 'documents',
-    });
-
-    expect(mocks.storageSharedKeyCredential).toHaveBeenCalledWith(
-      'storageacct',
-      'account-key',
-    );
-    expect(mocks.blobServiceClient).toHaveBeenCalledWith(
-      'https://storageacct.blob.core.windows.net',
-      expect.anything(),
-    );
-    expect(mocks.getContainerClient).toHaveBeenCalledWith('documents');
-  });
-
-  it('uses a customBaseUrl when provided', () => {
-    azureBlob({
-      storageAccountName: 'storageacct',
-      storageAccountKey: 'account-key',
-      containerName: 'documents',
-      customBaseUrl: 'http://localhost:10000/devstoreaccount1',
-    });
-
-    expect(mocks.blobServiceClient).toHaveBeenCalledWith(
-      'http://localhost:10000/devstoreaccount1',
-      expect.anything(),
-    );
-    expect(mocks.getContainerClient).toHaveBeenCalledWith('documents');
-  });
-
-  it.each([
-    {
-      expectedUuidCalls: 0,
-      fileInfo: {
-        extension: 'png',
-        fileName: 'avatar.png',
-        isPublic: true,
-        path: [
-          { key: 'org', value: 'acme' },
-          { key: 'user', value: 'ravi' },
-        ],
-      },
-      expectedBlobName: 'documents/_public/acme/ravi/avatar.png',
-    },
-    {
-      expectedUuidCalls: 0,
-      fileInfo: {
-        extension: 'pdf',
-        fileName: 'report.pdf',
-        isPublic: false,
-        path: [],
-      },
-      expectedBlobName: 'documents/report.pdf',
-    },
-    {
-      expectedUuidCalls: 1,
-      fileInfo: {
-        extension: '.pdf',
-        fileName: undefined,
-        isPublic: false,
-        path: [{ key: 'year', value: '2026' }],
-      },
-      expectedBlobName: 'documents/2026/generated-id.pdf',
-    },
-  ])(
-    'uses the EdgeStore path shape as the Azure blob name',
-    async ({ fileInfo, expectedBlobName, expectedUuidCalls }) => {
-      const provider = azureBlob({
-        containerName: 'files',
-        customBaseUrl: 'http://localhost:10000/devstoreaccount1',
-        storageAccountKey: 'account-key',
-        storageAccountName: 'devstoreaccount1',
-      });
-
-      const res = await provider.uploads.request(createUploadParams(fileInfo));
-
-      expect(mocks.getBlobClient).toHaveBeenCalledWith(expectedBlobName);
-      expect(mocks.randomUUID).toHaveBeenCalledTimes(expectedUuidCalls);
-      expect(res).toEqual({
-        url: `${containerUrl}/${encodeBlobName(expectedBlobName)}`,
-        ...(fileInfo.isPublic
-          ? {}
-          : {
-              signedReadUrl: {
-                signedUrl: expect.stringContaining('?sig=r'),
-                expiresAt: expect.any(Date),
-                expiresIn: 60 * 60,
-              },
-            }),
-        uploadUrl: `${containerUrl}/${encodeBlobName(expectedBlobName)}?sig=cw`,
-        uploadHeaders: { 'x-ms-blob-type': 'BlockBlob' },
-      });
-      expect(mocks.blobSasPermissionsParse).toHaveBeenCalledWith('cw');
-      if (fileInfo.isPublic) {
-        expect(mocks.blobSasPermissionsParse).not.toHaveBeenCalledWith('r');
-      } else {
-        expect(mocks.blobSasPermissionsParse).toHaveBeenCalledWith('r');
-      }
-    },
-  );
-
-  it('uses write-only upload credentials and canonical public URLs', async () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date('2026-01-02T03:04:05.000Z'));
-    const provider = azureBlob({
-      containerName: 'files',
-      customBaseUrl: 'https://storage.example.com',
-      storageAccountKey: 'account-key',
-      storageAccountName: 'storageacct',
-      uploadUrlExpiresIn: 900,
-    });
-
-    const res = await provider.uploads.request(
-      createUploadParams({ fileName: 'public.txt', isPublic: true }),
-    );
-
-    expect(res).toEqual({
-      url: `${containerUrl}/documents/_public/public.txt`,
-      uploadUrl: `${containerUrl}/documents/_public/public.txt?sig=cw`,
-      uploadHeaders: { 'x-ms-blob-type': 'BlockBlob' },
-    });
-    expect(mocks.generateBlobSASQueryParameters).toHaveBeenCalledWith(
-      {
-        blobName: 'documents/_public/public.txt',
-        containerName: 'files',
-        expiresOn: new Date('2026-01-02T03:19:05.000Z'),
-        permissions: { value: 'cw' },
-        protocol: 'https',
-        startsOn: new Date('2026-01-02T02:59:05.000Z'),
-      },
-      expect.anything(),
-    );
-    expect(mocks.blobSasPermissionsParse).not.toHaveBeenCalledWith('r');
-    vi.useRealTimers();
-  });
-
-  it('normalizes an Azure access URL to a blob name for getFile', async () => {
-    const provider = azureBlob({
-      containerName: 'files',
-      customBaseUrl: 'http://localhost:10000/devstoreaccount1',
-      storageAccountKey: 'account-key',
-      storageAccountName: 'devstoreaccount1',
-    });
-
-    const res = await provider.files.get({
-      bucketName: 'documents',
-      file: {
-        url: `${containerUrl}/documents/_public/a%20b/file.txt?sv=token`,
-      },
-    });
-
-    expect(mocks.getBlobClient).toHaveBeenCalledWith(
-      'documents/_public/a b/file.txt',
-    );
-    expect(res).toEqual({
-      sizeBytes: 123,
-      uploadedAt: new Date('2026-01-02T03:04:05.000Z'),
-      updatedAt: new Date('2026-01-02T03:04:05.000Z'),
-      url: `${containerUrl}/documents/_public/a%20b/file.txt`,
-    });
-  });
-
-  it('creates separate blob-scoped read URLs with the requested expiry', async () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date('2026-01-02T03:04:05.000Z'));
-    const provider = azureBlob({
-      containerName: 'files',
-      customBaseUrl: 'http://localhost:10000/devstoreaccount1',
-      storageAccountKey: 'account-key',
-      storageAccountName: 'devstoreaccount1',
-    });
-
     await expect(
-      provider.files.getSignedUrls?.({
-        bucketName: 'documents',
-        files: [
-          { url: `${containerUrl}/documents/private.txt?old=credential` },
-        ],
-        expiresIn: 120,
+      provider.init({
+        ctx: {},
+        router: es.router({
+          files: es.fileBucket().accessControl({ user: 'someone' }),
+        }),
       }),
-    ).resolves.toEqual([
-      {
-        url: `${containerUrl}/documents/private.txt`,
-        signedUrl: `${containerUrl}/documents/private.txt?sig=r`,
-        expiresAt: new Date('2026-01-02T03:06:05.000Z'),
-        expiresIn: 120,
-      },
-    ]);
-    expect(mocks.generateBlobSASQueryParameters).toHaveBeenLastCalledWith(
-      expect.objectContaining({
-        blobName: 'documents/private.txt',
-        permissions: { value: 'r' },
-        expiresOn: new Date('2026-01-02T03:06:05.000Z'),
-      }),
-      expect.anything(),
-    );
-    vi.useRealTimers();
-  });
-
-  it('normalizes an Azure access URL to a blob name for deleteFile', async () => {
-    const provider = azureBlob({
-      containerName: 'files',
-      customBaseUrl: 'http://localhost:10000/devstoreaccount1',
-      storageAccountKey: 'account-key',
-      storageAccountName: 'devstoreaccount1',
-    });
-
+    ).rejects.toThrow('cookie-based');
     await expect(
-      provider.files.delete?.({
-        bucketName: 'documents',
-        files: [{ url: `${containerUrl}/documents/report.pdf` }],
+      provider.init({
+        ctx: {},
+        router: es.router({ files: es.fileBucket().accessControl('private') }),
       }),
-    ).resolves.toEqual({ results: [{ success: true }] });
-
-    expect(mocks.getBlobClient).toHaveBeenCalledWith('documents/report.pdf');
-    expect(mocks.deleteBlob).toHaveBeenCalledOnce();
-  });
-
-  it('rejects cross-bucket deletion before contacting Azure', async () => {
-    const provider = azureBlob({
-      containerName: 'files',
-      customBaseUrl: 'http://localhost:10000/devstoreaccount1',
-      storageAccountKey: 'account-key',
-      storageAccountName: 'devstoreaccount1',
-    });
-
-    await expect(
-      provider.files.delete?.({
-        bucketName: 'documents',
-        files: [{ url: `${containerUrl}/avatars/report.pdf` }],
-      }),
-    ).rejects.toThrow('File does not belong to EdgeStore bucket "documents".');
-    expect(mocks.deleteBlob).not.toHaveBeenCalled();
-  });
-
-  it('rejects cross-bucket lookup before contacting Azure', async () => {
-    const provider = azureBlob({
-      containerName: 'files',
-      customBaseUrl: 'http://localhost:10000/devstoreaccount1',
-      storageAccountKey: 'account-key',
-      storageAccountName: 'devstoreaccount1',
-    });
-
-    await expect(
-      provider.files.get({
-        bucketName: 'documents',
-        file: { url: `${containerUrl}/avatars/report.pdf` },
-      }),
-    ).rejects.toThrow('File does not belong to EdgeStore bucket "documents".');
-    expect(mocks.getProperties).not.toHaveBeenCalled();
+    ).resolves.toEqual({});
   });
 });

@@ -1,12 +1,12 @@
-name: S3 storage
+name: Storage providers
 
-# Runs the S3 provider against real S3-compatible storage. MinIO no longer
+# Runs the direct-storage providers against local emulators. MinIO no longer
 # publishes binaries or images, so a pinned release is built from source and
-# cached.
+# cached. Azurite ships as a pinned Microsoft image.
 on:
   pull_request:
     paths:
-      - .github/workflows/s3-storage.yml
+      - .github/workflows/storage.yml
       - packages/sdk/src/**
       - packages/server/src/**
       - packages/shared/src/**
@@ -16,7 +16,7 @@ on:
       - main
       - next
     paths:
-      - .github/workflows/s3-storage.yml
+      - .github/workflows/storage.yml
       - packages/sdk/src/**
       - packages/server/src/**
       - packages/shared/src/**
@@ -97,3 +97,45 @@ jobs:
         env:
           ES_S3_SMOKE_ENDPOINT: http://127.0.0.1:19000
         run: pnpm --filter @edgestore/server test:smoke src/providers/s3/s3.smoke.test.ts
+
+  azure-blob:
+    name: Azure Blob storage tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build server dependencies
+        run: pnpm turbo run build --filter=@edgestore/server^...
+
+      - name: Start Azurite
+        run: |
+          docker run -d --name azurite -p 127.0.0.1:10000:10000 \
+            mcr.microsoft.com/azure-storage/azurite:3.37.0 \
+            azurite-blob --blobHost 0.0.0.0 --skipApiVersionCheck
+          for attempt in $(seq 1 30); do
+            if curl -s -o /dev/null http://127.0.0.1:10000/; then exit 0; fi
+            sleep 1
+          done
+          docker logs azurite
+          exit 1
+
+      - name: Azure Blob storage tests
+        env:
+          ES_AZURE_SMOKE_ENDPOINT: http://127.0.0.1:10000/devstoreaccount1
+        run: pnpm --filter @edgestore/server test:smoke src/providers/azure-blob/azure-blob.smoke.test.ts
