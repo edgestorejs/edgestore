@@ -59,27 +59,20 @@ export const logo = (
     <Image
       src="/img/edgestore-lockup-light.svg"
       alt="EdgeStore"
-      width={161}
+      width={165}
       height={24}
       className="shrink-0 dark:hidden"
     />
     <Image
       src="/img/edgestore-lockup.svg"
       alt="EdgeStore"
-      width={161}
+      width={165}
       height={24}
       className="hidden shrink-0 dark:block"
     />
   </>
 );
 
-/**
- * Shared layout configurations
- *
- * you can customise layouts individually from:
- * Home Layout: app/(home)/layout.tsx
- * Docs Layout: app/docs/layout.tsx
- */
 export const baseOptions: BaseLayoutProps = {
   nav: {
     title: logo,

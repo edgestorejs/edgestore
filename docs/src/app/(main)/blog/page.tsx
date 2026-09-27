@@ -25,7 +25,7 @@ export default function BlogPage() {
   );
 
   return (
-    <main className="container w-full max-w-5xl flex-1 py-16 sm:py-24">
+    <div className="container mx-auto w-full max-w-5xl py-16 sm:py-24">
       <header className="max-w-2xl">
         <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">
           Blog
@@ -85,6 +85,6 @@ export default function BlogPage() {
           </Link>
         </section>
       )}
-    </main>
+    </div>
   );
 }

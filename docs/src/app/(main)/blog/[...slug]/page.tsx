@@ -24,7 +24,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const MDXContent = page.data.body;
 
   return (
-    <main className="container w-full max-w-4xl flex-1 py-12 sm:py-20">
+    <div className="container mx-auto w-full max-w-4xl py-12 sm:py-20">
       <Link
         href="/blog"
         className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
@@ -61,7 +61,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           <MDXContent components={getMDXComponents()} />
         </div>
       </article>
-    </main>
+    </div>
   );
 }
 
