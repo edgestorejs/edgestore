@@ -26,6 +26,9 @@ jobs:
     name: Checks
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      MINIO_VERSION: RELEASE.2025-04-22T22-12-26Z
+      MINIO_GO_VERSION: '1.24.2'
 
     steps:
       - name: Checkout
@@ -62,15 +65,26 @@ jobs:
       - name: Runtime tests
         run: pnpm test
 
+      - name: Cache S3 test storage binary
+        id: minio-cache
+        uses: actions/cache@v5
+        with:
+          path: ${{ runner.temp }}/minio-bin
+          key: minio-${{ runner.os }}-${{ runner.arch }}-${{ env.MINIO_VERSION }}-go${{ env.MINIO_GO_VERSION }}
+
       - name: Setup Go for S3 test storage
+        if: steps.minio-cache.outputs.cache-hit != 'true'
         uses: actions/setup-go@v6
         with:
-          go-version: '1.24.2'
+          go-version: ${{ env.MINIO_GO_VERSION }}
           cache: false
 
-      - name: Build and start S3-compatible storage
+      - name: Build S3 test storage binary
+        if: steps.minio-cache.outputs.cache-hit != 'true'
+        run: GOBIN="$RUNNER_TEMP/minio-bin" go install "github.com/minio/minio@$MINIO_VERSION"
+
+      - name: Start S3-compatible storage
         run: |
-          GOBIN="$RUNNER_TEMP/minio-bin" go install github.com/minio/minio@RELEASE.2025-04-22T22-12-26Z
           MINIO_ROOT_USER=edgestore-test MINIO_ROOT_PASSWORD=edgestore-test-password \
             "$RUNNER_TEMP/minio-bin/minio" server "$RUNNER_TEMP/minio-data" \
             --address 127.0.0.1:19000 > "$RUNNER_TEMP/minio.log" 2>&1 &
