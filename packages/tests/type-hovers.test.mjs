@@ -134,7 +134,6 @@ const expectedHovers = {
 }) => Promise<{
     url: string;
     size: number;
-    uploadedAt: Date;
     metadata: {
         role: "admin" | "visitor";
         category: "invoice" | "contract";
@@ -279,7 +278,6 @@ const expectedHovers = {
   reactUnsignedUpload: `const reactUnsignedUpload: {
     url: string;
     size: number;
-    uploadedAt: Date;
     metadata: Record<string, never>;
     path: Record<string, never>;
     pathOrder: [];
@@ -288,7 +286,6 @@ const expectedHovers = {
   reactSignedFileUpload: `const reactSignedFileUpload: {
     url: string;
     size: number;
-    uploadedAt: Date;
     metadata: {
         role: "admin" | "visitor";
         category: "invoice" | "contract";
@@ -308,7 +305,6 @@ const expectedHovers = {
     url: string;
     thumbnailUrl: string | null;
     size: number;
-    uploadedAt: Date;
     metadata: Record<string, never>;
     path: Record<string, never>;
     pathOrder: [];

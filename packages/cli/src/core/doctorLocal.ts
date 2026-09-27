@@ -49,7 +49,7 @@ export async function localApplicationChecks(
         : 'warn',
     detail:
       application.compatibility === 'legacy'
-        ? 'Installed 0.2 packages: choose maintenance or migration explicitly.'
+        ? 'Installed 0.x packages: choose maintenance or migration explicitly.'
         : `${application.compatibility}; API authority is each installed package's references.`,
   });
   for (const pkg of application.packages) {
@@ -166,7 +166,6 @@ export function inspectSource(source: string, frontend: boolean) {
   let adapter = false;
   let provider = false;
   const corsNames = new Set<string>();
-  const handlers = new Set<string>();
   const clientFile =
     frontend ||
     ast.program.directives.some(
@@ -183,11 +182,8 @@ export function inspectSource(source: string, frontend: boolean) {
             specifier.type === 'ImportSpecifier' &&
             specifier.importKind === 'type',
         ));
-    if (from.startsWith('@edgestore/server/adapters/') && !typeOnly) {
+    if (from.startsWith('@edgestore/server/adapters/') && !typeOnly)
       adapter = true;
-      for (const specifier of statement.specifiers)
-        handlers.add(specifier.local.name);
-    }
     if (from === 'hono/cors') {
       for (const specifier of statement.specifiers)
         corsNames.add(specifier.local.name);
@@ -222,15 +218,6 @@ export function inspectSource(source: string, frontend: boolean) {
     )
       return;
     const argument = node.arguments[0];
-    if (
-      handlers.has(node.callee.name) &&
-      property(argument, 'router') &&
-      !property(argument, 'edgestore')
-    ) {
-      warnings.add(
-        'Direct handler router option resembles 0.2 wiring. Check the installed version before maintaining or migrating it.',
-      );
-    }
     if (corsNames.has(node.callee.name)) {
       const origin = property(argument, 'origin');
       const credentials = property(argument, 'credentials');

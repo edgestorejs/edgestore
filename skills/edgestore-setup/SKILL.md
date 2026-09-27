@@ -22,7 +22,7 @@ belong to the installed package version; the skill and CLI can be newer. If the
 reference is absent, use installed types/source and version-matched documentation,
 and mention the fallback. Read the references again after installing packages.
 
-For an existing 0.2 integration, resolve maintenance versus migration with the
+For an existing 0.x integration, resolve maintenance versus migration with the
 user before changing APIs. Preserve installed versions unless an upgrade is
 authorized. For missing packages choose a compatible, explicit version. Use a
 prerelease only when requested or required by the application.

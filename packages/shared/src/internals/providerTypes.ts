@@ -11,24 +11,18 @@ export type InitParams<TCtx extends AnyContext = AnyContext> = {
   router: EdgeStoreRouter<TCtx>;
 };
 
+/** Requests the browser sends to file origins before loading protected files. */
 export type ClientInit = {
-  /** Absolute initialization URLs for active file aliases. Falls back to baseUrl + path. */
-  urls?: string[];
-  path: string;
+  /** Absolute initialization URLs, one per file origin. */
+  urls: string[];
   headers?: Record<string, string>;
 };
 
 export type InitRes = {
-  /** Delivery origin discovered during initialization. */
-  baseUrl?: string;
   clientInit?: ClientInit;
 };
 
 export type RequestUploadParams = {
-  multipart?: {
-    uploadId?: string;
-    parts: number[];
-  };
   bucketName: string;
   bucketType: string;
   fileInfo: {
@@ -141,14 +135,17 @@ export type BackendUploadParams = {
   }) => void;
 };
 
+/** A signed URL for reading a file that is not publicly accessible. */
+export type SignedReadUrl = {
+  signedUrl: string;
+  signedThumbnailUrl?: string | null;
+  expiresAt: Date | string;
+  expiresIn: number;
+};
+
 export type BackendUploadResult<TFile extends BackendFile = ProviderFile> = {
   file: TFile;
-  signedReadUrl?: {
-    signedUrl: string;
-    signedThumbnailUrl?: string | null;
-    expiresAt: Date | string;
-    expiresIn: number;
-  };
+  signedReadUrl?: SignedReadUrl;
 };
 
 export type BackendUploadOperation<TFile extends BackendFile = ProviderFile> = (
@@ -232,12 +229,11 @@ export type CompleteMultipartUploadParams = MultipartUploadSession & {
 type RequestUploadAccess = {
   /** Stable object key, when the provider exposes one. */
   key?: string;
-  accessUrl: string;
+  /** The file URL once the upload completes. */
+  url: string;
   thumbnailUrl?: string | null;
-  accessSignedUrl?: string;
-  accessSignedThumbnailUrl?: string | null;
-  accessSignedUrlExpiresAt?: Date | string;
-  accessSignedUrlExpiresIn?: number;
+  /** Returned when the bucket requests signed URLs for uploaded files. */
+  signedReadUrl?: SignedReadUrl;
 };
 
 export type SinglePartRequestUploadRes = RequestUploadAccess & {
@@ -360,7 +356,6 @@ export type EdgeStoreProvider<
   > = ProviderFiles<StandardSchemaV1.InferOutput<TReferenceSchema>, TCursor>,
 > = {
   name: string;
-  baseUrl: string | (() => MaybePromise<string>);
   init: <TCtx extends AnyContext>(
     params: InitParams<TCtx>,
   ) => MaybePromise<InitRes>;

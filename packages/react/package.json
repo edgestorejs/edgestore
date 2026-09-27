@@ -53,11 +53,6 @@
       "import": "./dist/errors/index.js",
       "default": "./dist/errors/index.js"
     },
-    "./shared": {
-      "types": "./dist/shared/index.d.ts",
-      "import": "./dist/shared/index.js",
-      "default": "./dist/shared/index.js"
-    },
     "./utils": {
       "types": "./dist/utils/index.d.ts",
       "import": "./dist/utils/index.js",
@@ -72,7 +67,6 @@
     "agent-docs",
     "package.json",
     "errors",
-    "shared",
     "utils",
     "!**/*.test.*",
     "!**/__tests__"

@@ -103,13 +103,12 @@ describe('azureBlob', () => {
   });
 
   it('constructs a base URL from the storage account', () => {
-    const provider = azureBlob({
+    azureBlob({
       storageAccountName: 'storageacct',
       storageAccountKey: 'account-key',
       containerName: 'documents',
     });
 
-    expect(provider.baseUrl).toBe('https://storageacct.blob.core.windows.net');
     expect(mocks.storageSharedKeyCredential).toHaveBeenCalledWith(
       'storageacct',
       'account-key',
@@ -122,14 +121,17 @@ describe('azureBlob', () => {
   });
 
   it('uses a customBaseUrl when provided', () => {
-    const provider = azureBlob({
+    azureBlob({
       storageAccountName: 'storageacct',
       storageAccountKey: 'account-key',
       containerName: 'documents',
       customBaseUrl: 'http://localhost:10000/devstoreaccount1',
     });
 
-    expect(provider.baseUrl).toBe('http://localhost:10000/devstoreaccount1');
+    expect(mocks.blobServiceClient).toHaveBeenCalledWith(
+      'http://localhost:10000/devstoreaccount1',
+      expect.anything(),
+    );
     expect(mocks.getContainerClient).toHaveBeenCalledWith('documents');
   });
 
@@ -182,14 +184,16 @@ describe('azureBlob', () => {
       expect(mocks.getBlobClient).toHaveBeenCalledWith(expectedBlobName);
       expect(mocks.randomUUID).toHaveBeenCalledTimes(expectedUuidCalls);
       expect(res).toEqual({
-        accessUrl: `${containerUrl}/${encodeBlobName(expectedBlobName)}`,
-        accessSignedUrl: fileInfo.isPublic
-          ? undefined
-          : expect.stringContaining('?sig=r'),
-        accessSignedUrlExpiresAt: fileInfo.isPublic
-          ? undefined
-          : expect.any(Date),
-        accessSignedUrlExpiresIn: fileInfo.isPublic ? undefined : 60 * 60,
+        url: `${containerUrl}/${encodeBlobName(expectedBlobName)}`,
+        ...(fileInfo.isPublic
+          ? {}
+          : {
+              signedReadUrl: {
+                signedUrl: expect.stringContaining('?sig=r'),
+                expiresAt: expect.any(Date),
+                expiresIn: 60 * 60,
+              },
+            }),
         uploadUrl: `${containerUrl}/${encodeBlobName(expectedBlobName)}?sig=cw`,
         uploadHeaders: { 'x-ms-blob-type': 'BlockBlob' },
       });
@@ -218,10 +222,7 @@ describe('azureBlob', () => {
     );
 
     expect(res).toEqual({
-      accessUrl: `${containerUrl}/documents/_public/public.txt`,
-      accessSignedUrl: undefined,
-      accessSignedUrlExpiresAt: undefined,
-      accessSignedUrlExpiresIn: undefined,
+      url: `${containerUrl}/documents/_public/public.txt`,
       uploadUrl: `${containerUrl}/documents/_public/public.txt?sig=cw`,
       uploadHeaders: { 'x-ms-blob-type': 'BlockBlob' },
     });

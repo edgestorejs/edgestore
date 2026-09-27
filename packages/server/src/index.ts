@@ -1,9 +1,4 @@
 export { initEdgeStore, type ConfiguredRouter } from './core/router';
-export {
-  defineProvider,
-  type EdgeStoreClient,
-  type InferClientInputs,
-  type InferClientOutputs,
-  type InferClientResponse,
-  EdgeStoreFileMutationError,
-} from './core';
+export { defineProvider } from './core/provider';
+export type * from './core/client';
+export { EdgeStoreFileMutationError } from './core/client';

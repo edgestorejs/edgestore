@@ -174,7 +174,6 @@ export function azureBlob(options?: AzureBlobProviderOptions) {
 
   return defineProvider({
     name: 'azure-blob',
-    baseUrl,
     reference: {
       schema: z.object({ url: z.string() }),
       fromUrl: (url) => ({ url }),
@@ -201,10 +200,16 @@ export function azureBlob(options?: AzureBlobProviderOptions) {
         return {
           uploadUrl: uploadAccess.signedUrl,
           uploadHeaders: { 'x-ms-blob-type': 'BlockBlob' },
-          accessUrl: uploadAccess.url,
-          accessSignedUrl: readAccess?.signedUrl,
-          accessSignedUrlExpiresAt: readAccess?.expiresAt,
-          accessSignedUrlExpiresIn: readAccess?.expiresIn,
+          url: uploadAccess.url,
+          ...(readAccess
+            ? {
+                signedReadUrl: {
+                  signedUrl: readAccess.signedUrl,
+                  expiresAt: readAccess.expiresAt,
+                  expiresIn: readAccess.expiresIn,
+                },
+              }
+            : {}),
         };
       },
     },

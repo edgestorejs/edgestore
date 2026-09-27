@@ -305,17 +305,17 @@ describe('agent context', () => {
 
   it('routes legacy and mixed versions explicitly instead of selecting v1 guidance silently', async () => {
     const directory = await app({
-      '@edgestore/react': '0.2.2',
+      '@edgestore/react': '0.8.0',
       '@edgestore/server': '1.0.0',
     });
-    await install(directory, '@edgestore/react', '0.2.2');
+    await install(directory, '@edgestore/react', '0.8.0');
     await install(directory, '@edgestore/server', '1.0.0');
     expect((await inspectApplication(directory)).compatibility).toBe('mixed');
-    await install(directory, '@edgestore/server', '0.2.2');
+    await install(directory, '@edgestore/server', '0.8.0');
     expect(await inspectApplication(directory)).toMatchObject({
       compatibility: 'legacy',
       warnings: expect.arrayContaining([
-        expect.stringContaining('maintain 0.2'),
+        expect.stringContaining('maintain 0.x'),
       ]),
     });
   });
@@ -362,6 +362,8 @@ it('plans both packages for a combined Hono and Vite React app', async () => {
 
 it.each([
   ['0.2.4', 'legacy'],
+  ['0.8.0', 'legacy'],
+  ['0.0.0-canary-20260801075232', 'v1'],
   ['1.0.0-next.3', 'v1'],
   ['1.2.3', 'v1'],
   ['2.0.0', 'unsupported'],

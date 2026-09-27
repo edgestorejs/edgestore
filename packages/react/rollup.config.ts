@@ -8,7 +8,6 @@ const packageDir = path.dirname(fileURLToPath(import.meta.url));
 export const input = [
   'src/index.ts',
   'src/utils/index.ts',
-  'src/shared/index.ts',
   'src/errors/index.ts',
 ];
 

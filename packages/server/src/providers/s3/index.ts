@@ -50,13 +50,13 @@ function sessionLifetime(value: number) {
 export function s3(options: S3ProviderOptions = {}) {
   const {
     credentials: configuredCredentials,
-    accessKeyId = getEnv('ES_AWS_ACCESS_KEY_ID'),
-    secretAccessKey = getEnv('ES_AWS_SECRET_ACCESS_KEY'),
     region = getEnv('ES_AWS_REGION'),
     bucketName = getEnv('ES_AWS_BUCKET_NAME'),
     endpoint = getEnv('ES_AWS_ENDPOINT'),
     forcePathStyle = getEnv('ES_AWS_FORCE_PATH_STYLE') === 'true',
   } = options;
+  const accessKeyId = getEnv('ES_AWS_ACCESS_KEY_ID');
+  const secretAccessKey = getEnv('ES_AWS_SECRET_ACCESS_KEY');
   const client =
     options.client ??
     new S3Client({
@@ -195,7 +195,6 @@ export function s3(options: S3ProviderOptions = {}) {
 
   return defineProvider({
     name: 's3',
-    baseUrl,
     reference: {
       schema: z.union([
         z.object({ key: z.string().min(1) }),
@@ -225,12 +224,14 @@ export function s3(options: S3ProviderOptions = {}) {
         const read = await readForUpload(prepared.key, params);
         const access = {
           key: prepared.key,
-          accessUrl: prepared.url,
+          url: prepared.url,
           ...(read
             ? {
-                accessSignedUrl: read.signedUrl,
-                accessSignedUrlExpiresAt: read.expiresAt,
-                accessSignedUrlExpiresIn: read.expiresIn,
+                signedReadUrl: {
+                  signedUrl: read.signedUrl,
+                  expiresAt: read.expiresAt,
+                  expiresIn: read.expiresIn,
+                },
               }
             : {}),
         };

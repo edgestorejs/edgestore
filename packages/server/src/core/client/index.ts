@@ -427,7 +427,3 @@ export type InferClientOutputs<TRouter extends { readonly client: object }> = {
     >;
   };
 };
-
-/** @deprecated Use {@link InferClientOutputs} instead. */
-export type InferClientResponse<TRouter extends { readonly client: object }> =
-  InferClientOutputs<TRouter>;

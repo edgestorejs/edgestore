@@ -144,9 +144,7 @@ function EdgeStoreProviderInner<TRouter extends AnyRouter>({
 
         if (json.clientInit) {
           const { clientInit } = json;
-          const urls = clientInit.urls ?? [
-            joinUrl(json.baseUrl, clientInit.path),
-          ];
+          const urls = clientInit.urls;
           if (urls.length === 0) {
             throw new EdgeStoreClientError('Missing file initialization URL.');
           }
@@ -220,8 +218,4 @@ function EdgeStoreProviderInner<TRouter extends AnyRouter>({
       </context.Provider>
     </>
   );
-}
-
-function joinUrl(baseUrl: string, path: string) {
-  return `${baseUrl.replace(/\/+$/, '')}/${path.replace(/^\/+/, '')}`;
 }
