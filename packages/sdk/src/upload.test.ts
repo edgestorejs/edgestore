@@ -14,11 +14,65 @@ function createSdk(fetch: typeof globalThis.fetch) {
   });
 }
 
+function createManagementSdk(fetch: typeof globalThis.fetch) {
+  return createEdgeStoreSdk({
+    credentials: { token: 'management-token' },
+    apiUrl: 'https://api.example/v2',
+    fetch,
+  });
+}
+
 function toRequest(input: URL | RequestInfo, init?: RequestInit) {
   return input instanceof Request ? input : new Request(input, init);
 }
 
 describe('runtime upload orchestration', () => {
+  it.each(['public', 'protected'] as const)(
+    'creates a new bucket from explicit %s settings without requiring a bucket lookup',
+    async (visibility) => {
+      const fetch = vi.fn<typeof globalThis.fetch>(async (input, init) => {
+        const request = toRequest(input, init);
+        if (request.url.endsWith('/buckets/newFiles/uploads')) {
+          await expect(request.json()).resolves.toMatchObject({
+            bucketType: 'file',
+            visibility,
+            sizeBytes: 7,
+          });
+          return Response.json({
+            data: {
+              file: { id: 'new-upload' },
+              upload: {
+                kind: 'single',
+                id: 'new-upload',
+                signedUrl: 'https://storage.example/new-upload',
+              },
+            },
+          });
+        }
+        if (request.url === 'https://storage.example/new-upload') {
+          expect(request.method).toBe('PUT');
+          return new Response(null, { status: 200 });
+        }
+        if (request.url.endsWith('/uploads/new-upload')) {
+          return Response.json({
+            data: {
+              upload: { id: 'new-upload', status: 'completed' },
+              file: { id: 'new-file', url: 'https://files.example/new-file' },
+            },
+          });
+        }
+        throw new Error(`Unexpected request: ${request.method} ${request.url}`);
+      });
+      const result = await createSdk(fetch).runtime.uploads.upload({
+        bucket: 'newFiles',
+        bucketConfig: { type: 'file', visibility },
+        source: 'content',
+      });
+      expect(result.file.id).toBe('new-file');
+      expect(fetch).toHaveBeenCalledTimes(3);
+    },
+  );
+
   it('uploads a single file, normalizes metadata, and waits for processing', async () => {
     const progress = vi.fn();
     const fetch = vi.fn<typeof globalThis.fetch>(async (input, init) => {
@@ -515,7 +569,7 @@ describe('runtime upload orchestration', () => {
         multipart: { partSizeBytes: MIN_MULTIPART_PART_SIZE_BYTES - 1 },
       }),
     ).rejects.toThrow(
-      `multipart.partSizeBytes must be at least ${MIN_MULTIPART_PART_SIZE_BYTES} bytes (5 MiB).`,
+      `preferredPartSizeBytes must be at least ${MIN_MULTIPART_PART_SIZE_BYTES} bytes (5 MiB).`,
     );
     expect(fetch).not.toHaveBeenCalled();
   });
@@ -809,5 +863,117 @@ describe('runtime upload orchestration', () => {
     ).rejects.toMatchObject({ status: 503 });
 
     expect(requestAttempts).toBe(1);
+  });
+});
+
+describe('management upload orchestration', () => {
+  it('retries transient transfers and follows processing Retry-After', async () => {
+    let transferAttempts = 0;
+    let statusChecks = 0;
+    const fetch = vi.fn<typeof globalThis.fetch>(async (input, init) => {
+      const request = toRequest(input, init);
+      if (request.url.endsWith('/buckets/documents/uploads')) {
+        return Response.json({
+          data: {
+            file: { id: 'management-id' },
+            upload: {
+              kind: 'single',
+              id: 'management-id',
+              signedUrl: 'https://storage.example/management',
+            },
+          },
+        });
+      }
+      if (request.url === 'https://storage.example/management') {
+        transferAttempts++;
+        return new Response(null, {
+          status: transferAttempts < 3 ? 503 : 200,
+          headers: transferAttempts < 3 ? { 'retry-after': '0' } : undefined,
+        });
+      }
+      if (request.url.endsWith('/uploads/management-id')) {
+        statusChecks++;
+        return statusChecks === 1
+          ? Response.json(
+              {
+                data: {
+                  upload: { id: 'management-id', status: 'processing' },
+                },
+              },
+              { status: 202, headers: { 'retry-after': '0' } },
+            )
+          : Response.json({
+              data: {
+                upload: { id: 'management-id', status: 'completed' },
+                file: { id: 'file-id', url: 'https://cdn.example/file' },
+              },
+            });
+      }
+      throw new Error(`Unexpected request: ${request.method} ${request.url}`);
+    });
+    const sdk = createManagementSdk(fetch);
+
+    const result = await sdk.management.uploads.upload({
+      project: 'project',
+      bucket: 'documents',
+      source: new Blob(['content']),
+    });
+
+    expect(result.file.id).toBe('file-id');
+    expect(transferAttempts).toBe(3);
+    expect(statusChecks).toBe(2);
+  });
+
+  it('rejects multipart storage responses without an ETag', async () => {
+    const methods: string[] = [];
+    const fetch = vi.fn<typeof globalThis.fetch>(async (input, init) => {
+      const request = toRequest(input, init);
+      methods.push(request.method);
+      if (request.url.endsWith('/buckets/documents/uploads')) {
+        return Response.json({
+          data: {
+            file: { id: 'multipart-id' },
+            upload: {
+              kind: 'multipart',
+              id: 'multipart-id',
+              parts: [
+                { partNumber: 1, signedUrl: 'https://storage.example/part' },
+              ],
+            },
+          },
+        });
+      }
+      if (request.url === 'https://storage.example/part') {
+        return new Response(null, { status: 200 });
+      }
+      if (
+        request.url.endsWith('/uploads/multipart-id') &&
+        request.method === 'DELETE'
+      ) {
+        return Response.json({
+          data: { upload: { id: 'multipart-id', status: 'canceled' } },
+        });
+      }
+      throw new Error(`Unexpected request: ${request.method} ${request.url}`);
+    });
+    const sdk = createManagementSdk(fetch);
+
+    await expect(
+      sdk.management.uploads.upload({
+        project: 'project',
+        bucket: 'documents',
+        source: new Blob(['content']),
+        multipart: true,
+      }),
+    ).rejects.toMatchObject({
+      name: 'EdgeStoreUploadError',
+      uploadId: 'multipart-id',
+    });
+    expect(methods).toContain('DELETE');
+    expect(
+      fetch.mock.calls.some(([input]) =>
+        toRequest(input).url.endsWith('/uploads/multipart-id/complete'),
+      ),
+    ).toBe(false);
   });
 });

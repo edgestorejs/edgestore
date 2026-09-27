@@ -1,11 +1,11 @@
 import {
-  initEdgeStore,
   type AnyContext,
   type EdgeStoreProvider,
   type EdgeStoreRouter,
 } from '@edgestore/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
+import { initEdgeStore } from '../core/router';
 import { getCookieConfig, init, requestUpload } from './shared';
 import {
   createContextToken,
@@ -73,13 +73,6 @@ describe('getCookieConfig', () => {
           maxAge: 30 * 24 * 60 * 60,
         },
       },
-      token: {
-        name: 'edgestore-token',
-        options: {
-          path: '/',
-          maxAge: 30 * 24 * 60 * 60,
-        },
-      },
     });
   });
 
@@ -95,13 +88,6 @@ describe('getCookieConfig', () => {
             httpOnly: undefined,
           },
         },
-        token: {
-          name: 'custom-token',
-          options: {
-            path: '/app',
-            maxAge: 60,
-          },
-        },
       }),
     ).toEqual({
       ctx: {
@@ -112,13 +98,6 @@ describe('getCookieConfig', () => {
           domain: 'example.com',
           sameSite: 'lax',
           secure: true,
-        },
-      },
-      token: {
-        name: 'custom-token',
-        options: {
-          path: '/app',
-          maxAge: 60,
         },
       },
     });
@@ -142,9 +121,11 @@ describe('init', () => {
       init: vi.fn(() => ({})),
     });
     const es = initEdgeStore.create();
-    const router = es.router({
-      documents: es.fileBucket(),
-    });
+    const router = es
+      .router({
+        documents: es.fileBucket(),
+      })
+      .provider(provider);
 
     const res = await init({
       provider,
@@ -175,9 +156,11 @@ describe('init', () => {
       init: vi.fn(() => ({})),
     });
     const es = initEdgeStore.create();
-    const router = es.router({
-      documents: es.fileBucket(),
-    });
+    const router = es
+      .router({
+        documents: es.fileBucket(),
+      })
+      .provider(provider);
 
     const res = await init({
       provider,
@@ -202,10 +185,12 @@ describe('init', () => {
       init: vi.fn(() => ({})),
     });
     const es = initEdgeStore.create();
-    const router = es.router({
-      documents: es.fileBucket(),
-      avatars: es.imageBucket(),
-    });
+    const router = es
+      .router({
+        documents: es.fileBucket(),
+        avatars: es.imageBucket(),
+      })
+      .provider(provider);
 
     const res = await init({
       provider,
@@ -228,7 +213,7 @@ describe('init', () => {
     const provider = createProvider({
       name: 'custom-provider',
       init: vi.fn(() => ({
-        token: 'provider-token',
+        baseUrl: 'https://discovered.example.test',
         clientInit: {
           path: '/_init',
           headers: { 'x-provider-token': 'provider-token' },
@@ -236,11 +221,13 @@ describe('init', () => {
       })),
     });
     const es = initEdgeStore.context<{ userId: string }>().create();
-    const router = es.router({
-      documents: es.fileBucket().accessControl({
-        userId: 'user-1',
-      }),
-    });
+    const router = es
+      .router({
+        documents: es.fileBucket().accessControl({
+          userId: 'user-1',
+        }),
+      })
+      .provider(provider);
 
     const res = await init({
       provider,
@@ -255,22 +242,24 @@ describe('init', () => {
     });
     expect(res).toMatchObject({
       providerName: 'custom-provider',
+      baseUrl: 'https://discovered.example.test',
       clientInit: {
         path: '/_init',
         headers: { 'x-provider-token': 'provider-token' },
       },
     });
-    expect(
-      res.newCookies.some((value) => value.startsWith('edgestore-token=')),
-    ).toBe(true);
+    // The token reaches the file origin only through clientInit headers.
+    expect(res.newCookies).toEqual([expect.stringMatching(/^edgestore-ctx=/)]);
   });
 
   it('keeps running init for custom providers', async () => {
     const provider = createProvider({ name: 'custom-provider' });
     const es = initEdgeStore.create();
-    const router = es.router({
-      documents: es.fileBucket(),
-    });
+    const router = es
+      .router({
+        documents: es.fileBucket(),
+      })
+      .provider(provider);
 
     const res = await init({
       provider,
@@ -446,11 +435,16 @@ describe('requestUpload', () => {
 
   it('passes computed upload info to the provider', async () => {
     const provider = createProvider();
+    const beforeUpload = vi.fn(() => true);
     const es = initEdgeStore.context<{ userId: string }>().create();
     const router = es.router({
       documents: es
         .fileBucket()
-        .input(z.object({ type: z.string() }))
+        .input(
+          z.object({
+            type: z.string().transform((value) => value.trim().toUpperCase()),
+          }),
+        )
         .path(({ ctx, input }) => [
           { author: ctx.userId },
           { type: input.type },
@@ -459,6 +453,7 @@ describe('requestUpload', () => {
           userId: ctx.userId,
           type: input.type,
         }))
+        .beforeUpload(beforeUpload)
         .accessControl({
           userId: { path: 'author' },
         }),
@@ -474,7 +469,7 @@ describe('requestUpload', () => {
       ctxToken,
       body: uploadBody({
         input: {
-          type: 'invoice',
+          type: ' invoice ',
         },
         fileInfo: {
           temporary: true,
@@ -482,6 +477,19 @@ describe('requestUpload', () => {
         },
       }),
       logger,
+    });
+
+    expect(beforeUpload).toHaveBeenCalledWith({
+      ctx: expect.objectContaining({ userId: 'user-1' }),
+      input: { type: 'INVOICE' },
+      fileInfo: {
+        size: 10,
+        type: 'text/plain',
+        extension: 'txt',
+        temporary: true,
+        fileName: 'invoice.txt',
+        replaceTargetUrl: undefined,
+      },
     });
 
     expect(provider.uploads.request).toHaveBeenCalledWith({
@@ -495,11 +503,11 @@ describe('requestUpload', () => {
         fileName: 'invoice.txt',
         path: [
           { key: 'author', value: 'user-1' },
-          { key: 'type', value: 'invoice' },
+          { key: 'type', value: 'INVOICE' },
         ],
         metadata: {
           userId: 'user-1',
-          type: 'invoice',
+          type: 'INVOICE',
         },
         isPublic: false,
       },
@@ -509,14 +517,46 @@ describe('requestUpload', () => {
       size: 10,
       path: {
         author: 'user-1',
-        type: 'invoice',
+        type: 'INVOICE',
       },
       pathOrder: ['author', 'type'],
       metadata: {
         userId: 'user-1',
-        type: 'invoice',
+        type: 'INVOICE',
       },
     });
+  });
+
+  it('rejects invalid async input before hooks and provider calls', async () => {
+    const provider = createProvider();
+    const beforeUpload = vi.fn(() => true);
+    const es = initEdgeStore.context<{ userId: string }>().create();
+    const router = es.router({
+      documents: es
+        .fileBucket()
+        .input(
+          z.object({ token: z.string() }).refine(async ({ token }) => {
+            await Promise.resolve();
+            return token === 'allowed';
+          }, 'Token is not allowed'),
+        )
+        .beforeUpload(beforeUpload),
+    });
+
+    await expect(
+      uploadWithContext({
+        provider,
+        router,
+        ctx: { userId: 'user-1' },
+        body: { input: { token: 'denied' } },
+      }),
+    ).rejects.toMatchObject({
+      code: 'BAD_REQUEST',
+      message: 'Invalid input: Token is not allowed',
+    });
+
+    expect(beforeUpload).not.toHaveBeenCalled();
+    expect(provider.uploads.request).not.toHaveBeenCalled();
   });
 
   it('preserves application context keys that match registered JWT claims', async () => {

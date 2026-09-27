@@ -956,6 +956,27 @@ export type paths = {
 export type webhooks = Record<string, never>;
 export type components = {
     schemas: {
+        /** @description Billing changes are temporarily unavailable while we perform maintenance. Please try again shortly. */
+        BillingMaintenanceError: {
+            /** @description A structured EdgeStore API error. */
+            error: {
+                /**
+                 * @description Stable machine-readable error code.
+                 * @constant
+                 */
+                code: "billing_maintenance";
+                /**
+                 * @description Human-readable explanation of the error.
+                 * @default Billing changes are temporarily unavailable while we perform maintenance. Please try again shortly.
+                 */
+                message: string;
+                /**
+                 * @description HTTP status code returned with the error.
+                 * @constant
+                 */
+                status: 503;
+            };
+        };
         /** @description Invalid request */
         InvalidRequestError: {
             /** @description A structured EdgeStore API error. */
@@ -1137,6 +1158,27 @@ export type components = {
                  * @constant
                  */
                 status: 404;
+            };
+        };
+        /** @description The project contains files */
+        ProjectNotEmptyError: {
+            /** @description A structured EdgeStore API error. */
+            error: {
+                /**
+                 * @description Stable machine-readable error code.
+                 * @constant
+                 */
+                code: "project_not_empty";
+                /**
+                 * @description Human-readable explanation of the error.
+                 * @default The project contains files
+                 */
+                message: string;
+                /**
+                 * @description HTTP status code returned with the error.
+                 * @constant
+                 */
+                status: 409;
             };
         };
         /** @description Bucket not found */
@@ -1789,7 +1831,7 @@ export type components = {
              */
             type: "file" | "image";
             /**
-             * @description Read visibility. Protected buckets require signed read URLs.
+             * @description Whether reads are public or require signed URLs.
              * @enum {string}
              */
             visibility: "public" | "protected";
@@ -1941,7 +1983,7 @@ export interface operations {
                                 /** @description Owning account ID. */
                                 accountId: string;
                                 /** @description Effective management permissions. */
-                                scopes: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "bucket:delete" | "bucket:empty" | "file:read" | "file:write" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
+                                scopes: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "bucket:delete" | "bucket:empty" | "file:read" | "file:write" | "file:delete" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
                             } | {
                                 /**
                                  * @description User-owned management-token principal.
@@ -1951,7 +1993,52 @@ export interface operations {
                                 /** @description Authenticated token ID. */
                                 tokenId: string;
                                 /** @description Effective management permissions. */
-                                scopes: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "bucket:delete" | "bucket:empty" | "file:read" | "file:write" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
+                                scopes: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "bucket:delete" | "bucket:empty" | "file:read" | "file:write" | "file:delete" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
+                                /** @description Authenticated user identity. */
+                                user: {
+                                    /** @description Unique EdgeStore user ID. */
+                                    id: string;
+                                    /** @description User ID from the identity provider. */
+                                    clerkUserId: string;
+                                    /** @description User's personal account ID. */
+                                    accountId: string;
+                                    /** @description Primary email address. */
+                                    email: string;
+                                    /** @description Username when configured. */
+                                    username: string | null;
+                                    /** @description First name when configured. */
+                                    firstName: string | null;
+                                    /** @description Last name when configured. */
+                                    lastName: string | null;
+                                    /** @description Profile image URL. */
+                                    picture: string;
+                                };
+                            } | {
+                                /**
+                                 * @description OAuth user principal.
+                                 * @constant
+                                 */
+                                kind: "oauth_user";
+                                /** @description OAuth subject identifier. */
+                                subject: string;
+                                /** @description OAuth client identifier. */
+                                clientId: string;
+                                /** @description Effective management permissions. */
+                                scopes: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "bucket:delete" | "bucket:empty" | "file:read" | "file:write" | "file:delete" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
+                                /** @description Accounts and projects this OAuth grant may access. */
+                                access: {
+                                    accounts: {
+                                        accountId: string;
+                                        projects: {
+                                            /** @constant */
+                                            mode: "all";
+                                        } | {
+                                            /** @constant */
+                                            mode: "selected";
+                                            projectIds: string[];
+                                        };
+                                    }[];
+                                };
                                 /** @description Authenticated user identity. */
                                 user: {
                                     /** @description Unique EdgeStore user ID. */
@@ -2024,6 +2111,16 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InternalError"];
+                };
+            };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
                 };
             };
         };
@@ -2130,6 +2227,16 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InternalError"];
+                };
+            };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
                 };
             };
         };
@@ -2251,6 +2358,16 @@ export interface operations {
                     "application/json": components["schemas"]["InternalError"];
                 };
             };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
+                };
+            };
         };
     };
     "v2.management.accounts.leave": {
@@ -2345,6 +2462,16 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InternalError"];
+                };
+            };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
                 };
             };
         };
@@ -2450,6 +2577,16 @@ export interface operations {
                     "application/json": components["schemas"]["InternalError"];
                 };
             };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
+                };
+            };
         };
     };
     "v2.management.projects.create": {
@@ -2466,6 +2603,11 @@ export interface operations {
                 "application/json": {
                     /** @description Human-readable project name. */
                     name: string;
+                    /**
+                     * @description Use a project subdomain. Requires EdgeStore server and React packages 1.0 or later. Defaults to shared delivery for compatibility.
+                     * @default false
+                     */
+                    useProjectDomain?: boolean;
                     /**
                      * @description Whether to create and return an initial project key.
                      * @default true
@@ -2606,6 +2748,16 @@ export interface operations {
                     "application/json": components["schemas"]["InternalError"];
                 };
             };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
+                };
+            };
         };
     };
     "v2.management.projects.get": {
@@ -2710,6 +2862,16 @@ export interface operations {
                     "application/json": components["schemas"]["InternalError"];
                 };
             };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
+                };
+            };
         };
     };
     "v2.management.projects.delete": {
@@ -2783,7 +2945,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["BucketEmptyInProgressError"];
+                    "application/json": components["schemas"]["ProjectNotEmptyError"] | components["schemas"]["BucketEmptyInProgressError"];
                 };
             };
             /** @description 413 */
@@ -2804,6 +2966,16 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InternalError"];
+                };
+            };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
                 };
             };
         };
@@ -2892,6 +3064,16 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InternalError"];
+                };
+            };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
                 };
             };
         };
@@ -3016,6 +3198,16 @@ export interface operations {
                     "application/json": components["schemas"]["InternalError"];
                 };
             };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
+                };
+            };
         };
     };
     "v2.management.buckets.get": {
@@ -3103,6 +3295,16 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InternalError"];
+                };
+            };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
                 };
             };
         };
@@ -3200,6 +3402,16 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InternalError"];
+                };
+            };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
                 };
             };
         };
@@ -3303,6 +3515,16 @@ export interface operations {
                     "application/json": components["schemas"]["InternalError"];
                 };
             };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
+                };
+            };
         };
     };
     "v2.management.buckets.empty": {
@@ -3402,6 +3624,16 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InternalError"];
+                };
+            };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
                 };
             };
         };
@@ -3540,6 +3772,16 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InternalError"];
+                };
+            };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
                 };
             };
         };
@@ -3682,6 +3924,16 @@ export interface operations {
                     "application/json": components["schemas"]["InternalError"];
                 };
             };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
+                };
+            };
         };
     };
     "v2.management.buckets.emptyJobs.retry": {
@@ -3794,6 +4046,16 @@ export interface operations {
                     "application/json": components["schemas"]["InternalError"];
                 };
             };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
+                };
+            };
         };
     };
     "v2.management.files.list": {
@@ -3891,6 +4153,16 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InternalError"];
+                };
+            };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
                 };
             };
         };
@@ -4000,6 +4272,16 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InternalError"];
+                };
+            };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
                 };
             };
         };
@@ -4134,6 +4416,16 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InternalError"];
+                };
+            };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
                 };
             };
         };
@@ -4312,6 +4604,16 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InternalError"];
+                };
+            };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
                 };
             };
         };
@@ -4513,6 +4815,16 @@ export interface operations {
                     "application/json": components["schemas"]["InternalError"];
                 };
             };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
+                };
+            };
         };
     };
     "v2.management.uploads.get": {
@@ -4645,6 +4957,16 @@ export interface operations {
                     "application/json": components["schemas"]["InternalError"];
                 };
             };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
+                };
+            };
         };
     };
     "v2.management.uploads.cancel": {
@@ -4750,6 +5072,16 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InternalError"];
+                };
+            };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
                 };
             };
         };
@@ -4864,6 +5196,16 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InternalError"];
+                };
+            };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
                 };
             };
         };
@@ -4986,6 +5328,16 @@ export interface operations {
                     "application/json": components["schemas"]["InternalError"];
                 };
             };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
+                };
+            };
         };
     };
     "v2.management.projectKeys.list": {
@@ -5089,6 +5441,16 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InternalError"];
+                };
+            };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
                 };
             };
         };
@@ -5206,6 +5568,16 @@ export interface operations {
                     "application/json": components["schemas"]["InternalError"];
                 };
             };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
+                };
+            };
         };
     };
     "v2.management.projectKeys.revoke": {
@@ -5301,6 +5673,16 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InternalError"];
+                };
+            };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
                 };
             };
         };
@@ -5415,6 +5797,16 @@ export interface operations {
                     "application/json": components["schemas"]["InternalError"];
                 };
             };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
+                };
+            };
         };
     };
     "v2.management.members.remove": {
@@ -5510,6 +5902,16 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InternalError"];
+                };
+            };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
                 };
             };
         };
@@ -5643,6 +6045,16 @@ export interface operations {
                     "application/json": components["schemas"]["InternalError"];
                 };
             };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
+                };
+            };
         };
     };
     "v2.management.invitations.list": {
@@ -5756,6 +6168,16 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InternalError"];
+                };
+            };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
                 };
             };
         };
@@ -5901,6 +6323,16 @@ export interface operations {
                     "application/json": components["schemas"]["InternalError"];
                 };
             };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
+                };
+            };
         };
     };
     "v2.management.invitations.revoke": {
@@ -5996,6 +6428,16 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InternalError"];
+                };
+            };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
                 };
             };
         };
@@ -6122,6 +6564,16 @@ export interface operations {
                     "application/json": components["schemas"]["InternalError"];
                 };
             };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
+                };
+            };
         };
     };
     "v2.management.tokens.listAccount": {
@@ -6161,7 +6613,7 @@ export interface operations {
                                 /** @description Non-secret token prefix used to identify the credential. */
                                 tokenPrefix: string;
                                 /** @description Granted permissions. */
-                                scopes: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "bucket:delete" | "bucket:empty" | "file:read" | "file:write" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
+                                scopes: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "bucket:delete" | "bucket:empty" | "file:read" | "file:write" | "file:delete" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
                                 /** @description ISO 8601 creation timestamp. */
                                 createdAt: string;
                                 /** @description ISO 8601 last-update timestamp. */
@@ -6241,6 +6693,16 @@ export interface operations {
                     "application/json": components["schemas"]["InternalError"];
                 };
             };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
+                };
+            };
         };
     };
     "v2.management.tokens.createAccount": {
@@ -6261,9 +6723,9 @@ export interface operations {
                      * @description Named permission set. Mutually exclusive with scopes.
                      * @enum {string}
                      */
-                    preset?: "deploy" | "read-only" | "full-access";
+                    preset?: "deploy" | "storage-management" | "read-only" | "full-access";
                     /** @description Explicit permissions. Mutually exclusive with preset. */
-                    scopes?: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "bucket:delete" | "bucket:empty" | "file:read" | "file:write" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
+                    scopes?: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "bucket:delete" | "bucket:empty" | "file:read" | "file:write" | "file:delete" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
                     /** @description ISO 8601 expiration timestamp, or null for no expiration. */
                     expiresAt?: string | null;
                 };
@@ -6294,7 +6756,7 @@ export interface operations {
                                 /** @description Non-secret token prefix used to identify the credential. */
                                 tokenPrefix: string;
                                 /** @description Granted permissions. */
-                                scopes: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "bucket:delete" | "bucket:empty" | "file:read" | "file:write" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
+                                scopes: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "bucket:delete" | "bucket:empty" | "file:read" | "file:write" | "file:delete" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
                                 /** @description ISO 8601 creation timestamp. */
                                 createdAt: string;
                                 /** @description ISO 8601 last-update timestamp. */
@@ -6374,6 +6836,16 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InternalError"];
+                };
+            };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
                 };
             };
         };
@@ -6413,7 +6885,7 @@ export interface operations {
                                 /** @description Non-secret token prefix used to identify the credential. */
                                 tokenPrefix: string;
                                 /** @description Granted permissions. */
-                                scopes: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "bucket:delete" | "bucket:empty" | "file:read" | "file:write" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
+                                scopes: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "bucket:delete" | "bucket:empty" | "file:read" | "file:write" | "file:delete" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
                                 /** @description ISO 8601 creation timestamp. */
                                 createdAt: string;
                                 /** @description ISO 8601 last-update timestamp. */
@@ -6483,6 +6955,16 @@ export interface operations {
                     "application/json": components["schemas"]["InternalError"];
                 };
             };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
+                };
+            };
         };
     };
     "v2.management.tokens.createUser": {
@@ -6501,9 +6983,9 @@ export interface operations {
                      * @description Named permission set. Mutually exclusive with scopes.
                      * @enum {string}
                      */
-                    preset?: "deploy" | "read-only" | "full-access";
+                    preset?: "deploy" | "storage-management" | "read-only" | "full-access";
                     /** @description Explicit permissions. Mutually exclusive with preset. */
-                    scopes?: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "bucket:delete" | "bucket:empty" | "file:read" | "file:write" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
+                    scopes?: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "bucket:delete" | "bucket:empty" | "file:read" | "file:write" | "file:delete" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
                     /** @description ISO 8601 expiration timestamp, or null for no expiration. */
                     expiresAt?: string | null;
                 };
@@ -6534,7 +7016,7 @@ export interface operations {
                                 /** @description Non-secret token prefix used to identify the credential. */
                                 tokenPrefix: string;
                                 /** @description Granted permissions. */
-                                scopes: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "bucket:delete" | "bucket:empty" | "file:read" | "file:write" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
+                                scopes: ("account:read" | "project:read" | "project:create" | "project:delete" | "bucket:read" | "bucket:write" | "bucket:delete" | "bucket:empty" | "file:read" | "file:write" | "file:delete" | "project-key:read" | "project-key:create" | "project-key:revoke" | "member:read" | "member:write" | "token:read" | "token:create" | "token:revoke")[];
                                 /** @description ISO 8601 creation timestamp. */
                                 createdAt: string;
                                 /** @description ISO 8601 last-update timestamp. */
@@ -6604,6 +7086,16 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InternalError"];
+                };
+            };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
                 };
             };
         };
@@ -6692,6 +7184,16 @@ export interface operations {
                     "application/json": components["schemas"]["InternalError"];
                 };
             };
+            /** @description 503 */
+            503: {
+                headers: {
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingMaintenanceError"];
+                };
+            };
         };
     };
     "v2.runtime.accessToken.create": {
@@ -6740,6 +7242,15 @@ export interface operations {
                         data: {
                             /** @description Encrypted runtime bearer token; store it securely. */
                             token: string;
+                            delivery?: {
+                                /**
+                                 * Format: uri
+                                 * @description Origin used for returned file URLs.
+                                 */
+                                baseUrl: string;
+                                /** @description File origins to initialize for protected access, including preserved legacy links. */
+                                initUrls: string[];
+                            };
                             /** @description Globally unique project base path. */
                             basePath: string;
                         };
@@ -6831,6 +7342,15 @@ export interface operations {
                         data: {
                             /** @description The project authenticated for runtime operations. */
                             project: {
+                                delivery?: {
+                                    /**
+                                     * Format: uri
+                                     * @description Origin used for returned file URLs.
+                                     */
+                                    baseUrl: string;
+                                    /** @description File origins to initialize for protected access, including preserved legacy links. */
+                                    initUrls: string[];
+                                };
                                 /** @description Unique project ID. */
                                 id: string;
                                 /** @description Globally unique project base path. */
@@ -7313,8 +7833,8 @@ export interface operations {
                                     } | {
                                         /** @description Inclusive lower and upper bounds. */
                                         between: [
-                                            unknown,
-                                            unknown
+                                            string,
+                                            string
                                         ];
                                     };
                                 };
@@ -7340,8 +7860,8 @@ export interface operations {
                                     } | {
                                         /** @description Inclusive lower and upper bounds. */
                                         between: [
-                                            unknown,
-                                            unknown
+                                            string,
+                                            string
                                         ];
                                     };
                                 };
@@ -7399,8 +7919,8 @@ export interface operations {
                                     } | {
                                         /** @description Inclusive lower and upper bounds. */
                                         between: [
-                                            unknown,
-                                            unknown
+                                            string,
+                                            string
                                         ];
                                     };
                                 };
@@ -7426,8 +7946,8 @@ export interface operations {
                                     } | {
                                         /** @description Inclusive lower and upper bounds. */
                                         between: [
-                                            unknown,
-                                            unknown
+                                            string,
+                                            string
                                         ];
                                     };
                                 };
@@ -7567,8 +8087,8 @@ export interface operations {
                                     } | {
                                         /** @description Inclusive lower and upper bounds. */
                                         between: [
-                                            unknown,
-                                            unknown
+                                            string,
+                                            string
                                         ];
                                     };
                                 };
@@ -7594,8 +8114,8 @@ export interface operations {
                                     } | {
                                         /** @description Inclusive lower and upper bounds. */
                                         between: [
-                                            unknown,
-                                            unknown
+                                            string,
+                                            string
                                         ];
                                     };
                                 };
@@ -7653,8 +8173,8 @@ export interface operations {
                                     } | {
                                         /** @description Inclusive lower and upper bounds. */
                                         between: [
-                                            unknown,
-                                            unknown
+                                            string,
+                                            string
                                         ];
                                     };
                                 };
@@ -7680,8 +8200,8 @@ export interface operations {
                                     } | {
                                         /** @description Inclusive lower and upper bounds. */
                                         between: [
-                                            unknown,
-                                            unknown
+                                            string,
+                                            string
                                         ];
                                     };
                                 };
@@ -8471,7 +8991,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"] | components["schemas"]["RestoreNotAllowedError"];
+                    "application/json": components["schemas"]["CredentialNotAllowedError"] | components["schemas"]["MissingScopeError"] | components["schemas"]["RestoreNotAllowedError"] | components["schemas"]["StorageLimitExceededError"];
                 };
             };
             /** @description 404 */

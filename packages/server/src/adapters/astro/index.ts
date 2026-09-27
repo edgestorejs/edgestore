@@ -6,10 +6,10 @@ import {
   resolveContext,
   type CreateContextConfig,
 } from '../dispatcher';
-import type { CookieConfig, HandlerEdgeStore } from '../shared';
+import type { CookieConfig, HandlerRouter } from '../shared';
 
 export type Config<TCtx extends AnyContext> = {
-  edgestore: HandlerEdgeStore<TCtx>;
+  router: HandlerRouter<TCtx>;
   logLevel?: LogLevel;
   cookieConfig?: CookieConfig;
 } & CreateContextConfig<TCtx, APIContext>;
@@ -24,13 +24,12 @@ export function createEdgeStoreAstroHandler<TCtx extends AnyContext>(
     const { request } = context;
     const url = new URL(request.url);
     return await dispatchEdgeStoreRequest<TCtx>({
-      edgestore: config.edgestore,
+      router: config.router,
       logger: log,
       cookieConfig: config.cookieConfig,
       request: {
         pathname: url.pathname,
         readJson: () => request.json(),
-        getQuery: (name) => url.searchParams.get(name) ?? undefined,
         cookieHeader: request.headers.get('cookie') ?? undefined,
         createContext: () => resolveContext<TCtx, APIContext>(config, context),
       },

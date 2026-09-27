@@ -8,13 +8,12 @@ implementation. The same provider instance powers the EdgeStore HTTP handler
 and the router-derived backend client:
 
 ```ts
-const configuredEdgeStore = createEdgeStore({
-  router,
-  provider: myProvider,
-});
+const router = es.router({
+  files: es.fileBucket(),
+}).provider(myProvider);
 
-createEdgeStoreNextHandler({ edgestore: configuredEdgeStore });
-configuredEdgeStore.client.files.get({ key: 'files/report.pdf' });
+createEdgeStoreNextHandler({ router });
+router.client.files.get({ key: 'files/report.pdf' });
 ```
 
 Method inputs are contextually typed. File references, cursors, returned file
@@ -126,11 +125,14 @@ export const myProvider = defineProvider({
       return storage.createUploadPlan({ bucketName, fileInfo });
     },
     multipart: {
-      async requestParts({ multipart, path }) {
-        return storage.createUploadParts({ multipart, path });
+      async requestParts({ uploadId, key, parts }) {
+        return { parts: await storage.signUploadParts({ uploadId, key, parts }) };
       },
       async complete({ uploadId, key, parts }) {
         await storage.completeMultipart({ uploadId, key, parts });
+      },
+      async abort({ uploadId, key }) {
+        await storage.abortMultipart({ uploadId, key });
       },
     },
     async upload({ bucketName, fileInfo, source, signal, onProgress }) {
@@ -235,8 +237,21 @@ file reference or calculate counts.
 
 Multipart support is optional. A single-part provider defines only
 `uploads.request`. When `uploads.multipart` is present, `uploads.request` may
-return a multipart plan and EdgeStore exposes the matching part-request and
-completion routes.
+return a multipart plan and EdgeStore exposes the matching part-request,
+completion, and cancellation routes. The plan only needs signed URLs for the
+first parts: the browser requests the rest through `requestParts` in batches as
+it reaches them, and requests a fresh URL once when storage rejects one. The
+browser calls `abort` after a failed or canceled transfer. Cleanup is best
+effort, so storage lifecycle rules should still remove abandoned uploads.
+
+A single-part plan can include `uploadHeaders`. The browser sends them with the
+upload request, which lets a provider sign headers such as `Content-Type` or
+storage metadata into the URL.
+
+Set `uploads.supportedOptions` to reject upload options your storage cannot
+honor. For example, `supportedOptions: { temporary: false }` removes
+`temporary` from the browser and backend upload types, and EdgeStore rejects it
+at runtime before calling the provider.
 
 `uploads.request` and `uploads.upload` remain separate because they perform
 different work: the former creates signed instructions for a browser transfer,

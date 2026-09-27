@@ -1,0 +1,7 @@
+{
+  "name": "edgestore-eval-next", "private": true,
+  "packageManager": "pnpm@11.15.1",
+  "scripts": { "dev": "next dev --port 4010", "build": "next build", "typecheck": "tsc --noEmit", "start": "next start --port 4010" },
+  "dependencies": { "next": "16.2.10", "react": "19.2.7", "react-dom": "19.2.7" },
+  "devDependencies": { "@types/node": "25.0.3", "@types/react": "19.2.17", "@types/react-dom": "19.2.3", "typescript": "6.0.3" }
+}

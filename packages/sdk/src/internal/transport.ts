@@ -8,6 +8,7 @@ import {
   EdgeStoreApiError,
   EdgeStoreError,
   EdgeStoreNetworkError,
+  EdgeStoreTimeoutError,
 } from '../errors';
 import type { paths } from '../generated/api-v2';
 import {
@@ -55,18 +56,26 @@ export function createTransport(options: TransportOptions): Transport {
   }
   const client = createClient<paths>({
     baseUrl: normalizeApiUrl(options.apiUrl ?? DEFAULT_API_URL),
-    fetch: (request) =>
-      fetch(
-        new Request(request, {
-          signal:
-            controlTimeoutMs === 0
-              ? request.signal
-              : AbortSignal.any([
-                  request.signal,
-                  AbortSignal.timeout(controlTimeoutMs),
-                ]),
-        }),
-      ),
+    fetch: async (request) => {
+      if (controlTimeoutMs === 0) return await fetch(request);
+
+      const timeoutSignal = AbortSignal.timeout(controlTimeoutMs);
+      try {
+        return await fetch(
+          new Request(request, {
+            signal: AbortSignal.any([request.signal, timeoutSignal]),
+          }),
+        );
+      } catch (error) {
+        if (timeoutSignal.aborted && !request.signal.aborted) {
+          throw new EdgeStoreTimeoutError(
+            `The EdgeStore API request timed out after ${controlTimeoutMs}ms.`,
+            { cause: error },
+          );
+        }
+        throw error;
+      }
+    },
     headers: {
       authorization,
       'user-agent': `${EDGE_STORE_PACKAGE_NAME}/${EDGE_STORE_PACKAGE_VERSION}`,

@@ -9,11 +9,22 @@ export {
   EdgeStoreError,
   EdgeStoreFileMutationError,
   EdgeStoreNetworkError,
+  EdgeStoreTimeoutError,
   EdgeStoreUploadCanceledError,
+  EdgeStoreUploadCleanupError,
   EdgeStoreUploadError,
   EdgeStoreUploadProcessingTimeoutError,
 } from './errors';
 export type { ManagementClient } from './managementClient';
+export type {
+  ManagementUploadInput,
+  ManagementUploadResult,
+} from './managementUpload';
+export {
+  planMultipartUpload,
+  type MultipartUploadPlan,
+  type MultipartUploadPlanOptions,
+} from './multipartPlan';
 export {
   createEdgeStoreSdk,
   type EdgeStoreSdkOptions,

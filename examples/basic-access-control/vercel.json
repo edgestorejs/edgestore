@@ -1,0 +1,3 @@
+{
+  "ignoreCommand": "b=$VERCEL_GIT_PREVIOUS_SHA; git cat-file -e \"$b\" 2>/dev/null || b=HEAD^; git diff --quiet \"$b\" \"$VERCEL_GIT_COMMIT_SHA\" -- . ../../pnpm-lock.yaml ../../pnpm-workspace.yaml ../../package.json ../../turbo.json; test $? -eq 0"
+}

@@ -53,7 +53,12 @@ const awsMocks = vi.hoisted(() => {
 });
 
 vi.mock('@aws-sdk/client-s3', () => ({
-  DeleteObjectCommand: awsMocks.DeleteObjectCommand,
+  AbortMultipartUploadCommand: awsMocks.PutObjectCommand,
+  CompleteMultipartUploadCommand: awsMocks.PutObjectCommand,
+  CreateMultipartUploadCommand: awsMocks.PutObjectCommand,
+  UploadPartCommand: awsMocks.PutObjectCommand,
+  GetObjectCommand: awsMocks.PutObjectCommand,
+  DeleteObjectsCommand: awsMocks.DeleteObjectCommand,
   HeadObjectCommand: awsMocks.HeadObjectCommand,
   PutObjectCommand: awsMocks.PutObjectCommand,
   S3Client: awsMocks.S3Client,
@@ -100,19 +105,21 @@ describe('s3', () => {
     const result = await provider.uploads.request(uploadParams());
 
     expect(result).toEqual({
+      key: 'documents/generated-uuid.txt',
       uploadUrl: 'https://signed-upload.example.com',
+      uploadHeaders: { 'Content-Type': 'application/octet-stream' },
       accessUrl:
         'https://storage-bucket.s3.us-east-1.amazonaws.com/documents/generated-uuid.txt',
     });
     expect(awsMocks.getSignedUrl).toHaveBeenCalledWith(
       expect.any(awsMocks.S3Client),
       expect.objectContaining({
-        input: {
+        input: expect.objectContaining({
           Bucket: 'storage-bucket',
           Key: 'documents/generated-uuid.txt',
-        },
+        }),
       }),
-      { expiresIn: 60 * 60 },
+      expect.objectContaining({ expiresIn: 60 * 60 }),
     );
   });
 
@@ -132,12 +139,12 @@ describe('s3', () => {
     expect(awsMocks.getSignedUrl).toHaveBeenCalledWith(
       expect.any(awsMocks.S3Client),
       expect.objectContaining({
-        input: {
+        input: expect.objectContaining({
           Bucket: 'storage-bucket',
           Key: 'documents/_public/generated-uuid.txt',
-        },
+        }),
       }),
-      { expiresIn: 60 * 60 },
+      expect.objectContaining({ expiresIn: 60 * 60 }),
     );
   });
 
@@ -159,12 +166,12 @@ describe('s3', () => {
     expect(awsMocks.getSignedUrl).toHaveBeenCalledWith(
       expect.any(awsMocks.S3Client),
       expect.objectContaining({
-        input: {
+        input: expect.objectContaining({
           Bucket: 'storage-bucket',
           Key: 'documents/acme/invoices/generated-uuid.txt',
-        },
+        }),
       }),
-      { expiresIn: 60 * 60 },
+      expect.objectContaining({ expiresIn: 60 * 60 }),
     );
   });
 
@@ -185,12 +192,12 @@ describe('s3', () => {
     expect(awsMocks.getSignedUrl).toHaveBeenCalledWith(
       expect.any(awsMocks.S3Client),
       expect.objectContaining({
-        input: {
+        input: expect.objectContaining({
           Bucket: 'storage-bucket',
           Key: 'documents/manual-name.pdf',
-        },
+        }),
       }),
-      { expiresIn: 60 * 60 },
+      expect.objectContaining({ expiresIn: 60 * 60 }),
     );
   });
 
@@ -205,12 +212,12 @@ describe('s3', () => {
     expect(awsMocks.getSignedUrl).toHaveBeenCalledWith(
       expect.any(awsMocks.S3Client),
       expect.objectContaining({
-        input: {
+        input: expect.objectContaining({
           Bucket: 'storage-bucket',
           Key: 'documents/generated-uuid.png',
-        },
+        }),
       }),
-      { expiresIn: 60 * 60 },
+      expect.objectContaining({ expiresIn: 60 * 60 }),
     );
   });
 
@@ -245,14 +252,54 @@ describe('s3', () => {
     expect(awsMocks.getSignedUrl).toHaveBeenCalledWith(
       expect.any(awsMocks.S3Client),
       expect.objectContaining({
-        input: {
+        input: expect.objectContaining({
           Bucket: 'storage-bucket',
           Key: 'documents/custom/tenant-1/generated-uuid.txt',
-        },
+        }),
       }),
-      { expiresIn: 60 * 60 },
+      expect.objectContaining({ expiresIn: 60 * 60 }),
     );
   });
+
+  it.each([
+    '',
+    '/',
+    '.',
+    '..',
+    '../escape.txt',
+    'folder/../escape.txt',
+    'folder/./file.txt',
+  ])(
+    'rejects invalid custom paths before signing or contacting storage: %s',
+    async (path) => {
+      const provider = s3({
+        bucketName: 'storage',
+        region: 'us-east-1',
+        path: async () => path,
+      });
+      await expect(provider.uploads.request(uploadParams())).rejects.toThrow(
+        'stay within',
+      );
+      expect(awsMocks.getSignedUrl).not.toHaveBeenCalled();
+      expect(awsMocks.send).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([
+    'documents/../escape.txt',
+    'documents/./file.txt',
+    '/documents/file.txt',
+    'documents/file.txt/',
+  ])(
+    'rejects noncanonical key references before contacting storage: %s',
+    async (key) => {
+      const provider = s3({ bucketName: 'storage', region: 'us-east-1' });
+      await expect(
+        provider.files.get({ bucketName: 'documents', file: { key } }),
+      ).rejects.toThrow();
+      expect(awsMocks.send).not.toHaveBeenCalled();
+    },
+  );
 
   it('uses custom endpoint and baseUrl settings', async () => {
     const provider = s3({
@@ -278,12 +325,12 @@ describe('s3', () => {
         }),
       }),
       expect.objectContaining({
-        input: {
+        input: expect.objectContaining({
           Bucket: 'storage-bucket',
           Key: 'documents/generated-uuid.txt',
-        },
+        }),
       }),
-      { expiresIn: 60 * 60 },
+      expect.objectContaining({ expiresIn: 60 * 60 }),
     );
   });
 
@@ -315,12 +362,12 @@ describe('s3', () => {
       expect(awsMocks.getSignedUrl).toHaveBeenCalledWith(
         expect.any(awsMocks.S3Client),
         expect.objectContaining({
-          input: {
+          input: expect.objectContaining({
             Bucket: 'storage-bucket',
             Key: objectKey,
-          },
+          }),
         }),
-        { expiresIn: 60 * 60 },
+        expect.objectContaining({ expiresIn: 60 * 60 }),
       );
 
       const lastModified = new Date('2026-01-01T00:00:00.000Z');
@@ -343,10 +390,10 @@ describe('s3', () => {
       expect(awsMocks.send).toHaveBeenNthCalledWith(
         1,
         expect.objectContaining({
-          input: {
+          input: expect.objectContaining({
             Bucket: 'storage-bucket',
             Key: objectKey,
-          },
+          }),
         }),
       );
       expect(awsMocks.send).toHaveBeenNthCalledWith(
@@ -354,7 +401,7 @@ describe('s3', () => {
         expect.objectContaining({
           input: {
             Bucket: 'storage-bucket',
-            Key: objectKey,
+            Delete: { Objects: [{ Key: objectKey }], Quiet: true },
           },
         }),
       );
@@ -376,6 +423,7 @@ describe('s3', () => {
       region: 'us-east-1',
       baseUrl: 'https://cdn.example.com',
     });
+    awsMocks.send.mockResolvedValueOnce({});
 
     await expect(
       provider.files.delete?.({
@@ -388,10 +436,80 @@ describe('s3', () => {
       expect.objectContaining({
         input: {
           Bucket: 'storage-bucket',
-          Key: 'documents/path/file.txt',
+          Delete: {
+            Objects: [{ Key: 'documents/path/file.txt' }],
+            Quiet: true,
+          },
         },
       }),
     );
+  });
+
+  it('deletes in batches of 1,000 and reports per-key failures in order', async () => {
+    const provider = s3({
+      bucketName: 'storage-bucket',
+      region: 'us-east-1',
+      baseUrl: 'https://cdn.example.com',
+    });
+    const keys = Array.from({ length: 1002 }, (_, i) => `documents/${i}`);
+    awsMocks.send
+      .mockResolvedValueOnce({
+        Errors: [{ Key: 'documents/1', Message: 'Access Denied' }],
+      })
+      .mockRejectedValueOnce(new Error('network down'));
+
+    const { results } = await provider.files.delete!({
+      bucketName: 'documents',
+      files: keys.map((key) => ({ key })),
+    });
+
+    expect(
+      awsMocks.send.mock.calls.map(
+        ([command]) => command.input.Delete.Objects.length,
+      ),
+    ).toEqual([1000, 2]);
+    expect(results).toHaveLength(1002);
+    expect(results[0]).toEqual({ success: true });
+    expect(results[1]).toEqual({
+      success: false,
+      error: { code: 'DELETE_FAILED', message: 'Access Denied' },
+    });
+    expect(results.slice(1000)).toEqual([
+      {
+        success: false,
+        error: { code: 'DELETE_FAILED', message: 'network down' },
+      },
+      {
+        success: false,
+        error: { code: 'DELETE_FAILED', message: 'network down' },
+      },
+    ]);
+  });
+
+  it('does not claim to retrieve router fields', async () => {
+    const provider = s3({
+      bucketName: 'storage-bucket',
+      region: 'us-east-1',
+      baseUrl: 'https://cdn.example.com',
+    });
+    const lastModified = new Date('2026-01-01T00:00:00.000Z');
+    awsMocks.send.mockResolvedValueOnce({
+      ContentLength: 10,
+      LastModified: lastModified,
+    });
+
+    await expect(
+      provider.files.get({
+        bucketName: 'documents',
+        file: { url: 'https://cdn.example.com/documents/path/file.txt' },
+      }),
+    ).resolves.toEqual({
+      key: 'documents/path/file.txt',
+      url: 'https://cdn.example.com/documents/path/file.txt',
+      sizeBytes: 10,
+      uploadedAt: lastModified,
+      updatedAt: lastModified,
+    });
   });
 
   it('rejects cross-bucket deletion before contacting S3', async () => {
@@ -442,8 +560,6 @@ describe('s3', () => {
         bucketName: 'documents',
         files: [{ url: 'https://example.com/documents/file.txt' }],
       }),
-    ).rejects.toThrow(
-      'S3 bucketName is not configured in S3ProviderOptions for deleteFile.',
-    );
+    ).rejects.toThrow('S3 bucketName is not configured in S3ProviderOptions.');
   });
 });
