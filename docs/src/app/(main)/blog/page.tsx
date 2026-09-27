@@ -1,9 +1,12 @@
-import { getBlogPosts } from '@/lib/source';
+import { blogDeployment, getBlogPosts } from '@/lib/source';
 import { ArrowRightIcon } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
+  ...(blogDeployment.showDrafts && {
+    robots: { index: false, follow: false },
+  }),
   title: 'Blog',
   description: 'News, release notes, and technical articles from EdgeStore.',
   alternates: {

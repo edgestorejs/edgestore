@@ -8,6 +8,7 @@
     "dev": "next dev --turbo",
     "start": "next start",
     "test:agents": "node --test tests/agents.test.js",
+    "test:blog": "node --test tests/blog.test.js",
     "lint": "eslint --cache --report-unused-disable-directives src",
     "postinstall": "fumadocs-mdx"
   },

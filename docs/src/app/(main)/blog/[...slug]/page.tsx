@@ -1,4 +1,5 @@
-import { getBlogPost, getBlogPosts } from '@/lib/source';
+import { getBlogSocialImage } from '@/app/_social-card/blog-images';
+import { blogDeployment, getBlogPost, getBlogPosts } from '@/lib/source';
 import { getMDXComponents } from '@/mdx-components';
 import { InlineTOC } from 'fumadocs-ui/components/inline-toc';
 import { ArrowLeftIcon } from 'lucide-react';
@@ -77,14 +78,19 @@ export async function generateMetadata({
   const page = getBlogPost(slug);
   if (!page) notFound();
 
+  const customImage = getBlogSocialImage(page.slugs);
   const image = {
     url: `/og/blog/${page.slugs.map(encodeURIComponent).join('/')}`,
-    width: 1200,
-    height: 630,
+    width: customImage?.width ?? 1200,
+    height: customImage?.height ?? 630,
     alt: page.data.title,
   };
 
   return {
+    ...(page.data.draft && {
+      metadataBase: blogDeployment.metadataBase,
+      robots: { index: false, follow: false },
+    }),
     title: page.data.title,
     description: page.data.description,
     alternates: {
