@@ -59,13 +59,15 @@ describe('azureBlob', () => {
       baseUrl: 'https://cdn.example.com/assets',
     });
 
-    expect(hosted.baseUrl).toBe('https://account.blob.core.windows.net/files');
+    await expect(hosted.uploads.request(request())).resolves.toMatchObject({
+      url: 'https://account.blob.core.windows.net/files/documents/a%20b.txt',
+    });
     const res = await cdn.uploads.request(request({}, { expiresIn: 60 }));
     expect(res).toMatchObject({
       key: 'documents/a b.txt',
-      accessUrl: 'https://cdn.example.com/assets/documents/a%20b.txt',
+      url: 'https://cdn.example.com/assets/documents/a%20b.txt',
     });
-    expect(res.accessSignedUrl).toMatch(
+    expect(res.signedReadUrl?.signedUrl).toMatch(
       /^http:\/\/127\.0\.0\.1:10000\/devstoreaccount1\/files\/documents\/a%20b\.txt\?.*sp=r/,
     );
   });
@@ -106,9 +108,9 @@ describe('azureBlob', () => {
       request({ isPublic: true }, { expiresIn: 60 }),
     );
 
-    expect(plain.accessSignedUrl).toBeUndefined();
-    expect(signed).toMatchObject({ accessSignedUrlExpiresIn: 60 });
-    expect(publicFile.accessSignedUrl).toBeUndefined();
+    expect(plain.signedReadUrl).toBeUndefined();
+    expect(signed.signedReadUrl).toMatchObject({ expiresIn: 60 });
+    expect(publicFile.signedReadUrl).toBeUndefined();
     expect(publicFile.key).toBe('documents/_public/a b.txt');
   });
 

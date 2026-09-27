@@ -39,7 +39,6 @@ const baseUrl = 'https://files.example.com';
 
 export const myProvider = defineProvider({
   name: 'my-storage',
-  baseUrl,
   async init() {
     return {};
   },
@@ -54,7 +53,7 @@ export const myProvider = defineProvider({
       const key = storage.createKey({ bucketName, fileInfo });
       return {
         uploadUrl: await storage.signUpload(key),
-        accessUrl: `${baseUrl}/${key}`,
+        url: `${baseUrl}/${key}`,
       };
     },
   },
@@ -79,6 +78,22 @@ export const myProvider = defineProvider({
 
 The resulting backend client exposes `get`, but not `upload`, `list`, or
 mutations, because those optional capabilities were not defined.
+
+`init` runs when the browser initializes EdgeStore. Return `{}` unless the
+browser must prepare access to your file origin before loading protected
+files. In that case, return `clientInit` with the absolute URLs to request and
+any headers to send; the browser calls each URL with credentials:
+
+```ts
+async init({ ctx }) {
+  return {
+    clientInit: {
+      urls: ['https://files.example.com/_init'],
+      headers: { 'x-file-token': await createFileToken(ctx) },
+    },
+  };
+},
+```
 
 ## Complete provider
 
@@ -112,7 +127,6 @@ const toFile = (object: Awaited<ReturnType<typeof storage.head>>) => ({
 
 export const myProvider = defineProvider({
   name: 'my-storage',
-  baseUrl,
   async init() {
     return {};
   },

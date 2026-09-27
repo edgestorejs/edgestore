@@ -120,15 +120,7 @@ describe('EdgeStore adapter live smoke test', () => {
       await expectOk(initRes);
 
       const cookie = getCookieHeader(initRes);
-      const initJson = (await initRes.json()) as {
-        baseUrl?: string;
-        providerName?: string;
-      };
-
-      expect(initJson).toMatchObject({
-        baseUrl: expect.any(String),
-        providerName: expect.any(String),
-      });
+      expect(await initRes.json()).toEqual({});
       expect(cookie).toContain('edgestore-ctx=');
 
       const fileBody = new Blob([SMOKE_CONTENT], {
@@ -160,12 +152,12 @@ describe('EdgeStore adapter live smoke test', () => {
           await expectOk(requestUploadRes);
 
           const uploadInfo = (await requestUploadRes.json()) as {
-            accessUrl?: string;
+            url?: string;
             size?: number;
             uploadUrl?: string;
           };
 
-          if (!uploadInfo.uploadUrl || !uploadInfo.accessUrl) {
+          if (!uploadInfo.uploadUrl || !uploadInfo.url) {
             throw new Error(
               'Upload URL or access URL missing from upload response',
             );
@@ -182,7 +174,7 @@ describe('EdgeStore adapter live smoke test', () => {
 
           return {
             size: uploadInfo.size ?? 0,
-            url: uploadInfo.accessUrl,
+            url: uploadInfo.url,
           };
         },
         confirmUpload: async (url) => {

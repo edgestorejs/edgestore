@@ -80,8 +80,10 @@ describe.skipIf(!endpoint)('Azure Blob live storage contract', () => {
     });
     expect(upload.status, await upload.text()).toBe(201);
     expect(result.key).toMatch(/^documents\/custom\//);
-    expect(await (await fetch(result.accessSignedUrl!)).text()).toBe('abc');
-    expect((await fetch(result.accessUrl)).ok).toBe(false);
+    expect(await (await fetch(result.signedReadUrl!.signedUrl)).text()).toBe(
+      'abc',
+    );
+    expect((await fetch(result.url)).ok).toBe(false);
 
     const properties = await container
       .getBlobClient(result.key!)
@@ -101,7 +103,7 @@ describe.skipIf(!endpoint)('Azure Blob live storage contract', () => {
 
   it('stages browser blocks, refreshes part URLs, and commits without ETags', async () => {
     const body = new Uint8Array(partSize + 3).fill(97);
-    const { multipart, accessSignedUrl } = await startMultipart(body);
+    const { multipart, signedReadUrl } = await startMultipart(body);
     expect(multipart.totalParts).toBe(2);
     const [first] = multipart.parts;
     const { parts: refreshed } = await provider.uploads.multipart.requestParts({
@@ -123,7 +125,7 @@ describe.skipIf(!endpoint)('Azure Blob live storage contract', () => {
       parts: [{ partNumber: 1 }, { partNumber: 2 }],
     });
 
-    const read = await fetch(accessSignedUrl!);
+    const read = await fetch(signedReadUrl!.signedUrl);
     expect(new Uint8Array(await read.arrayBuffer())).toEqual(body);
     const properties = await container
       .getBlobClient(multipart.key)

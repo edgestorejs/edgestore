@@ -24,21 +24,19 @@
     "@edgestore/cli": "0.0.0"
   },
   "changesets": [
-    "agent-experience",
-    "bright-files-progress",
-    "bright-pandas-auth",
-    "calm-clouds-guide",
-    "clean-production-dependencies",
-    "esm-only-packages",
-    "introduce-api-v2-sdk",
+    "agent-references",
+    "azure-blob-provider",
+    "backend-client-v2",
+    "custom-providers",
+    "esm-only-node-22",
+    "introduce-cli",
+    "introduce-sdk",
     "project-file-origins",
-    "quick-files-upload",
-    "quiet-s3-workflows",
-    "redesign-provider-backend-client",
-    "remove-zod-peer",
-    "standard-schema-core",
-    "tidy-buckets-upload",
-    "tidy-dots-login",
-    "validate-http-schema-input"
+    "react-file-lifecycle",
+    "remove-dev-proxy",
+    "resilient-multipart-uploads",
+    "router-provider",
+    "s3-provider",
+    "standard-schema-input"
   ]
 }

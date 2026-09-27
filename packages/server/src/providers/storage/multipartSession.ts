@@ -13,7 +13,7 @@ const sessionSchema = z.object({
   partSize: z.number().int().positive(),
   totalParts: z.number().int().min(1).max(10_000),
   /** Provider-specific settings applied when the upload completes. */
-  data: z.record(z.unknown()).optional(),
+  data: z.record(z.string(), z.unknown()).optional(),
 });
 
 export type MultipartSession = z.infer<typeof sessionSchema>;

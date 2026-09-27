@@ -21,7 +21,6 @@ export function createProvider(
 ): AnyEdgeStoreProvider {
   const provider: AnyEdgeStoreProvider = {
     name: 'test-provider',
-    baseUrl: 'https://files.example.com',
     init: vi.fn(() => ({})),
     reference: {
       schema: z.object({ url: z.string() }),
@@ -30,7 +29,7 @@ export function createProvider(
     uploads: {
       request: vi.fn(() => ({
         uploadUrl: 'https://upload.example.com/file.txt',
-        accessUrl: 'https://files.example.com/file.txt',
+        url: 'https://files.example.com/file.txt',
         thumbnailUrl: null,
       })),
       multipart: {

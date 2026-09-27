@@ -1,10 +1,9 @@
 ---
-"@edgestore/sdk": minor
-"@edgestore/shared": minor
-"@edgestore/server": minor
-"@edgestore/react": minor
+'@edgestore/server': minor
+'@edgestore/react': minor
 ---
 
-Discover project file origins from the service and initialize protected access on both project and preserved legacy hosts. Existing service responses and explicit development base URL overrides remain supported. Upload calls and file references are unchanged.
+pr: #237
 
-Allow management project creation to opt into project subdomains with `useProjectDomain: true`. Omitting the option preserves shared-domain compatibility with older packages.
+Initialize protected file access on the file origins returned by EdgeStore,
+including project subdomains and the shared origin used by existing links.

@@ -59,15 +59,9 @@
   "dependencies": {
     "@standard-schema/spec": "^1.1.0"
   },
-  "peerDependencies": {
-    "react": ">=16.8.0",
-    "react-dom": ">=16.8.0"
-  },
   "devDependencies": {
     "@types/node": "catalog:",
     "arktype": "2.2.3",
-    "react": "catalog:",
-    "react-dom": "catalog:",
     "tsx": "catalog:",
     "typescript": "catalog:",
     "valibot": "1.4.2",

@@ -7,7 +7,6 @@ const packageDir = path.dirname(fileURLToPath(import.meta.url));
 
 export const input = [
   'src/index.ts',
-  'src/core/index.ts',
   'src/adapters/astro/index.ts',
   'src/adapters/express/index.ts',
   'src/adapters/fastify/index.ts',

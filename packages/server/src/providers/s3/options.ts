@@ -27,28 +27,12 @@ export type S3ProviderOptions = {
   /**
    * AWS SDK credentials (or credentials provider) to use for S3 requests.
    *
-   * If unset, the AWS SDK will use its default credential provider chain
-   * (environment variables, shared config files, instance/task roles, etc).
+   * If unset, `ES_AWS_ACCESS_KEY_ID` and `ES_AWS_SECRET_ACCESS_KEY` are used
+   * when both are set. Otherwise the AWS SDK uses its default credential
+   * provider chain (environment variables, shared config files, instance/task
+   * roles, etc).
    */
   credentials?: S3ClientConfig['credentials'];
-  /**
-   * Access key for AWS credentials.
-   * Can also be set via the `ES_AWS_ACCESS_KEY_ID` environment variable.
-   *
-   * If unset, the SDK will attempt to use the default credentials provider chain.
-   *
-   * @deprecated Pass `credentials` instead.
-   */
-  accessKeyId?: string;
-  /**
-   * Secret access key for AWS credentials.
-   * Can also be set via the `ES_AWS_SECRET_ACCESS_KEY` environment variable.
-   *
-   * If unset, the SDK will attempt to use the default credentials provider chain.
-   *
-   * @deprecated Pass `credentials` instead.
-   */
-  secretAccessKey?: string;
   /**
    * AWS region to use.
    * Can also be set via the `ES_AWS_REGION` environment variable.

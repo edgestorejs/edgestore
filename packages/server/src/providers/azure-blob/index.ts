@@ -246,7 +246,6 @@ export function azureBlob(options: AzureBlobProviderOptions = {}) {
 
   return defineProvider({
     name: 'azure-blob',
-    baseUrl,
     reference: {
       schema: z.union([
         z.object({ key: z.string().min(1) }),
@@ -263,17 +262,11 @@ export function azureBlob(options: AzureBlobProviderOptions = {}) {
       supportedOptions: { temporary: false, replaceTargetUrl: false },
       async request(params): Promise<RequestUploadRes> {
         const { key, commit, plan } = await prepare(params);
-        const read = readForUpload(key, params);
+        const signedReadUrl = readForUpload(key, params);
         const access = {
           key,
-          accessUrl: keys.toUrl(key),
-          ...(read
-            ? {
-                accessSignedUrl: read.signedUrl,
-                accessSignedUrlExpiresAt: read.expiresAt,
-                accessSignedUrlExpiresIn: read.expiresIn,
-              }
-            : {}),
+          url: keys.toUrl(key),
+          ...(signedReadUrl ? { signedReadUrl } : {}),
         };
         if (plan) {
           return {

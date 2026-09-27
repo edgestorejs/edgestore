@@ -111,10 +111,7 @@ describe('Express adapter conformance', () => {
     expect(provider.init).toHaveBeenCalledWith(
       expect.objectContaining({ ctx: testCtx }),
     );
-    expect(res.body).toMatchObject({
-      baseUrl: 'https://files.example.com',
-      providerName: 'test-provider',
-    });
+    expect(res.body).toEqual({});
     expect(extractCookieValue(res.headers['Set-Cookie'])).toBeTruthy();
   });
 
@@ -137,7 +134,7 @@ describe('Express adapter conformance', () => {
 
     expect(uploadRes.statusCode).toBe(200);
     expect(uploadRes.body).toMatchObject({
-      accessUrl: 'https://files.example.com/file.txt',
+      url: 'https://files.example.com/file.txt',
       path: { author: testCtx.userId },
       metadata: {
         userId: testCtx.userId,

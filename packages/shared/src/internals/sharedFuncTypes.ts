@@ -8,14 +8,11 @@ import {
 
 export type SharedInitRes = {
   newCookies: string[];
-  baseUrl: string;
-  providerName: string;
   clientInit?: ClientInit;
 };
 export type SharedRequestUploadRes = Simplify<
   RequestUploadRes & {
     size: number;
-    uploadedAt: string;
     path: Record<string, string>;
     pathOrder: string[];
     metadata: AnyMetadata;

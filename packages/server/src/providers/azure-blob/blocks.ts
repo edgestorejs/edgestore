@@ -27,7 +27,7 @@ const commitSchema = z.object({
     blobCacheControl: z.string().optional(),
     blobContentDisposition: z.string().optional(),
   }),
-  metadata: z.record(z.string()).optional(),
+  metadata: z.record(z.string(), z.string()).optional(),
 });
 
 /** Blob properties applied when the blob is committed. */

@@ -95,7 +95,7 @@ Optionally move npm's `next` tag to the published RC so existing `@next`
 consumers follow the RC phase:
 
 ```sh
-for package_dir in server react shared; do
+for package_dir in server react shared sdk cli; do
   package_name="@edgestore/$package_dir"
   rc_version="$(pnpm view "$package_name" dist-tags.rc)"
   npm dist-tag add "$package_name@$rc_version" next
@@ -189,6 +189,8 @@ After a release, inspect every public package:
 pnpm view @edgestore/server dist-tags --json
 pnpm view @edgestore/react dist-tags --json
 pnpm view @edgestore/shared dist-tags --json
+pnpm view @edgestore/sdk dist-tags --json
+pnpm view @edgestore/cli dist-tags --json
 ```
 
 Expected tags are `latest` for stable, `next` or `rc` for prereleases,
