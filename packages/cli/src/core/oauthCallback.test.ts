@@ -79,12 +79,18 @@ describe('OAuth loopback callback', () => {
     });
   });
 
-  it('closes idle browser connections without blocking shutdown', async () => {
+  it('closes connections held open by late browser requests', async () => {
     const callback = await openOAuthCallbackServer(
       'expected-state',
       new AbortController().signal,
     );
     const redirectUri = new URL(callback.redirectUri);
+    redirectUri.searchParams.set('state', 'expected-state');
+    await (await fetch(redirectUri)).text();
+    await callback.callback;
+
+    // Browsers can request assets such as the favicon after the callback page
+    // renders. Nothing answers them once the callback has settled.
     const socket = connect(Number(redirectUri.port), redirectUri.hostname);
 
     try {
@@ -93,13 +99,11 @@ describe('OAuth loopback callback', () => {
         socket.once('close', resolve);
         socket.once('error', () => resolve());
       });
+      socket.write('GET /favicon.ico HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n');
+      await new Promise((resolve) => setTimeout(resolve, 50));
 
       await callback.close();
       await disconnected;
-
-      await expect(callback.callback).rejects.toMatchObject({
-        name: 'AbortError',
-      });
     } finally {
       socket.destroy();
     }
