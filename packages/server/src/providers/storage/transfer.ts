@@ -60,24 +60,24 @@ export function createProgress(
  * Runs tasks a few at a time to bound memory use. The first failure, or
  * the caller's signal, stops the remaining parts before the error is thrown.
  */
-export async function runConcurrently<TResult>(
-  partNumbers: number[],
+export async function runConcurrently<TItem, TResult>(
+  items: TItem[],
   signal: AbortSignal | undefined,
-  task: (partNumber: number, signal: AbortSignal) => Promise<TResult>,
+  task: (item: TItem, signal: AbortSignal) => Promise<TResult>,
 ) {
   const controller = new AbortController();
   const partSignal = signal
     ? AbortSignal.any([signal, controller.signal])
     : controller.signal;
-  const results = new Array<TResult>(partNumbers.length);
+  const results = new Array<TResult>(items.length);
   let next = 0;
   const workers = Array.from(
-    { length: Math.min(DEFAULT_MULTIPART_CONCURRENCY, partNumbers.length) },
+    { length: Math.min(DEFAULT_MULTIPART_CONCURRENCY, items.length) },
     async () => {
-      while (next < partNumbers.length) {
+      while (next < items.length) {
         partSignal.throwIfAborted();
         const index = next++;
-        results[index] = await task(partNumbers[index]!, partSignal);
+        results[index] = await task(items[index]!, partSignal);
       }
     },
   );

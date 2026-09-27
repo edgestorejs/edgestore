@@ -114,11 +114,17 @@
                 "description": "HTTP status code returned with the error."
               }
             },
-            "required": ["code", "message", "status"],
+            "required": [
+              "code",
+              "message",
+              "status"
+            ],
             "additionalProperties": false
           }
         },
-        "required": ["error"],
+        "required": [
+          "error"
+        ],
         "additionalProperties": false
       },
       "InvalidRequestError": {
@@ -169,20 +175,31 @@
                           "description": "Validation failure message."
                         }
                       },
-                      "required": ["path", "message"]
+                      "required": [
+                        "path",
+                        "message"
+                      ]
                     },
                     "description": "Request validation failures."
                   }
                 },
-                "required": ["issues"],
+                "required": [
+                  "issues"
+                ],
                 "description": "Structured details specific to this error code."
               }
             },
-            "required": ["code", "message", "status"],
+            "required": [
+              "code",
+              "message",
+              "status"
+            ],
             "additionalProperties": false
           }
         },
-        "required": ["error"],
+        "required": [
+          "error"
+        ],
         "additionalProperties": false
       },
       "PayloadTooLargeError": {
@@ -207,11 +224,17 @@
                 "description": "HTTP status code returned with the error."
               }
             },
-            "required": ["code", "message", "status"],
+            "required": [
+              "code",
+              "message",
+              "status"
+            ],
             "additionalProperties": false
           }
         },
-        "required": ["error"],
+        "required": [
+          "error"
+        ],
         "additionalProperties": false
       },
       "AuthenticationRequiredError": {
@@ -236,11 +259,17 @@
                 "description": "HTTP status code returned with the error."
               }
             },
-            "required": ["code", "message", "status"],
+            "required": [
+              "code",
+              "message",
+              "status"
+            ],
             "additionalProperties": false
           }
         },
-        "required": ["error"],
+        "required": [
+          "error"
+        ],
         "additionalProperties": false
       },
       "InvalidCredentialError": {
@@ -265,11 +294,17 @@
                 "description": "HTTP status code returned with the error."
               }
             },
-            "required": ["code", "message", "status"],
+            "required": [
+              "code",
+              "message",
+              "status"
+            ],
             "additionalProperties": false
           }
         },
-        "required": ["error"],
+        "required": [
+          "error"
+        ],
         "additionalProperties": false
       },
       "CredentialNotAllowedError": {
@@ -294,11 +329,17 @@
                 "description": "HTTP status code returned with the error."
               }
             },
-            "required": ["code", "message", "status"],
+            "required": [
+              "code",
+              "message",
+              "status"
+            ],
             "additionalProperties": false
           }
         },
-        "required": ["error"],
+        "required": [
+          "error"
+        ],
         "additionalProperties": false
       },
       "MissingScopeError": {
@@ -330,15 +371,24 @@
                     "description": "Permission required by the operation."
                   }
                 },
-                "required": ["requiredScope"],
+                "required": [
+                  "requiredScope"
+                ],
                 "description": "Structured details specific to this error code."
               }
             },
-            "required": ["code", "message", "status", "details"],
+            "required": [
+              "code",
+              "message",
+              "status",
+              "details"
+            ],
             "additionalProperties": false
           }
         },
-        "required": ["error"],
+        "required": [
+          "error"
+        ],
         "additionalProperties": false
       },
       "AccountNotFoundError": {
@@ -363,11 +413,17 @@
                 "description": "HTTP status code returned with the error."
               }
             },
-            "required": ["code", "message", "status"],
+            "required": [
+              "code",
+              "message",
+              "status"
+            ],
             "additionalProperties": false
           }
         },
-        "required": ["error"],
+        "required": [
+          "error"
+        ],
         "additionalProperties": false
       },
       "ProjectNotFoundError": {
@@ -392,11 +448,17 @@
                 "description": "HTTP status code returned with the error."
               }
             },
-            "required": ["code", "message", "status"],
+            "required": [
+              "code",
+              "message",
+              "status"
+            ],
             "additionalProperties": false
           }
         },
-        "required": ["error"],
+        "required": [
+          "error"
+        ],
         "additionalProperties": false
       },
       "ProjectNotEmptyError": {
@@ -421,11 +483,17 @@
                 "description": "HTTP status code returned with the error."
               }
             },
-            "required": ["code", "message", "status"],
+            "required": [
+              "code",
+              "message",
+              "status"
+            ],
             "additionalProperties": false
           }
         },
-        "required": ["error"],
+        "required": [
+          "error"
+        ],
         "additionalProperties": false
       },
       "BucketNotFoundError": {
@@ -450,11 +518,17 @@
                 "description": "HTTP status code returned with the error."
               }
             },
-            "required": ["code", "message", "status"],
+            "required": [
+              "code",
+              "message",
+              "status"
+            ],
             "additionalProperties": false
           }
         },
-        "required": ["error"],
+        "required": [
+          "error"
+        ],
         "additionalProperties": false
       },
       "FileNotFoundError": {
@@ -479,11 +553,17 @@
                 "description": "HTTP status code returned with the error."
               }
             },
-            "required": ["code", "message", "status"],
+            "required": [
+              "code",
+              "message",
+              "status"
+            ],
             "additionalProperties": false
           }
         },
-        "required": ["error"],
+        "required": [
+          "error"
+        ],
         "additionalProperties": false
       },
       "UploadNotFoundError": {
@@ -508,11 +588,17 @@
                 "description": "HTTP status code returned with the error."
               }
             },
-            "required": ["code", "message", "status"],
+            "required": [
+              "code",
+              "message",
+              "status"
+            ],
             "additionalProperties": false
           }
         },
-        "required": ["error"],
+        "required": [
+          "error"
+        ],
         "additionalProperties": false
       },
       "UploadAlreadyCompletedError": {
@@ -537,11 +623,17 @@
                 "description": "HTTP status code returned with the error."
               }
             },
-            "required": ["code", "message", "status"],
+            "required": [
+              "code",
+              "message",
+              "status"
+            ],
             "additionalProperties": false
           }
         },
-        "required": ["error"],
+        "required": [
+          "error"
+        ],
         "additionalProperties": false
       },
       "MemberNotFoundError": {
@@ -566,11 +658,17 @@
                 "description": "HTTP status code returned with the error."
               }
             },
-            "required": ["code", "message", "status"],
+            "required": [
+              "code",
+              "message",
+              "status"
+            ],
             "additionalProperties": false
           }
         },
-        "required": ["error"],
+        "required": [
+          "error"
+        ],
         "additionalProperties": false
       },
       "InvitationNotFoundError": {
@@ -595,11 +693,17 @@
                 "description": "HTTP status code returned with the error."
               }
             },
-            "required": ["code", "message", "status"],
+            "required": [
+              "code",
+              "message",
+              "status"
+            ],
             "additionalProperties": false
           }
         },
-        "required": ["error"],
+        "required": [
+          "error"
+        ],
         "additionalProperties": false
       },
       "TokenNotFoundError": {
@@ -624,11 +728,17 @@
                 "description": "HTTP status code returned with the error."
               }
             },
-            "required": ["code", "message", "status"],
+            "required": [
+              "code",
+              "message",
+              "status"
+            ],
             "additionalProperties": false
           }
         },
-        "required": ["error"],
+        "required": [
+          "error"
+        ],
         "additionalProperties": false
       },
       "ProjectKeyNotFoundError": {
@@ -653,11 +763,17 @@
                 "description": "HTTP status code returned with the error."
               }
             },
-            "required": ["code", "message", "status"],
+            "required": [
+              "code",
+              "message",
+              "status"
+            ],
             "additionalProperties": false
           }
         },
-        "required": ["error"],
+        "required": [
+          "error"
+        ],
         "additionalProperties": false
       },
       "EmptyBucketJobNotFoundError": {
@@ -682,11 +798,17 @@
                 "description": "HTTP status code returned with the error."
               }
             },
-            "required": ["code", "message", "status"],
+            "required": [
+              "code",
+              "message",
+              "status"
+            ],
             "additionalProperties": false
           }
         },
-        "required": ["error"],
+        "required": [
+          "error"
+        ],
         "additionalProperties": false
       },
       "PersonalAccountError": {
@@ -711,11 +833,17 @@
                 "description": "HTTP status code returned with the error."
               }
             },
-            "required": ["code", "message", "status"],
+            "required": [
+              "code",
+              "message",
+              "status"
+            ],
             "additionalProperties": false
           }
         },
-        "required": ["error"],
+        "required": [
+          "error"
+        ],
         "additionalProperties": false
       },
       "AccountPausedError": {
@@ -740,11 +868,17 @@
                 "description": "HTTP status code returned with the error."
               }
             },
-            "required": ["code", "message", "status"],
+            "required": [
+              "code",
+              "message",
+              "status"
+            ],
             "additionalProperties": false
           }
         },
-        "required": ["error"],
+        "required": [
+          "error"
+        ],
         "additionalProperties": false
       },
       "StorageLimitExceededError": {
@@ -769,11 +903,17 @@
                 "description": "HTTP status code returned with the error."
               }
             },
-            "required": ["code", "message", "status"],
+            "required": [
+              "code",
+              "message",
+              "status"
+            ],
             "additionalProperties": false
           }
         },
-        "required": ["error"],
+        "required": [
+          "error"
+        ],
         "additionalProperties": false
       },
       "RestoreNotAllowedError": {
@@ -798,11 +938,17 @@
                 "description": "HTTP status code returned with the error."
               }
             },
-            "required": ["code", "message", "status"],
+            "required": [
+              "code",
+              "message",
+              "status"
+            ],
             "additionalProperties": false
           }
         },
-        "required": ["error"],
+        "required": [
+          "error"
+        ],
         "additionalProperties": false
       },
       "SignedReadUrlNotAvailableError": {
@@ -827,11 +973,17 @@
                 "description": "HTTP status code returned with the error."
               }
             },
-            "required": ["code", "message", "status"],
+            "required": [
+              "code",
+              "message",
+              "status"
+            ],
             "additionalProperties": false
           }
         },
-        "required": ["error"],
+        "required": [
+          "error"
+        ],
         "additionalProperties": false
       },
       "LastOwnerError": {
@@ -856,11 +1008,17 @@
                 "description": "HTTP status code returned with the error."
               }
             },
-            "required": ["code", "message", "status"],
+            "required": [
+              "code",
+              "message",
+              "status"
+            ],
             "additionalProperties": false
           }
         },
-        "required": ["error"],
+        "required": [
+          "error"
+        ],
         "additionalProperties": false
       },
       "ProjectLimitReachedError": {
@@ -885,11 +1043,17 @@
                 "description": "HTTP status code returned with the error."
               }
             },
-            "required": ["code", "message", "status"],
+            "required": [
+              "code",
+              "message",
+              "status"
+            ],
             "additionalProperties": false
           }
         },
-        "required": ["error"],
+        "required": [
+          "error"
+        ],
         "additionalProperties": false
       },
       "MemberLimitReachedError": {
@@ -914,11 +1078,17 @@
                 "description": "HTTP status code returned with the error."
               }
             },
-            "required": ["code", "message", "status"],
+            "required": [
+              "code",
+              "message",
+              "status"
+            ],
             "additionalProperties": false
           }
         },
-        "required": ["error"],
+        "required": [
+          "error"
+        ],
         "additionalProperties": false
       },
       "UserAlreadyMemberError": {
@@ -943,11 +1113,17 @@
                 "description": "HTTP status code returned with the error."
               }
             },
-            "required": ["code", "message", "status"],
+            "required": [
+              "code",
+              "message",
+              "status"
+            ],
             "additionalProperties": false
           }
         },
-        "required": ["error"],
+        "required": [
+          "error"
+        ],
         "additionalProperties": false
       },
       "BucketAlreadyExistsError": {
@@ -972,11 +1148,17 @@
                 "description": "HTTP status code returned with the error."
               }
             },
-            "required": ["code", "message", "status"],
+            "required": [
+              "code",
+              "message",
+              "status"
+            ],
             "additionalProperties": false
           }
         },
-        "required": ["error"],
+        "required": [
+          "error"
+        ],
         "additionalProperties": false
       },
       "BucketNotEmptyError": {
@@ -1001,11 +1183,17 @@
                 "description": "HTTP status code returned with the error."
               }
             },
-            "required": ["code", "message", "status"],
+            "required": [
+              "code",
+              "message",
+              "status"
+            ],
             "additionalProperties": false
           }
         },
-        "required": ["error"],
+        "required": [
+          "error"
+        ],
         "additionalProperties": false
       },
       "BucketEmptyInProgressError": {
@@ -1030,11 +1218,17 @@
                 "description": "HTTP status code returned with the error."
               }
             },
-            "required": ["code", "message", "status"],
+            "required": [
+              "code",
+              "message",
+              "status"
+            ],
             "additionalProperties": false
           }
         },
-        "required": ["error"],
+        "required": [
+          "error"
+        ],
         "additionalProperties": false
       },
       "BucketStateConflictError": {
@@ -1059,11 +1253,17 @@
                 "description": "HTTP status code returned with the error."
               }
             },
-            "required": ["code", "message", "status"],
+            "required": [
+              "code",
+              "message",
+              "status"
+            ],
             "additionalProperties": false
           }
         },
-        "required": ["error"],
+        "required": [
+          "error"
+        ],
         "additionalProperties": false
       },
       "KeyAlreadyRevokedError": {
@@ -1088,11 +1288,17 @@
                 "description": "HTTP status code returned with the error."
               }
             },
-            "required": ["code", "message", "status"],
+            "required": [
+              "code",
+              "message",
+              "status"
+            ],
             "additionalProperties": false
           }
         },
-        "required": ["error"],
+        "required": [
+          "error"
+        ],
         "additionalProperties": false
       },
       "InvitationNotActiveError": {
@@ -1117,11 +1323,17 @@
                 "description": "HTTP status code returned with the error."
               }
             },
-            "required": ["code", "message", "status"],
+            "required": [
+              "code",
+              "message",
+              "status"
+            ],
             "additionalProperties": false
           }
         },
-        "required": ["error"],
+        "required": [
+          "error"
+        ],
         "additionalProperties": false
       },
       "InvalidFileReferenceError": {
@@ -1146,11 +1358,17 @@
                 "description": "HTTP status code returned with the error."
               }
             },
-            "required": ["code", "message", "status"],
+            "required": [
+              "code",
+              "message",
+              "status"
+            ],
             "additionalProperties": false
           }
         },
-        "required": ["error"],
+        "required": [
+          "error"
+        ],
         "additionalProperties": false
       },
       "EmptyBucketJobNotRetryableError": {
@@ -1175,11 +1393,17 @@
                 "description": "HTTP status code returned with the error."
               }
             },
-            "required": ["code", "message", "status"],
+            "required": [
+              "code",
+              "message",
+              "status"
+            ],
             "additionalProperties": false
           }
         },
-        "required": ["error"],
+        "required": [
+          "error"
+        ],
         "additionalProperties": false
       },
       "RouteNotFoundError": {
@@ -1204,11 +1428,17 @@
                 "description": "HTTP status code returned with the error."
               }
             },
-            "required": ["code", "message", "status"],
+            "required": [
+              "code",
+              "message",
+              "status"
+            ],
             "additionalProperties": false
           }
         },
-        "required": ["error"],
+        "required": [
+          "error"
+        ],
         "additionalProperties": false
       },
       "InternalError": {
@@ -1233,11 +1463,17 @@
                 "description": "HTTP status code returned with the error."
               }
             },
-            "required": ["code", "message", "status"],
+            "required": [
+              "code",
+              "message",
+              "status"
+            ],
             "additionalProperties": false
           }
         },
-        "required": ["error"],
+        "required": [
+          "error"
+        ],
         "additionalProperties": false
       },
       "File": {
@@ -1335,7 +1571,12 @@
             "description": "File media type, or null when not provided."
           },
           "state": {
-            "enum": ["requested", "uploaded", "deleted", "replace_requested"],
+            "enum": [
+              "requested",
+              "uploaded",
+              "deleted",
+              "replace_requested"
+            ],
             "type": "string",
             "description": "Current file lifecycle state."
           },
@@ -1394,12 +1635,18 @@
             "description": "ID of the account that owns the project."
           },
           "type": {
-            "enum": ["file", "image"],
+            "enum": [
+              "file",
+              "image"
+            ],
             "type": "string",
             "description": "Bucket content type. Image buckets support thumbnails."
           },
           "visibility": {
-            "enum": ["public", "protected"],
+            "enum": [
+              "public",
+              "protected"
+            ],
             "type": "string",
             "description": "Whether reads are public or require signed URLs."
           },
@@ -1440,7 +1687,9 @@
         "operationId": "v2.health",
         "summary": "Health check",
         "description": "Checks whether API v2 is reachable and reports the active API version. This operation does not require authentication.",
-        "tags": ["system"],
+        "tags": [
+          "system"
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -1461,11 +1710,16 @@
                           "description": "Active API major version."
                         }
                       },
-                      "required": ["ok", "version"],
+                      "required": [
+                        "ok",
+                        "version"
+                      ],
                       "description": "Successful response payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             },
@@ -1528,7 +1782,9 @@
         "operationId": "v2.whoami",
         "summary": "Describe the authenticated actor",
         "description": "Returns the resolved management principal, its credential kind, and its effective management scopes.",
-        "tags": ["auth"],
+        "tags": [
+          "auth"
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -1627,7 +1883,11 @@
                                   "description": "Authenticated user identity."
                                 }
                               },
-                              "required": ["kind", "provider", "user"]
+                              "required": [
+                                "kind",
+                                "provider",
+                                "user"
+                              ]
                             },
                             {
                               "type": "object",
@@ -1789,7 +2049,12 @@
                                   "description": "Authenticated user identity."
                                 }
                               },
-                              "required": ["kind", "tokenId", "scopes", "user"]
+                              "required": [
+                                "kind",
+                                "tokenId",
+                                "scopes",
+                                "user"
+                              ]
                             },
                             {
                               "type": "object",
@@ -1854,7 +2119,9 @@
                                                     "const": "all"
                                                   }
                                                 },
-                                                "required": ["mode"]
+                                                "required": [
+                                                  "mode"
+                                                ]
                                               },
                                               {
                                                 "type": "object",
@@ -1877,11 +2144,16 @@
                                             ]
                                           }
                                         },
-                                        "required": ["accountId", "projects"]
+                                        "required": [
+                                          "accountId",
+                                          "projects"
+                                        ]
                                       }
                                     }
                                   },
-                                  "required": ["accounts"],
+                                  "required": [
+                                    "accounts"
+                                  ],
                                   "description": "Accounts and projects this OAuth grant may access."
                                 },
                                 "user": {
@@ -1966,11 +2238,15 @@
                           ]
                         }
                       },
-                      "required": ["actor"],
+                      "required": [
+                        "actor"
+                      ],
                       "description": "Successful response payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             },
@@ -2097,7 +2373,10 @@
         "operationId": "v2.management.accounts.list",
         "summary": "List accessible accounts",
         "description": "Lists the active accounts visible to the current management credential, including plan limits, usage, and the caller's team role.",
-        "tags": ["management", "accounts"],
+        "tags": [
+          "management",
+          "accounts"
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -2119,7 +2398,10 @@
                                 "description": "Unique account ID."
                               },
                               "type": {
-                                "enum": ["PERSONAL", "TEAM"],
+                                "enum": [
+                                  "PERSONAL",
+                                  "TEAM"
+                                ],
                                 "type": "string",
                                 "description": "Whether the account belongs to one user or a team."
                               },
@@ -2130,7 +2412,11 @@
                               "role": {
                                 "anyOf": [
                                   {
-                                    "enum": ["OWNER", "MEMBER", "VIEWER"],
+                                    "enum": [
+                                      "OWNER",
+                                      "MEMBER",
+                                      "VIEWER"
+                                    ],
                                     "type": "string"
                                   },
                                   {
@@ -2205,11 +2491,15 @@
                           }
                         }
                       },
-                      "required": ["accounts"],
+                      "required": [
+                        "accounts"
+                      ],
                       "description": "Successful response payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             },
@@ -2336,7 +2626,10 @@
         "operationId": "v2.management.accounts.get",
         "summary": "Get an account",
         "description": "Returns plan limits, storage usage, project count, and the caller's role for one accessible account.",
-        "tags": ["management", "accounts"],
+        "tags": [
+          "management",
+          "accounts"
+        ],
         "parameters": [
           {
             "name": "accountId",
@@ -2368,7 +2661,10 @@
                               "description": "Unique account ID."
                             },
                             "type": {
-                              "enum": ["PERSONAL", "TEAM"],
+                              "enum": [
+                                "PERSONAL",
+                                "TEAM"
+                              ],
                               "type": "string",
                               "description": "Whether the account belongs to one user or a team."
                             },
@@ -2379,7 +2675,11 @@
                             "role": {
                               "anyOf": [
                                 {
-                                  "enum": ["OWNER", "MEMBER", "VIEWER"],
+                                  "enum": [
+                                    "OWNER",
+                                    "MEMBER",
+                                    "VIEWER"
+                                  ],
                                   "type": "string"
                                 },
                                 {
@@ -2453,11 +2753,15 @@
                           "description": "An account visible to the current management credential."
                         }
                       },
-                      "required": ["account"],
+                      "required": [
+                        "account"
+                      ],
                       "description": "Successful response payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             },
@@ -2599,7 +2903,10 @@
         "operationId": "v2.management.accounts.leave",
         "summary": "Leave an account",
         "description": "Removes the current user from a team account. Personal accounts, account tokens, and the team's last owner cannot use this operation.",
-        "tags": ["management", "accounts"],
+        "tags": [
+          "management",
+          "accounts"
+        ],
         "parameters": [
           {
             "name": "accountId",
@@ -2625,7 +2932,9 @@
                       "description": "Successful response payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             },
@@ -2796,7 +3105,10 @@
         "operationId": "v2.management.projects.list",
         "summary": "List projects in an account",
         "description": "Lists active projects owned by an accessible account in creation order.",
-        "tags": ["management", "projects"],
+        "tags": [
+          "management",
+          "projects"
+        ],
         "parameters": [
           {
             "name": "accountId",
@@ -2869,11 +3181,15 @@
                           }
                         }
                       },
-                      "required": ["projects"],
+                      "required": [
+                        "projects"
+                      ],
                       "description": "Successful response payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             },
@@ -3013,7 +3329,10 @@
         "operationId": "v2.management.projects.create",
         "summary": "Create a project",
         "description": "Creates a project in an account and, by default, returns its first project key. The secret key is returned only in this response.",
-        "tags": ["management", "projects"],
+        "tags": [
+          "management",
+          "projects"
+        ],
         "parameters": [
           {
             "name": "accountId",
@@ -3061,7 +3380,9 @@
                     "description": "Allow billable creation beyond the included project limit."
                   }
                 },
-                "required": ["name"],
+                "required": [
+                  "name"
+                ],
                 "additionalProperties": false
               }
             }
@@ -3186,14 +3507,21 @@
                               "description": "Secret-key portion returned once; store it securely."
                             }
                           },
-                          "required": ["key", "secretKey"]
+                          "required": [
+                            "key",
+                            "secretKey"
+                          ]
                         }
                       },
-                      "required": ["project"],
+                      "required": [
+                        "project"
+                      ],
                       "description": "Successful response payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             },
@@ -3350,7 +3678,10 @@
         "operationId": "v2.management.projects.get",
         "summary": "Get a project",
         "description": "Returns an accessible project resolved by its project ID or globally unique base path.",
-        "tags": ["management", "projects"],
+        "tags": [
+          "management",
+          "projects"
+        ],
         "parameters": [
           {
             "name": "projectRef",
@@ -3420,11 +3751,15 @@
                           "description": "An EdgeStore project."
                         }
                       },
-                      "required": ["project"],
+                      "required": [
+                        "project"
+                      ],
                       "description": "Successful response payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             },
@@ -3564,7 +3899,10 @@
         "operationId": "v2.management.projects.delete",
         "summary": "Delete a project",
         "description": "Deletes an accessible project after its buckets and files have been removed.",
-        "tags": ["management", "projects"],
+        "tags": [
+          "management",
+          "projects"
+        ],
         "parameters": [
           {
             "name": "projectRef",
@@ -3590,7 +3928,9 @@
                       "description": "Successful response payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             },
@@ -3754,7 +4094,10 @@
         "operationId": "v2.management.buckets.list",
         "summary": "List management buckets",
         "description": "Lists active buckets in an accessible project, including visibility and current storage usage.",
-        "tags": ["management", "buckets"],
+        "tags": [
+          "management",
+          "buckets"
+        ],
         "parameters": [
           {
             "name": "projectRef",
@@ -3786,11 +4129,15 @@
                           }
                         }
                       },
-                      "required": ["buckets"],
+                      "required": [
+                        "buckets"
+                      ],
                       "description": "Successful response payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             },
@@ -3930,7 +4277,10 @@
         "operationId": "v2.management.buckets.create",
         "summary": "Create a bucket",
         "description": "Creates a file or image bucket and configures the path and custom metadata fields accepted by its files.",
-        "tags": ["management", "buckets"],
+        "tags": [
+          "management",
+          "buckets"
+        ],
         "parameters": [
           {
             "name": "projectRef",
@@ -3959,12 +4309,18 @@
                     "description": "Bucket name. Starts with an alphanumeric character and may contain letters, numbers, underscores, and hyphens."
                   },
                   "type": {
-                    "enum": ["file", "image"],
+                    "enum": [
+                      "file",
+                      "image"
+                    ],
                     "type": "string",
                     "description": "Bucket content type. Image buckets support thumbnails."
                   },
                   "visibility": {
-                    "enum": ["public", "protected"],
+                    "enum": [
+                      "public",
+                      "protected"
+                    ],
                     "type": "string",
                     "description": "Whether reads are public or require signed URLs."
                   },
@@ -3996,7 +4352,11 @@
                     "description": "Metadata field configuration for the bucket."
                   }
                 },
-                "required": ["name", "type", "visibility"],
+                "required": [
+                  "name",
+                  "type",
+                  "visibility"
+                ],
                 "additionalProperties": false
               }
             }
@@ -4017,11 +4377,15 @@
                           "$ref": "#/components/schemas/Bucket"
                         }
                       },
-                      "required": ["bucket"],
+                      "required": [
+                        "bucket"
+                      ],
                       "description": "Successful response payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             },
@@ -4178,7 +4542,10 @@
         "operationId": "v2.management.buckets.get",
         "summary": "Get a management bucket",
         "description": "Returns one active bucket by name from an accessible project.",
-        "tags": ["management", "buckets"],
+        "tags": [
+          "management",
+          "buckets"
+        ],
         "parameters": [
           {
             "name": "projectRef",
@@ -4219,11 +4586,15 @@
                           "$ref": "#/components/schemas/Bucket"
                         }
                       },
-                      "required": ["bucket"],
+                      "required": [
+                        "bucket"
+                      ],
                       "description": "Successful response payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             },
@@ -4370,7 +4741,10 @@
         "operationId": "v2.management.buckets.update",
         "summary": "Update a bucket",
         "description": "Replaces the bucket's configured path and custom metadata field definitions.",
-        "tags": ["management", "buckets"],
+        "tags": [
+          "management",
+          "buckets"
+        ],
         "parameters": [
           {
             "name": "projectRef",
@@ -4451,11 +4825,15 @@
                           "$ref": "#/components/schemas/Bucket"
                         }
                       },
-                      "required": ["bucket"],
+                      "required": [
+                        "bucket"
+                      ],
                       "description": "Successful response payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             },
@@ -4602,7 +4980,10 @@
         "operationId": "v2.management.buckets.delete",
         "summary": "Delete a bucket",
         "description": "Deletes an empty bucket. Start an empty-bucket job first when the bucket contains files or incomplete uploads.",
-        "tags": ["management", "buckets"],
+        "tags": [
+          "management",
+          "buckets"
+        ],
         "parameters": [
           {
             "name": "projectRef",
@@ -4641,7 +5022,9 @@
                       "description": "Successful response payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             },
@@ -4815,7 +5198,10 @@
         "operationId": "v2.management.buckets.empty",
         "summary": "Start emptying a bucket",
         "description": "Starts an asynchronous job that deletes files, aborts uploads, reconciles stored objects, and invalidates cached content for the bucket.",
-        "tags": ["management", "buckets"],
+        "tags": [
+          "management",
+          "buckets"
+        ],
         "parameters": [
           {
             "name": "projectRef",
@@ -4871,16 +5257,27 @@
                           "description": "ID of the bucket being emptied."
                         },
                         "status": {
-                          "enum": ["QUEUED", "RUNNING", "SUCCEEDED", "FAILED"],
+                          "enum": [
+                            "QUEUED",
+                            "RUNNING",
+                            "SUCCEEDED",
+                            "FAILED"
+                          ],
                           "type": "string",
                           "description": "Current job lifecycle state."
                         }
                       },
-                      "required": ["jobId", "bucketId", "status"],
+                      "required": [
+                        "jobId",
+                        "bucketId",
+                        "status"
+                      ],
                       "description": "Accepted operation payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             },
@@ -5029,7 +5426,10 @@
         "operationId": "v2.management.buckets.emptyJobs.latest",
         "summary": "Get the latest empty-bucket job",
         "description": "Returns the most recently created empty-bucket job for the selected bucket, or null when no job exists.",
-        "tags": ["management", "buckets"],
+        "tags": [
+          "management",
+          "buckets"
+        ],
         "parameters": [
           {
             "name": "projectRef",
@@ -5250,11 +5650,15 @@
                           ]
                         }
                       },
-                      "required": ["job"],
+                      "required": [
+                        "job"
+                      ],
                       "description": "Successful response payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             },
@@ -5403,7 +5807,10 @@
         "operationId": "v2.management.buckets.emptyJobs.get",
         "summary": "Get an empty-bucket job",
         "description": "Returns progress, cleanup counters, timestamps, and failure information for one empty-bucket job.",
-        "tags": ["management", "buckets"],
+        "tags": [
+          "management",
+          "buckets"
+        ],
         "parameters": [
           {
             "name": "projectRef",
@@ -5628,11 +6035,15 @@
                           "description": "Progress and results for an asynchronous bucket cleanup."
                         }
                       },
-                      "required": ["job"],
+                      "required": [
+                        "job"
+                      ],
                       "description": "Successful response payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             },
@@ -5784,7 +6195,10 @@
         "operationId": "v2.management.buckets.emptyJobs.retry",
         "summary": "Retry an empty-bucket job",
         "description": "Queues a retry of a failed empty-bucket job. Jobs that are active or already succeeded cannot be retried.",
-        "tags": ["management", "buckets"],
+        "tags": [
+          "management",
+          "buckets"
+        ],
         "parameters": [
           {
             "name": "projectRef",
@@ -5851,16 +6265,27 @@
                           "description": "ID of the bucket being emptied."
                         },
                         "status": {
-                          "enum": ["QUEUED", "RUNNING", "SUCCEEDED", "FAILED"],
+                          "enum": [
+                            "QUEUED",
+                            "RUNNING",
+                            "SUCCEEDED",
+                            "FAILED"
+                          ],
                           "type": "string",
                           "description": "Current job lifecycle state."
                         }
                       },
-                      "required": ["jobId", "bucketId", "status"],
+                      "required": [
+                        "jobId",
+                        "bucketId",
+                        "status"
+                      ],
                       "description": "Accepted operation payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             },
@@ -6027,7 +6452,10 @@
         "operationId": "v2.management.files.list",
         "summary": "List management files",
         "description": "Lists active uploaded files in a bucket using an opaque cursor.",
-        "tags": ["management", "files"],
+        "tags": [
+          "management",
+          "files"
+        ],
         "parameters": [
           {
             "name": "projectRef",
@@ -6119,14 +6547,23 @@
                               "description": "Whether another page is available."
                             }
                           },
-                          "required": ["limit", "nextCursor", "hasMore"]
+                          "required": [
+                            "limit",
+                            "nextCursor",
+                            "hasMore"
+                          ]
                         }
                       },
-                      "required": ["files", "pagination"],
+                      "required": [
+                        "files",
+                        "pagination"
+                      ],
                       "description": "Successful response payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             },
@@ -6275,7 +6712,10 @@
         "operationId": "v2.management.files.lookup",
         "summary": "Look up a management file",
         "description": "Resolves one file by ID, storage key, canonical URL, or bucket name and path.",
-        "tags": ["management", "files"],
+        "tags": [
+          "management",
+          "files"
+        ],
         "parameters": [
           {
             "name": "projectRef",
@@ -6310,7 +6750,9 @@
                                 "description": "Unique file ID."
                               }
                             },
-                            "required": ["id"],
+                            "required": [
+                              "id"
+                            ],
                             "additionalProperties": false
                           },
                           {
@@ -6323,7 +6765,9 @@
                                 "description": "File storage key."
                               }
                             },
-                            "required": ["key"],
+                            "required": [
+                              "key"
+                            ],
                             "additionalProperties": false
                           },
                           {
@@ -6336,7 +6780,9 @@
                                 "description": "Canonical file URL."
                               }
                             },
-                            "required": ["url"],
+                            "required": [
+                              "url"
+                            ],
                             "additionalProperties": false
                           }
                         ],
@@ -6359,14 +6805,19 @@
                             "description": "File path within the bucket."
                           }
                         },
-                        "required": ["bucketName", "path"],
+                        "required": [
+                          "bucketName",
+                          "path"
+                        ],
                         "additionalProperties": false
                       }
                     ],
                     "description": "A management file reference using exactly one supported form."
                   }
                 },
-                "required": ["file"],
+                "required": [
+                  "file"
+                ],
                 "additionalProperties": false
               }
             }
@@ -6387,11 +6838,15 @@
                           "$ref": "#/components/schemas/File"
                         }
                       },
-                      "required": ["file"],
+                      "required": [
+                        "file"
+                      ],
                       "description": "Successful response payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             },
@@ -6547,7 +7002,10 @@
         "operationId": "v2.management.files.generateAccessUrls",
         "summary": "Generate management file access URLs",
         "description": "Generates read-access URLs for one or more files. Protected files receive expiring signed URLs; public files may return their canonical URLs.",
-        "tags": ["management", "files"],
+        "tags": [
+          "management",
+          "files"
+        ],
         "parameters": [
           {
             "name": "projectRef",
@@ -6586,7 +7044,9 @@
                                   "description": "Unique file ID."
                                 }
                               },
-                              "required": ["id"],
+                              "required": [
+                                "id"
+                              ],
                               "additionalProperties": false
                             },
                             {
@@ -6599,7 +7059,9 @@
                                   "description": "File storage key."
                                 }
                               },
-                              "required": ["key"],
+                              "required": [
+                                "key"
+                              ],
                               "additionalProperties": false
                             },
                             {
@@ -6612,7 +7074,9 @@
                                   "description": "Canonical file URL."
                                 }
                               },
-                              "required": ["url"],
+                              "required": [
+                                "url"
+                              ],
                               "additionalProperties": false
                             }
                           ],
@@ -6635,7 +7099,10 @@
                               "description": "File path within the bucket."
                             }
                           },
-                          "required": ["bucketName", "path"],
+                          "required": [
+                            "bucketName",
+                            "path"
+                          ],
                           "additionalProperties": false
                         }
                       ],
@@ -6650,7 +7117,9 @@
                     "description": "Requested signed URL lifetime in seconds."
                   }
                 },
-                "required": ["files"],
+                "required": [
+                  "files"
+                ],
                 "additionalProperties": false
               }
             }
@@ -6686,7 +7155,9 @@
                                             "description": "Unique file ID."
                                           }
                                         },
-                                        "required": ["id"],
+                                        "required": [
+                                          "id"
+                                        ],
                                         "additionalProperties": false
                                       },
                                       {
@@ -6699,7 +7170,9 @@
                                             "description": "File storage key."
                                           }
                                         },
-                                        "required": ["key"],
+                                        "required": [
+                                          "key"
+                                        ],
                                         "additionalProperties": false
                                       },
                                       {
@@ -6712,7 +7185,9 @@
                                             "description": "Canonical file URL."
                                           }
                                         },
-                                        "required": ["url"],
+                                        "required": [
+                                          "url"
+                                        ],
                                         "additionalProperties": false
                                       }
                                     ],
@@ -6735,7 +7210,10 @@
                                         "description": "File path within the bucket."
                                       }
                                     },
-                                    "required": ["bucketName", "path"],
+                                    "required": [
+                                      "bucketName",
+                                      "path"
+                                    ],
                                     "additionalProperties": false
                                   }
                                 ],
@@ -6779,11 +7257,15 @@
                           }
                         }
                       },
-                      "required": ["accessUrls"],
+                      "required": [
+                        "accessUrls"
+                      ],
                       "description": "Successful response payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             },
@@ -6939,7 +7421,10 @@
         "operationId": "v2.management.files.delete",
         "summary": "Delete management files",
         "description": "Deletes multiple files and returns an ordered success or error result for every supplied file reference.",
-        "tags": ["management", "files"],
+        "tags": [
+          "management",
+          "files"
+        ],
         "parameters": [
           {
             "name": "projectRef",
@@ -6978,7 +7463,9 @@
                                   "description": "Unique file ID."
                                 }
                               },
-                              "required": ["id"],
+                              "required": [
+                                "id"
+                              ],
                               "additionalProperties": false
                             },
                             {
@@ -6991,7 +7478,9 @@
                                   "description": "File storage key."
                                 }
                               },
-                              "required": ["key"],
+                              "required": [
+                                "key"
+                              ],
                               "additionalProperties": false
                             },
                             {
@@ -7004,7 +7493,9 @@
                                   "description": "Canonical file URL."
                                 }
                               },
-                              "required": ["url"],
+                              "required": [
+                                "url"
+                              ],
                               "additionalProperties": false
                             }
                           ],
@@ -7027,7 +7518,10 @@
                               "description": "File path within the bucket."
                             }
                           },
-                          "required": ["bucketName", "path"],
+                          "required": [
+                            "bucketName",
+                            "path"
+                          ],
                           "additionalProperties": false
                         }
                       ],
@@ -7036,7 +7530,9 @@
                     "description": "Files to delete."
                   }
                 },
-                "required": ["files"],
+                "required": [
+                  "files"
+                ],
                 "additionalProperties": false
               }
             }
@@ -7074,7 +7570,9 @@
                                                 "description": "Unique file ID."
                                               }
                                             },
-                                            "required": ["id"],
+                                            "required": [
+                                              "id"
+                                            ],
                                             "additionalProperties": false
                                           },
                                           {
@@ -7087,7 +7585,9 @@
                                                 "description": "File storage key."
                                               }
                                             },
-                                            "required": ["key"],
+                                            "required": [
+                                              "key"
+                                            ],
                                             "additionalProperties": false
                                           },
                                           {
@@ -7100,7 +7600,9 @@
                                                 "description": "Canonical file URL."
                                               }
                                             },
-                                            "required": ["url"],
+                                            "required": [
+                                              "url"
+                                            ],
                                             "additionalProperties": false
                                           }
                                         ],
@@ -7123,7 +7625,10 @@
                                             "description": "File path within the bucket."
                                           }
                                         },
-                                        "required": ["bucketName", "path"],
+                                        "required": [
+                                          "bucketName",
+                                          "path"
+                                        ],
                                         "additionalProperties": false
                                       }
                                     ],
@@ -7134,7 +7639,10 @@
                                     "description": "Whether this item succeeded."
                                   }
                                 },
-                                "required": ["fileRef", "success"]
+                                "required": [
+                                  "fileRef",
+                                  "success"
+                                ]
                               },
                               {
                                 "type": "object",
@@ -7153,7 +7661,9 @@
                                                 "description": "Unique file ID."
                                               }
                                             },
-                                            "required": ["id"],
+                                            "required": [
+                                              "id"
+                                            ],
                                             "additionalProperties": false
                                           },
                                           {
@@ -7166,7 +7676,9 @@
                                                 "description": "File storage key."
                                               }
                                             },
-                                            "required": ["key"],
+                                            "required": [
+                                              "key"
+                                            ],
                                             "additionalProperties": false
                                           },
                                           {
@@ -7179,7 +7691,9 @@
                                                 "description": "Canonical file URL."
                                               }
                                             },
-                                            "required": ["url"],
+                                            "required": [
+                                              "url"
+                                            ],
                                             "additionalProperties": false
                                           }
                                         ],
@@ -7202,7 +7716,10 @@
                                             "description": "File path within the bucket."
                                           }
                                         },
-                                        "required": ["bucketName", "path"],
+                                        "required": [
+                                          "bucketName",
+                                          "path"
+                                        ],
                                         "additionalProperties": false
                                       }
                                     ],
@@ -7230,11 +7747,18 @@
                                         "description": "Human-readable item error message."
                                       }
                                     },
-                                    "required": ["code", "message"],
+                                    "required": [
+                                      "code",
+                                      "message"
+                                    ],
                                     "description": "Error returned for this item."
                                   }
                                 },
-                                "required": ["fileRef", "success", "error"]
+                                "required": [
+                                  "fileRef",
+                                  "success",
+                                  "error"
+                                ]
                               }
                             ]
                           },
@@ -7253,11 +7777,17 @@
                           "description": "Number of failed items."
                         }
                       },
-                      "required": ["results", "successCount", "failureCount"],
+                      "required": [
+                        "results",
+                        "successCount",
+                        "failureCount"
+                      ],
                       "description": "Successful response payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             },
@@ -7414,7 +7944,10 @@
         "operationId": "v2.management.uploads.request",
         "summary": "Request a management upload",
         "description": "Creates a logical upload and returns signed storage URLs for either a single request or the requested multipart parts.",
-        "tags": ["management", "uploads"],
+        "tags": [
+          "management",
+          "uploads"
+        ],
         "parameters": [
           {
             "name": "projectRef",
@@ -7507,7 +8040,9 @@
                         "description": "Unique multipart part numbers to create signed URLs for."
                       }
                     },
-                    "required": ["partNumbers"],
+                    "required": [
+                      "partNumbers"
+                    ],
                     "additionalProperties": false,
                     "description": "Multipart upload configuration. Omit for a single upload."
                   },
@@ -7529,7 +8064,9 @@
                     "description": "Request a signed read URL together with the upload."
                   }
                 },
-                "required": ["sizeBytes"],
+                "required": [
+                  "sizeBytes"
+                ],
                 "additionalProperties": false
               }
             }
@@ -7663,7 +8200,11 @@
                                   "description": "Signed URL used to upload the object directly to storage."
                                 }
                               },
-                              "required": ["kind", "id", "signedUrl"]
+                              "required": [
+                                "kind",
+                                "id",
+                                "signedUrl"
+                              ]
                             },
                             {
                               "type": "object",
@@ -7691,12 +8232,19 @@
                                         "description": "Signed URL used to upload this part directly to storage."
                                       }
                                     },
-                                    "required": ["partNumber", "signedUrl"]
+                                    "required": [
+                                      "partNumber",
+                                      "signedUrl"
+                                    ]
                                   },
                                   "description": "Requested upload parts."
                                 }
                               },
-                              "required": ["kind", "id", "parts"]
+                              "required": [
+                                "kind",
+                                "id",
+                                "parts"
+                              ]
                             }
                           ]
                         },
@@ -7753,11 +8301,16 @@
                           "description": "Signed read URLs requested with the upload."
                         }
                       },
-                      "required": ["file", "upload"],
+                      "required": [
+                        "file",
+                        "upload"
+                      ],
                       "description": "Successful response payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             },
@@ -7930,7 +8483,10 @@
         "operationId": "v2.management.uploads.get",
         "summary": "Get management upload status",
         "description": "Returns 202 while object processing continues, then returns the canonical file or canceled state. Follow Retry-After before polling again.",
-        "tags": ["management", "uploads"],
+        "tags": [
+          "management",
+          "uploads"
+        ],
         "parameters": [
           {
             "name": "projectRef",
@@ -7980,13 +8536,19 @@
                                   "description": "Processing completed and the canonical file is available."
                                 }
                               },
-                              "required": ["id", "status"]
+                              "required": [
+                                "id",
+                                "status"
+                              ]
                             },
                             "file": {
                               "$ref": "#/components/schemas/File"
                             }
                           },
-                          "required": ["upload", "file"]
+                          "required": [
+                            "upload",
+                            "file"
+                          ]
                         },
                         {
                           "type": "object",
@@ -8003,16 +8565,23 @@
                                   "description": "The upload was canceled before completion."
                                 }
                               },
-                              "required": ["id", "status"]
+                              "required": [
+                                "id",
+                                "status"
+                              ]
                             }
                           },
-                          "required": ["upload"]
+                          "required": [
+                            "upload"
+                          ]
                         }
                       ],
                       "description": "Successful response payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             },
@@ -8052,14 +8621,21 @@
                               "description": "The uploaded object is still being processed."
                             }
                           },
-                          "required": ["id", "status"]
+                          "required": [
+                            "id",
+                            "status"
+                          ]
                         }
                       },
-                      "required": ["upload"],
+                      "required": [
+                        "upload"
+                      ],
                       "description": "Asynchronous operation payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
@@ -8201,7 +8777,10 @@
         "operationId": "v2.management.uploads.cancel",
         "summary": "Cancel a management upload",
         "description": "Cancels an incomplete upload and aborts its multipart storage session when present. Repeating a successful cancellation is safe.",
-        "tags": ["management", "uploads"],
+        "tags": [
+          "management",
+          "uploads"
+        ],
         "parameters": [
           {
             "name": "projectRef",
@@ -8249,14 +8828,21 @@
                               "description": "The upload was canceled before completion."
                             }
                           },
-                          "required": ["id", "status"]
+                          "required": [
+                            "id",
+                            "status"
+                          ]
                         }
                       },
-                      "required": ["upload"],
+                      "required": [
+                        "upload"
+                      ],
                       "description": "Successful response payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             },
@@ -8427,7 +9013,10 @@
         "operationId": "v2.management.uploads.parts.create",
         "summary": "Create management upload part URLs",
         "description": "Creates or refreshes signed URLs for selected parts of an existing multipart upload.",
-        "tags": ["management", "uploads"],
+        "tags": [
+          "management",
+          "uploads"
+        ],
         "parameters": [
           {
             "name": "projectRef",
@@ -8472,7 +9061,9 @@
                     "description": "Unique multipart part numbers to create signed URLs for."
                   }
                 },
-                "required": ["partNumbers"],
+                "required": [
+                  "partNumbers"
+                ],
                 "additionalProperties": false
               }
             }
@@ -8509,16 +9100,24 @@
                                 "description": "Signed URL used to upload this part directly to storage."
                               }
                             },
-                            "required": ["partNumber", "signedUrl"]
+                            "required": [
+                              "partNumber",
+                              "signedUrl"
+                            ]
                           },
                           "description": "Requested upload parts."
                         }
                       },
-                      "required": ["uploadId", "parts"],
+                      "required": [
+                        "uploadId",
+                        "parts"
+                      ],
                       "description": "Successful response payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             },
@@ -8682,7 +9281,10 @@
         "operationId": "v2.management.uploads.multipart.complete",
         "summary": "Complete a management multipart upload",
         "description": "Submits uploaded part ETags for assembly and returns 202 while EdgeStore processes the resulting object.",
-        "tags": ["management", "uploads"],
+        "tags": [
+          "management",
+          "uploads"
+        ],
         "parameters": [
           {
             "name": "projectRef",
@@ -8733,12 +9335,17 @@
                           "description": "Opaque ETag returned by storage after uploading the part."
                         }
                       },
-                      "required": ["partNumber", "eTag"]
+                      "required": [
+                        "partNumber",
+                        "eTag"
+                      ]
                     },
                     "description": "Uploaded multipart parts to assemble, in any order."
                   }
                 },
-                "required": ["parts"],
+                "required": [
+                  "parts"
+                ],
                 "additionalProperties": false
               }
             }
@@ -8775,14 +9382,21 @@
                               "description": "The uploaded object is still being processed."
                             }
                           },
-                          "required": ["id", "status"]
+                          "required": [
+                            "id",
+                            "status"
+                          ]
                         }
                       },
-                      "required": ["upload"],
+                      "required": [
+                        "upload"
+                      ],
                       "description": "Asynchronous operation payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
@@ -8941,7 +9555,10 @@
         "operationId": "v2.management.projectKeys.list",
         "summary": "List project keys",
         "description": "Lists project-key records without their secret keys, including revoked keys.",
-        "tags": ["management", "project-keys"],
+        "tags": [
+          "management",
+          "project-keys"
+        ],
         "parameters": [
           {
             "name": "projectRef",
@@ -9025,11 +9642,15 @@
                           }
                         }
                       },
-                      "required": ["keys"],
+                      "required": [
+                        "keys"
+                      ],
                       "description": "Successful response payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             },
@@ -9169,7 +9790,10 @@
         "operationId": "v2.management.projectKeys.create",
         "summary": "Create a project key",
         "description": "Creates a project credential. Its secret key is returned only in this response and cannot be retrieved later.",
-        "tags": ["management", "project-keys"],
+        "tags": [
+          "management",
+          "project-keys"
+        ],
         "parameters": [
           {
             "name": "projectRef",
@@ -9197,7 +9821,9 @@
                     "description": "Human-readable project-key name."
                   }
                 },
-                "required": ["name"],
+                "required": [
+                  "name"
+                ],
                 "additionalProperties": false
               }
             }
@@ -9274,11 +9900,16 @@
                           "description": "Secret-key portion returned once; store it securely."
                         }
                       },
-                      "required": ["key", "secretKey"],
+                      "required": [
+                        "key",
+                        "secretKey"
+                      ],
                       "description": "Successful response payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             },
@@ -9420,7 +10051,10 @@
         "operationId": "v2.management.projectKeys.revoke",
         "summary": "Revoke a project key",
         "description": "Permanently revokes a project key so it can no longer authenticate runtime requests.",
-        "tags": ["management", "project-keys"],
+        "tags": [
+          "management",
+          "project-keys"
+        ],
         "parameters": [
           {
             "name": "projectRef",
@@ -9458,7 +10092,9 @@
                       "description": "Successful response payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             },
@@ -9622,7 +10258,10 @@
         "operationId": "v2.management.members.list",
         "summary": "List account members",
         "description": "Lists a page of members in a team account. Personal accounts do not have members.",
-        "tags": ["management", "members"],
+        "tags": [
+          "management",
+          "members"
+        ],
         "parameters": [
           {
             "name": "accountId",
@@ -9696,7 +10335,11 @@
                                 "description": "Member email address."
                               },
                               "role": {
-                                "enum": ["OWNER", "MEMBER", "VIEWER"],
+                                "enum": [
+                                  "OWNER",
+                                  "MEMBER",
+                                  "VIEWER"
+                                ],
                                 "type": "string",
                                 "description": "Member permissions within a team account."
                               },
@@ -9722,11 +10365,15 @@
                           }
                         }
                       },
-                      "required": ["members"],
+                      "required": [
+                        "members"
+                      ],
                       "description": "Successful response payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             },
@@ -9875,7 +10522,10 @@
         "operationId": "v2.management.members.update",
         "summary": "Update an account member",
         "description": "Changes a team member's role. The last owner cannot be demoted.",
-        "tags": ["management", "members"],
+        "tags": [
+          "management",
+          "members"
+        ],
         "parameters": [
           {
             "name": "accountId",
@@ -9908,12 +10558,18 @@
                 "type": "object",
                 "properties": {
                   "role": {
-                    "enum": ["OWNER", "MEMBER", "VIEWER"],
+                    "enum": [
+                      "OWNER",
+                      "MEMBER",
+                      "VIEWER"
+                    ],
                     "type": "string",
                     "description": "Member permissions within a team account."
                   }
                 },
-                "required": ["role"],
+                "required": [
+                  "role"
+                ],
                 "additionalProperties": false
               }
             }
@@ -9951,7 +10607,11 @@
                               "description": "Member email address."
                             },
                             "role": {
-                              "enum": ["OWNER", "MEMBER", "VIEWER"],
+                              "enum": [
+                                "OWNER",
+                                "MEMBER",
+                                "VIEWER"
+                              ],
                               "type": "string",
                               "description": "Member permissions within a team account."
                             },
@@ -9976,11 +10636,15 @@
                           "description": "A member of a team account."
                         }
                       },
-                      "required": ["member"],
+                      "required": [
+                        "member"
+                      ],
                       "description": "Successful response payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             },
@@ -10149,7 +10813,10 @@
         "operationId": "v2.management.members.remove",
         "summary": "Remove an account member",
         "description": "Removes a user from a team account. The last owner cannot be removed.",
-        "tags": ["management", "members"],
+        "tags": [
+          "management",
+          "members"
+        ],
         "parameters": [
           {
             "name": "accountId",
@@ -10187,7 +10854,9 @@
                       "description": "Successful response payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             },
@@ -10358,7 +11027,10 @@
         "operationId": "v2.management.invitations.list",
         "summary": "List account invitations",
         "description": "Lists a page of invitations for a team account, including active and terminal invitation states.",
-        "tags": ["management", "members"],
+        "tags": [
+          "management",
+          "members"
+        ],
         "parameters": [
           {
             "name": "accountId",
@@ -10428,7 +11100,11 @@
                                 "description": "Invited email address."
                               },
                               "role": {
-                                "enum": ["OWNER", "MEMBER", "VIEWER"],
+                                "enum": [
+                                  "OWNER",
+                                  "MEMBER",
+                                  "VIEWER"
+                                ],
                                 "type": "string",
                                 "description": "Member permissions within a team account."
                               },
@@ -10464,11 +11140,15 @@
                           }
                         }
                       },
-                      "required": ["invitations"],
+                      "required": [
+                        "invitations"
+                      ],
                       "description": "Successful response payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             },
@@ -10615,7 +11295,10 @@
         "operationId": "v2.management.invitations.create",
         "summary": "Create an account invitation",
         "description": "Creates or updates a pending team invitation and sends its invitation email.",
-        "tags": ["management", "members"],
+        "tags": [
+          "management",
+          "members"
+        ],
         "parameters": [
           {
             "name": "accountId",
@@ -10643,7 +11326,11 @@
                     "description": "Email address to invite."
                   },
                   "role": {
-                    "enum": ["OWNER", "MEMBER", "VIEWER"],
+                    "enum": [
+                      "OWNER",
+                      "MEMBER",
+                      "VIEWER"
+                    ],
                     "type": "string",
                     "description": "Member permissions within a team account."
                   },
@@ -10653,7 +11340,10 @@
                     "description": "Allow a billable seat beyond the included member limit."
                   }
                 },
-                "required": ["email", "role"],
+                "required": [
+                  "email",
+                  "role"
+                ],
                 "additionalProperties": false
               }
             }
@@ -10687,7 +11377,11 @@
                               "description": "Invited email address."
                             },
                             "role": {
-                              "enum": ["OWNER", "MEMBER", "VIEWER"],
+                              "enum": [
+                                "OWNER",
+                                "MEMBER",
+                                "VIEWER"
+                              ],
                               "type": "string",
                               "description": "Member permissions within a team account."
                             },
@@ -10722,11 +11416,15 @@
                           "description": "An invitation to join a team account."
                         }
                       },
-                      "required": ["invitation"],
+                      "required": [
+                        "invitation"
+                      ],
                       "description": "Successful response payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             },
@@ -10897,7 +11595,10 @@
         "operationId": "v2.management.invitations.revoke",
         "summary": "Revoke an account invitation",
         "description": "Cancels an active team invitation and releases any seat reserved for it.",
-        "tags": ["management", "members"],
+        "tags": [
+          "management",
+          "members"
+        ],
         "parameters": [
           {
             "name": "accountId",
@@ -10935,7 +11636,9 @@
                       "description": "Successful response payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             },
@@ -11106,7 +11809,10 @@
         "operationId": "v2.management.invitations.resend",
         "summary": "Resend an account invitation",
         "description": "Sends a new email for an active team invitation and returns its updated record.",
-        "tags": ["management", "members"],
+        "tags": [
+          "management",
+          "members"
+        ],
         "parameters": [
           {
             "name": "accountId",
@@ -11159,7 +11865,11 @@
                               "description": "Invited email address."
                             },
                             "role": {
-                              "enum": ["OWNER", "MEMBER", "VIEWER"],
+                              "enum": [
+                                "OWNER",
+                                "MEMBER",
+                                "VIEWER"
+                              ],
                               "type": "string",
                               "description": "Member permissions within a team account."
                             },
@@ -11194,11 +11904,15 @@
                           "description": "An invitation to join a team account."
                         }
                       },
-                      "required": ["invitation"],
+                      "required": [
+                        "invitation"
+                      ],
                       "description": "Successful response payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             },
@@ -11369,7 +12083,10 @@
         "operationId": "v2.management.tokens.listAccount",
         "summary": "List account management tokens",
         "description": "Lists a page of management tokens owned by an account without exposing token secrets.",
-        "tags": ["management", "tokens"],
+        "tags": [
+          "management",
+          "tokens"
+        ],
         "parameters": [
           {
             "name": "accountId",
@@ -11434,7 +12151,10 @@
                                 "description": "Human-readable token name."
                               },
                               "kind": {
-                                "enum": ["ACCOUNT", "USER"],
+                                "enum": [
+                                  "ACCOUNT",
+                                  "USER"
+                                ],
                                 "type": "string",
                                 "description": "Whether the token is owned by an account or a user."
                               },
@@ -11553,11 +12273,15 @@
                           }
                         }
                       },
-                      "required": ["tokens"],
+                      "required": [
+                        "tokens"
+                      ],
                       "description": "Successful response payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             },
@@ -11697,7 +12421,10 @@
         "operationId": "v2.management.tokens.createAccount",
         "summary": "Create an account management token",
         "description": "Creates an account-owned management token with preset or explicit scopes. The token secret is returned only in this response.",
-        "tags": ["management", "tokens"],
+        "tags": [
+          "management",
+          "tokens"
+        ],
         "parameters": [
           {
             "name": "accountId",
@@ -11777,7 +12504,9 @@
                     "description": "ISO 8601 expiration timestamp, or null for no expiration."
                   }
                 },
-                "required": ["name"],
+                "required": [
+                  "name"
+                ],
                 "additionalProperties": false
               }
             }
@@ -11806,7 +12535,10 @@
                               "description": "Human-readable token name."
                             },
                             "kind": {
-                              "enum": ["ACCOUNT", "USER"],
+                              "enum": [
+                                "ACCOUNT",
+                                "USER"
+                              ],
                               "type": "string",
                               "description": "Whether the token is owned by an account or a user."
                             },
@@ -11928,11 +12660,16 @@
                           "description": "Bearer token secret returned once; store it securely."
                         }
                       },
-                      "required": ["token", "secret"],
+                      "required": [
+                        "token",
+                        "secret"
+                      ],
                       "description": "Successful response payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             },
@@ -12074,7 +12811,10 @@
         "operationId": "v2.management.tokens.listUser",
         "summary": "List current user management tokens",
         "description": "Lists a page of management tokens owned by the current user without exposing token secrets.",
-        "tags": ["management", "tokens"],
+        "tags": [
+          "management",
+          "tokens"
+        ],
         "parameters": [
           {
             "name": "page",
@@ -12128,7 +12868,10 @@
                                 "description": "Human-readable token name."
                               },
                               "kind": {
-                                "enum": ["ACCOUNT", "USER"],
+                                "enum": [
+                                  "ACCOUNT",
+                                  "USER"
+                                ],
                                 "type": "string",
                                 "description": "Whether the token is owned by an account or a user."
                               },
@@ -12247,11 +12990,15 @@
                           }
                         }
                       },
-                      "required": ["tokens"],
+                      "required": [
+                        "tokens"
+                      ],
                       "description": "Successful response payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             },
@@ -12376,7 +13123,10 @@
         "operationId": "v2.management.tokens.createUser",
         "summary": "Create a current user management token",
         "description": "Creates a user-owned management token with preset or explicit scopes. The token secret is returned only in this response.",
-        "tags": ["management", "tokens"],
+        "tags": [
+          "management",
+          "tokens"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -12443,7 +13193,9 @@
                     "description": "ISO 8601 expiration timestamp, or null for no expiration."
                   }
                 },
-                "required": ["name"],
+                "required": [
+                  "name"
+                ],
                 "additionalProperties": false
               }
             }
@@ -12472,7 +13224,10 @@
                               "description": "Human-readable token name."
                             },
                             "kind": {
-                              "enum": ["ACCOUNT", "USER"],
+                              "enum": [
+                                "ACCOUNT",
+                                "USER"
+                              ],
                               "type": "string",
                               "description": "Whether the token is owned by an account or a user."
                             },
@@ -12594,11 +13349,16 @@
                           "description": "Bearer token secret returned once; store it securely."
                         }
                       },
-                      "required": ["token", "secret"],
+                      "required": [
+                        "token",
+                        "secret"
+                      ],
                       "description": "Successful response payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             },
@@ -12725,7 +13485,10 @@
         "operationId": "v2.management.tokens.revoke",
         "summary": "Revoke a management token",
         "description": "Revokes an account- or user-owned management token. Repeating the operation for the same visible token is safe.",
-        "tags": ["management", "tokens"],
+        "tags": [
+          "management",
+          "tokens"
+        ],
         "parameters": [
           {
             "name": "tokenId",
@@ -12752,7 +13515,9 @@
                       "description": "Successful response payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             },
@@ -12894,7 +13659,10 @@
         "operationId": "v2.runtime.accessToken.create",
         "summary": "Create a runtime access token",
         "description": "Creates an encrypted token that carries runtime context, resolved bucket paths, and optional access-control data.",
-        "tags": ["runtime", "access-tokens"],
+        "tags": [
+          "runtime",
+          "access-tokens"
+        ],
         "parameters": [
           {
             "name": "projectRef",
@@ -12959,7 +13727,10 @@
                                 "description": "Resolved value for the path field."
                               }
                             },
-                            "required": ["key", "value"]
+                            "required": [
+                              "key",
+                              "value"
+                            ]
                           },
                           "description": "Resolved path fields available to runtime operations."
                         },
@@ -12967,12 +13738,17 @@
                           "description": "Opaque application access-control data embedded in the token."
                         }
                       },
-                      "required": ["path"]
+                      "required": [
+                        "path"
+                      ]
                     },
                     "description": "Runtime bucket context keyed by bucket name."
                   }
                 },
-                "required": ["context", "buckets"]
+                "required": [
+                  "context",
+                  "buckets"
+                ]
               }
             }
           }
@@ -13011,18 +13787,26 @@
                               "description": "File origins to initialize for protected access, including preserved legacy links."
                             }
                           },
-                          "required": ["baseUrl", "initUrls"]
+                          "required": [
+                            "baseUrl",
+                            "initUrls"
+                          ]
                         },
                         "basePath": {
                           "type": "string",
                           "description": "Globally unique project base path."
                         }
                       },
-                      "required": ["token", "basePath"],
+                      "required": [
+                        "token",
+                        "basePath"
+                      ],
                       "description": "Successful response payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             },
@@ -13152,7 +13936,10 @@
         "operationId": "v2.runtime.projects.get",
         "summary": "Get a runtime project",
         "description": "Returns the authenticated project resolved by project ID or globally unique base path.",
-        "tags": ["runtime", "projects"],
+        "tags": [
+          "runtime",
+          "projects"
+        ],
         "parameters": [
           {
             "name": "projectRef",
@@ -13199,7 +13986,10 @@
                                   "description": "File origins to initialize for protected access, including preserved legacy links."
                                 }
                               },
-                              "required": ["baseUrl", "initUrls"]
+                              "required": [
+                                "baseUrl",
+                                "initUrls"
+                              ]
                             },
                             "id": {
                               "type": "string",
@@ -13244,11 +14034,15 @@
                           "description": "The project authenticated for runtime operations."
                         }
                       },
-                      "required": ["project"],
+                      "required": [
+                        "project"
+                      ],
                       "description": "Successful response payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             },
@@ -13378,7 +14172,10 @@
         "operationId": "v2.runtime.buckets.list",
         "summary": "List runtime buckets",
         "description": "Lists active buckets in the authenticated project, including visibility and current storage usage.",
-        "tags": ["runtime", "buckets"],
+        "tags": [
+          "runtime",
+          "buckets"
+        ],
         "parameters": [
           {
             "name": "projectRef",
@@ -13410,11 +14207,15 @@
                           }
                         }
                       },
-                      "required": ["buckets"],
+                      "required": [
+                        "buckets"
+                      ],
                       "description": "Successful response payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             },
@@ -13544,7 +14345,10 @@
         "operationId": "v2.runtime.buckets.get",
         "summary": "Get a runtime bucket",
         "description": "Returns one active bucket by name from the authenticated project.",
-        "tags": ["runtime", "buckets"],
+        "tags": [
+          "runtime",
+          "buckets"
+        ],
         "parameters": [
           {
             "name": "projectRef",
@@ -13585,11 +14389,15 @@
                           "$ref": "#/components/schemas/Bucket"
                         }
                       },
-                      "required": ["bucket"],
+                      "required": [
+                        "bucket"
+                      ],
                       "description": "Successful response payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             },
@@ -13726,7 +14534,10 @@
         "operationId": "v2.runtime.files.search",
         "summary": "Search runtime files",
         "description": "Searches files in a bucket using composable field filters and opaque cursor pagination.",
-        "tags": ["runtime", "files"],
+        "tags": [
+          "runtime",
+          "files"
+        ],
         "parameters": [
           {
             "name": "projectRef",
@@ -13821,7 +14632,9 @@
                                 "description": "Inclusive lower and upper bounds."
                               }
                             },
-                            "required": ["between"],
+                            "required": [
+                              "between"
+                            ],
                             "additionalProperties": false
                           }
                         ],
@@ -13891,7 +14704,9 @@
                                   "description": "Inclusive lower and upper bounds."
                                 }
                               },
-                              "required": ["between"],
+                              "required": [
+                                "between"
+                              ],
                               "additionalProperties": false
                             }
                           ],
@@ -13963,7 +14778,9 @@
                                   "description": "Inclusive lower and upper bounds."
                                 }
                               },
-                              "required": ["between"],
+                              "required": [
+                                "between"
+                              ],
                               "additionalProperties": false
                             }
                           ],
@@ -14036,7 +14853,9 @@
                                       "description": "Inclusive lower and upper bounds."
                                     }
                                   },
-                                  "required": ["between"],
+                                  "required": [
+                                    "between"
+                                  ],
                                   "additionalProperties": false
                                 }
                               ],
@@ -14106,7 +14925,9 @@
                                         "description": "Inclusive lower and upper bounds."
                                       }
                                     },
-                                    "required": ["between"],
+                                    "required": [
+                                      "between"
+                                    ],
                                     "additionalProperties": false
                                   }
                                 ],
@@ -14178,7 +14999,9 @@
                                         "description": "Inclusive lower and upper bounds."
                                       }
                                     },
-                                    "required": ["between"],
+                                    "required": [
+                                      "between"
+                                    ],
                                     "additionalProperties": false
                                   }
                                 ],
@@ -14251,7 +15074,9 @@
                                             "description": "Inclusive lower and upper bounds."
                                           }
                                         },
-                                        "required": ["between"],
+                                        "required": [
+                                          "between"
+                                        ],
                                         "additionalProperties": false
                                       }
                                     ],
@@ -14321,7 +15146,9 @@
                                               "description": "Inclusive lower and upper bounds."
                                             }
                                           },
-                                          "required": ["between"],
+                                          "required": [
+                                            "between"
+                                          ],
                                           "additionalProperties": false
                                         }
                                       ],
@@ -14393,7 +15220,9 @@
                                               "description": "Inclusive lower and upper bounds."
                                             }
                                           },
-                                          "required": ["between"],
+                                          "required": [
+                                            "between"
+                                          ],
                                           "additionalProperties": false
                                         }
                                       ],
@@ -14476,7 +15305,9 @@
                                             "description": "Inclusive lower and upper bounds."
                                           }
                                         },
-                                        "required": ["between"],
+                                        "required": [
+                                          "between"
+                                        ],
                                         "additionalProperties": false
                                       }
                                     ],
@@ -14546,7 +15377,9 @@
                                               "description": "Inclusive lower and upper bounds."
                                             }
                                           },
-                                          "required": ["between"],
+                                          "required": [
+                                            "between"
+                                          ],
                                           "additionalProperties": false
                                         }
                                       ],
@@ -14618,7 +15451,9 @@
                                               "description": "Inclusive lower and upper bounds."
                                             }
                                           },
-                                          "required": ["between"],
+                                          "required": [
+                                            "between"
+                                          ],
                                           "additionalProperties": false
                                         }
                                       ],
@@ -14705,7 +15540,9 @@
                                       "description": "Inclusive lower and upper bounds."
                                     }
                                   },
-                                  "required": ["between"],
+                                  "required": [
+                                    "between"
+                                  ],
                                   "additionalProperties": false
                                 }
                               ],
@@ -14775,7 +15612,9 @@
                                         "description": "Inclusive lower and upper bounds."
                                       }
                                     },
-                                    "required": ["between"],
+                                    "required": [
+                                      "between"
+                                    ],
                                     "additionalProperties": false
                                   }
                                 ],
@@ -14847,7 +15686,9 @@
                                         "description": "Inclusive lower and upper bounds."
                                       }
                                     },
-                                    "required": ["between"],
+                                    "required": [
+                                      "between"
+                                    ],
                                     "additionalProperties": false
                                   }
                                 ],
@@ -14920,7 +15761,9 @@
                                             "description": "Inclusive lower and upper bounds."
                                           }
                                         },
-                                        "required": ["between"],
+                                        "required": [
+                                          "between"
+                                        ],
                                         "additionalProperties": false
                                       }
                                     ],
@@ -14990,7 +15833,9 @@
                                               "description": "Inclusive lower and upper bounds."
                                             }
                                           },
-                                          "required": ["between"],
+                                          "required": [
+                                            "between"
+                                          ],
                                           "additionalProperties": false
                                         }
                                       ],
@@ -15062,7 +15907,9 @@
                                               "description": "Inclusive lower and upper bounds."
                                             }
                                           },
-                                          "required": ["between"],
+                                          "required": [
+                                            "between"
+                                          ],
                                           "additionalProperties": false
                                         }
                                       ],
@@ -15145,7 +15992,9 @@
                                             "description": "Inclusive lower and upper bounds."
                                           }
                                         },
-                                        "required": ["between"],
+                                        "required": [
+                                          "between"
+                                        ],
                                         "additionalProperties": false
                                       }
                                     ],
@@ -15215,7 +16064,9 @@
                                               "description": "Inclusive lower and upper bounds."
                                             }
                                           },
-                                          "required": ["between"],
+                                          "required": [
+                                            "between"
+                                          ],
                                           "additionalProperties": false
                                         }
                                       ],
@@ -15287,7 +16138,9 @@
                                               "description": "Inclusive lower and upper bounds."
                                             }
                                           },
-                                          "required": ["between"],
+                                          "required": [
+                                            "between"
+                                          ],
                                           "additionalProperties": false
                                         }
                                       ],
@@ -15381,14 +16234,23 @@
                               "description": "Whether another page is available."
                             }
                           },
-                          "required": ["limit", "nextCursor", "hasMore"]
+                          "required": [
+                            "limit",
+                            "nextCursor",
+                            "hasMore"
+                          ]
                         }
                       },
-                      "required": ["files", "pagination"],
+                      "required": [
+                        "files",
+                        "pagination"
+                      ],
                       "description": "Successful response payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             },
@@ -15518,7 +16380,10 @@
         "operationId": "v2.runtime.files.lookup",
         "summary": "Look up a runtime file",
         "description": "Resolves one file in the authenticated project by file ID, storage key, or canonical URL.",
-        "tags": ["runtime", "files"],
+        "tags": [
+          "runtime",
+          "files"
+        ],
         "parameters": [
           {
             "name": "projectRef",
@@ -15550,7 +16415,9 @@
                             "description": "Unique file ID."
                           }
                         },
-                        "required": ["id"]
+                        "required": [
+                          "id"
+                        ]
                       },
                       {
                         "type": "object",
@@ -15562,7 +16429,9 @@
                             "description": "File storage key."
                           }
                         },
-                        "required": ["key"]
+                        "required": [
+                          "key"
+                        ]
                       },
                       {
                         "type": "object",
@@ -15574,7 +16443,9 @@
                             "description": "Canonical file URL."
                           }
                         },
-                        "required": ["url"]
+                        "required": [
+                          "url"
+                        ]
                       }
                     ],
                     "description": "A file reference using exactly one supported identifier."
@@ -15587,7 +16458,9 @@
                     "description": "Optional bucket the resolved file must belong to."
                   }
                 },
-                "required": ["file"]
+                "required": [
+                  "file"
+                ]
               }
             }
           }
@@ -15607,11 +16480,15 @@
                           "$ref": "#/components/schemas/File"
                         }
                       },
-                      "required": ["file"],
+                      "required": [
+                        "file"
+                      ],
                       "description": "Successful response payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             },
@@ -15755,7 +16632,10 @@
         "operationId": "v2.runtime.files.generateSignedReadUrls",
         "summary": "Generate runtime signed read URLs",
         "description": "Generates expiring read URLs for protected files and optionally their thumbnails.",
-        "tags": ["runtime", "files"],
+        "tags": [
+          "runtime",
+          "files"
+        ],
         "parameters": [
           {
             "name": "projectRef",
@@ -15811,7 +16691,9 @@
                     "description": "Whether to also sign thumbnail URLs when available."
                   }
                 },
-                "required": ["urls"]
+                "required": [
+                  "urls"
+                ]
               }
             }
           }
@@ -15882,11 +16764,15 @@
                           }
                         }
                       },
-                      "required": ["signedUrls"],
+                      "required": [
+                        "signedUrls"
+                      ],
                       "description": "Successful response payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             },
@@ -16041,7 +16927,10 @@
         "operationId": "v2.runtime.files.confirm",
         "summary": "Confirm runtime files",
         "description": "Marks temporary files as permanent and returns an ordered result for every supplied file reference.",
-        "tags": ["runtime", "files"],
+        "tags": [
+          "runtime",
+          "files"
+        ],
         "parameters": [
           {
             "name": "projectRef",
@@ -16077,7 +16966,9 @@
                               "description": "Unique file ID."
                             }
                           },
-                          "required": ["id"]
+                          "required": [
+                            "id"
+                          ]
                         },
                         {
                           "type": "object",
@@ -16089,7 +16980,9 @@
                               "description": "File storage key."
                             }
                           },
-                          "required": ["key"]
+                          "required": [
+                            "key"
+                          ]
                         },
                         {
                           "type": "object",
@@ -16101,7 +16994,9 @@
                               "description": "Canonical file URL."
                             }
                           },
-                          "required": ["url"]
+                          "required": [
+                            "url"
+                          ]
                         }
                       ],
                       "description": "A file reference using exactly one supported identifier."
@@ -16116,7 +17011,9 @@
                     "description": "Optional bucket every processed file must belong to."
                   }
                 },
-                "required": ["files"]
+                "required": [
+                  "files"
+                ]
               }
             }
           }
@@ -16150,7 +17047,9 @@
                                             "description": "Unique file ID."
                                           }
                                         },
-                                        "required": ["id"]
+                                        "required": [
+                                          "id"
+                                        ]
                                       },
                                       {
                                         "type": "object",
@@ -16162,7 +17061,9 @@
                                             "description": "File storage key."
                                           }
                                         },
-                                        "required": ["key"]
+                                        "required": [
+                                          "key"
+                                        ]
                                       },
                                       {
                                         "type": "object",
@@ -16174,7 +17075,9 @@
                                             "description": "Canonical file URL."
                                           }
                                         },
-                                        "required": ["url"]
+                                        "required": [
+                                          "url"
+                                        ]
                                       }
                                     ],
                                     "description": "Input reference for this result."
@@ -16184,7 +17087,10 @@
                                     "description": "Whether this item succeeded."
                                   }
                                 },
-                                "required": ["fileRef", "success"]
+                                "required": [
+                                  "fileRef",
+                                  "success"
+                                ]
                               },
                               {
                                 "type": "object",
@@ -16200,7 +17106,9 @@
                                             "description": "Unique file ID."
                                           }
                                         },
-                                        "required": ["id"]
+                                        "required": [
+                                          "id"
+                                        ]
                                       },
                                       {
                                         "type": "object",
@@ -16212,7 +17120,9 @@
                                             "description": "File storage key."
                                           }
                                         },
-                                        "required": ["key"]
+                                        "required": [
+                                          "key"
+                                        ]
                                       },
                                       {
                                         "type": "object",
@@ -16224,7 +17134,9 @@
                                             "description": "Canonical file URL."
                                           }
                                         },
-                                        "required": ["url"]
+                                        "required": [
+                                          "url"
+                                        ]
                                       }
                                     ],
                                     "description": "Input reference for this result."
@@ -16251,11 +17163,18 @@
                                         "description": "Human-readable item error message."
                                       }
                                     },
-                                    "required": ["code", "message"],
+                                    "required": [
+                                      "code",
+                                      "message"
+                                    ],
                                     "description": "Error returned for this item."
                                   }
                                 },
-                                "required": ["fileRef", "success", "error"]
+                                "required": [
+                                  "fileRef",
+                                  "success",
+                                  "error"
+                                ]
                               }
                             ]
                           }
@@ -16273,11 +17192,17 @@
                           "description": "Number of failed items."
                         }
                       },
-                      "required": ["results", "successCount", "failureCount"],
+                      "required": [
+                        "results",
+                        "successCount",
+                        "failureCount"
+                      ],
                       "description": "Successful response payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             },
@@ -16422,7 +17347,10 @@
         "operationId": "v2.runtime.files.delete",
         "summary": "Delete runtime files",
         "description": "Soft-deletes multiple files and returns an ordered result for every supplied file reference.",
-        "tags": ["runtime", "files"],
+        "tags": [
+          "runtime",
+          "files"
+        ],
         "parameters": [
           {
             "name": "projectRef",
@@ -16458,7 +17386,9 @@
                               "description": "Unique file ID."
                             }
                           },
-                          "required": ["id"]
+                          "required": [
+                            "id"
+                          ]
                         },
                         {
                           "type": "object",
@@ -16470,7 +17400,9 @@
                               "description": "File storage key."
                             }
                           },
-                          "required": ["key"]
+                          "required": [
+                            "key"
+                          ]
                         },
                         {
                           "type": "object",
@@ -16482,7 +17414,9 @@
                               "description": "Canonical file URL."
                             }
                           },
-                          "required": ["url"]
+                          "required": [
+                            "url"
+                          ]
                         }
                       ],
                       "description": "A file reference using exactly one supported identifier."
@@ -16497,7 +17431,9 @@
                     "description": "Optional bucket every processed file must belong to."
                   }
                 },
-                "required": ["files"]
+                "required": [
+                  "files"
+                ]
               }
             }
           }
@@ -16531,7 +17467,9 @@
                                             "description": "Unique file ID."
                                           }
                                         },
-                                        "required": ["id"]
+                                        "required": [
+                                          "id"
+                                        ]
                                       },
                                       {
                                         "type": "object",
@@ -16543,7 +17481,9 @@
                                             "description": "File storage key."
                                           }
                                         },
-                                        "required": ["key"]
+                                        "required": [
+                                          "key"
+                                        ]
                                       },
                                       {
                                         "type": "object",
@@ -16555,7 +17495,9 @@
                                             "description": "Canonical file URL."
                                           }
                                         },
-                                        "required": ["url"]
+                                        "required": [
+                                          "url"
+                                        ]
                                       }
                                     ],
                                     "description": "Input reference for this result."
@@ -16565,7 +17507,10 @@
                                     "description": "Whether this item succeeded."
                                   }
                                 },
-                                "required": ["fileRef", "success"]
+                                "required": [
+                                  "fileRef",
+                                  "success"
+                                ]
                               },
                               {
                                 "type": "object",
@@ -16581,7 +17526,9 @@
                                             "description": "Unique file ID."
                                           }
                                         },
-                                        "required": ["id"]
+                                        "required": [
+                                          "id"
+                                        ]
                                       },
                                       {
                                         "type": "object",
@@ -16593,7 +17540,9 @@
                                             "description": "File storage key."
                                           }
                                         },
-                                        "required": ["key"]
+                                        "required": [
+                                          "key"
+                                        ]
                                       },
                                       {
                                         "type": "object",
@@ -16605,7 +17554,9 @@
                                             "description": "Canonical file URL."
                                           }
                                         },
-                                        "required": ["url"]
+                                        "required": [
+                                          "url"
+                                        ]
                                       }
                                     ],
                                     "description": "Input reference for this result."
@@ -16632,11 +17583,18 @@
                                         "description": "Human-readable item error message."
                                       }
                                     },
-                                    "required": ["code", "message"],
+                                    "required": [
+                                      "code",
+                                      "message"
+                                    ],
                                     "description": "Error returned for this item."
                                   }
                                 },
-                                "required": ["fileRef", "success", "error"]
+                                "required": [
+                                  "fileRef",
+                                  "success",
+                                  "error"
+                                ]
                               }
                             ]
                           }
@@ -16654,11 +17612,17 @@
                           "description": "Number of failed items."
                         }
                       },
-                      "required": ["results", "successCount", "failureCount"],
+                      "required": [
+                        "results",
+                        "successCount",
+                        "failureCount"
+                      ],
                       "description": "Successful response payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             },
@@ -16803,7 +17767,10 @@
         "operationId": "v2.runtime.files.restore",
         "summary": "Restore runtime files",
         "description": "Restores multiple soft-deleted files when the account plan permits restoration and returns one result per reference.",
-        "tags": ["runtime", "files"],
+        "tags": [
+          "runtime",
+          "files"
+        ],
         "parameters": [
           {
             "name": "projectRef",
@@ -16839,7 +17806,9 @@
                               "description": "Unique file ID."
                             }
                           },
-                          "required": ["id"]
+                          "required": [
+                            "id"
+                          ]
                         },
                         {
                           "type": "object",
@@ -16851,7 +17820,9 @@
                               "description": "File storage key."
                             }
                           },
-                          "required": ["key"]
+                          "required": [
+                            "key"
+                          ]
                         },
                         {
                           "type": "object",
@@ -16863,7 +17834,9 @@
                               "description": "Canonical file URL."
                             }
                           },
-                          "required": ["url"]
+                          "required": [
+                            "url"
+                          ]
                         }
                       ],
                       "description": "A file reference using exactly one supported identifier."
@@ -16878,7 +17851,9 @@
                     "description": "Optional bucket every processed file must belong to."
                   }
                 },
-                "required": ["files"]
+                "required": [
+                  "files"
+                ]
               }
             }
           }
@@ -16912,7 +17887,9 @@
                                             "description": "Unique file ID."
                                           }
                                         },
-                                        "required": ["id"]
+                                        "required": [
+                                          "id"
+                                        ]
                                       },
                                       {
                                         "type": "object",
@@ -16924,7 +17901,9 @@
                                             "description": "File storage key."
                                           }
                                         },
-                                        "required": ["key"]
+                                        "required": [
+                                          "key"
+                                        ]
                                       },
                                       {
                                         "type": "object",
@@ -16936,7 +17915,9 @@
                                             "description": "Canonical file URL."
                                           }
                                         },
-                                        "required": ["url"]
+                                        "required": [
+                                          "url"
+                                        ]
                                       }
                                     ],
                                     "description": "Input reference for this result."
@@ -16946,7 +17927,10 @@
                                     "description": "Whether this item succeeded."
                                   }
                                 },
-                                "required": ["fileRef", "success"]
+                                "required": [
+                                  "fileRef",
+                                  "success"
+                                ]
                               },
                               {
                                 "type": "object",
@@ -16962,7 +17946,9 @@
                                             "description": "Unique file ID."
                                           }
                                         },
-                                        "required": ["id"]
+                                        "required": [
+                                          "id"
+                                        ]
                                       },
                                       {
                                         "type": "object",
@@ -16974,7 +17960,9 @@
                                             "description": "File storage key."
                                           }
                                         },
-                                        "required": ["key"]
+                                        "required": [
+                                          "key"
+                                        ]
                                       },
                                       {
                                         "type": "object",
@@ -16986,7 +17974,9 @@
                                             "description": "Canonical file URL."
                                           }
                                         },
-                                        "required": ["url"]
+                                        "required": [
+                                          "url"
+                                        ]
                                       }
                                     ],
                                     "description": "Input reference for this result."
@@ -17013,11 +18003,18 @@
                                         "description": "Human-readable item error message."
                                       }
                                     },
-                                    "required": ["code", "message"],
+                                    "required": [
+                                      "code",
+                                      "message"
+                                    ],
                                     "description": "Error returned for this item."
                                   }
                                 },
-                                "required": ["fileRef", "success", "error"]
+                                "required": [
+                                  "fileRef",
+                                  "success",
+                                  "error"
+                                ]
                               }
                             ]
                           }
@@ -17035,11 +18032,17 @@
                           "description": "Number of failed items."
                         }
                       },
-                      "required": ["results", "successCount", "failureCount"],
+                      "required": [
+                        "results",
+                        "successCount",
+                        "failureCount"
+                      ],
                       "description": "Successful response payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             },
@@ -17190,7 +18193,10 @@
         "operationId": "v2.runtime.uploads.request",
         "summary": "Request a runtime upload",
         "description": "Creates a logical upload and returns signed storage URLs. The request can create a bucket, replace an existing file, or request multipart parts.",
-        "tags": ["runtime", "uploads"],
+        "tags": [
+          "runtime",
+          "uploads"
+        ],
         "parameters": [
           {
             "name": "projectRef",
@@ -17224,12 +18230,18 @@
                 "type": "object",
                 "properties": {
                   "bucketType": {
-                    "enum": ["file", "image"],
+                    "enum": [
+                      "file",
+                      "image"
+                    ],
                     "type": "string",
                     "description": "Type used if the target bucket must be created."
                   },
                   "visibility": {
-                    "enum": ["public", "protected"],
+                    "enum": [
+                      "public",
+                      "protected"
+                    ],
                     "type": "string",
                     "default": "protected",
                     "description": "Visibility used if the target bucket must be created."
@@ -17268,7 +18280,10 @@
                           "description": "Path segments separated by forward slashes."
                         }
                       },
-                      "required": ["key", "value"]
+                      "required": [
+                        "key",
+                        "value"
+                      ]
                     },
                     "default": [],
                     "description": "Ordered path fields used to construct the file URL."
@@ -17309,7 +18324,9 @@
                             "description": "Unique file ID."
                           }
                         },
-                        "required": ["id"]
+                        "required": [
+                          "id"
+                        ]
                       },
                       {
                         "type": "object",
@@ -17321,7 +18338,9 @@
                             "description": "File storage key."
                           }
                         },
-                        "required": ["key"]
+                        "required": [
+                          "key"
+                        ]
                       },
                       {
                         "type": "object",
@@ -17333,7 +18352,9 @@
                             "description": "Canonical file URL."
                           }
                         },
-                        "required": ["url"]
+                        "required": [
+                          "url"
+                        ]
                       }
                     ],
                     "description": "Existing file to atomically replace after upload processing."
@@ -17354,7 +18375,9 @@
                         "description": "Unique multipart part numbers to create signed URLs for."
                       }
                     },
-                    "required": ["partNumbers"],
+                    "required": [
+                      "partNumbers"
+                    ],
                     "additionalProperties": false,
                     "description": "Multipart upload configuration. Omit for a single upload."
                   },
@@ -17376,7 +18399,10 @@
                     "description": "Request a signed read URL together with the upload."
                   }
                 },
-                "required": ["bucketType", "sizeBytes"],
+                "required": [
+                  "bucketType",
+                  "sizeBytes"
+                ],
                 "additionalProperties": false
               }
             }
@@ -17472,7 +18498,10 @@
                               "description": "Whether the file requires confirmation."
                             },
                             "state": {
-                              "enum": ["requested", "replace_requested"],
+                              "enum": [
+                                "requested",
+                                "replace_requested"
+                              ],
                               "type": "string",
                               "description": "Initial file lifecycle state."
                             }
@@ -17511,7 +18540,11 @@
                                   "description": "Signed URL used to upload the object directly to storage."
                                 }
                               },
-                              "required": ["kind", "id", "signedUrl"]
+                              "required": [
+                                "kind",
+                                "id",
+                                "signedUrl"
+                              ]
                             },
                             {
                               "type": "object",
@@ -17539,12 +18572,19 @@
                                         "description": "Signed URL used to upload this part directly to storage."
                                       }
                                     },
-                                    "required": ["partNumber", "signedUrl"]
+                                    "required": [
+                                      "partNumber",
+                                      "signedUrl"
+                                    ]
                                   },
                                   "description": "Requested upload parts."
                                 }
                               },
-                              "required": ["kind", "id", "parts"]
+                              "required": [
+                                "kind",
+                                "id",
+                                "parts"
+                              ]
                             }
                           ]
                         },
@@ -17601,11 +18641,16 @@
                           "description": "Signed read URLs requested with the upload."
                         }
                       },
-                      "required": ["file", "upload"],
+                      "required": [
+                        "file",
+                        "upload"
+                      ],
                       "description": "Successful response payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             },
@@ -17770,7 +18815,10 @@
         "operationId": "v2.runtime.uploads.get",
         "summary": "Get runtime upload status",
         "description": "Returns 202 while object processing continues, then returns the canonical file or canceled state. Follow Retry-After before polling again.",
-        "tags": ["runtime", "uploads"],
+        "tags": [
+          "runtime",
+          "uploads"
+        ],
         "parameters": [
           {
             "name": "projectRef",
@@ -17820,13 +18868,19 @@
                                   "description": "Processing completed and the canonical file is available."
                                 }
                               },
-                              "required": ["id", "status"]
+                              "required": [
+                                "id",
+                                "status"
+                              ]
                             },
                             "file": {
                               "$ref": "#/components/schemas/File"
                             }
                           },
-                          "required": ["upload", "file"]
+                          "required": [
+                            "upload",
+                            "file"
+                          ]
                         },
                         {
                           "type": "object",
@@ -17843,16 +18897,23 @@
                                   "description": "The upload was canceled before completion."
                                 }
                               },
-                              "required": ["id", "status"]
+                              "required": [
+                                "id",
+                                "status"
+                              ]
                             }
                           },
-                          "required": ["upload"]
+                          "required": [
+                            "upload"
+                          ]
                         }
                       ],
                       "description": "Successful response payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             },
@@ -17892,14 +18953,21 @@
                               "description": "The uploaded object is still being processed."
                             }
                           },
-                          "required": ["id", "status"]
+                          "required": [
+                            "id",
+                            "status"
+                          ]
                         }
                       },
-                      "required": ["upload"],
+                      "required": [
+                        "upload"
+                      ],
                       "description": "Asynchronous operation payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
@@ -18029,7 +19097,10 @@
         "operationId": "v2.runtime.uploads.cancel",
         "summary": "Cancel a runtime upload",
         "description": "Cancels an incomplete upload and aborts its multipart storage session when present. Repeating a successful cancellation is safe.",
-        "tags": ["runtime", "uploads"],
+        "tags": [
+          "runtime",
+          "uploads"
+        ],
         "parameters": [
           {
             "name": "projectRef",
@@ -18077,14 +19148,21 @@
                               "description": "The upload was canceled before completion."
                             }
                           },
-                          "required": ["id", "status"]
+                          "required": [
+                            "id",
+                            "status"
+                          ]
                         }
                       },
-                      "required": ["upload"],
+                      "required": [
+                        "upload"
+                      ],
                       "description": "Successful response payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             },
@@ -18243,7 +19321,10 @@
         "operationId": "v2.runtime.uploads.parts.create",
         "summary": "Create runtime upload part URLs",
         "description": "Creates or refreshes signed URLs for selected parts of an existing multipart upload.",
-        "tags": ["runtime", "uploads"],
+        "tags": [
+          "runtime",
+          "uploads"
+        ],
         "parameters": [
           {
             "name": "projectRef",
@@ -18288,7 +19369,9 @@
                     "description": "Unique multipart part numbers to create signed URLs for."
                   }
                 },
-                "required": ["partNumbers"],
+                "required": [
+                  "partNumbers"
+                ],
                 "additionalProperties": false
               }
             }
@@ -18325,16 +19408,24 @@
                                 "description": "Signed URL used to upload this part directly to storage."
                               }
                             },
-                            "required": ["partNumber", "signedUrl"]
+                            "required": [
+                              "partNumber",
+                              "signedUrl"
+                            ]
                           },
                           "description": "Requested upload parts."
                         }
                       },
-                      "required": ["uploadId", "parts"],
+                      "required": [
+                        "uploadId",
+                        "parts"
+                      ],
                       "description": "Successful response payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             },
@@ -18486,7 +19577,10 @@
         "operationId": "v2.runtime.uploads.multipart.complete",
         "summary": "Complete a runtime multipart upload",
         "description": "Submits uploaded part ETags for assembly and returns 202 while EdgeStore processes the resulting object.",
-        "tags": ["runtime", "uploads"],
+        "tags": [
+          "runtime",
+          "uploads"
+        ],
         "parameters": [
           {
             "name": "projectRef",
@@ -18537,12 +19631,17 @@
                           "description": "Opaque ETag returned by storage after uploading the part."
                         }
                       },
-                      "required": ["partNumber", "eTag"]
+                      "required": [
+                        "partNumber",
+                        "eTag"
+                      ]
                     },
                     "description": "Uploaded multipart parts to assemble, in any order."
                   }
                 },
-                "required": ["parts"],
+                "required": [
+                  "parts"
+                ],
                 "additionalProperties": false
               }
             }
@@ -18579,14 +19678,21 @@
                               "description": "The uploaded object is still being processed."
                             }
                           },
-                          "required": ["id", "status"]
+                          "required": [
+                            "id",
+                            "status"
+                          ]
                         }
                       },
-                      "required": ["upload"],
+                      "required": [
+                        "upload"
+                      ],
                       "description": "Asynchronous operation payload."
                     }
                   },
-                  "required": ["data"]
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }

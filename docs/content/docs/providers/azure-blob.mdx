@@ -3,82 +3,157 @@ title: Azure Blob Storage
 description: Learn how to use your own Azure Blob Storage with EdgeStore.
 ---
 
-You can also use the EdgeStore package with your own Azure Blob Storage. You might want to do that in case you have strict company policies that require you to have all the data in your own Azure account.
+Use the Azure Blob provider when your files must live in your own Azure
+storage account. It supports direct browser uploads, automatic block uploads
+for large files, backend uploads, private signed reads, and stable key
+references. Your application owns the container's CORS, access, and lifecycle
+configuration.
 
 The provider creates short-lived, blob-scoped SAS URLs for browser uploads and
-private reads. Permanent file URLs never contain credentials. Advanced hosted
-features such as image processing still require separate infrastructure.
+private reads. The account key stays on the server, and permanent file URLs
+never contain credentials. Hosted features such as image processing are not
+available.
 
 ## Installation
-
-You need to install some peer dependencies to use this provider.
 
 ```package-install
 @azure/storage-blob
 ```
 
-Chain `.provider()` when defining your router, then pass the router to the adapter.
-
 ```ts
 import { initEdgeStore } from '@edgestore/server';
-import {
-  createEdgeStoreNextHandler,
-  type CreateContextOptions,
-} from '@edgestore/server/adapters/next/pages';
-// [!code ++]
 import { azureBlob } from '@edgestore/server/providers/azure-blob';
-import { z } from 'zod';
 
-// ...
+const es = initEdgeStore.create();
+export const router = es.router({
+  documents: es.fileBucket().accessControl('private'),
+}).provider(
+  azureBlob({
+    storageAccountName: 'myaccount',
+    containerName: 'edgestore',
+  }),
+);
 
-const es = initEdgeStore.context<Context>().create();
-const router = es.router({
-  publicFiles: es.fileBucket(),
-}).provider(azureBlob());
+export type EdgeStoreRouter = typeof router;
+```
 
-export default createEdgeStoreNextHandler<Context>({
-  router,
-  createContext,
+Pass `router` to your framework adapter as its `router` option. Set
+`ES_AZURE_ACCOUNT_KEY` on the server, and set `EDGE_STORE_JWT_SECRET` to a
+stable random secret, for example one generated with `openssl rand -base64 32`.
+All application instances must share it. Credentials are only checked when the
+provider is first used, so defining a router does not require them.
+
+| Option                       | Default / environment variable                                                           |
+| ---------------------------- | ---------------------------------------------------------------------------------------- |
+| `storageAccountName`         | `ES_AZURE_ACCOUNT_NAME`                                                                  |
+| `storageAccountKey`          | `ES_AZURE_ACCOUNT_KEY`                                                                   |
+| `containerName`              | `ES_AZURE_CONTAINER_NAME`                                                                |
+| `endpoint`                   | `ES_AZURE_ENDPOINT`, otherwise `https://<account>.blob.core.windows.net`                 |
+| `baseUrl`                    | `EDGE_STORE_BASE_URL`, otherwise `<endpoint>/<container>`                                |
+| `uploadUrlExpiresIn`         | 3600 seconds                                                                             |
+| `signedUrlExpiresIn`         | 3600 seconds                                                                             |
+| `multipart.thresholdBytes`   | 100 MiB                                                                                  |
+| `multipart.partSizeBytes`    | 16 MiB; minimum 5 MiB, maximum 4000 MiB                                                  |
+| `multipart.sessionExpiresIn` | 86400 seconds                                                                            |
+| `jwtSecret`                  | Multipart signing override; otherwise `EDGE_STORE_JWT_SECRET` or `EDGE_STORE_SECRET_KEY` |
+
+Signed URL lifetimes must be between 1 and 604800 seconds. Upload URLs grant
+only create/write permission on one blob, and read URLs grant only read
+permission.
+
+## Paths and object settings
+
+Blobs are stored as `<router bucket>/<path>`. The default path adds `_public/`
+for public buckets, then the router path values and the file name. Use `path`
+to change everything after the router bucket, which is always kept:
+
+```ts
+azureBlob({
+  path: ({ defaultPath }) => `tenants/${defaultPath}`,
+  objectOptions: {
+    cacheControl: 'private, max-age=3600',
+    contentDisposition: 'attachment',
+    metadata: { source: 'edgestore' },
+  },
 });
 ```
 
-## Options
+`objectOptions` can also be a function that receives the same arguments as
+`path`. The content type comes from the uploaded file. Browser and backend
+uploads apply the same settings.
+
+## Large files and cancellation
+
+Files above the threshold are uploaded as blocks, in parallel, with retries.
+The browser requests block upload URLs as it reaches each block, so
+`uploadUrlExpiresIn` only needs to cover one block transfer. A session can
+request URLs and complete until `multipart.sessionExpiresIn` passes. Before
+committing, the provider checks that every block exists with the expected size.
+
+Azure has no multipart session to cancel. Blocks that are never committed are
+discarded automatically after seven days, so canceled and failed uploads need
+no lifecycle rule.
+
+Backend uploads use the same paths, object settings, and block configuration,
+and send up to four blocks at a time.
+
+## Private files
+
+Use `accessControl('private')` for private buckets. Cookie-based access-control
+rules are not supported and fail at initialization. Create read URLs from the
+backend client:
 
 ```ts
-export type AzureBlobProviderOptions = {
-  /**
-   * The storage account name for Azure Blob Storage
-   * Can also be set via the `ES_AZURE_ACCOUNT_NAME` environment variable.
-   */
-  storageAccountName?: string;
-  /**
-   * Account key used for server-side requests and signing short-lived URLs.
-   * Can also be set via the `ES_AZURE_ACCOUNT_KEY` environment variable.
-   */
-  storageAccountKey?: string;
-  /**
-   * Azure Blob Storage container name
-   * Can also be set via the `ES_AZURE_CONTAINER_NAME` environment variable.
-   */
-  containerName?: string;
-  /**
-   * Optional base URL for Azurite or another compatible endpoint.
-   * Can also be set via the `ES_AZURE_BASE_URL` environment variable.
-   */
-  customBaseUrl?: string;
-  /**
-   * Lifetime of browser upload URLs in seconds.
-   * @default 3600
-   */
-  uploadUrlExpiresIn?: number;
-  /**
-   * Default lifetime of private read URLs in seconds.
-   * @default 3600
-   */
-  signedUrlExpiresIn?: number;
-};
+const { signedUrl } = await router.client.documents.createSignedUrl({
+  url: { key: 'documents/report.pdf' },
+  expiresIn: 300,
+});
 ```
 
-The account key stays on the server. Upload URLs receive only create/write
-permissions, while private read URLs receive only read permission and expire
-independently.
+Add `.autoSignedUrls({ expiresIn: 300 })` to a private router bucket to receive
+a read URL with each upload response.
+
+## Container configuration
+
+Keep the container private. Configure blob service CORS for your application
+origins so browsers can upload:
+
+```json
+[{
+  "AllowedOrigins": ["http://localhost:3000", "https://app.example.com"],
+  "AllowedMethods": ["PUT", "GET", "HEAD"],
+  "AllowedHeaders": ["*"],
+  "ExposedHeaders": ["*"],
+  "MaxAgeInSeconds": 3600
+}]
+```
+
+## Local development with Azurite
+
+[Azurite](https://learn.microsoft.com/azure/storage/common/storage-use-azurite)
+emulates Blob Storage locally:
+
+```bash
+docker run -p 10000:10000 mcr.microsoft.com/azure-storage/azurite azurite-blob --blobHost 0.0.0.0
+```
+
+```ts
+azureBlob({
+  storageAccountName: 'devstoreaccount1',
+  // Azurite's documented development account key.
+  storageAccountKey:
+    'Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==',
+  containerName: 'edgestore',
+  endpoint: 'http://127.0.0.1:10000/devstoreaccount1',
+});
+```
+
+## Limitations
+
+- `temporary` and `replaceTargetUrl` are rejected. Track application-owned files
+  in your database and delete old files after a successful replacement.
+- SAS URLs cannot limit upload size. The router's `maxSize` is checked against
+  the size the browser declares; block uploads are also checked when they are
+  committed, but single-request uploads are not.
+- Confirmation, listing, restore, and generated thumbnails are unsupported.
+- Only account-key authentication is supported.

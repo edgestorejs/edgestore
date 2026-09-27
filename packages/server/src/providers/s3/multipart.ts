@@ -115,12 +115,12 @@ export function createMultipartUploads({
       if (!result.UploadId || !input.Key || ContentLength === undefined) {
         throw new Error('S3 did not return a multipart upload ID.');
       }
-      const session = sessionFromPlan(
-        input.Key,
-        result.UploadId,
-        ContentLength,
+      const session = sessionFromPlan({
+        key: input.Key,
+        id: result.UploadId,
+        size: ContentLength,
         plan,
-      );
+      });
       try {
         return {
           key: session.key,

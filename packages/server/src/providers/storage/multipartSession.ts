@@ -86,13 +86,19 @@ export function createMultipartSessions({
 }
 
 /** Builds a session from an upload plan. */
-export function sessionFromPlan(
-  key: string,
-  id: string,
-  size: number,
-  plan: MultipartUploadPlan,
-  data?: Record<string, unknown>,
-): MultipartSession {
+export function sessionFromPlan({
+  key,
+  id,
+  size,
+  plan,
+  data,
+}: {
+  key: string;
+  id: string;
+  size: number;
+  plan: MultipartUploadPlan;
+  data?: Record<string, unknown>;
+}): MultipartSession {
   return {
     key,
     id,
