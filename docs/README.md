@@ -9,7 +9,7 @@ until the first RC is published, then switch to `@rc` as described in
 `content/v0` and `public/v0/r` preserve the v0 docs and component registry from
 main at `4e7669ef`. They are available at `/v0/docs` and `/v0/r`, with version-local
 links and v0 package pins. Historical examples do not run Twoslash against v1;
-the archive omits the v1 AI assistant and search.
+the archive omits the v1 AI assistant and searches its own v0 collection.
 
 ## Hosted skill
 

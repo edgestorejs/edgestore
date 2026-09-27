@@ -9,7 +9,6 @@ export default function Layout({ children }: { children: ReactNode }) {
   return (
     <DocsLayout
       tree={source.pageTree}
-      searchToggle={{ enabled: false }}
       {...baseOptions}
       links={[
         {
