@@ -231,6 +231,26 @@ describe('multipartUpload', () => {
     expect(calls('abort-multipart-upload')).toEqual([session]);
   });
 
+  it('retries part URL requests after transient API failures', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    let attempts = 0;
+    routeFetch({
+      'request-upload-parts': (body) =>
+        attempts++ === 0
+          ? jsonResponse({ code: 'SERVER_ERROR', message: 'busy' }, 503)
+          : jsonResponse({ parts: partUrls(body.parts) }),
+      'complete-multipart-upload': ok,
+    });
+
+    const upload = start({ totalParts: 2 });
+    await answerParts();
+    await vi.advanceTimersByTimeAsync(1000);
+    await answerParts();
+    await upload;
+
+    expect(attempts).toBe(2);
+  });
+
   it('stops active and queued parts when canceled', async () => {
     const calls = routeFetch({
       'request-upload-parts': (body) =>

@@ -8,7 +8,7 @@ export class RetryableUploadError extends EdgeStoreClientError {}
 export class RejectedUploadUrlError extends EdgeStoreClientError {}
 
 /** Timeouts, throttling, and server or proxy errors other than 501 Not Implemented. */
-function isRetryableStatus(status: number) {
+export function isRetryableStatus(status: number) {
   return status === 408 || status === 429 || (status >= 500 && status !== 501);
 }
 

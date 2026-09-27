@@ -6,6 +6,7 @@ import EdgeStoreClientError from './libs/errors/EdgeStoreClientError';
 import { handleError } from './libs/errors/handleError';
 import { UploadAbortedError } from './libs/errors/uploadAbortedError';
 import {
+  isRetryableStatus,
   putBlob,
   RejectedUploadUrlError,
   RetryableUploadError,
@@ -150,6 +151,7 @@ function createPartUrls({
       `${apiPath}/request-upload-parts`,
       { ...session, parts: partNumbers },
       signal,
+      { retryTransientErrors: true },
     )
       .then((res) => res.json() as Promise<SharedRequestUploadPartsRes>)
       .then(
@@ -239,7 +241,16 @@ async function abortSession(apiPath: string, session: MultipartSession) {
   }
 }
 
-async function postJson(url: string, body: unknown, signal: AbortSignal) {
+/**
+ * POSTs to the EdgeStore API. With `retryTransientErrors`, throttling and
+ * server errors become `RetryableUploadError`s for the part retry loop.
+ */
+async function postJson(
+  url: string,
+  body: unknown,
+  signal: AbortSignal,
+  { retryTransientErrors = false } = {},
+) {
   let res: Response;
   try {
     res = await fetch(url, {
@@ -254,6 +265,9 @@ async function postJson(url: string, body: unknown, signal: AbortSignal) {
     throw new RetryableUploadError(
       error instanceof Error ? error.message : 'Network request failed',
     );
+  }
+  if (!res.ok && retryTransientErrors && isRetryableStatus(res.status)) {
+    throw new RetryableUploadError(`Request failed (HTTP ${res.status})`);
   }
   if (!res.ok) await handleError(res);
   return res;
