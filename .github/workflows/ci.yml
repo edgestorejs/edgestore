@@ -62,6 +62,20 @@ jobs:
       - name: Runtime tests
         run: pnpm test
 
+      - name: Agent documentation contracts
+        run: pnpm --filter docs test:agents
+
+      - name: Agent evaluation policy contracts (no agent or cloud runs)
+        run: pnpm eval:agents:test
+
+      - name: Package agent references
+        run: |
+          pnpm agent-docs:test
+          pnpm agent-docs:check
+          pnpm agent-docs:pack-check
+          pnpm agent-assets:check
+          pnpm agent-assets:pack-check
+
       - name: Type tests
         run: pnpm test:types
 
@@ -96,6 +110,10 @@ jobs:
 
       - name: Build CLI
         run: pnpm --filter @edgestore/cli build
+
+      - name: Validate zsh completion
+        if: runner.os == 'macOS'
+        run: pnpm --filter @edgestore/cli exec vitest run src/utility.test.ts
 
       - name: Load native credential store module
         run: pnpm --filter @edgestore/cli exec node -e "import('@napi-rs/keyring')"

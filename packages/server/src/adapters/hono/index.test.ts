@@ -10,7 +10,6 @@ import {
   extractCookieValue,
   requestUploadBody,
   setupAdapterTestEnv,
-  stubProxyFetch,
   testCookieConfig,
   testCtx,
 } from '../../test-utils/adapterConformance.test.utils';
@@ -30,7 +29,7 @@ describe('Hono adapter conformance', () => {
     const provider = createConformanceProvider();
     const router = createConformanceRouter();
     const handler = createEdgeStoreHonoHandler({
-      edgestore: { provider, router },
+      router: router.provider(provider),
       cookieConfig: testCookieConfig,
       createContext,
     });
@@ -111,29 +110,6 @@ describe('Hono adapter conformance', () => {
       key: 'uploads/file.txt',
       parts: completeMultipartUploadBody.parts,
     });
-  });
-
-  it('/proxy-file forwards request cookies and preserves content type', async () => {
-    const fetchMock = stubProxyFetch();
-    const { app } = createApp();
-
-    const res = await app.request(
-      `${baseUrl}/proxy-file?url=https://target.example/file`,
-      {
-        headers: {
-          cookie: 'session=abc; theme=dark',
-        },
-      },
-    );
-
-    expect(fetchMock).toHaveBeenCalledWith('https://target.example/file', {
-      headers: {
-        cookie: 'session=abc; theme=dark',
-      },
-    });
-    expect(res.status).toBe(202);
-    expect(res.headers.get('content-type')).toBe('text/custom');
-    await expect(res.text()).resolves.toBe('proxied body');
   });
 
   it('createContext failure maps to CREATE_CONTEXT_ERROR status/body', async () => {

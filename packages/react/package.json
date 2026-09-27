@@ -1,13 +1,13 @@
 {
   "name": "@edgestore/react",
-  "version": "1.0.0-next.1",
+  "version": "1.0.0-next.5",
   "description": "Upload files with ease from React/Next.js",
   "homepage": "https://edgestore.dev",
   "license": "MIT",
   "sideEffects": false,
   "type": "module",
   "engines": {
-    "node": ">=24"
+    "node": ">=22.22.0"
   },
   "repository": {
     "type": "git",
@@ -32,7 +32,9 @@
     "edge-store"
   ],
   "scripts": {
-    "build": "rollup --config rollup.config.ts --configPlugin rollup-plugin-swc3",
+    "build": "pnpm agent-docs:build && rollup --config rollup.config.ts --configPlugin rollup-plugin-swc3",
+    "agent-docs:build": "node --import tsx ../../scripts/agentDocs/build.ts react",
+    "prepack": "pnpm agent-docs:build",
     "dev": "pnpm build --watch",
     "codegen:entrypoints": "tsx entrypoints.script.ts",
     "test": "vitest run --config vitest.config.ts",
@@ -67,6 +69,7 @@
     "src",
     "README.md",
     "LICENSE",
+    "agent-docs",
     "package.json",
     "errors",
     "shared",
@@ -75,7 +78,7 @@
     "!**/__tests__"
   ],
   "dependencies": {
-    "@edgestore/shared": "1.0.0-next.1"
+    "@edgestore/shared": "1.0.0-next.5"
   },
   "peerDependencies": {
     "react": ">=16.8.0",

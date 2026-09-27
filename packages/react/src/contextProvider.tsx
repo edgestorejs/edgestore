@@ -31,13 +31,6 @@ export function createEdgeStoreProvider<TRouter extends AnyRouter>(opts?: {
    * @default 5
    */
   maxConcurrentUploads?: number;
-  /**
-   * Accessing EdgeStore protected files in development mode requires a proxy.
-   * You might want to disable this for other providers if you are overwriting the path.
-   *
-   * @default false
-   */
-  disableDevProxy?: boolean;
 }) {
   const EdgeStoreContext = React.createContext<
     EdgeStoreContextValue<TRouter> | undefined
@@ -62,7 +55,6 @@ export function createEdgeStoreProvider<TRouter extends AnyRouter>(opts?: {
       context: EdgeStoreContext,
       basePath,
       maxConcurrentUploads: opts?.maxConcurrentUploads,
-      disableDevProxy: opts?.disableDevProxy,
     });
   };
 
@@ -111,13 +103,11 @@ function EdgeStoreProviderInner<TRouter extends AnyRouter>({
   context,
   basePath,
   maxConcurrentUploads,
-  disableDevProxy,
 }: {
   children: React.ReactNode;
   context: React.Context<EdgeStoreContextValue<TRouter> | undefined>;
   basePath?: string;
   maxConcurrentUploads?: number;
-  disableDevProxy?: boolean;
 }) {
   const apiPath = basePath ? `${basePath}` : '/api/edgestore';
   const [state, setState] = React.useState<EdgeStoreProviderState>({
@@ -153,15 +143,23 @@ function EdgeStoreProviderInner<TRouter extends AnyRouter>({
         const json = (await res.json()) as Omit<SharedInitRes, 'newCookies'>;
 
         if (json.clientInit) {
-          const innerRes = await fetch(
-            joinUrl(json.baseUrl, json.clientInit.path),
-            {
-              method: 'GET',
-              credentials: 'include',
-              headers: json.clientInit.headers,
-            },
+          const { clientInit } = json;
+          const urls = clientInit.urls ?? [
+            joinUrl(json.baseUrl, clientInit.path),
+          ];
+          if (urls.length === 0) {
+            throw new EdgeStoreClientError('Missing file initialization URL.');
+          }
+          const responses = await Promise.all(
+            [...new Set(urls)].map((url) =>
+              fetch(url, {
+                method: 'GET',
+                credentials: 'include',
+                headers: clientInit.headers,
+              }),
+            ),
           );
-          if (innerRes.ok) {
+          if (responses.every((response) => response.ok)) {
             // update state
             setState({
               loading: false,
@@ -213,7 +211,6 @@ function EdgeStoreProviderInner<TRouter extends AnyRouter>({
             apiPath,
             uploadingCountRef,
             maxConcurrentUploads,
-            disableDevProxy,
           }),
           reset,
           state,

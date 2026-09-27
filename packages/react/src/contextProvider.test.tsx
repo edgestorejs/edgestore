@@ -169,6 +169,96 @@ describe('createEdgeStoreProvider initialization', () => {
     });
   });
 
+  it('initializes both file aliases before reporting ready', async () => {
+    const urls = [
+      'https://project.content.test/_init',
+      'https://files.example.com/_init',
+    ];
+    const { calls } = createFetchMock([
+      jsonResponse({
+        baseUrl: 'https://project.content.test',
+        clientInit: {
+          path: '/_init',
+          urls,
+          headers: { 'x-edgestore-token': 'token' },
+        },
+      }),
+      jsonResponse({}),
+      jsonResponse({}),
+    ]);
+    const { EdgeStoreProvider, useEdgeStore } = createEdgeStoreProvider<any>();
+    let state: unknown;
+    function Consumer() {
+      state = useEdgeStore().state;
+      return null;
+    }
+    await act(async () => {
+      root.render(
+        <EdgeStoreProvider>
+          <Consumer />
+        </EdgeStoreProvider>,
+      );
+    });
+    await waitFor(() =>
+      expect(state).toEqual({
+        loading: false,
+        initialized: true,
+        error: false,
+      }),
+    );
+    expect(calls.map((call) => call.url)).toEqual([
+      '/api/edgestore/init',
+      ...urls,
+    ]);
+    for (const call of calls.slice(1))
+      expect(call.init).toMatchObject({
+        credentials: 'include',
+        headers: { 'x-edgestore-token': 'token' },
+      });
+  });
+
+  it('does not report ready when an alias fails during reset', async () => {
+    createFetchMock([
+      jsonResponse({ baseUrl: 'https://files.example.com' }),
+      jsonResponse({
+        baseUrl: 'https://project.content.test',
+        clientInit: {
+          path: '/_init',
+          urls: [
+            'https://project.content.test/_init',
+            'https://files.example.com/_init',
+          ],
+        },
+      }),
+      jsonResponse({}),
+      jsonResponse({}, 503),
+    ]);
+    const { EdgeStoreProvider, useEdgeStore } = createEdgeStoreProvider<any>();
+    let current: ReturnType<typeof useEdgeStore>;
+    function Consumer() {
+      current = useEdgeStore();
+      return null;
+    }
+    await act(async () => {
+      root.render(
+        <EdgeStoreProvider>
+          <Consumer />
+        </EdgeStoreProvider>,
+      );
+    });
+    await waitFor(() => expect(current.state.initialized).toBe(true));
+    await act(async () => {
+      await expect(current.reset()).rejects.toThrow(
+        "Couldn't initialize EdgeStore.",
+      );
+    });
+    expect(current!.state).toEqual({
+      loading: false,
+      initialized: false,
+      error: true,
+    });
+  });
+
   it('reset reruns initialization', async () => {
     const { calls } = createFetchMock([
       jsonResponse({
