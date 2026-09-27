@@ -73,13 +73,6 @@ describe('getCookieConfig', () => {
           maxAge: 30 * 24 * 60 * 60,
         },
       },
-      token: {
-        name: 'edgestore-token',
-        options: {
-          path: '/',
-          maxAge: 30 * 24 * 60 * 60,
-        },
-      },
     });
   });
 
@@ -95,13 +88,6 @@ describe('getCookieConfig', () => {
             httpOnly: undefined,
           },
         },
-        token: {
-          name: 'custom-token',
-          options: {
-            path: '/app',
-            maxAge: 60,
-          },
-        },
       }),
     ).toEqual({
       ctx: {
@@ -112,13 +98,6 @@ describe('getCookieConfig', () => {
           domain: 'example.com',
           sameSite: 'lax',
           secure: true,
-        },
-      },
-      token: {
-        name: 'custom-token',
-        options: {
-          path: '/app',
-          maxAge: 60,
         },
       },
     });
@@ -234,7 +213,6 @@ describe('init', () => {
     const provider = createProvider({
       name: 'custom-provider',
       init: vi.fn(() => ({
-        token: 'provider-token',
         baseUrl: 'https://discovered.example.test',
         clientInit: {
           path: '/_init',
@@ -270,9 +248,8 @@ describe('init', () => {
         headers: { 'x-provider-token': 'provider-token' },
       },
     });
-    expect(
-      res.newCookies.some((value) => value.startsWith('edgestore-token=')),
-    ).toBe(true);
+    // The token reaches the file origin only through clientInit headers.
+    expect(res.newCookies).toEqual([expect.stringMatching(/^edgestore-ctx=/)]);
   });
 
   it('keeps running init for custom providers', async () => {

@@ -127,7 +127,6 @@ describe('edgestore provider', () => {
       }),
     ).resolves.toEqual({
       baseUrl: 'https://files.edgestore.dev',
-      token: 'token',
       clientInit: {
         path: '/_init',
         headers: {
