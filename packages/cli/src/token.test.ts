@@ -1,4 +1,4 @@
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -51,7 +51,83 @@ describe('token', () => {
 
     expect(exitCode).toBe(2);
     expect(fixture.createAccountToken).not.toHaveBeenCalled();
-    expect(fixture.stderr()).toContain('--copy or --output');
+    expect(fixture.stderr()).toContain('--output');
+  });
+
+  it.each([{ mode: ['--json'] }, { mode: ['--json', '--copy'] }, { mode: [] }])(
+    'requires a protected automated destination (%j)',
+    async ({ mode }) => {
+      fixture.runtime.io.inputIsTty = false;
+      const exitCode = await runCli(
+        [...mode, 'token', 'create', '--name', 'eval', '--preset', 'read-only'],
+        fixture.runtime,
+        '0.0.0',
+      );
+      expect(exitCode).toBe(2);
+      expect(fixture.createAccountToken).not.toHaveBeenCalled();
+      expect(fixture.stdout()).toBe('');
+    },
+  );
+
+  it('delivers a JSON-created token without serializing its secret', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-token-'),
+    );
+    fixture.runtime.cwd = temporaryDirectory;
+    const exitCode = await runCli(
+      [
+        '--json',
+        'token',
+        'create',
+        '--name',
+        'eval',
+        '--preset',
+        'read-only',
+        '--output',
+        '.env.local',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+    expect(exitCode).toBe(0);
+    expect(JSON.parse(fixture.stdout())).toEqual({
+      token: accountToken,
+      delivery: [expect.stringContaining('Saved to')],
+    });
+    expect(fixture.stdout() + fixture.stderr()).not.toContain('mgmt_created');
+    expect(
+      await readFile(path.join(temporaryDirectory, '.env.local'), 'utf8'),
+    ).toContain('EDGESTORE_TOKEN=mgmt_created');
+    expect(
+      (await stat(path.join(temporaryDirectory, '.env.local'))).mode & 0o777,
+    ).toBe(0o600);
+    expect(
+      await readFile(path.join(temporaryDirectory, '.gitignore'), 'utf8'),
+    ).toContain('/.env.local');
+  });
+
+  it('rejects an escaping token destination before creating a token', async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(tmpdir(), 'edgestore-cli-token-'),
+    );
+    fixture.runtime.cwd = temporaryDirectory;
+    const exitCode = await runCli(
+      [
+        '--json',
+        'token',
+        'create',
+        '--name',
+        'eval',
+        '--preset',
+        'read-only',
+        '--output',
+        '../escaped.env',
+      ],
+      fixture.runtime,
+      '0.0.0',
+    );
+    expect(exitCode).toBe(2);
+    expect(fixture.createAccountToken).not.toHaveBeenCalled();
   });
 
   it('preflights token output before creating the token', async () => {
@@ -117,6 +193,7 @@ describe('token', () => {
 
     expect(exitCode).toBe(2);
     const error = JSON.parse(fixture.stderr()).error;
+    expect(fixture.stdout() + fixture.stderr()).not.toContain('mgmt_created');
     expect(error.details.rollback).toMatchObject({
       status: 'failed',
       credentialId: accountToken.id,

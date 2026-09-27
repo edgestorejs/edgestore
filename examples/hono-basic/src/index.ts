@@ -1,6 +1,5 @@
-import { createEdgeStore, initEdgeStore } from '@edgestore/server';
+import { initEdgeStore } from '@edgestore/server';
 import { createEdgeStoreHonoHandler } from '@edgestore/server/adapters/hono';
-import { edgestore } from '@edgestore/server/providers/edgestore';
 import { serve } from '@hono/node-server';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
@@ -8,6 +7,7 @@ import { cors } from 'hono/cors';
 // --- HONO CONFIG ---
 
 const PORT = process.env.PORT ?? 3001;
+const frontendOrigin = process.env.FRONTEND_ORIGIN ?? 'http://localhost:5173';
 const app = new Hono();
 
 /**
@@ -15,10 +15,9 @@ const app = new Hono();
  * To avoid CORS issues, we should use the cors middleware.
  */
 app.use(
-  '*',
+  '/edgestore/*',
   cors({
-    // Change this to your frontend origin for better security
-    origin: (origin) => origin,
+    origin: frontendOrigin,
     credentials: true,
   }),
 );
@@ -33,11 +32,7 @@ const router = es.router({
 
 export type EdgeStoreRouter = typeof router;
 
-const configuredEdgeStore = createEdgeStore({
-  router,
-  provider: edgestore(),
-});
-const handler = createEdgeStoreHonoHandler({ edgestore: configuredEdgeStore });
+const handler = createEdgeStoreHonoHandler({ router });
 
 // --- HONO ROUTES ---
 

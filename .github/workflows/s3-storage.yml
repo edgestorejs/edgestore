@@ -1,0 +1,99 @@
+name: S3 storage
+
+# Runs the S3 provider against real S3-compatible storage. MinIO no longer
+# publishes binaries or images, so a pinned release is built from source and
+# cached.
+on:
+  pull_request:
+    paths:
+      - .github/workflows/s3-storage.yml
+      - packages/sdk/src/**
+      - packages/server/src/**
+      - packages/shared/src/**
+      - pnpm-lock.yaml
+  push:
+    branches:
+      - main
+      - next
+    paths:
+      - .github/workflows/s3-storage.yml
+      - packages/sdk/src/**
+      - packages/server/src/**
+      - packages/shared/src/**
+      - pnpm-lock.yaml
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  CI: true
+  TURBO_TELEMETRY_DISABLED: 1
+
+jobs:
+  s3-storage:
+    name: S3 storage tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      MINIO_VERSION: RELEASE.2025-04-22T22-12-26Z
+      MINIO_GO_VERSION: '1.24.2'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build server dependencies
+        run: pnpm turbo run build --filter=@edgestore/server^...
+
+      - name: Cache MinIO binary
+        id: minio-cache
+        uses: actions/cache@v5
+        with:
+          path: ${{ runner.temp }}/minio-bin
+          key: minio-${{ runner.os }}-${{ runner.arch }}-${{ env.MINIO_VERSION }}-go${{ env.MINIO_GO_VERSION }}
+
+      - name: Setup Go
+        if: steps.minio-cache.outputs.cache-hit != 'true'
+        uses: actions/setup-go@v6
+        with:
+          go-version: ${{ env.MINIO_GO_VERSION }}
+          cache: false
+
+      - name: Build MinIO
+        if: steps.minio-cache.outputs.cache-hit != 'true'
+        run: GOBIN="$RUNNER_TEMP/minio-bin" go install "github.com/minio/minio@$MINIO_VERSION"
+
+      - name: Start MinIO
+        run: |
+          MINIO_ROOT_USER=edgestore-test MINIO_ROOT_PASSWORD=edgestore-test-password \
+            "$RUNNER_TEMP/minio-bin/minio" server "$RUNNER_TEMP/minio-data" \
+            --address 127.0.0.1:19000 > "$RUNNER_TEMP/minio.log" 2>&1 &
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:19000/minio/health/live; then exit 0; fi
+            sleep 1
+          done
+          cat "$RUNNER_TEMP/minio.log"
+          exit 1
+
+      - name: S3 storage tests
+        env:
+          ES_S3_SMOKE_ENDPOINT: http://127.0.0.1:19000
+        run: pnpm --filter @edgestore/server test:smoke src/providers/s3/s3.smoke.test.ts

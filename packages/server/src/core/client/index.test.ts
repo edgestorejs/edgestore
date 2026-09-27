@@ -1,6 +1,5 @@
 import { EdgeStoreFileMutationError as SdkFileMutationError } from '@edgestore/sdk';
 import {
-  initEdgeStore,
   type BackendFileMutationOperation,
   type BackendGetFileOperation,
   type BackendGetSignedUrlsOperation,
@@ -10,8 +9,8 @@ import {
 } from '@edgestore/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
-import { createEdgeStore } from '../index';
 import { defineProvider } from '../provider';
+import { initEdgeStore } from '../router';
 import { EdgeStoreFileMutationError } from './index';
 
 const backend = {
@@ -41,6 +40,7 @@ const provider = defineProvider({
     multipart: {
       requestParts: vi.fn(),
       complete: vi.fn(),
+      abort: vi.fn(),
     },
     upload: backend.upload,
   },
@@ -99,15 +99,11 @@ function createRouter() {
   });
 }
 
-function createClient(config: { baseUrl?: string } = {}) {
-  return createEdgeStore({
-    router: createRouter(),
-    provider,
-    ...config,
-  }).client;
+function createClient() {
+  return createRouter().provider(provider).client;
 }
 
-describe('createEdgeStore', () => {
+describe('router backend client', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     fetchMock.mockResolvedValue({
@@ -132,7 +128,7 @@ describe('createEdgeStore', () => {
     vi.unstubAllEnvs();
   });
 
-  it('eagerly creates an inspectable client with stable bucket objects', async () => {
+  it('creates an inspectable client with stable bucket objects', async () => {
     const client = createClient();
 
     expect(Object.keys(client)).toEqual(['documents', 'publicFiles']);
@@ -167,10 +163,7 @@ describe('createEdgeStore', () => {
         get: backend.getFile,
       },
     });
-    const client = createEdgeStore({
-      router: createRouter(),
-      provider: getOnlyProvider,
-    }).client;
+    const client = createRouter().provider(getOnlyProvider).client;
 
     expect(Object.keys(client.documents)).toEqual(['get']);
     backend.getFile.mockResolvedValue(createFile());
@@ -182,6 +175,30 @@ describe('createEdgeStore', () => {
       bucketName: 'documents',
       file: { id: 'file-id' },
     });
+  });
+
+  it.each([
+    { temporary: true },
+    { replaceTargetUrl: 'https://files.example.com/old.txt' },
+  ])('rejects %o when the provider does not support it', async (options) => {
+    const client = createRouter().provider(
+      defineProvider({
+        ...provider,
+        uploads: {
+          ...provider.uploads,
+          supportedOptions: { temporary: false, replaceTargetUrl: false },
+        },
+      }),
+    ).client;
+
+    await expect(
+      client.publicFiles.upload({
+        content: 'plain text',
+        ctx: { userId: 'user-1' },
+        options: options as never,
+      }),
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+    expect(backend.upload).not.toHaveBeenCalled();
   });
 
   it('uploads string content as a text/plain txt blob', async () => {
@@ -404,10 +421,7 @@ describe('createEdgeStore', () => {
         .path(({ input }) => [{ type: input.type }])
         .metadata(({ input }) => ({ type: input.type })),
     });
-    const client = createEdgeStore({
-      router,
-      provider,
-    }).client;
+    const client = router.provider(provider).client;
 
     await client.documents.upload({
       content: 'invoice',
@@ -434,7 +448,7 @@ describe('createEdgeStore', () => {
         .path(({ input }) => [{ type: input.type }])
         .metadata(({ input }) => ({ type: input.type })),
     });
-    const client = createEdgeStore({ router, provider }).client;
+    const client = router.provider(provider).client;
 
     await client.documents.upload({
       content: 'invoice',
@@ -462,10 +476,7 @@ describe('createEdgeStore', () => {
         }, 'Token is not allowed'),
       ),
     });
-    const client = createEdgeStore({
-      router,
-      provider,
-    }).client;
+    const client = router.provider(provider).client;
 
     await expect(
       client.documents.upload({
@@ -504,7 +515,7 @@ describe('createEdgeStore', () => {
         .beforeUpload(beforeUpload)
         .beforeDelete(beforeDelete),
     });
-    const client = createEdgeStore({ router, provider }).client;
+    const client = router.provider(provider).client;
 
     await expect(
       client.documents.upload({
@@ -563,11 +574,9 @@ describe('createEdgeStore', () => {
     });
   });
 
-  it('converts uploadedAt to Date and proxies protected dev file URLs', async () => {
+  it('converts uploadedAt to Date and keeps protected dev file URLs', async () => {
     vi.stubEnv('NODE_ENV', 'development');
-    const client = createClient({
-      baseUrl: 'http://localhost:3000/api/edgestore',
-    });
+    const client = createClient();
     backend.getFile.mockResolvedValue(
       createFile({
         url: 'https://files.example.com/_protected/file.txt',
@@ -604,9 +613,7 @@ describe('createEdgeStore', () => {
     const files = await client.documents.list();
 
     expect(file.uploadedAt).toEqual(new Date('2024-01-02T03:04:05.000Z'));
-    expect(file.url).toBe(
-      'http://localhost:3000/api/edgestore/proxy-file?url=https%3A%2F%2Ffiles.example.com%2F_protected%2Ffile.txt',
-    );
+    expect(file.url).toBe('https://files.example.com/_protected/file.txt');
     expect(files.items[0]?.uploadedAt).toEqual(
       new Date('2024-02-03T04:05:06.000Z'),
     );
@@ -617,7 +624,7 @@ describe('createEdgeStore', () => {
       new Date('2024-03-04T05:06:07.000Z'),
     );
     expect(files.items[1]?.url).toBe(
-      'http://localhost:3000/api/edgestore/proxy-file?url=https%3A%2F%2Ffiles.example.com%2F_protected%2Fprivate.txt',
+      'https://files.example.com/_protected/private.txt',
     );
     expect(backend.listFiles).toHaveBeenCalledWith({
       bucketName: 'documents',
@@ -689,24 +696,6 @@ describe('createEdgeStore', () => {
         refs: [{ key: 'files/one' }, { key: 'files/two' }],
       }),
     ).rejects.toThrow('The provider returned 1 mutation results for 2 files.');
-  });
-
-  it('throws for protected dev file URLs when baseUrl is missing', async () => {
-    vi.stubEnv('NODE_ENV', 'development');
-    const client = createClient();
-    backend.getFile.mockResolvedValue(
-      createFile({
-        url: 'https://files.example.com/_protected/file.txt',
-      }),
-    );
-
-    await expect(
-      client.documents.get({
-        url: 'https://files.example.com/_protected/file.txt',
-      }),
-    ).rejects.toThrow(
-      'Missing baseUrl. Pass the baseUrl to `createEdgeStore` to get protected files in development.',
-    );
   });
 
   it('leaves unknown buckets undefined', () => {

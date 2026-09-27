@@ -1,5 +1,5 @@
 import { AppContextProvider } from '@/components/app-context-provider';
-import { GITHUB_OWNER, GITHUB_REPO } from '@/lib/constants';
+import { GITHUB_OWNER, GITHUB_REPO, SITE_URL } from '@/lib/constants';
 import { EdgeStoreProvider } from '@/lib/edgestore';
 import './global.css';
 import { env } from '@/env';
@@ -10,6 +10,7 @@ import { Inter } from 'next/font/google';
 import type { ReactNode } from 'react';
 
 export const metadata: Metadata = {
+  metadataBase: SITE_URL,
   title: {
     template: '%s | EdgeStore',
     default: 'EdgeStore',

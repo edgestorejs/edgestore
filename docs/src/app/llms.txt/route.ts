@@ -1,3 +1,4 @@
+import { DOCS_ORIGIN } from '@/lib/constants';
 import { source } from '@/lib/source';
 
 export const revalidate = false;
@@ -5,13 +6,16 @@ export const revalidate = false;
 export function GET() {
   const scanned: string[] = [];
   scanned.push('# Docs');
+  scanned.push(
+    `- [EdgeStore setup skill](${DOCS_ORIGIN}/SKILL.md): Instructions for integrating file uploads into an application.`,
+  );
   const map = new Map<string, string[]>();
 
   for (const page of source.getPages()) {
     const dir = page.slugs.length <= 1 ? 'getting-started' : page.slugs[0]!;
     const list = map.get(dir) ?? [];
     list.push(
-      `- [${page.data.title}](https://edgestore.dev${page.url}.md): ${page.data.description}`,
+      `- [${page.data.title}](${DOCS_ORIGIN}${page.url}.md): ${page.data.description}`,
     );
     map.set(dir, list);
   }

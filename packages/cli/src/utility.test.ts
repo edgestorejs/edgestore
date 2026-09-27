@@ -326,7 +326,7 @@ describe('utility', () => {
     expect(JSON.parse(fixture.stdout()).checks).toContainEqual({
       name: 'Local config',
       status: 'fail',
-      detail: 'Invalid EdgeStore config at /repo/.edgestore/config.json.',
+      detail: 'Could not read local config; inspect its format locally.',
     });
   });
 
