@@ -213,7 +213,7 @@ describe('adapter dispatcher', () => {
     expect(response.status).toBe(400);
     await expect(response.json()).resolves.toMatchObject({
       code: 'BAD_REQUEST',
-      message: 'Invalid input: label: Expected string, received number',
+      message: 'Invalid input: label: Invalid input: expected string, received number',
     });
     expect(beforeUpload).not.toHaveBeenCalled();
     expect(provider.uploads.request).not.toHaveBeenCalled();

@@ -10,7 +10,6 @@ import {
   type SharedRequestUploadPartsRes,
   type SharedRequestUploadRes,
 } from '@edgestore/shared';
-import { hkdf } from '@panva/hkdf';
 import { stringifySetCookie } from 'cookie';
 import { EncryptJWT, jwtDecrypt } from 'jose';
 import { z } from 'zod';
@@ -89,31 +88,17 @@ type ResolvedCookieConfig = {
 export function getCookieConfig(
   cookieConfig?: CookieConfig,
 ): ResolvedCookieConfig {
-  const defaultOptions: CookieOptions = {
-    path: '/',
-    maxAge: DEFAULT_MAX_AGE,
-  };
-
-  // Helper function to merge options, filtering out undefined values
-  const mergeOptions = (configOptions?: CookieOptions): CookieOptions => {
-    const merged = { ...defaultOptions };
-
-    if (configOptions) {
-      Object.keys(configOptions).forEach((key) => {
-        const value = configOptions[key as keyof CookieOptions];
-        if (value !== undefined) {
-          (merged as any)[key] = value;
-        }
-      });
-    }
-
-    return merged;
-  };
+  // Explicit `undefined` options keep their defaults.
+  const configured = Object.fromEntries(
+    Object.entries(cookieConfig?.ctx?.options ?? {}).filter(
+      ([, value]) => value !== undefined,
+    ),
+  );
 
   return {
     ctx: {
       name: cookieConfig?.ctx?.name ?? 'edgestore-ctx',
-      options: mergeOptions(cookieConfig?.ctx?.options),
+      options: { path: '/', maxAge: DEFAULT_MAX_AGE, ...configured },
     },
   };
 }
@@ -178,23 +163,9 @@ export async function requestUpload<TCtx extends AnyContext>(params: {
   } = params;
   logger.debug('Running [requestUpload]', { bucketName, input, fileInfo });
 
-  if (!ctxToken) {
-    throw new EdgeStoreError({
-      message: 'Missing edgestore-ctx cookie',
-      code: 'UNAUTHORIZED',
-    });
-  }
   const ctx = await getContext(ctxToken);
-
   logger.debug('Decrypted Context', { ctx });
-
-  const bucket = router.buckets[bucketName];
-  if (!bucket) {
-    throw new EdgeStoreError({
-      message: `Bucket ${bucketName} not found`,
-      code: 'BAD_REQUEST',
-    });
-  }
+  const bucket = getBucket(router, bucketName);
   assertSupportedUploadOptions(provider, fileInfo);
   const parsedInput = await parseBucketInput(bucket, input);
   if (bucket._def.beforeUpload) {
@@ -318,19 +289,8 @@ async function getMultipartUploads<TCtx extends AnyContext>({
   ctxToken,
   body: { bucketName },
 }: MultipartRequest<TCtx, { bucketName: string }>) {
-  if (!ctxToken) {
-    throw new EdgeStoreError({
-      message: 'Missing edgestore-ctx cookie',
-      code: 'UNAUTHORIZED',
-    });
-  }
-  await getContext(ctxToken); // just to check if the token is valid
-  if (!router.buckets[bucketName]) {
-    throw new EdgeStoreError({
-      message: `Bucket ${bucketName} not found`,
-      code: 'BAD_REQUEST',
-    });
-  }
+  await getContext(ctxToken);
+  getBucket(router, bucketName);
   const multipartUploads = provider.uploads.multipart;
   if (!multipartUploads) {
     throw new EdgeStoreError({
@@ -409,20 +369,8 @@ export async function confirmUploads<TCtx extends AnyContext>(params: {
 
   logger.debug('Running [confirmUploads]', { bucketName, urls });
 
-  if (!ctxToken) {
-    throw new EdgeStoreError({
-      message: 'Missing edgestore-ctx cookie',
-      code: 'UNAUTHORIZED',
-    });
-  }
-  await getContext(ctxToken); // just to check if the token is valid
-  const bucket = router.buckets[bucketName];
-  if (!bucket) {
-    throw new EdgeStoreError({
-      message: `Bucket ${bucketName} not found`,
-      code: 'BAD_REQUEST',
-    });
-  }
+  await getContext(ctxToken);
+  getBucket(router, bucketName);
 
   if (!provider.files.confirm) {
     throw new EdgeStoreError({
@@ -466,20 +414,8 @@ export async function deleteFiles<TCtx extends AnyContext>(params: {
 
   logger.debug('Running [deleteFiles]', { bucketName, urls });
 
-  if (!ctxToken) {
-    throw new EdgeStoreError({
-      message: 'Missing edgestore-ctx cookie',
-      code: 'UNAUTHORIZED',
-    });
-  }
   const ctx = await getContext(ctxToken);
-  const bucket = router.buckets[bucketName];
-  if (!bucket) {
-    throw new EdgeStoreError({
-      message: `Bucket ${bucketName} not found`,
-      code: 'BAD_REQUEST',
-    });
-  }
+  const bucket = getBucket(router, bucketName);
 
   if (!bucket._def.beforeDelete) {
     throw new EdgeStoreError({
@@ -566,38 +502,53 @@ function mapFrontendMutationResult(
   return { succeeded, failed };
 }
 
-async function encryptJWT(ctx: AnyContext) {
-  const secret =
-    getEnv('EDGE_STORE_JWT_SECRET') ?? getEnv('EDGE_STORE_SECRET_KEY');
-  if (!secret) {
+function getBucket<TCtx extends AnyContext>(
+  router: EdgeStoreRouter<TCtx>,
+  bucketName: string,
+) {
+  const bucket = router.buckets[bucketName];
+  if (!bucket) {
     throw new EdgeStoreError({
-      message: 'EDGE_STORE_JWT_SECRET or EDGE_STORE_SECRET_KEY is not defined',
-      code: 'SERVER_ERROR',
+      message: `Bucket ${bucketName} not found`,
+      code: 'BAD_REQUEST',
     });
   }
-  const encryptionSecret = await getDerivedEncryptionKey(secret);
+  return bucket;
+}
+
+async function encryptJWT(ctx: AnyContext) {
   return await new EncryptJWT({ ctx })
     .setProtectedHeader({ alg: 'dir', enc: 'A256GCM' })
     .setIssuedAt()
     .setExpirationTime(Date.now() / 1000 + DEFAULT_MAX_AGE)
     .setJti(crypto.randomUUID())
-    .encrypt(encryptionSecret);
+    .encrypt(await getEncryptionKey());
 }
 
-async function decryptJWT(token: string) {
-  const secret =
-    getEnv('EDGE_STORE_JWT_SECRET') ?? getEnv('EDGE_STORE_SECRET_KEY');
-  if (!secret) {
+const contextPayloadSchema = z.object({
+  ctx: z.record(z.string(), z.string()),
+});
+
+/** Decrypts and validates the `edgestore-ctx` cookie set by `/init`. */
+async function getContext(token: string | undefined) {
+  if (!token) {
     throw new EdgeStoreError({
-      message: 'EDGE_STORE_JWT_SECRET or EDGE_STORE_SECRET_KEY is not defined',
-      code: 'SERVER_ERROR',
+      message: 'Missing edgestore-ctx cookie',
+      code: 'UNAUTHORIZED',
     });
   }
-  const encryptionSecret = await getDerivedEncryptionKey(secret);
-  const { payload } = await jwtDecrypt(token, encryptionSecret, {
-    clockTolerance: 15,
-  });
-  const result = z.object({ ctx: z.record(z.string()) }).safeParse(payload);
+  const key = await getEncryptionKey();
+  const payload = await jwtDecrypt(token, key, { clockTolerance: 15 }).then(
+    (result) => result.payload,
+    (error: unknown) => {
+      throw new EdgeStoreError({
+        message: 'Invalid edgestore-ctx cookie',
+        code: 'UNAUTHORIZED',
+        cause: error instanceof Error ? error : undefined,
+      });
+    },
+  );
+  const result = contextPayloadSchema.safeParse(payload);
   if (!result.success) {
     throw new EdgeStoreError({
       message: 'Invalid edgestore-ctx cookie',
@@ -608,16 +559,33 @@ async function decryptJWT(token: string) {
   return result.data.ctx;
 }
 
-async function getDerivedEncryptionKey(secret: string) {
-  return await hkdf(
-    'sha256',
-    secret,
-    '',
-    'EdgeStore Generated Encryption Key',
-    32,
+/** Derives the context-cookie encryption key from the configured secret. */
+async function getEncryptionKey() {
+  const secret =
+    getEnv('EDGE_STORE_JWT_SECRET') ?? getEnv('EDGE_STORE_SECRET_KEY');
+  if (!secret) {
+    throw new EdgeStoreError({
+      message: 'EDGE_STORE_JWT_SECRET or EDGE_STORE_SECRET_KEY is not defined',
+      code: 'SERVER_ERROR',
+    });
+  }
+  const encoder = new TextEncoder();
+  const material = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(secret),
+    'HKDF',
+    false,
+    ['deriveBits'],
   );
-}
-
-async function getContext(token: string) {
-  return await decryptJWT(token);
+  const bits = await crypto.subtle.deriveBits(
+    {
+      name: 'HKDF',
+      hash: 'SHA-256',
+      salt: new Uint8Array(),
+      info: encoder.encode('EdgeStore Generated Encryption Key'),
+    },
+    material,
+    256,
+  );
+  return new Uint8Array(bits);
 }
