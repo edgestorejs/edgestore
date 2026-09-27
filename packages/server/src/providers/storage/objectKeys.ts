@@ -1,3 +1,17 @@
+import type { MaybePromise, RequestUploadParams } from '@edgestore/shared';
+
+export type ObjectPathFnArgs = {
+  /** Logical EdgeStore router bucket name. */
+  edgestoreBucketName: string;
+  /** File info after EdgeStore path and metadata generation. */
+  fileInfo: RequestUploadParams['fileInfo'];
+  /** Default object path relative to the logical bucket prefix. */
+  defaultPath: string;
+};
+
+/** Returns an object path relative to the logical bucket prefix. */
+export type ObjectPathFn = (args: ObjectPathFnArgs) => MaybePromise<string>;
+
 export function createObjectKeys(baseUrl: string) {
   const normalizedBaseUrl = baseUrl.replace(/\/+$/, '');
 
@@ -55,5 +69,34 @@ export function createObjectKeys(baseUrl: string) {
     return key;
   }
 
-  return { toUrl: objectKeyToUrl, fromReference, normalizeRelativePath };
+  /**
+   * Resolves the object key for an upload. The logical bucket is always the
+   * first key segment, so router authorization for one bucket cannot reach
+   * objects from another.
+   */
+  async function forUpload(
+    edgestoreBucketName: string,
+    fileInfo: RequestUploadParams['fileInfo'],
+    path?: ObjectPathFn,
+  ) {
+    const extension = fileInfo.extension
+      ? `.${fileInfo.extension.replace(/^\./, '')}`
+      : '';
+    const defaultPath = [
+      ...(fileInfo.isPublic ? ['_public'] : []),
+      ...fileInfo.path.map((part) => part.value),
+      fileInfo.fileName ?? `${crypto.randomUUID()}${extension}`,
+    ].join('/');
+    const relativePath = normalizeRelativePath(
+      path
+        ? await path({ edgestoreBucketName, fileInfo, defaultPath })
+        : defaultPath,
+    );
+    return {
+      key: `${edgestoreBucketName}/${relativePath}`,
+      pathArgs: { edgestoreBucketName, fileInfo, defaultPath },
+    };
+  }
+
+  return { toUrl: objectKeyToUrl, fromReference, forUpload };
 }

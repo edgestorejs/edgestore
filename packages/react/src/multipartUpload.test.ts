@@ -214,11 +214,6 @@ describe('multipartUpload', () => {
       respond: (xhr: MockXMLHttpRequest) => xhr.load(501),
       error: 'HTTP 501',
     },
-    {
-      name: 'missing ETags',
-      respond: (xhr: MockXMLHttpRequest) => xhr.load(200),
-      error: 'exposes the ETag header',
-    },
   ])('fails without retrying on $name', async ({ respond, error }) => {
     const calls = routeFetch({ 'abort-multipart-upload': ok });
 
@@ -249,6 +244,18 @@ describe('multipartUpload', () => {
     await upload;
 
     expect(attempts).toBe(2);
+  });
+
+  it('completes parts that storage returns without an ETag', async () => {
+    const calls = routeFetch({ 'complete-multipart-upload': ok });
+
+    const upload = start({ totalParts: 1 });
+    await answerParts((xhr) => xhr.load(200));
+    await upload;
+
+    expect(calls('complete-multipart-upload')[0].parts).toEqual([
+      { partNumber: 1 },
+    ]);
   });
 
   it('stops active and queued parts when canceled', async () => {

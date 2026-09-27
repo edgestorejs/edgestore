@@ -300,7 +300,7 @@ export const completeMultipartUploadBodySchema =
     parts: z.array(
       z.object({
         partNumber: z.number().int().positive(),
-        eTag: nonEmptyStringSchema,
+        eTag: nonEmptyStringSchema.optional(),
       }),
     ),
   });

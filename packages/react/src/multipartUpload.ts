@@ -87,14 +87,10 @@ export async function multipartUpload({
             reportProgress();
           },
         });
-        if (!eTag) {
-          throw new EdgeStoreClientError(
-            'Could not get ETag from multipart response. Check that the storage CORS configuration exposes the ETag header.',
-          );
-        }
         loadedBytes[index] = chunk.size;
         reportProgress();
-        return { partNumber, eTag };
+        // Some storage (Azure blocks) returns no ETag; the provider decides.
+        return eTag ? { partNumber, eTag } : { partNumber };
       } catch (error) {
         refreshUrl = false;
         if (controller.signal.aborted) throw error;

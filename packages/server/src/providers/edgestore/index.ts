@@ -175,7 +175,15 @@ export function edgestore(options?: EdgeStoreProviderOptions) {
         complete: async ({ uploadId, parts }) => {
           await runtime.uploads.completeMultipart({
             uploadId,
-            parts,
+            parts: parts.map(({ partNumber, eTag }) => {
+              if (!eTag) {
+                throw new EdgeStoreError({
+                  message: `Multipart part ${partNumber} is missing its ETag.`,
+                  code: 'BAD_REQUEST',
+                });
+              }
+              return { partNumber, eTag };
+            }),
           });
         },
         abort: async ({ uploadId }) => {

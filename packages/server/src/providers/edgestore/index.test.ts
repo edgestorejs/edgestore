@@ -319,6 +319,13 @@ describe('edgestore provider', () => {
       uploadId: 'upload-1',
       parts: [{ partNumber: 2, eTag: 'etag-2' }],
     });
+    await expect(
+      provider.uploads.multipart.complete({
+        uploadId: 'upload-1',
+        key: 'files/file.txt',
+        parts: [{ partNumber: 2 }],
+      }),
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
     await provider.uploads.multipart.abort({
       uploadId: 'upload-1',
       key: 'files/file.txt',

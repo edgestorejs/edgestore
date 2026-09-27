@@ -58,11 +58,11 @@ Use `claude` for Claude Code or `cursor` for Cursor. Setup installs the skill an
 configures MCP for the project. `--skills-only` leaves MCP settings untouched;
 `--global` installs for all projects.
 
-| Client | Skill directory |
-| --- | --- |
-| Codex | `.agents/skills` |
+| Client      | Skill directory  |
+| ----------- | ---------------- |
+| Codex       | `.agents/skills` |
 | Claude Code | `.claude/skills` |
-| Cursor | `.cursor/skills` |
+| Cursor      | `.cursor/skills` |
 
 These paths are relative to the Git or package root, or your home for global
 setup. The CLI reports existing global skills without installing a duplicate.
@@ -95,11 +95,11 @@ Use `codex`, `claude` for Claude Code, or `cursor`. Setup writes to the Git root
 or the package root outside Git. Use `--cwd` to select the project and `--global`
 for user configuration. Automated writes require `--yes`.
 
-| Client | Project configuration | User configuration |
-| --- | --- | --- |
-| Codex | `.codex/config.toml` | `$CODEX_HOME/config.toml` or `~/.codex/config.toml` |
-| Claude Code | `.mcp.json` | `~/.claude.json` |
-| Cursor | `.cursor/mcp.json` | `~/.cursor/mcp.json` |
+| Client      | Project configuration | User configuration                                  |
+| ----------- | --------------------- | --------------------------------------------------- |
+| Codex       | `.codex/config.toml`  | `$CODEX_HOME/config.toml` or `~/.codex/config.toml` |
+| Claude Code | `.mcp.json`           | `~/.claude.json`                                    |
+| Cursor      | `.cursor/mcp.json`    | `~/.cursor/mcp.json`                                |
 
 Setup preserves existing connections, unrelated settings, and JSONC comments.
 
