@@ -145,7 +145,7 @@ export type AutoSignedUrlsConfig = {
   includeThumbnails?: boolean;
 };
 
-type BucketConfig = {
+export type BucketConfig = {
   /**
    * Maximum size for a single file in bytes
    *
@@ -531,16 +531,6 @@ function createBuilder<
   };
 }
 
-class EdgeStoreBuilder<TCtx = Record<string, never>> {
-  context<TNewContext extends AnyContext>() {
-    return new EdgeStoreBuilder<TNewContext>();
-  }
-
-  create() {
-    return createEdgeStoreInner<TCtx>()();
-  }
-}
-
 export type EdgeStoreRouter<
   TCtx,
   TBuckets extends Record<string, ErasedBuilder<TCtx>> = Record<
@@ -560,144 +550,10 @@ export type EdgeStoreRouter<
 
 export type AnyRouter = EdgeStoreRouter<any, Record<string, AnyBuilder>>;
 
-function createRouterFactory<TCtx>() {
-  return function createRouterInner<
-    TBuckets extends EdgeStoreRouter<TCtx>['buckets'],
-  >(buckets: TBuckets) {
-    return {
-      $config: {
-        ctx: undefined as TCtx,
-      },
-      buckets,
-    } satisfies EdgeStoreRouter<TCtx, TBuckets>;
-  };
-}
-
-function initBucket<TCtx, TType extends BucketType>(
+/** Create a bucket builder shared by server initialization and bucket tests. */
+export function initBucket<TCtx, TType extends BucketType>(
   type: TType,
   config?: BucketConfig,
 ) {
   return createBuilder<TCtx, TType>({ type }, { bucketConfig: config });
 }
-
-function createEdgeStoreInner<TCtx>() {
-  return function initEdgeStoreInner() {
-    return {
-      /**
-       * Builder object for creating an image bucket
-       */
-      imageBucket(config?: BucketConfig) {
-        return initBucket<TCtx, 'IMAGE'>('IMAGE', config);
-      },
-      /**
-       * Builder object for creating a file bucket
-       */
-      fileBucket(config?: BucketConfig) {
-        return initBucket<TCtx, 'FILE'>('FILE', config);
-      },
-      /**
-       * Create a router
-       */
-      router: createRouterFactory<TCtx>(),
-    };
-  };
-}
-
-/**
- * Initialize EdgeStore - be done exactly once per backend
- */
-export const initEdgeStore = new EdgeStoreBuilder();
-
-// ↓↓↓ TYPE TESTS ↓↓↓
-
-// type Context = {
-//   userId: string;
-//   userRole: 'admin' | 'visitor';
-// };
-
-// const es = initEdgeStore.context<Context>().create();
-
-// const imagesBucket = es.imageBucket()
-//   .input(
-//     z.object({
-//       type: z.enum(['profile', 'post']),
-//       extension: z.string().optional(),
-//     }),
-//   )
-//   .path(({ ctx, input }) => [{ author: ctx.userId }, { type: input.type }])
-//   .metadata(({ ctx, input }) => ({
-//     extension: input.extension,
-//     role: ctx.userRole,
-//   }))
-//   .beforeUpload(() => {
-//     return true;
-//   });
-// const a = es.imageBucket()
-//   .input(z.object({ type: z.string(), someMeta: z.string().optional() }))
-//   .path(({ ctx, input }) => [{ author: ctx.userId }, { type: input.type }])
-//   .metadata(({ ctx, input }) => ({
-//     role: ctx.userRole,
-//     someMeta: input.someMeta,
-//   }))
-//   .accessControl({
-//     OR: [
-//       {
-//         userId: { path: 'author' }, // this will check if the userId is the same as the author in the path parameter
-//       },
-//       {
-//         userRole: 'admin', // this is the same as { userRole: { eq: "admin" } }
-//       },
-//     ],
-//   })
-//   .beforeUpload(({ ctx, input }) => {
-//     return true;
-//   })
-//   .beforeDelete(({ ctx, file }) => {
-//     return true;
-//   });
-
-// const b = es.imageBucket().path(({ ctx }) => [{ author: ctx.userId }]);
-
-// const router = es.router({
-//   original: imagesBucket,
-//   imageBucket: a,
-//   imageBucket2: b,
-// });
-
-// export { router };
-
-// type ListFilesResponse<TBucket extends AnyRouter['buckets'][string]> = {
-//   data: {
-//     // url: string;
-//     // size: number;
-//     // uploadedAt: Date;
-//     // metadata: InferMetadataObject<TBucket>;
-//     path: InferBucketPathKeys<TBucket> extends string ? {
-//       [key: string]: string;
-//     } :{
-//       [TKey in InferBucketPathKeys<TBucket>]: string;
-//     };
-//   }[];
-//   pagination: {
-//     currentPage: number;
-//     totalPages: number;
-//     totalCount: number;
-//   };
-// };
-
-// type TPathKeys = 'author' | 'type';
-// type TPathKeys2 = InferBucketPathKeys<AnyBuilder>;
-
-// type ObjectWithKeys<TKeys extends string> = {
-//   [TKey in TKeys]: string;
-// };
-
-// type Test1 = ObjectWithKeys<TPathKeys>;
-// type Test2 = ObjectWithKeys<TPathKeys2>;
-// type PathKeys = InferBucketPathKeys<typeof router.buckets.imageBucket>;
-
-// type MetadataKeys = InferMetadataObject<typeof router.buckets.imageBucket>;
-
-// type MyEdgeStoreRouter = typeof router;
-
-// type MyAccessControl = AccessControlSchema<Context, AnyDef>;
