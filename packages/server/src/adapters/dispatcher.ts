@@ -10,6 +10,8 @@ import { type z } from 'zod';
 import type { LoggerLike } from '../libs/logger';
 import { matchPath } from '../libs/utils';
 import {
+  abortMultipartUpload,
+  abortMultipartUploadBodySchema,
   completeMultipartUpload,
   completeMultipartUploadBodySchema,
   confirmUploads,
@@ -140,6 +142,17 @@ export async function dispatchEdgeStoreRequest<
           request,
           completeMultipartUploadBodySchema,
         ),
+        ctxToken,
+        logger,
+      });
+      return new Response(null, { status: 200 });
+    }
+
+    if (matchPath(request.pathname, '/abort-multipart-upload')) {
+      await abortMultipartUpload({
+        provider,
+        router,
+        body: await parseRequestBody(request, abortMultipartUploadBodySchema),
         ctxToken,
         logger,
       });

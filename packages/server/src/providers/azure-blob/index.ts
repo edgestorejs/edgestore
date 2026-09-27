@@ -183,6 +183,7 @@ export function azureBlob(options?: AzureBlobProviderOptions) {
       return {};
     },
     uploads: {
+      supportedOptions: { temporary: false, replaceTargetUrl: false },
       async request(params) {
         const blobName = getBlobName(params);
         const uploadAccess = createSignedBlobUrl({
@@ -199,6 +200,7 @@ export function azureBlob(options?: AzureBlobProviderOptions) {
             });
         return {
           uploadUrl: uploadAccess.signedUrl,
+          uploadHeaders: { 'x-ms-blob-type': 'BlockBlob' },
           accessUrl: uploadAccess.url,
           accessSignedUrl: readAccess?.signedUrl,
           accessSignedUrlExpiresAt: readAccess?.expiresAt,

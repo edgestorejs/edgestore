@@ -14,7 +14,11 @@ import { hkdf } from '@panva/hkdf';
 import { stringifySetCookie } from 'cookie';
 import { EncryptJWT, jwtDecrypt } from 'jose';
 import { z } from 'zod';
-import { getProviderBaseUrl, referenceFromUrl } from '../core/provider';
+import {
+  assertSupportedUploadOptions,
+  getProviderBaseUrl,
+  referenceFromUrl,
+} from '../core/provider';
 import { buildPath, parseBucketInput, parsePath } from '../core/routerRules';
 import { validateFileForBucket } from '../core/validateFile';
 import { getEnv } from '../libs/env';
@@ -204,6 +208,7 @@ export async function requestUpload<TCtx extends AnyContext>(params: {
       code: 'BAD_REQUEST',
     });
   }
+  assertSupportedUploadOptions(provider, fileInfo);
   const parsedInput = await parseBucketInput(bucket, input);
   if (bucket._def.beforeUpload) {
     logger.debug('Running [beforeUpload]');
@@ -274,96 +279,59 @@ export async function requestUpload<TCtx extends AnyContext>(params: {
   };
 }
 
-export const requestUploadPartsBodySchema = z.object({
-  multipart: z.object({
-    uploadId: nonEmptyStringSchema,
-    parts: z.array(z.number().int().positive()),
-  }),
-  path: nonEmptyStringSchema,
-});
-
-export type RequestUploadPartsParams = z.infer<
-  typeof requestUploadPartsBodySchema
->;
-
-export async function requestUploadParts<TCtx extends AnyContext>(params: {
-  provider: AnyEdgeStoreProvider;
-  router: EdgeStoreRouter<TCtx>;
-  ctxToken: string | undefined;
-  body: RequestUploadPartsParams;
-  logger: LoggerLike;
-}): Promise<SharedRequestUploadPartsRes> {
-  const {
-    provider,
-    ctxToken,
-    logger,
-    body: { multipart, path },
-  } = params;
-
-  logger.debug('Running [requestUploadParts]', { multipart, path });
-
-  if (!ctxToken) {
-    throw new EdgeStoreError({
-      message: 'Missing edgestore-ctx cookie',
-      code: 'UNAUTHORIZED',
-    });
-  }
-  await getContext(ctxToken); // just to check if the token is valid
-
-  const multipartUploads = provider.uploads.multipart;
-  if (!multipartUploads) {
-    throw new EdgeStoreError({
-      message: `Provider ${provider.name} does not support multipart uploads.`,
-      code: 'BAD_REQUEST',
-    });
-  }
-  const res = await multipartUploads.requestParts({
-    multipart,
-    path,
-  });
-
-  logger.debug('Finished [requestUploadParts]');
-
-  return res;
-}
-
-export const completeMultipartUploadBodySchema = z.object({
+const multipartSessionBodySchema = z.object({
   bucketName: nonEmptyStringSchema,
   uploadId: nonEmptyStringSchema,
   key: nonEmptyStringSchema,
-  parts: z.array(
-    z.object({
-      partNumber: z.number().int().positive(),
-      eTag: nonEmptyStringSchema,
-    }),
-  ),
 });
 
+/** Bounds the presigning work one request can trigger. Clients ask for 10. */
+const MAX_PART_URLS_PER_REQUEST = 100;
+
+export const requestUploadPartsBodySchema = multipartSessionBodySchema.extend({
+  parts: z
+    .array(z.number().int().positive())
+    .min(1)
+    .max(MAX_PART_URLS_PER_REQUEST),
+});
+
+export const completeMultipartUploadBodySchema =
+  multipartSessionBodySchema.extend({
+    parts: z.array(
+      z.object({
+        partNumber: z.number().int().positive(),
+        eTag: nonEmptyStringSchema,
+      }),
+    ),
+  });
+
+export const abortMultipartUploadBodySchema = multipartSessionBodySchema;
+
+export type RequestUploadPartsBody = z.infer<
+  typeof requestUploadPartsBodySchema
+>;
 export type CompleteMultipartUploadBody = z.infer<
   typeof completeMultipartUploadBodySchema
 >;
+export type AbortMultipartUploadBody = z.infer<
+  typeof abortMultipartUploadBodySchema
+>;
 
-export async function completeMultipartUpload<TCtx extends AnyContext>(params: {
+type MultipartRequest<TCtx extends AnyContext, TBody> = {
   provider: AnyEdgeStoreProvider;
   router: EdgeStoreRouter<TCtx>;
   ctxToken: string | undefined;
-  body: CompleteMultipartUploadBody;
+  body: TBody;
   logger: LoggerLike;
-}) {
-  const {
-    provider,
-    router,
-    ctxToken,
-    logger,
-    body: { bucketName, uploadId, key, parts },
-  } = params;
+};
 
-  logger.debug('Running [completeMultipartUpload]', {
-    bucketName,
-    uploadId,
-    key,
-  });
-
+/** Authorizes a multipart session request and returns the provider operations. */
+async function getMultipartUploads<TCtx extends AnyContext>({
+  provider,
+  router,
+  ctxToken,
+  body: { bucketName },
+}: MultipartRequest<TCtx, { bucketName: string }>) {
   if (!ctxToken) {
     throw new EdgeStoreError({
       message: 'Missing edgestore-ctx cookie',
@@ -371,14 +339,12 @@ export async function completeMultipartUpload<TCtx extends AnyContext>(params: {
     });
   }
   await getContext(ctxToken); // just to check if the token is valid
-  const bucket = router.buckets[bucketName];
-  if (!bucket) {
+  if (!router.buckets[bucketName]) {
     throw new EdgeStoreError({
       message: `Bucket ${bucketName} not found`,
       code: 'BAD_REQUEST',
     });
   }
-
   const multipartUploads = provider.uploads.multipart;
   if (!multipartUploads) {
     throw new EdgeStoreError({
@@ -386,13 +352,51 @@ export async function completeMultipartUpload<TCtx extends AnyContext>(params: {
       code: 'BAD_REQUEST',
     });
   }
-  await multipartUploads.complete({
+  return multipartUploads;
+}
+
+export async function requestUploadParts<TCtx extends AnyContext>(
+  params: MultipartRequest<TCtx, RequestUploadPartsBody>,
+): Promise<SharedRequestUploadPartsRes> {
+  const { bucketName, uploadId, key, parts } = params.body;
+  params.logger.debug('Running [requestUploadParts]', {
+    bucketName,
     uploadId,
     key,
     parts,
   });
+  const multipartUploads = await getMultipartUploads(params);
+  const res = await multipartUploads.requestParts({ uploadId, key, parts });
+  params.logger.debug('Finished [requestUploadParts]');
+  return res;
+}
 
-  logger.debug('Finished [completeMultipartUpload]');
+export async function completeMultipartUpload<TCtx extends AnyContext>(
+  params: MultipartRequest<TCtx, CompleteMultipartUploadBody>,
+) {
+  const { bucketName, uploadId, key, parts } = params.body;
+  params.logger.debug('Running [completeMultipartUpload]', {
+    bucketName,
+    uploadId,
+    key,
+  });
+  const multipartUploads = await getMultipartUploads(params);
+  await multipartUploads.complete({ uploadId, key, parts });
+  params.logger.debug('Finished [completeMultipartUpload]');
+}
+
+export async function abortMultipartUpload<TCtx extends AnyContext>(
+  params: MultipartRequest<TCtx, AbortMultipartUploadBody>,
+) {
+  const { bucketName, uploadId, key } = params.body;
+  params.logger.debug('Running [abortMultipartUpload]', {
+    bucketName,
+    uploadId,
+    key,
+  });
+  const multipartUploads = await getMultipartUploads(params);
+  await multipartUploads.abort({ uploadId, key });
+  params.logger.debug('Finished [abortMultipartUpload]');
 }
 
 export const confirmUploadsBodySchema = z.object({

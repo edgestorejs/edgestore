@@ -11,7 +11,10 @@ import {
   type RequestUploadRes,
 } from '@edgestore/shared';
 import { z } from 'zod';
-import { defineProvider } from '../../core/provider';
+import {
+  defineProvider,
+  INITIAL_MULTIPART_PART_URLS,
+} from '../../core/provider';
 import { getEnv } from '../../libs/env';
 import EdgeStoreCredentialsError from '../../libs/errors/EdgeStoreCredentialsError';
 
@@ -137,7 +140,10 @@ export function edgestore(options?: EdgeStoreProviderOptions) {
               bucket: bucketName,
               ...mapRawUploadRequest(bucketType, fileInfo, autoSignedUrls),
               multipart: {
-                partNumbers: multipartPlan.partNumbers,
+                partNumbers: multipartPlan.partNumbers.slice(
+                  0,
+                  INITIAL_MULTIPART_PART_URLS,
+                ),
               },
             }),
             {
@@ -154,19 +160,16 @@ export function edgestore(options?: EdgeStoreProviderOptions) {
         );
       },
       multipart: {
-        requestParts: async ({ multipart }) => {
+        requestParts: async ({ uploadId, parts }) => {
           const res = await runtime.uploads.createParts({
-            uploadId: multipart.uploadId,
-            partNumbers: multipart.parts,
+            uploadId,
+            partNumbers: parts,
           });
           return {
-            multipart: {
-              uploadId: multipart.uploadId,
-              parts: res.parts.map((part) => ({
-                partNumber: part.partNumber,
-                uploadUrl: part.signedUrl,
-              })),
-            },
+            parts: res.parts.map((part) => ({
+              partNumber: part.partNumber,
+              uploadUrl: part.signedUrl,
+            })),
           };
         },
         complete: async ({ uploadId, parts }) => {
@@ -174,6 +177,9 @@ export function edgestore(options?: EdgeStoreProviderOptions) {
             uploadId,
             parts,
           });
+        },
+        abort: async ({ uploadId }) => {
+          await runtime.uploads.cancel({ uploadId });
         },
       },
       upload: async ({
@@ -447,6 +453,7 @@ function mapUploadResponse(
 ): RequestUploadRes {
   const signed = res.signedReadUrl;
   const access = {
+    key: res.file.key,
     accessUrl: res.file.url,
     thumbnailUrl: res.file.thumbnailUrl,
     accessSignedUrl: signed?.signedUrl,

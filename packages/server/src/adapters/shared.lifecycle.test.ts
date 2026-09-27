@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { initEdgeStore } from '../core/router';
 import {
+  abortMultipartUpload,
   completeMultipartUpload,
   confirmUploads,
   deleteFiles,
@@ -316,94 +317,96 @@ describe('multipart lifecycle', () => {
     vi.unstubAllEnvs();
   });
 
-  it('checks context before requesting parts', async () => {
-    const es = initEdgeStore.create();
-    const provider = createProvider();
-
-    await expect(
-      requestUploadParts({
-        provider,
-        router: es.router({ documents: es.fileBucket() }),
-        ctxToken: undefined,
-        body: {
-          multipart: { uploadId: 'upload-id', parts: [1, 2] },
-          path: 'documents/file.txt',
-        },
-        logger,
-      }),
-    ).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
-    expect(provider.uploads.multipart?.requestParts).not.toHaveBeenCalled();
-  });
-
-  it('forwards part requests after context validation', async () => {
-    const es = initEdgeStore.create();
-    const router = es.router({ documents: es.fileBucket() });
-    const provider = createProvider();
-    const ctxToken = await createContextToken({ router, ctx: {} });
-    const body = {
-      multipart: { uploadId: 'upload-id', parts: [1, 2] },
-      path: 'documents/file.txt',
-    };
-
-    await requestUploadParts({ provider, router, ctxToken, body, logger });
-
-    expect(provider.uploads.multipart?.requestParts).toHaveBeenCalledWith(body);
-  });
-
-  it('rejects multipart routes for single-part providers', async () => {
-    const es = initEdgeStore.create();
-    const router = es.router({ documents: es.fileBucket() });
-    const provider = createProvider({
-      uploads: {
-        request: vi.fn(() => ({
-          uploadUrl: 'https://upload.example.com/file.txt',
-          accessUrl: 'https://files.example.com/file.txt',
-        })),
+  const session = {
+    bucketName: 'documents',
+    uploadId: 'upload-id',
+    key: 'documents/file.txt',
+  };
+  const operations = [
+    {
+      name: 'requestParts',
+      run: requestUploadParts,
+      body: { ...session, parts: [1, 2] },
+      forwarded: { uploadId: 'upload-id', key: session.key, parts: [1, 2] },
+    },
+    {
+      name: 'complete',
+      run: completeMultipartUpload,
+      body: { ...session, parts: [{ partNumber: 1, eTag: 'etag-1' }] },
+      forwarded: {
+        uploadId: 'upload-id',
+        key: session.key,
+        parts: [{ partNumber: 1, eTag: 'etag-1' }],
       },
-    });
-    const ctxToken = await createContextToken({ router, ctx: {} });
+    },
+    {
+      name: 'abort',
+      run: abortMultipartUpload,
+      body: session,
+      forwarded: { uploadId: 'upload-id', key: session.key },
+    },
+  ] as const;
 
-    await expect(
-      requestUploadParts({
-        provider,
-        router,
-        ctxToken,
-        body: {
-          multipart: { uploadId: 'upload-id', parts: [1] },
-          path: 'documents/file.txt',
-        },
-        logger,
-      }),
-    ).rejects.toMatchObject({
-      code: 'BAD_REQUEST',
-      message: 'Provider test-provider does not support multipart uploads.',
-    });
-  });
-
-  it('checks context and bucket before completing multipart uploads', async () => {
+  function setup(provider = createProvider()) {
     const es = initEdgeStore.create();
     const router = es.router({ documents: es.fileBucket() });
-    const provider = createProvider();
-    const ctxToken = await createContextToken({ router, ctx: {} });
-    const body = {
-      bucketName: 'documents',
-      uploadId: 'upload-id',
-      key: 'documents/file.txt',
-      parts: [{ partNumber: 1, eTag: 'etag-1' }],
-    };
+    return { provider, router };
+  }
 
-    await completeMultipartUpload({
-      provider,
-      router,
-      ctxToken,
-      body,
-      logger,
-    });
+  it.each(operations)(
+    '$name forwards the session after context and bucket checks',
+    async ({ name, run, body, forwarded }) => {
+      const { provider, router } = setup();
+      const ctxToken = await createContextToken({ router, ctx: {} });
+      const operation = provider.uploads.multipart![name];
 
-    expect(provider.uploads.multipart?.complete).toHaveBeenCalledWith({
-      uploadId: body.uploadId,
-      key: body.key,
-      parts: body.parts,
-    });
-  });
+      await expect(
+        run({
+          provider,
+          router,
+          ctxToken: undefined,
+          body: body as never,
+          logger,
+        }),
+      ).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
+      await expect(
+        run({
+          provider,
+          router,
+          ctxToken,
+          body: { ...body, bucketName: 'missing' } as never,
+          logger,
+        }),
+      ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+      expect(operation).not.toHaveBeenCalled();
+
+      await run({ provider, router, ctxToken, body: body as never, logger });
+
+      expect(operation).toHaveBeenCalledWith(forwarded);
+    },
+  );
+
+  it.each(operations)(
+    'rejects $name for single-part providers',
+    async ({ run, body }) => {
+      const { provider, router } = setup(
+        createProvider({
+          uploads: {
+            request: vi.fn(() => ({
+              uploadUrl: 'https://upload.example.com/file.txt',
+              accessUrl: 'https://files.example.com/file.txt',
+            })),
+          },
+        }),
+      );
+      const ctxToken = await createContextToken({ router, ctx: {} });
+
+      await expect(
+        run({ provider, router, ctxToken, body: body as never, logger }),
+      ).rejects.toMatchObject({
+        code: 'BAD_REQUEST',
+        message: 'Provider test-provider does not support multipart uploads.',
+      });
+    },
+  );
 });

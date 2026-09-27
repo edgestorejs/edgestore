@@ -94,6 +94,40 @@ describe('adapter dispatcher', () => {
     );
     expect(complete.status).toBe(200);
     expect(provider.uploads.multipart?.complete).toHaveBeenCalledOnce();
+
+    const { parts: _parts, ...session } = completeMultipartUploadBody;
+    const abort = await dispatch('/api/edgestore/abort-multipart-upload', {
+      body: session,
+      cookieHeader,
+    });
+    expect(abort.status).toBe(200);
+    expect(provider.uploads.multipart?.abort).toHaveBeenCalledWith({
+      uploadId: session.uploadId,
+      key: session.key,
+    });
+  });
+
+  it('rejects upload options that the provider does not support', async () => {
+    const { dispatch, provider } = createDispatcher(createSilentLogger());
+    provider.uploads.supportedOptions = { temporary: false };
+    const init = await dispatch('/api/edgestore/init');
+    const cookieHeader = `${testCookieConfig.ctx.name}=${extractCookieValue(init.headers.getSetCookie())}`;
+
+    const response = await dispatch('/api/edgestore/request-upload', {
+      body: {
+        ...requestUploadBody,
+        fileInfo: { ...requestUploadBody.fileInfo, temporary: true },
+      },
+      cookieHeader,
+    });
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toMatchObject({
+      code: 'BAD_REQUEST',
+      message:
+        'Provider test-provider does not support the temporary upload option.',
+    });
+    expect(provider.uploads.request).not.toHaveBeenCalled();
   });
 
   it('normalizes context creation failures', async () => {
@@ -116,6 +150,7 @@ describe('adapter dispatcher', () => {
     '/api/edgestore/request-upload',
     '/api/edgestore/request-upload-parts',
     '/api/edgestore/complete-multipart-upload',
+    '/api/edgestore/abort-multipart-upload',
     '/api/edgestore/confirm-uploads',
     '/api/edgestore/delete-files',
   ])('rejects malformed bodies for %s', async (pathname) => {
@@ -131,8 +166,24 @@ describe('adapter dispatcher', () => {
     expect(provider.uploads.request).not.toHaveBeenCalled();
     expect(provider.uploads.multipart?.requestParts).not.toHaveBeenCalled();
     expect(provider.uploads.multipart?.complete).not.toHaveBeenCalled();
+    expect(provider.uploads.multipart?.abort).not.toHaveBeenCalled();
     expect(provider.files.confirm).not.toHaveBeenCalled();
     expect(provider.files.delete).not.toHaveBeenCalled();
+  });
+
+  it('caps the part URLs one request can ask for', async () => {
+    const { dispatch, provider } = createDispatcher(createSilentLogger());
+    const { parts: _parts, ...session } = completeMultipartUploadBody;
+
+    const response = await dispatch('/api/edgestore/request-upload-parts', {
+      body: {
+        ...session,
+        parts: Array.from({ length: 101 }, (_, index) => index + 1),
+      },
+    });
+
+    expect(response.status).toBe(400);
+    expect(provider.uploads.multipart?.requestParts).not.toHaveBeenCalled();
   });
 
   it('rejects invalid bucket input before hooks or providers run', async () => {

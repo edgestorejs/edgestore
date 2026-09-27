@@ -22,6 +22,7 @@ const runtime = vi.hoisted(() => ({
     request: vi.fn(),
     createParts: vi.fn(),
     completeMultipart: vi.fn(),
+    cancel: vi.fn(),
   },
 }));
 
@@ -202,6 +203,7 @@ describe('edgestore provider', () => {
         fileInfo,
       }),
     ).resolves.toEqual({
+      key: 'files/file',
       accessUrl: 'https://files.example/file',
       thumbnailUrl: null,
       uploadUrl: 'https://upload.example/file',
@@ -224,6 +226,28 @@ describe('edgestore provider', () => {
       replaceTarget: undefined,
       signedReadUrl: undefined,
     });
+  });
+
+  it('signs only the first multipart part URLs up front', async () => {
+    runtime.uploads.request.mockResolvedValue({
+      file: { url: 'https://files.example/file', key: 'files/file' },
+      upload: { kind: 'multipart', id: 'upload-1', parts: [] },
+    });
+    const provider = edgestore({ accessKey: 'access', secretKey: 'secret' });
+
+    await provider.uploads.request({
+      bucketName: 'files',
+      bucketType: 'FILE',
+      fileInfo: { ...fileInfo, size: 20 * 16 * 1024 * 1024 },
+    });
+
+    expect(runtime.uploads.request).toHaveBeenCalledWith(
+      expect.objectContaining({
+        multipart: {
+          partNumbers: Array.from({ length: 10 }, (_, index) => index + 1),
+        },
+      }),
+    );
   });
 
   it('requests multipart uploads above the shared threshold', async () => {
@@ -264,7 +288,7 @@ describe('edgestore provider', () => {
     });
   });
 
-  it('delegates multipart part requests and completion to the SDK', async () => {
+  it('delegates multipart part requests, completion and cancellation to the SDK', async () => {
     runtime.uploads.createParts.mockResolvedValue({
       parts: [{ partNumber: 2, signedUrl: 'https://upload.example/2' }],
     });
@@ -272,14 +296,12 @@ describe('edgestore provider', () => {
 
     await expect(
       provider.uploads.multipart.requestParts({
-        multipart: { uploadId: 'upload-1', parts: [2] },
-        path: 'files/file.txt',
+        uploadId: 'upload-1',
+        key: 'files/file.txt',
+        parts: [2],
       }),
     ).resolves.toEqual({
-      multipart: {
-        uploadId: 'upload-1',
-        parts: [{ partNumber: 2, uploadUrl: 'https://upload.example/2' }],
-      },
+      parts: [{ partNumber: 2, uploadUrl: 'https://upload.example/2' }],
     });
     await expect(
       provider.uploads.multipart.complete({
@@ -296,6 +318,13 @@ describe('edgestore provider', () => {
     expect(runtime.uploads.completeMultipart).toHaveBeenCalledWith({
       uploadId: 'upload-1',
       parts: [{ partNumber: 2, eTag: 'etag-2' }],
+    });
+    await provider.uploads.multipart.abort({
+      uploadId: 'upload-1',
+      key: 'files/file.txt',
+    });
+    expect(runtime.uploads.cancel).toHaveBeenCalledWith({
+      uploadId: 'upload-1',
     });
   });
 

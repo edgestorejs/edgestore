@@ -34,13 +34,9 @@ export function createProvider(
         thumbnailUrl: null,
       })),
       multipart: {
-        requestParts: vi.fn(() => ({
-          multipart: {
-            uploadId: 'upload-id',
-            parts: [],
-          },
-        })),
+        requestParts: vi.fn(() => ({ parts: [] })),
         complete: vi.fn(),
+        abort: vi.fn(),
       },
     },
     files: {
