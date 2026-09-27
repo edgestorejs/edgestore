@@ -12,12 +12,12 @@ const dateFormatter = new Intl.DateTimeFormat('en', {
 });
 
 type BlogPostPageProps = {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ slug: string[] }>;
 };
 
 export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const { slug } = await params;
-  const page = blog.getPage([slug]);
+  const page = blog.getPage(slug);
   if (!page) notFound();
 
   const MDXContent = page.data.body;
@@ -58,9 +58,9 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   );
 }
 
-export function generateStaticParams(): { slug: string }[] {
+export function generateStaticParams(): { slug: string[] }[] {
   return blog.getPages().map((page) => ({
-    slug: page.slugs[0]!,
+    slug: page.slugs,
   }));
 }
 
@@ -68,7 +68,7 @@ export async function generateMetadata({
   params,
 }: BlogPostPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const page = blog.getPage([slug]);
+  const page = blog.getPage(slug);
   if (!page) notFound();
 
   return {
