@@ -79,7 +79,11 @@ export function createBlockUploads({
     }));
   }
 
-  /** SAS URLs cannot limit sizes, so check every staged block before committing. */
+  /**
+   * Catches incomplete or broken uploads before the provider commits them.
+   * This is not a security boundary: a blob write SAS also permits Put Blob
+   * and Put Block List, so a browser can write its one blob directly.
+   */
   async function assertStagedBlocks(session: MultipartSession) {
     const { uncommittedBlocks = [] } = await blob(session.key).getBlockList(
       'uncommitted',

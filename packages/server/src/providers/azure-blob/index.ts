@@ -124,6 +124,10 @@ export function azureBlob(options: AzureBlobProviderOptions = {}) {
   const readExpiresIn = expiration(options.signedUrlExpiresIn ?? 3600);
 
   function plan(sizeBytes: number) {
+    if (!Number.isSafeInteger(sizeBytes) || sizeBytes < 0)
+      throw new RangeError(
+        'Azure Blob upload size must be a nonnegative safe integer.',
+      );
     const result = planMultipartUpload({
       sizeBytes,
       thresholdBytes: options.multipart?.thresholdBytes,

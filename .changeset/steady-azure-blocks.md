@@ -7,7 +7,7 @@
 Bring the Azure Blob provider to parity with S3. Large browser uploads use
 block uploads with signed, object-scoped sessions: the browser stages blocks
 through short-lived Put Block URLs, and the provider checks every block's size
-before committing. Backend uploads are available through the router client,
+before committing to catch incomplete uploads. Backend uploads are available through the router client,
 files can be referenced by `{ key }` as well as by URL, and uploads accept a
 `path` callback and `objectOptions` (cache control, content disposition, and
 metadata).

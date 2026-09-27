@@ -171,6 +171,9 @@ describe('azureBlob', () => {
     await expect(
       provider.uploads.request(request({ size: 5001 * 1024 ** 2 })),
     ).rejects.toThrow('4000 MiB');
+    await expect(
+      provider.uploads.request(request({ size: 200 * 1024 ** 2 + 0.5 })),
+    ).rejects.toThrow('safe integer');
     expect(() =>
       azureBlob({ ...config, multipart: { sessionExpiresIn: 0 } }),
     ).toThrow('positive integer');

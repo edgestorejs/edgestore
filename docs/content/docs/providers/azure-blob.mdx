@@ -88,7 +88,8 @@ Files above the threshold are uploaded as blocks, in parallel, with retries.
 The browser requests block upload URLs as it reaches each block, so
 `uploadUrlExpiresIn` only needs to cover one block transfer. A session can
 request URLs and complete until `multipart.sessionExpiresIn` passes. Before
-committing, the provider checks that every block exists with the expected size.
+committing, the provider checks that every block exists with the expected size,
+which catches incomplete uploads.
 
 Azure has no multipart session to cancel. Blocks that are never committed are
 discarded automatically after seven days, so canceled and failed uploads need
@@ -152,8 +153,12 @@ azureBlob({
 
 - `temporary` and `replaceTargetUrl` are rejected. Track application-owned files
   in your database and delete old files after a successful replacement.
-- SAS URLs cannot limit upload size. The router's `maxSize` is checked against
-  the size the browser declares; block uploads are also checked when they are
-  committed, but single-request uploads are not.
+- Azure SAS URLs grant write access to one blob and cannot limit its size or
+  the write operation. A browser holding an upload URL can therefore write
+  that blob directly, with any size and blob headers. The router's `maxSize`,
+  mime-type checks, and `objectOptions` apply to the declared upload and to
+  backend uploads, but are not enforced on bytes a browser sends. Only give
+  upload access to users you trust with that blob, and validate stored files
+  before serving them if this matters to you.
 - Confirmation, listing, restore, and generated thumbnails are unsupported.
 - Only account-key authentication is supported.
