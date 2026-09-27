@@ -358,6 +358,29 @@ describe('S3 backend and private files', () => {
     );
   });
 
+  it('signs the read URL before sending bytes', async () => {
+    const { provider, send } = setup();
+    vi.mocked(getSignedUrl).mockRejectedValueOnce(new Error('no credentials'));
+
+    await expect(
+      provider.uploads.upload({
+        ...request({ size: 3 }),
+        autoSignedUrls: { expiresIn: 300 },
+        source: new Blob(['abc']),
+      }),
+    ).rejects.toThrow('no credentials');
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  it('accepts multipart sessions longer than the S3 URL limit', () => {
+    expect(() =>
+      setup({ multipart: { sessionExpiresIn: 14 * 24 * 3600 } }),
+    ).not.toThrow();
+    expect(() => setup({ multipart: { sessionExpiresIn: 0 } })).toThrow(
+      'positive integer',
+    );
+  });
+
   it('returns a committed upload without depending on a follow-up request', async () => {
     const { provider, send } = setup();
     const controller = new AbortController();

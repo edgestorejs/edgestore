@@ -37,6 +37,16 @@ function expiration(value: number) {
   return value;
 }
 
+/** Multipart sessions are EdgeStore JWTs, not S3 URLs, so S3's cap does not apply. */
+function sessionLifetime(value: number) {
+  if (!Number.isSafeInteger(value) || value < 1) {
+    throw new RangeError(
+      'S3 multipart session lifetime must be a positive integer number of seconds.',
+    );
+  }
+  return value;
+}
+
 export function s3(options: S3ProviderOptions = {}) {
   const {
     credentials: configuredCredentials,
@@ -101,7 +111,9 @@ export function s3(options: S3ProviderOptions = {}) {
     client,
     bucket,
     partUrlExpiresIn: uploadExpiresIn,
-    sessionExpiresIn: expiration(options.multipart?.sessionExpiresIn ?? 86400),
+    sessionExpiresIn: sessionLifetime(
+      options.multipart?.sessionExpiresIn ?? 86400,
+    ),
     audience: `edgestore:s3:${endpoint ?? region ?? 'aws'}:${bucketName}`,
     secret: () =>
       options.jwtSecret ??
@@ -255,9 +267,9 @@ export function s3(options: S3ProviderOptions = {}) {
             type: params.source.type || params.fileInfo.type,
           },
         });
-        // Validate signed URL settings before sending bytes.
-        if (params.autoSignedUrls?.expiresIn !== undefined)
-          expiration(params.autoSignedUrls.expiresIn);
+        // Sign the read URL before sending bytes: nothing fallible may run
+        // after the object is committed.
+        const signedReadUrl = await readForUpload(prepared.key, params);
         await uploadObject({
           client,
           input: prepared.input,
@@ -277,7 +289,7 @@ export function s3(options: S3ProviderOptions = {}) {
             uploadedAt,
             updatedAt: uploadedAt,
           },
-          signedReadUrl: await readForUpload(prepared.key, params),
+          signedReadUrl,
         };
       },
     },
