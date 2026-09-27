@@ -171,6 +171,21 @@ describe('adapter dispatcher', () => {
     expect(provider.files.delete).not.toHaveBeenCalled();
   });
 
+  it('caps the part URLs one request can ask for', async () => {
+    const { dispatch, provider } = createDispatcher(createSilentLogger());
+    const { parts: _parts, ...session } = completeMultipartUploadBody;
+
+    const response = await dispatch('/api/edgestore/request-upload-parts', {
+      body: {
+        ...session,
+        parts: Array.from({ length: 101 }, (_, index) => index + 1),
+      },
+    });
+
+    expect(response.status).toBe(400);
+    expect(provider.uploads.multipart?.requestParts).not.toHaveBeenCalled();
+  });
+
   it('rejects invalid bucket input before hooks or providers run', async () => {
     const beforeUpload = vi.fn(() => true);
     const es = initEdgeStore.context<typeof testCtx>().create();
