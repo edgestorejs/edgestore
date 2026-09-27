@@ -316,8 +316,14 @@ const multipartSessionBodySchema = z.object({
   key: nonEmptyStringSchema,
 });
 
+/** Bounds the presigning work one request can trigger. Clients ask for 10. */
+const MAX_PART_URLS_PER_REQUEST = 100;
+
 export const requestUploadPartsBodySchema = multipartSessionBodySchema.extend({
-  parts: z.array(z.number().int().positive()).min(1),
+  parts: z
+    .array(z.number().int().positive())
+    .min(1)
+    .max(MAX_PART_URLS_PER_REQUEST),
 });
 
 export const completeMultipartUploadBodySchema =
