@@ -4,7 +4,7 @@ import { EdgeStoreProvider } from '@/lib/edgestore';
 
 export const metadata: Metadata = {
   title: 'EdgeStore Complete Example',
-  description: 'A focused playground for testing EdgeStore features.',
+  description: 'Try every EdgeStore feature step by step.',
 };
 
 export default function RootLayout({
@@ -14,7 +14,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>
+      <body className="bg-zinc-50 text-zinc-900 antialiased dark:bg-zinc-950 dark:text-zinc-100">
         <EdgeStoreProvider>{children}</EdgeStoreProvider>
       </body>
     </html>

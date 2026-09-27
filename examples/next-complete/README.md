@@ -1,30 +1,10 @@
 # Next.js complete example
 
-A focused App Router playground for exercising EdgeStore's client, backend
-client, and low-level SDK without adding authentication, a database, or a UI
-framework.
+A step-by-step page for trying EdgeStore's main features in a Next.js App
+Router app. Each step runs one feature and shows whether it behaved as
+expected, so you can test the whole library by working from top to bottom.
 
-## Covered features
-
-- Public file, public image, and access-controlled image buckets
-- File size and MIME type validation
-- Typed input, context-derived paths, metadata, and lifecycle hooks
-- Client upload progress, two-item concurrency, cancellation, retry, and errors
-- Temporary uploads, confirmation, replacement, singular and batch mutations
-- Manual filenames and client/backend text transforms
-- Automatic multipart upload with an optional 101 MiB fixture
-- Image thumbnails, protected reads, and signed URLs
-- Backend listing with path, metadata, date filters, and cursor pagination
-- Backend upload from strings, blobs, and remote URLs
-- Lookup by file ID, soft deletion, and restore
-- Low-level SDK uploads plus health, project, and bucket inspection
-- Deterministic guest, user, owner, and admin access-control scenarios
-
-The identity selector uses an HTTP-only demo cookie. It intentionally avoids a
-real authentication dependency while still exercising context reset and
-access-control behavior.
-
-## Run locally
+## Run it
 
 From the repository root:
 
@@ -34,24 +14,39 @@ pnpm install
 pnpm --filter next-complete dev
 ```
 
-Add an EdgeStore access key and secret key to `.env.local`, then open
-<http://localhost:3000>.
+Add your access key and secret key from the
+[EdgeStore dashboard](https://dashboard.edgestore.dev) to `.env.local`, then
+open <http://localhost:3000>.
 
-The example uses `http://localhost:3000/api/edgestore` to proxy protected files
-in development. Set `EDGE_STORE_EXAMPLE_BASE_URL` if the app runs on another
-origin or port.
+## What to try
 
-## Useful scenarios
+Pick **Alice** at the top of the page, then:
 
-1. Select Alice, upload a temporary file, and confirm it from the upload list.
-2. Upload a public image as Alice, switch to Bob, and verify client deletion is
-   rejected. Switch to Admin and delete it.
-3. Upload a private image, request a 60-second signed URL, then switch users to
-   compare protected access.
-4. Select `publicImages` and add the MIME or 11 MiB error fixture.
-5. Select `publicFiles` and add the 101 MiB fixture to exercise multipart upload
-   and cancellation.
-6. Soft-delete a file from the backend controls, retain its ID from the result,
-   then restore it.
-7. Compare a router backend upload with a low-level SDK upload and inspect the
-   returned progress phases.
+| Step                       | What it tests                                                  |
+| -------------------------- | -------------------------------------------------------------- |
+| 1. Upload a file           | Progress, cancellation, multipart uploads for files > 100 MiB  |
+| 2. Validation              | `maxSize` and image type checks reject bad files               |
+| 3. Temporary files         | `temporary` uploads and `confirm`                              |
+| 4. Replace a file          | `replaceTargetUrl`                                             |
+| 5. Transform and rename    | `transform` and `manualFileName`                               |
+| 6. Images and access       | Thumbnails and a protected bucket with `accessControl`         |
+| 7. Browse and manage files | Backend `list`, browser delete, server soft delete and restore |
+| 8. Upload from the server  | Backend client uploads and the low-level `@edgestore/sdk`      |
+
+Then switch users to check the access rules:
+
+- **Signed out:** uploads fail because `beforeUpload` requires a user.
+- **Bob:** Alice's private images show as blocked in step 7, and deleting her
+  files fails because `beforeDelete` only allows the owner. Use **Signed URL**
+  as Alice to share a private image with anyone for 60 seconds.
+
+## How it is organized
+
+- `src/lib/edgestore-server.ts` defines the three buckets and their rules.
+- `src/lib/users.ts` fakes sign-in with a cookie so you can switch users
+  without an auth provider. Switching users calls `reset()` so EdgeStore picks
+  up the new context.
+- `src/lib/actions.ts` holds the server actions that use the backend client
+  and the SDK. The backend client skips `beforeUpload`, `beforeDelete`, and
+  `accessControl`, so each action checks the user itself.
+- `src/components/` has one component per step.

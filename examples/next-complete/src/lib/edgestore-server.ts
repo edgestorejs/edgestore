@@ -1,110 +1,58 @@
-import { createEdgeStore, initEdgeStore } from '@edgestore/server';
+import { initEdgeStore } from '@edgestore/server';
 import {
   createEdgeStoreNextHandler,
   type CreateContextOptions,
 } from '@edgestore/server/adapters/next/app';
-import { edgestore } from '@edgestore/server/providers/edgestore';
 import { z } from 'zod';
-import {
-  categories,
-  demoUsers,
-  resolveDemoUser,
-  type DemoContext,
-} from './demo';
+import { getUser, USER_COOKIE, type Context } from './users';
 
-const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
-const MAX_FILE_SIZE = 512 * 1024 * 1024;
+const MiB = 1024 * 1024;
 
-const uploadInput = z.object({
-  category: z.enum(categories),
-  label: z.string().trim().min(1).max(40),
-  allowUpload: z.boolean(),
-});
-
-function createContext({ req }: CreateContextOptions): DemoContext {
-  const user = resolveDemoUser(req.cookies.get('edgestore-demo-user')?.value);
-  return demoUsers[user];
+function createContext({ req }: CreateContextOptions): Context {
+  const { userId, role } = getUser(req.cookies.get(USER_COOKIE)?.value);
+  return { userId, role };
 }
 
-const es = initEdgeStore.context<DemoContext>().create();
+const es = initEdgeStore.context<Context>().create();
 
-const router = es.router({
+// Shared rules: only signed-in users can upload, and only the owner can
+// delete from the browser.
+const isSignedIn = ({ ctx }: { ctx: Context }) => ctx.role === 'user';
+const isOwner = ({
+  ctx,
+  fileInfo,
+}: {
+  ctx: Context;
+  fileInfo: { path: Record<string, string> };
+}) => fileInfo.path.owner === ctx.userId;
+
+export const router = es.router({
+  /** Any file type, typed input, metadata, and multipart uploads. */
   publicFiles: es
-    .fileBucket({ maxSize: MAX_FILE_SIZE })
-    .input(uploadInput)
-    .path(({ ctx, input }) => [
-      { owner: ctx.userId },
-      { category: input.category },
-    ])
-    .metadata(({ ctx, input }) => ({
-      label: input.label,
-      uploadedByRole: ctx.role,
-    }))
-    .beforeUpload(({ ctx, input }) =>
-      Boolean(ctx.role !== 'guest' && input.allowUpload),
-    )
-    .beforeDelete(({ ctx, fileInfo }) =>
-      Boolean(ctx.role === 'admin' || fileInfo.path.owner === ctx.userId),
-    ),
+    .fileBucket({ maxSize: 200 * MiB })
+    .input(z.object({ label: z.string().max(40) }))
+    .path(({ ctx }) => [{ owner: ctx.userId }])
+    .metadata(({ input }) => ({ label: input.label }))
+    .beforeUpload(isSignedIn)
+    .beforeDelete(isOwner),
+
+  /** Images up to 2 MiB. EdgeStore generates thumbnails automatically. */
   publicImages: es
-    .imageBucket({
-      maxSize: MAX_IMAGE_SIZE,
-      accept: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
-    })
-    .input(uploadInput)
-    .path(({ ctx, input }) => [
-      { owner: ctx.userId },
-      { category: input.category },
-    ])
-    .metadata(({ ctx, input }) => ({
-      label: input.label,
-      uploadedByRole: ctx.role,
-    }))
-    .beforeUpload(({ ctx, input }) =>
-      Boolean(ctx.role !== 'guest' && input.allowUpload),
-    )
-    .beforeDelete(({ ctx, fileInfo }) =>
-      Boolean(ctx.role === 'admin' || fileInfo.path.owner === ctx.userId),
-    ),
+    .imageBucket({ maxSize: 2 * MiB })
+    .path(({ ctx }) => [{ owner: ctx.userId }])
+    .beforeUpload(isSignedIn)
+    .beforeDelete(isOwner),
+
+  /** Protected images: only the owner's browser can load them. */
   privateImages: es
-    .imageBucket({
-      maxSize: MAX_IMAGE_SIZE,
-      accept: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
-    })
-    .input(uploadInput)
-    .path(({ ctx, input }) => [
-      { owner: ctx.userId },
-      { category: input.category },
-    ])
-    .metadata(({ ctx, input }) => ({
-      label: input.label,
-      uploadedByRole: ctx.role,
-    }))
-    .accessControl({
-      OR: [{ userId: { path: 'owner' } }, { role: 'admin' }],
-    })
-    .autoSignedUrls({ expiresIn: 5 * 60, includeThumbnails: true })
-    .beforeUpload(({ ctx, input }) =>
-      Boolean(ctx.role !== 'guest' && input.allowUpload),
-    )
-    .beforeDelete(({ ctx, fileInfo }) =>
-      Boolean(ctx.role === 'admin' || fileInfo.path.owner === ctx.userId),
-    ),
+    .imageBucket({ maxSize: 2 * MiB })
+    .path(({ ctx }) => [{ owner: ctx.userId }])
+    .accessControl({ userId: { path: 'owner' } })
+    .beforeUpload(isSignedIn)
+    .beforeDelete(isOwner),
 });
 
-export const configuredEdgeStore = createEdgeStore({
-  router,
-  provider: edgestore(),
-  baseUrl:
-    process.env.EDGE_STORE_EXAMPLE_BASE_URL ??
-    'http://localhost:3000/api/edgestore',
-});
-
-export const handler = createEdgeStoreNextHandler({
-  edgestore: configuredEdgeStore,
-  createContext,
-});
-
-export const backendClient = configuredEdgeStore.client;
+export const handler = createEdgeStoreNextHandler({ router, createContext });
 
 export type EdgeStoreRouter = typeof router;
+export type BucketName = keyof EdgeStoreRouter['buckets'];
