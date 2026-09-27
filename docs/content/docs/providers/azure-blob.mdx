@@ -157,8 +157,9 @@ azureBlob({
   the write operation. A browser holding an upload URL can therefore write
   that blob directly, with any size and blob headers. The router's `maxSize`,
   mime-type checks, and `objectOptions` apply to the declared upload and to
-  backend uploads, but are not enforced on bytes a browser sends. Only give
-  upload access to users you trust with that blob, and validate stored files
-  before serving them if this matters to you.
+  backend uploads, but are not enforced on bytes a browser sends. If you need
+  those guarantees, validate each stored blob after upload from a storage
+  event, for example an Event Grid `BlobCreated` subscription that triggers an
+  Azure Function, and delete blobs that fail your checks.
 - Confirmation, listing, restore, and generated thumbnails are unsupported.
 - Only account-key authentication is supported.

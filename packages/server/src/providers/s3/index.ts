@@ -69,7 +69,10 @@ export function s3(options: S3ProviderOptions = {}) {
         : async () =>
             `https://${bucketName}.s3.${await client.config.region()}.amazonaws.com`);
   const keys = async () =>
-    createObjectKeys(typeof baseUrl === 'function' ? await baseUrl() : baseUrl);
+    createObjectKeys(
+      'S3',
+      typeof baseUrl === 'function' ? await baseUrl() : baseUrl,
+    );
   const uploadExpiresIn = expiration(options.uploadUrlExpiresIn ?? 3600);
   const readExpiresIn = expiration(options.signedUrlExpiresIn ?? 3600);
 

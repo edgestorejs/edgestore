@@ -119,7 +119,7 @@ export function azureBlob(options: AzureBlobProviderOptions = {}) {
     options.baseUrl ??
     getEnv('EDGE_STORE_BASE_URL') ??
     `${endpoint}/${containerName}`;
-  const keys = createObjectKeys(baseUrl);
+  const keys = createObjectKeys('Azure Blob', baseUrl);
   const uploadExpiresIn = expiration(options.uploadUrlExpiresIn ?? 3600);
   const readExpiresIn = expiration(options.signedUrlExpiresIn ?? 3600);
 

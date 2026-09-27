@@ -12,7 +12,7 @@ export type ObjectPathFnArgs = {
 /** Returns an object path relative to the logical bucket prefix. */
 export type ObjectPathFn = (args: ObjectPathFnArgs) => MaybePromise<string>;
 
-export function createObjectKeys(baseUrl: string) {
+export function createObjectKeys(providerName: string, baseUrl: string) {
   const normalizedBaseUrl = baseUrl.replace(/\/+$/, '');
 
   function objectKeyToUrl(objectKey: string) {
@@ -37,7 +37,9 @@ export function createObjectKeys(baseUrl: string) {
         fileUrl.pathname.slice(providerUrl.pathname.length),
       );
     } catch {
-      throw new Error('File URL does not belong to this S3 provider.');
+      throw new Error(
+        `File URL does not belong to this ${providerName} provider.`,
+      );
     }
   }
 
@@ -47,7 +49,9 @@ export function createObjectKeys(baseUrl: string) {
       path.length === 0 ||
       path.split('/').some((segment) => segment === '.' || segment === '..')
     ) {
-      throw new Error('S3 paths must stay within the EdgeStore bucket prefix.');
+      throw new Error(
+        `${providerName} paths must stay within the EdgeStore bucket prefix.`,
+      );
     }
     return path;
   }

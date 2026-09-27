@@ -200,17 +200,20 @@ describe('azureBlob', () => {
     expect(byUrl!.url).toBe(
       'https://account.blob.core.windows.net/files/documents/b%20c.txt',
     );
-    for (const file of [
-      { key: 'avatars/a.txt' },
-      { key: 'documents/../avatars/a.txt' },
-      { url: 'https://evil.example.com/files/documents/a.txt' },
-    ]) {
+    for (const [file, message] of [
+      [{ key: 'avatars/a.txt' }, 'does not belong to EdgeStore bucket'],
+      [{ key: 'documents/../avatars/a.txt' }, 'Azure Blob paths must stay'],
+      [
+        { url: 'https://evil.example.com/files/documents/a.txt' },
+        'does not belong to this Azure Blob provider',
+      ],
+    ] as const) {
       await expect(
         provider.files.getSignedUrls({
           bucketName: 'documents',
           files: [file],
         }),
-      ).rejects.toThrow();
+      ).rejects.toThrow(message);
     }
   });
 
