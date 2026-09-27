@@ -33,6 +33,7 @@
     "introduce-api-v2-sdk",
     "project-file-origins",
     "quick-files-upload",
+    "quiet-s3-workflows",
     "redesign-provider-backend-client",
     "remove-zod-peer",
     "standard-schema-core",
