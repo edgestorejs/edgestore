@@ -171,6 +171,20 @@ describe('adapter dispatcher', () => {
     expect(provider.files.delete).not.toHaveBeenCalled();
   });
 
+  it('rejects fractional upload sizes', async () => {
+    const { dispatch, provider } = createDispatcher(createSilentLogger());
+
+    const response = await dispatch('/api/edgestore/request-upload', {
+      body: {
+        ...requestUploadBody,
+        fileInfo: { ...requestUploadBody.fileInfo, size: 1.5 },
+      },
+    });
+
+    expect(response.status).toBe(400);
+    expect(provider.uploads.request).not.toHaveBeenCalled();
+  });
+
   it('caps the part URLs one request can ask for', async () => {
     const { dispatch, provider } = createDispatcher(createSilentLogger());
     const { parts: _parts, ...session } = completeMultipartUploadBody;

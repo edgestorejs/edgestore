@@ -93,6 +93,7 @@ export const backendClient = router.client;
 | Nullable metadata values                    | Nullish values omitted                       | Treat those inferred keys as optional strings.              |
 | Handcrafted server raw client               | `@edgestore/sdk`                             | Migrate direct API consumers to the public SDK.             |
 | `ES_AZURE_SAS_TOKEN` / `sasToken`           | `ES_AZURE_ACCOUNT_KEY` / `storageAccountKey` | Give Azure signing authority only to the server.            |
+| Azure `customBaseUrl` / `ES_AZURE_BASE_URL` | `endpoint` / `ES_AZURE_ENDPOINT`             | Use `baseUrl` separately for file URLs, such as a CDN.      |
 
 Pagination is no longer page-number based. Continue only when your application
 intentionally needs another page:
@@ -151,7 +152,7 @@ router backend client exposes exactly the methods present on that provider:
 | -------------------- | ---------------------------------------- | --------------------- | ------------------------ |
 | Hosted `edgestore()` | Full support                             | Full support          | Through `@edgestore/sdk` |
 | `s3()`               | Upload, get, delete, and signed reads    | Full support          | Never                    |
-| `azureBlob()`        | Get, delete, and signed private reads    | Full support          | Never                    |
+| `azureBlob()`        | Upload, get, delete, and signed reads    | Full support          | Never                    |
 | Custom provider      | Inferred from its `defineProvider` shape | Provider-defined      | Provider-defined         |
 
 Omitted capabilities are absent from TypeScript and are not replaced by a

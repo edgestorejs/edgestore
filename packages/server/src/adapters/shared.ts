@@ -136,7 +136,7 @@ export const requestUploadBodySchema = z.object({
   bucketName: nonEmptyStringSchema,
   input: z.unknown(),
   fileInfo: z.object({
-    size: z.number().finite().nonnegative(),
+    size: z.number().int().nonnegative(),
     type: z.string(),
     extension: z.string(),
     fileName: z.string().optional(),
@@ -257,7 +257,7 @@ export const completeMultipartUploadBodySchema =
     parts: z.array(
       z.object({
         partNumber: z.number().int().positive(),
-        eTag: nonEmptyStringSchema,
+        eTag: nonEmptyStringSchema.optional(),
       }),
     ),
   });

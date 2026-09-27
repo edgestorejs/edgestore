@@ -192,6 +192,24 @@ describe('S3 multipart uploads', () => {
     expect(getSignedUrl).not.toHaveBeenCalled();
   });
 
+  it('rejects completion when parts are missing ETags', async () => {
+    const { provider, send } = setup();
+    send.mockResolvedValue({ UploadId: 'aws-upload-id' });
+    const session = await start(provider);
+    send.mockClear();
+
+    await expect(
+      provider.uploads.multipart.complete({
+        ...session,
+        parts: [{ partNumber: 1, eTag: 'one' }, { partNumber: 2 }],
+      }),
+    ).rejects.toMatchObject({
+      code: 'BAD_REQUEST',
+      message: expect.stringContaining('exposes the ETag header'),
+    });
+    expect(send).not.toHaveBeenCalled();
+  });
+
   it('signs the first part URLs up front and honors the session lifetime', async () => {
     const { provider, send } = setup({
       multipart: {

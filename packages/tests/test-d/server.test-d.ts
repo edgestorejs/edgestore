@@ -5,6 +5,7 @@ import {
   type InferClientInputs,
   type InferClientOutputs,
 } from '@edgestore/server';
+import { azureBlob } from '@edgestore/server/providers/azure-blob';
 import { edgestore } from '@edgestore/server/providers/edgestore';
 import { s3 } from '@edgestore/server/providers/s3';
 import { type InitParams } from '@edgestore/shared';
@@ -124,6 +125,25 @@ expectError(
   s3PrivateClient.documents.createSignedUrl({ url: { id: 'unsupported-id' } }),
 );
 expectError(s3PrivateClient.documents.restore);
+
+const azureClientRouter = publicEs
+  .router({
+    documents: publicEs.fileBucket().accessControl('private'),
+  })
+  .provider(azureBlob());
+const azureClient = azureClientRouter.client;
+void azureClient.documents.upload({ content: 'hello' }).then((file) => {
+  expectType<string>(file.key);
+});
+void azureClient.documents.get({ key: 'documents/report.pdf' });
+void azureClient.documents.createSignedUrl({
+  url: { url: 'https://account.blob.core.windows.net/files/documents/a.pdf' },
+});
+expectNotAssignable<
+  InferClientInputs<typeof azureClientRouter>['documents']['upload']
+>({ content: 'hello', options: { temporary: true } });
+expectError(azureClient.documents.list);
+expectError(azureClient.documents.confirm);
 
 const syntheticProvider = defineProvider({
   name: 'synthetic',
