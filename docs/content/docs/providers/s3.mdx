@@ -125,7 +125,8 @@ cannot be used on the adapter's multipart routes.
 Cleanup requests from the browser have a five-second deadline so a failed
 cleanup cannot leave cancellation pending indefinitely. Multipart transfers
 retry network errors and transient HTTP responses (408, 429, 500, 502, 503,
-and 504). Other HTTP failures and missing ETags fail immediately; expose `ETag`
+and 504), plus S3's HTTP 400 `RequestTimeout` error. Other HTTP failures and
+missing ETags fail immediately; expose `ETag`
 in storage CORS if that header is missing.
 
 The provider supports refreshing part URLs, but the React client does not yet

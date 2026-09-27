@@ -399,6 +399,16 @@ function getUrl(url: string, apiPath: string, disableDevProxy?: boolean) {
 
 class RetryableUploadError extends EdgeStoreClientError {}
 
+function isRetryableUploadResponse(request: XMLHttpRequest) {
+  if ([408, 429, 500, 502, 503, 504].includes(request.status)) return true;
+  // S3 reports socket timeouts as HTTP 400 with an XML error code.
+  return (
+    request.status === 400 &&
+    request.responseXML?.querySelector('Error > Code')?.textContent?.trim() ===
+      'RequestTimeout'
+  );
+}
+
 async function uploadFileInner(props: {
   file: File | Blob;
   uploadUrl: string;
@@ -436,7 +446,7 @@ async function uploadFileInner(props: {
         resolve(request.getResponseHeader('ETag'));
         return;
       }
-      const ErrorClass = [408, 429, 500, 502, 503, 504].includes(request.status)
+      const ErrorClass = isRetryableUploadResponse(request)
         ? RetryableUploadError
         : EdgeStoreClientError;
       reject(new ErrorClass(`Error uploading file (HTTP ${request.status})`));

@@ -15,6 +15,7 @@ class MockXMLHttpRequest extends EventTarget {
   url?: string;
   body?: BodyInit | null;
   status = 200;
+  responseXML: Document | null = null;
   upload = new EventTarget();
   headers = new Map<string, string>();
   responseHeaders = new Map<string, string>();
@@ -600,7 +601,7 @@ describe('createNextProxy upload', () => {
     },
   );
 
-  it.each([408, 429, 500, 502, 503, 504, 'network'])(
+  it.each([408, 429, 500, 502, 503, 504, 'network', 'RequestTimeout'])(
     'retries a transient multipart failure: %s',
     async (failure) => {
       vi.useFakeTimers();
@@ -613,7 +614,13 @@ describe('createNextProxy upload', () => {
       await waitForXhrs(1);
       const first = MockXMLHttpRequest.instances[0]!;
       if (typeof failure === 'number') first.load(failure);
-      else first.dispatchEvent(new Event('error'));
+      else if (failure === 'RequestTimeout') {
+        first.responseXML = new DOMParser().parseFromString(
+          '<?xml version="1.0"?><Error><Code>RequestTimeout</Code><Message>Socket timed out.</Message></Error>',
+          'application/xml',
+        );
+        first.load(400);
+      } else first.dispatchEvent(new Event('error'));
       await vi.advanceTimersByTimeAsync(4999);
       expect(MockXMLHttpRequest.instances).toHaveLength(1);
       await vi.advanceTimersByTimeAsync(1);
@@ -621,6 +628,35 @@ describe('createNextProxy upload', () => {
       MockXMLHttpRequest.instances[1]!.load(200, 'etag');
       await upload;
       expect(calls[1]?.url).toBe('/api/edgestore/complete-multipart-upload');
+    },
+  );
+
+  it.each([
+    '<Error><Code>InvalidRequest</Code><Message>RequestTimeout</Message></Error>',
+    '<Error><Code>RequestTimeout</Code>',
+    '<html><body>Bad request</body></html>',
+  ])(
+    'does not retry non-timeout or malformed HTTP 400 responses: %s',
+    async (body) => {
+      vi.useFakeTimers();
+      const { calls } = createFetchMock([
+        multipartResponse(),
+        jsonResponse({}),
+      ]);
+      const { assets } = createProxy();
+      const upload = assets.upload({ file: new File(['ab'], 'file') });
+      const rejected = expect(upload).rejects.toThrow('HTTP 400');
+      await waitForXhrs(1);
+      const request = MockXMLHttpRequest.instances[0]!;
+      request.responseXML = new DOMParser().parseFromString(
+        body,
+        'application/xml',
+      );
+      request.load(400);
+      await rejected;
+      expect(MockXMLHttpRequest.instances).toHaveLength(1);
+      expect(calls[1]?.url).toBe('/api/edgestore/abort-multipart-upload');
+      expect(vi.getTimerCount()).toBe(0);
     },
   );
 
