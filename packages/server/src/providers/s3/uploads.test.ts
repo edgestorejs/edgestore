@@ -367,6 +367,28 @@ describe('S3 backend and private files', () => {
     );
   });
 
+  it('returns a committed upload even if canceled during the metadata lookup', async () => {
+    const { provider, send } = setup();
+    const controller = new AbortController();
+    const lastModified = new Date();
+    send.mockImplementation(async (command, options) => {
+      if (command instanceof PutObjectCommand) {
+        controller.abort();
+        return {};
+      }
+      expect(options).toBeUndefined();
+      return { ContentLength: 3, LastModified: lastModified };
+    });
+
+    await expect(
+      provider.uploads.upload({
+        ...request({ size: 3 }),
+        source: new Blob(['abc']),
+        signal: controller.signal,
+      }),
+    ).resolves.toMatchObject({ file: { sizeBytes: 3 } });
+  });
+
   it('signs private reads from keys or URLs and rejects cross-bucket references', async () => {
     const { provider } = setup({ baseUrl: 'https://cdn.example/assets' });
     const result = await provider.files.getSignedUrls({

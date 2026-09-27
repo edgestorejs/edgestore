@@ -266,9 +266,9 @@ export function s3(options: S3ProviderOptions = {}) {
           signal: params.signal,
           onProgress: params.onProgress,
         });
+        // The object is committed, so finish describing it even if canceled.
         const { ContentLength, LastModified } = await client.send(
           new HeadObjectCommand({ Bucket: bucket(), Key: prepared.key }),
-          { abortSignal: params.signal },
         );
         if (ContentLength === undefined || !LastModified)
           throw new Error('File not found');
