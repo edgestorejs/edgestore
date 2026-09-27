@@ -3,7 +3,8 @@ import type {
   S3Client,
   S3ClientConfig,
 } from '@aws-sdk/client-s3';
-import type { MaybePromise, RequestUploadParams } from '@edgestore/shared';
+import type { MaybePromise } from '@edgestore/shared';
+import type { ObjectPathFn, ObjectPathFnArgs } from '../storage/objectKeys';
 
 export type S3ObjectOptions = Pick<
   PutObjectCommandInput,
@@ -16,19 +17,11 @@ export type S3ObjectOptions = Pick<
   | 'SSEKMSKeyId'
 >;
 
-// FileInfo type as received by the provider's requestUpload, part of RequestUploadParams
-type ProviderUploadedFileInfo = RequestUploadParams['fileInfo'];
+/** Arguments passed to the `path` callback. */
+export type S3PathFnArgs = ObjectPathFnArgs;
 
-export type S3PathFnArgs = {
-  /** Logical EdgeStore router bucket name. */
-  edgestoreBucketName: string;
-  /** File info after EdgeStore path and metadata generation. */
-  fileInfo: ProviderUploadedFileInfo;
-  /** Default object path relative to the logical bucket prefix. */
-  defaultPath: string;
-};
-
-export type S3PathFn = (args: S3PathFnArgs) => MaybePromise<string>;
+/** Returns an object path relative to the logical bucket prefix. */
+export type S3PathFn = ObjectPathFn;
 
 export type S3ProviderOptions = {
   /**
