@@ -1,5 +1,29 @@
 # @edgestore/server
 
+## 1.0.0-next.5
+
+### Major Changes
+
+- [#249](https://github.com/edgestorejs/edgestore/pull/249) [`a6456c6`](https://github.com/edgestorejs/edgestore/commit/a6456c6cfec8408f5becad0cf189d5abddcf4f95) Thanks [@raviships](https://github.com/raviships)! - Support automatic S3 multipart uploads with signed sessions scoped to one
+  object, backend uploads, private signed downloads, stable key references, and
+  configurable object settings (cache and download headers, metadata, tags,
+  storage class, and encryption). Browser uploads receive the exact headers S3
+  signs. Multipart sessions sign their first part URLs up front, refresh the rest
+  on demand, and last `multipart.sessionExpiresIn` (24 hours by default). Backend
+  multipart uploads send parts concurrently through the configured S3 client,
+  and file deletion uses batched `DeleteObjects` requests.
+
+  S3 declares `temporary` and `replaceTargetUrl` as unsupported, so the upload
+  types omit them and EdgeStore rejects them at runtime. Cookie-based access
+  control rules are rejected at initialization instead of being silently
+  ignored.
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @edgestore/sdk@1.0.0-next.5
+  - @edgestore/shared@1.0.0-next.5
+
 ## 1.0.0-next.4
 
 ### Minor Changes
