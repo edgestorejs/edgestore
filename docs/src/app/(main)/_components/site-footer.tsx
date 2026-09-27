@@ -6,8 +6,10 @@ import {
   X_URL,
   YOUTUBE_URL,
 } from '@/lib/constants';
+import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { Brand } from './site-header';
+import { siteContainer } from './styles';
 
 const groups = [
   {
@@ -44,11 +46,16 @@ const groups = [
 
 export function SiteFooter() {
   return (
-    <footer className="ya-footer">
-      <div className="ya-container ya-footer-grid">
-        <div className="ya-footer-brand">
+    <footer className="border-t border-site-line py-14 max-[601px]:py-10">
+      <div
+        className={cn(
+          siteContainer,
+          'grid grid-cols-[1.7fr_1fr_1fr_1fr] gap-10 max-[981px]:grid-cols-3 max-[601px]:gap-x-4 max-[601px]:gap-y-8',
+        )}
+      >
+        <div className="max-[981px]:col-span-full">
           <Brand />
-          <p>
+          <p className="my-5 text-sm/7 text-site-muted">
             Type-safe file uploads
             <br />
             for TypeScript and React.
@@ -56,11 +63,18 @@ export function SiteFooter() {
         </div>
         {groups.map((group) => (
           <nav aria-label={group.title} key={group.title}>
-            <h3>{group.title}</h3>
-            <ul>
+            <h3 className="mb-4 text-sm font-semibold tracking-[-0.025em]">
+              {group.title}
+            </h3>
+            <ul className="grid gap-3 text-[13px] text-site-muted max-[601px]:text-xs">
               {group.links.map(([label, href]) => (
                 <li key={label}>
-                  <Link href={href!}>{label}</Link>
+                  <Link
+                    className="no-underline hover:text-site-accent"
+                    href={href!}
+                  >
+                    {label}
+                  </Link>
                 </li>
               ))}
             </ul>
