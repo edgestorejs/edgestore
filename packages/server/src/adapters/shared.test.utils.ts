@@ -22,7 +22,7 @@ export function createProvider(
   const provider: AnyEdgeStoreProvider = {
     name: 'test-provider',
     baseUrl: 'https://files.example.com',
-    init: vi.fn(() => ({ token: 'provider-token' })),
+    init: vi.fn(() => ({})),
     reference: {
       schema: z.object({ url: z.string() }),
       fromUrl: (url) => ({ url }),
@@ -34,13 +34,9 @@ export function createProvider(
         thumbnailUrl: null,
       })),
       multipart: {
-        requestParts: vi.fn(() => ({
-          multipart: {
-            uploadId: 'upload-id',
-            parts: [],
-          },
-        })),
+        requestParts: vi.fn(() => ({ parts: [] })),
         complete: vi.fn(),
+        abort: vi.fn(),
       },
     },
     files: {

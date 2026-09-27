@@ -7,7 +7,7 @@ import {
   toNodeDispatchResponse,
   type CreateContextConfig,
 } from '../../dispatcher';
-import type { CookieConfig, HandlerEdgeStore } from '../../shared';
+import type { CookieConfig, HandlerRouter } from '../../shared';
 
 export type CreateContextOptions = {
   req: NextApiRequest;
@@ -15,7 +15,7 @@ export type CreateContextOptions = {
 };
 
 export type Config<TCtx extends AnyContext> = {
-  edgestore: HandlerEdgeStore<TCtx>;
+  router: HandlerRouter<TCtx>;
   logLevel?: LogLevel;
   cookieConfig?: CookieConfig;
 } & CreateContextConfig<TCtx, CreateContextOptions>;
@@ -39,18 +39,12 @@ export function createEdgeStoreNextHandler<TCtx extends AnyContext>(
 
     const url = new URL(req.url ?? '', 'http://edgestore.local');
     const response = await dispatchEdgeStoreRequest<TCtx>({
-      edgestore: config.edgestore,
+      router: config.router,
       logger: log,
       cookieConfig: config.cookieConfig,
       request: {
         pathname: url.pathname,
         readJson: async () => req.body,
-        getQuery: (name) => {
-          const value = req.query[name];
-          return typeof value === 'string'
-            ? value
-            : (url.searchParams.get(name) ?? undefined);
-        },
         cookieHeader: req.headers.cookie,
         cookies: req.cookies,
         createContext: () =>

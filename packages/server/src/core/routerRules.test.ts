@@ -1,6 +1,7 @@
-import { EdgeStoreError, initEdgeStore } from '@edgestore/shared';
+import { EdgeStoreError } from '@edgestore/shared';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
+import { initEdgeStore } from './router';
 import { buildPath, parsePath } from './routerRules';
 
 describe('router path rules', () => {

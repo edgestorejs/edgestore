@@ -3,11 +3,12 @@ title: EdgeStore
 description: Learn about the EdgeStore provider and its configuration options for customizing your EdgeStore integration.
 ---
 
-The hosted `edgestore()` provider uses EdgeStore API v2. Configure it together
-with your router, then pass that configured instance to the HTTP adapter.
+The hosted EdgeStore provider uses API v2 and is the default for `es.router()`.
+No provider configuration is needed when using environment credentials. Chain
+`.provider(edgestore(options))` to supply custom credentials or an API URL.
 
 ```ts
-import { createEdgeStore, initEdgeStore } from '@edgestore/server';
+import { initEdgeStore } from '@edgestore/server';
 import {
   createEdgeStoreNextHandler,
   type CreateContextOptions,
@@ -16,14 +17,13 @@ import {
 import { edgestore } from '@edgestore/server/providers/edgestore';
 import { z } from 'zod';
 
-const configuredEdgeStore = createEdgeStore({
-  router,
-  // [!code ++]
-  provider: edgestore(),
-});
+const es = initEdgeStore.context<Context>().create();
+const router = es.router({
+  publicFiles: es.fileBucket(),
+}).provider(edgestore());
 
 export default createEdgeStoreNextHandler<Context>({
-  edgestore: configuredEdgeStore,
+  router,
   createContext,
 });
 ```

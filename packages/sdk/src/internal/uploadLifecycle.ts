@@ -84,11 +84,14 @@ export async function executeUploadLifecycle<
         url: requested.upload.signedUrl,
         body: prepared.body,
         signal,
-      });
-      reportUploadProgress(onProgress, {
-        transferredBytes: totalBytes,
-        totalBytes,
-        phase: 'uploading',
+        onProgress: onProgress
+          ? (transferredBytes) =>
+              reportUploadProgress(onProgress, {
+                transferredBytes,
+                totalBytes,
+                phase: 'uploading',
+              })
+          : undefined,
       });
     } else {
       if (requested.upload.kind !== 'multipart' || !multipartPlan) {
