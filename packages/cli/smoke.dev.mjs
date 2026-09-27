@@ -50,6 +50,15 @@ console.log(`API: ${apiUrl}`);
 console.log(`Project: ${projectRef}`);
 console.log(`Run: ${runId}`);
 
+// Node dispatches signals only between event-loop turns, which never happen
+// during this synchronous run. Listening keeps SIGINT and SIGTERM from
+// terminating the runner before `finally` cleans up; an interrupted child
+// fails its step, and the recorded signal is read after one turn below.
+let interruption;
+for (const signal of ['SIGINT', 'SIGTERM']) {
+  process.on(signal, () => (interruption = signal));
+}
+
 try {
   smoke();
 } catch (error) {
@@ -59,11 +68,16 @@ try {
   rmSync(workDir, { recursive: true, force: true });
 }
 
-if (failure || cleanupFailures.length) {
-  if (failure) console.error(`\nSmoke test failed: ${failure.message}`);
-  for (const cleanupFailure of cleanupFailures) {
-    console.error(`Cleanup failed: ${cleanupFailure}`);
-  }
+await new Promise((resolve) => setImmediate(resolve));
+
+if (interruption) console.error(`\nSmoke test interrupted by ${interruption}.`);
+if (failure) console.error(`\nSmoke test failed: ${failure.message}`);
+for (const cleanupFailure of cleanupFailures) {
+  console.error(`Cleanup failed: ${cleanupFailure}`);
+}
+if (interruption) {
+  process.exitCode = interruption === 'SIGINT' ? 130 : 143;
+} else if (failure || cleanupFailures.length) {
   process.exitCode = 1;
 } else {
   console.log(`\nPASS: ${checks} checks completed; cleanup succeeded.`);
@@ -479,13 +493,18 @@ function developmentApiUrl(value) {
   if (url.protocol !== 'http:' && url.protocol !== 'https:') {
     configurationError('EDGESTORE_SMOKE_API_URL must use HTTP or HTTPS.');
   }
+  if (url.username || url.password) {
+    configurationError('EDGESTORE_SMOKE_API_URL must not contain credentials.');
+  }
   const hostname = url.hostname.toLowerCase().replace(/\.$/, '');
   if (!isDevelopmentHost(hostname)) {
     configurationError(
       `Refusing to run mutations against non-development API host ${hostname}.`,
     );
   }
-  return value;
+  // The CLI ignores the path, query, and fragment, so pass and log only the
+  // origin.
+  return url.origin;
 }
 
 function isDevelopmentHost(hostname) {
