@@ -1,8 +1,4 @@
-export {
-  initEdgeStore,
-  type ConfiguredRouter,
-  type RouterOptions,
-} from './core/router';
+export { initEdgeStore, type ConfiguredRouter } from './core/router';
 export {
   defineProvider,
   type EdgeStoreClient,

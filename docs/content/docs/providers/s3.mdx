@@ -139,16 +139,6 @@ The callback returns a path relative to the logical bucket and cannot escape
 that boundary. It also receives `edgestoreBucketName` and `fileInfo` when you
 need provider-specific naming logic.
 
-If you remove `_public`, you might also want to disable the development proxy
-in `createEdgeStoreProvider`.
-
-```ts
-const { EdgeStoreProvider, useEdgeStore } =
-  createEdgeStoreProvider<EdgeStoreRouter>({
-    disableDevProxy: true,
-  });
-```
-
 ## Using with Minio
 
 You can use the S3 provider with MinIO or other S3-compatible storage providers

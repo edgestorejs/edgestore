@@ -28,25 +28,15 @@ const router = es.router({
 }).provider(s3());
 ```
 
-`.provider()` returns a new router. It preserves bucket definitions and router
-options, while leaving existing routers, clients, and handlers bound to their
-original provider. The backend client exposes only methods supported by the
+`.provider()` returns a new router. It preserves bucket definitions, while
+leaving existing routers, clients, and handlers bound to their original
+provider. The backend client exposes only methods supported by the
 selected provider.
 
 The default hosted provider is initialized when handling requests or when
 `router.client` is first accessed. Defining a router or overriding its provider
 does not require hosted EdgeStore credentials. Each router reuses its provider
 and backend client after initialization.
-
-For protected file URLs in local development, pass the handler URL as a router
-option. This option is also preserved when chaining `.provider()`:
-
-```ts
-const router = es.router(
-  { privateFiles: es.fileBucket().accessControl('private') },
-  { baseUrl: 'http://localhost:3000/api/edgestore' },
-);
-```
 
 Keep the router object on the server; import only its type into frontend code.
 
@@ -264,9 +254,9 @@ const filesBucket = es
 Other available operators are: `eq`, `not`, `gt`, `gte`, `lt`, `lte`, `in`, `contains`
 
 <Callout>
-  The access control functionality uses third party cookies. Since third party cookies are not supported in localhost (without https), in development, all the protected files will be proxied through your app's api so that the cookies can be forwarded to the file request.
+  The access control functionality uses a partitioned cookie that EdgeStore sets on the file origin when the provider initializes. Protected files load directly from that origin, including in local development.
 
-Also, the `<Image />` component from `next/image` does not forward the cookies in the request, so protected images won't be displayed. You will need ot use the `<img />` tag instead.
+The `<Image />` component from `next/image` does not forward the cookies in the request, so protected images won't be displayed. You will need to use the `<img />` tag instead.
 
 </Callout>
 

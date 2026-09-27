@@ -35,7 +35,6 @@ describe('adapter dispatcher', () => {
         body?: unknown;
         cookieHeader?: string;
         createContext?: () => typeof testCtx;
-        query?: Record<string, string>;
       } = {},
     ) =>
       dispatchEdgeStoreRequest({
@@ -45,7 +44,6 @@ describe('adapter dispatcher', () => {
         request: {
           pathname,
           readJson: async () => options.body,
-          getQuery: (name) => options.query?.[name],
           cookieHeader: options.cookieHeader,
           createContext: options.createContext ?? (() => testCtx),
         },
@@ -223,13 +221,5 @@ describe('adapter dispatcher', () => {
       ctx: testCtx,
     });
     expect(secondLogger.debug).not.toHaveBeenCalled();
-  });
-
-  it('rejects proxy requests without a URL', async () => {
-    const { dispatch } = createDispatcher();
-
-    const response = await dispatch('/api/edgestore/proxy-file');
-
-    expect(response.status).toBe(400);
   });
 });

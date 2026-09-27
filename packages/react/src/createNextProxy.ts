@@ -89,12 +89,10 @@ export function createNextProxy<TRouter extends AnyRouter>({
   apiPath,
   uploadingCountRef,
   maxConcurrentUploads = 5,
-  disableDevProxy,
 }: {
   apiPath: string;
   uploadingCountRef: React.MutableRefObject<number>;
   maxConcurrentUploads?: number;
-  disableDevProxy?: boolean;
 }) {
   return new Proxy<BucketFunctions<TRouter>>({} as BucketFunctions<TRouter>, {
     get(_, prop) {
@@ -129,14 +127,10 @@ export function createNextProxy<TRouter extends AnyRouter>({
             }
 
             uploadingCountRef.current++;
-            const fileInfo = await uploadFile(
-              params,
-              {
-                bucketName: bucketName as string,
-                apiPath,
-              },
-              disableDevProxy,
-            );
+            const fileInfo = await uploadFile(params, {
+              bucketName: bucketName as string,
+              apiPath,
+            });
             return fileInfo;
           } finally {
             uploadingCountRef.current--;
@@ -199,7 +193,6 @@ async function uploadFile(
     apiPath: string;
     bucketName: string;
   },
-  disableDevProxy?: boolean,
 ) {
   try {
     onProgressChange?.(0);
@@ -261,10 +254,8 @@ async function uploadFile(
       throw new EdgeStoreClientError('An error occurred');
     }
     return {
-      url: getUrl(json.accessUrl, apiPath, disableDevProxy),
-      thumbnailUrl: json.thumbnailUrl
-        ? getUrl(json.thumbnailUrl, apiPath, disableDevProxy)
-        : null,
+      url: json.accessUrl,
+      thumbnailUrl: json.thumbnailUrl ?? null,
       ...mapSignedUploadAccess(json),
       size: json.size,
       uploadedAt: new Date(json.uploadedAt),
@@ -350,34 +341,6 @@ function mapSignedUploadAccess(res: SharedRequestUploadRes) {
     signedThumbnailUrl: res.accessSignedThumbnailUrl ?? null,
   };
 }
-/**
- * Protected files need third-party cookies to work.
- * Since third party cookies don't work on localhost,
- * we need to proxy the file through the server.
- */
-function getUrl(url: string, apiPath: string, disableDevProxy?: boolean) {
-  const mode =
-    typeof process !== 'undefined'
-      ? process.env.NODE_ENV
-      : // @ts-expect-error - DEV is injected by Vite
-        import.meta.env?.DEV
-        ? 'development'
-        : 'production';
-  if (
-    mode === 'development' &&
-    !url.includes('/_public/') &&
-    !disableDevProxy
-  ) {
-    const proxyUrl = new URL(window.location.origin);
-    proxyUrl.pathname = `${apiPath}/proxy-file`;
-    proxyUrl.search = new URLSearchParams({
-      url,
-    }).toString();
-    return proxyUrl.toString();
-  }
-  return url;
-}
-
 async function uploadFileInner(props: {
   file: File | Blob;
   uploadUrl: string;

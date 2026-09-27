@@ -78,21 +78,4 @@ describe('configured routers', () => {
       expect(provider.files.get).toHaveBeenCalledTimes(1);
     }
   });
-
-  it('preserves development proxy options across provider overrides', async () => {
-    vi.stubEnv('NODE_ENV', 'development');
-    const options = { baseUrl: 'http://localhost:3000/api/edgestore' };
-    const router = es.router({ files: es.fileBucket() }, options);
-    options.baseUrl = 'http://different.example/api/edgestore';
-    const configured = router
-      .provider(createConformanceProvider())
-      .provider(createConformanceProvider());
-    const url = 'https://files.example.com/protected/file';
-
-    const file = await configured.client.files.get({ url });
-
-    expect(file.url).toBe(
-      `http://localhost:3000/api/edgestore/proxy-file?${new URLSearchParams({ url })}`,
-    );
-  });
 });

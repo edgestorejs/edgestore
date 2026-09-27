@@ -32,7 +32,6 @@ export function createEdgeStoreRemixHandler<TCtx extends AnyContext>(
       request: {
         pathname: url.pathname,
         readJson: () => req.json(),
-        getQuery: (name) => url.searchParams.get(name) ?? undefined,
         cookieHeader: req.headers.get('cookie') ?? undefined,
         createContext: () =>
           resolveContext<TCtx, CreateContextOptions>(config, {

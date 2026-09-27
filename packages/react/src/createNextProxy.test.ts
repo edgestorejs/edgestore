@@ -118,14 +118,12 @@ function uploadResponse(overrides: Partial<Record<string, unknown>> = {}) {
 function createProxy(opts?: {
   uploadingCount?: number;
   maxConcurrentUploads?: number;
-  disableDevProxy?: boolean;
 }) {
   const uploadingCountRef = { current: opts?.uploadingCount ?? 0 };
   const edgestore = createNextProxy<any>({
     apiPath: '/api/edgestore',
     uploadingCountRef,
     maxConcurrentUploads: opts?.maxConcurrentUploads,
-    disableDevProxy: opts?.disableDevProxy,
   });
   return { assets: edgestore.assets!, edgestore, uploadingCountRef };
 }
@@ -413,51 +411,19 @@ describe('createNextProxy upload', () => {
     expect(progress).toHaveBeenCalledWith(100);
   });
 
-  it('rewrites protected URLs in development, but not public URLs or disabled proxies', async () => {
+  it('returns protected URLs unchanged in development', async () => {
     vi.stubEnv('NODE_ENV', 'development');
-    const cases = [
-      {
-        response: uploadResponse({
-          accessUrl: 'https://files.example/protected/file.txt',
-        }),
-        disableDevProxy: false,
-        expected:
-          'http://localhost/api/edgestore/proxy-file?url=https%3A%2F%2Ffiles.example%2Fprotected%2Ffile.txt',
-      },
-      {
-        response: uploadResponse({
-          accessUrl: 'https://files.example/_public/file.txt',
-        }),
-        disableDevProxy: false,
-        expected: 'https://files.example/_public/file.txt',
-      },
-      {
-        response: uploadResponse({
-          accessUrl: 'https://files.example/protected/file.txt',
-        }),
-        disableDevProxy: true,
-        expected: 'https://files.example/protected/file.txt',
-      },
-    ];
+    const accessUrl = 'https://files.example/protected/file.txt';
+    createFetchMock([jsonResponse(uploadResponse({ accessUrl }))]);
+    const { assets } = createProxy();
+    const upload = assets.upload({
+      file: new File(['hello'], 'hello.txt'),
+    });
 
-    for (const testCase of cases) {
-      createFetchMock([jsonResponse(testCase.response)]);
-      const { assets } = createProxy({
-        disableDevProxy: testCase.disableDevProxy,
-      });
-      const upload = assets.upload({
-        file: new File(['hello'], 'hello.txt'),
-      });
+    await waitForXhrs(1);
+    MockXMLHttpRequest.instances[0]!.load();
 
-      await waitForXhrs(MockXMLHttpRequest.instances.length + 1);
-      MockXMLHttpRequest.instances.at(-1)!.load();
-
-      await expect(upload).resolves.toMatchObject({
-        url: testCase.expected,
-      });
-      vi.unstubAllGlobals();
-      vi.stubGlobal('XMLHttpRequest', MockXMLHttpRequest);
-    }
+    await expect(upload).resolves.toMatchObject({ url: accessUrl });
   });
 });
 

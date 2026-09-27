@@ -379,16 +379,12 @@ type BackendClient<
 export function createBackendClient<
   TRouter extends AnyRouter,
   TProvider extends AnyBackendProvider,
->(
-  router: TRouter,
-  provider: TProvider,
-  baseUrl?: string,
-): BackendClient<TRouter, TProvider> {
+>(router: TRouter, provider: TProvider): BackendClient<TRouter, TProvider> {
   const bucketNames = Object.keys(router.buckets) as (keyof TRouter['buckets'] &
     string)[];
   const entries = bucketNames.map((bucketName) => [
     bucketName,
-    createBucketClient(router, bucketName, { provider, baseUrl }),
+    createBucketClient(router, bucketName, { provider }),
   ]);
 
   return Object.fromEntries(entries) as BackendClient<TRouter, TProvider>;
