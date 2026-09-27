@@ -92,12 +92,9 @@ uploads: {
 }
 ```
 
-The configured router carries these flags into browser and backend upload types.
-Explicit `false` flags reject the corresponding options, including options
-passed through variables. Omitted flags preserve the existing option types.
-Providers must still validate requests at runtime: type declarations do not
-validate JavaScript clients or HTTP requests. Declare these flags through
-`defineProvider` so their literal values are preserved.
+Set a flag to `false` to reject that option in browser and backend upload types.
+Omitted flags leave the option available. Providers must also reject unsupported
+options at runtime.
 
 ## Complete provider
 
