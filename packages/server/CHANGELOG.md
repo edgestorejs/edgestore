@@ -1,5 +1,61 @@
 # @edgestore/server
 
+## 1.0.0-next.5
+
+### Major Changes
+
+- [#249](https://github.com/edgestorejs/edgestore/pull/249) [`a6456c6`](https://github.com/edgestorejs/edgestore/commit/a6456c6cfec8408f5becad0cf189d5abddcf4f95) Thanks [@raviships](https://github.com/raviships)! - Support automatic S3 multipart uploads with signed sessions scoped to one
+  object, backend uploads, private signed downloads, stable key references, and
+  configurable object settings (cache and download headers, metadata, tags,
+  storage class, and encryption). Browser uploads receive the exact headers S3
+  signs. Multipart sessions sign their first part URLs up front, refresh the rest
+  on demand, and last `multipart.sessionExpiresIn` (24 hours by default). Backend
+  multipart uploads send parts concurrently through the configured S3 client,
+  and file deletion uses batched `DeleteObjects` requests.
+
+  S3 declares `temporary` and `replaceTargetUrl` as unsupported, so the upload
+  types omit them and EdgeStore rejects them at runtime. Cookie-based access
+  control rules are rejected at initialization instead of being silently
+  ignored.
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @edgestore/sdk@1.0.0-next.5
+  - @edgestore/shared@1.0.0-next.5
+
+## 1.0.0-next.4
+
+### Minor Changes
+
+- [#248](https://github.com/edgestorejs/edgestore/pull/248) [`7061756`](https://github.com/edgestorejs/edgestore/commit/7061756406e16388663c445ab6fc1472b72bf5e2) Thanks [@raviships](https://github.com/raviships)! - Add coding-agent setup for Codex, Claude Code, and Cursor, including skill
+  installation and updates, hosted MCP configuration, application context, and
+  offline diagnostics. Automated provisioning delivers credentials to protected
+  files instead of returning secrets in structured output.
+
+  Bundle version-matched Markdown API references with the server, React, and SDK
+  packages so agents can use documentation for the application's installed versions.
+
+- [#237](https://github.com/edgestorejs/edgestore/pull/237) [`9dfc9fe`](https://github.com/edgestorejs/edgestore/commit/9dfc9fe8cea705a03d51d8a0fec39f3fb6189467) Thanks [@raviships](https://github.com/raviships)! - Discover project file origins from the service and initialize protected access on both project and preserved legacy hosts. Existing service responses and explicit development base URL overrides remain supported. Upload calls and file references are unchanged.
+
+  Allow management project creation to opt into project subdomains with `useProjectDomain: true`. Omitting the option preserves shared-domain compatibility with older packages.
+
+### Patch Changes
+
+- [#237](https://github.com/edgestorejs/edgestore/pull/237) [`cee2e96`](https://github.com/edgestorejs/edgestore/commit/cee2e961d404959fb7adfddaa9c0ab74dbd7f88e) Thanks [@raviships](https://github.com/raviships)! - Allow the EdgeStore provider to pass router bucket settings to managed uploads, so the first backend upload can create a bucket with the correct visibility.
+
+- Updated dependencies [[`7061756`](https://github.com/edgestorejs/edgestore/commit/7061756406e16388663c445ab6fc1472b72bf5e2), [`cd209e0`](https://github.com/edgestorejs/edgestore/commit/cd209e0036bad76bf8c59f8e19f9c468ef947de7), [`9dfc9fe`](https://github.com/edgestorejs/edgestore/commit/9dfc9fe8cea705a03d51d8a0fec39f3fb6189467), [`cee2e96`](https://github.com/edgestorejs/edgestore/commit/cee2e961d404959fb7adfddaa9c0ab74dbd7f88e)]:
+  - @edgestore/sdk@1.0.0-next.4
+  - @edgestore/shared@1.0.0-next.4
+
+## 1.0.0-next.3
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @edgestore/sdk@1.0.0-next.3
+  - @edgestore/shared@1.0.0-next.3
+
 ## 1.0.0-next.2
 
 ### Major Changes

@@ -27,6 +27,52 @@ function toRequest(input: URL | RequestInfo, init?: RequestInit) {
 }
 
 describe('runtime upload orchestration', () => {
+  it.each(['public', 'protected'] as const)(
+    'creates a new bucket from explicit %s settings without requiring a bucket lookup',
+    async (visibility) => {
+      const fetch = vi.fn<typeof globalThis.fetch>(async (input, init) => {
+        const request = toRequest(input, init);
+        if (request.url.endsWith('/buckets/newFiles/uploads')) {
+          await expect(request.json()).resolves.toMatchObject({
+            bucketType: 'file',
+            visibility,
+            sizeBytes: 7,
+          });
+          return Response.json({
+            data: {
+              file: { id: 'new-upload' },
+              upload: {
+                kind: 'single',
+                id: 'new-upload',
+                signedUrl: 'https://storage.example/new-upload',
+              },
+            },
+          });
+        }
+        if (request.url === 'https://storage.example/new-upload') {
+          expect(request.method).toBe('PUT');
+          return new Response(null, { status: 200 });
+        }
+        if (request.url.endsWith('/uploads/new-upload')) {
+          return Response.json({
+            data: {
+              upload: { id: 'new-upload', status: 'completed' },
+              file: { id: 'new-file', url: 'https://files.example/new-file' },
+            },
+          });
+        }
+        throw new Error(`Unexpected request: ${request.method} ${request.url}`);
+      });
+      const result = await createSdk(fetch).runtime.uploads.upload({
+        bucket: 'newFiles',
+        bucketConfig: { type: 'file', visibility },
+        source: 'content',
+      });
+      expect(result.file.id).toBe('new-file');
+      expect(fetch).toHaveBeenCalledTimes(3);
+    },
+  );
+
   it('uploads a single file, normalizes metadata, and waits for processing', async () => {
     const progress = vi.fn();
     const fetch = vi.fn<typeof globalThis.fetch>(async (input, init) => {

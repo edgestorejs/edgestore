@@ -5,6 +5,26 @@ import type {
   ProviderFileMutationResult,
 } from './providerTypes';
 
+/** The provider carried by a configured router. */
+export type RouterProvider<TRouter> = TRouter extends {
+  readonly _def: { readonly provider: infer TProvider };
+}
+  ? TProvider
+  : unknown;
+
+/** Removes upload options that the provider declares as unsupported. */
+export type ProviderUploadOptions<TOptions, TProvider> = TProvider extends {
+  uploads: { supportedOptions: infer TSupported };
+}
+  ? {
+      [K in keyof TOptions]: K extends keyof TSupported
+        ? TSupported[K] extends false
+          ? never
+          : TOptions[K]
+        : TOptions[K];
+    }
+  : TOptions;
+
 export type ProviderCapabilityName =
   | 'upload'
   | 'get'
