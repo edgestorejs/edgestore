@@ -6,6 +6,7 @@ import EdgeStoreClientError from './libs/errors/EdgeStoreClientError';
 import { handleError } from './libs/errors/handleError';
 import { UploadAbortedError } from './libs/errors/uploadAbortedError';
 import {
+  isRetryableStatus,
   putBlob,
   RejectedUploadUrlError,
   RetryableUploadError,
@@ -110,11 +111,10 @@ export async function multipartUpload({
 
   try {
     const parts = await runWorkers(totalParts, controller, uploadPart);
-    await postJson(
-      `${apiPath}/complete-multipart-upload`,
-      { ...session, parts },
-      controller.signal,
-    );
+    await postJson(`${apiPath}/complete-multipart-upload`, {
+      body: { ...session, parts },
+      signal: controller.signal,
+    });
   } catch (error) {
     await abortSession(apiPath, session);
     throw signal?.aborted
@@ -146,11 +146,11 @@ function createPartUrls({
   );
 
   const requestBatch = (partNumbers: number[]) => {
-    const batch = postJson(
-      `${apiPath}/request-upload-parts`,
-      { ...session, parts: partNumbers },
+    const batch = postJson(`${apiPath}/request-upload-parts`, {
+      body: { ...session, parts: partNumbers },
       signal,
-    )
+      retryTransientErrors: true,
+    })
       .then((res) => res.json() as Promise<SharedRequestUploadPartsRes>)
       .then(
         (res) =>
@@ -227,11 +227,10 @@ async function abortSession(apiPath: string, session: MultipartSession) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), CLEANUP_TIMEOUT_MS);
   try {
-    await postJson(
-      `${apiPath}/abort-multipart-upload`,
-      session,
-      controller.signal,
-    );
+    await postJson(`${apiPath}/abort-multipart-upload`, {
+      body: session,
+      signal: controller.signal,
+    });
   } catch {
     // Best effort: the original failure is more useful to the caller.
   } finally {
@@ -239,7 +238,18 @@ async function abortSession(apiPath: string, session: MultipartSession) {
   }
 }
 
-async function postJson(url: string, body: unknown, signal: AbortSignal) {
+/**
+ * POSTs to the EdgeStore API. With `retryTransientErrors`, throttling and
+ * server errors become `RetryableUploadError`s for the part retry loop.
+ */
+async function postJson(
+  url: string,
+  {
+    body,
+    signal,
+    retryTransientErrors = false,
+  }: { body: unknown; signal: AbortSignal; retryTransientErrors?: boolean },
+) {
   let res: Response;
   try {
     res = await fetch(url, {
@@ -254,6 +264,9 @@ async function postJson(url: string, body: unknown, signal: AbortSignal) {
     throw new RetryableUploadError(
       error instanceof Error ? error.message : 'Network request failed',
     );
+  }
+  if (!res.ok && retryTransientErrors && isRetryableStatus(res.status)) {
+    throw new RetryableUploadError(`Request failed (HTTP ${res.status})`);
   }
   if (!res.ok) await handleError(res);
   return res;
