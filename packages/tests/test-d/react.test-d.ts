@@ -1,6 +1,7 @@
 import { createEdgeStoreProvider } from '@edgestore/react';
 import { defineProvider, initEdgeStore } from '@edgestore/server';
 import { edgestore } from '@edgestore/server/providers/edgestore';
+import { s3 } from '@edgestore/server/providers/s3';
 import { expectAssignable, expectNotAssignable, expectType } from 'tsd';
 import { z } from 'zod';
 
@@ -74,4 +75,14 @@ expectNotAssignable<KeyOnlyUploadParams>({
 expectNotAssignable<KeyOnlyUploadParams>({
   file: {} as File,
   options: { replaceTargetUrl: 'https://files.example/a' },
+});
+
+const s3Router = router.provider(s3());
+const s3Store = createEdgeStoreProvider<typeof s3Router>();
+type S3UploadParams = Parameters<
+  ReturnType<typeof s3Store.useEdgeStore>['edgestore']['files']['upload']
+>[0];
+expectNotAssignable<S3UploadParams>({
+  file: {} as File,
+  options: { temporary: true },
 });

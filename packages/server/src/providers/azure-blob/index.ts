@@ -183,6 +183,7 @@ export function azureBlob(options?: AzureBlobProviderOptions) {
       return {};
     },
     uploads: {
+      supportedOptions: { temporary: false, replaceTargetUrl: false },
       async request(params) {
         const blobName = getBlobName(params);
         const uploadAccess = createSignedBlobUrl({

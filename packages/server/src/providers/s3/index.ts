@@ -186,6 +186,7 @@ export function s3(options?: S3ProviderOptions) {
       return {};
     },
     uploads: {
+      supportedOptions: { temporary: false, replaceTargetUrl: false },
       async request(params: RequestUploadParams) {
         const { bucketName: esBucketName, fileInfo } = params;
 

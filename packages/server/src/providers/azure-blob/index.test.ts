@@ -89,6 +89,19 @@ describe('azureBlob', () => {
     }));
   });
 
+  it('declares temporary and replacement uploads as unsupported', () => {
+    const provider = azureBlob({
+      storageAccountName: 'storageacct',
+      storageAccountKey: 'account-key',
+      containerName: 'documents',
+    });
+
+    expect(provider.uploads.supportedOptions).toEqual({
+      temporary: false,
+      replaceTargetUrl: false,
+    });
+  });
+
   it('constructs a base URL from the storage account', () => {
     const provider = azureBlob({
       storageAccountName: 'storageacct',
