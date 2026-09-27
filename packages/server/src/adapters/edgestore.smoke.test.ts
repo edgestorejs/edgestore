@@ -120,15 +120,7 @@ describe('EdgeStore adapter live smoke test', () => {
       await expectOk(initRes);
 
       const cookie = getCookieHeader(initRes);
-      const initJson = (await initRes.json()) as {
-        baseUrl?: string;
-        providerName?: string;
-      };
-
-      expect(initJson).toMatchObject({
-        baseUrl: expect.any(String),
-        providerName: expect.any(String),
-      });
+      expect(await initRes.json()).toEqual({});
       expect(cookie).toContain('edgestore-ctx=');
 
       const fileBody = new Blob([SMOKE_CONTENT], {

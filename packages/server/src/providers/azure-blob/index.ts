@@ -174,7 +174,6 @@ export function azureBlob(options?: AzureBlobProviderOptions) {
 
   return defineProvider({
     name: 'azure-blob',
-    baseUrl,
     reference: {
       schema: z.object({ url: z.string() }),
       fromUrl: (url) => ({ url }),

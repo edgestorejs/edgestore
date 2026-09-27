@@ -16,7 +16,6 @@ import { EncryptJWT, jwtDecrypt } from 'jose';
 import { z } from 'zod';
 import {
   assertSupportedUploadOptions,
-  getProviderBaseUrl,
   referenceFromUrl,
 } from '../core/provider';
 import { buildPath, parseBucketInput, parsePath } from '../core/routerRules';
@@ -132,7 +131,7 @@ export async function init<TCtx extends AnyContext>(params: {
   const resolvedCookieConfig = getCookieConfig(cookieConfig);
 
   const ctxToken = await encryptJWT(ctx);
-  const initRes = await provider.init({ ctx, router });
+  const { clientInit } = await provider.init({ ctx, router });
   const newCookies = [
     stringifySetCookie({
       name: resolvedCookieConfig.ctx.name,
@@ -140,22 +139,10 @@ export async function init<TCtx extends AnyContext>(params: {
       ...resolvedCookieConfig.ctx.options,
     }),
   ];
-  const baseUrl = initRes.baseUrl ?? (await getProviderBaseUrl(provider));
 
-  logger.debug('Finished [init]', {
-    ctx,
-    newCookies,
-    baseUrl,
-    providerName: provider.name,
-    clientInit: initRes.clientInit,
-  });
+  logger.debug('Finished [init]', { ctx, newCookies, clientInit });
 
-  return {
-    newCookies,
-    baseUrl,
-    providerName: provider.name,
-    clientInit: initRes.clientInit,
-  };
+  return { newCookies, clientInit };
 }
 
 const nonEmptyStringSchema = z.string().min(1);

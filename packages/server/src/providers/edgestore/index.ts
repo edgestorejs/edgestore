@@ -68,12 +68,10 @@ export type EdgeStoreProviderOptions = EdgeStoreProviderCommonOptions &
   (EdgeStoreProjectProviderOptions | EdgeStoreBearerProviderOptions);
 
 export function edgestore(options?: EdgeStoreProviderOptions) {
-  const baseUrl = getEnv('EDGE_STORE_BASE_URL') ?? DEFAULT_BASE_URL;
   const runtime = createProviderRuntime(options);
 
   const provider = defineProvider({
     name: 'edgestore',
-    baseUrl,
     reference: {
       schema: fileReferenceSchema,
       fromUrl: (url) => ({ url }),
@@ -114,10 +112,13 @@ export function edgestore(options?: EdgeStoreProviderOptions) {
       });
       const overrideBaseUrl = getEnv('EDGE_STORE_BASE_URL');
       return {
-        baseUrl: overrideBaseUrl ?? delivery?.baseUrl ?? baseUrl,
         clientInit: {
-          ...(delivery && !overrideBaseUrl ? { urls: delivery.initUrls } : {}),
-          path: '/_init',
+          urls:
+            delivery && !overrideBaseUrl
+              ? delivery.initUrls
+              : [
+                  `${(overrideBaseUrl ?? DEFAULT_BASE_URL).replace(/\/+$/, '')}/_init`,
+                ],
           headers: {
             'x-edgestore-token': token,
           },
@@ -342,16 +343,8 @@ function resolveProviderAuthentication(
     );
   }
 
-  const accessKey =
-    configuredAccessKey ??
-    getEnv('EDGE_STORE_ACCESS_KEY') ??
-    // @ts-expect-error - In Vite/Astro, the env variables are available on `import.meta`.
-    import.meta.env?.EDGE_STORE_ACCESS_KEY;
-  const secretKey =
-    configuredSecretKey ??
-    getEnv('EDGE_STORE_SECRET_KEY') ??
-    // @ts-expect-error - In Vite/Astro, the env variables are available on `import.meta`.
-    import.meta.env?.EDGE_STORE_SECRET_KEY;
+  const accessKey = configuredAccessKey ?? getEnv('EDGE_STORE_ACCESS_KEY');
+  const secretKey = configuredSecretKey ?? getEnv('EDGE_STORE_SECRET_KEY');
 
   if (
     typeof accessKey !== 'string' ||

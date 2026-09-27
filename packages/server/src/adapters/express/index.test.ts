@@ -111,10 +111,7 @@ describe('Express adapter conformance', () => {
     expect(provider.init).toHaveBeenCalledWith(
       expect.objectContaining({ ctx: testCtx }),
     );
-    expect(res.body).toMatchObject({
-      baseUrl: 'https://files.example.com',
-      providerName: 'test-provider',
-    });
+    expect(res.body).toEqual({});
     expect(extractCookieValue(res.headers['Set-Cookie'])).toBeTruthy();
   });
 

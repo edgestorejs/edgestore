@@ -312,7 +312,6 @@ describe('s3', () => {
 
     const result = await provider.uploads.request(uploadParams());
 
-    expect(provider.baseUrl).toBe('https://cdn.example.com/assets');
     expect(result.accessUrl).toBe(
       'https://cdn.example.com/assets/documents/generated-uuid.txt',
     );
@@ -408,13 +407,17 @@ describe('s3', () => {
     },
   );
 
-  it('uses endpoint-derived baseUrl when no custom baseUrl is provided', () => {
+  it('uses endpoint-derived baseUrl when no custom baseUrl is provided', async () => {
     const provider = s3({
       bucketName: 'storage-bucket',
       endpoint: 'http://localhost:9000',
     });
 
-    expect(provider.baseUrl).toBe('http://localhost:9000/storage-bucket');
+    const result = await provider.uploads.request(uploadParams());
+
+    expect(result.accessUrl).toBe(
+      'http://localhost:9000/storage-bucket/documents/generated-uuid.txt',
+    );
   });
 
   it('maps access URLs back to S3 keys on delete', async () => {

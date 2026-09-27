@@ -25,7 +25,6 @@ const backend = {
 
 const provider = defineProvider({
   name: 'test',
-  baseUrl: 'https://files.example.com',
   init: vi.fn(),
   reference: {
     schema: z.union([

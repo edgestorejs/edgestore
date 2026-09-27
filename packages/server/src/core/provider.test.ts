@@ -10,7 +10,6 @@ import {
 function createProvider() {
   return defineProvider({
     name: 'custom',
-    baseUrl: 'https://files.example.com',
     init: async () => ({}),
     reference: {
       schema: z
@@ -51,7 +50,6 @@ function createBucketScopedProvider() {
 
   return defineProvider({
     name: 'bucket-scoped',
-    baseUrl: 'https://files.example.com',
     init: async () => ({}),
     reference: {
       schema: z.object({

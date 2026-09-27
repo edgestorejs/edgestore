@@ -11,16 +11,14 @@ export type InitParams<TCtx extends AnyContext = AnyContext> = {
   router: EdgeStoreRouter<TCtx>;
 };
 
+/** Requests the browser sends to file origins before loading protected files. */
 export type ClientInit = {
-  /** Absolute initialization URLs for active file aliases. Falls back to baseUrl + path. */
-  urls?: string[];
-  path: string;
+  /** Absolute initialization URLs, one per file origin. */
+  urls: string[];
   headers?: Record<string, string>;
 };
 
 export type InitRes = {
-  /** Delivery origin discovered during initialization. */
-  baseUrl?: string;
   clientInit?: ClientInit;
 };
 
@@ -356,7 +354,6 @@ export type EdgeStoreProvider<
   > = ProviderFiles<StandardSchemaV1.InferOutput<TReferenceSchema>, TCursor>,
 > = {
   name: string;
-  baseUrl: string | (() => MaybePromise<string>);
   init: <TCtx extends AnyContext>(
     params: InitParams<TCtx>,
   ) => MaybePromise<InitRes>;

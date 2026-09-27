@@ -127,7 +127,6 @@ expectError(s3PrivateClient.documents.restore);
 
 const syntheticProvider = defineProvider({
   name: 'synthetic',
-  baseUrl: 'https://s3.example',
   init: async () => ({}),
   reference: {
     schema: z.object({ objectKey: z.string() }),

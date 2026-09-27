@@ -138,9 +138,6 @@ describe('init', () => {
       ctx: {},
       router,
     });
-    expect(res).toMatchObject({
-      providerName: 's3',
-    });
     expect(res.clientInit).toBeUndefined();
     expect(
       res.newCookies.some((value) => value.startsWith('edgestore-ctx=')),
@@ -173,9 +170,6 @@ describe('init', () => {
       ctx: {},
       router,
     });
-    expect(res).toMatchObject({
-      providerName: 'azure-blob',
-    });
     expect(res.clientInit).toBeUndefined();
   });
 
@@ -200,9 +194,6 @@ describe('init', () => {
     });
 
     expect(provider.init).toHaveBeenCalledWith({ ctx: {}, router });
-    expect(res).toMatchObject({
-      providerName: 'edgestore',
-    });
     expect(res.clientInit).toBeUndefined();
     expect(
       res.newCookies.some((value) => value.startsWith('edgestore-ctx=')),
@@ -213,9 +204,8 @@ describe('init', () => {
     const provider = createProvider({
       name: 'custom-provider',
       init: vi.fn(() => ({
-        baseUrl: 'https://discovered.example.test',
         clientInit: {
-          path: '/_init',
+          urls: ['https://discovered.example.test/_init'],
           headers: { 'x-provider-token': 'provider-token' },
         },
       })),
@@ -240,13 +230,9 @@ describe('init', () => {
       ctx: { userId: 'user-1' },
       router,
     });
-    expect(res).toMatchObject({
-      providerName: 'custom-provider',
-      baseUrl: 'https://discovered.example.test',
-      clientInit: {
-        path: '/_init',
-        headers: { 'x-provider-token': 'provider-token' },
-      },
+    expect(res.clientInit).toEqual({
+      urls: ['https://discovered.example.test/_init'],
+      headers: { 'x-provider-token': 'provider-token' },
     });
     // The token reaches the file origin only through clientInit headers.
     expect(res.newCookies).toEqual([expect.stringMatching(/^edgestore-ctx=/)]);
@@ -271,9 +257,6 @@ describe('init', () => {
     expect(provider.init).toHaveBeenCalledWith({
       ctx: {},
       router,
-    });
-    expect(res).toMatchObject({
-      providerName: 'custom-provider',
     });
     expect(res.clientInit).toBeUndefined();
   });

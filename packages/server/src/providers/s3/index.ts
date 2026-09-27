@@ -195,7 +195,6 @@ export function s3(options: S3ProviderOptions = {}) {
 
   return defineProvider({
     name: 's3',
-    baseUrl,
     reference: {
       schema: z.union([
         z.object({ key: z.string().min(1) }),

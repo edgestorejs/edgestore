@@ -59,10 +59,7 @@ describe('Hono adapter conformance', () => {
     expect(provider.init).toHaveBeenCalledWith(
       expect.objectContaining({ ctx: testCtx }),
     );
-    await expect(res.json()).resolves.toMatchObject({
-      baseUrl: 'https://files.example.com',
-      providerName: 'test-provider',
-    });
+    await expect(res.json()).resolves.toEqual({});
     expect(extractCookieValue(res.headers.get('set-cookie'))).toBeTruthy();
   });
 
