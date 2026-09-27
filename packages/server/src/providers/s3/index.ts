@@ -1,5 +1,5 @@
 import {
-  DeleteObjectCommand,
+  DeleteObjectsCommand,
   GetObjectCommand,
   HeadObjectCommand,
   PutObjectCommand,
@@ -9,7 +9,6 @@ import {
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { planMultipartUpload } from '@edgestore/sdk';
 import {
-  EdgeStoreError,
   type RequestUploadParams,
   type RequestUploadRes,
 } from '@edgestore/shared';
@@ -101,7 +100,8 @@ export function s3(options: S3ProviderOptions = {}) {
   const multipart = createMultipartUploads({
     client,
     bucket,
-    expiresIn: uploadExpiresIn,
+    partUrlExpiresIn: uploadExpiresIn,
+    sessionExpiresIn: expiration(options.multipart?.sessionExpiresIn ?? 86400),
     audience: `edgestore:s3:${endpoint ?? region ?? 'aws'}:${bucketName}`,
     secret: () =>
       options.jwtSecret ??
@@ -114,13 +114,6 @@ export function s3(options: S3ProviderOptions = {}) {
     fileInfo,
   }: RequestUploadParams) {
     const physicalBucket = bucket();
-    if (fileInfo.temporary || fileInfo.replaceTargetUrl) {
-      throw new EdgeStoreError({
-        code: 'BAD_REQUEST',
-        message:
-          'S3 does not support temporary uploads or replaceTargetUrl. Use unique keys and manage file cleanup in your application.',
-      });
-    }
     const objectKeys = await keys();
     const extension = fileInfo.extension
       ? `.${fileInfo.extension.replace(/^\./, '')}`
@@ -168,6 +161,21 @@ export function s3(options: S3ProviderOptions = {}) {
       expiresIn: ttl,
     };
   }
+  // Presigned browser uploads must not sign a checksum of the empty body.
+  let presignable: Promise<void> | undefined;
+  function assertPresignableClient() {
+    return (presignable ??= (async () => {
+      const policy = options.client
+        ? await client.config.requestChecksumCalculation?.()
+        : undefined;
+      if (policy && policy !== 'WHEN_REQUIRED') {
+        throw new Error(
+          'An injected S3 client must use requestChecksumCalculation: "WHEN_REQUIRED" for browser uploads.',
+        );
+      }
+    })());
+  }
+
   async function readForUpload(key: string, params: RequestUploadParams) {
     if (params.fileInfo.isPublic || !params.autoSignedUrls) return undefined;
     return signedRead(key, params.autoSignedUrls.expiresIn);
@@ -175,7 +183,6 @@ export function s3(options: S3ProviderOptions = {}) {
 
   return defineProvider({
     name: 's3',
-    disableDevProxy: true,
     baseUrl,
     reference: {
       schema: z.union([
@@ -201,14 +208,7 @@ export function s3(options: S3ProviderOptions = {}) {
     uploads: {
       supportedOptions: { temporary: false, replaceTargetUrl: false },
       async request(params): Promise<RequestUploadRes> {
-        const checksumPolicy = options.client
-          ? await client.config.requestChecksumCalculation?.()
-          : undefined;
-        if (checksumPolicy && checksumPolicy !== 'WHEN_REQUIRED') {
-          throw new Error(
-            'An injected S3 client must use requestChecksumCalculation: "WHEN_REQUIRED" for browser uploads.',
-          );
-        }
+        await assertPresignableClient();
         const prepared = await prepare(params);
         const read = await readForUpload(prepared.key, params);
         const access = {
@@ -311,28 +311,45 @@ export function s3(options: S3ProviderOptions = {}) {
         );
       },
       async delete({ bucketName: logicalBucket, files }) {
-        bucket();
+        const physicalBucket = bucket();
         const objectKeys = await keys();
         const paths = files.map((file) =>
           objectKeys.fromReference(logicalBucket, file),
         );
         const results = [];
-        // Bounded requests avoid flooding the S3 client for large batches.
-        for (const key of paths) {
+        // DeleteObjects accepts up to 1,000 keys per request.
+        for (let start = 0; start < paths.length; start += 1000) {
+          const batch = paths.slice(start, start + 1000);
+          const errors = new Map<string, string>();
           try {
-            await client.send(
-              new DeleteObjectCommand({ Bucket: bucket(), Key: key }),
+            const { Errors } = await client.send(
+              new DeleteObjectsCommand({
+                Bucket: physicalBucket,
+                Delete: {
+                  Objects: [...new Set(batch)].map((Key) => ({ Key })),
+                  Quiet: true,
+                },
+              }),
             );
-            results.push({ success: true as const });
+            for (const error of Errors ?? []) {
+              if (error.Key)
+                errors.set(error.Key, error.Message ?? 'Delete failed');
+            }
           } catch (error) {
-            results.push({
-              success: false as const,
-              error: {
-                code: 'DELETE_FAILED' as const,
-                message:
-                  error instanceof Error ? error.message : 'Delete failed',
-              },
-            });
+            const message =
+              error instanceof Error ? error.message : 'Delete failed';
+            for (const key of batch) errors.set(key, message);
+          }
+          for (const key of batch) {
+            const message = errors.get(key);
+            results.push(
+              message === undefined
+                ? { success: true as const }
+                : {
+                    success: false as const,
+                    error: { code: 'DELETE_FAILED' as const, message },
+                  },
+            );
           }
         }
         return { results };

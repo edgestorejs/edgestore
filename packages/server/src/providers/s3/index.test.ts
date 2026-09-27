@@ -58,7 +58,7 @@ vi.mock('@aws-sdk/client-s3', () => ({
   CreateMultipartUploadCommand: awsMocks.PutObjectCommand,
   UploadPartCommand: awsMocks.PutObjectCommand,
   GetObjectCommand: awsMocks.PutObjectCommand,
-  DeleteObjectCommand: awsMocks.DeleteObjectCommand,
+  DeleteObjectsCommand: awsMocks.DeleteObjectCommand,
   HeadObjectCommand: awsMocks.HeadObjectCommand,
   PutObjectCommand: awsMocks.PutObjectCommand,
   S3Client: awsMocks.S3Client,
@@ -399,10 +399,10 @@ describe('s3', () => {
       expect(awsMocks.send).toHaveBeenNthCalledWith(
         2,
         expect.objectContaining({
-          input: expect.objectContaining({
+          input: {
             Bucket: 'storage-bucket',
-            Key: objectKey,
-          }),
+            Delete: { Objects: [{ Key: objectKey }], Quiet: true },
+          },
         }),
       );
     },
@@ -423,6 +423,7 @@ describe('s3', () => {
       region: 'us-east-1',
       baseUrl: 'https://cdn.example.com',
     });
+    awsMocks.send.mockResolvedValueOnce({});
 
     await expect(
       provider.files.delete?.({
@@ -433,12 +434,56 @@ describe('s3', () => {
 
     expect(awsMocks.send).toHaveBeenCalledWith(
       expect.objectContaining({
-        input: expect.objectContaining({
+        input: {
           Bucket: 'storage-bucket',
-          Key: 'documents/path/file.txt',
-        }),
+          Delete: {
+            Objects: [{ Key: 'documents/path/file.txt' }],
+            Quiet: true,
+          },
+        },
       }),
     );
+  });
+
+  it('deletes in batches of 1,000 and reports per-key failures in order', async () => {
+    const provider = s3({
+      bucketName: 'storage-bucket',
+      region: 'us-east-1',
+      baseUrl: 'https://cdn.example.com',
+    });
+    const keys = Array.from({ length: 1002 }, (_, i) => `documents/${i}`);
+    awsMocks.send
+      .mockResolvedValueOnce({
+        Errors: [{ Key: 'documents/1', Message: 'Access Denied' }],
+      })
+      .mockRejectedValueOnce(new Error('network down'));
+
+    const { results } = await provider.files.delete!({
+      bucketName: 'documents',
+      files: keys.map((key) => ({ key })),
+    });
+
+    expect(
+      awsMocks.send.mock.calls.map(
+        ([command]) => command.input.Delete.Objects.length,
+      ),
+    ).toEqual([1000, 2]);
+    expect(results).toHaveLength(1002);
+    expect(results[0]).toEqual({ success: true });
+    expect(results[1]).toEqual({
+      success: false,
+      error: { code: 'DELETE_FAILED', message: 'Access Denied' },
+    });
+    expect(results.slice(1000)).toEqual([
+      {
+        success: false,
+        error: { code: 'DELETE_FAILED', message: 'network down' },
+      },
+      {
+        success: false,
+        error: { code: 'DELETE_FAILED', message: 'network down' },
+      },
+    ]);
   });
 
   it('does not claim to retrieve router fields', async () => {

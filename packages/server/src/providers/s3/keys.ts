@@ -9,8 +9,7 @@ export function createObjectKeys(baseUrl: string) {
     return `${normalizedBaseUrl}/${encodedKey}`;
   }
 
-  function urlToObjectKey(edgestoreBucketName: string, url: string) {
-    let objectKey: string;
+  function urlToObjectKey(url: string) {
     try {
       const fileUrl = new URL(url);
       const providerUrl = new URL(`${normalizedBaseUrl}/`);
@@ -20,19 +19,12 @@ export function createObjectKeys(baseUrl: string) {
       ) {
         throw new Error();
       }
-      objectKey = decodeURIComponent(
+      return decodeURIComponent(
         fileUrl.pathname.slice(providerUrl.pathname.length),
       );
     } catch {
       throw new Error('File URL does not belong to this S3 provider.');
     }
-
-    if (!objectKey.startsWith(`${edgestoreBucketName}/`)) {
-      throw new Error(
-        `File does not belong to EdgeStore bucket "${edgestoreBucketName}".`,
-      );
-    }
-    return objectKey;
   }
 
   function normalizeRelativePath(value: string) {
@@ -46,18 +38,22 @@ export function createObjectKeys(baseUrl: string) {
     return path;
   }
 
+  /** Keys from both URLs and key references must stay inside the logical bucket. */
   function fromReference(
     bucketName: string,
     file: { url: string } | { key: string },
   ) {
-    if ('url' in file) return urlToObjectKey(bucketName, file.url);
-    const key = normalizeRelativePath(file.key);
-    if (key !== file.key || !key.startsWith(`${bucketName}/`)) {
+    const key = 'url' in file ? urlToObjectKey(file.url) : file.key;
+    if (
+      normalizeRelativePath(key) !== key ||
+      !key.startsWith(`${bucketName}/`)
+    ) {
       throw new Error(
         `File does not belong to EdgeStore bucket "${bucketName}".`,
       );
     }
     return key;
   }
+
   return { toUrl: objectKeyToUrl, fromReference, normalizeRelativePath };
 }

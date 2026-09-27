@@ -83,7 +83,6 @@ describe('S3 multipart uploads', () => {
       key: 'documents/report.txt',
       partSize,
       totalParts: 2,
-      abortSupported: true,
     });
     expect(session.uploadId).not.toBe('aws-upload-id');
     expect(send).toHaveBeenCalledWith(expect.any(CreateMultipartUploadCommand));
@@ -107,9 +106,14 @@ describe('S3 multipart uploads', () => {
         ContentLength: 3,
       },
     ]);
-    await provider.uploads.multipart.requestParts({
-      path: session.key,
-      multipart: { uploadId: session.uploadId, parts: [2] },
+    await expect(
+      provider.uploads.multipart.requestParts({
+        uploadId: session.uploadId,
+        key: session.key,
+        parts: [2],
+      }),
+    ).resolves.toEqual({
+      parts: [{ partNumber: 2, uploadUrl: 'https://signed.example/file' }],
     });
     await provider.uploads.multipart.complete({
       ...session,
@@ -163,8 +167,9 @@ describe('S3 multipart uploads', () => {
     for (const parts of [[], [0], [3], [1, 1], [1.5]]) {
       await expect(
         provider.uploads.multipart.requestParts({
-          path: session.key,
-          multipart: { uploadId: session.uploadId, parts },
+          uploadId: session.uploadId,
+          key: session.key,
+          parts,
         }),
       ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
     }
@@ -188,6 +193,34 @@ describe('S3 multipart uploads', () => {
     expect(getSignedUrl).not.toHaveBeenCalled();
   });
 
+  it('signs the first part URLs up front and honors the session lifetime', async () => {
+    const { provider, send } = setup({
+      multipart: {
+        thresholdBytes: partSize,
+        partSizeBytes: partSize,
+        sessionExpiresIn: 60,
+      },
+    });
+    send.mockResolvedValue({ UploadId: 'aws-upload-id' });
+    const response = await provider.uploads.request(
+      request({ size: partSize * 25 }),
+    );
+    if (!('multipart' in response)) throw new Error('Expected multipart');
+    const session = response.multipart;
+    expect(session.totalParts).toBe(25);
+    expect(session.parts.map((part) => part.partNumber)).toEqual(
+      Array.from({ length: 10 }, (_, index) => index + 1),
+    );
+    await expect(
+      provider.uploads.multipart.requestParts({ ...session, parts: [25] }),
+    ).resolves.toMatchObject({ parts: [{ partNumber: 25 }] });
+    vi.useFakeTimers();
+    vi.setSystemTime(Date.now() + 61 * 1000);
+    await expect(
+      provider.uploads.multipart.requestParts({ ...session, parts: [11] }),
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+  });
+
   it('validates the secret before initiation and aborts when part signing fails', async () => {
     vi.stubEnv('EDGE_STORE_JWT_SECRET', '');
     vi.stubEnv('EDGE_STORE_SECRET_KEY', '');
@@ -205,7 +238,7 @@ describe('S3 multipart uploads', () => {
 });
 
 describe('S3 backend and private files', () => {
-  it('uses canonical backend URLs in development without the hosted cookie proxy', async () => {
+  it('uses canonical backend URLs in development', async () => {
     vi.stubEnv('NODE_ENV', 'development');
     const { provider, send } = setup();
     send.mockResolvedValue({ ContentLength: 3, LastModified: new Date() });
@@ -259,7 +292,7 @@ describe('S3 backend and private files', () => {
     });
   });
 
-  it('uploads backend parts sequentially and reports byte progress', async () => {
+  it('uploads backend parts concurrently and reports byte progress', async () => {
     const { provider, send } = setup();
     send
       .mockResolvedValueOnce({ UploadId: 'backend-id' })
@@ -292,10 +325,13 @@ describe('S3 backend and private files', () => {
 
   it('aborts a failed backend transfer without hiding its original error', async () => {
     const { provider, send } = setup();
-    send
-      .mockResolvedValueOnce({ UploadId: 'backend-id' })
-      .mockRejectedValueOnce(new Error('transfer failed'))
-      .mockRejectedValueOnce(new Error('cleanup failed'));
+    send.mockImplementation(async (command) => {
+      if (command instanceof CreateMultipartUploadCommand)
+        return { UploadId: 'backend-id' };
+      if (command instanceof UploadPartCommand)
+        throw new Error('transfer failed');
+      throw new Error('cleanup failed');
+    });
     await expect(
       provider.uploads.upload({
         ...request(),
@@ -310,13 +346,15 @@ describe('S3 backend and private files', () => {
   it('cancels a backend transfer and performs cleanup without the canceled signal', async () => {
     const { provider, send } = setup();
     const controller = new AbortController();
-    send
-      .mockResolvedValueOnce({ UploadId: 'backend-id' })
-      .mockImplementationOnce(async () => {
+    send.mockImplementation(async (command) => {
+      if (command instanceof CreateMultipartUploadCommand)
+        return { UploadId: 'backend-id' };
+      if (command instanceof UploadPartCommand) {
         controller.abort();
-        return { ETag: 'one' };
-      })
-      .mockResolvedValueOnce({});
+        return { ETag: 'part' };
+      }
+      return {};
+    });
     await expect(
       provider.uploads.upload({
         ...request(),
@@ -365,16 +403,12 @@ describe('S3 backend and private files', () => {
     ).rejects.toThrow('expiration');
   });
 
-  it('fails clearly for unsupported lifecycle and cookie-based access control', async () => {
+  it('declares unsupported lifecycle options and rejects cookie-based access control', async () => {
     const { provider, send } = setup();
-    for (const fileInfo of [
-      { temporary: true },
-      { replaceTargetUrl: 'https://example/old' },
-    ]) {
-      await expect(
-        provider.uploads.request(request(fileInfo)),
-      ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
-    }
+    expect(provider.uploads.supportedOptions).toEqual({
+      temporary: false,
+      replaceTargetUrl: false,
+    });
     const es = initEdgeStore.create();
     await expect(
       provider.init({

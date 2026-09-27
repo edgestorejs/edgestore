@@ -107,8 +107,18 @@ export type S3ProviderOptions = {
   uploadUrlExpiresIn?: number;
   /** Presigned download URL lifetime in seconds. Default: 3600. */
   signedUrlExpiresIn?: number;
-  /** Automatic multipart upload configuration. Defaults: 100 MiB / 16 MiB. */
-  multipart?: { thresholdBytes?: number; partSizeBytes?: number };
+  /** Automatic multipart upload configuration. */
+  multipart?: {
+    /** Size above which uploads use multipart transfers. Default: 100 MiB. */
+    thresholdBytes?: number;
+    /** Preferred part size. Default: 16 MiB. */
+    partSizeBytes?: number;
+    /**
+     * How long a browser multipart session can request part URLs, complete, or
+     * abort, in seconds. Default: 86400 (24 hours).
+     */
+    sessionExpiresIn?: number;
+  };
   /** Object settings shared by browser and backend uploads. */
   objectOptions?:
     S3ObjectOptions | ((args: S3PathFnArgs) => MaybePromise<S3ObjectOptions>);

@@ -14,6 +14,7 @@ import {
 } from '@edgestore/shared';
 import { jwtVerify, SignJWT } from 'jose';
 import { z } from 'zod';
+import { INITIAL_MULTIPART_PART_URLS } from '../../core/provider';
 
 const sessionSchema = z.object({
   key: z.string(),
@@ -30,13 +31,15 @@ export function createMultipartUploads({
   bucket,
   audience,
   secret,
-  expiresIn,
+  partUrlExpiresIn,
+  sessionExpiresIn,
 }: {
   client: S3Client;
   bucket: () => string;
   audience: string;
   secret: () => string | undefined;
-  expiresIn: number;
+  partUrlExpiresIn: number;
+  sessionExpiresIn: number;
 }) {
   function signingKey() {
     const value = secret();
@@ -108,20 +111,16 @@ export function createMultipartUploads({
               session.size - (partNumber - 1) * session.partSize,
             ),
           }),
-          { expiresIn },
+          { expiresIn: partUrlExpiresIn },
         ),
       })),
     );
   }
 
   const operations: ProviderMultipartUploads = {
-    async requestParts({ multipart, path }) {
-      const session = await readSession(multipart.uploadId, path);
+    async requestParts({ uploadId, key, parts }) {
       return {
-        multipart: {
-          uploadId: multipart.uploadId,
-          parts: await signParts(session, multipart.parts),
-        },
+        parts: await signParts(await readSession(uploadId, key), parts),
       };
     },
     async complete({ uploadId, key, parts }) {
@@ -131,12 +130,6 @@ export function createMultipartUploads({
         parts.map((part) => part.partNumber),
         true,
       );
-      if (parts.some((part) => !part.eTag.trim())) {
-        throw new EdgeStoreError({
-          code: 'BAD_REQUEST',
-          message: 'Missing S3 multipart ETag.',
-        });
-      }
       await client.send(
         new CompleteMultipartUploadCommand({
           Bucket: bucket(),
@@ -182,15 +175,17 @@ export function createMultipartUploads({
           .setProtectedHeader({ alg: 'HS256' })
           .setAudience(audience)
           .setIssuedAt()
-          .setExpirationTime('24h')
+          .setExpirationTime(`${sessionExpiresIn}s`)
           .sign(key);
         return {
           key: session.key,
           uploadId,
           partSize: session.partSize,
           totalParts: session.totalParts,
-          parts: await signParts(session, plan.partNumbers),
-          abortSupported: true,
+          parts: await signParts(
+            session,
+            plan.partNumbers.slice(0, INITIAL_MULTIPART_PART_URLS),
+          ),
         };
       } catch (error) {
         await abort(session).catch(() => undefined);

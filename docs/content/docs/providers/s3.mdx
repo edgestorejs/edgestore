@@ -40,18 +40,19 @@ Credentials use the AWS SDK's default provider chain, including environment
 variables, shared config, and instance/task roles. You can also pass
 `credentials` with an AWS credentials object or provider function.
 
-| Option                     | Default / environment variable                                                           |
-| -------------------------- | ---------------------------------------------------------------------------------------- |
-| `bucketName`               | `ES_AWS_BUCKET_NAME`                                                                     |
-| `region`                   | `ES_AWS_REGION`, then AWS SDK region resolution                                          |
-| `endpoint`                 | `ES_AWS_ENDPOINT`                                                                        |
-| `forcePathStyle`           | `ES_AWS_FORCE_PATH_STYLE === 'true'`                                                     |
-| `baseUrl`                  | `EDGE_STORE_BASE_URL`, otherwise the storage URL                                         |
-| `uploadUrlExpiresIn`       | 3600 seconds                                                                             |
-| `signedUrlExpiresIn`       | 3600 seconds                                                                             |
-| `multipart.thresholdBytes` | 100 MiB                                                                                  |
-| `multipart.partSizeBytes`  | 16 MiB; minimum 5 MiB                                                                    |
-| `jwtSecret`                | Multipart signing override; otherwise `EDGE_STORE_JWT_SECRET` or `EDGE_STORE_SECRET_KEY` |
+| Option                       | Default / environment variable                                                           |
+| ---------------------------- | ---------------------------------------------------------------------------------------- |
+| `bucketName`                 | `ES_AWS_BUCKET_NAME`                                                                     |
+| `region`                     | `ES_AWS_REGION`, then AWS SDK region resolution                                          |
+| `endpoint`                   | `ES_AWS_ENDPOINT`                                                                        |
+| `forcePathStyle`             | `ES_AWS_FORCE_PATH_STYLE === 'true'`                                                     |
+| `baseUrl`                    | `EDGE_STORE_BASE_URL`, otherwise the storage URL                                         |
+| `uploadUrlExpiresIn`         | 3600 seconds                                                                             |
+| `signedUrlExpiresIn`         | 3600 seconds                                                                             |
+| `multipart.thresholdBytes`   | 100 MiB                                                                                  |
+| `multipart.partSizeBytes`    | 16 MiB; minimum 5 MiB                                                                    |
+| `multipart.sessionExpiresIn` | 86400 seconds                                                                            |
+| `jwtSecret`                  | Multipart signing override; otherwise `EDGE_STORE_JWT_SECRET` or `EDGE_STORE_SECRET_KEY` |
 
 Setting `jwtSecret` does not replace the required environment secret.
 Signed URL lifetimes must be between 1 and 604800 seconds; temporary AWS
@@ -108,9 +109,13 @@ s3({
 });
 ```
 
-Uploads do not resume across page reloads or automatically refresh expired
-upload URLs. Set `uploadUrlExpiresIn` long enough for your expected transfer
-duration.
+The browser requests part URLs as it reaches each part and refreshes a rejected
+URL once, so `uploadUrlExpiresIn` only needs to cover one part transfer. A
+multipart session can request URLs, complete, or abort until
+`multipart.sessionExpiresIn` passes. Uploads do not resume across page reloads.
+
+Backend uploads send up to four parts at a time through your S3 client, so the
+client's retry and transport settings apply.
 
 Configure an S3 lifecycle rule to clean up incomplete uploads left by browser
 shutdowns, network loss, or failed cancellation:

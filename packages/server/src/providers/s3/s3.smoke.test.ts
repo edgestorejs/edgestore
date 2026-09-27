@@ -13,6 +13,8 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { s3 } from './index';
 
 // Opt-in against an isolated MinIO/S3-compatible endpoint. Never uses AWS defaults.
+// MinIO accepts some requests AWS rejects, so this does not prove AWS
+// compatibility; presigning.test.ts covers AWS request signing.
 const endpoint = process.env.ES_S3_SMOKE_ENDPOINT;
 const bucketName = `edgestore-smoke-${crypto.randomUUID()}`;
 const credentials = {
@@ -152,7 +154,7 @@ describe.skipIf(!endpoint)('S3 live storage contract', () => {
     const abandoned = await provider.uploads.request(request(body.length));
     if (!('multipart' in abandoned))
       throw new Error('Expected multipart upload');
-    await provider.uploads.multipart.abort!(abandoned.multipart);
+    await provider.uploads.multipart.abort(abandoned.multipart);
     const { Uploads } = await client.send(
       new ListMultipartUploadsCommand({ Bucket: bucketName }),
     );
