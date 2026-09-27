@@ -10,4 +10,4 @@ Rebuild the backend client on EdgeStore API v2. Methods are `upload`, `get`,
 and results are canonical file records. `list` takes `{ cursor, limit }` and
 returns `items`. Batch methods report per-file failures, and singular methods
 throw `EdgeStoreFileMutationError`. Methods the provider does not support are
-absent from the client. `InferClientOutputs` replaces `InferClientResponse`.
+absent from the client.

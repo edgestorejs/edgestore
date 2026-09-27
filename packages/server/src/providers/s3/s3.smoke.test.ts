@@ -102,7 +102,9 @@ describe.skipIf(!endpoint)('S3 live storage contract', () => {
     });
     expect(upload.status, await upload.text()).toBe(200);
     expect((await fetch(result.url)).status).toBe(403);
-    expect(await (await fetch(result.signedReadUrl!.signedUrl)).text()).toBe('abc');
+    expect(await (await fetch(result.signedReadUrl!.signedUrl)).text()).toBe(
+      'abc',
+    );
     const file = await provider.files.get({
       bucketName: 'documents',
       file: { key: result.key! },

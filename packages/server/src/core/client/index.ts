@@ -427,4 +427,3 @@ export type InferClientOutputs<TRouter extends { readonly client: object }> = {
     >;
   };
 };
-

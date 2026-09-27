@@ -108,8 +108,7 @@ describe('s3', () => {
       key: 'documents/generated-uuid.txt',
       uploadUrl: 'https://signed-upload.example.com',
       uploadHeaders: { 'Content-Type': 'application/octet-stream' },
-      url:
-        'https://storage-bucket.s3.us-east-1.amazonaws.com/documents/generated-uuid.txt',
+      url: 'https://storage-bucket.s3.us-east-1.amazonaws.com/documents/generated-uuid.txt',
     });
     expect(awsMocks.getSignedUrl).toHaveBeenCalledWith(
       expect.any(awsMocks.S3Client),
