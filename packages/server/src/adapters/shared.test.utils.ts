@@ -22,7 +22,7 @@ export function createProvider(
   const provider: AnyEdgeStoreProvider = {
     name: 'test-provider',
     baseUrl: 'https://files.example.com',
-    init: vi.fn(() => ({ token: 'provider-token' })),
+    init: vi.fn(() => ({})),
     reference: {
       schema: z.object({ url: z.string() }),
       fromUrl: (url) => ({ url }),
