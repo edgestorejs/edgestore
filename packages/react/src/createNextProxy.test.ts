@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createNextProxy } from './createNextProxy';
-import EdgeStoreClientError from './libs/errors/EdgeStoreClientError';
+import { EdgeStoreFileMutationError } from './errors';
 import { UploadAbortedError } from './libs/errors/uploadAbortedError';
 import {
   createFetchMock,
@@ -374,7 +374,31 @@ describe('createNextProxy file mutations', () => {
 
     await expect(
       assets.confirm({ url: 'https://files.example/file.txt' }),
-    ).rejects.toBeInstanceOf(EdgeStoreClientError);
+    ).rejects.toBeInstanceOf(EdgeStoreFileMutationError);
+  });
+
+  it('reports the failed file on singular confirmation', async () => {
+    createFetchMock([
+      jsonResponse({
+        succeeded: [],
+        failed: [
+          {
+            url: 'https://files.example/file.txt',
+            error: { code: 'NOT_CONFIRMABLE', message: 'Not confirmable' },
+          },
+        ],
+      }),
+    ]);
+    const { assets } = createProxy();
+
+    await expect(
+      assets.confirm({ url: 'https://files.example/file.txt' }),
+    ).rejects.toMatchObject({
+      name: 'EdgeStoreFileMutationError',
+      code: 'NOT_CONFIRMABLE',
+      message: 'Not confirmable',
+      fileRef: { url: 'https://files.example/file.txt' },
+    });
   });
 
   it('throws when singular deletion fails', async () => {
@@ -393,7 +417,12 @@ describe('createNextProxy file mutations', () => {
 
     await expect(
       assets.delete({ url: 'https://files.example/file.txt' }),
-    ).rejects.toBeInstanceOf(EdgeStoreClientError);
+    ).rejects.toMatchObject({
+      name: 'EdgeStoreFileMutationError',
+      code: 'DELETE_FAILED',
+      message: 'Delete failed',
+      fileRef: { url: 'https://files.example/file.txt' },
+    });
   });
 
   it('sends one request for plural deletion and preserves partial failures', async () => {

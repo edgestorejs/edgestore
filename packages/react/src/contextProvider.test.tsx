@@ -84,9 +84,7 @@ describe('createEdgeStoreProvider initialization', () => {
   });
 
   it('skips client initialization when the server returns no instruction', async () => {
-    const { calls } = createFetchMock([
-      jsonResponse({}),
-    ]);
+    const { calls } = createFetchMock([jsonResponse({})]);
     const { EdgeStoreProvider, useEdgeStore } = createEdgeStoreProvider<any>();
     const states: unknown[] = [];
 
@@ -251,10 +249,7 @@ describe('createEdgeStoreProvider initialization', () => {
   });
 
   it('reset reruns initialization', async () => {
-    const { calls } = createFetchMock([
-      jsonResponse({}),
-      jsonResponse({}),
-    ]);
+    const { calls } = createFetchMock([jsonResponse({}), jsonResponse({})]);
     const { EdgeStoreProvider, useEdgeStore } = createEdgeStoreProvider<any>();
     let reset: (() => Promise<void>) | undefined;
 

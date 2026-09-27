@@ -13,6 +13,7 @@ import {
   type UploadOptions,
 } from '@edgestore/shared';
 import EdgeStoreClientError from './libs/errors/EdgeStoreClientError';
+import { EdgeStoreFileMutationError } from './libs/errors/EdgeStoreFileMutationError';
 import { handleError } from './libs/errors/handleError';
 import { UploadAbortedError } from './libs/errors/uploadAbortedError';
 import { putBlob } from './libs/putBlob';
@@ -151,10 +152,7 @@ export function createNextProxy<TRouter extends AnyRouter>({
             bucketName: bucketName as string,
             apiPath,
           });
-          const failure = result.failed[0];
-          if (failure) {
-            throw new EdgeStoreClientError(failure.error.message);
-          }
+          throwSingularFailure(result);
         },
         confirmMany: async (params: { urls: string[] }) =>
           await mutateFiles('confirm', params.urls, {
@@ -166,10 +164,7 @@ export function createNextProxy<TRouter extends AnyRouter>({
             bucketName: bucketName as string,
             apiPath,
           });
-          const failure = result.failed[0];
-          if (failure) {
-            throw new EdgeStoreClientError(failure.error.message);
-          }
+          throwSingularFailure(result);
         },
         deleteMany: async (params: { urls: string[] }) =>
           await mutateFiles('delete', params.urls, {
@@ -352,6 +347,17 @@ function mapSignedReadUrl(signed: SharedRequestUploadRes['signedReadUrl']) {
     signedThumbnailUrl: signed.signedThumbnailUrl ?? null,
   };
 }
+function throwSingularFailure(result: SharedFileMutationRes) {
+  const failure = result.failed[0];
+  if (failure) {
+    throw new EdgeStoreFileMutationError(
+      failure.error.code,
+      failure.error.message,
+      { url: failure.url },
+    );
+  }
+}
+
 async function mutateFiles(
   operation: 'confirm' | 'delete',
   urls: string[],

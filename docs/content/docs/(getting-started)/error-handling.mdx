@@ -69,3 +69,25 @@ import {
 - `DELETE_NOT_ALLOWED`
 - `CREATE_CONTEXT_ERROR`
 - `SERVER_ERROR`
+
+## File mutation errors
+
+`confirm` and `delete` throw `EdgeStoreFileMutationError` when the provider
+rejects that file. It carries the provider error `code`, the `message`, and the
+`fileRef` it applied to. `confirmMany` and `deleteMany` do not throw for
+per-file failures; inspect the returned `failed` list instead.
+
+```ts
+import { EdgeStoreFileMutationError } from '@edgestore/react/errors';
+
+try {
+  await edgestore.publicFiles.delete({ url });
+} catch (error) {
+  if (error instanceof EdgeStoreFileMutationError) {
+    console.error(error.code, error.fileRef.url);
+  }
+}
+```
+
+`EdgeStoreClientError` reports client-side failures, such as an EdgeStore API
+route that does not return JSON.
