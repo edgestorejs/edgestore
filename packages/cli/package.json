@@ -33,6 +33,7 @@
     "prepack": "node ../../scripts/agentAssets.ts",
     "dev": "pnpm build --watch",
     "test": "node ../../scripts/agentAssets.ts && vitest run",
+    "test:smoke:dev": "node smoke.dev.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint --cache --report-unused-disable-directives src"
   },
