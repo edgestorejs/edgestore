@@ -1,6 +1,6 @@
 import { loader, type InferPageType } from 'fumadocs-core/source';
 import { lucideIconsPlugin } from 'fumadocs-core/source/lucide-icons';
-import { blogPosts, docs, v0Docs } from 'fumadocs-mdx:collections/server';
+import { blogPosts, docs } from 'fumadocs-mdx:collections/server';
 import { toFumadocsSource } from 'fumadocs-mdx/runtime/server';
 import { getBlogDeployment } from './blogDeployment';
 
@@ -9,12 +9,6 @@ export const source = loader({
   // it assigns a URL to your pages
   baseUrl: '/docs',
   source: docs.toFumadocsSource(),
-  plugins: [lucideIconsPlugin()],
-});
-
-export const v0Source = loader({
-  baseUrl: '/v0/docs',
-  source: v0Docs.toFumadocsSource(),
   plugins: [lucideIconsPlugin()],
 });
 

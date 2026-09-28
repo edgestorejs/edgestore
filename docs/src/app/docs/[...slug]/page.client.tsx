@@ -8,18 +8,12 @@ import { useState } from 'react';
 
 const cache = new Map<string, string>();
 
-export function LLMCopyButton({
-  slug,
-  baseUrl = '/docs',
-}: {
-  slug: string[];
-  baseUrl?: string;
-}) {
+export function LLMCopyButton({ slug }: { slug: string[] }) {
   const [isLoading, setLoading] = useState(false);
   const [checked, onClick] = useCopyButton(async () => {
     setLoading(true);
 
-    const url = `${baseUrl}/${slug.join('/')}.md`;
+    const url = `/docs/${slug.join('/')}.md`;
     try {
       const cached = cache.get(url);
 

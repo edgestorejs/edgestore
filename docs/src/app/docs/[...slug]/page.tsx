@@ -1,5 +1,4 @@
-import { DocsVersionNotice } from '@/components/docs-version-notice';
-import { DOCS_GIT_REF, GITHUB_URL } from '@/lib/constants';
+import { GITHUB_URL } from '@/lib/constants';
 import { source } from '@/lib/source';
 import { getMDXComponents } from '@/mdx-components';
 import { createRelativeLink } from 'fumadocs-ui/mdx';
@@ -25,12 +24,11 @@ export default async function Page(props: {
 
   return (
     <DocsPage toc={page.data.toc} full={page.data.full}>
-      <DocsVersionNotice />
       <DocsTitle>{page.data.title}</DocsTitle>
       <DocsDescription>{page.data.description}</DocsDescription>
       <div className="mb-4 flex flex-row items-center gap-2">
         <LLMCopyButton slug={params.slug} />
-        <EditOnGitHub url={`${GITHUB_URL}/blob/${DOCS_GIT_REF}/${path}`} />
+        <EditOnGitHub url={`${GITHUB_URL}/blob/dev/${path}`} />
       </div>
       <DocsBody>
         <MDXContent

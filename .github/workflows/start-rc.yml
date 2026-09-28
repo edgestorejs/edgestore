@@ -1,0 +1,84 @@
+name: Start RC cycle
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: start-rc-cycle
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  prepare:
+    name: Prepare RC handoff PR
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout next
+        uses: actions/checkout@v7
+        with:
+          ref: next
+          fetch-depth: 0
+
+      - name: Validate next prerelease state
+        id: source
+        shell: bash
+        run: |
+          jq -e '.mode == "pre" and .tag == "next"' .changeset/pre.json
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Prepare RC prerelease state
+        shell: bash
+        run: |
+          temp_file="$(mktemp)"
+          jq '.tag = "rc"' .changeset/pre.json > "$temp_file"
+          mv "$temp_file" .changeset/pre.json
+
+          jq -e '.mode == "pre" and .tag == "rc"' .changeset/pre.json
+          test "$(git diff --name-only)" = '.changeset/pre.json'
+
+      - name: Open RC handoff PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NEXT_SHA: ${{ steps.source.outputs.sha }}
+          PR_BODY: |
+            Starts the RC prerelease phase on `next`.
+
+            - Keeps Changesets in prerelease mode.
+            - Changes the prerelease tag from `next` to `rc`.
+            - Allows Changesets to create **Version Packages (rc)**.
+            - Continues the existing numeric prerelease counter.
+
+            No package versions are changed by this PR.
+        shell: bash
+        run: |
+          branch="release/start-rc-$NEXT_SHA"
+          existing_url="$(gh pr list \
+            --base next \
+            --head "$branch" \
+            --state open \
+            --json url \
+            --jq '.[0].url // ""')"
+
+          if [[ -n "$existing_url" ]]; then
+            echo "RC handoff PR already exists: $existing_url"
+            exit 0
+          fi
+
+          git switch -c "$branch"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .changeset/pre.json
+          git diff --cached --check
+          git commit -m 'chore: start rc release cycle'
+          git push -u origin "$branch"
+
+          gh pr create \
+            --base next \
+            --head "$branch" \
+            --title 'chore: start RC release cycle' \
+            --body "$PR_BODY"

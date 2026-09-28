@@ -52,8 +52,7 @@
     "changeset": "changeset",
     "version": "changeset version && pnpm -s sync-versions",
     "release": "pnpm build && changeset publish",
-    "sync-versions": "tsx scripts/syncVersions.ts",
-    "test:release-workflow": "node --import tsx --test scripts/releaseWorkflow.test.ts"
+    "sync-versions": "tsx scripts/syncVersions.ts"
   },
   "devDependencies": {
     "@changesets/changelog-github": "0.7.0",
