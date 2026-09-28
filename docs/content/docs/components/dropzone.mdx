@@ -230,6 +230,8 @@ export { Dropzone };
 
 ## Usage
 
+Install or copy the component from [Installation](#installation) before using this example.
+
 This section provides a guide on how to use the `Dropzone` component with the `UploaderProvider`.
 
 ### Basic Usage
@@ -237,8 +239,11 @@ This section provides a guide on how to use the `Dropzone` component with the `U
 The Dropzone component must be used within an `UploaderProvider`.
 
 ```tsx
+'use client';
+
 import { Dropzone } from '@/components/ui/dropzone';
-import { UploaderProvider } from '@/components/ui/uploader-provider';
+import { UploaderProvider, type UploadFn } from '@/components/ui/uploader-provider';
+import { useEdgeStore } from '@/lib/edgestore';
 import * as React from 'react';
 
 export default function DropzoneExample() {
