@@ -231,13 +231,15 @@ export function AvatarDropzone({
         {fileState?.status === 'ERROR' && (
           <p className="text-sm text-destructive">
             {fileState.error ?? 'Upload failed'}{' '}
-            <button
-              type="button"
-              onClick={() => void uploadFiles([fileState.key])}
-              className="font-medium underline underline-offset-2"
-            >
-              Retry
-            </button>
+            {!disabled && (
+              <button
+                type="button"
+                onClick={() => void uploadFiles([fileState.key])}
+                className="font-medium underline underline-offset-2"
+              >
+                Retry
+              </button>
+            )}
           </p>
         )}
         {errors[0] && (

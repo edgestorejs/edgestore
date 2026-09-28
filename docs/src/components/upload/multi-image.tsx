@@ -82,13 +82,15 @@ export function ImageTile({
       {status === 'ERROR' && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-2 text-center text-xs font-semibold text-white">
           <span title={error}>Upload failed</span>
-          <button
-            type="button"
-            onClick={() => void uploadFiles([key])}
-            className="inline-flex items-center gap-1 rounded-md bg-black/60 px-2 py-1 font-medium backdrop-blur-sm outline-none hover:bg-black/80 focus-visible:ring-2 focus-visible:ring-white/70"
-          >
-            <RotateCwIcon className="size-3.5" /> Retry
-          </button>
+          {!disabled && (
+            <button
+              type="button"
+              onClick={() => void uploadFiles([key])}
+              className="inline-flex items-center gap-1 rounded-md bg-black/60 px-2 py-1 font-medium backdrop-blur-sm outline-none hover:bg-black/80 focus-visible:ring-2 focus-visible:ring-white/70"
+            >
+              <RotateCwIcon className="size-3.5" /> Retry
+            </button>
+          )}
         </div>
       )}
 

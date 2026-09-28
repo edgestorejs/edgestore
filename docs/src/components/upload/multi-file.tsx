@@ -76,9 +76,14 @@ function IconButton({
  */
 export function FileListItem({
   fileState,
+  disabled,
   className,
   ...props
-}: React.ComponentProps<'li'> & { fileState: FileState }) {
+}: React.ComponentProps<'li'> & {
+  fileState: FileState;
+  /** Hides the retry, cancel and remove actions. */
+  disabled?: boolean;
+}) {
   const { removeFile, cancelUpload, uploadFiles } = useUploader();
   const { file, key, status, progress, error } = fileState;
 
@@ -123,31 +128,33 @@ export function FileListItem({
           />
         )}
       </div>
-      <div className="flex items-center">
-        {status === 'ERROR' && (
-          <IconButton
-            label={`Retry ${file.name}`}
-            onClick={() => void uploadFiles([key])}
-          >
-            <RotateCwIcon />
-          </IconButton>
-        )}
-        {status === 'UPLOADING' ? (
-          <IconButton
-            label={`Cancel ${file.name}`}
-            onClick={() => cancelUpload(key)}
-          >
-            <XIcon />
-          </IconButton>
-        ) : (
-          <IconButton
-            label={`Remove ${file.name}`}
-            onClick={() => removeFile(key)}
-          >
-            <XIcon />
-          </IconButton>
-        )}
-      </div>
+      {!disabled && (
+        <div className="flex items-center">
+          {status === 'ERROR' && (
+            <IconButton
+              label={`Retry ${file.name}`}
+              onClick={() => void uploadFiles([key])}
+            >
+              <RotateCwIcon />
+            </IconButton>
+          )}
+          {status === 'UPLOADING' ? (
+            <IconButton
+              label={`Cancel ${file.name}`}
+              onClick={() => cancelUpload(key)}
+            >
+              <XIcon />
+            </IconButton>
+          ) : (
+            <IconButton
+              label={`Remove ${file.name}`}
+              onClick={() => removeFile(key)}
+            >
+              <XIcon />
+            </IconButton>
+          )}
+        </div>
+      )}
     </li>
   );
 }
@@ -160,7 +167,14 @@ export function FileListItem({
  * <FileList className="my-4" />
  * ```
  */
-export function FileList({ className, ...props }: React.ComponentProps<'ul'>) {
+export function FileList({
+  disabled,
+  className,
+  ...props
+}: React.ComponentProps<'ul'> & {
+  /** Hides the retry, cancel and remove actions. */
+  disabled?: boolean;
+}) {
   const { fileStates } = useUploader();
   if (fileStates.length === 0) return null;
 
@@ -171,7 +185,11 @@ export function FileList({ className, ...props }: React.ComponentProps<'ul'>) {
       {...props}
     >
       {fileStates.map((fileState) => (
-        <FileListItem key={fileState.key} fileState={fileState} />
+        <FileListItem
+          key={fileState.key}
+          fileState={fileState}
+          disabled={disabled}
+        />
       ))}
     </ul>
   );
@@ -259,7 +277,7 @@ export function FileUploader({
         disabled={disabled}
         className={dropzoneClassName}
       />
-      <FileList className={fileListClassName} />
+      <FileList className={fileListClassName} disabled={disabled} />
       {fileStates.length > 0 && (
         <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
           <span className="tabular-nums">

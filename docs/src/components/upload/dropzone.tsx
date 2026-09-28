@@ -63,14 +63,16 @@ export function useUploadDropzone({
   const isFull =
     !replace && maxFiles !== undefined && fileStates.length >= maxFiles;
 
+  const multiple = options.multiple ?? !replace;
+
   const dropzone = useDropzone({
-    multiple: !replace,
     ...options,
+    multiple,
     disabled: disabled || isFull,
     getErrorMessage: uploadErrorMessage({
       maxSize: options.maxSize,
       minSize: options.minSize,
-      maxFiles: replace ? 1 : maxFiles,
+      maxFiles: multiple ? maxFiles : 1,
       typesLabel,
     }),
     onDrop: (accepted, rejected) => {

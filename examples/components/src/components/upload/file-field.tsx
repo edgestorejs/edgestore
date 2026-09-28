@@ -84,7 +84,7 @@ export function FileField({
     <div className={cn('grid gap-1.5', className)} {...props}>
       {fileState ? (
         <ul>
-          <FileListItem fileState={fileState} />
+          <FileListItem fileState={fileState} disabled={disabled} />
         </ul>
       ) : (
         <div

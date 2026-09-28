@@ -128,9 +128,10 @@ export function uploadErrorMessage(limits: UploadLimits) {
           ? `${file.name} isn't supported. Use ${limits.typesLabel}.`
           : `${file.name} isn't a supported file type.`;
       case 'too-many-files':
-        return limits.maxFiles === 1
-          ? 'Choose a single file.'
-          : `You can add up to ${limits.maxFiles} files.`;
+        if (limits.maxFiles === 1) return 'Choose a single file.';
+        return limits.maxFiles
+          ? `You can add up to ${limits.maxFiles} files.`
+          : 'Too many files.';
       default:
         return error.message;
     }
