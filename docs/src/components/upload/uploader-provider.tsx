@@ -28,12 +28,6 @@ export type FileState = {
 
   /** Error message if the upload failed */
   error?: string;
-
-  /** AbortController to cancel the upload */
-  abortController?: AbortController;
-
-  /** Whether the file should be automatically uploaded */
-  autoUpload?: boolean;
 };
 
 /**
@@ -71,29 +65,35 @@ type UploaderContextType<TOptions = unknown> = {
   /** List of all files in the uploader */
   fileStates: FileState[];
 
-  /** Add files to the uploader */
-  addFiles: (files: File[]) => void;
+  /** Add files to the uploader. Returns the new file states. */
+  addFiles: (files: File[]) => FileState[];
 
   /** Update a file's state */
   updateFileState: (key: string, changes: Partial<FileState>) => void;
 
-  /** Remove a file from the uploader */
+  /** Remove a file from the uploader, aborting its upload if it is running */
   removeFile: (key: string) => void;
 
-  /** Cancel an ongoing upload */
+  /**
+   * Cancel an ongoing upload. With `autoUpload` the file is removed,
+   * otherwise it goes back to `PENDING`.
+   */
   cancelUpload: (key: string) => void;
 
-  /** Start uploading files */
+  /**
+   * Upload files that are `PENDING` or `ERROR` (so it also retries failed uploads).
+   * Pass keys to upload only those files.
+   */
   uploadFiles: (keysToUpload?: string[], options?: TOptions) => Promise<void>;
 
-  /** Reset all files */
+  /** Remove all files, aborting any running uploads */
   resetFiles: () => void;
 
   /** Whether any file is currently uploading */
   isUploading: boolean;
 
-  /** Whether files should be automatically uploaded */
-  autoUpload?: boolean;
+  /** Whether files are uploaded as soon as they are added */
+  autoUpload: boolean;
 };
 
 /**
@@ -130,14 +130,12 @@ type ProviderProps<TOptions = unknown> = {
   autoUpload?: boolean;
 };
 
-// Context
 const UploaderContext =
   React.createContext<UploaderContextType<unknown> | null>(null);
 
 /**
  * Hook to access the uploader context.
  *
- * @returns The uploader context
  * @throws Error if used outside of UploaderProvider
  *
  * @example
@@ -154,9 +152,8 @@ export function useUploader<TOptions = unknown>() {
 }
 
 /**
- * Provider component for file upload functionality.
+ * Holds the files of an uploader and runs their uploads.
  *
- * @component
  * @example
  * ```tsx
  * <UploaderProvider
@@ -164,7 +161,7 @@ export function useUploader<TOptions = unknown>() {
  *     // Upload implementation
  *     return { url: 'https://example.com/uploads/image.jpg' };
  *   }}
- *   autoUpload={true}
+ *   autoUpload
  * >
  *   <ImageUploader maxFiles={5} maxSize={1024 * 1024 * 2} />
  * </UploaderProvider>
@@ -183,9 +180,8 @@ export function UploaderProvider<TOptions = unknown>({
   const [fileStates, setFileStates] = React.useState<FileState[]>(
     externalValue ?? [],
   );
-  const [pendingAutoUploadKeys, setPendingAutoUploadKeys] = React.useState<
-    string[] | null
-  >(null);
+  // Abort controllers of running uploads, by file key.
+  const controllers = React.useRef(new Map<string, AbortController>());
 
   // Sync with external value if provided
   React.useEffect(() => {
@@ -196,180 +192,146 @@ export function UploaderProvider<TOptions = unknown>({
 
   const updateFileState = React.useCallback(
     (key: string, changes: Partial<FileState>) => {
-      setFileStates((prevStates) => {
-        return prevStates.map((fileState) => {
-          if (fileState.key === key) {
-            return { ...fileState, ...changes };
-          }
-          return fileState;
-        });
-      });
+      setFileStates((prev) =>
+        prev.map((fileState) =>
+          fileState.key === key ? { ...fileState, ...changes } : fileState,
+        ),
+      );
     },
     [],
+  );
+
+  const upload = React.useCallback(
+    async (fileState: FileState, options?: TOptions) => {
+      const { key, file } = fileState;
+      const controller = new AbortController();
+      controllers.current.set(key, controller);
+      updateFileState(key, {
+        status: 'UPLOADING',
+        progress: 0,
+        error: undefined,
+      });
+
+      try {
+        const { url } = await uploadFn({
+          file,
+          signal: controller.signal,
+          onProgressChange: (progress) => {
+            if (!controller.signal.aborted) updateFileState(key, { progress });
+          },
+          options,
+        });
+
+        // Let the progress bar reach 100% before showing the completed state.
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        if (controller.signal.aborted) return;
+
+        updateFileState(key, { status: 'COMPLETE', progress: 100, url });
+        void onUploadCompleted?.({
+          ...fileState,
+          status: 'COMPLETE',
+          progress: 100,
+          url,
+          error: undefined,
+        });
+      } catch (err: unknown) {
+        // cancelUpload/removeFile already updated the state.
+        if (controller.signal.aborted) return;
+        if (process.env.NODE_ENV === 'development') {
+          console.error(err);
+        }
+        updateFileState(key, {
+          status: 'ERROR',
+          error: err instanceof Error ? err.message : 'Upload failed',
+        });
+      } finally {
+        if (controllers.current.get(key) === controller) {
+          controllers.current.delete(key);
+        }
+      }
+    },
+    [updateFileState, uploadFn, onUploadCompleted],
   );
 
   const uploadFiles = React.useCallback(
     async (keysToUpload?: string[], options?: TOptions) => {
       const filesToUpload = fileStates.filter(
         (fileState) =>
-          fileState.status === 'PENDING' &&
+          (fileState.status === 'PENDING' || fileState.status === 'ERROR') &&
           (!keysToUpload || keysToUpload.includes(fileState.key)),
       );
-
-      if (filesToUpload.length === 0) return;
-
       await Promise.all(
-        filesToUpload.map(async (fileState) => {
-          try {
-            const abortController = new AbortController();
-            updateFileState(fileState.key, {
-              abortController,
-              status: 'UPLOADING',
-              progress: 0,
-            });
-
-            const uploadResult = await uploadFn({
-              file: fileState.file,
-              signal: abortController.signal,
-              onProgressChange: (progress) => {
-                updateFileState(fileState.key, { progress });
-              },
-              options,
-            });
-
-            // Wait a bit to show the bar at 100%
-            await new Promise((resolve) => setTimeout(resolve, 500));
-
-            const completedFile = {
-              ...fileState,
-              status: 'COMPLETE' as const,
-              progress: 100,
-              url: uploadResult?.url,
-            };
-
-            updateFileState(fileState.key, {
-              status: 'COMPLETE',
-              progress: 100,
-              url: uploadResult?.url,
-            });
-
-            // Call onUploadCompleted when a file upload is completed
-            if (onUploadCompleted) {
-              void onUploadCompleted(completedFile);
-            }
-          } catch (err: unknown) {
-            if (
-              err instanceof Error &&
-              // if using with EdgeStore, the error name is UploadAbortedError
-              (err.name === 'AbortError' || err.name === 'UploadAbortedError')
-            ) {
-              updateFileState(fileState.key, {
-                status: 'PENDING',
-                progress: 0,
-                error: 'Upload canceled',
-              });
-            } else {
-              if (process.env.NODE_ENV === 'development') {
-                console.error(err);
-              }
-              const errorMessage =
-                err instanceof Error ? err.message : 'Upload failed';
-              updateFileState(fileState.key, {
-                status: 'ERROR',
-                error: errorMessage,
-              });
-            }
-          }
-        }),
+        filesToUpload.map((fileState) => upload(fileState, options)),
       );
     },
-    [fileStates, updateFileState, uploadFn, onUploadCompleted],
+    [fileStates, upload],
   );
 
   const addFiles = React.useCallback(
     (files: File[]) => {
+      if (files.length === 0) return [];
       const newFileStates = files.map<FileState>((file) => ({
         file,
-        key: `${file.name}-${Date.now()}-${Math.random()
-          .toString(36)
-          .slice(2)}`,
+        key: `${file.name}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
         progress: 0,
         status: 'PENDING',
-        autoUpload,
       }));
       setFileStates((prev) => [...prev, ...newFileStates]);
-
-      // Call onFileAdded for each new file
-      if (onFileAdded) {
-        newFileStates.forEach((fileState) => {
-          void onFileAdded(fileState);
-        });
-      }
-
-      if (autoUpload) {
-        setPendingAutoUploadKeys(newFileStates.map((fs) => fs.key));
-      }
+      newFileStates.forEach((fileState) => {
+        void onFileAdded?.(fileState);
+        if (autoUpload) void upload(fileState);
+      });
+      return newFileStates;
     },
-    [autoUpload, onFileAdded],
+    [autoUpload, onFileAdded, upload],
   );
 
   const removeFile = React.useCallback(
     (key: string) => {
+      controllers.current.get(key)?.abort();
       setFileStates((prev) =>
         prev.filter((fileState) => fileState.key !== key),
       );
-
-      // Call onFileRemoved when a file is removed
-      if (onFileRemoved) {
-        void onFileRemoved(key);
-      }
+      void onFileRemoved?.(key);
     },
     [onFileRemoved],
   );
 
   const cancelUpload = React.useCallback(
     (key: string) => {
-      const fileState = fileStates.find((f) => f.key === key);
-      if (fileState?.abortController && fileState.progress < 100) {
-        fileState.abortController.abort();
-        if (fileState?.autoUpload) {
-          // Remove file if it was an auto-upload
-          removeFile(key);
-        } else {
-          // If it was not an auto-upload, reset the file state
-          updateFileState(key, { status: 'PENDING', progress: 0 });
-        }
+      const controller = controllers.current.get(key);
+      if (!controller) return;
+      controller.abort();
+      if (autoUpload) {
+        removeFile(key);
+      } else {
+        updateFileState(key, { status: 'PENDING', progress: 0 });
       }
     },
-    [fileStates, updateFileState, removeFile],
+    [autoUpload, removeFile, updateFileState],
   );
 
   const resetFiles = React.useCallback(() => {
+    controllers.current.forEach((controller) => controller.abort());
     setFileStates([]);
   }, []);
 
+  // Abort running uploads when the provider unmounts.
   React.useEffect(() => {
-    const completedFileStates = fileStates.filter(
+    const running = controllers.current;
+    return () => {
+      running.forEach((controller) => controller.abort());
+    };
+  }, []);
+
+  React.useEffect(() => {
+    const completedFiles = fileStates.filter(
       (fs): fs is CompletedFileState => fs.status === 'COMPLETE' && !!fs.url,
     );
-    void onChange?.({
-      allFiles: fileStates,
-      completedFiles: completedFileStates,
-    });
+    void onChange?.({ allFiles: fileStates, completedFiles });
   }, [fileStates, onChange]);
 
-  // Handle auto-uploading files added to the queue
-  React.useEffect(() => {
-    if (pendingAutoUploadKeys && pendingAutoUploadKeys.length > 0) {
-      void uploadFiles(pendingAutoUploadKeys);
-      setPendingAutoUploadKeys(null);
-    }
-  }, [pendingAutoUploadKeys, uploadFiles]);
-
-  const isUploading = React.useMemo(
-    () => fileStates.some((fs) => fs.status === 'UPLOADING'),
-    [fileStates],
-  );
+  const isUploading = fileStates.some((fs) => fs.status === 'UPLOADING');
 
   const value = React.useMemo(
     () => ({
@@ -401,25 +363,4 @@ export function UploaderProvider<TOptions = unknown>({
       {typeof children === 'function' ? children(value) : children}
     </UploaderContext.Provider>
   );
-}
-
-/**
- * Formats a file size in bytes to a human-readable string.
- *
- * @param bytes - The file size in bytes
- * @returns A formatted string (e.g., "1.5 MB")
- *
- * @example
- * ```ts
- * formatFileSize(1024); // "1 KB"
- * formatFileSize(1024 * 1024 * 2.5); // "2.5 MB"
- * ```
- */
-export function formatFileSize(bytes?: number) {
-  if (!bytes) return '0 B';
-  const k = 1024;
-  const dm = 2;
-  const sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
 }

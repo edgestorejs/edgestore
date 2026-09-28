@@ -83,7 +83,8 @@
   --popover: oklch(0.208 0.042 265.755);
   --popover-foreground: oklch(0.984 0.003 247.858);
   --primary: #aa99ff;
-  --primary-foreground: oklch(1 0 0);
+  /* Dark text: white on the light #aa99ff is only 2.4:1 contrast. */
+  --primary-foreground: #050817;
   --secondary: oklch(0.279 0.041 260.031);
   --secondary-foreground: oklch(0.984 0.003 247.858);
   --muted: oklch(0.279 0.041 260.031);

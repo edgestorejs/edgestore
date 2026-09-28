@@ -10,7 +10,7 @@ import {
 import * as React from 'react';
 
 export default function MultiImageUploaderBlock() {
-  const { edgestore } = useMockEdgeStore();
+  const { edgestore } = useMockEdgeStore(); // Mock edgestore for easy v0 integration
 
   const uploadFn: UploadFn = React.useCallback(
     async ({ file, signal, onProgressChange }) => {
@@ -19,6 +19,8 @@ export default function MultiImageUploaderBlock() {
         signal,
         onProgressChange,
       });
+      // you can run some server action or api here
+      // to add the necessary data to your database
       return { url: res.url };
     },
     [edgestore],
@@ -32,14 +34,14 @@ export default function MultiImageUploaderBlock() {
             maxFiles={6}
             maxSize={1024 * 1024 * 2} // 2MB
           />
-          <CompletedImages />
+          <CompletedFiles />
         </UploaderProvider>
       </div>
     </div>
   );
 }
 
-function CompletedImages() {
+function CompletedFiles() {
   const { fileStates } = useUploader();
 
   const completedFiles = fileStates.filter(
@@ -51,21 +53,22 @@ function CompletedImages() {
   }
 
   return (
-    <div className="mt-8 w-full">
-      <h3 className="mb-2 text-lg font-semibold">Uploaded Files</h3>
-      <div className="rounded-md bg-gray-50 p-4 dark:bg-gray-900">
-        {completedFiles.map((res) => (
-          <a
-            key={res.url}
-            className="mb-1 block underline"
-            href={res.url}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {res.file.name}
-          </a>
+    <div className="mt-6 w-full">
+      <h3 className="mb-2 text-sm font-semibold">Uploaded files</h3>
+      <ul className="grid gap-1 rounded-lg bg-muted/50 p-3 text-sm">
+        {completedFiles.map((fs) => (
+          <li key={fs.key} className="truncate">
+            <a
+              className="underline underline-offset-2"
+              href={fs.url}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {fs.file.name}
+            </a>
+          </li>
         ))}
-      </div>
+      </ul>
     </div>
   );
 }
@@ -76,37 +79,32 @@ function useMockEdgeStore() {
     edgestore: {
       myPublicImages: {
         upload: async ({
-          file,
+          signal,
           onProgressChange,
         }: {
           file: File;
           signal?: AbortSignal;
           onProgressChange?: (progress: number) => void | Promise<void>;
         }) => {
-          // Simulate upload progress with a Promise that completes only after reaching 100%
-          await new Promise<void>((resolve) => {
-            if (onProgressChange) {
-              let progress = 0;
-              const interval = setInterval(() => {
-                const increment = Math.floor(Math.random() * 41) + 10;
-                progress = Math.min(progress + increment, 100);
-                void onProgressChange(progress);
-
-                if (progress >= 100) {
-                  clearInterval(interval);
-                  setTimeout(() => {
-                    void onProgressChange(100);
-                    setTimeout(resolve, 200);
-                  }, 300);
-                }
-              }, 300);
-            } else {
-              // If no progress handler, just wait a bit
-              setTimeout(resolve, 1500);
-            }
+          // Simulate upload progress. Rejects like EdgeStore when the upload is aborted.
+          await new Promise<void>((resolve, reject) => {
+            let progress = 0;
+            const interval = setInterval(() => {
+              progress = Math.min(
+                progress + Math.floor(Math.random() * 21) + 10,
+                100,
+              );
+              void onProgressChange?.(progress);
+              if (progress >= 100) {
+                clearInterval(interval);
+                resolve();
+              }
+            }, 300);
+            signal?.addEventListener('abort', () => {
+              clearInterval(interval);
+              reject(new DOMException('Upload aborted', 'AbortError'));
+            });
           });
-
-          console.log('Simulated upload of', file.name);
 
           return {
             url: 'https://edgestore.dev/img/upload-demo.webp',

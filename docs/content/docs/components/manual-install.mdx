@@ -14,7 +14,9 @@ import { Callout } from 'fumadocs-ui/components/callout';
 If you're not using shadcn/ui, you can install the components manually. Follow the steps below to prepare for the components manual installation.
 
 <Callout type="info">
-  Components installed manually do not use shadcn/ui specific colors.
+  The components use the shadcn/ui color tokens (`background`, `foreground`,
+  `primary`, `muted`, `muted-foreground`, `destructive`, `border` and `ring`).
+  If you don't use shadcn/ui, define these colors in your Tailwind theme.
 </Callout>
 
 ## Install dependencies
@@ -22,6 +24,10 @@ If you're not using shadcn/ui, you can install the components manually. Follow t
 ```package-install
 tailwind-merge clsx react-dropzone lucide-react
 ```
+
+Some components (multi-image, multi-file, avatar and upload button) also use the shadcn/ui [Button](https://ui.shadcn.com/docs/components/button) at `@/components/ui/button`.
+
+The enter animations use classes from [tw-animate-css](https://github.com/Wombosvideo/tw-animate-css). Without it, the components work the same, just without the animations.
 
 ## Add the cn helper
 

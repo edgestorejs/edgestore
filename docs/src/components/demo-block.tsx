@@ -8,17 +8,14 @@ import React from 'react';
 type DemoBlockProps = {
   children: React.ReactNode;
   externalLink?: string;
-  v0Config?: {
-    title: string;
-    description: string;
-    registryUrl: string;
-  };
+  /** Registry item to open in v0. */
+  registryUrl?: string;
 };
 
 export function DemoBlock({
   children,
   externalLink,
-  v0Config,
+  registryUrl,
 }: DemoBlockProps) {
   return (
     <div className="not-prose flex items-center justify-center pb-4">
@@ -38,7 +35,7 @@ export function DemoBlock({
             </Button>
           )}
           <div className="grow" />
-          {v0Config && (
+          {registryUrl && (
             <Button
               asChild
               variant="outline"
@@ -46,7 +43,7 @@ export function DemoBlock({
               className="flex items-center gap-1 text-foreground no-underline"
             >
               <a
-                href={`https://v0.dev/chat/api/open?title=${v0Config.title}&prompt=${v0Config.description}&url=${v0Config.registryUrl}`}
+                href={`https://v0.dev/chat/api/open?url=${encodeURIComponent(registryUrl)}`}
                 target="_blank"
                 rel="noreferrer"
               >

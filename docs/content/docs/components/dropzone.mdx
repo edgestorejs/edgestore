@@ -1,6 +1,6 @@
 ---
 title: Dropzone
-description: The Dropzone component provides a user-friendly drag-and-drop interface for file uploads that integrates seamlessly with the UploaderProvider.
+description: The drop area and the useUploadDropzone hook that the other upload components are built on.
 ---
 
 import { LimitedCode } from '@/components/ui/limited-code';
@@ -11,21 +11,32 @@ import {
   OpenTabsTrigger,
 } from '@/components/ui/open-tabs';
 import { Callout } from 'fumadocs-ui/components/callout';
+import { Step, Steps } from 'fumadocs-ui/components/steps';
+
+`dropzone.tsx` exports:
+
+- `Dropzone`: a drop area that adds files to the nearest `UploaderProvider`.
+- `useUploadDropzone`: [react-dropzone](https://react-dropzone.js.org/)'s `useDropzone`, connected to the `UploaderProvider`. It enforces `maxFiles` across drops, adds what fits, and returns readable messages about skipped files.
+- `DropzonePrompt`, `DropzoneOverlay` and `UploadErrors`: the building blocks for the empty state, the drag overlay and the error notice.
+- `dropzoneVariants` and `dropzoneState`: the classes for a drop area and the data attributes that drive its drag styles.
 
 <Callout>
-  If you are installing the other dropzone components via the CLI, this
+  If you are installing the other upload components via the CLI, this
   component will be installed automatically. You can skip the following steps.
 </Callout>
 
 ## Installation
 
 <OpenTabs defaultValue="cli">
+
 <OpenTabsList>
   <OpenTabsTrigger value="cli">CLI</OpenTabsTrigger>
   <OpenTabsTrigger value="manual">Manual</OpenTabsTrigger>
 </OpenTabsList>
 
 <OpenTabsContent value="cli">
+
+Use the shadcn CLI to add the component to your project.
 
 ```package-install
 npx shadcn@latest add https://edgestore.dev/r/dropzone.json
@@ -35,218 +46,60 @@ npx shadcn@latest add https://edgestore.dev/r/dropzone.json
 
 <OpenTabsContent value="manual">
 
+<Steps>
+
+<Step>
+
+### Setup for manual installation
+
+First you will need to follow the [manual install setup](./manual-install) guide.
+
+</Step>
+
+<Step>
+
+### Install required components
+
+- [uploader-provider](./uploader-provider)
+
+</Step>
+
+<Step>
+
 ### Copy this component
 
 <LimitedCode>
 
-````tsx
-'use client';
+<include lang="tsx" meta='title="components/upload/dropzone.tsx"'>../../../src/components/upload/dropzone.tsx</include>
 
-import { cn } from '@/lib/utils';
-import { AlertCircleIcon, UploadCloudIcon } from 'lucide-react';
-import * as React from 'react';
-import { useDropzone, type DropzoneOptions } from 'react-dropzone';
-import { formatFileSize, useUploader } from './uploader-provider';
-
-const DROPZONE_VARIANTS = {
-  base: 'relative rounded-md p-4 w-full flex justify-center items-center flex-col cursor-pointer border-2 border-dashed border-gray-400 dark:border-gray-600 transition-colors duration-200 ease-in-out',
-  active: 'border-blue-500 dark:border-blue-400',
-  disabled:
-    'bg-gray-100 dark:bg-gray-800 border-gray-400/50 dark:border-gray-600/50 cursor-default pointer-events-none opacity-50',
-  accept:
-    'border-blue-500 dark:border-blue-400 bg-blue-100 dark:bg-blue-900/30',
-  reject: 'border-red-500 dark:border-red-400 bg-red-100 dark:bg-red-900/30',
-};
-
-/**
- * Props for the Dropzone component.
- *
- * @interface DropzoneProps
- * @extends {React.HTMLAttributes<HTMLInputElement>}
- */
-export interface DropzoneProps extends React.HTMLAttributes<HTMLInputElement> {
-  /**
-   * Options passed to the underlying react-dropzone component.
-   * Cannot include 'disabled' or 'onDrop' as they are handled internally.
-   */
-  dropzoneOptions?: Omit<DropzoneOptions, 'disabled' | 'onDrop'>;
-
-  /**
-   * Whether the dropzone is disabled.
-   */
-  disabled?: boolean;
-
-  /**
-   * Message shown when files are being dragged over the dropzone.
-   */
-  dropMessageActive?: string;
-
-  /**
-   * Default message shown when the dropzone is idle.
-   */
-  dropMessageDefault?: string;
-}
-
-/**
- * A dropzone component for file uploads that integrates with the UploaderProvider.
- *
- * @component
- * @example
- * ```tsx
- * <Dropzone
- *   dropzoneOptions={{
- *     maxFiles: 5,
- *     maxSize: 1024 * 1024 * 10, // 10MB
- *   }}
- * />
- * ```
- */
-const Dropzone = React.forwardRef<HTMLInputElement, DropzoneProps>(
-  (
-    {
-      dropzoneOptions,
-      className,
-      disabled,
-      dropMessageActive = 'Drop files here...',
-      dropMessageDefault = 'drag & drop files here, or click to select',
-      ...props
-    },
-    ref,
-  ) => {
-    const { fileStates, addFiles } = useUploader();
-    const [error, setError] = React.useState<string>();
-
-    const maxFiles = dropzoneOptions?.maxFiles;
-    const maxSize = dropzoneOptions?.maxSize;
-    const isMaxFilesReached = !!maxFiles && fileStates.length >= maxFiles;
-    const isDisabled = disabled ?? isMaxFilesReached;
-
-    const {
-      getRootProps,
-      getInputProps,
-      isDragActive,
-      isFocused,
-      isDragAccept,
-      isDragReject,
-    } = useDropzone({
-      disabled: isDisabled,
-      onDrop: (acceptedFiles, rejectedFiles) => {
-        setError(undefined);
-
-        // Handle rejections first
-        if (rejectedFiles.length > 0) {
-          if (rejectedFiles[0]?.errors[0]) {
-            const error = rejectedFiles[0].errors[0];
-            const code = error.code;
-            const messages: Record<string, string> = {
-              'file-too-large': `The file is too large. Max size is ${formatFileSize(
-                maxSize ?? 0,
-              )}.`,
-              'file-invalid-type': 'Invalid file type.',
-              'too-many-files': `You can only add ${
-                maxFiles ?? 'multiple'
-              } file(s).`,
-              default: 'The file is not supported.',
-            };
-            setError(messages[code] ?? messages.default);
-          }
-          return; // Exit early if there are any rejections
-        }
-
-        // Handle accepted files
-        if (acceptedFiles.length === 0) return;
-
-        // Check if adding these files would exceed maxFiles limit
-        if (maxFiles) {
-          const remainingSlots = maxFiles - fileStates.length;
-          // If adding all files would exceed the limit, reject them all
-          if (acceptedFiles.length > remainingSlots) {
-            setError(`You can only add ${maxFiles} file(s).`);
-            return;
-          }
-        }
-
-        addFiles(acceptedFiles);
-      },
-      ...dropzoneOptions,
-    });
-
-    const dropZoneClassName = React.useMemo(
-      () =>
-        cn(
-          DROPZONE_VARIANTS.base,
-          isFocused && DROPZONE_VARIANTS.active,
-          isDisabled && DROPZONE_VARIANTS.disabled,
-          isDragReject && DROPZONE_VARIANTS.reject,
-          isDragAccept && DROPZONE_VARIANTS.accept,
-          className,
-        ),
-      [isFocused, isDisabled, isDragAccept, isDragReject, className],
-    );
-
-    return (
-      <div className="w-full">
-        <div
-          {...getRootProps({
-            className: dropZoneClassName,
-          })}
-        >
-          <input ref={ref} {...getInputProps()} {...props} />
-          <div className="flex flex-col items-center justify-center gap-2 text-center text-gray-500 dark:text-gray-400">
-            <UploadCloudIcon className="h-10 w-10" />
-            <div className="text-sm font-medium">
-              {isDragActive ? dropMessageActive : dropMessageDefault}
-            </div>
-            {(!!maxSize || !!maxFiles) && (
-              <div className="text-xs">
-                {maxFiles && maxFiles > 1 ? `Up to ${maxFiles} files` : ''}
-                {maxFiles && maxFiles > 1 && maxSize ? ', ' : ''}
-                {maxSize && `Max size: ${formatFileSize(maxSize)}`}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Error Text */}
-        {error && (
-          <div className="mt-1 flex items-center text-xs text-red-500 dark:text-red-400">
-            <AlertCircleIcon className="mr-1 h-4 w-4" />
-            <span>{error}</span>
-          </div>
-        )}
-      </div>
-    );
-  },
-);
-Dropzone.displayName = 'Dropzone';
-
-export { Dropzone };
-````
+<include lang="tsx" meta='title="components/upload/upload-utils.ts"'>../../../src/components/upload/upload-utils.ts</include>
 
 </LimitedCode>
 
+</Step>
+
+</Steps>
+
 </OpenTabsContent>
+
 </OpenTabs>
 
 ## Usage
 
 Install or copy the component from [Installation](#installation) before using this example.
 
-This section provides a guide on how to use the `Dropzone` component with the `UploaderProvider`.
-
-### Basic Usage
-
-The Dropzone component must be used within an `UploaderProvider`.
-
 ```tsx
 'use client';
 
-import { Dropzone } from '@/components/ui/dropzone';
-import { UploaderProvider, type UploadFn } from '@/components/ui/uploader-provider';
+import { Dropzone } from '@/components/upload/dropzone';
+import {
+  UploaderProvider,
+  type UploadFn,
+} from '@/components/upload/uploader-provider';
 import { useEdgeStore } from '@/lib/edgestore';
 import * as React from 'react';
 
-export default function DropzoneExample() {
+export function DropzoneUsage() {
   const { edgestore } = useEdgeStore();
 
   const uploadFn: UploadFn = React.useCallback(
@@ -273,6 +126,7 @@ export default function DropzoneExample() {
           accept: {
             'image/*': ['.jpeg', '.jpg', '.png'],
           },
+          typesLabel: 'JPG or PNG',
         }}
       />
       {/* You can create a component that uses the provider context */}
@@ -281,3 +135,36 @@ export default function DropzoneExample() {
   );
 }
 ```
+
+### Custom dropzones
+
+Use `useUploadDropzone` to build your own drop area. Spread `dropzoneState()` on the root element so the `data-dragging`, `data-rejected` and `data-disabled` attributes drive the styles in `dropzoneVariants`:
+
+```tsx
+import {
+  dropzoneState,
+  dropzoneVariants,
+  UploadErrors,
+  useUploadDropzone,
+} from '@/components/upload/dropzone';
+
+function MyDropzone() {
+  const { getRootProps, getInputProps, isDragActive, isDragReject, errors } =
+    useUploadDropzone({ maxFiles: 3, maxSize: 1024 * 1024 });
+
+  return (
+    <>
+      <div
+        {...getRootProps({ className: dropzoneVariants })}
+        {...dropzoneState({ isDragActive, isDragReject })}
+      >
+        <input {...getInputProps()} />
+        <p>Drop files here</p>
+      </div>
+      <UploadErrors errors={errors} />
+    </>
+  );
+}
+```
+
+`upload-utils.ts` has the helpers the components share: `formatFileSize`, accept presets (`IMAGE_ACCEPT`, `DOCUMENT_ACCEPT`, `SPREADSHEET_ACCEPT`), the `minImageSize` validator and the `useObjectUrl` preview hook.
