@@ -50,6 +50,9 @@ jobs:
       - name: Check formatting
         run: pnpm format --check
 
+      - name: Vercel deployment filters
+        run: pnpm test:vercel-ignore
+
       - name: Lint
         run: pnpm lint
 
