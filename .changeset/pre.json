@@ -39,8 +39,6 @@
     "resilient-multipart-uploads",
     "router-provider",
     "s3-provider",
-    "standard-schema-input",
-    "steady-azure-blocks",
-    "v1-release-candidate"
+    "standard-schema-input"
   ]
 }
