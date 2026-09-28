@@ -29,10 +29,14 @@ export function dotenvValue(
   contents: string,
   name: string,
 ): string | undefined {
+  return readDotenvValue(contents, name) || undefined;
+}
+
+function readDotenvValue(contents: string, name: string): string | undefined {
   let value: string | undefined;
   for (const line of contents.split('\n')) {
     const assignment = parseDotenvAssignment(line);
-    if (assignment?.name === name) value = assignment.value || undefined;
+    if (assignment?.name === name) value = assignment.value;
   }
   return value;
 }
@@ -66,4 +70,15 @@ function findClosingQuote(value: string, quote: string): number {
     if (backslashes % 2 === 0) return index;
   }
   return -1;
+}
+
+export function projectEnvValue(
+  contents: string,
+  name: 'EDGESTORE_ACCESS_KEY' | 'EDGESTORE_SECRET_KEY',
+): string | undefined {
+  // Preserve an explicitly empty canonical value, matching server resolution.
+  return (
+    readDotenvValue(contents, name) ??
+    readDotenvValue(contents, name.replace('EDGESTORE_', 'EDGE_STORE_'))
+  );
 }

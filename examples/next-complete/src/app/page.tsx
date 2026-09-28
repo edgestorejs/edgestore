@@ -5,7 +5,8 @@ import { cookies } from 'next/headers';
 export default async function Home() {
   const { userId } = getUser((await cookies()).get(USER_COOKIE)?.value);
   const hasKeys = Boolean(
-    process.env.EDGE_STORE_ACCESS_KEY && process.env.EDGE_STORE_SECRET_KEY,
+    (process.env.EDGESTORE_ACCESS_KEY ?? process.env.EDGE_STORE_ACCESS_KEY) &&
+    (process.env.EDGESTORE_SECRET_KEY ?? process.env.EDGE_STORE_SECRET_KEY),
   );
 
   return (

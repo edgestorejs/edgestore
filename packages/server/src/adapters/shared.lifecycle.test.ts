@@ -20,7 +20,7 @@ const originalUrls = [
 
 describe('frontend file mutations', () => {
   beforeEach(() => {
-    vi.stubEnv('EDGE_STORE_JWT_SECRET', 'test-secret');
+    vi.stubEnv('EDGESTORE_JWT_SECRET', 'test-secret');
     vi.clearAllMocks();
   });
 
@@ -309,7 +309,7 @@ describe('frontend file mutations', () => {
 
 describe('multipart lifecycle', () => {
   beforeEach(() => {
-    vi.stubEnv('EDGE_STORE_JWT_SECRET', 'test-secret');
+    vi.stubEnv('EDGESTORE_JWT_SECRET', 'test-secret');
     vi.clearAllMocks();
   });
 

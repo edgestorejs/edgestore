@@ -60,13 +60,13 @@ export type AzureBlobProviderOptions = {
   endpoint?: string;
   /**
    * Base URL for file URLs, such as a CDN in front of the container. Defaults
-   * to `<endpoint>/<container>`. Can also be set via `EDGE_STORE_BASE_URL`.
+   * to `<endpoint>/<container>`. Can also be set via `EDGESTORE_BASE_URL`.
    * Signed URLs always use the endpoint.
    */
   baseUrl?: string;
   /**
    * Secret used to sign multipart upload sessions. Defaults to
-   * `EDGE_STORE_JWT_SECRET` or `EDGE_STORE_SECRET_KEY`.
+   * `EDGESTORE_JWT_SECRET` or `EDGESTORE_SECRET_KEY`.
    */
   jwtSecret?: string;
   /**
@@ -117,7 +117,7 @@ export function azureBlob(options: AzureBlobProviderOptions = {}) {
   ).replace(/\/+$/, '');
   const baseUrl =
     options.baseUrl ??
-    getEnv('EDGE_STORE_BASE_URL') ??
+    getEnv('EDGESTORE_BASE_URL') ??
     `${endpoint}/${containerName}`;
   const keys = createObjectKeys('Azure Blob', baseUrl);
   const uploadExpiresIn = expiration(options.uploadUrlExpiresIn ?? 3600);

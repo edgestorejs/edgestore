@@ -102,7 +102,7 @@ describe('agent project-key delivery', () => {
     fixture.createProjectKey.mockImplementationOnce(async () => {
       await writeFile(
         path.join(root, '.env.local'),
-        'EDGE_STORE_SECRET_KEY=existing',
+        'EDGESTORE_SECRET_KEY=existing',
       );
       return { key: projectKey, secretKey: 'secret-sentinel' };
     });

@@ -46,7 +46,7 @@ export function sanitize(value: string, secrets: string[] = []): string {
       '[URL_WITH_QUERY_REDACTED]',
     )
     .replace(
-      /((?:EDGE_STORE_(?:ACCESS_KEY|SECRET_KEY)|EDGESTORE_TOKEN|Authorization)["']?\s*[:=]\s*)[^\r\n]+/gi,
+      /((?:EDGE_?STORE_(?:ACCESS_KEY|SECRET_KEY)|EDGESTORE_TOKEN|Authorization)["']?\s*[:=]\s*)[^\r\n]+/gi,
       '$1[REDACTED]',
     );
 }

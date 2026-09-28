@@ -71,6 +71,36 @@ describe('edgestore provider', () => {
     expect(forProject).not.toHaveBeenCalled();
   });
 
+  it.each(['EDGESTORE', 'EDGE_STORE'])(
+    'reads %s credentials and API endpoint',
+    (prefix) => {
+      for (const suffix of ['ACCESS_KEY', 'SECRET_KEY', 'API_ENDPOINT']) {
+        vi.stubEnv(`EDGESTORE_${suffix}`, undefined);
+        vi.stubEnv(`EDGE_STORE_${suffix}`, undefined);
+      }
+      vi.stubEnv(`${prefix}_ACCESS_KEY`, 'env-access');
+      vi.stubEnv(`${prefix}_SECRET_KEY`, 'env-secret');
+      vi.stubEnv(`${prefix}_API_ENDPOINT`, 'https://api.example');
+      edgestore();
+      expect(createEdgeStoreSdk).toHaveBeenCalledWith({
+        credentials: { accessKey: 'env-access', secretKey: 'env-secret' },
+        apiUrl: 'https://api.example/v2',
+      });
+      edgestore({
+        accessKey: 'explicit-access',
+        secretKey: 'explicit-secret',
+        apiUrl: 'https://explicit.example/v2',
+      });
+      expect(createEdgeStoreSdk).toHaveBeenLastCalledWith({
+        credentials: {
+          accessKey: 'explicit-access',
+          secretKey: 'explicit-secret',
+        },
+        apiUrl: 'https://explicit.example/v2',
+      });
+    },
+  );
+
   it('scopes a Bearer-authenticated SDK once at provider creation', () => {
     edgestore({
       token: 'management-token',
@@ -162,7 +192,7 @@ describe('edgestore provider', () => {
     expect(await provider.init({ ctx: {}, router })).toMatchObject({
       clientInit: { urls: delivery.initUrls },
     });
-    vi.stubEnv('EDGE_STORE_BASE_URL', 'http://localhost:4444/');
+    vi.stubEnv('EDGESTORE_BASE_URL', 'http://localhost:4444/');
     const overridden = await provider.init({ ctx: {}, router });
     expect(overridden.clientInit?.urls).toEqual([
       'http://localhost:4444/_init',

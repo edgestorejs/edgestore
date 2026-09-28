@@ -63,7 +63,7 @@ export const logger: TestLogger = {
 };
 
 export function setupAdapterTestEnv() {
-  vi.stubEnv('EDGE_STORE_JWT_SECRET', 'test-secret');
+  vi.stubEnv('EDGESTORE_JWT_SECRET', 'test-secret');
   vi.stubEnv('NODE_ENV', 'test');
   vi.clearAllMocks();
 }

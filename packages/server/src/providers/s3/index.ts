@@ -61,7 +61,7 @@ export function s3(options: S3ProviderOptions = {}) {
     });
   const baseUrl =
     options.baseUrl ??
-    getEnv('EDGE_STORE_BASE_URL') ??
+    getEnv('EDGESTORE_BASE_URL') ??
     (endpoint
       ? `${endpoint.replace(/\/+$/, '')}/${bucketName}`
       : region

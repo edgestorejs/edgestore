@@ -239,8 +239,8 @@ describe('S3 multipart uploads', () => {
   });
 
   it('validates the secret before initiation and aborts when part signing fails', async () => {
-    vi.stubEnv('EDGE_STORE_JWT_SECRET', '');
-    vi.stubEnv('EDGE_STORE_SECRET_KEY', '');
+    vi.stubEnv('EDGESTORE_JWT_SECRET', '');
+    vi.stubEnv('EDGESTORE_SECRET_KEY', '');
     const missing = setup({ jwtSecret: undefined });
     await expect(start(missing.provider)).rejects.toThrow('require jwtSecret');
     expect(missing.send).not.toHaveBeenCalled();

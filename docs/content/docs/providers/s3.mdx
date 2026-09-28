@@ -33,7 +33,7 @@ export type EdgeStoreRouter = typeof router;
 ```
 
 Pass `router` to your framework adapter as its `router` option.
-Set `EDGE_STORE_JWT_SECRET` to a stable random secret, for example one generated
+Set `EDGESTORE_JWT_SECRET` to a stable random secret, for example one generated
 with `openssl rand -base64 32`. All application instances must share it.
 
 Pass `credentials` with an AWS credentials object or provider function. If it
@@ -47,13 +47,13 @@ environment variables, shared config, and instance/task roles.
 | `region`                     | `ES_AWS_REGION`, then AWS SDK region resolution                                          |
 | `endpoint`                   | `ES_AWS_ENDPOINT`                                                                        |
 | `forcePathStyle`             | `ES_AWS_FORCE_PATH_STYLE === 'true'`                                                     |
-| `baseUrl`                    | `EDGE_STORE_BASE_URL`, otherwise the storage URL                                         |
+| `baseUrl`                    | `EDGESTORE_BASE_URL`, otherwise the storage URL                                         |
 | `uploadUrlExpiresIn`         | 3600 seconds                                                                             |
 | `signedUrlExpiresIn`         | 3600 seconds                                                                             |
 | `multipart.thresholdBytes`   | 100 MiB                                                                                  |
 | `multipart.partSizeBytes`    | 16 MiB; minimum 5 MiB                                                                    |
 | `multipart.sessionExpiresIn` | 86400 seconds                                                                            |
-| `jwtSecret`                  | Multipart signing override; otherwise `EDGE_STORE_JWT_SECRET` or `EDGE_STORE_SECRET_KEY` |
+| `jwtSecret`                  | Multipart signing override; otherwise `EDGESTORE_JWT_SECRET` or `EDGESTORE_SECRET_KEY` |
 
 Setting `jwtSecret` does not replace the required environment secret.
 Signed URL lifetimes must be between 1 and 604800 seconds; temporary AWS

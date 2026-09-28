@@ -336,7 +336,7 @@ async function preflightKeyDelivery(
 ): Promise<void> {
   await preflightEnvSecret(
     runtime.cwd,
-    ['EDGE_STORE_ACCESS_KEY', 'EDGE_STORE_SECRET_KEY'],
+    ['EDGESTORE_ACCESS_KEY', 'EDGESTORE_SECRET_KEY'],
     options,
   );
   if (options.output) await protectSecretFile(runtime.cwd, options.output);
@@ -357,8 +357,8 @@ function requireSecretDelivery(
 
 function keyValues(accessKey: string, secretKey: string) {
   return {
-    EDGE_STORE_ACCESS_KEY: accessKey,
-    EDGE_STORE_SECRET_KEY: secretKey,
+    EDGESTORE_ACCESS_KEY: accessKey,
+    EDGESTORE_SECRET_KEY: secretKey,
   };
 }
 

@@ -180,11 +180,11 @@ function smoke() {
     (id, result) => {
       assert.ok(id, 'project key ID was empty');
       const values = assertSecretFile(projectKeyPath, [
-        'EDGE_STORE_ACCESS_KEY',
-        'EDGE_STORE_SECRET_KEY',
+        'EDGESTORE_ACCESS_KEY',
+        'EDGESTORE_SECRET_KEY',
       ]);
-      projectKeySecrets = [values.EDGE_STORE_SECRET_KEY];
-      assert.ok(!result.stdout.includes('EDGE_STORE_SECRET_KEY='));
+      projectKeySecrets = [values.EDGESTORE_SECRET_KEY];
+      assert.ok(!result.stdout.includes('EDGESTORE_SECRET_KEY='));
     },
   );
   json(
@@ -546,7 +546,7 @@ function resolveCli(configured, root) {
 function redact(value) {
   return String(value)
     .replace(/es_(?:usr|acc)_[A-Za-z0-9_-]+/g, 'es_[REDACTED]')
-    .replace(/(EDGE_STORE_SECRET_KEY=)[^\s]+/g, '$1[REDACTED]')
+    .replace(/(EDGE_?STORE_SECRET_KEY=)[^\s]+/g, '$1[REDACTED]')
     .replace(/(EDGESTORE_TOKEN=)[^\s]+/g, '$1[REDACTED]')
     .replace(/([?&](?:X-Amz-Signature|Signature)=)[^&\s]+/gi, '$1[REDACTED]');
 }

@@ -113,8 +113,10 @@ export async function uploadWithSdk() {
     // rules, so the path and metadata are passed explicitly.
     const sdk = createEdgeStoreSdk({
       credentials: {
-        accessKey: process.env.EDGE_STORE_ACCESS_KEY!,
-        secretKey: process.env.EDGE_STORE_SECRET_KEY!,
+        accessKey: (process.env.EDGESTORE_ACCESS_KEY ??
+          process.env.EDGE_STORE_ACCESS_KEY)!,
+        secretKey: (process.env.EDGESTORE_SECRET_KEY ??
+          process.env.EDGE_STORE_SECRET_KEY)!,
       },
     });
     const { file } = await sdk.runtime.uploads.upload({

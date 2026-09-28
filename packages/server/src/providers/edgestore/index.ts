@@ -41,14 +41,14 @@ type EdgeStoreProjectProviderOptions = {
    * Access key for your EdgeStore project.
    * Can be found in the EdgeStore dashboard.
    *
-   * This can be omitted if the `EDGE_STORE_ACCESS_KEY` environment variable is set.
+   * This can be omitted if the `EDGESTORE_ACCESS_KEY` environment variable is set.
    */
   accessKey?: string;
   /**
    * Secret key for your EdgeStore project.
    * Can be found in the EdgeStore dashboard.
    *
-   * This can be omitted if the `EDGE_STORE_SECRET_KEY` environment variable is set.
+   * This can be omitted if the `EDGESTORE_SECRET_KEY` environment variable is set.
    */
   secretKey?: string;
   token?: never;
@@ -110,7 +110,7 @@ export function edgestore(options?: EdgeStoreProviderOptions) {
           ]),
         ),
       });
-      const overrideBaseUrl = getEnv('EDGE_STORE_BASE_URL');
+      const overrideBaseUrl = getEnv('EDGESTORE_BASE_URL');
       return {
         clientInit: {
           urls:
@@ -351,8 +351,8 @@ function resolveProviderAuthentication(
     );
   }
 
-  const accessKey = configuredAccessKey ?? getEnv('EDGE_STORE_ACCESS_KEY');
-  const secretKey = configuredSecretKey ?? getEnv('EDGE_STORE_SECRET_KEY');
+  const accessKey = configuredAccessKey ?? getEnv('EDGESTORE_ACCESS_KEY');
+  const secretKey = configuredSecretKey ?? getEnv('EDGESTORE_SECRET_KEY');
 
   if (
     typeof accessKey !== 'string' ||
@@ -399,7 +399,7 @@ function mapMutationResult<TErrorCode extends string>(result: {
 }
 
 function getApiUrl() {
-  const configured = getEnv('EDGE_STORE_API_ENDPOINT');
+  const configured = getEnv('EDGESTORE_API_ENDPOINT');
   if (!configured) return undefined;
   const base = configured.replace(/\/+$/, '');
   return base.endsWith('/v2') ? base : `${base}/v2`;

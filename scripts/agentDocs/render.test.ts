@@ -136,7 +136,7 @@ Unrelated content.
 test('collapsed quick start keeps both server and React package references complete', async () => {
   const server = (await packageReferences('server')).get('next.md')!;
   const react = (await packageReferences('react')).get('client.md')!;
-  assert.match(server, /EDGE_STORE_ACCESS_KEY/);
+  assert.match(server, /EDGESTORE_ACCESS_KEY/);
   assert.match(server, /adapters\/next\/app/);
   assert.match(server, /adapters\/next\/pages/);
   assert.match(react, /createEdgeStoreProvider/);

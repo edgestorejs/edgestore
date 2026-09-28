@@ -276,9 +276,11 @@ function assertAssignmentsAvailable(input: {
 }
 
 function hasAssignment(contents: string, name: string): boolean {
-  return contents
-    .split('\n')
-    .some((line) => parseDotenvAssignment(line)?.name === name);
+  const legacyName = name.replace(/^EDGESTORE_/, 'EDGE_STORE_');
+  return contents.split('\n').some((line) => {
+    const assignment = parseDotenvAssignment(line);
+    return assignment?.name === name || assignment?.name === legacyName;
+  });
 }
 
 function updateAssignments(

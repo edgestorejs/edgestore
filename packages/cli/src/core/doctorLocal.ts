@@ -81,6 +81,8 @@ export async function localApplicationChecks(
         ),
       ].some((match) => Boolean(dotenvValue(contents, match[1]!)));
       const backendKeys = Boolean(
+        dotenvValue(contents, 'EDGESTORE_SECRET_KEY') ||
+        dotenvValue(contents, 'EDGESTORE_ACCESS_KEY') ||
         dotenvValue(contents, 'EDGE_STORE_SECRET_KEY') ||
         dotenvValue(contents, 'EDGE_STORE_ACCESS_KEY'),
       );

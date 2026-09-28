@@ -50,7 +50,7 @@ it('offline never accesses credentials, OAuth, APIs, or command execution', asyn
   const available = vi.spyOn(fixture.credentials, 'available');
   await writeFile(
     path.join(directory, '.env'),
-    'EDGE_STORE_ACCESS_KEY=access-sentinel\nEDGE_STORE_SECRET_KEY=secret-sentinel',
+    'EDGESTORE_ACCESS_KEY=access-sentinel\nEDGESTORE_SECRET_KEY=secret-sentinel',
   );
   const before = await readFile(path.join(directory, '.env'), 'utf8');
   expect(
@@ -112,6 +112,14 @@ it.each([
   {
     dependencies: { next: '16' },
     env: 'NEXT_PUBLIC_EDGE_STORE_SECRET_KEY=secret-sentinel',
+  },
+  {
+    dependencies: { vite: '8', react: '19' },
+    env: 'EDGESTORE_SECRET_KEY=secret-sentinel',
+  },
+  {
+    dependencies: { next: '16' },
+    env: 'NEXT_PUBLIC_EDGESTORE_SECRET_KEY=secret-sentinel',
   },
 ])(
   'fails exposed environment boundaries without values',
