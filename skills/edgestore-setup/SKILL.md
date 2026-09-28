@@ -85,10 +85,11 @@ In split workspaces, export the real backend router type and import it with
 `import type` on the frontend. For cross-origin calls, configure CORS for the
 intended frontend origin. Wrap the upload UI with the React provider.
 
-Choose upload UI that fits the feature: a dropzone or file list for attachments,
-an avatar picker for profiles, or a file field or upload button for forms.
-Reuse existing app components or adapt the React package's component references.
-If absent, see the
+Implement upload UI as a reusable component, reusing the app's components or
+adapting the React package's component references. For attachments, provide
+drag-and-drop and file selection with a file list. For profiles or compact forms,
+choose an avatar picker, file field, or upload button as appropriate.
+If the installed references are absent, see the
 [Dropzone](https://edgestore.dev/docs/components/dropzone.md),
 [Multi-file uploader](https://edgestore.dev/docs/components/multi-file.md),
 [Avatar](https://edgestore.dev/docs/components/avatar.md),
@@ -100,11 +101,13 @@ Adapt the examples to the installed APIs and app styling; do not introduce a new
 styling system just to use them. For custom dropzones, prefer `react-dropzone`
 with accessible file selection, progress, and error feedback.
 
-For uploads in unsaved forms, use temporary files when supported and confirm them
-after saving the record, rather than requiring a save before file selection.
-Persist the upload result's ID/key and URL directly; do not fetch the file again
-just to save its reference. Wait for processing only when the feature needs
-processed details immediately, using the installed API's opt-in support.
+For uploads in unsaved forms, use temporary files when supported: upload, save
+the record, then confirm. A failed database save must leave the files temporary.
+Persist the upload result's ID/key and URL directly. Do not add a backend `get()`
+just to recheck the uploaded URL or size: it can return 404 while processing is
+pending. Validate input and authorize attachments in the app; fetch authoritative
+metadata only when the feature needs it. Wait for processing only when processed
+details are needed immediately, using the installed API's opt-in support.
 
 For a failing integration, read the installed server's `troubleshooting.md` and
 the React package's `errors.md`. Diagnose the failing app request before changing

@@ -149,7 +149,10 @@ const res = await backendClient.publicImages.upload({
 
 ### Confirm a temporary file upload
 
-If you upload a temporary file, you can confirm it by using the `confirm` function.
+Save the upload result's ID/key and URL in your database, then confirm the
+temporary file. Hosted EdgeStore accepts confirmation during processing; a
+preceding `get()` is unnecessary and can return 404 until processing finishes.
+If saving fails, leave the file temporary.
 
 ```ts
 const res = await backendClient.publicFiles.confirm({
