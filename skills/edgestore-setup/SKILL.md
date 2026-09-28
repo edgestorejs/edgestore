@@ -42,21 +42,23 @@ Azure, and custom providers rather than provisioning hosted EdgeStore resources.
 
 Infer a bucket name from the application's feature (for example avatars or
 attachments); fall back to `publicFiles` when context is insufficient. Infer public
-versus protected access from the application and disclose the decision in the
-initial implementation plan or after implementation. Ask when the access policy
-is ambiguous or the files may be sensitive. Configure the application's
-authorization rules for protected files.
+versus protected access from the application. Ask when the access policy is
+ambiguous or the files may be sensitive. Configure the application's authorization
+rules for protected files.
 
-Before provisioning, know the selected app/backend, intended provider, account,
-project, bucket identity, access policy, and env destination. Reuse an existing env
-file when the backend already loads it; otherwise use the framework's convention.
-Preserve existing env values.
+Before changing configuration or provisioning, summarize the proposed setup for
+approval: app/backend, provider, account/project to create or reuse, bucket name,
+who can access files, upload limits, and env destination. Proceed once approved;
+ask again only if the plan materially changes. Reuse an existing env file when
+the backend already loads it; otherwise use the framework's convention. Preserve
+existing env values.
 
 ## Use MCP and the CLI
 
 Prefer an available MCP for an action it supports; otherwise use the CLI if
 available. Start with read-only discovery and request only the permissions needed.
-If authentication requires the user, explain the sign-in step and continue local work.
+When sign-in is needed, initiate it with the available tooling, ask the user to
+complete the browser step, then resume setup and verification.
 
 Creating resources requires authorization for that setup. A project already
 created through MCP should be linked locally, not created again through CLI.
