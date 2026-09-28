@@ -4,6 +4,8 @@
 '@edgestore/shared': minor
 ---
 
+pr: #275
+
 React upload results include the file `id` when the provider exposes one, so
 apps can save it without a lookup. Uploads still resolve after the transfer;
 pass `options.waitForProcessing` to resolve with the processed file instead,
