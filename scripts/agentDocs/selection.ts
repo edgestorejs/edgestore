@@ -45,6 +45,7 @@ export const references: Record<string, Reference[]> = {
         'Cancel upload',
         'Transform files before upload',
         'Temporary files',
+        'Wait for processing',
       ],
     },
     {
@@ -53,7 +54,14 @@ export const references: Record<string, Reference[]> = {
       sections: ['Limit parallel uploads', 'Base Path'],
     },
     { file: 'errors.md', source: '(getting-started)/error-handling.mdx' },
-    ...['dropzone', 'multi-file', 'uploader-provider'].map((component) => ({
+    ...[
+      'dropzone',
+      'multi-file',
+      'avatar',
+      'file-field',
+      'upload-button',
+      'uploader-provider',
+    ].map((component) => ({
       file: `${component}.md`,
       source: `components/${component}.mdx`,
       sections: ['Usage'],
