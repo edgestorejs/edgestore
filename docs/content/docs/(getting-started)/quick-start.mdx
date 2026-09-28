@@ -348,7 +348,11 @@ await edgestore.publicFiles.upload({
 });
 ```
 
-To confirm a temporary file, you can use the `confirm` method.
+For forms, upload files as temporary and save their returned IDs/keys and URLs
+with your record before confirming them. If the database save fails, leave the
+files temporary. Confirmation does not require waiting for hosted processing.
+
+Use the `confirm` method after saving:
 
 ```tsx
 await edgestore.publicFiles.confirm({
