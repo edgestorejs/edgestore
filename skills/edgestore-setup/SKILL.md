@@ -85,15 +85,26 @@ In split workspaces, export the real backend router type and import it with
 `import type` on the frontend. For cross-origin calls, configure CORS for the
 intended frontend origin. Wrap the upload UI with the React provider.
 
-For new attachment UI, reuse an existing upload component or build a reusable
-dropzone, preferably with `react-dropzone`, with accessible file selection,
-progress, and error feedback. Use the React package's `dropzone.md`, `multi-file.md`,
-and `uploader-provider.md` references for examples. If absent, see the
+Choose upload UI that fits the feature: a dropzone or file list for attachments,
+an avatar picker for profiles, or a file field or upload button for forms.
+Reuse existing app components or adapt the React package's component references.
+If absent, see the
 [Dropzone](https://edgestore.dev/docs/components/dropzone.md),
-[Multi-file uploader](https://edgestore.dev/docs/components/multi-file.md), and
+[Multi-file uploader](https://edgestore.dev/docs/components/multi-file.md),
+[Avatar](https://edgestore.dev/docs/components/avatar.md),
+[File field](https://edgestore.dev/docs/components/file-field.md),
+[Upload button](https://edgestore.dev/docs/components/upload-button.md), and
 [Uploader provider](https://edgestore.dev/docs/components/uploader-provider.md) guides.
+Use the docs origin recorded in the installed references for these online guides.
 Adapt the examples to the installed APIs and app styling; do not introduce a new
-styling system just to use them.
+styling system just to use them. For custom dropzones, prefer `react-dropzone`
+with accessible file selection, progress, and error feedback.
+
+For uploads in unsaved forms, use temporary files when supported and confirm them
+after saving the record, rather than requiring a save before file selection.
+Persist the upload result's ID/key and URL directly; do not fetch the file again
+just to save its reference. Wait for processing only when the feature needs
+processed details immediately, using the installed API's opt-in support.
 
 For a failing integration, read the installed server's `troubleshooting.md` and
 the React package's `errors.md`. Diagnose the failing app request before changing
