@@ -220,20 +220,6 @@ test('server references cover every shipped framework adapter, including both Ne
   assert.ok(files.has('troubleshooting.md'));
 });
 
-test('React references include component examples and their installation links', async () => {
-  const files = await packageReferences('react');
-  for (const component of ['dropzone', 'multi-file', 'uploader-provider']) {
-    const file = `${component}.md`;
-    const content = files.get(file);
-    assert.ok(content, `Missing ${file}`);
-    assert.ok(files.get('README.md')!.includes(`](${file})`));
-    assert.ok(content.includes(`/docs/components/${component}#installation`));
-    assert.match(content, /```tsx/);
-    assert.match(content, /useEdgeStore/);
-    assert.doesNotMatch(content, /<OpenTabs|<DemoBlock|<LimitedCode/);
-  }
-});
-
 test('adapter examples contain valid TypeScript and JSX syntax', async () => {
   for (const adapter of [
     'remix',

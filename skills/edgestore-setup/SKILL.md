@@ -89,9 +89,9 @@ For new attachment UI, reuse an existing upload component or build a reusable
 dropzone, preferably with `react-dropzone`, with accessible file selection,
 progress, and error feedback. Use the React package's `dropzone.md`, `multi-file.md`,
 and `uploader-provider.md` references for examples. If absent, see the
-[Dropzone](https://edgestore.dev/docs/components/dropzone),
-[Multi-file uploader](https://edgestore.dev/docs/components/multi-file), and
-[Uploader provider](https://edgestore.dev/docs/components/uploader-provider) guides.
+[Dropzone](https://edgestore.dev/docs/components/dropzone.md),
+[Multi-file uploader](https://edgestore.dev/docs/components/multi-file.md), and
+[Uploader provider](https://edgestore.dev/docs/components/uploader-provider.md) guides.
 Adapt the examples to the installed APIs and app styling; do not introduce a new
 styling system just to use them.
 

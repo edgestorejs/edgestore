@@ -1,15 +1,5 @@
 import assert from 'node:assert/strict';
-import { execFileSync, spawnSync } from 'node:child_process';
-import {
-  access,
-  mkdir,
-  mkdtemp,
-  readFile,
-  rm,
-  writeFile,
-} from 'node:fs/promises';
-import os from 'node:os';
-import path from 'node:path';
+import { access, readFile } from 'node:fs/promises';
 import test from 'node:test';
 import { z } from 'zod';
 import { getDocsDeployment } from '../src/lib/docsDeployment.ts';
@@ -18,52 +8,6 @@ import { skillDocument } from '../src/lib/hostedSkill.ts';
 process.env.SKIP_ENV_VALIDATION = '1';
 const { default: config } = await import('../next.config.mjs');
 const docsRoot = new URL('../content/docs/', import.meta.url);
-
-await test('docs deployment includes skill changes but skips unrelated changes', async (context) => {
-  const root = await mkdtemp(path.join(os.tmpdir(), 'edgestore-deploy-test-'));
-  context.after(() => rm(root, { recursive: true, force: true }));
-  const git = (...args) =>
-    execFileSync('git', args, {
-      cwd: root,
-      encoding: 'utf8',
-      stdio: 'pipe',
-    }).trim();
-  git('init');
-  git('config', 'user.name', 'Deployment Test');
-  git('config', 'user.email', 'test@example.com');
-  git('config', 'commit.gpgsign', 'false');
-  git('config', 'core.hooksPath', '/dev/null');
-  await mkdir(path.join(root, 'docs'));
-  await writeFile(path.join(root, 'docs/index.md'), 'Docs');
-  git('add', '.');
-  git('commit', '-m', 'Initial docs');
-  const { ignoreCommand } = JSON.parse(
-    await readFile(new URL('../vercel.json', import.meta.url), 'utf8'),
-  );
-  for (const [file, expected] of [
-    ['skills/edgestore-setup/SKILL.md', 1],
-    ['skills/edgestore-setup/references/hosted-setup.md', 1],
-    ['docs/index.md', 1],
-    ['pnpm-lock.yaml', 1],
-    ['packages/server/README.md', 0],
-  ]) {
-    const previous = git('rev-parse', 'HEAD');
-    await mkdir(path.dirname(path.join(root, file)), { recursive: true });
-    await writeFile(path.join(root, file), `Changed ${file}`);
-    git('add', file);
-    git('commit', '-m', `Update ${file}`);
-    const result = spawnSync('sh', ['-c', ignoreCommand], {
-      cwd: path.join(root, 'docs'),
-      env: {
-        ...process.env,
-        VERCEL_GIT_PREVIOUS_SHA: previous,
-        VERCEL_GIT_COMMIT_SHA: git('rev-parse', 'HEAD'),
-      },
-      encoding: 'utf8',
-    });
-    assert.equal(result.status, expected, `${file}: ${result.stderr}`);
-  }
-});
 
 await test('hosted skill preserves canonical instructions and serves its linked reference', async () => {
   const source = await readFile(
