@@ -10,13 +10,18 @@ import {
   type RouterProvider,
   type SharedFileMutationRes,
   type SharedRequestUploadRes,
+  type SharedUploadStatusRes,
   type UploadOptions,
 } from '@edgestore/shared';
 import EdgeStoreClientError from './libs/errors/EdgeStoreClientError';
 import { EdgeStoreFileMutationError } from './libs/errors/EdgeStoreFileMutationError';
 import { handleError } from './libs/errors/handleError';
 import { UploadAbortedError } from './libs/errors/uploadAbortedError';
-import { putBlob } from './libs/putBlob';
+import {
+  UploadCanceledError,
+  UploadProcessingTimeoutError,
+} from './libs/errors/uploadProcessingErrors';
+import { isRetryableStatus, putBlob } from './libs/putBlob';
 import { multipartUpload } from './multipartUpload';
 
 type UploadResponse<TBucket extends AnyBuilder> =
@@ -36,6 +41,8 @@ type UploadResponse<TBucket extends AnyBuilder> =
         path: InferBucketPathObject<TBucket>;
         pathOrder: InferBucketPathOrder<TBucket>;
       }) & {
+    /** Stable file ID, when the provider exposes one. */
+    id?: string;
     /** Stable object key, when the provider exposes one. */
     key?: string;
   } & (undefined extends TBucket['_def']['autoSignedUrls']
@@ -62,6 +69,7 @@ export type BucketFunctions<TRouter extends AnyRouter> = {
      *   manualFileName: file.name, // if you want to use a custom file name
      *   replaceTargetUrl: url, // replace an existing file, when the provider supports it
      *   temporary: true, // delete the file unless confirmed within 24 hours, when the provider supports it
+     *   waitForProcessing: true, // resolve after the provider finishes processing the file
      *  }
      * })
      */
@@ -71,6 +79,7 @@ export type BucketFunctions<TRouter extends AnyRouter> = {
             file: File;
             signal?: AbortSignal;
             onProgressChange?: (progress: number) => void;
+            onPhaseChange?: (phase: 'uploading' | 'processing') => void;
             options?: ProviderUploadOptions<
               UploadOptions,
               RouterProvider<TRouter>
@@ -81,6 +90,7 @@ export type BucketFunctions<TRouter extends AnyRouter> = {
             signal?: AbortSignal;
             input: InferSchemaInput<TRouter['buckets'][K]['_def']['input']>;
             onProgressChange?: (progress: number) => void;
+            onPhaseChange?: (phase: 'uploading' | 'processing') => void;
             options?: ProviderUploadOptions<
               UploadOptions,
               RouterProvider<TRouter>
@@ -95,6 +105,13 @@ export type BucketFunctions<TRouter extends AnyRouter> = {
 };
 
 type OnProgressChangeHandler = (progress: number) => void;
+/**
+ * `processing` starts after the transfer when `waitForProcessing` is set.
+ */
+type OnPhaseChangeHandler = (phase: 'uploading' | 'processing') => void;
+
+const DEFAULT_PROCESSING_TIMEOUT_MS = 60_000;
+const PROCESSING_POLL_INTERVAL_MS = 1_000;
 
 export function createNextProxy<TRouter extends AnyRouter>({
   apiPath,
@@ -110,6 +127,12 @@ export function createNextProxy<TRouter extends AnyRouter>({
       const bucketName = prop as keyof TRouter['buckets'];
       const bucketFunctions = {
         upload: async (params) => {
+          let holdsSlot = false;
+          const releaseSlot = () => {
+            if (!holdsSlot) return;
+            holdsSlot = false;
+            uploadingCountRef.current--;
+          };
           try {
             params.onProgressChange?.(0);
 
@@ -138,13 +161,15 @@ export function createNextProxy<TRouter extends AnyRouter>({
             }
 
             uploadingCountRef.current++;
-            const fileInfo = await uploadFile(params, {
+            holdsSlot = true;
+            return await uploadFile(params, {
               bucketName: bucketName as string,
               apiPath,
+              // Waiting for processing does not occupy a transfer slot.
+              onTransferComplete: releaseSlot,
             });
-            return fileInfo;
           } finally {
-            uploadingCountRef.current--;
+            releaseSlot();
           }
         },
         confirm: async (params: { url: string }) => {
@@ -183,20 +208,24 @@ async function uploadFile(
     signal,
     input,
     onProgressChange,
+    onPhaseChange,
     options,
   }: {
     file: File;
     signal?: AbortSignal;
     input?: object;
     onProgressChange?: OnProgressChangeHandler;
+    onPhaseChange?: OnPhaseChangeHandler;
     options?: UploadOptions;
   },
   {
     apiPath,
     bucketName,
+    onTransferComplete,
   }: {
     apiPath: string;
     bucketName: string;
+    onTransferComplete: () => void;
   },
 ) {
   try {
@@ -238,6 +267,7 @@ async function uploadFile(
     }
     const json = (await res.json()) as SharedRequestUploadRes;
     const blob = uploadFileInfo.file;
+    onPhaseChange?.('uploading');
     if ('multipart' in json) {
       await multipartUpload({
         apiPath,
@@ -261,7 +291,9 @@ async function uploadFile(
     } else {
       throw new EdgeStoreClientError('An error occurred');
     }
-    return {
+    onTransferComplete();
+    const result = {
+      id: json.id,
       key: json.key,
       url: json.url,
       thumbnailUrl: json.thumbnailUrl ?? null,
@@ -271,6 +303,31 @@ async function uploadFile(
       pathOrder: json.pathOrder as any,
       metadata: json.metadata as any,
     };
+    const { id, statusToken } = json;
+    if (!options?.waitForProcessing || !id || !statusToken) {
+      return result;
+    }
+
+    onPhaseChange?.('processing');
+    const processed = await waitForProcessing({
+      apiPath,
+      id,
+      statusToken,
+      signal,
+      timeoutMs:
+        (typeof options.waitForProcessing === 'object'
+          ? options.waitForProcessing.timeoutMs
+          : undefined) ?? DEFAULT_PROCESSING_TIMEOUT_MS,
+    });
+    const { file: processedFile, signedReadUrl } = processed;
+    return {
+      ...result,
+      url: processedFile.url,
+      key: processedFile.key ?? result.key,
+      thumbnailUrl: processedFile.thumbnailUrl,
+      size: processedFile.size,
+      ...mapSignedReadUrl(signedReadUrl),
+    };
   } catch (e) {
     onProgressChange?.(0);
     if (signal?.aborted || (e instanceof Error && e.name === 'AbortError')) {
@@ -278,6 +335,114 @@ async function uploadFile(
     }
     throw e;
   }
+}
+
+async function waitForProcessing({
+  apiPath,
+  id,
+  statusToken,
+  signal,
+  timeoutMs,
+}: {
+  apiPath: string;
+  id: string;
+  statusToken: string;
+  signal?: AbortSignal;
+  timeoutMs: number;
+}) {
+  // One signal bounds the whole wait, including a status request that hangs.
+  const controller = new AbortController();
+  let abortError: Error | undefined;
+  const abort = (error: Error) => {
+    abortError ??= error;
+    controller.abort();
+  };
+  const onAbort = () => abort(new UploadAbortedError('File upload aborted'));
+  const timeout = setTimeout(
+    () =>
+      abort(
+        new UploadProcessingTimeoutError(
+          'Timed out while EdgeStore was processing the upload.',
+          id,
+        ),
+      ),
+    timeoutMs,
+  );
+  signal?.addEventListener('abort', onAbort);
+  if (signal?.aborted) onAbort();
+
+  try {
+    while (true) {
+      const status = await fetchUploadStatus(
+        apiPath,
+        statusToken,
+        controller.signal,
+      );
+      if (status?.status === 'completed') {
+        return status;
+      }
+      if (status?.status === 'canceled') {
+        throw new UploadCanceledError(
+          'EdgeStore canceled the upload while processing it.',
+          id,
+        );
+      }
+      await sleep(PROCESSING_POLL_INTERVAL_MS, controller.signal);
+    }
+  } catch (e) {
+    throw abortError ?? e;
+  } finally {
+    clearTimeout(timeout);
+    signal?.removeEventListener('abort', onAbort);
+  }
+}
+
+/**
+ * Returns `undefined` on a transient failure, so the caller polls again until
+ * the processing deadline.
+ */
+async function fetchUploadStatus(
+  apiPath: string,
+  statusToken: string,
+  signal: AbortSignal,
+): Promise<SharedUploadStatusRes | undefined> {
+  let res: Response;
+  try {
+    res = await fetch(`${apiPath}/upload-status`, {
+      method: 'POST',
+      credentials: 'include',
+      signal,
+      body: JSON.stringify({ statusToken }),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    // Reading the body can fail mid-stream, just like the request itself.
+    if (res.ok) return (await res.json()) as SharedUploadStatusRes;
+  } catch (e) {
+    if (signal.aborted) throw e;
+    return undefined;
+  }
+  if (isRetryableStatus(res.status)) return undefined;
+  return await handleError(res);
+}
+
+function sleep(ms: number, signal?: AbortSignal) {
+  return new Promise<void>((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(new UploadAbortedError('File upload aborted'));
+      return;
+    }
+    const onAbort = () => {
+      clearTimeout(timeout);
+      reject(new UploadAbortedError('File upload aborted'));
+    };
+    const timeout = setTimeout(() => {
+      signal?.removeEventListener('abort', onAbort);
+      resolve();
+    }, ms);
+    signal?.addEventListener('abort', onAbort, { once: true });
+  });
 }
 
 async function getUploadFileInfo({

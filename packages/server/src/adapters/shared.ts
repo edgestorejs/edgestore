@@ -9,6 +9,7 @@ import {
   type SharedInitRes,
   type SharedRequestUploadPartsRes,
   type SharedRequestUploadRes,
+  type SharedUploadStatusRes,
 } from '@edgestore/shared';
 import { stringifySetCookie } from 'cookie';
 import { EncryptJWT, jwtDecrypt } from 'jose';
@@ -224,6 +225,10 @@ export async function requestUpload<TCtx extends AnyContext>(params: {
     autoSignedUrls,
   });
   const { parsedPath, pathOrder } = parsePath(path);
+  const statusToken =
+    provider.uploads.getStatus && requestUploadRes.id
+      ? await encryptStatusToken({ id: requestUploadRes.id, bucketName })
+      : undefined;
 
   logger.debug('Finished [requestUpload]');
 
@@ -233,6 +238,64 @@ export async function requestUpload<TCtx extends AnyContext>(params: {
     path: parsedPath,
     pathOrder,
     metadata,
+    statusToken,
+  };
+}
+
+export const uploadStatusBodySchema = z.object({
+  statusToken: nonEmptyStringSchema,
+});
+
+export type UploadStatusBody = z.infer<typeof uploadStatusBodySchema>;
+
+/** Reports processing state for an upload authorized by its status token. */
+export async function getUploadStatus<TCtx extends AnyContext>(params: {
+  provider: AnyEdgeStoreProvider;
+  router: EdgeStoreRouter<TCtx>;
+  ctxToken: string | undefined;
+  body: UploadStatusBody;
+  logger: LoggerLike;
+}): Promise<SharedUploadStatusRes> {
+  const { provider, router, ctxToken, logger, body } = params;
+
+  await getContext(ctxToken);
+  const { id, bucketName } = await decryptStatusToken(body.statusToken);
+  logger.debug('Running [getUploadStatus]', { bucketName, id });
+  const bucket = getBucket(router, bucketName);
+
+  if (!provider.uploads.getStatus) {
+    throw new EdgeStoreError({
+      message: `Provider ${provider.name} does not report upload status.`,
+      code: 'BAD_REQUEST',
+    });
+  }
+  const result = await provider.uploads.getStatus({ bucketName, id });
+
+  logger.debug('Finished [getUploadStatus]', { status: result.status });
+
+  if (result.status !== 'completed') return { status: result.status };
+  const { url, key, thumbnailUrl, sizeBytes } = result.file;
+  // Processing may add a thumbnail that the upload response could not sign.
+  const { autoSignedUrls } = bucket._def;
+  const [signed] =
+    autoSignedUrls && provider.files.getSignedUrls
+      ? await provider.files.getSignedUrls({
+          bucketName,
+          files: [await referenceFromUrl(provider, url)],
+          ...autoSignedUrls,
+        })
+      : [];
+  return {
+    status: 'completed',
+    file: { url, key, thumbnailUrl: thumbnailUrl ?? null, size: sizeBytes },
+    ...(signed && {
+      signedReadUrl: {
+        signedUrl: signed.signedUrl,
+        signedThumbnailUrl: signed.signedThumbnailUrl ?? null,
+        expiresAt: signed.expiresAt,
+        expiresIn: signed.expiresIn,
+      },
+    }),
   };
 }
 
@@ -523,6 +586,41 @@ async function encryptJWT(ctx: AnyContext) {
     .setExpirationTime(Date.now() / 1000 + DEFAULT_MAX_AGE)
     .setJti(crypto.randomUUID())
     .encrypt(await getEncryptionKey());
+}
+
+/**
+ * Status tokens bind one upload to the browser that requested it. They never
+ * reach application code, so they carry no expiry: uploads can take arbitrarily
+ * long, and the client bounds how long it waits for processing.
+ */
+async function encryptStatusToken(upload: { id: string; bucketName: string }) {
+  return await new EncryptJWT({ upload })
+    .setProtectedHeader({ alg: 'dir', enc: 'A256GCM' })
+    .encrypt(await getEncryptionKey());
+}
+
+const statusTokenPayloadSchema = z.object({
+  upload: z.object({
+    id: nonEmptyStringSchema,
+    bucketName: nonEmptyStringSchema,
+  }),
+});
+
+async function decryptStatusToken(token: string) {
+  const invalid = (cause?: Error) =>
+    new EdgeStoreError({
+      message: 'Invalid upload status token',
+      code: 'BAD_REQUEST',
+      cause,
+    });
+  const { payload } = await jwtDecrypt(token, await getEncryptionKey()).catch(
+    (error: unknown) => {
+      throw invalid(error instanceof Error ? error : undefined);
+    },
+  );
+  const result = statusTokenPayloadSchema.safeParse(payload);
+  if (!result.success) throw invalid(result.error);
+  return result.data.upload;
 }
 
 const contextPayloadSchema = z.object({

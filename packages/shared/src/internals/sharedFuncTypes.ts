@@ -4,6 +4,7 @@ import {
   type ClientInit,
   type RequestUploadPartsRes,
   type RequestUploadRes,
+  type SignedReadUrl,
 } from './providerTypes';
 
 export type SharedInitRes = {
@@ -16,9 +17,27 @@ export type SharedRequestUploadRes = Simplify<
     path: Record<string, string>;
     pathOrder: string[];
     metadata: AnyMetadata;
+    /**
+     * Authorizes `/upload-status` for this upload. Returned when the provider
+     * reports processing state.
+     */
+    statusToken?: string;
   }
 >;
 export type SharedRequestUploadPartsRes = RequestUploadPartsRes;
+export type SharedUploadStatusRes =
+  | { status: 'processing' | 'canceled' }
+  | {
+      status: 'completed';
+      file: {
+        url: string;
+        key?: string;
+        thumbnailUrl: string | null;
+        size: number;
+      };
+      /** Re-signed after processing, for buckets with `autoSignedUrls`. */
+      signedReadUrl?: SignedReadUrl;
+    };
 
 export type SharedFileMutationRes = {
   succeeded: string[];

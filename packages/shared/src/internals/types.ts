@@ -49,4 +49,23 @@ export type UploadOptions = {
    * upload request.
    */
   transform?: ClientUploadTransform;
+  /**
+   * Wait for the provider to finish processing the file, such as generating
+   * its thumbnail, before resolving. The result then describes the processed
+   * file. Waiting does not confirm a temporary file.
+   *
+   * Providers without asynchronous processing resolve once the transfer
+   * completes.
+   *
+   * @default false
+   */
+  waitForProcessing?:
+    | boolean
+    | {
+        /**
+         * How long to wait after the transfer completes, in milliseconds.
+         * @default 60000
+         */
+        timeoutMs?: number;
+      };
 };

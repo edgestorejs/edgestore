@@ -231,6 +231,8 @@ export type CompleteMultipartUploadParams = MultipartUploadSession & {
 };
 
 type RequestUploadAccess = {
+  /** Stable file ID, when the provider exposes one. */
+  id?: string;
   /** Stable object key, when the provider exposes one. */
   key?: string;
   /** The file URL once the upload completes. */
@@ -282,6 +284,19 @@ export type ProviderReferenceDefinition<
   fromUrl: (url: string) => MaybePromise<unknown>;
 };
 
+/** Processing state of a requested upload. */
+export type UploadStatus =
+  | { status: 'processing' | 'canceled' }
+  | {
+      status: 'completed';
+      file: {
+        url: string;
+        key?: string;
+        thumbnailUrl?: string | null;
+        sizeBytes: number;
+      };
+    };
+
 type ProviderUploadBase<
   TUpload extends BackendUploadOperation<BackendFile> | undefined =
     BackendUploadOperation<BackendFile> | undefined,
@@ -292,6 +307,16 @@ type ProviderUploadBase<
    * rejected by the upload types and at runtime.
    */
   supportedOptions?: { temporary?: boolean; replaceTargetUrl?: boolean };
+  /**
+   * Reports whether a requested upload finished asynchronous processing.
+   * Providers without asynchronous processing omit it; their uploads are
+   * ready once the transfer completes.
+   */
+  getStatus?: (params: {
+    bucketName: string;
+    /** The file ID returned by `request`. */
+    id: string;
+  }) => MaybePromise<UploadStatus>;
 };
 
 export type ProviderMultipartUploads = {

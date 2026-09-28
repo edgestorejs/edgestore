@@ -130,6 +130,7 @@ const expectedHovers = {
         category: "invoice" | "contract";
     };
     onProgressChange?: (progress: number) => void;
+    onPhaseChange?: (phase: "uploading" | "processing") => void;
     options?: UploadOptions | undefined;
 }) => Promise<{
     url: string;
@@ -143,6 +144,7 @@ const expectedHovers = {
         owner: string;
     };
     pathOrder: ("category" | "owner")[];
+    id?: string | undefined;
     key?: string | undefined;
     signedUrl: string;
     expiresAt: Date;
@@ -281,6 +283,7 @@ const expectedHovers = {
     metadata: Record<string, never>;
     path: Record<string, never>;
     pathOrder: [];
+    id?: string | undefined;
     key?: string | undefined;
 }`,
   reactSignedFileUpload: `const reactSignedFileUpload: {
@@ -295,6 +298,7 @@ const expectedHovers = {
         owner: string;
     };
     pathOrder: ("category" | "owner")[];
+    id?: string | undefined;
     key?: string | undefined;
     signedUrl: string;
     expiresAt: Date;
@@ -308,6 +312,7 @@ const expectedHovers = {
     metadata: Record<string, never>;
     path: Record<string, never>;
     pathOrder: [];
+    id?: string | undefined;
     key?: string | undefined;
     signedUrl: string;
     expiresAt: Date;

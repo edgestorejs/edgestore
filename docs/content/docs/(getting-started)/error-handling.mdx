@@ -9,6 +9,8 @@ You might need to handle specific server errors in your application. Here is an 
 import {
   EdgeStoreApiClientError,
   UploadAbortedError,
+  UploadCanceledError,
+  UploadProcessingTimeoutError,
 } from '@edgestore/react/errors';
 
 // ...
@@ -19,6 +21,7 @@ import {
       if (file) {
         const res = await edgestore.publicFiles.upload({
           file,
+          options: { waitForProcessing: true },
         });
       }
     } catch (error) {
@@ -47,6 +50,13 @@ import {
       } else if (error instanceof UploadAbortedError) {
         // if the upload was canceled from an AbortController's signal
         console.log('Upload aborted');
+      } else if (error instanceof UploadCanceledError) {
+        // if EdgeStore could not process the uploaded file
+        alert('This file could not be processed.');
+      } else if (error instanceof UploadProcessingTimeoutError) {
+        // if processing outlasted `waitForProcessing.timeoutMs`;
+        // the file may still finish processing
+        console.log('Still processing', error.id);
       } else {
         // unknown error
         console.error(error);
