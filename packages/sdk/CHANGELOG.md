@@ -1,5 +1,11 @@
 # @edgestore/sdk
 
+## 1.0.0-rc.6
+
+### Patch Changes
+
+- [#264](https://github.com/edgestorejs/edgestore/pull/264) [`4df0909`](https://github.com/edgestorejs/edgestore/commit/4df090990f42a069da0e19e37a06bee1c1af499e) Thanks [@raviships](https://github.com/raviships)! - Begin the v1 release-candidate cycle under the `rc` tag.
+
 ## 1.0.0-next.5
 
 ## 1.0.0-next.4

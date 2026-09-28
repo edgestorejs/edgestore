@@ -1,5 +1,32 @@
 # @edgestore/shared
 
+## 1.0.0-rc.6
+
+### Major Changes
+
+- [#262](https://github.com/edgestorejs/edgestore/pull/262) [`371b083`](https://github.com/edgestorejs/edgestore/commit/371b0834f7006f3c3245ae2f46aac6bd9fa3dbff) Thanks [@raviships](https://github.com/raviships)! - Bring the Azure Blob provider to parity with S3. Large browser uploads use
+  block uploads with signed, object-scoped sessions: the browser stages blocks
+  through short-lived Put Block URLs, and the provider checks every block's size
+  before committing to catch incomplete uploads. Backend uploads are available through the router client,
+  files can be referenced by `{ key }` as well as by URL, and uploads accept a
+  `path` callback and `objectOptions` (cache control, content disposition, and
+  metadata).
+
+  Breaking changes to `azureBlob()`: `customBaseUrl` / `ES_AZURE_BASE_URL` is
+  replaced by `endpoint` / `ES_AZURE_ENDPOINT`, with a separate `baseUrl` for file
+  URLs. Credentials are checked on first use instead of when the provider is
+  created. Upload responses include a signed read URL only when the private
+  bucket sets `autoSignedUrls`, and cookie-based access-control rules are
+  rejected at initialization.
+
+  Multipart part ETags are optional in the provider contract, so storage that
+  returns none can complete uploads. S3 and the hosted provider reject missing
+  ETags with an actionable error.
+
+### Patch Changes
+
+- [#264](https://github.com/edgestorejs/edgestore/pull/264) [`4df0909`](https://github.com/edgestorejs/edgestore/commit/4df090990f42a069da0e19e37a06bee1c1af499e) Thanks [@raviships](https://github.com/raviships)! - Begin the v1 release-candidate cycle under the `rc` tag.
+
 ## 1.0.0-next.5
 
 ## 1.0.0-next.4

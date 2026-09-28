@@ -1,6 +1,6 @@
 {
   "name": "@edgestore/server",
-  "version": "1.0.0-next.5",
+  "version": "1.0.0-rc.6",
   "description": "Upload files with ease from React/Next.js",
   "homepage": "https://edgestore.dev",
   "license": "MIT",
@@ -122,8 +122,8 @@
     "!**/__tests__"
   ],
   "dependencies": {
-    "@edgestore/sdk": "1.0.0-next.5",
-    "@edgestore/shared": "1.0.0-next.5",
+    "@edgestore/sdk": "1.0.0-rc.6",
+    "@edgestore/shared": "1.0.0-rc.6",
     "@standard-schema/spec": "^1.1.0",
     "cookie": "^2.0.1",
     "jose": "^6.2.3",

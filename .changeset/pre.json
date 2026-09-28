@@ -31,12 +31,16 @@
     "esm-only-node-22",
     "introduce-cli",
     "introduce-sdk",
+    "invalid-context-cookie",
     "project-file-origins",
     "react-file-lifecycle",
+    "remove-deprecated-apis",
     "remove-dev-proxy",
     "resilient-multipart-uploads",
     "router-provider",
     "s3-provider",
-    "standard-schema-input"
+    "standard-schema-input",
+    "steady-azure-blocks",
+    "v1-release-candidate"
   ]
 }
