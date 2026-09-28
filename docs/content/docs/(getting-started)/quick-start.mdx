@@ -201,7 +201,7 @@ export default function Page() {
               },
             });
             // you can run some server action or api here
-            // to add the necessary data to your database
+            // to save `res.id` and `res.url` in your database
             console.log(res);
           }
         }}
@@ -368,6 +368,42 @@ const result = await edgestore.publicFiles.confirmMany({
   You can check if a file is temporary in the dashboard. <br />
   Temporary files are marked with a clock icon.
 </Callout>
+
+### Wait for processing
+
+`upload` resolves as soon as the file is transferred. EdgeStore then processes
+it in the background, for example to generate an image thumbnail. The file ID
+and URL are final right away, so most apps can save them without waiting.
+
+When you need processed details immediately, such as whether the image got a
+thumbnail, pass `waitForProcessing`. The upload then resolves with the
+processed file, and `onPhaseChange` tells you when the transfer finishes and
+processing begins.
+
+```tsx
+const res = await edgestore.publicImages.upload({
+  file,
+  onProgressChange: (progress) => setProgress(progress),
+  // [!code ++:6]
+  onPhaseChange: (phase) => {
+    if (phase === 'processing') setStatus('Processing…');
+  },
+  options: {
+    waitForProcessing: true, // or { timeoutMs: 120_000 }
+  },
+});
+```
+
+Processing failures reject with `UploadCanceledError`. If processing takes
+longer than `timeoutMs` (60 seconds by default), the upload rejects with
+`UploadProcessingTimeoutError`; the file may still finish processing. Both
+errors include the file `id`. See [Error Handling](/docs/error-handling).
+
+Waiting for processing does not confirm a [temporary file](#temporary-files).
+Confirm it separately once your app decides to keep it.
+
+Providers without background processing, such as S3 and Azure Blob, resolve
+once the transfer completes.
 
 </SetupGuide>
 

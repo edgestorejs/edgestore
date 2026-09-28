@@ -1,6 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createNextProxy } from './createNextProxy';
-import { EdgeStoreFileMutationError } from './errors';
+import {
+  EdgeStoreFileMutationError,
+  UploadCanceledError,
+  UploadProcessingTimeoutError,
+} from './errors';
 import { UploadAbortedError } from './libs/errors/uploadAbortedError';
 import {
   createFetchMock,
@@ -354,6 +358,236 @@ describe('createNextProxy upload', () => {
       expiresIn: 3600,
       signedThumbnailUrl: null,
     });
+  });
+});
+
+describe('createNextProxy processing', () => {
+  const statusUploadResponse = (
+    overrides: Partial<Record<string, unknown>> = {},
+  ) =>
+    uploadResponse({
+      id: 'file_1',
+      statusToken: 'status-token',
+      thumbnailUrl: 'https://files.example/thumb.webp',
+      ...overrides,
+    });
+
+  it('returns the file ID without waiting for processing by default', async () => {
+    const { calls } = createFetchMock([jsonResponse(statusUploadResponse())]);
+    const { assets } = createProxy();
+    const upload = assets.upload({ file: new File(['hello'], 'hello.txt') });
+
+    await waitForXhrs(1);
+    MockXMLHttpRequest.instances[0]!.load();
+
+    await expect(upload).resolves.toMatchObject({
+      id: 'file_1',
+      thumbnailUrl: 'https://files.example/thumb.webp',
+    });
+    expect(calls).toHaveLength(1);
+  });
+
+  it('waits for processing and returns the processed file', async () => {
+    vi.useFakeTimers();
+    const { calls } = createFetchMock([
+      jsonResponse(
+        statusUploadResponse({
+          signedReadUrl: {
+            signedUrl: 'https://files.example/protected/file.txt?sig=1',
+            signedThumbnailUrl: 'https://files.example/thumb.webp?sig=1',
+            expiresAt: '2026-01-02T04:04:05.000Z',
+            expiresIn: 3600,
+          },
+        }),
+      ),
+      jsonResponse({ status: 'processing' }),
+      jsonResponse({
+        status: 'completed',
+        file: {
+          url: 'https://files.example/protected/file.txt',
+          key: 'assets/file.txt',
+          thumbnailUrl: null,
+          size: 13,
+        },
+      }),
+    ]);
+    const { assets } = createProxy();
+    const phases: string[] = [];
+    const upload = assets.upload({
+      file: new File(['hello'], 'hello.txt'),
+      options: { waitForProcessing: true },
+      onPhaseChange: (phase) => phases.push(phase),
+    });
+
+    await waitForXhrs(1);
+    MockXMLHttpRequest.instances[0]!.load();
+    await vi.advanceTimersByTimeAsync(1_000);
+
+    await expect(upload).resolves.toMatchObject({
+      id: 'file_1',
+      key: 'assets/file.txt',
+      thumbnailUrl: null,
+      signedThumbnailUrl: null,
+      size: 13,
+    });
+    expect(phases).toEqual(['uploading', 'processing']);
+    expect(calls.map((call) => call.url)).toEqual([
+      '/api/edgestore/request-upload',
+      '/api/edgestore/upload-status',
+      '/api/edgestore/upload-status',
+    ]);
+    expect(getBody(calls[1]!)).toEqual({ statusToken: 'status-token' });
+  });
+
+  it('rejects when EdgeStore cancels the upload during processing', async () => {
+    createFetchMock([
+      jsonResponse(statusUploadResponse()),
+      jsonResponse({ status: 'canceled' }),
+    ]);
+    const { assets } = createProxy();
+    const upload = assets.upload({
+      file: new File(['hello'], 'hello.txt'),
+      options: { waitForProcessing: true },
+    });
+
+    await waitForXhrs(1);
+    MockXMLHttpRequest.instances[0]!.load();
+
+    const error = await upload.catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(UploadCanceledError);
+    expect(error).toMatchObject({ id: 'file_1' });
+  });
+
+  it('rejects when processing exceeds the timeout', async () => {
+    vi.useFakeTimers();
+    const { calls } = createFetchMock([
+      jsonResponse(statusUploadResponse()),
+      jsonResponse({ status: 'processing' }),
+      jsonResponse({ status: 'processing' }),
+    ]);
+    const { assets } = createProxy();
+    const upload = assets.upload({
+      file: new File(['hello'], 'hello.txt'),
+      options: { waitForProcessing: { timeoutMs: 1_500 } },
+    });
+    const result = upload.catch((e: unknown) => e);
+
+    await waitForXhrs(1);
+    MockXMLHttpRequest.instances[0]!.load();
+    await vi.advanceTimersByTimeAsync(1_000);
+
+    const error = await result;
+    expect(error).toBeInstanceOf(UploadProcessingTimeoutError);
+    expect(error).toMatchObject({ id: 'file_1' });
+    expect(calls).toHaveLength(3);
+  });
+
+  it('stops waiting when aborted', async () => {
+    vi.useFakeTimers();
+    createFetchMock([
+      jsonResponse(statusUploadResponse()),
+      jsonResponse({ status: 'processing' }),
+    ]);
+    const { assets } = createProxy();
+    const controller = new AbortController();
+    const upload = assets.upload({
+      file: new File(['hello'], 'hello.txt'),
+      signal: controller.signal,
+      options: { waitForProcessing: true },
+    });
+    const result = upload.catch((e: unknown) => e);
+
+    await waitForXhrs(1);
+    MockXMLHttpRequest.instances[0]!.load();
+    await flushMicrotasks();
+    await vi.advanceTimersByTimeAsync(0);
+    controller.abort();
+
+    expect(await result).toBeInstanceOf(UploadAbortedError);
+  });
+
+  it('resolves after the transfer when the provider reports no status', async () => {
+    const { calls } = createFetchMock([jsonResponse(uploadResponse())]);
+    const { assets } = createProxy();
+    const upload = assets.upload({
+      file: new File(['hello'], 'hello.txt'),
+      options: { waitForProcessing: true },
+    });
+
+    await waitForXhrs(1);
+    MockXMLHttpRequest.instances[0]!.load();
+
+    await expect(upload).resolves.toMatchObject({ size: 12 });
+    expect(calls).toHaveLength(1);
+  });
+
+  it('frees the transfer slot while waiting for processing', async () => {
+    const uploads = [
+      statusUploadResponse(),
+      uploadResponse({ uploadUrl: 'https://uploads.example/two' }),
+    ];
+    let resolveStatus!: (response: Response) => void;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) =>
+        url.endsWith('/upload-status')
+          ? await new Promise<Response>((resolve) => {
+              resolveStatus = resolve;
+            })
+          : jsonResponse(uploads.shift()),
+      ),
+    );
+    const { assets, uploadingCountRef } = createProxy({
+      maxConcurrentUploads: 1,
+    });
+
+    const first = assets.upload({
+      file: new File(['one'], 'one.txt'),
+      options: { waitForProcessing: true },
+    });
+    await waitForXhrs(1);
+    MockXMLHttpRequest.instances[0]!.load();
+    await vi.waitFor(() => expect(resolveStatus).toBeDefined());
+    expect(uploadingCountRef.current).toBe(0);
+
+    const second = assets.upload({ file: new File(['two'], 'two.txt') });
+    await waitForXhrs(2);
+    MockXMLHttpRequest.instances[1]!.load();
+    await second;
+
+    resolveStatus(
+      jsonResponse({
+        status: 'completed',
+        file: {
+          url: 'https://files.example/one.txt',
+          thumbnailUrl: null,
+          size: 3,
+        },
+      }),
+    );
+    await expect(first).resolves.toMatchObject({ id: 'file_1', size: 3 });
+    expect(uploadingCountRef.current).toBe(0);
+  });
+
+  it('does not release a slot when aborted while queued', async () => {
+    vi.useFakeTimers();
+    createFetchMock([]);
+    const { assets, uploadingCountRef } = createProxy({
+      uploadingCount: 1,
+      maxConcurrentUploads: 1,
+    });
+    const controller = new AbortController();
+    const upload = assets.upload({
+      file: new File(['hello'], 'hello.txt'),
+      signal: controller.signal,
+    });
+    const result = upload.catch((e: unknown) => e);
+
+    controller.abort();
+    await vi.advanceTimersByTimeAsync(300);
+
+    expect(await result).toBeInstanceOf(UploadAbortedError);
+    expect(uploadingCountRef.current).toBe(1);
   });
 });
 

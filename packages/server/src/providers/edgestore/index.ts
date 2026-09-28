@@ -191,6 +191,12 @@ export function edgestore(options?: EdgeStoreProviderOptions) {
           await runtime.uploads.cancel({ uploadId });
         },
       },
+      getStatus: async ({ id }) => {
+        const result = await runtime.uploads.get({ uploadId: id });
+        return 'file' in result
+          ? { status: 'completed', file: result.file }
+          : { status: result.upload.status };
+      },
       upload: async ({
         bucketName,
         bucketType,
@@ -453,6 +459,7 @@ function mapUploadResponse(
   multipartConfig?: { partSize: number; totalParts: number },
 ): RequestUploadRes {
   const access = {
+    id: res.file.id,
     key: res.file.key,
     url: res.file.url,
     thumbnailUrl: res.file.thumbnailUrl,

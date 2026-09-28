@@ -23,6 +23,7 @@ const runtime = vi.hoisted(() => ({
     createParts: vi.fn(),
     completeMultipart: vi.fn(),
     cancel: vi.fn(),
+    get: vi.fn(),
   },
 }));
 
@@ -183,6 +184,7 @@ describe('edgestore provider', () => {
   it('maps a single v2 upload and omits nullish metadata', async () => {
     runtime.uploads.request.mockResolvedValue({
       file: {
+        id: 'file-1',
         url: 'https://files.example/file',
         key: 'files/file',
         thumbnailUrl: null,
@@ -202,6 +204,7 @@ describe('edgestore provider', () => {
         fileInfo,
       }),
     ).resolves.toEqual({
+      id: 'file-1',
       key: 'files/file',
       url: 'https://files.example/file',
       thumbnailUrl: null,
@@ -222,6 +225,25 @@ describe('edgestore provider', () => {
       replaceTarget: undefined,
       signedReadUrl: undefined,
     });
+  });
+
+  it('maps upload processing state', async () => {
+    const file = { url: 'https://files.example/file', sizeBytes: 12 };
+    runtime.uploads.get
+      .mockResolvedValueOnce({ upload: { id: 'file-1', status: 'processing' } })
+      .mockResolvedValueOnce({ upload: { id: 'file-1', status: 'canceled' } })
+      .mockResolvedValueOnce({
+        upload: { id: 'file-1', status: 'completed' },
+        file,
+      });
+    const provider = edgestore({ accessKey: 'access', secretKey: 'secret' });
+    const getStatus = () =>
+      provider.uploads.getStatus({ bucketName: 'files', id: 'file-1' });
+
+    await expect(getStatus()).resolves.toEqual({ status: 'processing' });
+    await expect(getStatus()).resolves.toEqual({ status: 'canceled' });
+    await expect(getStatus()).resolves.toEqual({ status: 'completed', file });
+    expect(runtime.uploads.get).toHaveBeenCalledWith({ uploadId: 'file-1' });
   });
 
   it('signs only the first multipart part URLs up front', async () => {

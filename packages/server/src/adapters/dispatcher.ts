@@ -19,11 +19,13 @@ import {
   deleteFiles,
   deleteFilesBodySchema,
   getCookieConfig,
+  getUploadStatus,
   init,
   requestUpload,
   requestUploadBodySchema,
   requestUploadParts,
   requestUploadPartsBodySchema,
+  uploadStatusBodySchema,
   type CookieConfig,
   type HandlerRouter,
 } from './shared';
@@ -157,6 +159,18 @@ export async function dispatchEdgeStoreRequest<
         logger,
       });
       return new Response(null, { status: 200 });
+    }
+
+    if (matchPath(request.pathname, '/upload-status')) {
+      return jsonResponse(
+        await getUploadStatus({
+          provider,
+          router,
+          body: await parseRequestBody(request, uploadStatusBodySchema),
+          ctxToken,
+          logger,
+        }),
+      );
     }
 
     if (matchPath(request.pathname, '/confirm-uploads')) {

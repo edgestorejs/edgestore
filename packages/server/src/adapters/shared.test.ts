@@ -2,12 +2,18 @@ import {
   type AnyContext,
   type EdgeStoreProvider,
   type EdgeStoreRouter,
+  type UploadStatus,
 } from '@edgestore/shared';
 import { EncryptJWT } from 'jose';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import { initEdgeStore } from '../core/router';
-import { getCookieConfig, init, requestUpload } from './shared';
+import {
+  getCookieConfig,
+  getUploadStatus,
+  init,
+  requestUpload,
+} from './shared';
 import {
   createContextToken,
   createProvider,
@@ -632,5 +638,111 @@ describe('requestUpload', () => {
       message: 'Invalid edgestore-ctx cookie',
     });
     expect(provider.uploads.request).not.toHaveBeenCalled();
+  });
+});
+
+describe('getUploadStatus', () => {
+  beforeEach(() => {
+    vi.stubEnv('EDGE_STORE_JWT_SECRET', 'test-secret');
+    vi.stubEnv('NODE_ENV', 'test');
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  function createStatusProvider(
+    getStatus = vi.fn((): UploadStatus => ({ status: 'processing' })),
+  ) {
+    const base = createProvider();
+    return createProvider({
+      uploads: {
+        ...base.uploads,
+        request: vi.fn(() => ({
+          id: 'file_1',
+          uploadUrl: 'https://upload.example.com/file.txt',
+          url: 'https://files.example.com/file.txt',
+          thumbnailUrl: null,
+        })),
+        getStatus,
+      },
+    });
+  }
+
+  async function setup(provider = createStatusProvider()) {
+    const es = initEdgeStore.create();
+    const router = es.router({ documents: es.fileBucket() });
+    const ctxToken = await createContextToken({ router, ctx: {} });
+    const { statusToken } = await requestUpload({
+      provider,
+      router,
+      ctxToken,
+      body: uploadBody(),
+      logger,
+    });
+    const status = (token = statusToken!) =>
+      getUploadStatus({
+        provider,
+        router,
+        ctxToken,
+        body: { statusToken: token },
+        logger,
+      });
+    return { ctxToken, provider, statusToken, status };
+  }
+
+  it('authorizes status checks for the requested upload', async () => {
+    const getStatus = vi.fn((): UploadStatus => ({
+      status: 'completed',
+      file: { url: 'https://files.example.com/file.txt', sizeBytes: 12 },
+    }));
+    const { statusToken, status } = await setup(
+      createStatusProvider(getStatus),
+    );
+
+    expect(statusToken).toEqual(expect.any(String));
+    await expect(status()).resolves.toEqual({
+      status: 'completed',
+      file: {
+        url: 'https://files.example.com/file.txt',
+        key: undefined,
+        thumbnailUrl: null,
+        size: 12,
+      },
+    });
+    expect(getStatus).toHaveBeenCalledWith({
+      bucketName: 'documents',
+      id: 'file_1',
+    });
+  });
+
+  it.each(['processing', 'canceled'] as const)(
+    'reports %s uploads',
+    async (state) => {
+      const { status } = await setup(
+        createStatusProvider(vi.fn((): UploadStatus => ({ status: state }))),
+      );
+
+      await expect(status()).resolves.toEqual({ status: state });
+    },
+  );
+
+  it('omits the status token when the provider does not report status', async () => {
+    const { statusToken } = await setup(createProvider());
+
+    expect(statusToken).toBeUndefined();
+  });
+
+  it('rejects tokens that were not issued for an upload', async () => {
+    const { ctxToken, provider, status } = await setup();
+
+    for (const token of [ctxToken!, 'not-a-token']) {
+      await expect(status(token)).rejects.toMatchObject({
+        code: 'BAD_REQUEST',
+        message: 'Invalid upload status token',
+      });
+    }
+    expect(provider.uploads.getStatus).not.toHaveBeenCalled();
   });
 });

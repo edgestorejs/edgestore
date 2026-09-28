@@ -151,6 +151,7 @@ describe('adapter dispatcher', () => {
     '/api/edgestore/request-upload-parts',
     '/api/edgestore/complete-multipart-upload',
     '/api/edgestore/abort-multipart-upload',
+    '/api/edgestore/upload-status',
     '/api/edgestore/confirm-uploads',
     '/api/edgestore/delete-files',
   ])('rejects malformed bodies for %s', async (pathname) => {

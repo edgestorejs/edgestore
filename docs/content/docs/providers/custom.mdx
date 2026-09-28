@@ -262,6 +262,18 @@ A single-part plan can include `uploadHeaders`. The browser sends them with the
 upload request, which lets a provider sign headers such as `Content-Type` or
 storage metadata into the URL.
 
+Return `id` from `uploads.request` when your storage assigns stable file IDs.
+The browser upload result includes it so apps can save it.
+
+If your storage processes files after the transfer, return `id` and implement
+`uploads.getStatus({ bucketName, id })`. It returns
+`{ status: 'processing' }`, `{ status: 'canceled' }`, or
+`{ status: 'completed', file }` with the processed `url`, `key`,
+`thumbnailUrl`, and `sizeBytes`. Browser uploads with `waitForProcessing` poll
+it through an encrypted status token that only the uploading browser receives.
+Providers without `getStatus` treat uploads as ready once the transfer
+completes.
+
 Set `uploads.supportedOptions` to reject upload options your storage cannot
 honor. For example, `supportedOptions: { temporary: false }` removes
 `temporary` from the browser and backend upload types, and EdgeStore rejects it
