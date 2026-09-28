@@ -55,8 +55,11 @@ existing env values.
 
 ## Use MCP and the CLI
 
-Prefer an available MCP for an action it supports; otherwise use the CLI if
-available. Start with read-only discovery and request only the permissions needed.
+Prefer an available MCP for an action it supports; otherwise use the CLI.
+For hosted setup, complete authentication, project linking, and credential
+delivery as part of the task. When the CLI is needed but missing, install or
+invoke `@edgestore/cli` with the application's package manager using the version
+guidance above. Start with read-only discovery.
 When sign-in is needed, initiate it with the available tooling, ask the user to
 complete the browser step, then resume setup and verification.
 
@@ -74,9 +77,23 @@ For hosted provisioning or credential delivery, read
 Configure the backend router/provider and the matching client endpoint using
 installed references. Keep server keys in a loaded, gitignored backend env file,
 not frontend variables (`VITE_*`, `NEXT_PUBLIC_*`).
+Treat credentials as required configuration. Do not add conditional providers,
+upload-enable flags, or disabled setup placeholders merely because authentication
+is pending. Finish setup instead; preserve optional-storage behavior only when
+the application requires it.
 In split workspaces, export the real backend router type and import it with
 `import type` on the frontend. For cross-origin calls, configure CORS for the
 intended frontend origin. Wrap the upload UI with the React provider.
+
+For new attachment UI, reuse an existing upload component or build a reusable
+dropzone, preferably with `react-dropzone`, with accessible file selection,
+progress, and error feedback. Use the React package's `dropzone.md`, `multi-file.md`,
+and `uploader-provider.md` references for examples. If absent, see the
+[Dropzone](https://edgestore.dev/docs/components/dropzone.md),
+[Multi-file uploader](https://edgestore.dev/docs/components/multi-file.md), and
+[Uploader provider](https://edgestore.dev/docs/components/uploader-provider.md) guides.
+Adapt the examples to the installed APIs and app styling; do not introduce a new
+styling system just to use them.
 
 For a failing integration, read the installed server's `troubleshooting.md` and
 the React package's `errors.md`. Diagnose the failing app request before changing

@@ -37,6 +37,7 @@ The destination must be gitignored. If values already exist, inspect the
 configuration before considering `--update`. Check key presence and project
 association without reading secret values into agent context. If file delivery is
 unavailable, ask the user to configure the key locally, not paste it into chat.
+Do not substitute dashboard instructions for setup the available tools can perform.
 On partial failure, follow the returned recovery status before retrying.
 
 `init` provisions or links resources. Use `project link` when MCP has already
