@@ -91,7 +91,7 @@ export function FileListItem({
     <li
       data-status={status}
       className={cn(
-        'flex animate-in items-center gap-3 rounded-xl border bg-background py-2.5 pr-2 pl-2.5 fade-in-0 slide-in-from-top-1 data-[status=ERROR]:border-destructive/40',
+        'relative flex animate-in items-center gap-3 overflow-hidden rounded-xl border bg-background py-2.5 pr-2 pl-2.5 fade-in-0 slide-in-from-top-1 data-[status=ERROR]:border-destructive/40',
         className,
       )}
       {...props}
@@ -121,13 +121,16 @@ export function FileListItem({
               ? `${formatFileSize((file.size * progress) / 100)} of ${formatFileSize(file.size)} · ${Math.round(progress)}%`
               : formatFileSize(file.size)}
         </p>
-        {status === 'UPLOADING' && (
-          <ProgressBar
-            progress={progress}
-            aria-label={`Uploading ${file.name}`}
-          />
-        )}
       </div>
+      {/* Pinned to the bottom edge so the row keeps its height when the upload ends. */}
+      {status === 'UPLOADING' && (
+        <ProgressBar
+          progress={progress}
+          aria-label={`Uploading ${file.name}`}
+          className="absolute inset-x-0 bottom-0 h-0.5 rounded-none bg-transparent"
+          indicatorClassName="rounded-none"
+        />
+      )}
       {!disabled && (
         <div className="flex items-center">
           {status === 'ERROR' && (
