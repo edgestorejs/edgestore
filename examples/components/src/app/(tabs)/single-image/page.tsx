@@ -64,11 +64,8 @@ function SingleImageExample() {
     <UploaderProvider uploadFn={uploadFn} autoUpload>
       <div className="flex flex-col items-center">
         <SingleImageDropzone
-          height={200}
-          width={200}
-          dropzoneOptions={{
-            maxSize: 1024 * 1024 * 1, // 1 MB
-          }}
+          className="w-52"
+          maxSize={1024 * 1024 * 1} // 1 MB
         />
         {uploadRes && (
           <div className="mt-2">
@@ -114,41 +111,17 @@ function SingleImageDetails() {
         </li>
       </ul>
       <h3 className="mt-4 text-base font-bold">About</h3>
-      <div className="text-sm text-foreground/80">
+      <div className="flex flex-col gap-2 text-sm text-foreground/80">
         <p>
-          This component is a dropzone to upload an image. It is configured with
-          a max file size of 1 MB. And since it&apos;s using an EdgeStore image
-          bucket, it will only accept images.
+          This component is a dropzone to upload a single image. It is
+          configured with a max file size of 1 MB and accepts PNG, JPG, WEBP and
+          GIF images.
+        </p>
+        <p>
+          Drop or choose another image to replace the current one. The image is
+          converted to WEBP in the browser before it is uploaded.
         </p>
       </div>
-      <table className="mt-2 inline-block text-xs text-foreground/80">
-        <tbody>
-          <tr className="border">
-            <td className="p-1">image/jpeg</td>
-          </tr>
-          <tr className="border">
-            <td className="p-1">image/png</td>
-          </tr>
-          <tr className="border">
-            <td className="p-1">image/gif</td>
-          </tr>
-          <tr className="border">
-            <td className="p-1">image/webp</td>
-          </tr>
-          <tr className="border">
-            <td className="p-1">image/svg+xml</td>
-          </tr>
-          <tr className="border">
-            <td className="p-1">image/tiff</td>
-          </tr>
-          <tr className="border">
-            <td className="p-1">image/bmp</td>
-          </tr>
-          <tr className="border">
-            <td className="p-1">image/x-icon</td>
-          </tr>
-        </tbody>
-      </table>
     </div>
   );
 }

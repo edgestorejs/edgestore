@@ -3,7 +3,7 @@
 import { useMockProgress } from '@/hooks/use-mock-progress';
 import { ProgressBar } from '../progress-bar';
 
-export function ProgressBarUsage() {
+export default function ProgressBarUsage() {
   const progress = useMockProgress();
 
   return (

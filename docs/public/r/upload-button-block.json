@@ -1,0 +1,24 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "upload-button-block",
+  "title": "Upload Button Block",
+  "description": "A block with upload buttons feeding a file list.",
+  "dependencies": [
+    "lucide-react"
+  ],
+  "registryDependencies": [
+    "https://edgestore.dev/r/upload-button.json",
+    "https://edgestore.dev/r/file-uploader.json",
+    "https://edgestore.dev/r/dropzone.json",
+    "https://edgestore.dev/r/uploader-provider.json"
+  ],
+  "files": [
+    {
+      "path": "examples/components/src/components/upload/blocks/upload-button-block.tsx",
+      "content": "'use client';\n\nimport { UploadErrors } from '@/components/upload/dropzone';\nimport { FileList } from '@/components/upload/multi-file';\nimport { UploadButton } from '@/components/upload/upload-button';\nimport {\n  UploaderProvider,\n  type UploadFn,\n} from '@/components/upload/uploader-provider';\nimport { PaperclipIcon, UploadIcon } from 'lucide-react';\nimport * as React from 'react';\n\nexport default function UploadButtonBlock() {\n  const [errors, setErrors] = React.useState<string[]>([]);\n  const { edgestore } = useMockEdgeStore(); // Mock edgestore for easy v0 integration\n\n  const uploadFn: UploadFn = React.useCallback(\n    async ({ file, signal, onProgressChange }) => {\n      const res = await edgestore.myPublicFiles.upload({\n        file,\n        signal,\n        onProgressChange,\n      });\n      // you can run some server action or api here\n      // to add the necessary data to your database\n      return { url: res.url };\n    },\n    [edgestore],\n  );\n\n  return (\n    <div className=\"flex flex-col items-center gap-4 p-4\">\n      <div className=\"flex w-full max-w-md flex-col gap-4\">\n        <UploaderProvider uploadFn={uploadFn} autoUpload>\n          <div className=\"flex items-center gap-2\">\n            <UploadButton\n              maxSize={1024 * 1024 * 1} // 1 MB\n              onRejected={setErrors}\n            >\n              <UploadIcon /> Upload files\n            </UploadButton>\n            <UploadButton\n              variant=\"outline\"\n              size=\"icon\"\n              aria-label=\"Attach files\"\n              maxSize={1024 * 1024 * 1} // 1 MB\n              onRejected={setErrors}\n            >\n              <PaperclipIcon />\n            </UploadButton>\n          </div>\n          <UploadErrors errors={errors} onDismiss={() => setErrors([])} />\n          <FileList />\n        </UploaderProvider>\n      </div>\n    </div>\n  );\n}\n\n// Mock implementation of EdgeStore\nfunction useMockEdgeStore() {\n  return {\n    edgestore: {\n      myPublicFiles: {\n        upload: async ({\n          signal,\n          onProgressChange,\n        }: {\n          file: File;\n          signal?: AbortSignal;\n          onProgressChange?: (progress: number) => void | Promise<void>;\n        }) => {\n          // Simulate upload progress. Rejects like EdgeStore when the upload is aborted.\n          await new Promise<void>((resolve, reject) => {\n            let progress = 0;\n            const interval = setInterval(() => {\n              progress = Math.min(\n                progress + Math.floor(Math.random() * 21) + 10,\n                100,\n              );\n              void onProgressChange?.(progress);\n              if (progress >= 100) {\n                clearInterval(interval);\n                resolve();\n              }\n            }, 300);\n            signal?.addEventListener('abort', () => {\n              clearInterval(interval);\n              reject(new DOMException('Upload aborted', 'AbortError'));\n            });\n          });\n\n          return {\n            url: 'https://edgestore.dev/img/upload-demo.webp',\n          };\n        },\n      },\n    },\n  };\n}\n",
+      "type": "registry:block",
+      "target": "components/upload/blocks/upload-button-block.tsx"
+    }
+  ],
+  "type": "registry:block"
+}

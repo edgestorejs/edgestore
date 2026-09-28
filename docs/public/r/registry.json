@@ -4,11 +4,42 @@
   "homepage": "https://edgestore.dev",
   "items": [
     {
+      "name": "upload-utils",
+      "type": "registry:lib",
+      "title": "Upload Utils",
+      "description": "Shared helpers for the upload components: file sizes, accept presets, error messages, validators and previews.",
+      "dependencies": ["react-dropzone"],
+      "files": [
+        {
+          "path": "examples/components/src/components/upload/upload-utils.ts",
+          "type": "registry:lib",
+          "target": "components/upload/upload-utils.ts"
+        }
+      ]
+    },
+    {
+      "name": "uploader-provider",
+      "type": "registry:component",
+      "title": "Uploader Provider",
+      "description": "A provider component and hook for managing file uploads with progress tracking and state management.",
+      "files": [
+        {
+          "path": "examples/components/src/components/upload/uploader-provider.tsx",
+          "type": "registry:component",
+          "target": "components/upload/uploader-provider.tsx"
+        }
+      ]
+    },
+    {
       "name": "dropzone",
-      "type": "registry:block",
+      "type": "registry:component",
       "title": "Dropzone",
-      "description": "A file dropzone component.",
+      "description": "A file dropzone and the useUploadDropzone hook the upload components are built on.",
       "dependencies": ["react-dropzone", "lucide-react"],
+      "registryDependencies": [
+        "https://edgestore.dev/r/uploader-provider.json",
+        "https://edgestore.dev/r/upload-utils.json"
+      ],
       "files": [
         {
           "path": "examples/components/src/components/upload/dropzone.tsx",
@@ -19,14 +50,16 @@
     },
     {
       "name": "file-uploader",
-      "type": "registry:block",
+      "type": "registry:component",
       "title": "File Uploader",
-      "description": "A component for uploading multiple files with preview and progress indicators.",
+      "description": "A component for uploading multiple files with a progress list, retry and a running total.",
       "dependencies": ["react-dropzone", "lucide-react"],
       "registryDependencies": [
+        "button",
         "https://edgestore.dev/r/dropzone.json",
         "https://edgestore.dev/r/progress-bar.json",
-        "https://edgestore.dev/r/uploader-provider.json"
+        "https://edgestore.dev/r/uploader-provider.json",
+        "https://edgestore.dev/r/upload-utils.json"
       ],
       "files": [
         {
@@ -38,14 +71,16 @@
     },
     {
       "name": "image-uploader",
-      "type": "registry:block",
+      "type": "registry:component",
       "title": "Image Uploader",
-      "description": "A component for uploading multiple images with preview grid and progress indicators.",
+      "description": "A gallery uploader for multiple images with thumbnails and progress indicators.",
       "dependencies": ["react-dropzone", "lucide-react"],
       "registryDependencies": [
+        "button",
         "https://edgestore.dev/r/dropzone.json",
-        "https://edgestore.dev/r/progress-circle.json",
-        "https://edgestore.dev/r/uploader-provider.json"
+        "https://edgestore.dev/r/progress-bar.json",
+        "https://edgestore.dev/r/uploader-provider.json",
+        "https://edgestore.dev/r/upload-utils.json"
       ],
       "files": [
         {
@@ -59,17 +94,79 @@
       "name": "single-image-dropzone",
       "type": "registry:component",
       "title": "Single Image Dropzone",
-      "description": "A dropzone component for uploading a single image with preview and progress indicator.",
+      "description": "A dropzone for uploading a single image with preview, progress and replace.",
       "dependencies": ["react-dropzone", "lucide-react"],
       "registryDependencies": [
-        "https://edgestore.dev/r/progress-circle.json",
-        "https://edgestore.dev/r/uploader-provider.json"
+        "https://edgestore.dev/r/dropzone.json",
+        "https://edgestore.dev/r/progress-bar.json",
+        "https://edgestore.dev/r/uploader-provider.json",
+        "https://edgestore.dev/r/upload-utils.json"
       ],
       "files": [
         {
           "path": "examples/components/src/components/upload/single-image.tsx",
           "type": "registry:component",
           "target": "components/upload/single-image.tsx"
+        }
+      ]
+    },
+    {
+      "name": "avatar-dropzone",
+      "type": "registry:component",
+      "title": "Avatar Dropzone",
+      "description": "A single image in a fixed shape, for profile photos and logos.",
+      "dependencies": ["react-dropzone", "lucide-react"],
+      "registryDependencies": [
+        "button",
+        "https://edgestore.dev/r/dropzone.json",
+        "https://edgestore.dev/r/progress-circle.json",
+        "https://edgestore.dev/r/uploader-provider.json",
+        "https://edgestore.dev/r/upload-utils.json"
+      ],
+      "files": [
+        {
+          "path": "examples/components/src/components/upload/avatar-dropzone.tsx",
+          "type": "registry:component",
+          "target": "components/upload/avatar-dropzone.tsx"
+        }
+      ]
+    },
+    {
+      "name": "file-field",
+      "type": "registry:component",
+      "title": "File Field",
+      "description": "A compact single-file input that sits in a form next to regular fields.",
+      "dependencies": ["react-dropzone", "lucide-react"],
+      "registryDependencies": [
+        "https://edgestore.dev/r/dropzone.json",
+        "https://edgestore.dev/r/file-uploader.json",
+        "https://edgestore.dev/r/uploader-provider.json",
+        "https://edgestore.dev/r/upload-utils.json"
+      ],
+      "files": [
+        {
+          "path": "examples/components/src/components/upload/file-field.tsx",
+          "type": "registry:component",
+          "target": "components/upload/file-field.tsx"
+        }
+      ]
+    },
+    {
+      "name": "upload-button",
+      "type": "registry:component",
+      "title": "Upload Button",
+      "description": "A button that opens the file dialog and also accepts files dropped onto it.",
+      "dependencies": ["react-dropzone"],
+      "registryDependencies": [
+        "button",
+        "https://edgestore.dev/r/dropzone.json",
+        "https://edgestore.dev/r/uploader-provider.json"
+      ],
+      "files": [
+        {
+          "path": "examples/components/src/components/upload/upload-button.tsx",
+          "type": "registry:component",
+          "target": "components/upload/upload-button.tsx"
         }
       ]
     },
@@ -100,24 +197,14 @@
       ]
     },
     {
-      "name": "uploader-provider",
-      "type": "registry:component",
-      "title": "Uploader Provider",
-      "description": "A provider component and hook for managing file uploads with progress tracking and state management.",
-      "files": [
-        {
-          "path": "examples/components/src/components/upload/uploader-provider.tsx",
-          "type": "registry:component",
-          "target": "components/upload/uploader-provider.tsx"
-        }
-      ]
-    },
-    {
       "name": "file-uploader-block",
       "type": "registry:block",
       "title": "File Uploader Block",
       "description": "A block for uploading multiple files with preview and progress indicators.",
-      "registryDependencies": ["https://edgestore.dev/r/file-uploader.json"],
+      "registryDependencies": [
+        "https://edgestore.dev/r/file-uploader.json",
+        "https://edgestore.dev/r/uploader-provider.json"
+      ],
       "files": [
         {
           "path": "examples/components/src/components/upload/blocks/multi-file-block.tsx",
@@ -157,6 +244,61 @@
           "path": "examples/components/src/components/upload/blocks/multi-image-block.tsx",
           "type": "registry:block",
           "target": "components/upload/blocks/multi-image-block.tsx"
+        }
+      ]
+    },
+    {
+      "name": "avatar-dropzone-block",
+      "type": "registry:block",
+      "title": "Avatar Dropzone Block",
+      "description": "A block for uploading a profile photo.",
+      "registryDependencies": [
+        "https://edgestore.dev/r/avatar-dropzone.json",
+        "https://edgestore.dev/r/uploader-provider.json"
+      ],
+      "files": [
+        {
+          "path": "examples/components/src/components/upload/blocks/avatar-block.tsx",
+          "type": "registry:block",
+          "target": "components/upload/blocks/avatar-block.tsx"
+        }
+      ]
+    },
+    {
+      "name": "file-field-block",
+      "type": "registry:block",
+      "title": "File Field Block",
+      "description": "A block with a compact single-file form field.",
+      "registryDependencies": [
+        "https://edgestore.dev/r/file-field.json",
+        "https://edgestore.dev/r/upload-utils.json",
+        "https://edgestore.dev/r/uploader-provider.json"
+      ],
+      "files": [
+        {
+          "path": "examples/components/src/components/upload/blocks/file-field-block.tsx",
+          "type": "registry:block",
+          "target": "components/upload/blocks/file-field-block.tsx"
+        }
+      ]
+    },
+    {
+      "name": "upload-button-block",
+      "type": "registry:block",
+      "title": "Upload Button Block",
+      "description": "A block with upload buttons feeding a file list.",
+      "dependencies": ["lucide-react"],
+      "registryDependencies": [
+        "https://edgestore.dev/r/upload-button.json",
+        "https://edgestore.dev/r/file-uploader.json",
+        "https://edgestore.dev/r/dropzone.json",
+        "https://edgestore.dev/r/uploader-provider.json"
+      ],
+      "files": [
+        {
+          "path": "examples/components/src/components/upload/blocks/upload-button-block.tsx",
+          "type": "registry:block",
+          "target": "components/upload/blocks/upload-button-block.tsx"
         }
       ]
     },

@@ -3,11 +3,8 @@ import * as React from 'react';
 
 /**
  * Props for the ProgressCircle component.
- *
- * @interface ProgressCircleProps
- * @extends {React.HTMLAttributes<HTMLDivElement>}
  */
-export interface ProgressCircleProps extends React.HTMLAttributes<HTMLDivElement> {
+export type ProgressCircleProps = React.ComponentProps<'div'> & {
   /**
    * The progress value as a percentage (0-100).
    */
@@ -24,70 +21,79 @@ export interface ProgressCircleProps extends React.HTMLAttributes<HTMLDivElement
    * @default 4
    */
   strokeWidth?: number;
-}
+
+  /**
+   * Whether to show the percentage in the middle.
+   * @default true
+   */
+  showValue?: boolean;
+};
 
 /**
- * A circular progress indicator component that visualizes completion percentage.
+ * A circular progress indicator. It draws with `currentColor`,
+ * so set the color with a text class.
  *
- * @component
  * @example
  * ```tsx
- * <ProgressCircle progress={75} />
+ * <ProgressCircle progress={75} className="text-white" />
  * <ProgressCircle progress={50} size={64} strokeWidth={6} />
  * ```
  */
-const ProgressCircle = React.forwardRef<HTMLDivElement, ProgressCircleProps>(
-  ({ progress, size = 48, strokeWidth = 4, className, ...props }, ref) => {
-    const radius = (size - strokeWidth) / 2;
-    const circumference = 2 * Math.PI * radius;
-    const offset = circumference - (progress / 100) * circumference;
+function ProgressCircle({
+  progress,
+  size = 48,
+  strokeWidth = 4,
+  showValue = true,
+  className,
+  style,
+  ...props
+}: ProgressCircleProps) {
+  const value = Math.min(100, Math.max(0, progress));
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
 
-    return (
-      <div
-        ref={ref}
-        className={cn(
-          'relative flex flex-col items-center justify-center text-white',
-          className,
-        )}
-        style={{
-          width: size,
-          height: size,
-        }}
-        {...props}
+  return (
+    <div
+      role="progressbar"
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={Math.round(value)}
+      className={cn('relative grid place-items-center', className)}
+      style={{ width: size, height: size, ...style }}
+      {...props}
+    >
+      <svg
+        className="absolute inset-0 -rotate-90"
+        width={size}
+        height={size}
+        viewBox={`0 0 ${size} ${size}`}
+        aria-hidden="true"
       >
-        <svg
-          className="absolute" // Position SVG centered relative to the div
-          width={size}
-          height={size}
-          viewBox={`0 0 ${size} ${size}`}
-          style={{ transform: 'rotate(-90deg)' }} // Start from top
-        >
-          {/* Background track */}
-          <circle
-            cx={size / 2}
-            cy={size / 2}
-            r={radius}
-            strokeWidth={strokeWidth}
-            className="fill-none stroke-gray-500"
-          />
-          {/* Progress arc */}
-          <circle
-            cx={size / 2}
-            cy={size / 2}
-            r={radius}
-            strokeWidth={strokeWidth}
-            className="fill-none stroke-white"
-            strokeDasharray={circumference}
-            strokeDashoffset={offset}
-            style={{ transition: 'stroke-dashoffset 0.3s ease' }} // Smooth transition
-          />
-        </svg>
-        {/* Progress Percentage Text (centered visually) */}
-        <div className="z-10 text-xs font-medium">{Math.round(progress)}%</div>
-      </div>
-    );
-  },
-);
-ProgressCircle.displayName = 'ProgressCircle';
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          strokeWidth={strokeWidth}
+          className="fill-none stroke-current opacity-25"
+        />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          strokeWidth={strokeWidth}
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={circumference * (1 - value / 100)}
+          className="fill-none stroke-current transition-[stroke-dashoffset] duration-150 ease-linear motion-reduce:transition-none"
+        />
+      </svg>
+      {showValue && (
+        <span className="text-xs font-medium tabular-nums">
+          {Math.round(value)}%
+        </span>
+      )}
+    </div>
+  );
+}
 
 export { ProgressCircle };

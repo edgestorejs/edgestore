@@ -1,0 +1,160 @@
+---
+title: File Field
+description: A compact single-file input that sits in a form next to regular fields.
+---
+
+import { DemoBlock } from '@/components/demo-block';
+import { LimitedCode } from '@/components/ui/limited-code';
+import {
+  OpenTabs,
+  OpenTabsContent,
+  OpenTabsList,
+  OpenTabsTrigger,
+} from '@/components/ui/open-tabs';
+import FileFieldBlock from '@/components/upload/blocks/file-field-block';
+import { Step, Steps } from 'fumadocs-ui/components/steps';
+
+<DemoBlock registryUrl="https://edgestore.dev/r/file-field-block.json">
+  <FileFieldBlock />
+</DemoBlock>
+
+Once a file is chosen, the field shows it with its progress and a remove button instead of the drop area.
+
+## Installation
+
+<OpenTabs defaultValue="cli">
+
+<OpenTabsList>
+  <OpenTabsTrigger value="cli">CLI</OpenTabsTrigger>
+  <OpenTabsTrigger value="manual">Manual</OpenTabsTrigger>
+</OpenTabsList>
+
+<OpenTabsContent value="cli">
+
+Use the shadcn CLI to add the component to your project.
+
+```package-install
+npx shadcn@latest add https://edgestore.dev/r/file-field.json
+```
+
+</OpenTabsContent>
+
+<OpenTabsContent value="manual">
+
+<Steps>
+
+<Step>
+
+### Setup for manual installation
+
+First you will need to follow the [manual install setup](./manual-install) guide.
+
+</Step>
+
+<Step>
+
+### Install required components
+
+- [uploader-provider](./uploader-provider)
+- [dropzone](./dropzone)
+- [multi-file](./multi-file)
+
+</Step>
+
+<Step>
+
+### Copy this component
+
+<LimitedCode>
+
+<include lang="tsx" meta='title="components/upload/file-field.tsx"'>../../../src/components/upload/file-field.tsx</include>
+
+</LimitedCode>
+
+</Step>
+
+</Steps>
+
+</OpenTabsContent>
+
+</OpenTabs>
+
+## Usage
+
+```tsx
+'use client';
+
+import { FileField } from '@/components/upload/file-field';
+import { DOCUMENT_ACCEPT } from '@/components/upload/upload-utils';
+import {
+  UploaderProvider,
+  type UploadFn,
+} from '@/components/upload/uploader-provider';
+import { useEdgeStore } from '@/lib/edgestore';
+import * as React from 'react';
+
+export function FileFieldUsage() {
+  const { edgestore } = useEdgeStore();
+
+  const uploadFn: UploadFn = React.useCallback(
+    async ({ file, onProgressChange, signal }) => {
+      const res = await edgestore.publicFiles.upload({
+        file,
+        signal,
+        onProgressChange,
+      });
+      // you can run some server action or api here
+      // to add the necessary data to your database
+      console.log(res);
+      return res;
+    },
+    [edgestore],
+  );
+
+  return (
+    <UploaderProvider uploadFn={uploadFn} autoUpload>
+      <label id="resume-label" htmlFor="resume-input">
+        Resume
+      </label>
+      <FileField
+        inputId="resume-input"
+        aria-labelledby="resume-label"
+        accept={DOCUMENT_ACCEPT}
+        typesLabel="PDF, DOC or DOCX"
+        maxSize={1024 * 1024 * 5} // 5 MB
+      />
+    </UploaderProvider>
+  );
+}
+```
+
+## Props
+
+| Prop              | Type      | Default   | Description                                                                                                              |
+| ----------------- | --------- | --------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `inputId`         | `string`  |           | Id for the hidden file input, so a `<label htmlFor>` opens the file dialog.                                              |
+| `maxSize`         | `number`  |           | Maximum file size in bytes.                                                                                              |
+| `accept`          | `Accept`  | all types | Accepted file types, in [react-dropzone's format](https://react-dropzone.js.org/#section-accepting-specific-file-types). |
+| `typesLabel`      | `string`  |           | Human-readable list of accepted types, shown in the hint and in error messages.                                          |
+| `disabled`        | `boolean` | `false`   | Disables the component.                                                                                                  |
+| `aria-labelledby` | `string`  |           | Id of the element that labels the field.                                                                                 |
+
+### With React Hook Form
+
+Give each field its own `UploaderProvider` and write the completed file into the form value from `onChange`:
+
+```tsx
+const handleChange = React.useCallback(
+  ({ completedFiles }: { completedFiles: CompletedFileState[] }) => {
+    const [completed] = completedFiles;
+    field.onChange(
+      completed ? { filename: completed.file.name, url: completed.url } : null,
+    );
+  },
+  [field],
+);
+
+<UploaderProvider uploadFn={uploadFn} onChange={handleChange} autoUpload>
+  <FileField aria-labelledby="resume-label" />
+</UploaderProvider>;
+```
