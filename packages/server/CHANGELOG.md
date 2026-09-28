@@ -1,5 +1,29 @@
 # @edgestore/server
 
+## 1.0.0-rc.7
+
+### Minor Changes
+
+- [#274](https://github.com/edgestorejs/edgestore/pull/274) [`5b79f19`](https://github.com/edgestorejs/edgestore/commit/5b79f19b8f99032d3d6ad6502d7b4947491349f4) Thanks [@raviships](https://github.com/raviships)! - Support `EDGESTORE_*` environment variables for credentials, API and base URLs,
+  and signing secrets. Prefer these names in configuration guidance.
+
+- [#275](https://github.com/edgestorejs/edgestore/pull/275) [`e1548ab`](https://github.com/edgestorejs/edgestore/commit/e1548abcc37b195a697e9b13689bb88bb7cf4d5c) Thanks [@raviships](https://github.com/raviships)! - React upload results include the file `id` when the provider exposes one, so
+  apps can save it without a lookup. Uploads still resolve after the transfer;
+  pass `options.waitForProcessing` to resolve with the processed file instead,
+  and use `onPhaseChange` to show when processing starts. Processing failures
+  reject with `UploadCanceledError`, and waits longer than `timeoutMs` reject
+  with `UploadProcessingTimeoutError`. Waiting never confirms a temporary file.
+
+  Providers can report processing state with `uploads.getStatus`. The EdgeStore
+  provider implements it, and the new `/upload-status` route only answers for
+  the browser that requested the upload.
+
+### Patch Changes
+
+- Updated dependencies [[`6462d06`](https://github.com/edgestorejs/edgestore/commit/6462d0651da79d935b21b30e63c4f4b5158a7320)]:
+  - @edgestore/shared@1.0.0-rc.7
+  - @edgestore/sdk@1.0.0-rc.7
+
 ## 1.0.0-rc.6
 
 ### Major Changes
