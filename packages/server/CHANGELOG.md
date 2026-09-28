@@ -1,5 +1,47 @@
 # @edgestore/server
 
+## 1.0.0-rc.6
+
+### Major Changes
+
+- [#263](https://github.com/edgestorejs/edgestore/pull/263) [`6b46893`](https://github.com/edgestorejs/edgestore/commit/6b46893343e8c8641a574d8e2f35d841a793d54b) Thanks [@raviships](https://github.com/raviships)! - Remove deprecated and duplicate entrypoints and options:
+  `@edgestore/react/shared` (import errors from `@edgestore/react/errors`),
+  `@edgestore/server/core` (import types from `@edgestore/server`), the
+  `InferClientResponse` type (use `InferClientOutputs`), and the S3
+  `accessKeyId` and `secretAccessKey` options (pass `credentials` or set
+  `ES_AWS_ACCESS_KEY_ID` and `ES_AWS_SECRET_ACCESS_KEY`).
+
+- [#262](https://github.com/edgestorejs/edgestore/pull/262) [`371b083`](https://github.com/edgestorejs/edgestore/commit/371b0834f7006f3c3245ae2f46aac6bd9fa3dbff) Thanks [@raviships](https://github.com/raviships)! - Bring the Azure Blob provider to parity with S3. Large browser uploads use
+  block uploads with signed, object-scoped sessions: the browser stages blocks
+  through short-lived Put Block URLs, and the provider checks every block's size
+  before committing to catch incomplete uploads. Backend uploads are available through the router client,
+  files can be referenced by `{ key }` as well as by URL, and uploads accept a
+  `path` callback and `objectOptions` (cache control, content disposition, and
+  metadata).
+
+  Breaking changes to `azureBlob()`: `customBaseUrl` / `ES_AZURE_BASE_URL` is
+  replaced by `endpoint` / `ES_AZURE_ENDPOINT`, with a separate `baseUrl` for file
+  URLs. Credentials are checked on first use instead of when the provider is
+  created. Upload responses include a signed read URL only when the private
+  bucket sets `autoSignedUrls`, and cookie-based access-control rules are
+  rejected at initialization.
+
+  Multipart part ETags are optional in the provider contract, so storage that
+  returns none can complete uploads. S3 and the hosted provider reject missing
+  ETags with an actionable error.
+
+### Patch Changes
+
+- [#263](https://github.com/edgestorejs/edgestore/pull/263) [`fb05c3f`](https://github.com/edgestorejs/edgestore/commit/fb05c3fcb49e98cc66c6c90319f690705a0b0b45) Thanks [@raviships](https://github.com/raviships)! - Respond with `401 UNAUTHORIZED` instead of a server error when the
+  `edgestore-ctx` cookie is expired, tampered with, or encrypted with a different
+  secret.
+
+- [#264](https://github.com/edgestorejs/edgestore/pull/264) [`4df0909`](https://github.com/edgestorejs/edgestore/commit/4df090990f42a069da0e19e37a06bee1c1af499e) Thanks [@raviships](https://github.com/raviships)! - Begin the v1 release-candidate cycle under the `rc` tag.
+
+- Updated dependencies [[`371b083`](https://github.com/edgestorejs/edgestore/commit/371b0834f7006f3c3245ae2f46aac6bd9fa3dbff), [`4df0909`](https://github.com/edgestorejs/edgestore/commit/4df090990f42a069da0e19e37a06bee1c1af499e)]:
+  - @edgestore/shared@1.0.0-rc.6
+  - @edgestore/sdk@1.0.0-rc.6
+
 ## 1.0.0-next.5
 
 ### Major Changes

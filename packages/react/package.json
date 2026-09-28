@@ -1,6 +1,6 @@
 {
   "name": "@edgestore/react",
-  "version": "1.0.0-next.5",
+  "version": "1.0.0-rc.6",
   "description": "Upload files with ease from React/Next.js",
   "homepage": "https://edgestore.dev",
   "license": "MIT",
@@ -72,7 +72,7 @@
     "!**/__tests__"
   ],
   "dependencies": {
-    "@edgestore/shared": "1.0.0-next.5"
+    "@edgestore/shared": "1.0.0-rc.6"
   },
   "peerDependencies": {
     "react": ">=16.8.0",
