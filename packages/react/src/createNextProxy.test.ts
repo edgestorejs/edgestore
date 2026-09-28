@@ -455,6 +455,14 @@ describe('createNextProxy processing', () => {
       },
       () => jsonResponse({ message: 'Service unavailable' }, 503),
       () =>
+        new Response(
+          new ReadableStream({
+            start(controller) {
+              controller.error(new TypeError('Network connection lost'));
+            },
+          }),
+        ),
+      () =>
         jsonResponse({
           status: 'completed',
           file: {
@@ -474,10 +482,10 @@ describe('createNextProxy processing', () => {
 
     await waitForXhrs(1);
     MockXMLHttpRequest.instances[0]!.load();
-    await vi.advanceTimersByTimeAsync(2_000);
+    await vi.advanceTimersByTimeAsync(3_000);
 
     await expect(upload).resolves.toMatchObject({ id: 'file_1', size: 13 });
-    expect(fetchMock).toHaveBeenCalledTimes(4);
+    expect(fetchMock).toHaveBeenCalledTimes(5);
   });
 
   it('rejects when EdgeStore cancels the upload during processing', async () => {

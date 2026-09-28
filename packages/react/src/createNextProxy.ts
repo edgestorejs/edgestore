@@ -417,13 +417,14 @@ async function fetchUploadStatus(
         'Content-Type': 'application/json',
       },
     });
+    // Reading the body can fail mid-stream, just like the request itself.
+    if (res.ok) return (await res.json()) as SharedUploadStatusRes;
   } catch (e) {
     if (signal.aborted) throw e;
     return undefined;
   }
   if (isRetryableStatus(res.status)) return undefined;
-  if (!res.ok) await handleError(res);
-  return (await res.json()) as SharedUploadStatusRes;
+  return await handleError(res);
 }
 
 function sleep(ms: number, signal?: AbortSignal) {
