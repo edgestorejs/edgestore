@@ -1,6 +1,6 @@
 ---
 title: S3
-description: Upload to your own AWS S3 bucket or S3-compatible service.
+description: Upload to your own AWS S3 bucket or an S3-compatible service such as Cloudflare R2, Backblaze B2, DigitalOcean Spaces, Google Cloud Storage, Tigris, Supabase Storage, or MinIO.
 ---
 
 The S3 provider supports direct browser uploads, automatic multipart uploads,
@@ -238,7 +238,111 @@ required for browser multipart completion:
 
 ## S3-compatible services
 
-For local MinIO:
+`s3()` works with services that implement the S3 API, including Cloudflare R2,
+Backblaze B2, DigitalOcean Spaces, Google Cloud Storage, Tigris, Supabase
+Storage, and MinIO. Point `endpoint` at the service, pass its access keys as
+`credentials` (or the `ES_AWS_ACCESS_KEY_ID` / `ES_AWS_SECRET_ACCESS_KEY`
+environment variables), and configure bucket CORS as described above, including
+exposing `ETag`.
+
+The endpoint must be reachable from both your server and the browser. `baseUrl`
+defaults to `<endpoint>/<bucket>`; set it to the service's public or CDN URL when
+public files are served from a different host. Services differ in support for
+tags, storage classes, and KMS encryption, so only set `objectOptions` your
+service supports. EdgeStore's CI runs against MinIO; the setups below follow each
+service's S3 compatibility documentation.
+
+### Cloudflare R2
+
+```ts
+s3({
+  bucketName: 'edgestore',
+  region: 'auto',
+  endpoint: 'https://<ACCOUNT_ID>.r2.cloudflarestorage.com',
+  credentials: { accessKeyId: '...', secretAccessKey: '...' },
+  // Public files: an r2.dev subdomain or a custom domain on the bucket.
+  baseUrl: 'https://files.example.com',
+});
+```
+
+Create the keys as an R2 API token. R2 does not support object tagging or KMS
+encryption, and supports the `STANDARD` and `STANDARD_IA` storage classes.
+
+### Backblaze B2
+
+```ts
+s3({
+  bucketName: 'edgestore',
+  region: 'us-west-004',
+  endpoint: 'https://s3.us-west-004.backblazeb2.com',
+  credentials: { accessKeyId: '<keyID>', secretAccessKey: '<applicationKey>' },
+});
+```
+
+Use the region from your bucket's S3 endpoint and an application key. B2 does
+not support object tagging or KMS encryption.
+
+### DigitalOcean Spaces
+
+```ts
+s3({
+  bucketName: 'edgestore',
+  region: 'nyc3',
+  endpoint: 'https://nyc3.digitaloceanspaces.com',
+  credentials: { accessKeyId: '...', secretAccessKey: '...' },
+  // Optional: serve public files through the Spaces CDN.
+  baseUrl: 'https://edgestore.nyc3.cdn.digitaloceanspaces.com',
+});
+```
+
+Spaces supports customer-provided encryption keys but not KMS encryption.
+
+### Google Cloud Storage
+
+```ts
+s3({
+  bucketName: 'edgestore',
+  region: 'auto',
+  endpoint: 'https://storage.googleapis.com',
+  credentials: { accessKeyId: '<HMAC access ID>', secretAccessKey: '<HMAC secret>' },
+});
+```
+
+Cloud Storage's XML API is S3-compatible when you use HMAC keys, including
+signed URLs, multipart uploads, and multi-object delete. Create an HMAC key for a
+service account with access to the bucket. Tagging and KMS headers are not
+supported.
+
+### Tigris
+
+```ts
+s3({
+  bucketName: 'edgestore',
+  region: 'auto',
+  endpoint: 'https://t3.storage.dev',
+  credentials: { accessKeyId: '...', secretAccessKey: '...' },
+});
+```
+
+### Supabase Storage
+
+```ts
+s3({
+  bucketName: 'edgestore',
+  region: '<project region>',
+  endpoint: 'https://<project_ref>.storage.supabase.co/storage/v1/s3',
+  forcePathStyle: true,
+  credentials: { accessKeyId: '...', secretAccessKey: '...' },
+  // Public buckets are served from the object endpoint.
+  baseUrl:
+    'https://<project_ref>.supabase.co/storage/v1/object/public/edgestore',
+});
+```
+
+Create S3 access keys in your project's storage settings. Supabase Storage does
+not support object tagging, storage classes, or server-side encryption options.
+
+### MinIO
 
 ```ts
 s3({
@@ -248,11 +352,6 @@ s3({
   forcePathStyle: true,
 });
 ```
-
-The endpoint must be reachable from both the application server and browser.
-Set `baseUrl` explicitly for custom domains or virtual-hosted endpoint layouts.
-S3-compatible services may differ in support for KMS, storage classes, tags,
-checksums, and lifecycle policies; only enable settings your service supports.
 
 ## Limitations
 
