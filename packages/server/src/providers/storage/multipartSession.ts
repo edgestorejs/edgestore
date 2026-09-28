@@ -42,11 +42,11 @@ export function createMultipartSessions({
   function signingKey() {
     const value =
       secret ??
-      getEnv('EDGE_STORE_JWT_SECRET') ??
-      getEnv('EDGE_STORE_SECRET_KEY');
+      getEnv('EDGESTORE_JWT_SECRET') ??
+      getEnv('EDGESTORE_SECRET_KEY');
     if (!value)
       throw new Error(
-        `${providerName} multipart uploads require jwtSecret or EDGE_STORE_JWT_SECRET.`,
+        `${providerName} multipart uploads require jwtSecret or EDGESTORE_JWT_SECRET.`,
       );
     return new TextEncoder().encode(value);
   }

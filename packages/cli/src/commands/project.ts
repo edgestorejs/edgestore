@@ -90,8 +90,8 @@ export async function projectCreateCommand(
     isInteractive(runtime, flags) && result.projectKey
       ? [
           '',
-          `EDGE_STORE_ACCESS_KEY=${result.projectKey.key.accessKey}`,
-          `EDGE_STORE_SECRET_KEY=${result.projectKey.secretKey}`,
+          `EDGESTORE_ACCESS_KEY=${result.projectKey.key.accessKey}`,
+          `EDGESTORE_SECRET_KEY=${result.projectKey.secretKey}`,
           '',
           'Save this secret now. You will not be able to view it again.',
         ]

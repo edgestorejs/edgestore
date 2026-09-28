@@ -182,7 +182,7 @@ describe('utility', () => {
     };
     await writeFile(
       path.join(directory, '.env.local'),
-      'EDGE_STORE_ACCESS_KEY=access_test\nEDGE_STORE_SECRET_KEY=do-not-print\n',
+      'EDGESTORE_ACCESS_KEY=access_test\nEDGESTORE_SECRET_KEY=do-not-print\n',
     );
 
     try {
@@ -197,41 +197,44 @@ describe('utility', () => {
     }
   });
 
-  it('checks exported and quoted env file assignments', async () => {
-    const directory = await mkdtemp(path.join(tmpdir(), 'edgestore-doctor-'));
-    fixture.runtime.cwd = directory;
-    fixture.repoConfig.config = {
-      account: account.id,
-      project: project.basePath,
-    };
-    await writeFile(
-      path.join(directory, '.env.local'),
-      [
-        'export EDGE_STORE_ACCESS_KEY = "access_test"',
-        "EDGE_STORE_SECRET_KEY = 'do-not-print'",
-        '',
-      ].join('\n'),
-    );
-
-    try {
-      await runCli(['--json', 'doctor'], fixture.runtime, '1.2.3');
-
-      const checks = JSON.parse(fixture.stdout()).checks;
-      expect(checks).toContainEqual({
-        name: '.env.local',
-        status: 'pass',
-        detail: 'EDGE_STORE_ACCESS_KEY present, EDGE_STORE_SECRET_KEY present',
-      });
-      expect(checks).not.toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({ name: 'Environment project' }),
-        ]),
+  it.each(['EDGESTORE', 'EDGE_STORE'])(
+    'checks exported and quoted %s env file assignments',
+    async (prefix) => {
+      const directory = await mkdtemp(path.join(tmpdir(), 'edgestore-doctor-'));
+      fixture.runtime.cwd = directory;
+      fixture.repoConfig.config = {
+        account: account.id,
+        project: project.basePath,
+      };
+      await writeFile(
+        path.join(directory, '.env.local'),
+        [
+          `export ${prefix}_ACCESS_KEY = "access_test"`,
+          `${prefix}_SECRET_KEY = 'do-not-print'`,
+          '',
+        ].join('\n'),
       );
-      expect(fixture.stdout()).not.toContain('do-not-print');
-    } finally {
-      await rm(directory, { recursive: true, force: true });
-    }
-  });
+
+      try {
+        await runCli(['--json', 'doctor'], fixture.runtime, '1.2.3');
+
+        const checks = JSON.parse(fixture.stdout()).checks;
+        expect(checks).toContainEqual({
+          name: '.env.local',
+          status: 'pass',
+          detail: 'EDGESTORE_ACCESS_KEY present, EDGESTORE_SECRET_KEY present',
+        });
+        expect(checks).not.toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({ name: 'Environment project' }),
+          ]),
+        );
+        expect(fixture.stdout()).not.toContain('do-not-print');
+      } finally {
+        await rm(directory, { recursive: true, force: true });
+      }
+    },
+  );
 
   it('checks the env file remembered by init', async () => {
     const directory = await mkdtemp(path.join(tmpdir(), 'edgestore-doctor-'));
@@ -246,7 +249,7 @@ describe('utility', () => {
     });
     await writeFile(
       path.join(directory, '.env.development.local'),
-      'EDGE_STORE_ACCESS_KEY=access_test\nEDGE_STORE_SECRET_KEY=secret\n',
+      'EDGESTORE_ACCESS_KEY=access_test\nEDGESTORE_SECRET_KEY=secret\n',
     );
 
     try {
@@ -295,7 +298,7 @@ describe('utility', () => {
     });
     await writeFile(
       path.join(directory, '.env.local'),
-      'EDGE_STORE_ACCESS_KEY=access_test\nEDGE_STORE_SECRET_KEY=secret\n',
+      'EDGESTORE_ACCESS_KEY=access_test\nEDGESTORE_SECRET_KEY=secret\n',
     );
 
     try {

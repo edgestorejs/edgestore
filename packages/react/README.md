@@ -19,8 +19,8 @@ npm install @edgestore/server @edgestore/react
 Then go to your [Dashboard](https://dashboard.edgestore.dev), create a new project and copy the keys to your environment variables.
 
 ```shell title=".env"
-EDGE_STORE_ACCESS_KEY=your-access-key
-EDGE_STORE_SECRET_KEY=your-secret-key
+EDGESTORE_ACCESS_KEY=your-access-key
+EDGESTORE_SECRET_KEY=your-secret-key
 ```
 
 ### Backend

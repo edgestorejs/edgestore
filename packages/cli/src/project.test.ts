@@ -75,7 +75,7 @@ describe('project', () => {
     );
 
     expect(fixture.repoConfig.config).toBeUndefined();
-    expect(fixture.stdout()).toContain('EDGE_STORE_ACCESS_KEY=access_test');
+    expect(fixture.stdout()).toContain('EDGESTORE_ACCESS_KEY=access_test');
     expect(fixture.stdout()).toContain(
       'You will not be able to view it again.',
     );
@@ -210,8 +210,8 @@ describe('project', () => {
       '0.0.0',
     );
 
-    expect(fixture.stdout()).toContain('EDGE_STORE_ACCESS_KEY=access_test');
-    expect(fixture.stdout()).toContain('EDGE_STORE_SECRET_KEY=secret_test');
+    expect(fixture.stdout()).toContain('EDGESTORE_ACCESS_KEY=access_test');
+    expect(fixture.stdout()).toContain('EDGESTORE_SECRET_KEY=secret_test');
   });
 
   it('requires a destination for plain project-key creation', async () => {
@@ -260,7 +260,7 @@ describe('project', () => {
     expect(fixture.stdout()).toBe(`${projectKey.id}\n`);
     await expect(
       readFile(path.join(temporaryDirectory, '.env.local'), 'utf8'),
-    ).resolves.toContain('EDGE_STORE_SECRET_KEY=secret_test');
+    ).resolves.toContain('EDGESTORE_SECRET_KEY=secret_test');
   });
 
   it('keeps only the replacement key ID on plain rotation stdout', async () => {
@@ -299,7 +299,7 @@ describe('project', () => {
     fixture.runtime.cwd = temporaryDirectory;
     await writeFile(
       path.join(temporaryDirectory, '.env.local'),
-      'EDGE_STORE_ACCESS_KEY=access_old\nEDGE_STORE_SECRET_KEY=secret_old\n',
+      'EDGESTORE_ACCESS_KEY=access_old\nEDGESTORE_SECRET_KEY=secret_old\n',
     );
     fixture.createProjectKey.mockResolvedValueOnce({
       key: { ...projectKey, id: 'key_replacement' },
@@ -339,7 +339,7 @@ describe('project', () => {
     );
     await expect(
       readFile(path.join(temporaryDirectory, '.env.local'), 'utf8'),
-    ).resolves.toContain('EDGE_STORE_SECRET_KEY=secret_test');
+    ).resolves.toContain('EDGESTORE_SECRET_KEY=secret_test');
   });
 
   it('revokes an unpersisted replacement when rotation is canceled', async () => {
@@ -474,7 +474,7 @@ describe('project', () => {
     });
     await expect(
       readFile(path.join(temporaryDirectory, '.env.local'), 'utf8'),
-    ).resolves.toContain('EDGE_STORE_SECRET_KEY=secret_test');
+    ).resolves.toContain('EDGESTORE_SECRET_KEY=secret_test');
   });
 
   it('preserves and quotes rotation options in confirmation recovery', async () => {
@@ -572,7 +572,7 @@ describe('project', () => {
     fixture.createProjectKey.mockImplementationOnce(async () => {
       await writeFile(
         path.join(temporaryDirectory!, '.env.local'),
-        'EDGE_STORE_ACCESS_KEY=raced\n',
+        'EDGESTORE_ACCESS_KEY=raced\n',
       );
       return { key: projectKey, secretKey: 'secret_test' };
     });
@@ -616,7 +616,7 @@ describe('project', () => {
     fixture.createProjectKey.mockImplementationOnce(async () => {
       await writeFile(
         path.join(temporaryDirectory!, '.env.local'),
-        'EDGE_STORE_ACCESS_KEY=raced\n',
+        'EDGESTORE_ACCESS_KEY=raced\n',
       );
       return { key: projectKey, secretKey: 'secret_test' };
     });

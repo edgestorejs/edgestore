@@ -30,9 +30,16 @@ test('does not inherit credentials, client configuration, or Node preload hooks'
 
 test('sanitizes known secrets, env assignments, authorization and URL queries', () => {
   const raw =
-    'sentinel\nEDGE_STORE_SECRET_KEY=unknown\n"EDGESTORE_TOKEN": "other"\nAuthorization: Bearer x\nhttps://files.example/a?signature=secret';
+    'sentinel\nEDGE_STORE_SECRET_KEY=legacy-secret\nEDGESTORE_SECRET_KEY=unknown\n"EDGESTORE_TOKEN": "other"\nAuthorization: Bearer x\nhttps://files.example/a?signature=secret';
   const clean = sanitize(raw, ['sentinel', '']);
-  for (const word of ['sentinel', 'unknown', 'other', 'Bearer', 'signature='])
+  for (const word of [
+    'sentinel',
+    'legacy-secret',
+    'unknown',
+    'other',
+    'Bearer',
+    'signature=',
+  ])
     assert.ok(!clean.includes(word));
   assert.equal(
     sanitize('package metadata and https://example.com/docs'),

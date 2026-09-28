@@ -114,7 +114,7 @@ export async function initCommand(
   if (secretOutput) {
     await preflightEnvSecret(
       packageCwd,
-      ['EDGE_STORE_ACCESS_KEY', 'EDGE_STORE_SECRET_KEY'],
+      ['EDGESTORE_ACCESS_KEY', 'EDGESTORE_SECRET_KEY'],
       { output: secretOutput, update: options.update },
     );
     envFile = await protectSecretFile(packageCwd, secretOutput);
@@ -143,8 +143,8 @@ export async function initCommand(
       await deliverEnvSecretWithRollback({
         cwd: packageCwd,
         values: {
-          EDGE_STORE_ACCESS_KEY: keyResult.key.accessKey,
-          EDGE_STORE_SECRET_KEY: keyResult.secretKey,
+          EDGESTORE_ACCESS_KEY: keyResult.key.accessKey,
+          EDGESTORE_SECRET_KEY: keyResult.secretKey,
         },
         options: { output: secretOutput, update: options.update },
         credential: { label: 'project key', id: keyResult.key.id },

@@ -58,15 +58,15 @@ export type S3ProviderOptions = {
    * Base URL to use for accessing files.
    * Only needed if you are using a custom domain or cloudfront.
    *
-   * It can also be set via the `EDGE_STORE_BASE_URL` environment variable.
+   * It can also be set via the `EDGESTORE_BASE_URL` environment variable.
    */
   baseUrl?: string;
   /**
    * Secret used to sign multipart upload sessions. The adapter context cookie
-   * still requires EDGE_STORE_JWT_SECRET (or EDGE_STORE_SECRET_KEY).
+   * still requires EDGESTORE_JWT_SECRET (or EDGESTORE_SECRET_KEY).
    * Can be generated with `openssl rand -base64 32`.
    *
-   * It can also be set via the `EDGE_STORE_JWT_SECRET` environment variable.
+   * It can also be set via the `EDGESTORE_JWT_SECRET` environment variable.
    */
   jwtSecret?: string;
   /**

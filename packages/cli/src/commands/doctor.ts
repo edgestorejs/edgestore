@@ -9,7 +9,7 @@ import {
 } from '../core/config';
 import { resolveCredential } from '../core/credentials';
 import { localApplicationChecks, type DoctorCheck } from '../core/doctorLocal';
-import { dotenvValue } from '../core/dotenv';
+import { projectEnvValue } from '../core/dotenv';
 import { CliError } from '../core/errors';
 import { renderTable } from '../core/output';
 import type { CliRuntime, GlobalFlags } from '../core/runtime';
@@ -297,14 +297,16 @@ async function checkEnvFile(
     }
     return { hasSecretKey: false, label };
   }
-  const accessKey = dotenvValue(contents, 'EDGE_STORE_ACCESS_KEY');
-  const hasSecretKey = Boolean(dotenvValue(contents, 'EDGE_STORE_SECRET_KEY'));
+  const accessKey = projectEnvValue(contents, 'EDGESTORE_ACCESS_KEY');
+  const hasSecretKey = Boolean(
+    projectEnvValue(contents, 'EDGESTORE_SECRET_KEY'),
+  );
   checks.push({
     name: label,
     status: accessKey && hasSecretKey ? 'pass' : 'warn',
     detail: [
-      `EDGE_STORE_ACCESS_KEY ${accessKey ? 'present' : 'missing'}`,
-      `EDGE_STORE_SECRET_KEY ${hasSecretKey ? 'present' : 'missing'}`,
+      `EDGESTORE_ACCESS_KEY ${accessKey ? 'present' : 'missing'}`,
+      `EDGESTORE_SECRET_KEY ${hasSecretKey ? 'present' : 'missing'}`,
     ].join(', '),
   });
   return { accessKey, hasSecretKey, label };

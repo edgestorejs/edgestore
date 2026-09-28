@@ -4,7 +4,7 @@ import { createConformanceProvider } from '../test-utils/adapterConformance.test
 import { initEdgeStore } from './router';
 
 afterEach(() => vi.unstubAllEnvs());
-beforeEach(() => vi.stubEnv('EDGE_STORE_JWT_SECRET', 'test-secret'));
+beforeEach(() => vi.stubEnv('EDGESTORE_JWT_SECRET', 'test-secret'));
 
 function initRequest() {
   return { request: new Request('https://app.example.com/api/edgestore/init') };
@@ -14,8 +14,8 @@ describe('configured routers', () => {
   const es = initEdgeStore.create();
 
   it('defers hosted credentials until a request or backend client needs them', async () => {
-    vi.stubEnv('EDGE_STORE_ACCESS_KEY', '');
-    vi.stubEnv('EDGE_STORE_SECRET_KEY', '');
+    vi.stubEnv('EDGESTORE_ACCESS_KEY', '');
+    vi.stubEnv('EDGESTORE_SECRET_KEY', '');
     const router = es.router({ files: es.fileBucket() });
     const handler = createEdgeStoreStartHandler({ router, logLevel: 'none' });
 
@@ -23,8 +23,8 @@ describe('configured routers', () => {
     expect(() => router.client).toThrow();
     expect((await handler(initRequest())).status).toBe(500);
 
-    vi.stubEnv('EDGE_STORE_ACCESS_KEY', 'test-key');
-    vi.stubEnv('EDGE_STORE_SECRET_KEY', 'test-secret');
+    vi.stubEnv('EDGESTORE_ACCESS_KEY', 'test-key');
+    vi.stubEnv('EDGESTORE_SECRET_KEY', 'test-secret');
     expect((await handler(initRequest())).status).toBe(200);
     const provider = router._def.provider;
     expect(provider.name).toBe('edgestore');
@@ -35,8 +35,8 @@ describe('configured routers', () => {
   });
 
   it('shares a custom provider between handler and client without hosted credentials', async () => {
-    vi.stubEnv('EDGE_STORE_ACCESS_KEY', '');
-    vi.stubEnv('EDGE_STORE_SECRET_KEY', '');
+    vi.stubEnv('EDGESTORE_ACCESS_KEY', '');
+    vi.stubEnv('EDGESTORE_SECRET_KEY', '');
     const provider = createConformanceProvider();
     const router = es.router({ files: es.fileBucket() }).provider(provider);
 

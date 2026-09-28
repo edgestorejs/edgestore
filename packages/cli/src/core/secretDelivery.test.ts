@@ -17,33 +17,53 @@ describe('deliverEnvSecret', () => {
 
     await deliverEnvSecret(
       directory,
-      { EDGE_STORE_ACCESS_KEY: 'access' },
+      { EDGESTORE_ACCESS_KEY: 'access' },
       { output: '.env.local' },
     );
 
-    expect(await readFile(file, 'utf8')).toBe('EDGE_STORE_ACCESS_KEY=access\n');
+    expect(await readFile(file, 'utf8')).toBe('EDGESTORE_ACCESS_KEY=access\n');
     await expect(
       deliverEnvSecret(
         directory,
-        { EDGE_STORE_ACCESS_KEY: 'next' },
+        { EDGESTORE_ACCESS_KEY: 'next' },
         { output: '.env.local' },
       ),
     ).rejects.toMatchObject({ code: 'secret_output_exists' });
   });
 
+  it('requires --update before overriding legacy credentials', async () => {
+    directory = await mkdtemp(path.join(tmpdir(), 'edgestore-secret-'));
+    const file = path.join(directory, '.env.local');
+    const contents = 'export EDGE_STORE_ACCESS_KEY=existing\n';
+    await writeFile(file, contents);
+    const values = { EDGESTORE_ACCESS_KEY: 'next' };
+    const options = { output: '.env.local' };
+    await expect(
+      preflightEnvSecret(directory, Object.keys(values), options),
+    ).rejects.toMatchObject({ code: 'secret_output_exists' });
+    await expect(
+      deliverEnvSecret(directory, values, options),
+    ).rejects.toMatchObject({ code: 'secret_output_exists' });
+    expect(await readFile(file, 'utf8')).toBe(contents);
+    await deliverEnvSecret(directory, values, { ...options, update: true });
+    expect(await readFile(file, 'utf8')).toBe(
+      `${contents}EDGESTORE_ACCESS_KEY=next\n`,
+    );
+  });
+
   it('updates existing values and preserves unrelated lines', async () => {
     directory = await mkdtemp(path.join(tmpdir(), 'edgestore-secret-'));
     const file = path.join(directory, '.env.local');
-    await writeFile(file, 'OTHER=value\nEDGE_STORE_ACCESS_KEY=old\n');
+    await writeFile(file, 'OTHER=value\nEDGESTORE_ACCESS_KEY=old\n');
 
     await deliverEnvSecret(
       directory,
-      { EDGE_STORE_ACCESS_KEY: 'next' },
+      { EDGESTORE_ACCESS_KEY: 'next' },
       { output: '.env.local', update: true },
     );
 
     expect(await readFile(file, 'utf8')).toBe(
-      'OTHER=value\nEDGE_STORE_ACCESS_KEY=next\n',
+      'OTHER=value\nEDGESTORE_ACCESS_KEY=next\n',
     );
   });
 
@@ -54,27 +74,27 @@ describe('deliverEnvSecret', () => {
       file,
       [
         '# keys',
-        'export EDGE_STORE_ACCESS_KEY=old-one',
+        'export EDGESTORE_ACCESS_KEY=old-one',
         'OTHER=value',
-        'EDGE_STORE_ACCESS_KEY = old-two',
-        'EDGE_STORE_ACCESS_KEY_SUFFIX=untouched',
+        'EDGESTORE_ACCESS_KEY = old-two',
+        'EDGESTORE_ACCESS_KEY_SUFFIX=untouched',
         '',
       ].join('\n'),
     );
 
     await deliverEnvSecret(
       directory,
-      { EDGE_STORE_ACCESS_KEY: 'next' },
+      { EDGESTORE_ACCESS_KEY: 'next' },
       { output: '.env.local', update: true },
     );
 
     expect(await readFile(file, 'utf8')).toBe(
       [
         '# keys',
-        'export EDGE_STORE_ACCESS_KEY=next',
+        'export EDGESTORE_ACCESS_KEY=next',
         'OTHER=value',
-        'EDGE_STORE_ACCESS_KEY = next',
-        'EDGE_STORE_ACCESS_KEY_SUFFIX=untouched',
+        'EDGESTORE_ACCESS_KEY = next',
+        'EDGESTORE_ACCESS_KEY_SUFFIX=untouched',
         '',
       ].join('\n'),
     );
@@ -83,15 +103,15 @@ describe('deliverEnvSecret', () => {
   it('preflights existing assignments without changing the file', async () => {
     directory = await mkdtemp(path.join(tmpdir(), 'edgestore-secret-'));
     const file = path.join(directory, '.env.local');
-    await writeFile(file, 'EDGE_STORE_ACCESS_KEY=old\n');
+    await writeFile(file, 'EDGESTORE_ACCESS_KEY=old\n');
 
     await expect(
-      preflightEnvSecret(directory, ['EDGE_STORE_ACCESS_KEY'], {
+      preflightEnvSecret(directory, ['EDGESTORE_ACCESS_KEY'], {
         output: '.env.local',
       }),
     ).rejects.toMatchObject({ code: 'secret_output_exists' });
     await expect(readFile(file, 'utf8')).resolves.toBe(
-      'EDGE_STORE_ACCESS_KEY=old\n',
+      'EDGESTORE_ACCESS_KEY=old\n',
     );
   });
 
@@ -99,7 +119,7 @@ describe('deliverEnvSecret', () => {
     directory = await mkdtemp(path.join(tmpdir(), 'edgestore-secret-'));
     const file = path.join(directory, '.env.local');
     const contents = [
-      'export EDGE_STORE_ACCESS_KEY=old',
+      'export EDGESTORE_ACCESS_KEY=old',
       'EDGESTORE_TOKEN = old',
       '',
     ].join('\n');
@@ -108,7 +128,7 @@ describe('deliverEnvSecret', () => {
     await expect(
       preflightEnvSecret(
         directory,
-        ['EDGE_STORE_ACCESS_KEY', 'EDGESTORE_TOKEN'],
+        ['EDGESTORE_ACCESS_KEY', 'EDGESTORE_TOKEN'],
         { output: '.env.local' },
       ),
     ).rejects.toMatchObject({ code: 'secret_output_exists' });

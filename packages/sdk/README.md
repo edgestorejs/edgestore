@@ -13,8 +13,8 @@ import { createEdgeStoreSdk } from '@edgestore/sdk';
 
 const sdk = createEdgeStoreSdk({
   credentials: {
-    accessKey: process.env.EDGE_STORE_ACCESS_KEY!,
-    secretKey: process.env.EDGE_STORE_SECRET_KEY!,
+    accessKey: process.env.EDGESTORE_ACCESS_KEY!,
+    secretKey: process.env.EDGESTORE_SECRET_KEY!,
   },
 });
 
@@ -34,7 +34,7 @@ an explicit `project` selector or an eagerly scoped client:
 
 ```ts
 const management = createEdgeStoreSdk({
-  credentials: { token: process.env.EDGE_STORE_MANAGEMENT_TOKEN! },
+  credentials: { token: process.env.EDGESTORE_MANAGEMENT_TOKEN! },
 });
 
 const project = management.runtime.forProject('project-id');

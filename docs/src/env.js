@@ -13,8 +13,8 @@ export const env = createEnv({
       .enum(['development', 'test', 'production'])
       .default('development'),
     DASHBOARD_API_KEY: z.string(),
-    EDGE_STORE_ACCESS_KEY: z.string(),
-    EDGE_STORE_SECRET_KEY: z.string(),
+    EDGESTORE_ACCESS_KEY: z.string(),
+    EDGESTORE_SECRET_KEY: z.string(),
     GITHUB_TOKEN: z.string(),
   },
 
@@ -38,8 +38,10 @@ export const env = createEnv({
     NODE_ENV: process.env.NODE_ENV,
     NEXT_PUBLIC_DASHBOARD_URL: process.env.NEXT_PUBLIC_DASHBOARD_URL,
     DASHBOARD_API_KEY: process.env.DASHBOARD_API_KEY,
-    EDGE_STORE_ACCESS_KEY: process.env.EDGE_STORE_ACCESS_KEY,
-    EDGE_STORE_SECRET_KEY: process.env.EDGE_STORE_SECRET_KEY,
+    EDGESTORE_ACCESS_KEY:
+      process.env.EDGESTORE_ACCESS_KEY ?? process.env.EDGE_STORE_ACCESS_KEY,
+    EDGESTORE_SECRET_KEY:
+      process.env.EDGESTORE_SECRET_KEY ?? process.env.EDGE_STORE_SECRET_KEY,
     GITHUB_TOKEN: process.env.GITHUB_TOKEN,
     NEXT_PUBLIC_POSTHOG_KEY: process.env.NEXT_PUBLIC_POSTHOG_KEY,
     NEXT_PUBLIC_POSTHOG_API_HOST: process.env.NEXT_PUBLIC_POSTHOG_API_HOST,

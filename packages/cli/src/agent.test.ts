@@ -150,7 +150,7 @@ describe('agent context', () => {
     const installed = await install(directory, '@edgestore/server');
     await writeFile(
       path.join(directory, '.env.local'),
-      'EDGE_STORE_SECRET_KEY=secret-sentinel',
+      'EDGESTORE_SECRET_KEY=secret-sentinel',
     );
     const fixture = createFixture();
     fixture.runtime.setCwd(directory);

@@ -86,7 +86,7 @@ is the docs preview.
    operation succeeds. If a request's outcome is uncertain, look up the resource
    before retrying.
 2. After the coding session ends, supply the project key and
-   `EDGE_STORE_API_ENDPOINT` to the backend process only. Keep management
+   `EDGESTORE_API_ENDPOINT` to the backend process only. Keep management
    credentials outside the app. Exclude secrets and signed URLs from transcripts.
 3. Build and start the app. The UI uses port 4010; Hono uses 4011. In a browser,
    select a small, uniquely named file with Choose file, then click Upload.

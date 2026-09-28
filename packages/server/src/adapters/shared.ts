@@ -562,10 +562,10 @@ async function getContext(token: string | undefined) {
 /** Derives the context-cookie encryption key from the configured secret. */
 async function getEncryptionKey() {
   const secret =
-    getEnv('EDGE_STORE_JWT_SECRET') ?? getEnv('EDGE_STORE_SECRET_KEY');
+    getEnv('EDGESTORE_JWT_SECRET') ?? getEnv('EDGESTORE_SECRET_KEY');
   if (!secret) {
     throw new EdgeStoreError({
-      message: 'EDGE_STORE_JWT_SECRET or EDGE_STORE_SECRET_KEY is not defined',
+      message: 'EDGESTORE_JWT_SECRET or EDGESTORE_SECRET_KEY is not defined',
       code: 'SERVER_ERROR',
     });
   }

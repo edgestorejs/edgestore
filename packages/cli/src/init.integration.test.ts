@@ -176,7 +176,7 @@ describe('init.integration', () => {
     });
     await expect(
       readFile(path.join(temporaryDirectory, '.env.development.local'), 'utf8'),
-    ).resolves.toContain('EDGE_STORE_SECRET_KEY=secret_test');
+    ).resolves.toContain('EDGESTORE_SECRET_KEY=secret_test');
   });
 
   it('validates non-interactive bucket options before creating a project', async () => {
@@ -232,7 +232,7 @@ describe('init.integration', () => {
       );
 
       expect(await readFile(path.join(directory, '.env.local'), 'utf8')).toBe(
-        'EDGE_STORE_ACCESS_KEY=access_test\nEDGE_STORE_SECRET_KEY=secret_test\n',
+        'EDGESTORE_ACCESS_KEY=access_test\nEDGESTORE_SECRET_KEY=secret_test\n',
       );
       expect(await readFile(path.join(directory, '.gitignore'), 'utf8')).toBe(
         '/.env.local\n',
@@ -388,7 +388,7 @@ describe('init.integration', () => {
     fixture.runtime.cwd = temporaryDirectory;
     fixture.runtime.io.inputIsTty = false;
     const outputPath = path.join(temporaryDirectory, '.env.local');
-    await writeFile(outputPath, 'EDGE_STORE_ACCESS_KEY=existing\n');
+    await writeFile(outputPath, 'EDGESTORE_ACCESS_KEY=existing\n');
 
     const exitCode = await runCli(
       ['init', '--new', '--name', 'Marketing Site'],
@@ -399,7 +399,7 @@ describe('init.integration', () => {
     expect(exitCode).toBe(2);
     expect(fixture.createProject).not.toHaveBeenCalled();
     await expect(readFile(outputPath, 'utf8')).resolves.toBe(
-      'EDGE_STORE_ACCESS_KEY=existing\n',
+      'EDGESTORE_ACCESS_KEY=existing\n',
     );
   });
 
@@ -411,7 +411,7 @@ describe('init.integration', () => {
     fixture.runtime.io.inputIsTty = false;
     const outputPath = path.join(temporaryDirectory, '.env.local');
     fixture.createProject.mockImplementationOnce(async () => {
-      await writeFile(outputPath, 'EDGE_STORE_ACCESS_KEY=raced\n');
+      await writeFile(outputPath, 'EDGESTORE_ACCESS_KEY=raced\n');
       return projectCreateResult;
     });
 
@@ -452,7 +452,7 @@ describe('init.integration', () => {
       `Project ${project.basePath} was preserved.`,
     );
     await expect(readFile(outputPath, 'utf8')).resolves.toBe(
-      'EDGE_STORE_ACCESS_KEY=raced\n',
+      'EDGESTORE_ACCESS_KEY=raced\n',
     );
   });
 
@@ -464,7 +464,7 @@ describe('init.integration', () => {
     fixture.runtime.io.inputIsTty = false;
     const outputPath = path.join(temporaryDirectory, '.env.local');
     fixture.createProject.mockImplementationOnce(async () => {
-      await writeFile(outputPath, 'EDGE_STORE_ACCESS_KEY=raced\n');
+      await writeFile(outputPath, 'EDGESTORE_ACCESS_KEY=raced\n');
       return projectCreateResult;
     });
     fixture.revokeProjectKey.mockRejectedValueOnce(
