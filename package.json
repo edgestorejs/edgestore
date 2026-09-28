@@ -40,7 +40,6 @@
     "eval:agents:test": "tsc -p evals/agents/tsconfig.json && node --test evals/agents/policy.test.ts",
     "test": "turbo run test --filter=@edgestore/*",
     "test:types": "turbo run test:types --filter=edgestore-tests",
-    "test:vercel-ignore": "node --test scripts/vercel-ignore.test.mjs",
     "test:smoke": "turbo run test:smoke --filter=@edgestore/server",
     "check:dependencies": "node scripts/checkDependencyVersions.ts",
     "lint": "turbo lint",
