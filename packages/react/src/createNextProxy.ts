@@ -351,37 +351,58 @@ async function waitForProcessing({
   signal?: AbortSignal;
   timeoutMs: number;
 }) {
-  const deadline = Date.now() + timeoutMs;
-  while (true) {
-    const res = await fetch(`${apiPath}/upload-status`, {
-      method: 'POST',
-      credentials: 'include',
-      signal,
-      body: JSON.stringify({ statusToken }),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-    if (!res.ok) {
-      await handleError(res);
+  // One signal bounds the whole wait, including a status request that hangs.
+  const controller = new AbortController();
+  let abortError: Error | undefined;
+  const abort = (error: Error) => {
+    abortError ??= error;
+    controller.abort();
+  };
+  const onAbort = () => abort(new UploadAbortedError('File upload aborted'));
+  const timeout = setTimeout(
+    () =>
+      abort(
+        new UploadProcessingTimeoutError(
+          'Timed out while EdgeStore was processing the upload.',
+          id,
+        ),
+      ),
+    timeoutMs,
+  );
+  signal?.addEventListener('abort', onAbort);
+  if (signal?.aborted) onAbort();
+
+  try {
+    while (true) {
+      const res = await fetch(`${apiPath}/upload-status`, {
+        method: 'POST',
+        credentials: 'include',
+        signal: controller.signal,
+        body: JSON.stringify({ statusToken }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!res.ok) {
+        await handleError(res);
+      }
+      const status = (await res.json()) as SharedUploadStatusRes;
+      if (status.status === 'completed') {
+        return status.file;
+      }
+      if (status.status === 'canceled') {
+        throw new UploadCanceledError(
+          'EdgeStore canceled the upload while processing it.',
+          id,
+        );
+      }
+      await sleep(PROCESSING_POLL_INTERVAL_MS, controller.signal);
     }
-    const status = (await res.json()) as SharedUploadStatusRes;
-    if (status.status === 'completed') {
-      return status.file;
-    }
-    if (status.status === 'canceled') {
-      throw new UploadCanceledError(
-        'EdgeStore canceled the upload while processing it.',
-        id,
-      );
-    }
-    if (Date.now() + PROCESSING_POLL_INTERVAL_MS > deadline) {
-      throw new UploadProcessingTimeoutError(
-        'Timed out while EdgeStore was processing the upload.',
-        id,
-      );
-    }
-    await sleep(PROCESSING_POLL_INTERVAL_MS, signal);
+  } catch (e) {
+    throw abortError ?? e;
+  } finally {
+    clearTimeout(timeout);
+    signal?.removeEventListener('abort', onAbort);
   }
 }
 

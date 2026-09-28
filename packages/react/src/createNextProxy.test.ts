@@ -474,12 +474,46 @@ describe('createNextProxy processing', () => {
 
     await waitForXhrs(1);
     MockXMLHttpRequest.instances[0]!.load();
-    await vi.advanceTimersByTimeAsync(1_000);
+    await vi.advanceTimersByTimeAsync(1_500);
 
     const error = await result;
     expect(error).toBeInstanceOf(UploadProcessingTimeoutError);
     expect(error).toMatchObject({ id: 'file_1' });
     expect(calls).toHaveLength(3);
+  });
+
+  it('times out when a status request hangs', async () => {
+    vi.useFakeTimers();
+    let statusSignal: AbortSignal | undefined;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit) => {
+        if (!url.endsWith('/upload-status')) {
+          return jsonResponse(statusUploadResponse());
+        }
+        statusSignal = init?.signal ?? undefined;
+        return await new Promise<Response>((_, reject) => {
+          statusSignal?.addEventListener('abort', () =>
+            reject(new DOMException('Aborted', 'AbortError')),
+          );
+        });
+      }),
+    );
+    const { assets } = createProxy();
+    const upload = assets.upload({
+      file: new File(['hello'], 'hello.txt'),
+      options: { waitForProcessing: { timeoutMs: 5_000 } },
+    });
+    const result = upload.catch((e: unknown) => e);
+
+    await waitForXhrs(1);
+    MockXMLHttpRequest.instances[0]!.load();
+    await vi.advanceTimersByTimeAsync(5_000);
+
+    const error = await result;
+    expect(error).toBeInstanceOf(UploadProcessingTimeoutError);
+    expect(error).toMatchObject({ id: 'file_1' });
+    expect(statusSignal?.aborted).toBe(true);
   });
 
   it('stops waiting when aborted', async () => {
