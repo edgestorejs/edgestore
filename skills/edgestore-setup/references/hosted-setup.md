@@ -16,7 +16,9 @@ Use `claude` or `cursor` for those clients. Setup configures
 requested permissions.
 
 Check `--help` for the installed CLI's available commands. Use `--json` and file
-delivery to keep secrets out of tool output. Let the user complete any required login.
+delivery to keep secrets out of tool output. For CLI authentication, run
+`edgestore login`. If it opens a browser, use that flow rather than opening the
+same authorization URL again.
 
 After MCP creates/selects a project, link the backend to that same project and
 existing env convention:
