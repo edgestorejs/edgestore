@@ -1,6 +1,6 @@
 {
   "mode": "pre",
-  "tag": "next",
+  "tag": "rc",
   "initialVersions": {
     "docs": "0.1.0",
     "astro-basic": "0.1.0",
