@@ -1,5 +1,12 @@
 # @edgestore/cli
 
+## 1.0.0-rc.7
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @edgestore/sdk@1.0.0-rc.7
+
 ## 1.0.0-rc.6
 
 ### Patch Changes

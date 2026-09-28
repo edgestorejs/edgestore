@@ -28,6 +28,7 @@
     "azure-blob-provider",
     "backend-client-v2",
     "custom-providers",
+    "edgestore-env-vars",
     "esm-only-node-22",
     "introduce-cli",
     "introduce-sdk",
@@ -39,6 +40,7 @@
     "resilient-multipart-uploads",
     "router-provider",
     "s3-provider",
-    "standard-schema-input"
+    "standard-schema-input",
+    "upload-file-ids-processing"
   ]
 }
