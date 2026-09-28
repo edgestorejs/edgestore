@@ -24,8 +24,11 @@ and mention the fallback. Read the references again after installing packages.
 
 For an existing 0.x integration, resolve maintenance versus migration with the
 user before changing APIs. Preserve installed versions unless an upgrade is
-authorized. For missing packages choose a compatible, explicit version. Use a
-prerelease only when requested or required by the application.
+authorized. For new integrations, install EdgeStore v1 packages from the `rc`
+tag (for example, `@edgestore/server@rc` and `@edgestore/react@rc`); use
+`@edgestore/sdk@rc` or `@edgestore/cli@rc` when needed. For missing packages in
+an existing integration, choose a compatible, explicit version. Use other
+prereleases only when requested or required by the application.
 
 ## Choose the integration
 
