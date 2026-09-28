@@ -377,7 +377,8 @@ and URL are final right away, so most apps can save them without waiting.
 
 When you need processed details immediately, such as whether the image got a
 thumbnail, pass `waitForProcessing`. The upload then resolves with the
-processed file, and `onPhaseChange` tells you when the transfer finishes and
+processed file, including freshly signed URLs for buckets with
+`autoSignedUrls`, and `onPhaseChange` tells you when the transfer finishes and
 processing begins.
 
 ```tsx

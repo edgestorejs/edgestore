@@ -4,6 +4,7 @@ import {
   type ClientInit,
   type RequestUploadPartsRes,
   type RequestUploadRes,
+  type SignedReadUrl,
 } from './providerTypes';
 
 export type SharedInitRes = {
@@ -34,6 +35,8 @@ export type SharedUploadStatusRes =
         thumbnailUrl: string | null;
         size: number;
       };
+      /** Re-signed after processing, for buckets with `autoSignedUrls`. */
+      signedReadUrl?: SignedReadUrl;
     };
 
 export type SharedFileMutationRes = {

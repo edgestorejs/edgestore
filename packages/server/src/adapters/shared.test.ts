@@ -642,6 +642,8 @@ describe('requestUpload', () => {
 });
 
 describe('getUploadStatus', () => {
+  const es = initEdgeStore.create();
+
   beforeEach(() => {
     vi.stubEnv('EDGE_STORE_JWT_SECRET', 'test-secret');
     vi.stubEnv('NODE_ENV', 'test');
@@ -670,9 +672,12 @@ describe('getUploadStatus', () => {
     });
   }
 
-  async function setup(provider = createStatusProvider()) {
-    const es = initEdgeStore.create();
-    const router = es.router({ documents: es.fileBucket() });
+  async function setup(
+    provider = createStatusProvider(),
+    router: EdgeStoreRouter<AnyContext> = es.router({
+      documents: es.fileBucket(),
+    }),
+  ) {
     const ctxToken = await createContextToken({ router, ctx: {} });
     const { statusToken } = await requestUpload({
       provider,
@@ -714,6 +719,53 @@ describe('getUploadStatus', () => {
     expect(getStatus).toHaveBeenCalledWith({
       bucketName: 'documents',
       id: 'file_1',
+    });
+  });
+
+  it('re-signs processed files for buckets with auto-signed URLs', async () => {
+    const expiresAt = new Date('2030-01-01T00:00:00.000Z');
+    const getSignedUrls = vi.fn(() => [
+      {
+        url: 'https://files.example.com/file.txt',
+        signedUrl: 'https://files.example.com/file.txt?sig=1',
+        signedThumbnailUrl: 'https://files.example.com/thumb.webp?sig=1',
+        expiresAt,
+        expiresIn: 600,
+      },
+    ]);
+    const provider = createStatusProvider(
+      vi.fn((): UploadStatus => ({
+        status: 'completed',
+        file: {
+          url: 'https://files.example.com/file.txt',
+          thumbnailUrl: 'https://files.example.com/thumb.webp',
+          sizeBytes: 12,
+        },
+      })),
+    );
+    provider.files.getSignedUrls = getSignedUrls;
+    const router = es.router({
+      documents: es
+        .fileBucket()
+        .accessControl('private')
+        .autoSignedUrls({ expiresIn: 600, includeThumbnails: true }),
+    });
+    const { status } = await setup(provider, router);
+
+    await expect(status()).resolves.toMatchObject({
+      file: { thumbnailUrl: 'https://files.example.com/thumb.webp' },
+      signedReadUrl: {
+        signedUrl: 'https://files.example.com/file.txt?sig=1',
+        signedThumbnailUrl: 'https://files.example.com/thumb.webp?sig=1',
+        expiresAt,
+        expiresIn: 600,
+      },
+    });
+    expect(getSignedUrls).toHaveBeenCalledWith({
+      bucketName: 'documents',
+      files: [{ url: 'https://files.example.com/file.txt' }],
+      expiresIn: 600,
+      includeThumbnails: true,
     });
   });
 

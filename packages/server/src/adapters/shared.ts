@@ -261,7 +261,7 @@ export async function getUploadStatus<TCtx extends AnyContext>(params: {
   await getContext(ctxToken);
   const { id, bucketName } = await decryptStatusToken(body.statusToken);
   logger.debug('Running [getUploadStatus]', { bucketName, id });
-  getBucket(router, bucketName);
+  const bucket = getBucket(router, bucketName);
 
   if (!provider.uploads.getStatus) {
     throw new EdgeStoreError({
@@ -275,9 +275,27 @@ export async function getUploadStatus<TCtx extends AnyContext>(params: {
 
   if (result.status !== 'completed') return { status: result.status };
   const { url, key, thumbnailUrl, sizeBytes } = result.file;
+  // Processing may add a thumbnail that the upload response could not sign.
+  const { autoSignedUrls } = bucket._def;
+  const [signed] =
+    autoSignedUrls && provider.files.getSignedUrls
+      ? await provider.files.getSignedUrls({
+          bucketName,
+          files: [await referenceFromUrl(provider, url)],
+          ...autoSignedUrls,
+        })
+      : [];
   return {
     status: 'completed',
     file: { url, key, thumbnailUrl: thumbnailUrl ?? null, size: sizeBytes },
+    ...(signed && {
+      signedReadUrl: {
+        signedUrl: signed.signedUrl,
+        signedThumbnailUrl: signed.signedThumbnailUrl ?? null,
+        expiresAt: signed.expiresAt,
+        expiresIn: signed.expiresIn,
+      },
+    }),
   };
 }
 

@@ -21,7 +21,7 @@ import {
   UploadCanceledError,
   UploadProcessingTimeoutError,
 } from './libs/errors/uploadProcessingErrors';
-import { putBlob } from './libs/putBlob';
+import { isRetryableStatus, putBlob } from './libs/putBlob';
 import { multipartUpload } from './multipartUpload';
 
 type UploadResponse<TBucket extends AnyBuilder> =
@@ -319,15 +319,14 @@ async function uploadFile(
           ? options.waitForProcessing.timeoutMs
           : undefined) ?? DEFAULT_PROCESSING_TIMEOUT_MS,
     });
+    const { file: processedFile, signedReadUrl } = processed;
     return {
       ...result,
-      url: processed.url,
-      key: processed.key ?? result.key,
-      thumbnailUrl: processed.thumbnailUrl,
-      size: processed.size,
-      ...(processed.thumbnailUrl === null && 'signedThumbnailUrl' in result
-        ? { signedThumbnailUrl: null }
-        : {}),
+      url: processedFile.url,
+      key: processedFile.key ?? result.key,
+      thumbnailUrl: processedFile.thumbnailUrl,
+      size: processedFile.size,
+      ...mapSignedReadUrl(signedReadUrl),
     };
   } catch (e) {
     onProgressChange?.(0);
@@ -374,23 +373,15 @@ async function waitForProcessing({
 
   try {
     while (true) {
-      const res = await fetch(`${apiPath}/upload-status`, {
-        method: 'POST',
-        credentials: 'include',
-        signal: controller.signal,
-        body: JSON.stringify({ statusToken }),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      if (!res.ok) {
-        await handleError(res);
+      const status = await fetchUploadStatus(
+        apiPath,
+        statusToken,
+        controller.signal,
+      );
+      if (status?.status === 'completed') {
+        return status;
       }
-      const status = (await res.json()) as SharedUploadStatusRes;
-      if (status.status === 'completed') {
-        return status.file;
-      }
-      if (status.status === 'canceled') {
+      if (status?.status === 'canceled') {
         throw new UploadCanceledError(
           'EdgeStore canceled the upload while processing it.',
           id,
@@ -404,6 +395,35 @@ async function waitForProcessing({
     clearTimeout(timeout);
     signal?.removeEventListener('abort', onAbort);
   }
+}
+
+/**
+ * Returns `undefined` on a transient failure, so the caller polls again until
+ * the processing deadline.
+ */
+async function fetchUploadStatus(
+  apiPath: string,
+  statusToken: string,
+  signal: AbortSignal,
+): Promise<SharedUploadStatusRes | undefined> {
+  let res: Response;
+  try {
+    res = await fetch(`${apiPath}/upload-status`, {
+      method: 'POST',
+      credentials: 'include',
+      signal,
+      body: JSON.stringify({ statusToken }),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+  } catch (e) {
+    if (signal.aborted) throw e;
+    return undefined;
+  }
+  if (isRetryableStatus(res.status)) return undefined;
+  if (!res.ok) await handleError(res);
+  return (await res.json()) as SharedUploadStatusRes;
 }
 
 function sleep(ms: number, signal?: AbortSignal) {

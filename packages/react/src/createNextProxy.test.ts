@@ -409,6 +409,12 @@ describe('createNextProxy processing', () => {
           thumbnailUrl: null,
           size: 13,
         },
+        signedReadUrl: {
+          signedUrl: 'https://files.example/protected/file.txt?sig=2',
+          signedThumbnailUrl: null,
+          expiresAt: '2026-01-02T04:04:06.000Z',
+          expiresIn: 3600,
+        },
       }),
     ]);
     const { assets } = createProxy();
@@ -427,6 +433,7 @@ describe('createNextProxy processing', () => {
       id: 'file_1',
       key: 'assets/file.txt',
       thumbnailUrl: null,
+      signedUrl: 'https://files.example/protected/file.txt?sig=2',
       signedThumbnailUrl: null,
       size: 13,
     });
@@ -437,6 +444,40 @@ describe('createNextProxy processing', () => {
       '/api/edgestore/upload-status',
     ]);
     expect(getBody(calls[1]!)).toEqual({ statusToken: 'status-token' });
+  });
+
+  it('keeps polling through transient status failures', async () => {
+    vi.useFakeTimers();
+    const responses: (() => Response)[] = [
+      () => jsonResponse(statusUploadResponse()),
+      () => {
+        throw new TypeError('Failed to fetch');
+      },
+      () => jsonResponse({ message: 'Service unavailable' }, 503),
+      () =>
+        jsonResponse({
+          status: 'completed',
+          file: {
+            url: 'https://files.example/protected/file.txt',
+            thumbnailUrl: null,
+            size: 13,
+          },
+        }),
+    ];
+    const fetchMock = vi.fn(async () => responses.shift()!());
+    vi.stubGlobal('fetch', fetchMock);
+    const { assets } = createProxy();
+    const upload = assets.upload({
+      file: new File(['hello'], 'hello.txt'),
+      options: { waitForProcessing: true },
+    });
+
+    await waitForXhrs(1);
+    MockXMLHttpRequest.instances[0]!.load();
+    await vi.advanceTimersByTimeAsync(2_000);
+
+    await expect(upload).resolves.toMatchObject({ id: 'file_1', size: 13 });
+    expect(fetchMock).toHaveBeenCalledTimes(4);
   });
 
   it('rejects when EdgeStore cancels the upload during processing', async () => {
