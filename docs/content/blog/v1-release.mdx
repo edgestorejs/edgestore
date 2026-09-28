@@ -3,8 +3,8 @@ title: EdgeStore v1 is here
 description: File uploads for your app just got better.
 author: Ravi
 category: Release
-# TODO before publishing: replace this placeholder with the actual v1 release date before setting draft to false.
-date: '2026-09-26'
+# TODO before publishing: confirm this planned date matches the actual v1 release date before setting draft to false.
+date: '2026-09-29'
 draft: true
 ---
 
@@ -37,6 +37,14 @@ edgestore agent setup --client cursor
 ```
 
 Use `codex` or `claude` for the other supported clients. MCP sign-in is separate from CLI sign-in. The [agent setup guide](/docs/agents) covers both plugin and CLI installation; you only need one of those setup paths.
+
+## Updated upload components
+
+The upload components have a refreshed design, with three new options: an [avatar uploader](/docs/components/avatar) for profile photos and logos, a [file field](/docs/components/file-field) for forms, and an [upload button](/docs/components/upload-button) that also accepts drag-and-drop.
+
+The existing components handle more of the small details too. Dropping an invalid file no longer discards the valid files alongside it. Failed uploads show an error and a retry button, running uploads can be canceled, and completed images can be replaced or removed. Keyboard focus, button labels, and progress indicators have also been improved.
+
+Add them through the shadcn registry or copy the source into your app and customize it to fit your UI.
 
 ## REST API and standalone SDK
 
@@ -88,19 +96,21 @@ const backendClient = router.client;
 
 It now works with external providers too. Chain `.provider(myProvider)` on the router, and the client exposes the operations that provider supports. Bucket names, input, and metadata remain inferred from your router.
 
-For example, S3 supports backend uploads, file lookup, deletion, and signed private downloads. Unsupported operations are left out of the client type.
+For example, S3 and Azure Blob Storage support backend uploads, file lookup, deletion, and signed private downloads. Unsupported operations are left out of the client type.
 
 The backend client is privileged: authorize callers in your server code. It validates input and file rules, but does not run `accessControl`, `beforeUpload`, or `beforeDelete` hooks. The [backend client guide](/docs/backend-client) covers setup and provider support.
 
-## Expanded S3 support
+## Expanded S3 and Azure support
 
-The S3 provider now supports multipart uploads, backend uploads, and signed URLs for private downloads. Large files can be split into parts while keeping the same React upload API.
+Both providers now support large-file uploads from the browser and backend uploads through `router.client`. S3 uses multipart uploads and Azure Blob Storage uses block uploads, while your React upload API stays the same. Both also support signed URLs for private downloads.
 
-There are also options for cache headers, download filenames, metadata, tags, storage class, and encryption. Upload results include the storage key, giving you a reference for later lookup or deletion even if your CDN domain changes.
+The S3 provider isn't limited to AWS. You can also use Cloudflare R2, Backblaze B2, DigitalOcean Spaces, Google Cloud Storage, Tigris, Supabase Storage, and MinIO through their S3-compatible APIs. The [S3-compatible services guide](/docs/providers/s3#s3-compatible-services) includes configuration examples and service-specific differences.
 
-Browser multipart uploads have more targeted error handling across hosted EdgeStore and direct S3. The client requests part URLs on demand, can refresh a rejected URL, and distinguishes temporary failures from permanent errors when retrying.
+You can configure storage paths, cache headers, download filenames, and metadata for both providers. S3 also supports tags, storage class, and encryption settings. Upload results include the storage key, giving you a reference for later lookup or deletion even if your CDN domain changes.
 
-You still manage your own bucket's permissions and lifecycle rules. The [S3 guide](/docs/providers/s3) covers configuration and differences from hosted EdgeStore. Hosted features such as listing and temporary files aren't available with this provider.
+Large browser uploads have more targeted error handling across hosted EdgeStore, S3, and Azure. The client requests part URLs on demand, can refresh a rejected URL, and distinguishes temporary failures from permanent errors when retrying.
+
+You still manage your own storage permissions and configuration. The [S3 guide](/docs/providers/s3) and [Azure guide](/docs/providers/azure-blob) cover setup and differences from hosted EdgeStore. Hosted features such as listing and temporary files aren't available with these providers.
 
 ## Standard Schema support
 
@@ -141,6 +151,12 @@ That gives features like multi-select deletion fewer round trips and lets you re
 Emptying a bucket now runs as a background job instead of keeping a request open until every file is removed. This lets cleanup work through large buckets without depending on a single request completing the whole operation.
 
 The dashboard shows progress, keeps track of the job after a page refresh, and lets you retry if cleanup fails. This is a hosted-service improvement, so it doesn't require a package upgrade.
+
+## A dashboard that works on your phone
+
+The dashboard now adapts to smaller screens, with mobile navigation and touch-friendly controls for projects, files, usage, and settings. Actions such as copying credentials and removing files no longer depend on hovering over them.
+
+On iPhone, you can also add EdgeStore to your Home Screen and open the dashboard in its own window. It's the same web dashboard, with a layout designed to work on your phone as well as your desktop.
 
 ## Upgrading to v1
 
