@@ -168,6 +168,14 @@ v1 includes breaking changes. Before updating:
 
 The [migration guide](/docs/migrate-to-v1) covers the full API and provider changes, including Azure credentials. The development file proxy has also been removed, so you'll need to remove `disableDevProxy`, `cookieConfig.token`, and old `/proxy-file` links. Test uploads and private reads before deploying the upgrade.
 
+To upgrade with a coding agent, use this prompt:
+
+<AgentPrompt>
+
+Upgrade this app to EdgeStore v1. Follow the migration guide: https://edgestore.dev/docs/migrate-to-v1.md
+
+</AgentPrompt>
+
 To install v1 in a React application:
 
 ```sh
