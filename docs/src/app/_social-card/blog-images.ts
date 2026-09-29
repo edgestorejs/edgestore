@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 type BlogSocialImage = {
   width: number;
   height: number;
+  contentType: 'image/jpeg' | 'image/png';
   read: () => Promise<Buffer>;
 };
 
@@ -11,9 +12,10 @@ const images = new Map<string, BlogSocialImage>([
   [
     'v1-release',
     {
-      width: 1734,
-      height: 907,
-      read: () => readFile(new URL('./assets/v1-release.png', import.meta.url)),
+      width: 1200,
+      height: 628,
+      contentType: 'image/jpeg',
+      read: () => readFile(new URL('./assets/v1-release.jpg', import.meta.url)),
     },
   ],
 ]);
