@@ -2,5 +2,7 @@
 '@edgestore/server': minor
 ---
 
+pr: #274
+
 Support `EDGESTORE_*` environment variables for credentials, API and base URLs,
-and signing secrets. Prefer these names in configuration guidance.
+and signing secrets.

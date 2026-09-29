@@ -3,9 +3,9 @@
 '@edgestore/react': major
 ---
 
-Remove deprecated and duplicate entrypoints and options:
-`@edgestore/react/shared` (import errors from `@edgestore/react/errors`),
-`@edgestore/server/core` (import types from `@edgestore/server`), the
-`InferClientResponse` type (use `InferClientOutputs`), and the S3
-`accessKeyId` and `secretAccessKey` options (pass `credentials` or set
-`ES_AWS_ACCESS_KEY_ID` and `ES_AWS_SECRET_ACCESS_KEY`).
+pr: #263
+
+Remove deprecated and duplicate APIs: `@edgestore/react/shared` (use
+`@edgestore/react/errors`), `@edgestore/server/core` (use `@edgestore/server`),
+`InferClientResponse` (use `InferClientOutputs`), and the S3 `accessKeyId` and
+`secretAccessKey` options (use `credentials` or the `ES_AWS_*` variables).
