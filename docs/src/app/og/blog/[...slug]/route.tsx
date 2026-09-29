@@ -21,7 +21,7 @@ export async function GET(
   const image = getBlogSocialImage(post.slugs);
   if (image) {
     return new Response(new Uint8Array(await image.read()), {
-      headers: { 'Content-Type': 'image/png' },
+      headers: { 'Content-Type': image.contentType },
     });
   }
 
