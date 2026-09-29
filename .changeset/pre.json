@@ -25,22 +25,30 @@
   },
   "changesets": [
     "agent-references",
+    "azure-blob-credentials",
     "azure-blob-provider",
     "backend-client-v2",
     "custom-providers",
     "edgestore-env-vars",
     "esm-only-node-22",
+    "hosted-provider-token",
     "introduce-cli",
     "introduce-sdk",
     "invalid-context-cookie",
     "project-file-origins",
+    "provider-factories",
+    "react-batch-mutations",
     "react-file-lifecycle",
+    "react-mutation-errors",
+    "react-remove-uploaded-at",
     "remove-deprecated-apis",
     "remove-dev-proxy",
     "resilient-multipart-uploads",
     "router-provider",
     "s3-provider",
+    "s3-provider-options",
     "standard-schema-input",
-    "upload-file-ids-processing"
+    "upload-processing-wait",
+    "upload-result-ids"
   ]
 }
