@@ -49,6 +49,7 @@
     "s3-provider-options",
     "standard-schema-input",
     "upload-processing-wait",
-    "upload-result-ids"
+    "upload-result-ids",
+    "upload-result-keys"
   ]
 }
