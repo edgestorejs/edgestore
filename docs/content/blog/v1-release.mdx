@@ -8,22 +8,24 @@ date: '2026-10-02'
 
 EdgeStore v1 is now available. And I’m very proud of this one!
 
-Many improvements dropping for both the opensource packages and the hosted storage provider:
+Many improvements are dropping for both the open-source packages and the hosted storage provider:
 
 - New REST API and SDK
 - Better tools for agentic coding (CLI/MCP/Skills)
-- more flexible access control logic
+- More flexible access control logic
 - Updated and new upload sample components
-- expanded support for external providers
-- mobile support for the dashboard
-- standard schema support (not Zod only)
-- batch file opperations
-- upload transforms
-- a few performance improvements
+- Expanded support for external providers
+- Mobile support for the dashboard
+- Standard Schema support (not just Zod)
+- Batch file operations
+- Upload transforms
+- A few performance improvements
 
 ## REST API and standalone SDK
 
-EdgeStore's new v2 API allows you to do most of the things you can do through the dashboard. Allowing you to create automations and more importantly, giving a good foundation to the other tools, which are super important for this new era of agentic development.
+EdgeStore's new v2 API allows you to do most of the things you can do through the dashboard. You can create automations and, more importantly, it gives a good foundation to the other tools, which are super important for this new era of agentic development.
+
+For example, you can create a project from a server-side script using the SDK:
 
 ```ts
 import { createEdgeStoreSdk } from '@edgestore/sdk';
@@ -42,14 +44,14 @@ const { project } = await sdk.management.projects.create({
 console.log(project.id);
 ```
 
-The API is divided in 2 parts, the `runtime` and the `management`.
+The API is divided into two parts, `runtime` and `management`.
 
 - `runtime`
-  - Works with the keys already configured in your app, scoped to their project
+  - Works with the keys already configured in your app, scoped to their project.
   - Can be used for actions like managing files, listing buckets, and generating signed URLs.
 - `management`
-  - Needs a user or account level management token
-  - Can be used for actions that could only be done through the dashboard. Like managing projects, buckets, keys, members, and more, within the token's permissions.
+  - Needs a user or account-level management token.
+  - Can be used for actions that could only be done through the dashboard, like managing projects, buckets, keys, members, and more, within the token's permissions.
 
 Keep project secrets and management tokens on the server.
 
@@ -59,7 +61,7 @@ See the [SDK guide](/docs/sdk) for more.
 
 <img src="/img/blog/v1-release-tools.svg" alt="The EdgeStore logo connected to CLI, MCP, and Skills." width={1200} height={600} className="w-full rounded-xl" />
 
-The new CLI, MCP, Skills and plugins give you all you need to leverage your AI subscription to integrate and improve file uploads in your app.
+The new CLI, MCP, skills, and plugins give you all you need to use your AI subscription to integrate and improve file uploads in your app.
 
 ```sh
 npm install --global @edgestore/cli@latest
@@ -67,7 +69,7 @@ edgestore login
 edgestore init
 ```
 
-You can also use the CLI to setup the agent integration:
+You can also use the CLI to set up the agent integration:
 
 ```sh
 edgestore agent setup --client codex
@@ -79,25 +81,25 @@ See the [agent setup guide](/docs/agents) for more.
 
 ## Improved access control (private files)
 
-There were 2 main improvements to protected files access control on EdgeStore.
+There were two main improvements to access control for private files on EdgeStore.
 
-The first one was on the cookie based access control, where originally it wouldn't work on browsers that blocked third party cookies by default. Now with the implementation of [partitioned cookies (CHIPS)](https://developer.mozilla.org/en-US/docs/Web/Privacy/Guides/Third-party_cookies/Partitioned_cookies) we can work around this issue in browsers that support partitioned cookies.
+The first was cookie-based access control. Originally, it wouldn't work on browsers that blocked third-party cookies by default. Now with [partitioned cookies (CHIPS)](https://developer.mozilla.org/en-US/docs/Web/Privacy/Guides/Third-party_cookies/Partitioned_cookies) we can work around this issue in browsers that support them.
 
-The other improvement was on implementing signed urls. Now apps can add their own custom logic to give access to a file.
+The other improvement was adding signed URLs. Now apps can add their own custom logic to give access to a file.
 
-The access control configuration is recommended when all the information needed to give access is in the user's context and the file path. The access control check on the file origin doesn't need any DB queries so it is very performant.
+The access control configuration is recommended when all the information needed to give access is in the user's context and the file path. The access control check on the file origin doesn't need any DB queries, so it is very performant.
 
-Signed urls are recommended when you need a more dynamic or custom logic that needs access from your DB to decide if the user can access the file or not. Check permissions in your backend before generating a signed URL. Anyone with the link can use it until it expires.
+Signed URLs are recommended when you need more dynamic or custom logic that queries your DB to decide if the user can access the file. Check permissions in your backend before generating a signed URL. Anyone with the link can use it until it expires.
 
 See the [access control configuration](/docs/configuration#access-control-experimental) and [signed URL guide](/docs/backend-client#private-read-urls) for more.
 
 ## Updated upload components
 
-The existing example components are improved and new ones were added:
+The existing example components were improved, and new ones were added:
 
-- [avatar uploader](/docs/components/avatar)
-- [file field](/docs/components/file-field)
-- [upload button](/docs/components/upload-button)
+- [Avatar uploader](/docs/components/avatar)
+- [File field](/docs/components/file-field)
+- [Upload button](/docs/components/upload-button)
 
 <img src="/img/blog/v1-release-upload-components.webp" alt="The avatar uploader, upload button, and a resume file field shown together in a sample form." width={864} height={403} className="w-full rounded-xl" />
 
@@ -105,44 +107,44 @@ See the [component setup guide](/docs/components/uploader-provider) to add them 
 
 ## Expanded external provider support
 
-In case you didn't know, the EdgeStore package can also be used with your own storage provider like S3 compatible providers or Azure.
+In case you didn't know, the EdgeStore package can also be used with your own storage, like S3-compatible providers or Azure.
 
-On this new version the support was greatly improved. Now you can also use the [backend client](/docs/backend-client) for external providers and more features like multipart uploads for S3 and block uploads for Azure were also added for large files.
+In this new version the support was greatly improved. Now you can also use the [backend client](/docs/backend-client) with external providers. Multipart uploads for S3 and block uploads for Azure were also added for large files.
 
-Examples on how to connect to other S3 compatible providers like Cloudflare R2, Backblaze B2, DigitalOcean Spaces, Google Cloud Storage, Tigris, Supabase Storage, and MinIO were also added to the docs.
+Examples of how to connect to other S3-compatible providers like Cloudflare R2, Backblaze B2, DigitalOcean Spaces, Google Cloud Storage, Tigris, Supabase Storage, and MinIO were also added to the docs.
 
 <img src="/img/blog/v1-release-providers.svg" alt="Logos of AWS, Azure, Cloudflare, DigitalOcean, Google Cloud, and Supabase." width={960} height={420} className="w-full rounded-xl" />
 
 See the [S3-compatible services guide](/docs/providers/s3#s3-compatible-services) and [Azure guide](/docs/providers/azure-blob) for setup and provider differences.
 
-## Standard schema support
+## Standard Schema support
 
-Until now we had to use zod for the bucket input schemas. Now we can use any Standard Schema compatible object schema like Zod, Valibot and ArkType.
+Until now we had to use Zod for the bucket input schemas. Now we can use any Standard Schema-compatible object schema, like Zod, Valibot, and ArkType.
 
 See the [input schema configuration](/docs/configuration#metadata--file-path) for more.
 
 ## Mobile support for the dashboard app
 
-With the recent AI apps we are now able to basically do the whole app development flow through our phones, so I felt that being able to control the whole dashboard through the phone is getting very important.
+With the recent AI apps we are now able to basically do the whole app development flow from our phones. So I felt that being able to control the whole dashboard from a phone is getting very important.
 
-Now the EdgeStore dashboard UI supports mobile a lot better. And it also supports PWA, so you can add it to your home screen and make it feel like a regular app.
+Now the EdgeStore dashboard UI supports mobile a lot better. And it's also a PWA, so you can add it to your home screen and make it feel like a regular app.
 
 <img src="/img/blog/v1-release-mobile-app.webp" alt="The EdgeStore app icon on a phone home screen, with surrounding apps blurred." width={640} height={640} className="mx-auto w-full max-w-64 rounded-2xl" />
 
 ## Other improvements
 
-The cookie initialization only runs when needed for access control, reducing http request for apps that don't use it.
+Cookie initialization only runs when needed for access control, reducing HTTP requests for apps that don't use it.
 
-Batch methods were added to the client side and backend clients.
+Batch methods were added to the browser and backend clients:
 
-- [Client side](/docs/quick-start#delete-file): `deleteMany` and [`confirmMany`](/docs/quick-start#temporary-files).
+- [Browser client](/docs/quick-start#delete-file): `deleteMany` and [`confirmMany`](/docs/quick-start#temporary-files).
 - [Backend client](/docs/backend-client): `deleteMany`, `confirmMany`, `restoreMany`, and `createSignedUrls`, where supported by the provider.
 
-Emptying a bucket now runs asynchronously on the background, making it more reliable for large buckets and allowing you to see the progress while the files are being deleted.
+Emptying a bucket now runs asynchronously in the background, making it more reliable for large buckets and allowing you to see progress while the files are being deleted.
 
 [Upload transforms](/docs/quick-start#transform-files-before-upload) let you resize or convert files before uploading them. They also work in [backend uploads](/docs/backend-client#transform-a-file-before-upload). Signed URLs, transforms, and the initialization improvement first shipped in v0.8 and carry forward into v1.
 
-And other improvements you can check from the [full changelog](https://github.com/edgestorejs/edgestore/releases).
+You can check the other improvements in the [full changelog](https://github.com/edgestorejs/edgestore/releases).
 
 ## Migrating to v1
 
@@ -154,4 +156,4 @@ Upgrade this app to EdgeStore v1. Follow the migration guide: https://edgestore.
 
 </AgentPrompt>
 
-Or check the [migration guide](/docs/migrate-to-v1).
+Or check the [migration guide](/docs/migrate-to-v1). v1 includes breaking changes, so test uploads and private file access before deploying your upgrade.
