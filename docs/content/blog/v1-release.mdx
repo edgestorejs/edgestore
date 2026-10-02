@@ -3,24 +3,67 @@ title: EdgeStore v1 is here
 description: File uploads for your app just got better.
 author: Ravi
 category: Release
-# TODO before publishing: confirm this planned date matches the actual v1 release date before setting draft to false.
-date: '2026-09-29'
-draft: true
+date: '2026-10-02'
 ---
 
-EdgeStore v1 is now available.
+import { UploadComponentsDemo } from '@/components/blog/upload-components-demo';
 
-EdgeStore has been stable for some time, even though it was still on v0.x. With this release, the tools around it have grown: you can manage files from your terminal, connect a coding agent to your projects, and use EdgeStore from scripts without setting up an app router.
+EdgeStore v1 is now available. And I’m very proud of this one!
 
-v1 brings those tools together with a simpler backend client, broader storage provider support, and more flexibility in how you validate and serve files.
+Many improvements are dropping for both the open-source packages and the hosted storage provider:
 
-Upgrading from v0.x? Start with the [migration guide](/docs/migrate-to-v1). The main breaking changes are also summarized at the end of this post.
+- New REST API and SDK
+- Better tools for agentic coding (CLI/MCP/Skills)
+- More flexible access control logic
+- Updated and new upload sample components
+- Expanded support for external providers
+- Mobile support for the dashboard
+- Standard Schema support (not just Zod)
+- Batch file operations
+- Upload transforms
+- A few performance improvements
+
+## REST API and standalone SDK
+
+EdgeStore's new v2 API allows you to do most of the things you can do through the dashboard. You can create automations and, more importantly, it gives a good foundation to the other tools, which are super important for this new era of agentic development.
+
+For example, you can create a project from a server-side script using the SDK:
+
+```ts
+import { createEdgeStoreSdk } from '@edgestore/sdk';
+
+const sdk = createEdgeStoreSdk({
+  credentials: {
+    token: process.env.EDGESTORE_MANAGEMENT_TOKEN!,
+  },
+});
+
+const { project } = await sdk.management.projects.create({
+  account: process.env.EDGESTORE_ACCOUNT_ID!,
+  name: 'My new app',
+});
+
+console.log(project.id);
+```
+
+The API is divided into two parts, `runtime` and `management`.
+
+- `runtime`
+  - Works with the keys already configured in your app, scoped to their project.
+  - Can be used for actions like managing files, listing buckets, and generating signed URLs.
+- `management`
+  - Needs a user or account-level management token.
+  - Can be used for actions that could only be done through the dashboard, like managing projects, buckets, keys, members, and more, within the token's permissions.
+
+Keep project secrets and management tokens on the server.
+
+See the [SDK guide](/docs/sdk) for more.
 
 ## CLI, MCP, and coding agent integrations
 
 <img src="/img/blog/v1-release-tools.svg" alt="The EdgeStore logo connected to CLI, MCP, and Skills." width={1200} height={600} className="w-full rounded-xl" />
 
-The new CLI lets you create projects and buckets, upload files, and manage credentials from the terminal. It works interactively or in scripts, with upload progress and structured JSON output.
+The new CLI, MCP, skills, and plugins give you all you need to use your AI subscription to integrate and improve file uploads in your app.
 
 ```sh
 npm install --global @edgestore/cli@latest
@@ -28,151 +71,84 @@ edgestore login
 edgestore init
 ```
 
-Coding agents can use the hosted MCP server to work with your EdgeStore projects: inspect files, create buckets, and generate access URLs within the permissions you grant them.
-
-For adding EdgeStore to an app, the setup skill guides the agent through the integration. The server, React, and SDK packages now include version-matched Markdown references, so it can use the APIs you actually have installed.
-
-Plugins bundle the skill and MCP connection for Codex, Claude Code, and Cursor. You can also configure them through the CLI:
+You can also use the CLI to set up the agent integration:
 
 ```sh
-edgestore agent setup --client cursor
+edgestore agent setup --client codex
 ```
 
-Use `codex` or `claude` for the other supported clients. MCP sign-in is separate from CLI sign-in. The [agent setup guide](/docs/agents) covers both plugin and CLI installation; you only need one of those setup paths.
+See the [agent setup guide](/docs/agents) for more.
+
+## Improved access control (private files)
+
+There were two main improvements to access control for private files on EdgeStore.
+
+The first was cookie-based access control. Originally, it wouldn't work on browsers that blocked third-party cookies by default. Now with [partitioned cookies (CHIPS)](https://developer.mozilla.org/en-US/docs/Web/Privacy/Guides/Third-party_cookies/Partitioned_cookies) we can work around this issue in browsers that support them.
+
+The other improvement was adding signed URLs. Now apps can add their own custom logic to give access to a file.
+
+The access control configuration is recommended when all the information needed to give access is in the user's context and the file path. The access control check on the file origin doesn't need any DB queries, so it is very performant.
+
+Signed URLs are recommended when you need more dynamic or custom logic that queries your DB to decide if the user can access the file. Check permissions in your backend before generating a signed URL. Anyone with the link can use it until it expires.
+
+See the [access control configuration](/docs/configuration#access-control-experimental) and [signed URL guide](/docs/backend-client#private-read-urls) for more.
 
 ## Updated upload components
 
-The upload components have a refreshed design, with three new options: an [avatar uploader](/docs/components/avatar) for profile photos and logos, a [file field](/docs/components/file-field) for forms, and an [upload button](/docs/components/upload-button) that also accepts drag-and-drop.
+The existing example components were improved, and new ones were added:
 
-The existing components handle more of the small details too. Dropping an invalid file no longer discards the valid files alongside it. Failed uploads show an error and a retry button, running uploads can be canceled, and completed images can be replaced or removed. Keyboard focus, button labels, and progress indicators have also been improved.
+- [Avatar uploader](/docs/components/avatar)
+- [File field](/docs/components/file-field)
+- [Upload button](/docs/components/upload-button)
 
-Add them through the shadcn registry or copy the source into your app and customize it to fit your UI.
+<UploadComponentsDemo />
 
-## REST API and standalone SDK
+See the [component setup guide](/docs/components/uploader-provider) to add them to your app.
 
-EdgeStore's API v2 gives you direct access to file operations and project management. The new `@edgestore/sdk` package provides a typed TypeScript client for working with it without an EdgeStore router.
+## Expanded external provider support
 
-Use it to import files, upload generated reports, or manage projects from a background job. The upload helper handles single and multipart transfers, reports progress, and waits for processing to finish before returning the file.
+In case you didn't know, the EdgeStore package can also be used with your own storage, like S3-compatible providers or Azure.
 
-```ts
-import { createEdgeStoreSdk } from '@edgestore/sdk';
+In this new version the support was greatly improved. Now you can also use the [backend client](/docs/backend-client) with external providers. Multipart uploads for S3 and block uploads for Azure were also added for large files.
 
-const sdk = createEdgeStoreSdk({
-  credentials: {
-    accessKey: process.env.EDGESTORE_ACCESS_KEY!,
-    secretKey: process.env.EDGESTORE_SECRET_KEY!,
-  },
-});
+Examples of how to connect to other S3-compatible providers like Cloudflare R2, Backblaze B2, DigitalOcean Spaces, Google Cloud Storage, Tigris, Supabase Storage, and MinIO were also added to the docs.
 
-const result = await sdk.runtime.uploads.upload({
-  bucket: 'reports',
-  source: new Blob(['month,total\nSeptember,42\n'], { type: 'text/csv' }),
-  fileName: 'monthly-report.csv',
-});
-```
+<img src="/img/blog/v1-release-providers.svg" alt="Logos of AWS, Azure, Cloudflare, DigitalOcean, Google Cloud, and Supabase." width={960} height={420} className="w-full rounded-xl" />
 
-Project credentials scope operations to a project. Management tokens can also work with account resources within their permissions. Keep both on the server, never in a browser bundle. See the [SDK guide](/docs/sdk) for more examples.
-
-## Better file domain isolation
-
-Project-specific file domains are now available, separating file delivery between projects instead of relying only on a shared file domain. The client discovers the project's file origin automatically, so your upload calls stay the same.
-
-The integration also supports preserved legacy file hosts during migration. Upgrading the packages alone does not move an existing project to a new domain.
-
-This lays the groundwork for custom domains, which are planned as a follow-up rather than part of this release.
-
-## Backend client support for external providers
-
-The backend client is now available directly as `router.client`. It shares the router's configuration with your framework handler, so there is no separate client to initialize.
-
-```ts
-import { initEdgeStore } from '@edgestore/server';
-import { createEdgeStoreNextHandler } from '@edgestore/server/adapters/next/app';
-
-const es = initEdgeStore.create();
-const router = es.router({ documents: es.fileBucket() });
-
-const handler = createEdgeStoreNextHandler({ router });
-const backendClient = router.client;
-```
-
-It now works with external providers too. Chain `.provider(myProvider)` on the router, and the client exposes the operations that provider supports. Bucket names, input, and metadata remain inferred from your router.
-
-For example, S3 and Azure Blob Storage support backend uploads, file lookup, deletion, and signed private downloads. Unsupported operations are left out of the client type.
-
-The backend client is privileged: authorize callers in your server code. It validates input and file rules, but does not run `accessControl`, `beforeUpload`, or `beforeDelete` hooks. The [backend client guide](/docs/backend-client) covers setup and provider support.
-
-## Expanded S3 and Azure support
-
-Both providers now support large-file uploads from the browser and backend uploads through `router.client`. S3 uses multipart uploads and Azure Blob Storage uses block uploads, while your React upload API stays the same. Both also support signed URLs for private downloads.
-
-The S3 provider isn't limited to AWS. You can also use Cloudflare R2, Backblaze B2, DigitalOcean Spaces, Google Cloud Storage, Tigris, Supabase Storage, and MinIO through their S3-compatible APIs. The [S3-compatible services guide](/docs/providers/s3#s3-compatible-services) includes configuration examples and service-specific differences.
-
-You can configure storage paths, cache headers, download filenames, and metadata for both providers. S3 also supports tags, storage class, and encryption settings. Upload results include the storage key, giving you a reference for later lookup or deletion even if your CDN domain changes.
-
-Large browser uploads have more targeted error handling across hosted EdgeStore, S3, and Azure. The client requests part URLs on demand, can refresh a rejected URL, and distinguishes temporary failures from permanent errors when retrying.
-
-You still manage your own storage permissions and configuration. The [S3 guide](/docs/providers/s3) and [Azure guide](/docs/providers/azure-blob) cover setup and differences from hosted EdgeStore. Hosted features such as listing and temporary files aren't available with these providers.
+See the [S3-compatible services guide](/docs/providers/s3#s3-compatible-services) and [Azure guide](/docs/providers/azure-blob) for setup and provider differences.
 
 ## Standard Schema support
 
-Bucket `.input()` now accepts object schemas that implement Standard Schema, including compatible Zod, Valibot, and ArkType schemas. Use the validation library already in your app without adding Zod just for EdgeStore.
+Until now we had to use Zod for the bucket input schemas. Now we can use any Standard Schema-compatible object schema, like Zod, Valibot, and ArkType.
 
-If your schema transforms a value, the client gets the input type and your server callbacks get the transformed type. EdgeStore rejects invalid input before running upload hooks or storage operations.
+See the [input schema configuration](/docs/configuration#metadata--file-path) for more.
 
-## Upload transforms
+## Mobile support for the dashboard app
 
-Upload transforms and signed URLs also arrived during this development cycle and shipped in v0.8. They're worth highlighting here if you haven't tried the recent releases.
+With the recent AI apps we are now able to basically do the whole app development flow from our phones. So I felt that being able to control the whole dashboard from a phone is getting very important.
 
-Transforms let you process a file before EdgeStore validates and uploads it. For example, you can use an image-processing library to resize a photo or convert it to WebP in the browser, then upload the result. Backend uploads support transforms too.
+Now the EdgeStore dashboard UI supports mobile a lot better. And it's also a PWA, so you can add it to your home screen and make it feel like a regular app.
 
-The callback returns the transformed file and, when needed, its new extension. See the [upload example](/docs/quick-start#transform-files-before-upload) for a WebP conversion using `browser-image-compression`.
+<img src="/img/blog/v1-release-mobile-app.webp" alt="The EdgeStore app icon on a phone home screen, with surrounding apps blurred." width={640} height={640} className="mx-auto w-full max-w-64 rounded-2xl" />
 
-## Flexible access control with signed URLs
+## Other improvements
 
-Signed URLs let you grant temporary access to a private file without making the bucket public. After checking that someone is allowed to read the file, your backend can issue a link with an expiration time.
+Cookie initialization only runs when needed for access control, reducing HTTP requests for apps that don't use it.
 
-This is useful for downloads and sharing files outside an authenticated app session. Anyone with the link can use it until it expires, so treat it as an access credential.
+Batch methods were added to the browser and backend clients:
 
-The backend client can sign individual files or several at once. See [private read URLs](/docs/backend-client#private-read-urls) for an example.
+- [Browser client](/docs/quick-start#delete-file): `deleteMany` and [`confirmMany`](/docs/quick-start#temporary-files).
+- [Backend client](/docs/backend-client): `deleteMany`, `confirmMany`, `restoreMany`, and `createSignedUrls`, where supported by the provider.
 
-## Fewer requests during initialization
+Emptying a bucket now runs asynchronously in the background, making it more reliable for large buckets and allowing you to see progress while the files are being deleted.
 
-Apps that don't need cookie-based file access, such as those with only public buckets, now skip unnecessary file-access token creation and the extra browser request to initialize access on the file domain. Your app still initializes its router and context, but avoids the file-access setup it doesn't use.
+[Upload transforms](/docs/quick-start#transform-files-before-upload) let you resize or convert files before uploading them. They also work in [backend uploads](/docs/backend-client#transform-a-file-before-upload). Signed URLs, transforms, and the initialization improvement first shipped in v0.8 and carry forward into v1.
 
-This improvement shipped in v0.8 and carries forward into v1.
+You can check the other improvements in the [full changelog](https://github.com/edgestorejs/edgestore/releases).
 
-## Batch file operations
+## Migrating to v1
 
-Deleting several files no longer requires a separate browser request for each one. React's `deleteMany` sends the batch to your app in one request and returns which files succeeded or failed.
-
-That gives features like multi-select deletion fewer round trips and lets you retry just the failed files. Each file is still authorized before storage is modified.
-
-## Performance and scalability
-
-Emptying a bucket now runs as a background job instead of keeping a request open until every file is removed. This lets cleanup work through large buckets without depending on a single request completing the whole operation.
-
-The dashboard shows progress, keeps track of the job after a page refresh, and lets you retry if cleanup fails. This is a hosted-service improvement, so it doesn't require a package upgrade.
-
-## A dashboard that works on your phone
-
-The dashboard now adapts to smaller screens, with mobile navigation and touch-friendly controls for projects, files, usage, and settings. Actions such as copying credentials and removing files no longer depend on hovering over them.
-
-<img src="/img/blog/v1-release-mobile.webp" alt="Illustration of file cards between a desktop screen and a phone." width={1600} height={800} className="w-full rounded-xl" />
-
-On iPhone, you can also add EdgeStore to your Home Screen and open the dashboard in its own window. It's the same web dashboard, with a layout designed to work on your phone as well as your desktop.
-
-## Upgrading to v1
-
-v1 includes breaking changes. Before updating:
-
-- Your app needs Node.js 22.22.0 or newer and ESM. The packages no longer include CommonJS builds.
-- Replace `initEdgeStoreClient({ router })` with `router.client` and pass `router` to your framework adapter. Custom providers use `.provider(myProvider)`.
-- Some methods and results have changed. For example, `confirmUpload` is now `confirm`, and backend listing uses cursor pagination. Check batch results for individual failures.
-
-The [migration guide](/docs/migrate-to-v1) covers the full API and provider changes, including Azure credentials. The development file proxy has also been removed, so you'll need to remove `disableDevProxy`, `cookieConfig.token`, and old `/proxy-file` links. Test uploads and private reads before deploying the upgrade.
-
-To upgrade with a coding agent, use this prompt:
+Just use this prompt:
 
 <AgentPrompt>
 
@@ -180,16 +156,6 @@ Upgrade this app to EdgeStore v1. Follow the migration guide: https://edgestore.
 
 </AgentPrompt>
 
-To install v1 in a React application:
+Or check the [migration guide](/docs/migrate-to-v1). v1 includes breaking changes, so test uploads and private file access before deploying your upgrade.
 
-```sh
-npm install @edgestore/server@latest @edgestore/react@latest
-```
-
-For a standalone server-side integration:
-
-```sh
-npm install @edgestore/sdk@latest
-```
-
-Try v1 in your next project, or follow the migration guide to upgrade an existing app. Share feedback and report migration issues on [GitHub](https://github.com/edgestorejs/edgestore/issues).
+Try it out and let me know what you think! If you find any bugs or run into issues migrating, [open an issue on GitHub](https://github.com/edgestorejs/edgestore/issues).
