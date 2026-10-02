@@ -1,7 +1,6 @@
 import { GITHUB_URL } from '@/lib/constants';
 import { source } from '@/lib/source';
 import { getMDXComponents } from '@/mdx-components';
-import { Heading } from 'fumadocs-ui/components/heading';
 import { createRelativeLink } from 'fumadocs-ui/mdx';
 import {
   DocsBody,
@@ -11,7 +10,6 @@ import {
 } from 'fumadocs-ui/page';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import type { HTMLAttributes } from 'react';
 import { EditOnGitHub, LLMCopyButton } from './page.client';
 
 export default async function Page(props: {
@@ -37,23 +35,6 @@ export default async function Page(props: {
           components={getMDXComponents({
             // this allows you to link to other pages with relative file paths
             a: createRelativeLink(source, page),
-            h2: ({
-              children,
-              ...props
-            }: HTMLAttributes<HTMLHeadingElement>) => (
-              <Heading as="h2" {...props}>
-                {/* Keep old links working without web-only markup in package references. */}
-                {page.url === '/docs/configuration' &&
-                  props.id === 'access-control' && (
-                    <span
-                      id="access-control-experimental"
-                      className="scroll-mt-28"
-                      aria-hidden="true"
-                    />
-                  )}
-                {children}
-              </Heading>
-            ),
           })}
         />
       </DocsBody>
