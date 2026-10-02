@@ -82,15 +82,21 @@ function visitorId() {
 }
 
 const distinctID = visitorId();
+// Local development must not send events to the production project.
+const analyticsEnabled = process.env.NODE_ENV === 'production';
 
-posthog.init(env.NEXT_PUBLIC_POSTHOG_KEY, {
-  api_host: env.NEXT_PUBLIC_POSTHOG_API_HOST,
-  ui_host: env.NEXT_PUBLIC_POSTHOG_UI_HOST,
-  capture_pageview: 'history_change',
-  // The dashboard links this visitor to the account at signup.
-  person_profiles: 'identified_only',
-  ...(distinctID && { bootstrap: { distinctID } }),
-});
+if (analyticsEnabled) {
+  posthog.init(env.NEXT_PUBLIC_POSTHOG_KEY, {
+    api_host: env.NEXT_PUBLIC_POSTHOG_API_HOST,
+    ui_host: env.NEXT_PUBLIC_POSTHOG_UI_HOST,
+    capture_pageview: 'history_change',
+    // The dashboard links this visitor to the account at signup.
+    person_profiles: 'identified_only',
+    ...(distinctID && { bootstrap: { distinctID } }),
+  });
+  // Docs and dashboard events share a PostHog project.
+  posthog.register({ site: 'docs' });
+}
 
 const dashboardHost = new URL(env.NEXT_PUBLIC_DASHBOARD_URL).host;
 
@@ -111,7 +117,7 @@ function trackDashboardClick(event: MouseEvent) {
 }
 
 // Like the dashboard's own browser events, honor DNT and Global Privacy Control.
-if (trackingAllowed()) {
+if (analyticsEnabled && trackingAllowed()) {
   document.addEventListener('click', trackDashboardClick, { capture: true });
   document.addEventListener('auxclick', trackDashboardClick, { capture: true });
 }
