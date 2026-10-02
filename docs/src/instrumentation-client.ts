@@ -110,5 +110,8 @@ function trackDashboardClick(event: MouseEvent) {
   );
 }
 
-document.addEventListener('click', trackDashboardClick, { capture: true });
-document.addEventListener('auxclick', trackDashboardClick, { capture: true });
+// Like the dashboard's own browser events, honor DNT and Global Privacy Control.
+if (trackingAllowed()) {
+  document.addEventListener('click', trackDashboardClick, { capture: true });
+  document.addEventListener('auxclick', trackDashboardClick, { capture: true });
+}
