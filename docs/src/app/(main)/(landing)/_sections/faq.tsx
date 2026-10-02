@@ -86,7 +86,7 @@ export function Faq() {
           rules. Hosted storage also supports{' '}
           <Link
             className="text-site-accent underline underline-offset-[3px]"
-            href="/docs/configuration#access-control-experimental"
+            href="/docs/configuration#access-control"
           >
             protected file access
           </Link>

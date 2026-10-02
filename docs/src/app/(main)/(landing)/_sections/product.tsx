@@ -172,7 +172,7 @@ const features = [
     description:
       'Use your existing authentication to decide who can upload or delete files. Add protected reads with hosted EdgeStore storage.',
     icon: Fingerprint,
-    href: '/docs/configuration#access-control-experimental',
+    href: '/docs/configuration#access-control',
     link: 'Explore access control',
     detail: [
       'Your authentication',
