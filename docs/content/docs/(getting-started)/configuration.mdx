@@ -3,6 +3,43 @@ title: Configuration
 description: Learn EdgeStore's configuration options.
 ---
 
+## Router and Provider
+
+Import `initEdgeStore` from `@edgestore/server`. The router uses the hosted
+EdgeStore provider by default and exposes its backend client as `router.client`:
+
+```ts
+const es = initEdgeStore.create();
+const router = es.router({
+  publicFiles: es.fileBucket(),
+});
+
+const handler = createEdgeStoreNextHandler({ router });
+const backendClient = router.client;
+```
+
+Chain `.provider()` to use another provider or custom credentials:
+
+```ts
+import { s3 } from '@edgestore/server/providers/s3';
+
+const router = es.router({
+  publicFiles: es.fileBucket(),
+}).provider(s3());
+```
+
+`.provider()` returns a new router. It preserves bucket definitions, while
+leaving existing routers, clients, and handlers bound to their original
+provider. The backend client exposes only methods supported by the
+selected provider.
+
+The default hosted provider is initialized when handling requests or when
+`router.client` is first accessed. Defining a router or overriding its provider
+does not require hosted EdgeStore credentials. Each router reuses its provider
+and backend client after initialization.
+
+Keep the router object on the server; import only its type into frontend code.
+
 ## Bucket Types
 
 There are two types of file buckets: `IMAGE` and `FILE`. Both types of buckets work basically the same way, but the `IMAGE` bucket only accepts [certain mime types](#image-bucket-accepted-mime-types).
@@ -10,7 +47,7 @@ There are two types of file buckets: `IMAGE` and `FILE`. Both types of buckets w
 IMAGE buckets automatically generate a thumbnail version of the image file if the file is bigger than 200px in width or height. In case a thumbnail was generated, the url will be included in the response of the upload request.
 
 ```ts
-const edgeStoreRouter = es.router({
+const router = es.router({
   publicFiles: es.fileBucket(),
   publicImages: es.imageBucket(),
 });
@@ -21,7 +58,7 @@ const edgeStoreRouter = es.router({
 You can set the maximum file size and the accepted mime types for every file bucket.
 
 ```ts
-const edgeStoreRouter = es.router({
+const router = es.router({
   publicFiles: es.fileBucket({
     maxSize: 1024 * 1024 * 10, // 10MB
     accept: ['image/jpeg', 'image/png'], // wildcard also works: ['image/*']
@@ -60,7 +97,7 @@ const es = initEdgeStore.context<Context>().create();
 // ...
 
 export default createEdgeStoreNextHandler({
-  router: edgeStoreRouter,
+  router,
   /**
    * The context is generated and saved to a cookie
    * in the first load of the page.
@@ -82,6 +119,12 @@ async function runAfterAuthChange() {
 ## Metadata & File Path
 
 Every uploaded file can hold two types of data: `metadata` and `path`. You can use this data for access control or for filtering files. The `metadata` and `path` can be generated from the context (`ctx`) or from the `input` of the upload request.
+
+<Callout type="info">
+  The `.input()` method accepts any object schema that implements [Standard
+  Schema](https://standardschema.dev/), including schemas from Zod, Valibot,
+  and ArkType.
+</Callout>
 
 ```ts
 import { initEdgeStore } from '@edgestore/server';
@@ -107,7 +150,7 @@ async function createContext({ req }: CreateContextOptions): Promise<Context> {
 
 const es = initEdgeStore.context<Context>().create();
 
-const edgeStoreRouter = es.router({
+const router = es.router({
   publicFiles: es
     .fileBucket()
     // this input will be required for every upload request
@@ -156,7 +199,7 @@ async function createContext({ req }: CreateContextOptions): Promise<Context> {
 
 const es = initEdgeStore.context<Context>().create();
 
-const edgeStoreRouter = es.router({
+const router = es.router({
   publicFiles: es
     .fileBucket()
     /**
@@ -178,7 +221,7 @@ const edgeStoreRouter = es.router({
 });
 ```
 
-## Access Control (Experimental)
+## Access Control
 
 You can use the `accessControl` function to add bucket level logic to allow or deny access to files. If you have ever used Prisma, you will probably notice that the structure of the `accessControl` function is similar to how you would write a Prisma query.
 
@@ -211,9 +254,9 @@ const filesBucket = es
 Other available operators are: `eq`, `not`, `gt`, `gte`, `lt`, `lte`, `in`, `contains`
 
 <Callout>
-  The access control functionality uses third party cookies. Since third party cookies are not supported in localhost (without https), in development, all the protected files will be proxied through your app's api so that the cookies can be forwarded to the file request.
+  The access control functionality uses a partitioned cookie that EdgeStore sets on the file origin when the provider initializes. Protected files load directly from that origin, including in local development.
 
-Also, the `<Image />` component from `next/image` does not forward the cookies in the request, so protected images won't be displayed. You will need ot use the `<img />` tag instead.
+The `<Image />` component from `next/image` does not forward the cookies in the request, so protected images won't be displayed. You will need to use the `<img />` tag instead.
 
 </Callout>
 

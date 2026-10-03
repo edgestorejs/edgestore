@@ -6,12 +6,12 @@ const es = initEdgeStore.create();
 /**
  * This is the main router for the EdgeStore buckets.
  */
-const edgeStoreRouter = es.router({
+const router = es.router({
   myPublicFiles: es.fileBucket(),
 });
 
 const handler = createEdgeStoreNextHandler({
-  router: edgeStoreRouter,
+  router,
 });
 
 export { handler as GET, handler as POST };
@@ -19,4 +19,4 @@ export { handler as GET, handler as POST };
 /**
  * This type is used to create the type-safe client for the frontend.
  */
-export type EdgeStoreRouter = typeof edgeStoreRouter;
+export type EdgeStoreRouter = typeof router;

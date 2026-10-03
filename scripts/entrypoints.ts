@@ -7,7 +7,7 @@ export type PackageJson = {
   name: string;
   exports: Record<
     string,
-    { import: string; require: string; default: string } | string
+    { types: string; import: string; default: string } | string
   >;
   files: string[];
   dependencies: Record<string, string>;
@@ -31,18 +31,27 @@ function writeFileSyncRecursive(filePath: string, content: string) {
   fs.writeFileSync(filePath, content, 'utf8');
 }
 
-export async function generateEntrypoints(rawInputs: string[]) {
+export async function generateEntrypoints(
+  rawInputs: string[],
+  options: { includeSource?: boolean; additionalFiles?: string[] } = {},
+) {
   const inputs = [...rawInputs];
   // set some defaults for the package.json
   const pkgJsonPath = path.resolve('package.json');
   const pkgJson: PackageJson = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf8'));
 
-  pkgJson.files = ['dist', 'src', 'README.md', 'LICENSE'];
+  pkgJson.files = [
+    'dist',
+    ...(options.includeSource === false ? [] : ['src']),
+    'README.md',
+    'LICENSE',
+    ...(options.additionalFiles ?? []),
+  ];
   pkgJson.exports = {
     './package.json': './package.json',
     '.': {
-      import: './dist/index.mjs',
-      require: './dist/index.js',
+      types: './dist/index.d.ts',
+      import: './dist/index.js',
       default: './dist/index.js',
     },
   };
@@ -57,8 +66,8 @@ export async function generateEntrypoints(rawInputs: string[]) {
    *  src/adapters/express.ts -> adapters/express
    *
    *  Also, write to the package.json exports field, e.g.
-   *  src/adapters/aws-lambda/index.ts -> exports['adapters/aws-lambda'] = { import: './dist/adapters/aws-lambda/index.mjs', ... }
-   *  src/adapters/express.ts -> exports['adapters/express'] = { import: './dist/adapters/express.mjs', ... }
+   *  src/adapters/aws-lambda/index.ts -> exports['adapters/aws-lambda'] = { default: './dist/adapters/aws-lambda/index.js', ... }
+   *  src/adapters/express.ts -> exports['adapters/express'] = { default: './dist/adapters/express.js', ... }
    */
   inputs
     .filter((i) => i !== 'src/index.ts') // index included by the default above
@@ -76,12 +85,12 @@ export async function generateEntrypoints(rawInputs: string[]) {
           : pathWithoutSrc.replace(/\.(ts|tsx)$/, '');
 
       // write this entrypoint to the package.json exports field
-      const esm = './dist/' + pathWithoutSrc.replace(/\.(ts|tsx)$/, '.mjs');
-      const cjs = './dist/' + pathWithoutSrc.replace(/\.(ts|tsx)$/, '.js');
+      const js = './dist/' + pathWithoutSrc.replace(/\.(ts|tsx)$/, '.js');
+      const types = './dist/' + pathWithoutSrc.replace(/\.(ts|tsx)$/, '.d.ts');
       pkgJson.exports[`./${importPath}`] = {
-        import: esm,
-        require: cjs,
-        default: cjs,
+        types,
+        import: js,
+        default: js,
       };
 
       // create the barrel file, linking the declared exports to the compiled files in dist
@@ -94,12 +103,12 @@ export async function generateEntrypoints(rawInputs: string[]) {
       ].join('/');
       // index.js
       const indexFile = path.resolve(importPath, 'index.js');
-      const indexFileContent = `module.exports = require('${resolvedImport}');\n`;
+      const indexFileContent = `export * from '${resolvedImport}/index.js';\n`;
       writeFileSyncRecursive(indexFile, indexFileContent);
 
       // index.d.ts
       const typeFile = path.resolve(importPath, 'index.d.ts');
-      const typeFileContent = `export * from '${resolvedImport}';\n`;
+      const typeFileContent = `export * from '${resolvedImport}/index.js';\n`;
       writeFileSyncRecursive(typeFile, typeFileContent);
     });
 
@@ -115,9 +124,11 @@ export async function generateEntrypoints(rawInputs: string[]) {
     if (topLevel !== 'package.json') scriptOutputs.add(`${topLevel}/**`);
   });
 
-  // Exclude test files in builds
-  pkgJson.files.push('!**/*.test.*');
-  pkgJson.files.push('!**/__tests__');
+  if (options.includeSource !== false) {
+    // Exclude test files in builds
+    pkgJson.files.push('!**/*.test.*');
+    pkgJson.files.push('!**/__tests__');
+  }
   // Add `funding` in all packages
   // pkgJson.funding = ['https://edgestore.dev/sponsor'];
 
@@ -136,10 +147,16 @@ export async function generateEntrypoints(rawInputs: string[]) {
 
   existingTurboJson.tasks ??= {};
   existingTurboJson.tasks['codegen:entrypoints'] ??= {};
-  existingTurboJson.tasks['codegen:entrypoints'].outputs = [...scriptOutputs];
+  const nextOutputs = [...scriptOutputs];
+  const currentOutputs =
+    existingTurboJson.tasks['codegen:entrypoints'].outputs ?? [];
+  if (JSON.stringify(currentOutputs) === JSON.stringify(nextOutputs)) {
+    return;
+  }
+  existingTurboJson.tasks['codegen:entrypoints'].outputs = nextOutputs;
 
   const formattedTurboJson = await prettier.format(
-    JSON.stringify(existingTurboJson),
+    JSON.stringify(existingTurboJson, null, 2),
     {
       parser: 'json',
       ...(await prettier.resolveConfig(turboPath)),

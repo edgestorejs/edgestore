@@ -1,0 +1,145 @@
+---
+title: Upload Button
+description: A button that opens the file dialog and also accepts files dropped onto it.
+---
+
+import { DemoBlock } from '@/components/demo-block';
+import { LimitedCode } from '@/components/ui/limited-code';
+import {
+  OpenTabs,
+  OpenTabsContent,
+  OpenTabsList,
+  OpenTabsTrigger,
+} from '@/components/ui/open-tabs';
+import UploadButtonBlock from '@/components/upload/blocks/upload-button-block';
+import { Step, Steps } from 'fumadocs-ui/components/steps';
+
+<DemoBlock registryUrl="https://edgestore.dev/r/upload-button-block.json">
+  <UploadButtonBlock />
+</DemoBlock>
+
+It takes the same props as the shadcn/ui `Button`. Several buttons can feed the same `UploaderProvider`, so you can pair them with a `FileList` or build your own list with `useUploader`.
+
+## Installation
+
+<OpenTabs defaultValue="cli">
+
+<OpenTabsList>
+  <OpenTabsTrigger value="cli">CLI</OpenTabsTrigger>
+  <OpenTabsTrigger value="manual">Manual</OpenTabsTrigger>
+</OpenTabsList>
+
+<OpenTabsContent value="cli">
+
+Use the shadcn CLI to add the component to your project.
+
+```package-install
+npx shadcn@latest add https://edgestore.dev/r/upload-button.json
+```
+
+</OpenTabsContent>
+
+<OpenTabsContent value="manual">
+
+<Steps>
+
+<Step>
+
+### Setup for manual installation
+
+First you will need to follow the [manual install setup](./manual-install) guide.
+
+</Step>
+
+<Step>
+
+### Install required components
+
+- [uploader-provider](./uploader-provider)
+- [dropzone](./dropzone)
+- [shadcn/ui button](https://ui.shadcn.com/docs/components/button)
+
+</Step>
+
+<Step>
+
+### Copy this component
+
+<LimitedCode>
+
+<include lang="tsx" meta='title="components/upload/upload-button.tsx"'>../../../src/components/upload/upload-button.tsx</include>
+
+</LimitedCode>
+
+</Step>
+
+</Steps>
+
+</OpenTabsContent>
+
+</OpenTabs>
+
+## Usage
+
+Install or copy the component from [Installation](#installation) before using this example.
+
+```tsx
+'use client';
+
+import { UploadErrors } from '@/components/upload/dropzone';
+import { FileList } from '@/components/upload/multi-file';
+import { UploadButton } from '@/components/upload/upload-button';
+import {
+  UploaderProvider,
+  type UploadFn,
+} from '@/components/upload/uploader-provider';
+import { useEdgeStore } from '@/lib/edgestore';
+import { UploadIcon } from 'lucide-react';
+import * as React from 'react';
+
+export function UploadButtonUsage() {
+  const [errors, setErrors] = React.useState<string[]>([]);
+  const { edgestore } = useEdgeStore();
+
+  const uploadFn: UploadFn = React.useCallback(
+    async ({ file, onProgressChange, signal }) => {
+      const res = await edgestore.publicFiles.upload({
+        file,
+        signal,
+        onProgressChange,
+      });
+      // you can run some server action or api here
+      // to add the necessary data to your database
+      console.log(res);
+      return res;
+    },
+    [edgestore],
+  );
+
+  return (
+    <UploaderProvider uploadFn={uploadFn} autoUpload>
+      <UploadButton
+        maxSize={1024 * 1024 * 1} // 1 MB
+        onRejected={setErrors}
+      >
+        <UploadIcon /> Upload files
+      </UploadButton>
+      <UploadErrors errors={errors} onDismiss={() => setErrors([])} />
+      <FileList />
+    </UploaderProvider>
+  );
+}
+```
+
+## Props
+
+| Prop                   | Type                           | Default   | Description                                                                                                              |
+| ---------------------- | ------------------------------ | --------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `maxFiles`             | `number`                       |           | Maximum number of files in total.                                                                                        |
+| `multiple`             | `boolean`                      | `true`    | Whether more than one file can be picked at once.                                                                        |
+| `onRejected`           | `(messages: string[]) => void` |           | Called with messages about files that were not added.                                                                    |
+| `maxSize`              | `number`                       |           | Maximum file size in bytes.                                                                                              |
+| `accept`               | `Accept`                       | all types | Accepted file types, in [react-dropzone's format](https://react-dropzone.js.org/#section-accepting-specific-file-types). |
+| `typesLabel`           | `string`                       |           | Human-readable list of accepted types, shown in the hint and in error messages.                                          |
+| `disabled`             | `boolean`                      | `false`   | Disables the component.                                                                                                  |
+| `variant`, `size`, ... |                                |           | Any other [Button](https://ui.shadcn.com/docs/components/button) prop.                                                   |

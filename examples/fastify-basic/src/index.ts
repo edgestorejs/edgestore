@@ -31,14 +31,14 @@ async function configureApp() {
 
 const es = initEdgeStore.create();
 
-const edgeStoreRouter = es.router({
+const router = es.router({
   publicFiles: es.fileBucket(),
 });
 
-export type EdgeStoreRouter = typeof edgeStoreRouter;
+export type EdgeStoreRouter = typeof router;
 
 const handler = createEdgeStoreFastifyHandler({
-  router: edgeStoreRouter,
+  router,
 });
 
 // --- FASTIFY ROUTES ---

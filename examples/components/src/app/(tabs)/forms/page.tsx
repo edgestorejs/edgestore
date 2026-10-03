@@ -5,7 +5,9 @@ import { CodeBlock } from '@/components/ui/code';
 import { ExampleFrame } from '@/components/ui/example-frame';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { FileField } from '@/components/upload/file-field';
 import { FileUploader } from '@/components/upload/multi-file';
+import { DOCUMENT_ACCEPT } from '@/components/upload/upload-utils';
 import {
   UploaderProvider,
   type CompletedFileState,
@@ -30,8 +32,14 @@ export default function Page() {
   );
 }
 
+const uploadedFileSchema = z.object({
+  filename: z.string().min(1),
+  url: z.string().min(1),
+});
+
 const formSchema = z.object({
   text: z.string(),
+  resume: uploadedFileSchema,
   files: z
     .array(
       z.object({
@@ -75,7 +83,13 @@ function ReactHookFormExample() {
           />
         </div>
         <div className="flex w-full flex-col gap-1.5">
-          <Label htmlFor="text-field">Upload Input</Label>
+          <Label id="resume-label" htmlFor="resume-input">
+            Resume
+          </Label>
+          <ResumeInput control={control} name="resume" />
+        </div>
+        <div className="flex w-full flex-col gap-1.5">
+          <Label>Attachments</Label>
           <UploadInput control={control} name="files" />
         </div>
         <Button>Submit</Button>
@@ -138,11 +152,57 @@ function UploadInput<T extends FieldValues>(props: UseControllerProps<T>) {
   );
 }
 
+function ResumeInput<T extends FieldValues>(props: UseControllerProps<T>) {
+  const {
+    field: { onChange },
+  } = useController(props);
+  const { edgestore } = useEdgeStore();
+
+  const uploadFn: UploadFn = React.useCallback(
+    async ({ file, signal, onProgressChange }) => {
+      return edgestore.myPublicFiles.upload({
+        file,
+        signal,
+        onProgressChange,
+      });
+    },
+    [edgestore],
+  );
+
+  const handleUploaderChange = React.useCallback(
+    ({ completedFiles }: { completedFiles: CompletedFileState[] }) => {
+      const [completed] = completedFiles;
+      onChange(
+        completed
+          ? { filename: completed.file.name, url: completed.url }
+          : null,
+      );
+    },
+    [onChange],
+  );
+
+  return (
+    <UploaderProvider
+      uploadFn={uploadFn}
+      onChange={handleUploaderChange}
+      autoUpload
+    >
+      <FileField
+        inputId="resume-input"
+        aria-labelledby="resume-label"
+        accept={DOCUMENT_ACCEPT}
+        typesLabel="PDF, DOC or DOCX"
+        maxSize={1024 * 1024 * 1} // 1 MB
+      />
+    </UploaderProvider>
+  );
+}
+
 function MultiFileInstantDetails() {
   return (
     <div className="flex flex-col">
       <h3 className="mt-4 text-base font-bold">See in GitHub</h3>
-      <ul className="text-foreground/80 text-sm">
+      <ul className="text-sm text-foreground/80">
         <li>
           <a
             href="https://github.com/edgestorejs/edgestore/blob/main/examples/components/src/app/(tabs)/forms/page.tsx"
@@ -165,7 +225,7 @@ function MultiFileInstantDetails() {
         </li>
       </ul>
       <h3 className="mt-4 text-base font-bold">About</h3>
-      <div className="text-foreground/80 flex flex-col gap-2 text-sm">
+      <div className="flex flex-col gap-2 text-sm text-foreground/80">
         <p>
           This example demonstrates how to use EdgeStore with{' '}
           <a
@@ -179,8 +239,9 @@ function MultiFileInstantDetails() {
           .
         </p>
         <p>
-          It uses the same component as the multi-file-instant example, but it
-          is wrapped in a way that it can be easily used with React Hook Form.
+          The resume field uses the compact single-file field. The attachments
+          field uses the same component as the multi-file-instant example. Both
+          are wrapped so they can be used with React Hook Form.
         </p>
       </div>
     </div>

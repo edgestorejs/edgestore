@@ -1,0 +1,141 @@
+---
+title: Avatar
+description: A single image in a fixed shape, for profile photos and logos.
+---
+
+import { DemoBlock } from '@/components/demo-block';
+import { LimitedCode } from '@/components/ui/limited-code';
+import {
+  OpenTabs,
+  OpenTabsContent,
+  OpenTabsList,
+  OpenTabsTrigger,
+} from '@/components/ui/open-tabs';
+import AvatarDropzoneBlock from '@/components/upload/blocks/avatar-block';
+import { Step, Steps } from 'fumadocs-ui/components/steps';
+
+<DemoBlock registryUrl="https://edgestore.dev/r/avatar-dropzone-block.json">
+  <AvatarDropzoneBlock />
+</DemoBlock>
+
+Click or drop onto the image to replace it. With `minDimension`, the image's pixel size is checked in the browser before it is uploaded.
+
+## Installation
+
+<OpenTabs defaultValue="cli">
+
+<OpenTabsList>
+  <OpenTabsTrigger value="cli">CLI</OpenTabsTrigger>
+  <OpenTabsTrigger value="manual">Manual</OpenTabsTrigger>
+</OpenTabsList>
+
+<OpenTabsContent value="cli">
+
+Use the shadcn CLI to add the component to your project.
+
+```package-install
+npx shadcn@latest add https://edgestore.dev/r/avatar-dropzone.json
+```
+
+</OpenTabsContent>
+
+<OpenTabsContent value="manual">
+
+<Steps>
+
+<Step>
+
+### Setup for manual installation
+
+First you will need to follow the [manual install setup](./manual-install) guide.
+
+</Step>
+
+<Step>
+
+### Install required components
+
+- [uploader-provider](./uploader-provider)
+- [dropzone](./dropzone)
+- [progress-circle](./progress-circle)
+- [shadcn/ui button](https://ui.shadcn.com/docs/components/button)
+
+</Step>
+
+<Step>
+
+### Copy this component
+
+<LimitedCode>
+
+<include lang="tsx" meta='title="components/upload/avatar-dropzone.tsx"'>../../../src/components/upload/avatar-dropzone.tsx</include>
+
+</LimitedCode>
+
+</Step>
+
+</Steps>
+
+</OpenTabsContent>
+
+</OpenTabs>
+
+## Usage
+
+Install or copy the component from [Installation](#installation) before using this example.
+
+```tsx
+'use client';
+
+import { AvatarDropzone } from '@/components/upload/avatar-dropzone';
+import {
+  UploaderProvider,
+  type UploadFn,
+} from '@/components/upload/uploader-provider';
+import { useEdgeStore } from '@/lib/edgestore';
+import * as React from 'react';
+
+export function AvatarDropzoneUsage() {
+  const { edgestore } = useEdgeStore();
+
+  const uploadFn: UploadFn = React.useCallback(
+    async ({ file, onProgressChange, signal }) => {
+      const res = await edgestore.publicImages.upload({
+        file,
+        signal,
+        onProgressChange,
+      });
+      // you can run some server action or api here
+      // to add the necessary data to your database
+      console.log(res);
+      return res;
+    },
+    [edgestore],
+  );
+
+  return (
+    <UploaderProvider uploadFn={uploadFn} autoUpload>
+      <AvatarDropzone
+        label="Profile photo"
+        maxSize={1024 * 1024 * 2} // 2 MB
+        minDimension={128}
+      />
+    </UploaderProvider>
+  );
+}
+```
+
+## Props
+
+| Prop           | Type                   | Default                   | Description                                                                                                              |
+| -------------- | ---------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `label`        | `string`               | `"Profile photo"`         | Label shown next to the image and used in accessible labels.                                                             |
+| `description`  | `ReactNode`            |                           | Help text under the label. Defaults to a summary of the limits.                                                          |
+| `shape`        | `"circle" \| "square"` | `"circle"`                | Shape of the image.                                                                                                      |
+| `size`         | `number`               | `88`                      | Size of the image in pixels.                                                                                             |
+| `minDimension` | `number`               |                           | Minimum width and height of the image in pixels.                                                                         |
+| `placeholder`  | `ReactNode`            | user icon                 | Shown when there is no image.                                                                                            |
+| `maxSize`      | `number`               |                           | Maximum file size in bytes.                                                                                              |
+| `accept`       | `Accept`               | PNG, JPG, WEBP, GIF       | Accepted file types, in [react-dropzone's format](https://react-dropzone.js.org/#section-accepting-specific-file-types). |
+| `typesLabel`   | `string`               | `"PNG, JPG, WEBP or GIF"` | Human-readable list of accepted types, shown in the hint and in error messages.                                          |
+| `disabled`     | `boolean`              | `false`                   | Disables the component.                                                                                                  |

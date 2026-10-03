@@ -23,16 +23,16 @@ export type UploadOptions = {
    * But it might take some time for the CDN cache to be cleared.
    * So maybe you will keep seeing the old file for a while.
    *
-   * If you want to replace an existing file, immediately leave the `manualFileName` option empty and use the `replaceTargetUrl` option.
+   * For providers that support managed replacement, leave `manualFileName` empty and use `replaceTargetUrl`.
    */
   manualFileName?: string;
   /**
-   * Use this to replace an existing file.
+   * Replace an existing file, when supported by the provider.
    * It will automatically delete the existing file when the upload is complete.
    */
   replaceTargetUrl?: string;
   /**
-   * If true, the file needs to be confirmed by using the `confirmUpload` function.
+   * When supported by the provider, the file needs to be confirmed by using the `confirm` function.
    * If the file is not confirmed within 24 hours, it will be deleted.
    *
    * This is useful for pages where the file is uploaded as soon as it is selected,
@@ -49,4 +49,23 @@ export type UploadOptions = {
    * upload request.
    */
   transform?: ClientUploadTransform;
+  /**
+   * Wait for the provider to finish processing the file, such as generating
+   * its thumbnail, before resolving. The result then describes the processed
+   * file. Waiting does not confirm a temporary file.
+   *
+   * Providers without asynchronous processing resolve once the transfer
+   * completes.
+   *
+   * @default false
+   */
+  waitForProcessing?:
+    | boolean
+    | {
+        /**
+         * How long to wait after the transfer completes, in milliseconds.
+         * @default 60000
+         */
+        timeoutMs?: number;
+      };
 };

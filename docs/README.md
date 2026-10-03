@@ -1,26 +1,58 @@
-# docs-new
+# EdgeStore docs
 
-This is a Next.js application generated with
-[Create Fumadocs](https://github.com/fuma-nama/fumadocs).
+Run `pnpm docs:dev` from the repository root.
 
-Run development server:
+## Hosted skill
 
-```bash
-npm run dev
-# or
-pnpm dev
-# or
-yarn dev
+`/SKILL.md` serves the canonical `skills/edgestore-setup/SKILL.md` from the repo
+root. Its local reference links are rewritten to the same site's
+`/skills/edgestore-setup/references/` routes. Both documents are rendered as static
+Markdown at build time; there is no separately maintained web copy.
+
+Edit the canonical skill and rebuild the docs to publish changes. Turbo already
+includes `skills/**` in build inputs. If the skill gains references, add their
+routes and extend the hosted-skill tests.
+
+## Deployment
+
+The docs default to `https://edgestore.dev` with GitHub source links on `main`.
+Set `DOCS_RELEASE_CHANNEL=next` only on the deployment serving prerelease docs.
+This selects `https://next.edgestore.dev` and the `next` source branch together.
+
+For a local preview build:
+
+```sh
+DOCS_RELEASE_CHANNEL=next pnpm --filter docs build
 ```
 
-Open http://localhost:3000 with your browser to see the result.
+Leave the variable unset, or set it to `stable`, on the production docs deployment.
+A build from `main` rejects the `next` channel. Branch detection uses Vercel's
+commit ref or GitHub Actions' head/ref name. Turbo includes these settings in its
+cache key. Deployment settings do not change links in published package references;
+those follow the package version.
 
-## Learn More
+Run `pnpm --filter docs test:agents` to check both channels and the production guard.
 
-To learn more about Next.js and Fumadocs, take a look at the following
-resources:
+## Blog drafts
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js
-  features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-- [Fumadocs](https://fumadocs.vercel.app) - learn about Fumadocs
+Posts with `draft: true` are visible in local development and all Vercel preview
+deployments (`VERCEL_ENV=preview`), regardless of branch. They remain hidden on
+production deployments, even if `DOCS_RELEASE_CHANNEL=next` is set.
+
+Draft article metadata uses `VERCEL_URL` for preview-local canonical and social
+image URLs and requests `noindex, nofollow`. Drafts never enter the sitemap.
+Preview visibility is not authentication: anyone with access to the preview can
+read the drafts. Vercel deployment protection may still prevent external social
+preview tools from fetching the page or its image.
+
+Before publishing a release post, update its date to the actual release date and
+set `draft: false`. Run `pnpm --filter docs test:blog` to check the visibility rules.
+
+## Blog social images
+
+Posts use generated social cards by default. Bespoke PNGs are registered by full
+post slug in `src/app/_social-card/blog-images.ts`, with their actual dimensions.
+Keep these files in `_social-card/assets`, not `public`: the existing OG route
+checks draft visibility before serving either a custom or generated image.
+Custom images contain baked-in text; update the image if the post's title or
+description changes.

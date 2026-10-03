@@ -2,19 +2,17 @@ import { env } from '@/env';
 import { langfuseSpanProcessor } from '@/instrumentation';
 import { getLLMText } from '@/lib/get-llm-text';
 import { source } from '@/lib/source';
-import {
-  observe,
-  updateActiveObservation,
-  updateActiveTrace,
-} from '@langfuse/tracing';
-import { trace } from '@opentelemetry/api';
+import { propagateAttributes } from '@langfuse/tracing';
 import {
   convertToModelMessages,
-  stepCountIs,
+  createUIMessageStreamResponse,
+  isStepCount,
   streamText,
+  toUIMessageStream,
   type UIMessage,
 } from 'ai';
 import { after } from 'next/server';
+import type { z } from 'zod';
 import {
   GetDocsToolSchema,
   ProvideLinksToolSchema,
@@ -38,34 +36,15 @@ async function getDocsForSlugs(slugs: string[]) {
   return texts.join('\n\n');
 }
 
-const handler = async (req: Request) => {
+export const POST = async (req: Request) => {
   const reqJson = (await req.json()) as { messages: UIMessage[]; id?: string };
   const availablePages = getAvailablePages();
 
   // Pre-fetch quick-start docs to include in system prompt by default
   const quickStartDocs = await getDocsForSlugs(['quick-start']);
 
-  const lastUserText =
-    reqJson.messages?.[reqJson.messages.length - 1]?.parts?.find(
-      (p) => p.type === 'text',
-    )?.text ?? '';
-
   const envName = env.VERCEL_ENV ?? 'local';
   const envTag = `env:${envName}`;
-
-  updateActiveObservation({
-    input: lastUserText,
-  });
-
-  updateActiveTrace({
-    name: 'docs-chat',
-    sessionId: reqJson.id,
-    input: lastUserText,
-    tags: [envTag, 'app:docs'],
-    metadata: {
-      env: envName,
-    },
-  });
 
   const systemPrompt = `You are a helpful assistant for EdgeStore documentation.
 
@@ -90,66 +69,76 @@ Guidelines:
 - Never invent API methods, configuration options, or features that aren't documented.
 - If a feature doesn't exist in EdgeStore, say so clearly.
 
-After providing your answer, use the "provideLinks" tool to share relevant documentation links with the user. Include links to the documentation pages you referenced in your answer.`;
+Before writing your final answer, call the "provideLinks" tool exactly once with the documentation pages you referenced. After the tool returns, write a complete, non-empty answer to the user. Do not call "provideLinks" again, and do not treat the tool call as the answer.`;
 
-  const result = streamText({
-    model: 'openai/gpt-4.1-mini',
-    system: systemPrompt,
-    tools: {
-      getDocs: {
-        inputSchema: GetDocsToolSchema,
-        execute: async ({ slugs }: { slugs: string[] }) => {
-          const docs = await getDocsForSlugs(slugs);
-          return docs || 'No documentation found for the requested slugs.';
+  return propagateAttributes(
+    {
+      traceName: 'docs-chat',
+      sessionId: reqJson.id,
+      tags: [envTag, 'app:docs'],
+      metadata: {
+        env: envName,
+      },
+    },
+    async () => {
+      const result = streamText({
+        model: 'openai/gpt-6-luna',
+        providerOptions: {
+          openai: {
+            reasoningEffort: 'none',
+          },
         },
-      },
-      provideLinks: {
-        inputSchema: ProvideLinksToolSchema,
-      },
-    },
-    messages: await convertToModelMessages(reqJson.messages, {
-      ignoreIncompleteToolCalls: true,
-    }),
-    toolChoice: 'auto',
-    stopWhen: stepCountIs(5),
-    experimental_telemetry: {
-      isEnabled: true,
-    },
-    onFinish: (finish) => {
-      updateActiveObservation({
-        output: finish.content,
+        instructions: systemPrompt,
+        tools: {
+          getDocs: {
+            inputSchema: GetDocsToolSchema,
+            execute: async ({ slugs }: { slugs: string[] }) => {
+              const docs = await getDocsForSlugs(slugs);
+              return docs || 'No documentation found for the requested slugs.';
+            },
+          },
+          provideLinks: {
+            inputSchema: ProvideLinksToolSchema,
+            execute: ({ links }: z.infer<typeof ProvideLinksToolSchema>) => ({
+              links,
+            }),
+          },
+        },
+        messages: await convertToModelMessages(reqJson.messages, {
+          ignoreIncompleteToolCalls: true,
+        }),
+        toolChoice: 'auto',
+        // Reserve the last two steps for links and a text-only answer.
+        stopWhen: isStepCount(6),
+        prepareStep: ({ steps, stepNumber }) => {
+          if (
+            steps.some((step) =>
+              step.toolCalls.some((call) => call.toolName === 'provideLinks'),
+            )
+          ) {
+            return { toolChoice: 'none' };
+          }
+          if (stepNumber >= 4) {
+            return {
+              activeTools: ['provideLinks'],
+              toolChoice: { type: 'tool', toolName: 'provideLinks' },
+            };
+          }
+        },
+        telemetry: {
+          functionId: 'docs-chat',
+        },
+        onError: ({ error }) => {
+          console.error('Error in chat API:', JSON.stringify(error, null, 2));
+        },
       });
-      updateActiveTrace({
-        output: finish.content,
-      });
 
-      // We're streaming, so we end the active span manually.
-      trace.getActiveSpan()?.end();
+      // Critical for serverless/edge runtimes: flush traces before the function exits.
+      after(() => langfuseSpanProcessor.forceFlush());
+
+      return createUIMessageStreamResponse({
+        stream: toUIMessageStream({ stream: result.stream }),
+      });
     },
-    onError: (error) => {
-      console.error('Error in chat API:', JSON.stringify(error, null, 2));
-
-      updateActiveObservation({
-        output: error,
-        level: 'ERROR',
-      });
-      updateActiveTrace({
-        output: error,
-      });
-
-      // We're streaming, so we end the active span manually.
-      trace.getActiveSpan()?.end();
-    },
-  });
-
-  // Critical for serverless/edge runtimes: flush traces before the function exits.
-  after(() => langfuseSpanProcessor.forceFlush());
-
-  return result.toUIMessageStreamResponse();
+  );
 };
-
-// Wrap handler with observe() to create a Langfuse trace.
-export const POST = observe(handler, {
-  name: 'ask-ai',
-  endOnExit: false,
-});

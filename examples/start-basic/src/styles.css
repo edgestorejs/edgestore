@@ -1,0 +1,25 @@
+* {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: light dark;
+  font-family: system-ui, sans-serif;
+}
+
+body {
+  margin: 0;
+}
+
+main {
+  display: grid;
+  max-width: 42rem;
+  gap: 1rem;
+  margin: 4rem auto;
+  padding: 0 1rem;
+}
+
+button {
+  width: fit-content;
+  padding: 0.5rem 1rem;
+}

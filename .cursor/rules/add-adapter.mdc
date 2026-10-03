@@ -73,8 +73,8 @@ index 0000000..b5d34a2
 +Then go to your [Dashboard](https://dashboard.edgestore.dev), create a new project and copy the keys to your environment variables.
 +
 +```shell title=".env"
-+EDGE_STORE_ACCESS_KEY=your-access-key
-+EDGE_STORE_SECRET_KEY=your-secret-key
++EDGESTORE_ACCESS_KEY=your-access-key
++EDGESTORE_SECRET_KEY=your-secret-key
 +```
 +
 +:::caution
@@ -581,28 +581,6 @@ index 0000000..93c79ec
 +            ctxToken: getCookie(req, 'edgestore-ctx'),
 +          }),
 +        );
-+      } else if (matchPath(pathname, '/proxy-file')) {
-+        const url = req.query ? (req.query as Record<string, any>).url : undefined;
-+        
-+        if (typeof url === 'string') {
-+          const cookieHeader = req.headers.cookie ?? '';
-+          
-+          const proxyRes = await fetch(url, {
-+            headers: {
-+              cookie: cookieHeader,
-+            },
-+          });
-+
-+          const data = await proxyRes.arrayBuffer();
-+          void reply.header(
-+            'Content-Type',
-+            proxyRes.headers.get('Content-Type') ?? 'application/octet-stream',
-+          );
-+
-+          return reply.send(Buffer.from(data));
-+        } else {
-+          return reply.status(400).send();
-+        }
 +      } else {
 +        return reply.status(404).send();
 +      }

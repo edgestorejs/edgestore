@@ -3,38 +3,42 @@ title: Quick Start
 description: Implement file uploads in your app with EdgeStore.
 ---
 
+## Set up with your agent
+
+<AgentPrompt>
+
+Read https://edgestore.dev/SKILL.md and add file uploads to this application.
+
+</AgentPrompt>
+
+[Install the skill or connect MCP](/docs/agents).
+
+<SetupGuide>
+
 ## Next.js Setup
 
 ### Install
 
-Let's start by installing the required packages.
-
 ```package-install
-@edgestore/server @edgestore/react zod
+@edgestore/server@rc @edgestore/react@rc
 ```
 
 ### Environment Variables
 
-Then go to your [Dashboard](https://dashboard.edgestore.dev), create a new project and copy the keys to your environment variables.
+Copy your project's keys from the [dashboard](https://dashboard.edgestore.dev) to the backend env file:
 
-```sh title=".env"
-EDGE_STORE_ACCESS_KEY=your-access-key
-EDGE_STORE_SECRET_KEY=your-secret-key
+```sh title=".env.local"
+EDGESTORE_ACCESS_KEY=your-access-key
+EDGESTORE_SECRET_KEY=your-secret-key
 ```
 
 <Callout type="warning">
-  Make sure you add `.env` to your `.gitignore` file. <br />
-  You don't want to commit your secret keys to your repository.
+  Use the app's existing env file, or `.env.local` for a new app. Keep it gitignored.
 </Callout>
 
 ### Backend
 
-Now we can create the backend code for our Next.js app.<br/>
-EdgeStore is compatible with both types of Next.js apps (`pages router` and `app router`).
-
-The example below is the simplest bucket you can create with EdgeStore. Just a simple file bucket with no validation that will be accessible by anyone with the link.
-
-You can have multiple buckets in your app, each with its own configuration.
+Choose your router below. This bucket's files are accessible to anyone with the link.
 
 <Tabs items={['app', 'pages']} groupId="next-router">
 
@@ -47,12 +51,12 @@ const es = initEdgeStore.create();
 /**
  * This is the main router for the EdgeStore buckets.
  */
-const edgeStoreRouter = es.router({
+const router = es.router({
   publicFiles: es.fileBucket(),
 });
 
 const handler = createEdgeStoreNextHandler({
-  router: edgeStoreRouter,
+  router,
 });
 
 export { handler as GET, handler as POST };
@@ -60,7 +64,7 @@ export { handler as GET, handler as POST };
 /**
  * This type is used to create the type-safe client for the frontend.
  */
-export type EdgeStoreRouter = typeof edgeStoreRouter;
+export type EdgeStoreRouter = typeof router;
 ```
 
 ```ts tab="pages" title="src/pages/api/edgestore/[...edgestore].ts"
@@ -72,25 +76,25 @@ const es = initEdgeStore.create();
 /**
  * This is the main router for the edgestore buckets.
  */
-const edgeStoreRouter = es.router({
+const router = es.router({
   publicFiles: es.fileBucket(),
 });
 
 export default createEdgeStoreNextHandler({
-  router: edgeStoreRouter,
+  router,
 });
 
 /**
  * This type is used to create the type-safe client for the frontend.
  */
-export type EdgeStoreRouter = typeof edgeStoreRouter;
+export type EdgeStoreRouter = typeof router;
 ```
 
 </Tabs>
 
 ### Frontend
 
-Now let's initiate our context provider.
+Create the React provider:
 
 <Tabs items={['app', 'pages']} groupId="next-router">
 
@@ -120,7 +124,7 @@ export { EdgeStoreProvider, useEdgeStore };
 
 </Tabs>
 
-And then wrap our app with the provider.
+Wrap your app with the provider:
 
 <Tabs items={['app', 'pages']} groupId="next-router">
 
@@ -155,10 +159,8 @@ import { EdgeStoreProvider } from '../lib/edgestore';
 
 export default function App({ Component, pageProps }: AppProps) {
   return (
-    {/* [!code ++] */}
     <EdgeStoreProvider>
       <Component {...pageProps} />
-    {/* [!code ++] */}
     </EdgeStoreProvider>
   );
 }
@@ -199,7 +201,7 @@ export default function Page() {
               },
             });
             // you can run some server action or api here
-            // to add the necessary data to your database
+            // to save `res.id` and `res.url` in your database
             console.log(res);
           }
         }}
@@ -230,7 +232,7 @@ const res = await edgestore.publicFiles.upload({
 
 ### Delete file
 
-You can delete a file by passing its url to the `delete` method.
+You can delete a file by passing its URL to the `delete` method.
 
 To be able to delete a file from a client component like this, you will need to set the `beforeDelete` [lifecycle hook](/docs/configuration#lifecycle-hooks) on the bucket.
 
@@ -239,6 +241,24 @@ await edgestore.publicFiles.delete({
   url: urlToDelete,
 });
 ```
+
+Use `deleteMany` to send one request for multiple files. Storage failures are
+reported per URL:
+
+```tsx
+const result = await edgestore.publicFiles.deleteMany({
+  urls: selectedFiles.map((file) => file.url),
+});
+
+for (const failure of result.failed) {
+  console.error(failure.url, failure.error.code);
+}
+```
+
+EdgeStore runs `beforeDelete` for every file before deleting any of them. If
+one file is unauthorized, the entire request is rejected without calling the
+storage provider. Once authorization succeeds, the provider may still return
+partial storage failures in `result.failed`.
 
 ### Cancel upload
 
@@ -270,6 +290,49 @@ abortController?.abort();
   For more information, check the [Error Handling](/docs/error-handling) page.
 </Callout>
 
+### Transform files before upload
+
+You can transform a file before EdgeStore validates and uploads it by passing
+the `transform` option. If the transform keeps the same extension, you can
+return the transformed `File` or `Blob` directly. If the transform changes the
+file type, return the transformed file with its new extension.
+
+For example, you can convert JPEG and PNG images to WebP before upload:
+
+```package-install
+npm install browser-image-compression
+```
+
+```tsx
+import imageCompression from 'browser-image-compression';
+
+const res = await edgestore.publicImages.upload({
+  file,
+  options: {
+    transform: async ({ file, extension, signal }) => {
+      if (!['image/jpeg', 'image/png'].includes(file.type)) {
+        return { file, extension };
+      }
+
+      const compressedFile = await imageCompression(file, {
+        fileType: 'image/webp',
+        initialQuality: 0.8,
+        useWebWorker: true,
+        signal,
+      });
+
+      return {
+        file: compressedFile,
+        extension: 'webp',
+      };
+    },
+  },
+});
+```
+
+If you provide `manualFileName`, EdgeStore will use that exact file name. Make
+sure the file name extension matches the transformed file type.
+
 ### Temporary files
 
 You can upload temporary files by passing the `temporary` option to the `upload` method.
@@ -285,11 +348,23 @@ await edgestore.publicFiles.upload({
 });
 ```
 
-To confirm a temporary file, you can use the `confirmUpload` method.
+For forms, upload files as temporary and save their returned IDs/keys and URLs
+with your record before confirming them. If the database save fails, leave the
+files temporary. Confirmation does not require waiting for hosted processing.
+
+Use the `confirm` method after saving:
 
 ```tsx
-await edgestore.publicFiles.confirmUpload({
+await edgestore.publicFiles.confirm({
   url: urlToConfirm,
+});
+```
+
+To confirm several temporary files in one request, use `confirmMany`:
+
+```tsx
+const result = await edgestore.publicFiles.confirmMany({
+  urls: temporaryFiles.map((file) => file.url),
 });
 ```
 
@@ -297,6 +372,45 @@ await edgestore.publicFiles.confirmUpload({
   You can check if a file is temporary in the dashboard. <br />
   Temporary files are marked with a clock icon.
 </Callout>
+
+### Wait for processing
+
+`upload` resolves as soon as the file is transferred. EdgeStore then processes
+it in the background, for example to generate an image thumbnail. The file ID
+and URL are final right away, so most apps can save them without waiting.
+
+When you need processed details immediately, such as whether the image got a
+thumbnail, pass `waitForProcessing`. The upload then resolves with the
+processed file, including freshly signed URLs for buckets with
+`autoSignedUrls`, and `onPhaseChange` tells you when the transfer finishes and
+processing begins.
+
+```tsx
+const res = await edgestore.publicImages.upload({
+  file,
+  onProgressChange: (progress) => setProgress(progress),
+  // [!code ++:6]
+  onPhaseChange: (phase) => {
+    if (phase === 'processing') setStatus('Processing…');
+  },
+  options: {
+    waitForProcessing: true, // or { timeoutMs: 120_000 }
+  },
+});
+```
+
+Processing failures reject with `UploadCanceledError`. If processing takes
+longer than `timeoutMs` (60 seconds by default), the upload rejects with
+`UploadProcessingTimeoutError`; the file may still finish processing. Both
+errors include the file `id`. See [Error Handling](/docs/error-handling).
+
+Waiting for processing does not confirm a [temporary file](#temporary-files).
+Confirm it separately once your app decides to keep it.
+
+Providers without background processing, such as S3 and Azure Blob, resolve
+once the transfer completes.
+
+</SetupGuide>
 
 ## Troubleshooting
 

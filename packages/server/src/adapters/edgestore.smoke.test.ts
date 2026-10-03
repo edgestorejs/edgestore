@@ -1,7 +1,7 @@
-import { initEdgeStore } from '@edgestore/shared';
-import { parse } from 'cookie';
+import { parseCookie } from 'cookie';
 import express from 'express';
 import { describe, expect, it } from 'vitest';
+import { initEdgeStore } from '../core/router';
 import {
   createSmokeFileName,
   getSmokeBucketName,
@@ -28,7 +28,7 @@ function getCookieHeader(res: Response) {
 
   return setCookies
     .map((cookie) => {
-      const [name, value] = Object.entries(parse(cookie))[0] ?? [];
+      const [name, value] = Object.entries(parseCookie(cookie))[0] ?? [];
       if (!name || !value) {
         throw new Error(`Could not parse Set-Cookie header: ${cookie}`);
       }
@@ -71,11 +71,11 @@ async function createSmokeServer() {
   const app = express();
   app.use(express.json());
   app.use((req, _res, next) => {
-    req.cookies = parse(req.headers.cookie ?? '');
+    req.cookies = parseCookie(req.headers.cookie ?? '');
     next();
   });
-  app.get('/edgestore/*', handler);
-  app.post('/edgestore/*', handler);
+  app.get('/edgestore/*path', handler);
+  app.post('/edgestore/*path', handler);
 
   const server = app.listen(0, '127.0.0.1');
 
@@ -120,15 +120,7 @@ describe('EdgeStore adapter live smoke test', () => {
       await expectOk(initRes);
 
       const cookie = getCookieHeader(initRes);
-      const initJson = (await initRes.json()) as {
-        baseUrl?: string;
-        providerName?: string;
-      };
-
-      expect(initJson).toMatchObject({
-        baseUrl: expect.any(String),
-        providerName: expect.any(String),
-      });
+      expect(await initRes.json()).toEqual({});
       expect(cookie).toContain('edgestore-ctx=');
 
       const fileBody = new Blob([SMOKE_CONTENT], {
@@ -160,12 +152,12 @@ describe('EdgeStore adapter live smoke test', () => {
           await expectOk(requestUploadRes);
 
           const uploadInfo = (await requestUploadRes.json()) as {
-            accessUrl?: string;
+            url?: string;
             size?: number;
             uploadUrl?: string;
           };
 
-          if (!uploadInfo.uploadUrl || !uploadInfo.accessUrl) {
+          if (!uploadInfo.uploadUrl || !uploadInfo.url) {
             throw new Error(
               'Upload URL or access URL missing from upload response',
             );
@@ -182,11 +174,11 @@ describe('EdgeStore adapter live smoke test', () => {
 
           return {
             size: uploadInfo.size ?? 0,
-            url: uploadInfo.accessUrl,
+            url: uploadInfo.url,
           };
         },
         confirmUpload: async (url) => {
-          const confirmRes = await fetch(`${baseUrl}/confirm-upload`, {
+          const confirmRes = await fetch(`${baseUrl}/confirm-uploads`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -194,15 +186,18 @@ describe('EdgeStore adapter live smoke test', () => {
             },
             body: JSON.stringify({
               bucketName: smokeBucketName,
-              url,
+              urls: [url],
             }),
           });
           await expectOk(confirmRes);
 
-          return (await confirmRes.json()) as { success: boolean };
+          const result = (await confirmRes.json()) as {
+            failed: unknown[];
+          };
+          return { success: result.failed.length === 0 };
         },
         deleteFile: async (url) => {
-          const deleteRes = await fetch(`${baseUrl}/delete-file`, {
+          const deleteRes = await fetch(`${baseUrl}/delete-files`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -210,12 +205,15 @@ describe('EdgeStore adapter live smoke test', () => {
             },
             body: JSON.stringify({
               bucketName: smokeBucketName,
-              url,
+              urls: [url],
             }),
           });
           await expectOk(deleteRes);
 
-          return (await deleteRes.json()) as { success: boolean };
+          const result = (await deleteRes.json()) as {
+            failed: unknown[];
+          };
+          return { success: result.failed.length === 0 };
         },
       });
 

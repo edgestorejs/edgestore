@@ -1,20 +1,10 @@
 import { randomUUID } from 'node:crypto';
+import { getEnv } from '../libs/env';
 
 export const SMOKE_CONTENT = 'edgestore smoke test';
 
-export function getSmokeApiEndpoint() {
-  return process.env.EDGE_STORE_API_ENDPOINT ?? 'https://api.edgestore.dev';
-}
-
 export function getSmokeBucketName() {
   return process.env.EDGESTORE_SMOKE_BUCKET_NAME ?? 'publicFiles';
-}
-
-export function getSmokeBasicAuthHeader() {
-  requireSmokeCredentials();
-  return `Basic ${Buffer.from(
-    `${process.env.EDGE_STORE_ACCESS_KEY}:${process.env.EDGE_STORE_SECRET_KEY}`,
-  ).toString('base64')}`;
 }
 
 export function createSmokeFileName(prefix: string) {
@@ -22,12 +12,9 @@ export function createSmokeFileName(prefix: string) {
 }
 
 export function requireSmokeCredentials() {
-  if (
-    !process.env.EDGE_STORE_ACCESS_KEY ||
-    !process.env.EDGE_STORE_SECRET_KEY
-  ) {
+  if (!getEnv('EDGESTORE_ACCESS_KEY') || !getEnv('EDGESTORE_SECRET_KEY')) {
     throw new Error(
-      'EDGE_STORE_ACCESS_KEY and EDGE_STORE_SECRET_KEY are required',
+      'EDGESTORE_ACCESS_KEY and EDGESTORE_SECRET_KEY are required',
     );
   }
 }

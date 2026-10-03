@@ -1,4 +1,5 @@
 {
+  "ignoreCommand": "node ../../scripts/vercel-ignore.mjs examples/components",
   "redirects": [
     {
       "source": "/",

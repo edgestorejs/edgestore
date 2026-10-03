@@ -1,43 +1,32 @@
+import type { StandardSchemaV1 } from '@standard-schema/spec';
 import { type MaybePromise } from '../types';
 import {
-  type AnyBuilder,
+  type AnyContext,
   type AnyMetadata,
   type EdgeStoreRouter,
 } from './bucketBuilder';
 
-export type InitParams = {
-  ctx: any;
-  router: EdgeStoreRouter<any>;
+export type InitParams<TCtx extends AnyContext = AnyContext> = {
+  ctx: TCtx;
+  router: EdgeStoreRouter<TCtx>;
+};
+
+/** Requests the browser sends to file origins before loading protected files. */
+export type ClientInit = {
+  /** Absolute initialization URLs, one per file origin. */
+  urls: string[];
+  headers?: Record<string, string>;
 };
 
 export type InitRes = {
-  token?: string;
-};
-
-export type GetFileParams = {
-  url: string;
-};
-
-export type GetFileRes = {
-  url: string;
-  size: number;
-  uploadedAt: Date;
-  path: {
-    [key: string]: string;
-  };
-  metadata: {
-    [key: string]: string;
-  };
+  clientInit?: ClientInit;
 };
 
 export type RequestUploadParams = {
-  multipart?: {
-    uploadId?: string;
-    parts: number[];
-  };
   bucketName: string;
   bucketType: string;
   fileInfo: {
+    type?: string;
     size: number;
     extension: string;
     isPublic: boolean;
@@ -56,17 +45,219 @@ export type RequestUploadParams = {
   };
 };
 
-export type RequestUploadPartsParams = {
-  multipart: {
-    uploadId: string;
-    parts: number[];
-  };
-  path: string;
+export type ProviderFilterValue =
+  | string
+  | Partial<{
+      eq: string;
+      neq: string;
+      gt: string;
+      gte: string;
+      lt: string;
+      lte: string;
+      startsWith: string;
+      endsWith: string;
+      between: [string, string];
+    }>;
+
+export type ListFilesFilter = {
+  AND?: ListFilesFilter[];
+  OR?: ListFilesFilter[];
+  uploadedAt?: ProviderFilterValue;
+  path?: Record<string, ProviderFilterValue>;
+  metadata?: Record<string, ProviderFilterValue>;
+};
+
+export type FileReference = { id: string } | { key: string } | { url: string };
+
+export type ProviderFile = {
+  id: string;
+  url: string;
+  key: string;
+  thumbnailUrl: string | null;
+  thumbnailKey: string | null;
+  bucketId: string;
+  bucketName: string;
+  projectId: string;
+  accountId: string;
+  name: string;
+  path: Record<string, string>;
+  metadata: Record<string, string>;
+  sizeBytes: number;
+  mimeType: string | null;
+  state: 'requested' | 'uploaded' | 'deleted' | 'replace_requested';
+  temporary: boolean;
+  uploadedAt: Date;
+  updatedAt: Date;
+};
+
+export type BackendFile = {
+  url: string;
+  sizeBytes: number;
+  /** Router-derived path values, when this operation retrieves them. */
+  path?: Record<string, string>;
+  /** Router-derived metadata values, when this operation retrieves them. */
+  metadata?: Record<string, string>;
+  uploadedAt: Date | string;
+  updatedAt: Date | string;
+};
+
+export type ProviderFileMutationResult<
+  TErrorCode extends string =
+    | 'FILE_NOT_CONFIRMABLE'
+    | 'FILE_NOT_DELETABLE'
+    | 'FILE_NOT_RESTORABLE'
+    | 'INVALID_FILE_REF',
+> = {
+  results: (
+    | { success: true }
+    | {
+        success: false;
+        error: {
+          code: TErrorCode;
+          message: string;
+        };
+      }
+  )[];
+};
+
+export type BackendUploadParams = {
+  bucketName: string;
+  bucketType: string;
+  fileInfo: RequestUploadParams['fileInfo'];
+  autoSignedUrls?: RequestUploadParams['autoSignedUrls'];
+  source: Blob;
+  signal?: AbortSignal;
+  onProgress?: (progress: {
+    transferredBytes: number;
+    totalBytes: number;
+    percentage: number;
+    phase: 'preparing' | 'uploading' | 'processing';
+  }) => void;
+};
+
+/** A signed URL for reading a file that is not publicly accessible. */
+export type SignedReadUrl = {
+  signedUrl: string;
+  signedThumbnailUrl?: string | null;
+  expiresAt: Date | string;
+  expiresIn: number;
+};
+
+export type BackendUploadResult<TFile extends BackendFile = ProviderFile> = {
+  file: TFile;
+  signedReadUrl?: SignedReadUrl;
+};
+
+export type BackendUploadOperation<TFile extends BackendFile = ProviderFile> = (
+  params: BackendUploadParams,
+) => MaybePromise<BackendUploadResult<TFile>>;
+
+export type BackendGetFileOperation<
+  TFile extends BackendFile = ProviderFile,
+  TFileReference = FileReference,
+> = (params: {
+  bucketName: string;
+  file: TFileReference;
+}) => MaybePromise<TFile>;
+
+export type BackendListFilesResult<
+  TFile extends BackendFile = ProviderFile,
+  TCursor = string,
+> = {
+  items: TFile[];
+  limit: number;
+  nextCursor: TCursor | null;
+  hasMore: boolean;
+};
+
+export type BackendListFilesOperation<
+  TFile extends BackendFile = ProviderFile,
+  TCursor = string,
+> = (params: {
+  bucketName: string;
+  filter?: ListFilesFilter;
+  cursor?: TCursor;
+  limit?: number;
+}) => MaybePromise<BackendListFilesResult<TFile, TCursor>>;
+
+export type BackendFileMutationOperation<
+  TFileReference = FileReference,
+  TErrorCode extends string =
+    | 'FILE_NOT_CONFIRMABLE'
+    | 'FILE_NOT_DELETABLE'
+    | 'FILE_NOT_RESTORABLE'
+    | 'INVALID_FILE_REF',
+> = (params: {
+  bucketName: string;
+  files: TFileReference[];
+}) => MaybePromise<ProviderFileMutationResult<TErrorCode>>;
+
+export type BackendGetSignedUrlsOperation<
+  TFileReference = FileReference,
+  TResult extends GetSignedUrlRes = GetSignedUrlRes,
+> = (params: {
+  bucketName: string;
+  files: TFileReference[];
+  expiresIn?: number;
+  includeThumbnails?: boolean;
+}) => MaybePromise<TResult[]>;
+
+/** Identifies one multipart upload session created by `uploads.request`. */
+export type MultipartUploadSession = {
+  uploadId: string;
+  key: string;
+};
+
+export type RequestUploadPartsParams = MultipartUploadSession & {
+  parts: number[];
 };
 
 export type RequestUploadPartsRes = {
+  parts: {
+    partNumber: number;
+    uploadUrl: string;
+  }[];
+};
+
+export type CompleteMultipartUploadParams = MultipartUploadSession & {
+  parts: {
+    partNumber: number;
+    /**
+     * The part's `ETag` response header, when storage returns one. Providers
+     * that need it (S3) reject completion without it.
+     */
+    eTag?: string;
+  }[];
+};
+
+type RequestUploadAccess = {
+  /** Stable file ID, when the provider exposes one. */
+  id?: string;
+  /** Stable object key, when the provider exposes one. */
+  key?: string;
+  /** The file URL once the upload completes. */
+  url: string;
+  thumbnailUrl?: string | null;
+  /** Returned when the bucket requests signed URLs for uploaded files. */
+  signedReadUrl?: SignedReadUrl;
+};
+
+export type SinglePartRequestUploadRes = RequestUploadAccess & {
+  uploadUrl: string;
+  /** Headers the browser must send with the upload request. */
+  uploadHeaders?: Record<string, string>;
+};
+
+export type MultipartRequestUploadRes = RequestUploadAccess & {
   multipart: {
+    key: string;
     uploadId: string;
+    partSize: number;
+    totalParts: number;
+    /**
+     * Signed URLs for some or all parts. Clients request missing or expired
+     * part URLs through `uploads.multipart.requestParts`.
+     */
     parts: {
       partNumber: number;
       uploadUrl: string;
@@ -74,54 +265,8 @@ export type RequestUploadPartsRes = {
   };
 };
 
-export type CompleteMultipartUploadParams = {
-  uploadId: string;
-  key: string;
-  parts: {
-    partNumber: number;
-    eTag: string;
-  }[];
-};
-
-export type CompleteMultipartUploadRes = {
-  success: boolean;
-};
-
 export type RequestUploadRes =
-  | {
-      uploadUrl: string;
-      accessUrl: string;
-      thumbnailUrl?: string | null;
-      accessSignedUrl?: string;
-      accessSignedThumbnailUrl?: string | null;
-      accessSignedUrlExpiresAt?: Date | string;
-      accessSignedUrlExpiresIn?: number;
-    }
-  | {
-      multipart: {
-        key: string;
-        uploadId: string;
-        partSize: number;
-        totalParts: number;
-        parts: {
-          partNumber: number;
-          uploadUrl: string;
-        }[];
-      };
-      accessUrl: string;
-      thumbnailUrl?: string | null;
-      accessSignedUrl?: string;
-      accessSignedThumbnailUrl?: string | null;
-      accessSignedUrlExpiresAt?: Date | string;
-      accessSignedUrlExpiresIn?: number;
-    };
-
-export type GetSignedUrlsParams = {
-  bucketName: string;
-  urls: string[];
-  expiresIn?: number;
-  includeThumbnails?: boolean;
-};
+  SinglePartRequestUploadRes | MultipartRequestUploadRes;
 
 export type GetSignedUrlRes = {
   url: string;
@@ -132,41 +277,142 @@ export type GetSignedUrlRes = {
   signedThumbnailUrl?: string | null;
 };
 
-export type ConfirmUpload = {
-  bucket: AnyBuilder;
-  url: string;
+export type ProviderReferenceDefinition<
+  TSchema extends StandardSchemaV1 = StandardSchemaV1,
+> = {
+  schema: TSchema;
+  fromUrl: (url: string) => MaybePromise<unknown>;
 };
 
-export type ConfirmUploadRes = {
-  success: boolean;
+/** Processing state of a requested upload. */
+export type UploadStatus =
+  | { status: 'processing' | 'canceled' }
+  | {
+      status: 'completed';
+      file: {
+        url: string;
+        key?: string;
+        thumbnailUrl?: string | null;
+        sizeBytes: number;
+      };
+    };
+
+type ProviderUploadBase<
+  TUpload extends BackendUploadOperation<BackendFile> | undefined =
+    BackendUploadOperation<BackendFile> | undefined,
+> = {
+  upload?: TUpload;
+  /**
+   * Upload options this provider cannot honor. Options set to `false` are
+   * rejected by the upload types and at runtime.
+   */
+  supportedOptions?: { temporary?: boolean; replaceTargetUrl?: boolean };
+  /**
+   * Reports whether a requested upload finished asynchronous processing.
+   * Providers without asynchronous processing omit it; their uploads are
+   * ready once the transfer completes.
+   */
+  getStatus?: (params: {
+    bucketName: string;
+    /** The file ID returned by `request`. */
+    id: string;
+  }) => MaybePromise<UploadStatus>;
 };
 
-export type DeleteFileParams = {
-  bucket: AnyBuilder;
-  url: string;
-};
-
-export type DeleteFileRes = {
-  success: boolean;
-};
-
-export type Provider = {
-  name: string;
-  init: (params: InitParams) => MaybePromise<InitRes>;
-  getBaseUrl: () => MaybePromise<string>;
-  getFile: (params: GetFileParams) => MaybePromise<GetFileRes>;
-  requestUpload: (
-    params: RequestUploadParams,
-  ) => MaybePromise<RequestUploadRes>;
-  requestUploadParts: (
+export type ProviderMultipartUploads = {
+  requestParts: (
     params: RequestUploadPartsParams,
   ) => MaybePromise<RequestUploadPartsRes>;
-  getSignedUrls?: (
-    params: GetSignedUrlsParams,
-  ) => MaybePromise<GetSignedUrlRes[]>;
-  completeMultipartUpload: (
-    params: CompleteMultipartUploadParams,
-  ) => MaybePromise<CompleteMultipartUploadRes>;
-  confirmUpload: (params: ConfirmUpload) => MaybePromise<ConfirmUploadRes>;
-  deleteFile: (params: DeleteFileParams) => MaybePromise<DeleteFileRes>;
+  complete: (params: CompleteMultipartUploadParams) => MaybePromise<void>;
+  /** Cancels an incomplete upload and releases its uploaded parts. */
+  abort: (params: MultipartUploadSession) => MaybePromise<void>;
+};
+
+export type ProviderUploads<
+  TUpload extends BackendUploadOperation<BackendFile> | undefined =
+    BackendUploadOperation<BackendFile> | undefined,
+> =
+  | (ProviderUploadBase<TUpload> & {
+      request: (
+        params: RequestUploadParams,
+      ) => MaybePromise<SinglePartRequestUploadRes>;
+      multipart?: never;
+    })
+  | (ProviderUploadBase<TUpload> & {
+      request: (params: RequestUploadParams) => MaybePromise<RequestUploadRes>;
+      multipart: ProviderMultipartUploads;
+    });
+
+export type ProviderFiles<
+  TFileReference = FileReference,
+  TCursor = string,
+  TGet extends BackendGetFileOperation<BackendFile, TFileReference> =
+    BackendGetFileOperation<BackendFile, TFileReference>,
+  TList extends BackendListFilesOperation<BackendFile, TCursor> | undefined =
+    BackendListFilesOperation<BackendFile, TCursor> | undefined,
+  TConfirm extends
+    BackendFileMutationOperation<TFileReference, string> | undefined =
+    BackendFileMutationOperation<TFileReference, string> | undefined,
+  TDelete extends
+    BackendFileMutationOperation<TFileReference, string> | undefined =
+    BackendFileMutationOperation<TFileReference, string> | undefined,
+  TRestore extends
+    BackendFileMutationOperation<TFileReference, string> | undefined =
+    BackendFileMutationOperation<TFileReference, string> | undefined,
+  TGetSignedUrls extends
+    BackendGetSignedUrlsOperation<TFileReference> | undefined =
+    BackendGetSignedUrlsOperation<TFileReference> | undefined,
+> = {
+  cursorSchema?: StandardSchemaV1<unknown, TCursor>;
+  get: TGet;
+  list?: TList;
+  confirm?: TConfirm;
+  delete?: TDelete;
+  restore?: TRestore;
+  getSignedUrls?: TGetSignedUrls;
+};
+
+export type EdgeStoreProvider<
+  TReferenceSchema extends StandardSchemaV1 = StandardSchemaV1<
+    unknown,
+    FileReference
+  >,
+  TCursor = string,
+  TUploads extends ProviderUploads = ProviderUploads,
+  TFiles extends ProviderFiles<
+    StandardSchemaV1.InferOutput<TReferenceSchema>,
+    TCursor
+  > = ProviderFiles<StandardSchemaV1.InferOutput<TReferenceSchema>, TCursor>,
+> = {
+  name: string;
+  init: <TCtx extends AnyContext>(
+    params: InitParams<TCtx>,
+  ) => MaybePromise<InitRes>;
+  reference: ProviderReferenceDefinition<TReferenceSchema>;
+  uploads: TUploads;
+  files: TFiles;
+};
+
+export type AnyEdgeStoreProvider = EdgeStoreProvider<
+  StandardSchemaV1<any, any>,
+  any,
+  ProviderUploads,
+  ProviderFiles<any, any>
+>;
+
+export type DefaultEdgeStoreProvider = EdgeStoreProvider<
+  StandardSchemaV1<unknown, FileReference>,
+  string
+> & {
+  uploads: ProviderUploads<BackendUploadOperation> & {
+    upload: BackendUploadOperation;
+  };
+  files: ProviderFiles<FileReference, string> & {
+    get: BackendGetFileOperation;
+    list: BackendListFilesOperation;
+    confirm: BackendFileMutationOperation;
+    delete: BackendFileMutationOperation;
+    restore: BackendFileMutationOperation;
+    getSignedUrls: BackendGetSignedUrlsOperation;
+  };
 };

@@ -1,14 +1,8 @@
-import { type AnyRouter } from '@edgestore/shared';
+import { type AnyRouter, type SharedInitRes } from '@edgestore/shared';
 import * as React from 'react';
 import { createNextProxy, type BucketFunctions } from './createNextProxy';
 import EdgeStoreClientError from './libs/errors/EdgeStoreClientError';
 import { handleError } from './libs/errors/handleError';
-
-const DEFAULT_BASE_URL =
-  (typeof process !== 'undefined'
-    ? process.env.NEXT_PUBLIC_EDGE_STORE_BASE_URL
-    : // @ts-expect-error - In Vite, the env variables are available on `import.meta`.
-      import.meta.env?.EDGE_STORE_BASE_URL) ?? 'https://files.edgestore.dev';
 
 type EdgeStoreContextValue<TRouter extends AnyRouter> = {
   edgestore: BucketFunctions<TRouter>;
@@ -37,13 +31,6 @@ export function createEdgeStoreProvider<TRouter extends AnyRouter>(opts?: {
    * @default 5
    */
   maxConcurrentUploads?: number;
-  /**
-   * Accessing EdgeStore protected files in development mode requires a proxy.
-   * You might want to disable this for other providers if you are overwriting the path.
-   *
-   * @default false
-   */
-  disableDevProxy?: boolean;
 }) {
   const EdgeStoreContext = React.createContext<
     EdgeStoreContextValue<TRouter> | undefined
@@ -68,7 +55,6 @@ export function createEdgeStoreProvider<TRouter extends AnyRouter>(opts?: {
       context: EdgeStoreContext,
       basePath,
       maxConcurrentUploads: opts?.maxConcurrentUploads,
-      disableDevProxy: opts?.disableDevProxy,
     });
   };
 
@@ -117,13 +103,11 @@ function EdgeStoreProviderInner<TRouter extends AnyRouter>({
   context,
   basePath,
   maxConcurrentUploads,
-  disableDevProxy,
 }: {
   children: React.ReactNode;
   context: React.Context<EdgeStoreContextValue<TRouter> | undefined>;
   basePath?: string;
   maxConcurrentUploads?: number;
-  disableDevProxy?: boolean;
 }) {
   const apiPath = basePath ? `${basePath}` : '/api/edgestore';
   const [state, setState] = React.useState<EdgeStoreProviderState>({
@@ -156,26 +140,24 @@ function EdgeStoreProviderInner<TRouter extends AnyRouter>({
         credentials: 'include',
       });
       if (res.ok) {
-        const json = await res.json();
+        const json = (await res.json()) as Omit<SharedInitRes, 'newCookies'>;
 
-        // Older servers do not return requiresFileAccessCookie, so only skip
-        // _init when the server explicitly says the files cookie is unnecessary.
-        if (
-          json.providerName === 'edgestore' &&
-          json.requiresFileAccessCookie !== false
-        ) {
-          if (!json.token) {
-            throw new EdgeStoreClientError("Couldn't initialize EdgeStore.");
+        if (json.clientInit) {
+          const { clientInit } = json;
+          const urls = clientInit.urls;
+          if (urls.length === 0) {
+            throw new EdgeStoreClientError('Missing file initialization URL.');
           }
-
-          const innerRes = await fetch(`${DEFAULT_BASE_URL}/_init`, {
-            method: 'GET',
-            credentials: 'include',
-            headers: {
-              'x-edgestore-token': json.token,
-            },
-          });
-          if (innerRes.ok) {
+          const responses = await Promise.all(
+            [...new Set(urls)].map((url) =>
+              fetch(url, {
+                method: 'GET',
+                credentials: 'include',
+                headers: clientInit.headers,
+              }),
+            ),
+          );
+          if (responses.every((response) => response.ok)) {
             // update state
             setState({
               loading: false,
@@ -191,7 +173,6 @@ function EdgeStoreProviderInner<TRouter extends AnyRouter>({
             throw new EdgeStoreClientError("Couldn't initialize EdgeStore.");
           }
         } else {
-          // For non-edgestore providers, just update state without calling _init
           setState({
             loading: false,
             initialized: true,
@@ -228,7 +209,6 @@ function EdgeStoreProviderInner<TRouter extends AnyRouter>({
             apiPath,
             uploadingCountRef,
             maxConcurrentUploads,
-            disableDevProxy,
           }),
           reset,
           state,

@@ -1,127 +1,209 @@
 'use client';
 
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import {
-  AlertCircleIcon,
-  CheckCircleIcon,
-  FileIcon,
-  Trash2Icon,
-  XIcon,
-} from 'lucide-react';
+import { CheckIcon, RotateCwIcon, XIcon } from 'lucide-react';
 import * as React from 'react';
-import { type DropzoneOptions } from 'react-dropzone';
+import { type Accept } from 'react-dropzone';
 import { Dropzone } from './dropzone';
 import { ProgressBar } from './progress-bar';
-import { formatFileSize, useUploader } from './uploader-provider';
+import {
+  fileExtension,
+  fileKind,
+  formatFileSize,
+  type FileKind,
+} from './upload-utils';
+import { useUploader, type FileState } from './uploader-provider';
+
+const KIND_CLASSNAMES: Record<FileKind, string> = {
+  image: 'text-purple-600 dark:text-purple-400',
+  video: 'text-pink-600 dark:text-pink-400',
+  audio: 'text-cyan-600 dark:text-cyan-400',
+  pdf: 'text-red-600 dark:text-red-400',
+  doc: 'text-blue-600 dark:text-blue-400',
+  sheet: 'text-green-600 dark:text-green-400',
+  slides: 'text-orange-600 dark:text-orange-400',
+  archive: 'text-yellow-600 dark:text-yellow-400',
+  code: 'text-teal-600 dark:text-teal-400',
+  other: 'text-muted-foreground',
+};
 
 /**
- * Displays a list of files with their upload status, progress, and controls.
+ * A colored tile with the file's extension.
+ */
+export function FileBadge({
+  file,
+  className,
+}: {
+  file: File;
+  className?: string;
+}) {
+  return (
+    <span
+      aria-hidden="true"
+      className={cn(
+        'grid h-10 w-9 shrink-0 place-items-center rounded-md border border-current/25 bg-current/10 font-mono text-[10px] font-bold uppercase',
+        KIND_CLASSNAMES[fileKind(file)],
+        className,
+      )}
+    >
+      {fileExtension(file.name).slice(0, 4) || 'file'}
+    </span>
+  );
+}
+
+function IconButton({
+  label,
+  className,
+  ...props
+}: React.ComponentProps<'button'> & { label: string }) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      className={cn(
+        'grid size-8 place-items-center rounded-md text-muted-foreground transition-colors outline-none hover:bg-muted hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 [&_svg]:size-4',
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+/**
+ * One file with its status, progress and actions (retry, cancel, remove).
+ */
+export function FileListItem({
+  fileState,
+  disabled,
+  className,
+  ...props
+}: React.ComponentProps<'li'> & {
+  fileState: FileState;
+  /** Hides the retry, cancel and remove actions. */
+  disabled?: boolean;
+}) {
+  const { removeFile, cancelUpload, uploadFiles } = useUploader();
+  const { file, key, status, progress, error } = fileState;
+
+  return (
+    <li
+      data-status={status}
+      className={cn(
+        'relative flex animate-in items-center gap-3 overflow-hidden rounded-xl border bg-background py-2.5 pr-2 pl-2.5 fade-in-0 slide-in-from-top-1 data-[status=ERROR]:border-destructive/40',
+        className,
+      )}
+      {...props}
+    >
+      <FileBadge file={file} />
+      <div className="grid min-w-0 flex-1 gap-1">
+        <div className="flex min-w-0 items-center gap-1.5">
+          <span className="truncate text-sm font-medium" title={file.name}>
+            {file.name}
+          </span>
+          {status === 'COMPLETE' && (
+            <span className="grid size-4 shrink-0 place-items-center rounded-full bg-emerald-600 text-white dark:bg-emerald-500">
+              <CheckIcon className="size-2.5" strokeWidth={4} />
+              <span className="sr-only">Uploaded</span>
+            </span>
+          )}
+        </div>
+        <p
+          className={cn(
+            'text-xs text-muted-foreground tabular-nums',
+            status === 'ERROR' && 'text-destructive',
+          )}
+        >
+          {status === 'ERROR'
+            ? (error ?? 'Upload failed')
+            : status === 'UPLOADING'
+              ? `${formatFileSize((file.size * progress) / 100)} of ${formatFileSize(file.size)} · ${Math.round(progress)}%`
+              : formatFileSize(file.size)}
+        </p>
+      </div>
+      {/* Pinned to the bottom edge so the row keeps its height when the upload ends. */}
+      {status === 'UPLOADING' && (
+        <ProgressBar
+          progress={progress}
+          aria-label={`Uploading ${file.name}`}
+          className="absolute inset-x-0 bottom-0 h-0.5 rounded-none bg-transparent"
+          indicatorClassName="rounded-none"
+        />
+      )}
+      {!disabled && (
+        <div className="flex items-center">
+          {status === 'ERROR' && (
+            <IconButton
+              label={`Retry ${file.name}`}
+              onClick={() => void uploadFiles([key])}
+            >
+              <RotateCwIcon />
+            </IconButton>
+          )}
+          {status === 'UPLOADING' ? (
+            <IconButton
+              label={`Cancel ${file.name}`}
+              onClick={() => cancelUpload(key)}
+            >
+              <XIcon />
+            </IconButton>
+          ) : (
+            <IconButton
+              label={`Remove ${file.name}`}
+              onClick={() => removeFile(key)}
+            >
+              <XIcon />
+            </IconButton>
+          )}
+        </div>
+      )}
+    </li>
+  );
+}
+
+/**
+ * Lists the files of the nearest `UploaderProvider`.
  *
- * @component
  * @example
  * ```tsx
  * <FileList className="my-4" />
  * ```
  */
-const FileList = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => {
-  const { fileStates, removeFile, cancelUpload } = useUploader();
-
-  if (!fileStates.length) return null;
+export function FileList({
+  disabled,
+  className,
+  ...props
+}: React.ComponentProps<'ul'> & {
+  /** Hides the retry, cancel and remove actions. */
+  disabled?: boolean;
+}) {
+  const { fileStates } = useUploader();
+  if (fileStates.length === 0) return null;
 
   return (
-    <div
-      ref={ref}
-      className={cn('mt-3 flex w-full flex-col gap-2', className)}
+    <ul
+      aria-label="Files"
+      className={cn('grid w-full gap-2', className)}
       {...props}
     >
-      {fileStates.map(({ file, abortController, progress, status, key }) => {
-        return (
-          <div
-            key={key}
-            className="shadow-xs border-border flex flex-col justify-center rounded border px-4 py-3"
-          >
-            <div className="text-foreground flex items-center gap-3">
-              <FileIcon className="text-muted-foreground h-8 w-8 shrink-0" />
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center justify-between text-xs">
-                  <div className="truncate text-sm">
-                    <div className="overflow-hidden text-ellipsis whitespace-nowrap font-medium">
-                      {file.name}
-                    </div>
-                    <div className="text-muted-foreground text-xs">
-                      {formatFileSize(file.size)}
-                    </div>
-                  </div>
-
-                  <div className="ml-2 flex items-center gap-2">
-                    {status === 'ERROR' && (
-                      <div className="text-destructive flex items-center text-xs">
-                        <AlertCircleIcon className="mr-1 h-4 w-4" />
-                      </div>
-                    )}
-
-                    {status === 'UPLOADING' && (
-                      <div className="flex flex-col items-end">
-                        {abortController && (
-                          <button
-                            type="button"
-                            className="hover:bg-secondary rounded-md p-0.5 transition-colors duration-200"
-                            disabled={progress === 100}
-                            onClick={() => {
-                              cancelUpload(key);
-                            }}
-                          >
-                            <XIcon className="text-muted-foreground block h-4 w-4 shrink-0" />
-                          </button>
-                        )}
-                        <div>{Math.round(progress)}%</div>
-                      </div>
-                    )}
-
-                    {status !== 'UPLOADING' && status !== 'COMPLETE' && (
-                      <button
-                        type="button"
-                        className="text-muted-foreground hover:bg-secondary hover:text-destructive rounded-md p-1 transition-colors duration-200"
-                        onClick={() => {
-                          removeFile(key);
-                        }}
-                        title="Remove"
-                      >
-                        <Trash2Icon className="block h-4 w-4 shrink-0" />
-                      </button>
-                    )}
-
-                    {status === 'COMPLETE' && (
-                      <CheckCircleIcon className="text-primary h-5 w-5 shrink-0" />
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Progress Bar */}
-            {status === 'UPLOADING' && <ProgressBar progress={progress} />}
-          </div>
-        );
-      })}
-    </div>
+      {fileStates.map((fileState) => (
+        <FileListItem
+          key={fileState.key}
+          fileState={fileState}
+          disabled={disabled}
+        />
+      ))}
+    </ul>
   );
-});
-FileList.displayName = 'FileList';
+}
 
 /**
  * Props for the FileUploader component.
- *
- * @interface FileUploaderProps
- * @extends {React.HTMLAttributes<HTMLDivElement>}
  */
-export interface FileUploaderProps
-  extends React.HTMLAttributes<HTMLDivElement> {
+export type FileUploaderProps = React.ComponentProps<'div'> & {
   /**
-   * Maximum number of files allowed.
+   * Maximum number of files allowed in total.
    */
   maxFiles?: number;
 
@@ -135,10 +217,17 @@ export interface FileUploaderProps
    *
    * @example
    * ```tsx
-   * accept={{ 'image/*': ['.png', '.jpg', '.jpeg'] }}
+   * accept={{ 'application/pdf': ['.pdf'] }}
    * ```
    */
-  accept?: DropzoneOptions['accept'];
+  accept?: Accept;
+
+  /**
+   * Human-readable list of accepted types, shown in the hint and messages.
+   *
+   * @example "PDF or TXT"
+   */
+  typesLabel?: string;
 
   /**
    * Whether the uploader is disabled.
@@ -146,67 +235,69 @@ export interface FileUploaderProps
   disabled?: boolean;
 
   /**
-   * Additional className for the dropzone component.
+   * Additional className for the dropzone.
    */
   dropzoneClassName?: string;
 
   /**
-   * Additional className for the file list component.
+   * Additional className for the file list.
    */
   fileListClassName?: string;
-
-  /**
-   * Ref for the input element inside the Dropzone.
-   */
-  inputRef?: React.Ref<HTMLInputElement>;
-}
+};
 
 /**
- * A complete file uploader component with dropzone and file list.
+ * A dropzone with a list of files, their progress and a summary.
  *
- * @component
  * @example
  * ```tsx
  * <FileUploader
  *   maxFiles={5}
  *   maxSize={1024 * 1024 * 10} // 10MB
- *   accept={{ 'application/pdf': [] }}
+ *   accept={{ 'application/pdf': ['.pdf'] }}
+ *   typesLabel="PDF"
  * />
  * ```
  */
-const FileUploader = React.forwardRef<HTMLDivElement, FileUploaderProps>(
-  (
-    {
-      maxFiles,
-      maxSize,
-      accept,
-      disabled,
-      className,
-      dropzoneClassName,
-      fileListClassName,
-      inputRef,
-      ...props
-    },
-    ref,
-  ) => {
-    return (
-      <div ref={ref} className={cn('w-full space-y-4', className)} {...props}>
-        <Dropzone
-          ref={inputRef}
-          dropzoneOptions={{
-            maxFiles,
-            maxSize,
-            accept,
-          }}
-          disabled={disabled}
-          className={dropzoneClassName}
-        />
+export function FileUploader({
+  maxFiles,
+  maxSize,
+  accept,
+  typesLabel,
+  disabled,
+  className,
+  dropzoneClassName,
+  fileListClassName,
+  ...props
+}: FileUploaderProps) {
+  const { fileStates, resetFiles } = useUploader();
+  const completed = fileStates.filter((fs) => fs.status === 'COMPLETE').length;
+  const totalSize = fileStates.reduce((sum, fs) => sum + fs.file.size, 0);
 
-        <FileList className={fileListClassName} />
-      </div>
-    );
-  },
-);
-FileUploader.displayName = 'FileUploader';
-
-export { FileList, FileUploader };
+  return (
+    <div className={cn('flex w-full flex-col gap-3', className)} {...props}>
+      <Dropzone
+        dropzoneOptions={{ maxFiles, maxSize, accept, typesLabel }}
+        disabled={disabled}
+        className={dropzoneClassName}
+      />
+      <FileList className={fileListClassName} disabled={disabled} />
+      {fileStates.length > 0 && (
+        <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+          <span className="tabular-nums">
+            {completed} of {fileStates.length} uploaded ·{' '}
+            {formatFileSize(totalSize)}
+          </span>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={resetFiles}
+            disabled={disabled}
+          >
+            Clear all
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}

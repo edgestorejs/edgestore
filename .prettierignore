@@ -2,9 +2,15 @@ __generated__/
 docs/.source/
 **/*.gen.ts
 **/*.gen.tsx
+packages/sdk/src/generated/api-v2.ts
 .docusaurus/
 .test/
 **/.next/
+**/.astro/
+**/.react-router/
+**/.output/
+**/.vinxi/
+**/next-env.d.ts
 **/docs/build/
 dist/
 pnpm-lock.yaml
