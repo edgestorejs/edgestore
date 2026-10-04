@@ -1,5 +1,22 @@
 # @edgestore/cli
 
+## 1.0.0
+
+### Major Changes
+
+- [#168](https://github.com/edgestorejs/edgestore/pull/168) [`fa6cac2`](https://github.com/edgestorejs/edgestore/commit/fa6cac2fa96cd1419a87d30be29d250a1d7dbb33) Thanks [@raviships](https://github.com/raviships)! - Introduce the `edgestore` CLI. It supports browser and device-code OAuth login;
+  management of accounts, projects, members, buckets, files, project keys, and
+  tokens; concurrent uploads with progress; guided `init`; coding-agent setup for
+  Codex, Claude Code, and Cursor; shell completion; and `doctor` diagnostics.
+  Project credential output and diagnostics use `EDGESTORE_ACCESS_KEY` and
+  `EDGESTORE_SECRET_KEY`.
+  Requires Node.js 22.22.0 or newer.
+
+### Patch Changes
+
+- Updated dependencies [[`fc16f0a`](https://github.com/edgestorejs/edgestore/commit/fc16f0af18564c83c8dd2c601386a0054534de76)]:
+  - @edgestore/sdk@1.0.0
+
 ## 1.0.0-rc.7
 
 ### Patch Changes
