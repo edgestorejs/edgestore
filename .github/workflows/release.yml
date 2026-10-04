@@ -51,9 +51,20 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Validate release mode
+        id: release-mode
         shell: bash
         run: |
           if [[ "$GITHUB_REF_NAME" == "next" ]]; then
+            if [[ ! -e .changeset/pre.json && ! -L .changeset/pre.json ]]; then
+              if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
+                echo 'should-release=false' >> "$GITHUB_OUTPUT"
+                echo 'Skipping release: next is dormant until a new prerelease cycle starts.'
+                echo 'Release skipped: `next` has no `.changeset/pre.json`. Start a new prerelease cycle as described in RELEASING.md before releasing.' >> "$GITHUB_STEP_SUMMARY"
+                exit 0
+              fi
+              echo '::error::Cannot release from dormant next. Run pnpm changeset pre enter next, commit .changeset/pre.json, and push to start a new prerelease cycle. See RELEASING.md.'
+              exit 1
+            fi
             jq -e \
               '.mode == "pre" and (.tag == "next" or .tag == "rc")' \
               .changeset/pre.json
@@ -65,8 +76,10 @@ jobs:
             echo 'Normal releases must run from main or next.'
             exit 1
           fi
+          echo 'should-release=true' >> "$GITHUB_OUTPUT"
 
       - name: Create Version PR or Publish
+        if: steps.release-mode.outputs.should-release == 'true'
         id: changesets
         uses: changesets/action@v1
         with:
