@@ -16,6 +16,11 @@ do
   source_file="$CODEX_SOURCE_TREE_PATH/$relative_path"
   destination_file="$CODEX_WORKTREE_PATH/$relative_path"
 
+  # Git can also return nested repository directories; only link files.
+  if [ ! -f "$source_file" ]; then
+    continue
+  fi
+
   if [ -e "$destination_file" ] && [ ! -L "$destination_file" ]; then
     echo "Skipping existing environment file: $relative_path" >&2
     continue
@@ -28,6 +33,7 @@ done
 node --version
 pnpm --version
 pnpm install --frozen-lockfile --prefer-offline
+pnpm build
 '''
 
 [[actions]]

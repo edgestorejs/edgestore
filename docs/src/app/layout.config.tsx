@@ -11,22 +11,29 @@ export const linkItems: LinkItemType[] = [
     children: (
       <div className="flex w-full flex-col items-end sm:flex-row sm:items-center sm:gap-2">
         <Link
-          className="text-fd-muted-foreground hover:text-fd-accent-foreground data-[active=true]:text-fd-primary inline-flex items-center gap-1 p-2 text-sm transition-colors [&_svg]:size-4"
+          className="inline-flex items-center gap-1 p-2 text-sm text-fd-muted-foreground transition-colors hover:text-fd-accent-foreground data-[active=true]:text-fd-primary [&_svg]:size-4"
           href="/docs/quick-start"
           aria-label="Go to documentation"
         >
           Docs
         </Link>
+        <Link
+          className="inline-flex items-center gap-1 p-2 text-sm text-fd-muted-foreground transition-colors hover:text-fd-accent-foreground data-[active=true]:text-fd-primary [&_svg]:size-4"
+          href="/blog"
+          aria-label="Go to blog"
+        >
+          Blog
+        </Link>
         <div className="grow max-sm:hidden" />
         <Link
-          className="text-fd-muted-foreground hover:text-fd-accent-foreground data-[active=true]:text-fd-primary inline-flex items-center gap-1 p-2 text-sm transition-colors [&_svg]:size-4"
+          className="inline-flex items-center gap-1 p-2 text-sm text-fd-muted-foreground transition-colors hover:text-fd-accent-foreground data-[active=true]:text-fd-primary [&_svg]:size-4"
           href="/pricing"
           aria-label="Go to pricing"
         >
           Pricing
         </Link>
         <Link
-          className="text-fd-muted-foreground hover:text-fd-accent-foreground data-[active=true]:text-fd-primary inline-flex items-center gap-1 p-2 text-sm transition-colors [&_svg]:size-4"
+          className="inline-flex items-center gap-1 p-2 text-sm text-fd-muted-foreground transition-colors hover:text-fd-accent-foreground data-[active=true]:text-fd-primary [&_svg]:size-4"
           href={env.NEXT_PUBLIC_DASHBOARD_URL}
           target="_blank"
           aria-label="Go to dashboard"
@@ -34,7 +41,7 @@ export const linkItems: LinkItemType[] = [
           Dashboard
         </Link>
         <Link
-          className="text-fd-muted-foreground hover:text-fd-accent-foreground data-[active=true]:text-fd-primary inline-flex items-center gap-1 p-2 text-sm transition-colors duration-200 [&_svg]:size-4"
+          className="inline-flex items-center gap-1 p-2 text-sm text-fd-muted-foreground transition-colors duration-200 hover:text-fd-accent-foreground data-[active=true]:text-fd-primary [&_svg]:size-4"
           href="https://discord.gg/HvrnhRTfgQ"
           target="_blank"
           aria-label="Go to Discord"
@@ -48,29 +55,26 @@ export const linkItems: LinkItemType[] = [
 ];
 
 export const logo = (
-  <Image
-    src="/img/logo-sm.png"
-    alt="EdgeStore"
-    aria-label="EdgeStore"
-    width={28}
-    height={28}
-  />
+  <>
+    <Image
+      src="/img/edgestore-lockup-light.svg"
+      alt="EdgeStore"
+      width={165}
+      height={24}
+      className="shrink-0 dark:hidden"
+    />
+    <Image
+      src="/img/edgestore-lockup.svg"
+      alt="EdgeStore"
+      width={165}
+      height={24}
+      className="hidden shrink-0 dark:block"
+    />
+  </>
 );
 
-/**
- * Shared layout configurations
- *
- * you can customise layouts individually from:
- * Home Layout: app/(home)/layout.tsx
- * Docs Layout: app/docs/layout.tsx
- */
 export const baseOptions: BaseLayoutProps = {
   nav: {
-    title: (
-      <>
-        {logo}
-        <div className="h-7 w-[120px] shrink-0 bg-[url('/img/edgestore-light.svg')] bg-contain bg-center bg-no-repeat dark:bg-[url('/img/edgestore.svg')]" />
-      </>
-    ),
+    title: logo,
   },
 };

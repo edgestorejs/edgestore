@@ -1,6 +1,6 @@
-# AWS Provider Example
+# S3 Provider Example
 
-This app uses the AWS Provider.
+This app uses the S3 provider with AWS S3.
 
 You can use it to upload files to your own S3 bucket.
 
@@ -14,7 +14,7 @@ npm install
 
 2. Add your environment variables to `.env.local`
 
-> See [https://edgestore.dev/docs/providers/aws](https://edgestore.dev/docs/providers/aws)
+> See [https://edgestore.dev/docs/providers/s3](https://edgestore.dev/docs/providers/s3)
 
 3. Run the development server
 
@@ -31,4 +31,3 @@ You can also run the development server with minio.
 ```bash
 npm run dev:minio
 ```
-

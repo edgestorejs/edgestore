@@ -1,0 +1,3 @@
+interface:
+  display_name: "EdgeStore Setup"
+  short_description: "Use when adding or troubleshooting EdgeStore file uploads."

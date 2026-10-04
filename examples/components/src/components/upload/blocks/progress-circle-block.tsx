@@ -1,7 +1,9 @@
+'use client';
+
 import * as React from 'react';
 import { ProgressCircle } from '../progress-circle';
 
-export function ProgressCircleUsage() {
+export default function ProgressCircleUsage() {
   const [progress, setProgress] = React.useState(0);
 
   React.useEffect(() => {
@@ -38,7 +40,7 @@ export function ProgressCircleUsage() {
   return (
     <div className="flex w-full items-center justify-center p-4">
       <div className="flex h-20 w-20 items-center justify-center rounded-md bg-black/80">
-        <ProgressCircle progress={progress} />
+        <ProgressCircle progress={progress} className="text-white" />
       </div>
     </div>
   );

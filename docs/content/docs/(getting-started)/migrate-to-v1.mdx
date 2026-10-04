@@ -1,0 +1,164 @@
+---
+title: Migrate to v1
+description: Move an EdgeStore v0.8 application to v1.
+---
+
+EdgeStore v1 is a deliberate major-version redesign. The browser router DX is
+largely unchanged, while direct API and privileged backend code now use API v2
+semantics without a runtime v1 fallback.
+
+## Runtime and packages
+
+- All packages are ESM-only and require Node.js 22.22.0 or newer.
+- Zod is no longer a peer dependency. Bucket `input` accepts any
+  [Standard Schema](https://standardschema.dev) library, including Zod,
+  Valibot, and ArkType.
+- `@edgestore/server/core` is removed. Import types such as
+  `InferClientOutputs` from `@edgestore/server`.
+- `@edgestore/react/shared` is removed. Import errors from
+  `@edgestore/react/errors`.
+
+## Configure EdgeStore once
+
+The HTTP handler and backend client now share the router's provider. The hosted
+provider is the default, so the basic handler setup stays the same. Replace
+`initEdgeStoreClient({ router })` with `router.client`, and configure custom
+providers by chaining `.provider(myProvider)` on `es.router(...)`.
+
+```ts title="Before"
+import { initEdgeStore } from '@edgestore/server';
+import { createEdgeStoreNextHandler } from '@edgestore/server/adapters/next/app';
+import { initEdgeStoreClient } from '@edgestore/server/core';
+
+const es = initEdgeStore.create();
+const router = es.router({
+  documents: es.fileBucket(),
+});
+
+export const handler = createEdgeStoreNextHandler({
+  router,
+});
+
+export const backendClient = initEdgeStoreClient({
+  router,
+});
+```
+
+```ts title="After"
+import { initEdgeStore } from '@edgestore/server';
+import { createEdgeStoreNextHandler } from '@edgestore/server/adapters/next/app';
+
+const es = initEdgeStore.create();
+const router = es.router({
+  documents: es.fileBucket(),
+});
+
+export const handler = createEdgeStoreNextHandler({
+  router,
+});
+
+export const backendClient = router.client;
+```
+
+## Breaking changes
+
+| v0.8                                        | v1                                           | Required change                                             |
+| ------------------------------------------- | -------------------------------------------- | ----------------------------------------------------------- |
+| Separate handler and client config          | `es.router(...).provider(...)`               | Configure the router and provider once.                     |
+| `initEdgeStoreClient`                       | `router.client`                              | Read the client from the configured router.                 |
+| `InferClientResponse`                       | `InferClientOutputs`                         | Rename the type helper.                                     |
+| `EdgeStoreProvider()`                       | `edgestore()`                                | Import from `@edgestore/server/providers/edgestore`.        |
+| `AWSProvider()` from `providers/aws`        | `s3()` from `providers/s3`                   | Update the import and pass it to `.provider(...)`.          |
+| `AzureProvider()` from `providers/azure`    | `azureBlob()` from `providers/azure-blob`    | Update the import and pass it to `.provider(...)`.          |
+| S3 `accessKeyId` / `secretAccessKey`        | S3 `credentials`                             | Pass credentials or keep `ES_AWS_*` variables.              |
+| S3 `overwritePath`                          | S3 `path`                                    | Return a key relative to the router bucket.                 |
+| URL-only identity                           | `{ id }`, `{ key }`, or `{ url }`            | Prefer stable IDs in new code.                              |
+| Predicted upload result                     | Canonical processed file                     | Use `sizeBytes`, `id`, `key`, and the returned timestamps.  |
+| `{ pagination: { currentPage, pageSize } }` | `{ cursor, limit }`                          | Replace page numbers with explicit cursor continuation.     |
+| `result.data`                               | `result.items`                               | Read canonical file records from `items`.                   |
+| `{ success: boolean }`                      | Singular result or partial batch             | Catch singular errors or inspect `failed`.                  |
+| React `confirmUpload`                       | React `confirm`                              | Use the resource-scoped lifecycle name.                     |
+| React upload `uploadedAt`                   | Removed                                      | Read timestamps from the backend client when needed.        |
+| React `disableDevProxy`, `/proxy-file`      | Removed                                      | Protected files load from their file origin in development. |
+| `cookieConfig.token`                        | Removed                                      | The `edgestore-token` cookie is no longer set.              |
+| Backend `getFile`                           | Backend `get`                                | Use the bucket-scoped read name.                            |
+| Backend `listFiles`                         | Backend `list`                               | Use the bucket-scoped list name.                            |
+| Backend `confirmUpload`                     | Backend `confirm`                            | Use the singular lifecycle name.                            |
+| Backend `confirmUploads`                    | Backend `confirmMany`                        | Use the `Many` suffix for batches.                          |
+| Backend `deleteFile`                        | Backend `delete`                             | Use the singular lifecycle name.                            |
+| Backend `deleteFiles`                       | Backend `deleteMany`                         | Use the `Many` suffix for batches.                          |
+| Backend `restoreFile(s)`                    | Backend `restore` / `restoreMany`            | Use singular and `Many` lifecycle names.                    |
+| Backend `getSignedUrl`                      | Backend `createSignedUrl`                    | Make signed-URL creation explicit.                          |
+| Backend `getSignedUrls`                     | Backend `createSignedUrls`                   | Make batch signed-URL creation explicit.                    |
+| Nullable metadata values                    | Nullish values omitted                       | Treat those inferred keys as optional strings.              |
+| Handcrafted server raw client               | `@edgestore/sdk`                             | Migrate direct API consumers to the public SDK.             |
+| `ES_AZURE_SAS_TOKEN` / `sasToken`           | `ES_AZURE_ACCOUNT_KEY` / `storageAccountKey` | Give Azure signing authority only to the server.            |
+| Azure `customBaseUrl` / `ES_AZURE_BASE_URL` | `endpoint` / `ES_AZURE_ENDPOINT`             | Use `baseUrl` separately for file URLs, such as a CDN.      |
+
+Pagination is no longer page-number based. Continue only when your application
+intentionally needs another page:
+
+```ts title="Before (v0.8)"
+const page = await backendClient.documents.listFiles({
+  pagination: {
+    currentPage: 1,
+    pageSize: 50,
+  },
+});
+```
+
+```ts title="After (v1)"
+const firstPage = await backendClient.documents.list({ limit: 50 });
+
+const secondPage = firstPage.hasMore
+  ? await backendClient.documents.list({
+      cursor: firstPage.nextCursor ?? undefined,
+      limit: 50,
+    })
+  : undefined;
+```
+
+```ts
+const page = await backendClient.documents.list({ limit: 50 });
+
+const deleted = await backendClient.documents.deleteMany({
+  refs: page.items.map((file) => ({ id: file.id })),
+});
+
+for (const failure of deleted.failed) {
+  console.error(failure.ref, failure.error.code);
+}
+```
+
+Frontend route bodies and bucket input are now validated before any router hook
+or provider method runs. v0.8 did not validate upload input on the server, so
+requests that passed before can now fail with `BAD_REQUEST`. Hooks, paths, and
+metadata receive the schema's parsed output. The encrypted `edgestore-ctx`
+payload is also namespaced in v1; there is no decoder fallback for a v0.8
+context cookie, so clients must complete the normal `/init` request after
+deployment.
+
+Azure users must replace the reusable SAS token with the storage account key.
+The provider now derives short-lived create/write upload URLs and independent
+read-only URLs for private files. Canonical file URLs never include the
+credential query string.
+
+## Provider capabilities
+
+Every provider is defined through the same resource-oriented contract. The
+router backend client exposes exactly the methods present on that provider:
+
+| Provider             | Router backend client                    | Adapter upload/delete | API v2 calls             |
+| -------------------- | ---------------------------------------- | --------------------- | ------------------------ |
+| Hosted `edgestore()` | Full support                             | Full support          | Through `@edgestore/sdk` |
+| `s3()`               | Upload, get, delete, and signed reads    | Full support          | Never                    |
+| `azureBlob()`        | Upload, get, delete, and signed reads    | Full support          | Never                    |
+| Custom provider      | Inferred from its `defineProvider` shape | Provider-defined      | Provider-defined         |
+
+Omitted capabilities are absent from TypeScript and are not replaced by a
+runtime fallback to the hosted API.
+
+## Staying on v0.8
+
+v0.8 remains installable for applications that cannot migrate yet. Pin
+`@edgestore/server` and `@edgestore/react` to `^0.8.0` until you are ready.

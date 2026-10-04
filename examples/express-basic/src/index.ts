@@ -1,6 +1,5 @@
 import { initEdgeStore } from '@edgestore/server';
 import { createEdgeStoreExpressHandler } from '@edgestore/server/adapters/express';
-import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
@@ -30,31 +29,32 @@ app.use(cookieParser());
  * We need to have access to the json request body.
  * We can use the body parser middleware to parse the request.
  */
-app.use(bodyParser.json());
+app.use(express.json());
 
 // --- EDGESTORE ROUTER CONFIG ---
 
 const es = initEdgeStore.create();
 
-const edgeStoreRouter = es.router({
+const router = es.router({
   publicFiles: es.fileBucket(),
 });
 
-export type EdgeStoreRouter = typeof edgeStoreRouter;
+export type EdgeStoreRouter = typeof router;
 
 const handler = createEdgeStoreExpressHandler({
-  router: edgeStoreRouter,
+  router,
 });
 
 // --- EXPRESS ROUTES ---
 
 app.get('/', (req, res) => {
-  console.log(req), res.send('Hello from server!');
+  console.log(req);
+  res.send('Hello from server!');
 });
 
 // set the get and post routes for the edgestore router
-app.get('/edgestore/*', handler);
-app.post('/edgestore/*', handler);
+app.get('/edgestore/*splat', handler);
+app.post('/edgestore/*splat', handler);
 
 app.listen(PORT, () => {
   console.log(`⚡Server is running here 👉 http://localhost:${PORT}`);

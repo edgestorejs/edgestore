@@ -3,14 +3,12 @@ import { createEdgeStoreRemixHandler } from '@edgestore/server/adapters/remix';
 
 const es = initEdgeStore.create();
 
-const edgeStoreRouter = es.router({
+const router = es.router({
   publicFiles: es.fileBucket(),
 });
 
-export type EdgeStoreRouter = typeof edgeStoreRouter;
+export type EdgeStoreRouter = typeof router;
 
-const handler = createEdgeStoreRemixHandler({
-  router: edgeStoreRouter,
-});
+const handler = createEdgeStoreRemixHandler({ router });
 
 export { handler as loader, handler as action };

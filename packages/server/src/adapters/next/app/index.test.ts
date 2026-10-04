@@ -9,7 +9,6 @@ import {
   extractCookieValue,
   requestUploadBody,
   setupAdapterTestEnv,
-  stubProxyFetch,
   testCookieConfig,
   testCtx,
 } from '../../../test-utils/adapterConformance.test.utils';
@@ -45,8 +44,7 @@ describe('Next app adapter conformance', () => {
     const provider = createConformanceProvider();
     const router = createConformanceRouter();
     const handler = createEdgeStoreNextHandler({
-      provider,
-      router,
+      router: router.provider(provider),
       cookieConfig: testCookieConfig,
       createContext,
     });
@@ -73,11 +71,7 @@ describe('Next app adapter conformance', () => {
     expect(provider.init).toHaveBeenCalledWith(
       expect.objectContaining({ ctx: testCtx }),
     );
-    await expect(res.json()).resolves.toMatchObject({
-      baseUrl: 'https://files.example.com',
-      providerName: 'test-provider',
-      token: 'provider-token',
-    });
+    await expect(res.json()).resolves.toEqual({});
     expect(extractCookieValue(res.headers.get('set-cookie'))).toBeTruthy();
   });
 
@@ -98,7 +92,7 @@ describe('Next app adapter conformance', () => {
 
     expect(uploadRes.status).toBe(200);
     await expect(uploadRes.json()).resolves.toMatchObject({
-      accessUrl: 'https://files.example.com/file.txt',
+      url: 'https://files.example.com/file.txt',
       path: { author: testCtx.userId },
       metadata: {
         userId: testCtx.userId,
@@ -123,33 +117,11 @@ describe('Next app adapter conformance', () => {
     );
 
     expect(res.status).toBe(200);
-    expect(provider.completeMultipartUpload).toHaveBeenCalledWith({
+    expect(provider.uploads.multipart?.complete).toHaveBeenCalledWith({
       uploadId: 'upload-id',
       key: 'uploads/file.txt',
       parts: completeMultipartUploadBody.parts,
     });
-  });
-
-  it('/proxy-file forwards request cookies and preserves content type/status', async () => {
-    const fetchMock = stubProxyFetch();
-    const { handler } = createHandler();
-
-    const res = await handler(
-      createRequest('/proxy-file?url=https://target.example/file', {
-        headers: {
-          cookie: 'session=abc; theme=dark',
-        },
-      }),
-    );
-
-    expect(fetchMock).toHaveBeenCalledWith('https://target.example/file', {
-      headers: {
-        cookie: 'session=abc; theme=dark',
-      },
-    });
-    expect(res.status).toBe(202);
-    expect(res.headers.get('content-type')).toBe('text/custom');
-    await expect(res.text()).resolves.toBe('proxied body');
   });
 
   it('createContext failure maps to CREATE_CONTEXT_ERROR status/body', async () => {

@@ -1,0 +1,23 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "upload-button",
+  "title": "Upload Button",
+  "description": "A button that opens the file dialog and also accepts files dropped onto it.",
+  "dependencies": [
+    "react-dropzone"
+  ],
+  "registryDependencies": [
+    "button",
+    "https://edgestore.dev/r/dropzone.json",
+    "https://edgestore.dev/r/uploader-provider.json"
+  ],
+  "files": [
+    {
+      "path": "examples/components/src/components/upload/upload-button.tsx",
+      "content": "'use client';\n\nimport { Button } from '@/components/ui/button';\nimport { cn } from '@/lib/utils';\nimport * as React from 'react';\nimport { type Accept } from 'react-dropzone';\nimport { dropzoneState, useUploadDropzone } from './dropzone';\n\n/**\n * Props for the UploadButton component.\n */\nexport type UploadButtonProps = Omit<\n  React.ComponentProps<typeof Button>,\n  'onClick' | 'type' | 'className'\n> & {\n  className?: string;\n\n  /**\n   * Accepted file types.\n   */\n  accept?: Accept;\n\n  /**\n   * Human-readable list of accepted types, used in messages.\n   */\n  typesLabel?: string;\n\n  /**\n   * Maximum file size in bytes.\n   */\n  maxSize?: number;\n\n  /**\n   * Maximum number of files allowed in total.\n   */\n  maxFiles?: number;\n\n  /**\n   * Whether more than one file can be picked at once.\n   * @default true\n   */\n  multiple?: boolean;\n\n  /**\n   * Called with messages about files that were not added\n   * (wrong type, too large, over the limit).\n   */\n  onRejected?: (messages: string[]) => void;\n};\n\n/**\n * A button that opens the file dialog and also accepts files dropped onto it.\n * Several buttons can feed the same `UploaderProvider`.\n *\n * @example\n * ```tsx\n * <UploadButton maxSize={1024 * 1024 * 10} onRejected={setErrors}>\n *   <UploadIcon /> Upload files\n * </UploadButton>\n * ```\n */\nexport function UploadButton({\n  accept,\n  typesLabel,\n  maxSize,\n  maxFiles,\n  multiple = true,\n  onRejected,\n  disabled,\n  className,\n  children,\n  ...props\n}: UploadButtonProps) {\n  const { getRootProps, getInputProps, isDragActive, isDragReject, isFull } =\n    useUploadDropzone({\n      accept,\n      typesLabel,\n      maxSize,\n      maxFiles,\n      multiple,\n      disabled,\n      onRejected,\n      // A <button> already opens the dialog on Enter and Space.\n      noKeyboard: true,\n    });\n\n  // react-dropzone keeps its hidden input in the layout, so it is wrapped with the\n  // button to keep it out of the parent's gaps.\n  return (\n    <span className=\"inline-flex\">\n      <Button\n        {...props}\n        {...getRootProps({ role: 'button' })}\n        {...dropzoneState({ isDragActive, isDragReject })}\n        type=\"button\"\n        disabled={disabled || isFull}\n        className={cn(\n          'data-[dragging]:ring-[3px] data-[dragging]:ring-ring/50 data-[rejected]:ring-destructive/40',\n          className,\n        )}\n      >\n        {children}\n      </Button>\n      <input {...getInputProps()} />\n    </span>\n  );\n}\n",
+      "type": "registry:component",
+      "target": "components/upload/upload-button.tsx"
+    }
+  ],
+  "type": "registry:component"
+}

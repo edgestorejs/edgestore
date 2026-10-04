@@ -2,247 +2,241 @@
 
 import { cn } from '@/lib/utils';
 import {
-  AlertCircleIcon,
+  ImageIcon,
+  RefreshCwIcon,
+  RotateCwIcon,
   Trash2Icon,
-  UploadCloudIcon,
   XIcon,
 } from 'lucide-react';
 import * as React from 'react';
-import { useDropzone, type DropzoneOptions } from 'react-dropzone';
-import { ProgressCircle } from './progress-circle';
-import { formatFileSize, useUploader } from './uploader-provider';
+import { type Accept } from 'react-dropzone';
+import {
+  DropzoneOverlay,
+  DropzonePrompt,
+  dropzoneState,
+  dropzoneVariants,
+  UploadErrors,
+  useUploadDropzone,
+} from './dropzone';
+import { ProgressBar } from './progress-bar';
+import {
+  describeLimits,
+  formatFileSize,
+  IMAGE_ACCEPT,
+  useObjectUrl,
+} from './upload-utils';
+import { useUploader } from './uploader-provider';
 
-const DROPZONE_VARIANTS = {
-  base: 'relative rounded-md p-4 flex justify-center items-center flex-col cursor-pointer min-h-[150px] min-w-[200px] border-2 border-dashed border-muted-foreground transition-colors duration-200 ease-in-out',
-  image: 'border-0 p-0 min-h-0 min-w-0 relative bg-muted shadow-md',
-  active: 'border-primary',
-  disabled:
-    'bg-muted/50 border-muted-foreground/50 cursor-default pointer-events-none',
-  accept: 'border-primary bg-primary/10',
-  reject: 'border-destructive bg-destructive/10',
-};
+function OverlayButton({
+  label,
+  className,
+  ...props
+}: React.ComponentProps<'button'> & { label: string }) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      className={cn(
+        'grid size-7 place-items-center rounded-md bg-black/60 text-white backdrop-blur-sm transition-colors outline-none hover:bg-black/80 focus-visible:ring-2 focus-visible:ring-white/70 [&_svg]:size-3.5',
+        className,
+      )}
+      {...props}
+    />
+  );
+}
 
 /**
  * Props for the SingleImageDropzone component.
- *
- * @interface SingleImageDropzoneProps
- * @extends {React.HTMLAttributes<HTMLInputElement>}
  */
-export interface SingleImageDropzoneProps
-  extends React.HTMLAttributes<HTMLInputElement> {
+export type SingleImageDropzoneProps = React.ComponentProps<'div'> & {
   /**
-   * The width of the dropzone area in pixels.
+   * CSS aspect ratio of the dropzone. Set the width with `className`.
+   * @default "1 / 1"
    */
-  width: number;
+  aspectRatio?: string;
 
   /**
-   * The height of the dropzone area in pixels.
+   * Maximum file size in bytes.
    */
-  height: number;
+  maxSize?: number;
+
+  /**
+   * Accepted image types.
+   * @default PNG, JPG, WEBP and GIF
+   */
+  accept?: Accept;
+
+  /**
+   * Human-readable list of accepted types, shown in the hint and messages.
+   * @default "PNG, JPG, WEBP or GIF"
+   */
+  typesLabel?: string;
+
+  /**
+   * Name of the image, used in accessible labels.
+   * @default "image"
+   */
+  label?: string;
 
   /**
    * Whether the dropzone is disabled.
    */
   disabled?: boolean;
-
-  /**
-   * Options passed to the underlying react-dropzone component.
-   * Cannot include 'disabled', 'onDrop', 'maxFiles', or 'multiple' as they are handled internally.
-   */
-  dropzoneOptions?: Omit<
-    DropzoneOptions,
-    'disabled' | 'onDrop' | 'maxFiles' | 'multiple'
-  >;
-}
+};
 
 /**
- * A single image upload component with preview and upload status.
+ * One image in a fixed aspect ratio: avatars, covers, thumbnails.
+ * Dropping or choosing a new image replaces the current one.
  *
- * This component allows users to upload a single image, shows a preview,
- * displays upload progress, and provides controls to remove or cancel the upload.
- *
- * @component
  * @example
  * ```tsx
  * <SingleImageDropzone
- *   width={320}
- *   height={320}
- *   dropzoneOptions={{ maxSize: 1024 * 1024 * 2 }} // 2MB
+ *   className="w-64"
+ *   aspectRatio="16 / 9"
+ *   maxSize={1024 * 1024 * 2} // 2MB
  * />
  * ```
  */
-const SingleImageDropzone = React.forwardRef<
-  HTMLInputElement,
-  SingleImageDropzoneProps
->(({ dropzoneOptions, width, height, className, disabled, ...props }, ref) => {
-  const { fileStates, addFiles, removeFile, cancelUpload } = useUploader();
-  const [error, setError] = React.useState<string>();
+export function SingleImageDropzone({
+  aspectRatio = '1 / 1',
+  maxSize,
+  accept = IMAGE_ACCEPT,
+  typesLabel = 'PNG, JPG, WEBP or GIF',
+  label = 'image',
+  disabled,
+  className,
+  ...props
+}: SingleImageDropzoneProps) {
+  const { fileStates, removeFile, cancelUpload, uploadFiles } = useUploader();
+  const fileState = fileStates[0];
+  const preview = useObjectUrl(fileState?.file);
+  const src = preview ?? fileState?.url;
 
-  const fileState = React.useMemo(() => fileStates[0], [fileStates]);
-  const maxSize = dropzoneOptions?.maxSize;
-
-  // Create temporary URL for image preview before upload is complete
-  const tempUrl = React.useMemo(() => {
-    if (fileState?.file) {
-      return URL.createObjectURL(fileState.file);
-    }
-    return null;
-  }, [fileState]);
-
-  // Clean up temporary URL to prevent memory leaks
-  React.useEffect(() => {
-    return () => {
-      if (tempUrl) {
-        URL.revokeObjectURL(tempUrl);
-      }
-    };
-  }, [tempUrl]);
-
-  const displayUrl = tempUrl ?? fileState?.url;
-  const isDisabled =
-    !!disabled ||
-    fileState?.status === 'UPLOADING' ||
-    fileState?.status === 'COMPLETE'; // Disable when upload complete
-
-  const { getRootProps, getInputProps, isFocused, isDragAccept, isDragReject } =
-    useDropzone({
-      accept: { 'image/*': [] }, // Accept only image files
-      multiple: false,
-      disabled: isDisabled,
-      onDrop: (acceptedFiles, rejectedFiles) => {
-        setError(undefined);
-
-        // Handle rejections first
-        if (rejectedFiles.length > 0) {
-          if (rejectedFiles[0]?.errors[0]) {
-            const error = rejectedFiles[0].errors[0];
-            const code = error.code;
-
-            // User-friendly error messages
-            const messages: Record<string, string> = {
-              'file-too-large': `The file is too large. Max size is ${formatFileSize(
-                maxSize ?? 0,
-              )}.`,
-              'file-invalid-type': 'Invalid file type.',
-              'too-many-files': 'You can only upload one file.',
-              default: 'The file is not supported.',
-            };
-
-            setError(messages[code] ?? messages.default);
-          }
-          return; // Exit early if there are any rejections
-        }
-
-        // Handle accepted files only if there are no rejections
-        if (acceptedFiles.length > 0) {
-          // Remove existing file before adding a new one
-          if (fileStates[0]) {
-            removeFile(fileStates[0].key);
-          }
-          addFiles(acceptedFiles);
-        }
-      },
-      ...dropzoneOptions,
-    });
-
-  const dropZoneClassName = React.useMemo(
-    () =>
-      cn(
-        DROPZONE_VARIANTS.base,
-        isFocused && DROPZONE_VARIANTS.active,
-        isDisabled && DROPZONE_VARIANTS.disabled,
-        displayUrl && DROPZONE_VARIANTS.image,
-        isDragReject && DROPZONE_VARIANTS.reject,
-        isDragAccept && DROPZONE_VARIANTS.accept,
-        className,
-      ),
-    [isFocused, isDisabled, displayUrl, isDragAccept, isDragReject, className],
-  );
-
-  // Combined error message from dropzone or file state
-  const errorMessage = error ?? fileState?.error;
+  const {
+    getRootProps,
+    getInputProps,
+    open,
+    isDragActive,
+    isDragReject,
+    errors,
+    clearErrors,
+  } = useUploadDropzone({
+    accept,
+    maxSize,
+    typesLabel,
+    disabled,
+    replace: true,
+    // With an image shown, the Replace button opens the dialog instead of click-anywhere.
+    noClick: !!fileState,
+    noKeyboard: !!fileState,
+  });
 
   return (
-    <div className="flex flex-col items-center">
+    <div className={cn('flex w-full flex-col gap-3', className)} {...props}>
       <div
         {...getRootProps({
-          className: dropZoneClassName,
-          style: {
-            width,
-            height,
-          },
+          role: fileState ? 'group' : 'button',
+          'aria-label': fileState
+            ? `${label}. Drop an image to replace it.`
+            : `Upload ${label}`,
+          style: { aspectRatio },
+          className: cn(
+            dropzoneVariants,
+            'overflow-hidden',
+            fileState &&
+              'cursor-default border-solid border-border bg-muted hover:border-border hover:bg-muted',
+          ),
         })}
+        {...dropzoneState({ isDragActive, isDragReject, disabled })}
       >
-        <input ref={ref} {...getInputProps()} {...props} />
-
-        {displayUrl ? (
-          <img
-            className="h-full w-full rounded-md object-cover"
-            src={displayUrl}
-            alt={fileState?.file.name ?? 'uploaded image'}
-          />
-        ) : (
-          // Placeholder content shown when no image is selected
-          <div
-            className={cn(
-              'text-muted-foreground flex flex-col items-center justify-center gap-2 text-center text-xs',
-              isDisabled && 'opacity-50',
+        <input {...getInputProps()} />
+        {fileState ? (
+          <>
+            {src && (
+              <img
+                src={src}
+                alt={fileState.file.name}
+                className="absolute inset-0 size-full animate-in object-cover fade-in-0"
+              />
             )}
-          >
-            <UploadCloudIcon className="mb-1 h-7 w-7" />
-            <div className="font-medium">
-              drag & drop an image or click to select
-            </div>
-            {maxSize && (
-              <div className="text-xs">Max size: {formatFileSize(maxSize)}</div>
+            {fileState.status === 'UPLOADING' && (
+              <ProgressBar
+                progress={fileState.progress}
+                aria-label={`Uploading ${fileState.file.name}`}
+                className="absolute inset-x-0 top-0 h-[3px] rounded-none bg-white/25"
+                indicatorClassName="rounded-none"
+              />
             )}
-          </div>
-        )}
-
-        {/* Upload progress overlay */}
-        {displayUrl && fileState?.status === 'UPLOADING' && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center rounded-md bg-black/70">
-            <ProgressCircle progress={fileState.progress} />
-          </div>
-        )}
-
-        {/* Remove/Cancel button */}
-        {displayUrl &&
-          !disabled &&
-          fileState &&
-          fileState.status !== 'COMPLETE' && (
-            <button
-              type="button"
-              className="border-muted-foreground bg-background group pointer-events-auto absolute right-1 top-1 z-10 transform rounded-full border p-1 shadow-md transition-all hover:scale-110"
-              onClick={(e) => {
-                e.stopPropagation(); // Prevent triggering dropzone click
-                if (fileState.status === 'UPLOADING') {
-                  cancelUpload(fileState.key);
-                } else {
-                  removeFile(fileState.key);
-                  setError(undefined); // Clear any error when removing the file
-                }
-              }}
-            >
-              {fileState.status === 'UPLOADING' ? (
-                <XIcon className="text-muted-foreground block h-4 w-4" />
-              ) : (
-                <Trash2Icon className="text-muted-foreground block h-4 w-4" />
+            {fileState.status === 'ERROR' && (
+              <p className="absolute inset-x-2.5 top-2.5 rounded-md bg-destructive px-2.5 py-1.5 text-left text-xs font-medium text-white">
+                {fileState.error ?? 'Upload failed'}
+              </p>
+            )}
+            <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 bg-linear-to-t from-black/60 to-transparent px-2.5 pt-8 pb-2.5 text-left text-white">
+              <span className="min-w-0 truncate pb-1 text-xs opacity-90">
+                {fileState.file.name} · {formatFileSize(fileState.file.size)}
+              </span>
+              {!disabled && (
+                <div className="flex shrink-0 gap-1.5">
+                  {fileState.status === 'ERROR' && (
+                    <OverlayButton
+                      label="Retry upload"
+                      onClick={() => void uploadFiles([fileState.key])}
+                    >
+                      <RotateCwIcon />
+                    </OverlayButton>
+                  )}
+                  <OverlayButton label={`Replace ${label}`} onClick={open}>
+                    <RefreshCwIcon />
+                  </OverlayButton>
+                  {fileState.status === 'UPLOADING' ? (
+                    <OverlayButton
+                      label="Cancel upload"
+                      onClick={() => cancelUpload(fileState.key)}
+                    >
+                      <XIcon />
+                    </OverlayButton>
+                  ) : (
+                    <OverlayButton
+                      label={`Remove ${label}`}
+                      onClick={() => {
+                        removeFile(fileState.key);
+                        clearErrors();
+                      }}
+                    >
+                      <Trash2Icon />
+                    </OverlayButton>
+                  )}
+                </div>
               )}
-            </button>
-          )}
+            </div>
+            {isDragActive && (
+              <DropzoneOverlay isDragReject={isDragReject}>
+                {isDragReject ? 'Only images are supported' : 'Drop to replace'}
+              </DropzoneOverlay>
+            )}
+          </>
+        ) : (
+          <DropzonePrompt
+            icon={<ImageIcon />}
+            isDragActive={isDragActive}
+            isDragReject={isDragReject}
+            activeText="Drop image here"
+            rejectText="Only images are supported"
+            title={
+              <>
+                <span className="font-semibold text-primary">
+                  Click to upload
+                </span>{' '}
+                or drag and drop
+              </>
+            }
+            hint={describeLimits({ typesLabel, maxSize, maxFiles: 1 })}
+          />
+        )}
       </div>
-
-      {/* Error message display */}
-      {errorMessage && (
-        <div className="text-destructive mt-2 flex items-center text-xs">
-          <AlertCircleIcon className="mr-1 h-4 w-4" />
-          <span>{errorMessage}</span>
-        </div>
-      )}
+      <UploadErrors errors={errors} onDismiss={clearErrors} />
     </div>
   );
-});
-SingleImageDropzone.displayName = 'SingleImageDropzone';
-
-export { SingleImageDropzone };
+}

@@ -7,6 +7,15 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
+  --site-bg: #fcfcff;
+  --site-panel: #f3f2fb;
+  --site-text: #11152b;
+  --site-muted: #626b87;
+  --site-accent: #6946d8;
+  --site-line: #dfdeef;
+  --site-button-start: #7048dd;
+  --site-button-end: #5731d0;
+  --site-panel-shadow: 0 0 0 1px #6e50cf15, 0 12px 40px #44378a12;
   --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.129 0.042 264.695);
@@ -57,6 +66,16 @@
 }
 
 .dark {
+  --site-bg: #050817;
+  --site-panel: #101529;
+  --site-text: #f8fafc;
+  --site-muted: #a6aec8;
+  --site-accent: #aa99ff;
+  --site-line: #292e49;
+  --site-button-start: #7953e2;
+  --site-button-end: #6236dc;
+  --site-panel-shadow:
+    0 0 0 1px #b7a4ff40, 0 0 28px #7154df18, 0 18px 48px #0003;
   --background: oklch(0.129 0.042 264.695);
   --foreground: oklch(0.984 0.003 247.858);
   --card: oklch(0.208 0.042 265.755);
@@ -64,7 +83,8 @@
   --popover: oklch(0.208 0.042 265.755);
   --popover-foreground: oklch(0.984 0.003 247.858);
   --primary: #aa99ff;
-  --primary-foreground: oklch(1 0 0);
+  /* Dark text: white on the light #aa99ff is only 2.4:1 contrast. */
+  --primary-foreground: #050817;
   --secondary: oklch(0.279 0.041 260.031);
   --secondary-foreground: oklch(0.984 0.003 247.858);
   --muted: oklch(0.279 0.041 260.031);
@@ -103,6 +123,12 @@
 }
 
 @theme inline {
+  --color-site-bg: var(--site-bg);
+  --color-site-panel: var(--site-panel);
+  --color-site-text: var(--site-text);
+  --color-site-muted: var(--site-muted);
+  --color-site-accent: var(--site-accent);
+  --color-site-line: var(--site-line);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);

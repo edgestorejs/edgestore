@@ -1,0 +1,20 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "file-field-block",
+  "title": "File Field Block",
+  "description": "A block with a compact single-file form field.",
+  "registryDependencies": [
+    "https://edgestore.dev/r/file-field.json",
+    "https://edgestore.dev/r/upload-utils.json",
+    "https://edgestore.dev/r/uploader-provider.json"
+  ],
+  "files": [
+    {
+      "path": "examples/components/src/components/upload/blocks/file-field-block.tsx",
+      "content": "'use client';\n\nimport { FileField } from '@/components/upload/file-field';\nimport { DOCUMENT_ACCEPT } from '@/components/upload/upload-utils';\nimport {\n  UploaderProvider,\n  type UploadFn,\n} from '@/components/upload/uploader-provider';\nimport * as React from 'react';\n\nexport default function FileFieldBlock() {\n  const { edgestore } = useMockEdgeStore(); // Mock edgestore for easy v0 integration\n\n  const uploadFn: UploadFn = React.useCallback(\n    async ({ file, signal, onProgressChange }) => {\n      const res = await edgestore.myPublicFiles.upload({\n        file,\n        signal,\n        onProgressChange,\n      });\n      // you can run some server action or api here\n      // to add the necessary data to your database\n      return { url: res.url };\n    },\n    [edgestore],\n  );\n\n  return (\n    <div className=\"flex flex-col items-center gap-4 p-4\">\n      <div className=\"grid w-full max-w-md gap-1.5\">\n        <label\n          id=\"resume-label\"\n          htmlFor=\"resume-input\"\n          className=\"text-sm font-medium\"\n        >\n          Resume\n        </label>\n        <UploaderProvider uploadFn={uploadFn} autoUpload>\n          <FileField\n            inputId=\"resume-input\"\n            aria-labelledby=\"resume-label\"\n            accept={DOCUMENT_ACCEPT}\n            typesLabel=\"PDF, DOC or DOCX\"\n            maxSize={1024 * 1024 * 5} // 5MB\n          />\n        </UploaderProvider>\n      </div>\n    </div>\n  );\n}\n\n// Mock implementation of EdgeStore\nfunction useMockEdgeStore() {\n  return {\n    edgestore: {\n      myPublicFiles: {\n        upload: async ({\n          signal,\n          onProgressChange,\n        }: {\n          file: File;\n          signal?: AbortSignal;\n          onProgressChange?: (progress: number) => void | Promise<void>;\n        }) => {\n          // Simulate upload progress. Rejects like EdgeStore when the upload is aborted.\n          await new Promise<void>((resolve, reject) => {\n            let progress = 0;\n            const interval = setInterval(() => {\n              progress = Math.min(\n                progress + Math.floor(Math.random() * 21) + 10,\n                100,\n              );\n              void onProgressChange?.(progress);\n              if (progress >= 100) {\n                clearInterval(interval);\n                resolve();\n              }\n            }, 300);\n            signal?.addEventListener('abort', () => {\n              clearInterval(interval);\n              reject(new DOMException('Upload aborted', 'AbortError'));\n            });\n          });\n\n          return {\n            url: 'https://edgestore.dev/img/upload-demo.webp',\n          };\n        },\n      },\n    },\n  };\n}\n",
+      "type": "registry:block",
+      "target": "components/upload/blocks/file-field-block.tsx"
+    }
+  ],
+  "type": "registry:block"
+}

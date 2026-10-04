@@ -8,7 +8,6 @@ import {
   extractCookieValue,
   requestUploadBody,
   setupAdapterTestEnv,
-  stubProxyFetch,
   testCookieConfig,
   testCtx,
 } from '../../test-utils/adapterConformance.test.utils';
@@ -83,8 +82,7 @@ describe('Express adapter conformance', () => {
     const provider = createConformanceProvider();
     const router = createConformanceRouter();
     const handler = createEdgeStoreExpressHandler({
-      provider,
-      router,
+      router: router.provider(provider),
       cookieConfig: testCookieConfig,
       createContext,
     });
@@ -113,11 +111,7 @@ describe('Express adapter conformance', () => {
     expect(provider.init).toHaveBeenCalledWith(
       expect.objectContaining({ ctx: testCtx }),
     );
-    expect(res.body).toMatchObject({
-      baseUrl: 'https://files.example.com',
-      providerName: 'test-provider',
-      token: 'provider-token',
-    });
+    expect(res.body).toEqual({});
     expect(extractCookieValue(res.headers['Set-Cookie'])).toBeTruthy();
   });
 
@@ -140,7 +134,7 @@ describe('Express adapter conformance', () => {
 
     expect(uploadRes.statusCode).toBe(200);
     expect(uploadRes.body).toMatchObject({
-      accessUrl: 'https://files.example.com/file.txt',
+      url: 'https://files.example.com/file.txt',
       path: { author: testCtx.userId },
       metadata: {
         userId: testCtx.userId,
@@ -168,42 +162,11 @@ describe('Express adapter conformance', () => {
     );
 
     expect(completeRes.statusCode).toBe(200);
-    expect(provider.completeMultipartUpload).toHaveBeenCalledWith({
+    expect(provider.uploads.multipart?.complete).toHaveBeenCalledWith({
       uploadId: 'upload-id',
       key: 'uploads/file.txt',
       parts: completeMultipartUploadBody.parts,
     });
-  });
-
-  it('/proxy-file forwards request cookies and preserves content type', async () => {
-    const fetchMock = stubProxyFetch();
-    const { handler } = createHandler();
-    const res = createMockResponse();
-
-    await handler(
-      createRequest(
-        '/api/edgestore/proxy-file?url=https://target.example/file',
-        {
-          headers: {
-            cookie: 'session=abc; theme=dark',
-          },
-          query: {
-            url: 'https://target.example/file',
-          },
-        },
-      ),
-      res,
-    );
-
-    expect(fetchMock).toHaveBeenCalledWith('https://target.example/file', {
-      headers: {
-        cookie: 'session=abc; theme=dark',
-      },
-    });
-    expect(res.statusCode).toBe(202);
-    expect(res.headers['Content-Type']).toBe('text/custom');
-    expect(Buffer.isBuffer(res.body)).toBe(true);
-    expect((res.body as Buffer).toString()).toBe('proxied body');
   });
 
   it('createContext failure maps to CREATE_CONTEXT_ERROR status/body', async () => {
@@ -230,14 +193,5 @@ describe('Express adapter conformance', () => {
     await handler(createRequest('/api/edgestore/missing'), res);
 
     expect(res.statusCode).toBe(404);
-  });
-
-  it('returns 400 for /proxy-file without a url', async () => {
-    const { handler } = createHandler();
-    const res = createMockResponse();
-
-    await handler(createRequest('/api/edgestore/proxy-file'), res);
-
-    expect(res.statusCode).toBe(400);
   });
 });

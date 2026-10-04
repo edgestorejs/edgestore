@@ -11,7 +11,7 @@ Check the official [documentation](https://edgestore.dev) for more information.
 Let's start by installing the required packages.
 
 ```shell
-npm install @edgestore/server @edgestore/react zod
+npm install @edgestore/server @edgestore/react
 ```
 
 ### Environment Variables
@@ -19,8 +19,8 @@ npm install @edgestore/server @edgestore/react zod
 Then go to your [Dashboard](https://dashboard.edgestore.dev), create a new project and copy the keys to your environment variables.
 
 ```shell title=".env"
-EDGE_STORE_ACCESS_KEY=your-access-key
-EDGE_STORE_SECRET_KEY=your-secret-key
+EDGESTORE_ACCESS_KEY=your-access-key
+EDGESTORE_SECRET_KEY=your-secret-key
 ```
 
 ### Backend
@@ -41,12 +41,12 @@ const es = initEdgeStore.create();
 /**
  * This is the main router for the EdgeStore buckets.
  */
-const edgeStoreRouter = es.router({
+const router = es.router({
   publicFiles: es.fileBucket(),
 });
 
 const handler = createEdgeStoreNextHandler({
-  router: edgeStoreRouter,
+  router,
 });
 
 export { handler as GET, handler as POST };
@@ -54,7 +54,7 @@ export { handler as GET, handler as POST };
 /**
  * This type is used to create the type-safe client for the frontend.
  */
-export type EdgeStoreRouter = typeof edgeStoreRouter;
+export type EdgeStoreRouter = typeof router;
 ```
 
 ### Frontend

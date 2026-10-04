@@ -1,0 +1,19 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "avatar-dropzone-block",
+  "title": "Avatar Dropzone Block",
+  "description": "A block for uploading a profile photo.",
+  "registryDependencies": [
+    "https://edgestore.dev/r/avatar-dropzone.json",
+    "https://edgestore.dev/r/uploader-provider.json"
+  ],
+  "files": [
+    {
+      "path": "examples/components/src/components/upload/blocks/avatar-block.tsx",
+      "content": "'use client';\n\nimport { AvatarDropzone } from '@/components/upload/avatar-dropzone';\nimport {\n  UploaderProvider,\n  type UploadFn,\n} from '@/components/upload/uploader-provider';\nimport * as React from 'react';\n\nexport default function AvatarDropzoneBlock() {\n  const { edgestore } = useMockEdgeStore(); // Mock edgestore for easy v0 integration\n\n  const uploadFn: UploadFn = React.useCallback(\n    async ({ file, signal, onProgressChange }) => {\n      const res = await edgestore.myPublicImages.upload({\n        file,\n        signal,\n        onProgressChange,\n      });\n      // you can run some server action or api here\n      // to add the necessary data to your database\n      return { url: res.url };\n    },\n    [edgestore],\n  );\n\n  return (\n    <div className=\"flex flex-col items-center gap-4 p-4\">\n      <div className=\"w-full max-w-md\">\n        <UploaderProvider uploadFn={uploadFn} autoUpload>\n          <AvatarDropzone\n            label=\"Profile photo\"\n            maxSize={1024 * 1024 * 2} // 2MB\n            minDimension={128}\n          />\n        </UploaderProvider>\n      </div>\n    </div>\n  );\n}\n\n// Mock implementation of EdgeStore\nfunction useMockEdgeStore() {\n  return {\n    edgestore: {\n      myPublicImages: {\n        upload: async ({\n          signal,\n          onProgressChange,\n        }: {\n          file: File;\n          signal?: AbortSignal;\n          onProgressChange?: (progress: number) => void | Promise<void>;\n        }) => {\n          // Simulate upload progress. Rejects like EdgeStore when the upload is aborted.\n          await new Promise<void>((resolve, reject) => {\n            let progress = 0;\n            const interval = setInterval(() => {\n              progress = Math.min(\n                progress + Math.floor(Math.random() * 21) + 10,\n                100,\n              );\n              void onProgressChange?.(progress);\n              if (progress >= 100) {\n                clearInterval(interval);\n                resolve();\n              }\n            }, 300);\n            signal?.addEventListener('abort', () => {\n              clearInterval(interval);\n              reject(new DOMException('Upload aborted', 'AbortError'));\n            });\n          });\n\n          return {\n            url: 'https://edgestore.dev/img/upload-demo.webp',\n          };\n        },\n      },\n    },\n  };\n}\n",
+      "type": "registry:block",
+      "target": "components/upload/blocks/avatar-block.tsx"
+    }
+  ],
+  "type": "registry:block"
+}

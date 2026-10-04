@@ -3,7 +3,6 @@ import {
   createEdgeStoreNextHandler,
   type CreateContextOptions,
 } from '@edgestore/server/adapters/next/app';
-import { initEdgeStoreClient } from '@edgestore/server/core';
 import { z } from 'zod';
 
 type Context = {
@@ -23,7 +22,7 @@ const es = initEdgeStore.context<Context>().create();
 /**
  * This is the main router for the EdgeStore buckets.
  */
-const edgeStoreRouter = es.router({
+const router = es.router({
   publicFiles: es
     .fileBucket({
       maxSize: 1 * 1024 * 1024, // 1MB
@@ -46,15 +45,13 @@ const edgeStoreRouter = es.router({
 });
 
 export const handler = createEdgeStoreNextHandler({
-  router: edgeStoreRouter,
+  router,
   createContext,
 });
 
 /**
  * This type is used to create the type-safe client for the frontend.
  */
-export type EdgeStoreRouter = typeof edgeStoreRouter;
+export type EdgeStoreRouter = typeof router;
 
-export const backendClient = initEdgeStoreClient({
-  router: edgeStoreRouter,
-});
+export const backendClient = router.client;

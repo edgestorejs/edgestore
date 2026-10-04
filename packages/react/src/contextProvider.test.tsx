@@ -83,13 +83,8 @@ describe('createEdgeStoreProvider initialization', () => {
     vi.unstubAllGlobals();
   });
 
-  it('skips _init for public EdgeStore responses', async () => {
-    const { calls } = createFetchMock([
-      jsonResponse({
-        providerName: 'edgestore',
-        requiresFileAccessCookie: false,
-      }),
-    ]);
+  it('skips client initialization when the server returns no instruction', async () => {
+    const { calls } = createFetchMock([jsonResponse({})]);
     const { EdgeStoreProvider, useEdgeStore } = createEdgeStoreProvider<any>();
     const states: unknown[] = [];
 
@@ -117,11 +112,15 @@ describe('createEdgeStoreProvider initialization', () => {
     expect(calls.map((call) => call.url)).toEqual(['/api/edgestore/init']);
   });
 
-  it('calls _init for older or protected EdgeStore responses', async () => {
+  it('executes the returned client-init instruction', async () => {
     const { calls } = createFetchMock([
       jsonResponse({
-        providerName: 'edgestore',
-        token: 'token_1',
+        clientInit: {
+          urls: ['https://files.example.com/storage/_init'],
+          headers: {
+            'x-provider-token': 'token_1',
+          },
+        },
       }),
       jsonResponse({ success: true }),
     ]);
@@ -152,30 +151,38 @@ describe('createEdgeStoreProvider initialization', () => {
       },
     });
     expect(calls[1]).toMatchObject({
-      url: 'https://files.edgestore.dev/_init',
+      url: 'https://files.example.com/storage/_init',
       init: {
         method: 'GET',
         credentials: 'include',
         headers: {
-          'x-edgestore-token': 'token_1',
+          'x-provider-token': 'token_1',
         },
       },
     });
   });
 
-  it('skips _init for non-EdgeStore providers', async () => {
+  it('initializes both file aliases before reporting ready', async () => {
+    const urls = [
+      'https://project.content.test/_init',
+      'https://files.example.com/_init',
+    ];
     const { calls } = createFetchMock([
       jsonResponse({
-        providerName: 's3',
+        clientInit: {
+          urls,
+          headers: { 'x-edgestore-token': 'token' },
+        },
       }),
+      jsonResponse({}),
+      jsonResponse({}),
     ]);
     const { EdgeStoreProvider, useEdgeStore } = createEdgeStoreProvider<any>();
-
+    let state: unknown;
     function Consumer() {
-      useEdgeStore();
+      state = useEdgeStore().state;
       return null;
     }
-
     await act(async () => {
       root.render(
         <EdgeStoreProvider>
@@ -183,24 +190,66 @@ describe('createEdgeStoreProvider initialization', () => {
         </EdgeStoreProvider>,
       );
     });
+    await waitFor(() =>
+      expect(state).toEqual({
+        loading: false,
+        initialized: true,
+        error: false,
+      }),
+    );
+    expect(calls.map((call) => call.url)).toEqual([
+      '/api/edgestore/init',
+      ...urls,
+    ]);
+    for (const call of calls.slice(1))
+      expect(call.init).toMatchObject({
+        credentials: 'include',
+        headers: { 'x-edgestore-token': 'token' },
+      });
+  });
 
-    await waitFor(() => {
-      expect(calls).toHaveLength(1);
+  it('does not report ready when an alias fails during reset', async () => {
+    createFetchMock([
+      jsonResponse({}),
+      jsonResponse({
+        clientInit: {
+          urls: [
+            'https://project.content.test/_init',
+            'https://files.example.com/_init',
+          ],
+        },
+      }),
+      jsonResponse({}),
+      jsonResponse({}, 503),
+    ]);
+    const { EdgeStoreProvider, useEdgeStore } = createEdgeStoreProvider<any>();
+    let current: ReturnType<typeof useEdgeStore>;
+    function Consumer() {
+      current = useEdgeStore();
+      return null;
+    }
+    await act(async () => {
+      root.render(
+        <EdgeStoreProvider>
+          <Consumer />
+        </EdgeStoreProvider>,
+      );
     });
-    expect(calls[0]?.url).toBe('/api/edgestore/init');
+    await waitFor(() => expect(current.state.initialized).toBe(true));
+    await act(async () => {
+      await expect(current.reset()).rejects.toThrow(
+        "Couldn't initialize EdgeStore.",
+      );
+    });
+    expect(current!.state).toEqual({
+      loading: false,
+      initialized: false,
+      error: true,
+    });
   });
 
   it('reset reruns initialization', async () => {
-    const { calls } = createFetchMock([
-      jsonResponse({
-        providerName: 'edgestore',
-        requiresFileAccessCookie: false,
-      }),
-      jsonResponse({
-        providerName: 'edgestore',
-        requiresFileAccessCookie: false,
-      }),
-    ]);
+    const { calls } = createFetchMock([jsonResponse({}), jsonResponse({})]);
     const { EdgeStoreProvider, useEdgeStore } = createEdgeStoreProvider<any>();
     let reset: (() => Promise<void>) | undefined;
 

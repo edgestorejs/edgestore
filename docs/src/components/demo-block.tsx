@@ -8,28 +8,25 @@ import React from 'react';
 type DemoBlockProps = {
   children: React.ReactNode;
   externalLink?: string;
-  v0Config?: {
-    title: string;
-    description: string;
-    registryUrl: string;
-  };
+  /** Registry item to open in v0. */
+  registryUrl?: string;
 };
 
 export function DemoBlock({
   children,
   externalLink,
-  v0Config,
+  registryUrl,
 }: DemoBlockProps) {
   return (
     <div className="not-prose flex items-center justify-center pb-4">
-      <div className="border-border bg-background flex w-full max-w-lg flex-col items-center rounded-lg border border-solid px-4 pb-8 pt-2">
+      <div className="flex w-full max-w-lg flex-col items-center rounded-lg border border-solid border-border bg-background px-4 pt-2 pb-8">
         <div className="flex w-full items-center gap-2">
           {externalLink && (
             <Button
               asChild
               variant="outline"
               size="sm"
-              className="text-foreground flex items-center gap-2"
+              className="flex items-center gap-2 text-foreground"
             >
               <a href={externalLink} target="_blank" rel="noreferrer">
                 <span>See it in action</span>
@@ -38,15 +35,15 @@ export function DemoBlock({
             </Button>
           )}
           <div className="grow" />
-          {v0Config && (
+          {registryUrl && (
             <Button
               asChild
               variant="outline"
               size="sm"
-              className="text-foreground flex items-center gap-1 no-underline"
+              className="flex items-center gap-1 text-foreground no-underline"
             >
               <a
-                href={`https://v0.dev/chat/api/open?title=${v0Config.title}&prompt=${v0Config.description}&url=${v0Config.registryUrl}`}
+                href={`https://v0.dev/chat/api/open?url=${encodeURIComponent(registryUrl)}`}
                 target="_blank"
                 rel="noreferrer"
               >

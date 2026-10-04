@@ -21,26 +21,26 @@ export default function GitHubStarButton({ className }: GitHubStarButtonProps) {
       size="sm"
       asChild
       className={cn(
-        'border-border/40 bg-background/60 hover:border-border hover:bg-accent/80 dark:hover:shadow-primary/5 group relative overflow-hidden backdrop-blur-sm transition-all duration-200 hover:shadow-md dark:hover:shadow-lg',
+        'group relative overflow-hidden border-border/40 bg-background/60 backdrop-blur-sm transition-all duration-200 hover:border-border hover:bg-accent/80 hover:shadow-md dark:hover:shadow-lg dark:hover:shadow-primary/5',
         className,
       )}
     >
       <Link href={GITHUB_URL} target="_blank" rel="noopener noreferrer">
         <div className="flex items-center gap-2">
-          <StarIcon className="text-muted-foreground h-4 w-4 transition-all duration-200 group-hover:fill-yellow-500 group-hover:text-yellow-500" />
-          <span className="text-muted-foreground text-sm font-medium">
+          <StarIcon className="h-4 w-4 text-muted-foreground transition-all duration-200 group-hover:fill-yellow-500 group-hover:text-yellow-500" />
+          <span className="text-sm font-medium text-muted-foreground">
             Star
           </span>
           <span
             className={cn(
-              'text-muted-foreground font-mono text-sm font-medium tabular-nums',
+              'font-mono text-sm font-medium text-muted-foreground tabular-nums',
               githubStars === undefined &&
-                'bg-muted animate-pulse select-none rounded text-transparent',
+                'animate-pulse rounded bg-muted text-transparent select-none',
             )}
           >
             {githubStars === undefined ? '...' : formatStars(githubStars)}
           </span>
-          <GithubIcon className="text-muted-foreground group-hover:text-foreground ml-1 h-4 w-4 transition-colors duration-200" />
+          <GithubIcon className="ml-1 h-4 w-4 text-muted-foreground transition-colors duration-200 group-hover:text-foreground" />
         </div>
 
         {/* Hover effect overlay */}

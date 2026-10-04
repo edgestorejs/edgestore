@@ -1,8 +1,8 @@
 import { createEdgeStoreProvider } from '@edgestore/react';
+import { initEdgeStore } from '@edgestore/server';
+import { createEdgeStoreAstroHandler } from '@edgestore/server/adapters/astro';
 import { createEdgeStoreFastifyHandler } from '@edgestore/server/adapters/fastify';
 import { createEdgeStoreHonoHandler } from '@edgestore/server/adapters/hono';
-import { initEdgeStoreClient } from '@edgestore/server/core';
-import { initEdgeStore } from '@edgestore/shared';
 import { z } from 'zod';
 
 type Context = {
@@ -45,7 +45,7 @@ const router = es.router({
     .autoSignedUrls({ includeThumbnails: true }),
 });
 
-const backendClient = initEdgeStoreClient({ router });
+const backendClient = router.client;
 const { useEdgeStore } = createEdgeStoreProvider<typeof router>();
 const { edgestore, state: providerState } = useEdgeStore();
 const backendSignedUploadMethod = backendClient.privateFiles.upload;
@@ -61,6 +61,18 @@ const fastifyHandler = createEdgeStoreFastifyHandler({
   createContext: () => ({ userId: 'user-1', role: 'admin' }),
 });
 
+// Astro's ESM-only declarations need the Bundler resolution used by this fixture.
+createEdgeStoreAstroHandler({
+  router,
+  createContext: () => ({ userId: 'user-1', role: 'admin' }),
+});
+// @ts-expect-error A router with context requires createContext.
+createEdgeStoreAstroHandler({ router });
+const publicEs = initEdgeStore.create();
+createEdgeStoreAstroHandler({
+  router: publicEs.router({ files: publicEs.fileBucket() }),
+});
+
 async function inspectOperationResults() {
   const backendUnsignedUpload = await backendClient.publicFiles.upload({
     content: 'hello',
@@ -71,16 +83,17 @@ async function inspectOperationResults() {
     ctx: { userId: 'user-1', role: 'admin' },
     input: { category: 'invoice' },
   });
-  const backendGetFile = await backendClient.privateFiles.getFile({
+  const backendGetFile = await backendClient.privateFiles.get({
     url: 'https://example.com/file',
   });
-  const backendListFiles = await backendClient.privateFiles.listFiles();
-  const backendGetSignedUrl = await backendClient.privateFiles.getSignedUrl({
+  const backendListFiles = await backendClient.privateFiles.list();
+  const backendGetSignedUrl = await backendClient.privateFiles.createSignedUrl({
     url: 'https://example.com/file',
   });
-  const backendGetSignedUrls = await backendClient.privateImages.getSignedUrls({
-    urls: ['https://example.com/image'],
-  });
+  const backendGetSignedUrls =
+    await backendClient.privateImages.createSignedUrls({
+      urls: ['https://example.com/image'],
+    });
 
   const reactUnsignedUpload = await edgestore.publicFiles.upload({
     file: null! as File,

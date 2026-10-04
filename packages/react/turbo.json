@@ -3,13 +3,7 @@
   "extends": ["//"],
   "tasks": {
     "codegen:entrypoints": {
-      "outputs": [
-        "package.json",
-        "dist/**",
-        "errors/**",
-        "shared/**",
-        "utils/**"
-      ]
+      "outputs": ["package.json", "dist/**", "errors/**", "utils/**"]
     }
   }
 }

@@ -1,7 +1,14 @@
-import { z } from 'zod';
 import { EdgeStoreError } from '../errors';
 import { type KeysOfUnion, type MaybePromise, type Simplify } from '../types';
 import { createPathParamProxy } from './createPathParamProxy';
+import {
+  assertStandardSchema,
+  type AnyInput,
+  type AnySchema,
+  type InferSchemaOutput,
+} from './schema';
+
+export type { AnyInput } from './schema';
 
 type Merge<TType, TWith> = {
   [TKey in keyof TType | keyof TWith]?: TKey extends keyof TType
@@ -23,21 +30,22 @@ type UnionToIntersection<TType> = (
   ? I
   : never;
 
-export type InferBucketPathKeys<TBucket extends Builder<any, AnyDef>> =
-  KeysOfUnion<TBucket['_def']['path'][number]>;
+export type InferBucketPathKeys<TBucket extends AnyBuilder> = KeysOfUnion<
+  TBucket['_def']['path'][number]
+>;
 
 type InferBucketPathKeysFromDef<TDef extends AnyDef> = KeysOfUnion<
   TDef['path'][number]
 >;
 
-export type InferBucketPathObject<TBucket extends Builder<any, AnyDef>> =
+export type InferBucketPathObject<TBucket extends AnyBuilder> =
   InferBucketPathKeys<TBucket> extends never
     ? Record<string, never>
     : {
         [TKey in InferBucketPathKeys<TBucket>]: string;
       };
 
-export type InferBucketPathOrder<TBucket extends Builder<any, AnyDef>> =
+export type InferBucketPathOrder<TBucket extends AnyBuilder> =
   InferBucketPathKeys<TBucket> extends never
     ? []
     : InferBucketPathKeys<TBucket>[];
@@ -49,23 +57,56 @@ export type InferBucketPathObjectFromDef<TDef extends AnyDef> =
         [TKey in InferBucketPathKeysFromDef<TDef>]: string;
       };
 
-export type InferMetadataObject<TBucket extends Builder<any, AnyDef>> =
-  TBucket['_def']['metadata'] extends (...args: any) => any
-    ? Awaited<ReturnType<TBucket['_def']['metadata']>>
+type NormalizeMetadata<TMetadata> = string extends keyof TMetadata
+  ? Record<string, Exclude<TMetadata[string], null | undefined>>
+  : Simplify<
+      {
+        [
+          TKey in keyof TMetadata as Extract<
+            TMetadata[TKey],
+            null | undefined
+          > extends never
+            ? TKey
+            : never
+        ]: Exclude<TMetadata[TKey], null | undefined>;
+      } & {
+        [
+          TKey in keyof TMetadata as Extract<
+            TMetadata[TKey],
+            null | undefined
+          > extends never
+            ? never
+            : TKey
+        ]?: Exclude<TMetadata[TKey], null | undefined>;
+      }
+    >;
+
+type InferMetadataObjectFromFn<TMetadata> = [
+  Exclude<TMetadata, undefined>,
+] extends [never]
+  ? Record<string, never>
+  : Exclude<TMetadata, undefined> extends (...args: any) => any
+    ? NormalizeMetadata<Awaited<ReturnType<Exclude<TMetadata, undefined>>>>
     : Record<string, never>;
+
+export type InferMetadataObject<TBucket extends AnyBuilder> =
+  InferMetadataObjectFromFn<TBucket['_def']['metadata']>;
 
 type InferMetadataObjectFromDef<TDef extends AnyDef> =
-  TDef['metadata'] extends (...args: any) => any
-    ? Awaited<ReturnType<TDef['metadata']>>
-    : Record<string, never>;
+  InferMetadataObjectFromFn<TDef['metadata']>;
 
-export type AnyContextValue = string | undefined | null | AnyContext;
+export type AnyContextValue = string | undefined;
 
+/**
+ * Context shared by router hooks, path and metadata builders, and providers.
+ *
+ * Values are limited to strings so every supported provider receives the same
+ * context shape. Optional properties may be `undefined`; providers omit them
+ * when serializing the context.
+ */
 export interface AnyContext {
   [key: string]: AnyContextValue;
 }
-
-export type AnyInput = z.AnyZodObject | z.ZodNever;
 
 export type AnyPath = Record<string, () => string>[];
 
@@ -87,9 +128,7 @@ type Conditions<TPath extends AnyPath> = {
 export type AccessControlSchema<TCtx, TDef extends AnyDef> = Merge<
   {
     [TKey in keyof TCtx]?:
-      | string
-      | PathParam<TDef['path']>
-      | Conditions<TDef['path']>;
+      string | PathParam<TDef['path']> | Conditions<TDef['path']>;
   },
   {
     OR?: AccessControlSchema<TCtx, TDef>[];
@@ -99,15 +138,14 @@ export type AccessControlSchema<TCtx, TDef extends AnyDef> = Merge<
 >;
 
 export type AccessControl<TCtx, TDef extends AnyDef> =
-  | 'private'
-  | AccessControlSchema<TCtx, TDef>;
+  'private' | AccessControlSchema<TCtx, TDef>;
 
 export type AutoSignedUrlsConfig = {
   expiresIn?: number;
   includeThumbnails?: boolean;
 };
 
-type BucketConfig = {
+export type BucketConfig = {
   /**
    * Maximum size for a single file in bytes
    *
@@ -128,7 +166,7 @@ type BucketConfig = {
 
 type BeforeUploadFn<TCtx, TDef extends AnyDef> = (params: {
   ctx: TCtx;
-  input: z.infer<TDef['input']>;
+  input: InferSchemaOutput<TDef['input']>;
   fileInfo: {
     size: number;
     type: string;
@@ -156,16 +194,22 @@ type MetadataFn<
   TCtx,
   TInput extends AnyInput,
   TMetadata extends AnyMetadata,
-> = (params: { ctx: TCtx; input: z.infer<TInput> }) => MaybePromise<TMetadata>;
+> = (params: {
+  ctx: TCtx;
+  input: InferSchemaOutput<TInput>;
+}) => MaybePromise<TMetadata>;
 
-export type AnyMetadataFn = MetadataFn<any, AnyInput, AnyMetadata>;
+export type AnyMetadataFn = (params: {
+  ctx: any;
+  input: any;
+}) => MaybePromise<AnyMetadata>;
 
 type BucketType = 'IMAGE' | 'FILE';
 
 type Def<
   TInput extends AnyInput,
   TPath extends AnyPath,
-  TMetadata extends AnyMetadataFn,
+  TMetadata extends AnyMetadataFn | undefined,
 > = {
   type: BucketType;
   input: TInput;
@@ -178,7 +222,7 @@ type Def<
   beforeDelete?: BeforeDeleteFn<any, any>;
 };
 
-type AnyDef = Def<AnyInput, AnyPath, AnyMetadataFn>;
+type AnyDef = Def<AnyInput, AnyPath, AnyMetadataFn | undefined>;
 
 type Builder<TCtx, TDef extends AnyDef> = {
   /** only used for types */
@@ -194,7 +238,7 @@ type Builder<TCtx, TDef extends AnyDef> = {
    *
    * This can be used to add additional information to the file, like choose the file path or add metadata.
    */
-  input<TInput extends AnyInput>(
+  input<TInput extends AnySchema>(
     input: TInput,
   ): Builder<
     TCtx,
@@ -225,7 +269,9 @@ type Builder<TCtx, TDef extends AnyDef> = {
   path<TParams extends AnyPath>(
     pathResolver: (params: {
       ctx: Simplify<ConvertStringToFunction<TCtx>>;
-      input: Simplify<ConvertStringToFunction<z.infer<TDef['input']>>>;
+      input: Simplify<
+        ConvertStringToFunction<InferSchemaOutput<TDef['input']>>
+      >;
     }) => [...TParams],
   ): Builder<
     TCtx,
@@ -341,7 +387,14 @@ type Builder<TCtx, TDef extends AnyDef> = {
   >;
 };
 
-export type AnyBuilder = Builder<any, AnyDef>;
+type ErasedBuilder<TCtx> = {
+  $config: {
+    ctx: TCtx;
+  };
+  _def: AnyDef;
+};
+
+export type AnyBuilder = ErasedBuilder<any>;
 
 const createNewBuilder = (initDef: AnyDef, newDef: Partial<AnyDef>) => {
   const mergedDef = {
@@ -359,9 +412,9 @@ const createNewBuilder = (initDef: AnyDef, newDef: Partial<AnyDef>) => {
 function createBuilder<
   TCtx,
   TType extends BucketType,
-  TInput extends AnyInput = z.ZodNever,
+  TInput extends AnyInput = undefined,
   TPath extends AnyPath = [],
-  TMetadata extends AnyMetadataFn = () => Record<string, never>,
+  TMetadata extends AnyMetadataFn | undefined = undefined,
 >(
   opts: { type: TType },
   initDef?: Partial<AnyDef>,
@@ -381,9 +434,9 @@ function createBuilder<
 > {
   const _def: AnyDef = {
     type: opts.type,
-    input: z.never(),
+    input: undefined,
     path: [],
-    metadata: () => ({}),
+    metadata: undefined,
     ...initDef,
   };
 
@@ -394,6 +447,7 @@ function createBuilder<
     // @ts-expect-error - I think it would be too much work to make this type correct.
     _def,
     input(input) {
+      assertStandardSchema(input);
       return createNewBuilder(_def, {
         input,
       }) as any;
@@ -477,21 +531,11 @@ function createBuilder<
   };
 }
 
-class EdgeStoreBuilder<TCtx = Record<string, never>> {
-  context<TNewContext extends AnyContext>() {
-    return new EdgeStoreBuilder<TNewContext>();
-  }
-
-  create() {
-    return createEdgeStoreInner<TCtx>()();
-  }
-}
-
 export type EdgeStoreRouter<
   TCtx,
-  TBuckets extends Record<string, Builder<TCtx, AnyDef>> = Record<
+  TBuckets extends Record<string, ErasedBuilder<TCtx>> = Record<
     string,
-    Builder<TCtx, AnyDef>
+    ErasedBuilder<TCtx>
   >,
 > = {
   /**
@@ -506,144 +550,10 @@ export type EdgeStoreRouter<
 
 export type AnyRouter = EdgeStoreRouter<any, Record<string, AnyBuilder>>;
 
-function createRouterFactory<TCtx>() {
-  return function createRouterInner<
-    TBuckets extends EdgeStoreRouter<TCtx>['buckets'],
-  >(buckets: TBuckets) {
-    return {
-      $config: {
-        ctx: undefined as TCtx,
-      },
-      buckets,
-    } satisfies EdgeStoreRouter<TCtx, TBuckets>;
-  };
-}
-
-function initBucket<TCtx, TType extends BucketType>(
+/** Create a bucket builder shared by server initialization and bucket tests. */
+export function initBucket<TCtx, TType extends BucketType>(
   type: TType,
   config?: BucketConfig,
 ) {
   return createBuilder<TCtx, TType>({ type }, { bucketConfig: config });
 }
-
-function createEdgeStoreInner<TCtx>() {
-  return function initEdgeStoreInner() {
-    return {
-      /**
-       * Builder object for creating an image bucket
-       */
-      imageBucket(config?: BucketConfig) {
-        return initBucket<TCtx, 'IMAGE'>('IMAGE', config);
-      },
-      /**
-       * Builder object for creating a file bucket
-       */
-      fileBucket(config?: BucketConfig) {
-        return initBucket<TCtx, 'FILE'>('FILE', config);
-      },
-      /**
-       * Create a router
-       */
-      router: createRouterFactory<TCtx>(),
-    };
-  };
-}
-
-/**
- * Initialize EdgeStore - be done exactly once per backend
- */
-export const initEdgeStore = new EdgeStoreBuilder();
-
-// ↓↓↓ TYPE TESTS ↓↓↓
-
-// type Context = {
-//   userId: string;
-//   userRole: 'admin' | 'visitor';
-// };
-
-// const es = initEdgeStore.context<Context>().create();
-
-// const imagesBucket = es.imageBucket()
-//   .input(
-//     z.object({
-//       type: z.enum(['profile', 'post']),
-//       extension: z.string().optional(),
-//     }),
-//   )
-//   .path(({ ctx, input }) => [{ author: ctx.userId }, { type: input.type }])
-//   .metadata(({ ctx, input }) => ({
-//     extension: input.extension,
-//     role: ctx.userRole,
-//   }))
-//   .beforeUpload(() => {
-//     return true;
-//   });
-// const a = es.imageBucket()
-//   .input(z.object({ type: z.string(), someMeta: z.string().optional() }))
-//   .path(({ ctx, input }) => [{ author: ctx.userId }, { type: input.type }])
-//   .metadata(({ ctx, input }) => ({
-//     role: ctx.userRole,
-//     someMeta: input.someMeta,
-//   }))
-//   .accessControl({
-//     OR: [
-//       {
-//         userId: { path: 'author' }, // this will check if the userId is the same as the author in the path parameter
-//       },
-//       {
-//         userRole: 'admin', // this is the same as { userRole: { eq: "admin" } }
-//       },
-//     ],
-//   })
-//   .beforeUpload(({ ctx, input }) => {
-//     return true;
-//   })
-//   .beforeDelete(({ ctx, file }) => {
-//     return true;
-//   });
-
-// const b = es.imageBucket().path(({ ctx }) => [{ author: ctx.userId }]);
-
-// const router = es.router({
-//   original: imagesBucket,
-//   imageBucket: a,
-//   imageBucket2: b,
-// });
-
-// export { router };
-
-// type ListFilesResponse<TBucket extends AnyRouter['buckets'][string]> = {
-//   data: {
-//     // url: string;
-//     // size: number;
-//     // uploadedAt: Date;
-//     // metadata: InferMetadataObject<TBucket>;
-//     path: InferBucketPathKeys<TBucket> extends string ? {
-//       [key: string]: string;
-//     } :{
-//       [TKey in InferBucketPathKeys<TBucket>]: string;
-//     };
-//   }[];
-//   pagination: {
-//     currentPage: number;
-//     totalPages: number;
-//     totalCount: number;
-//   };
-// };
-
-// type TPathKeys = 'author' | 'type';
-// type TPathKeys2 = InferBucketPathKeys<AnyBuilder>;
-
-// type ObjectWithKeys<TKeys extends string> = {
-//   [TKey in TKeys]: string;
-// };
-
-// type Test1 = ObjectWithKeys<TPathKeys>;
-// type Test2 = ObjectWithKeys<TPathKeys2>;
-// type PathKeys = InferBucketPathKeys<typeof router.buckets.imageBucket>;
-
-// type MetadataKeys = InferMetadataObject<typeof router.buckets.imageBucket>;
-
-// type MyEdgeStoreRouter = typeof router;
-
-// type MyAccessControl = AccessControlSchema<Context, AnyDef>;

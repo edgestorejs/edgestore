@@ -4,11 +4,26 @@
   "globalDependencies": ["tsconfig.json", "tsconfig.build.json", "scripts/**"],
   "globalEnv": [
     "NODE_ENV",
+    "DOCS_RELEASE_CHANNEL",
+    "VERCEL_ENV",
+    "VERCEL_URL",
+    "VERCEL_GIT_COMMIT_REF",
+    "GITHUB_HEAD_REF",
+    "GITHUB_REF_NAME",
     "ROLLUP_WATCH",
     "DASHBOARD_API_KEY",
     "DEV",
+    "EDGESTORE_API_ENDPOINT",
+    "EDGE_STORE_API_ENDPOINT",
+    "EDGESTORE_JWT_SECRET",
+    "EDGE_STORE_JWT_SECRET",
+    "EDGESTORE_API_URL",
+    "EDGESTORE_TOKEN",
+    "EDGESTORE_BASE_URL",
     "EDGE_STORE_BASE_URL",
+    "EDGESTORE_ACCESS_KEY",
     "EDGE_STORE_ACCESS_KEY",
+    "EDGESTORE_SECRET_KEY",
     "EDGE_STORE_SECRET_KEY",
     "GITHUB_TOKEN",
     "LANGFUSE_SECRET_KEY",
@@ -17,19 +32,21 @@
     "ENABLE_EXPERIMENTAL_COREPACK",
     "NEXT_PUBLIC_BASE_PATH",
     "NEXT_PUBLIC_DASHBOARD_URL",
+    "NEXT_PUBLIC_EDGESTORE_BASE_URL",
     "NEXT_PUBLIC_EDGE_STORE_BASE_URL",
     "NEXT_PUBLIC_POSTHOG_API_HOST",
     "NEXT_PUBLIC_POSTHOG_KEY",
     "NEXT_PUBLIC_POSTHOG_UI_HOST",
     "PORT",
+    "FRONTEND_ORIGIN",
     "SKIP_ENV_VALIDATION"
   ],
   "tasks": {
     "codegen:entrypoints": {},
     "build": {
       "dependsOn": ["^build", "codegen:entrypoints"],
-      "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [".next/**", "!.next/cache/**", "dist/**", "build/**"]
+      "inputs": ["$TURBO_DEFAULT$", ".env*", "$TURBO_ROOT$/docs/content/docs/**", "$TURBO_ROOT$/skills/**"],
+      "outputs": [".next/**", "!.next/cache/**", "dist/**", "build/**", "agent-docs/**", "agent-assets/**"]
     },
     "lint": {
       "dependsOn": ["^build"],
@@ -48,10 +65,11 @@
       "dependsOn": ["^build"],
       "env": [
         "TEST_ENV",
-        "EDGESTORE_SMOKE_BUCKET_NAME",
-        "EDGE_STORE_API_ENDPOINT",
-        "EDGE_STORE_ACCESS_KEY",
-        "EDGE_STORE_SECRET_KEY"
+        "ES_S3_SMOKE_ENDPOINT",
+        "ES_S3_SMOKE_ACCESS_KEY",
+        "ES_S3_SMOKE_SECRET_KEY",
+        "ES_AZURE_SMOKE_ENDPOINT",
+        "EDGESTORE_SMOKE_BUCKET_NAME"
       ],
       "outputs": [],
       "cache": false

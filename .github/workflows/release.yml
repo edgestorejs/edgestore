@@ -12,6 +12,7 @@ on:
         required: true
         type: choice
         options:
+          - release
           - maintenance
           - canary
       npm-tag:
@@ -25,7 +26,7 @@ concurrency:
 
 jobs:
   release:
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.operation == 'release')
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -38,8 +39,6 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
-        with:
-          version: 10.26.2
 
       - name: Setup Node
         uses: actions/setup-node@v6
@@ -55,9 +54,15 @@ jobs:
         shell: bash
         run: |
           if [[ "$GITHUB_REF_NAME" == "next" ]]; then
-            jq -e '.mode == "pre" and .tag == "next"' .changeset/pre.json
-          elif [[ -f .changeset/pre.json ]]; then
-            echo 'main must not contain a Changesets prerelease state'
+            jq -e \
+              '.mode == "pre" and (.tag == "next" or .tag == "rc")' \
+              .changeset/pre.json
+          elif [[ "$GITHUB_REF_NAME" == "main" ]]; then
+            if [[ -f .changeset/pre.json ]]; then
+              jq -e '.mode == "pre" and .tag == "rc"' .changeset/pre.json
+            fi
+          else
+            echo 'Normal releases must run from main or next.'
             exit 1
           fi
 
@@ -117,8 +122,6 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
-        with:
-          version: 10.26.2
 
       - name: Setup Node
         uses: actions/setup-node@v6
@@ -198,8 +201,6 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
-        with:
-          version: 10.26.2
 
       - name: Setup Node
         uses: actions/setup-node@v6
@@ -213,6 +214,11 @@ jobs:
 
       - name: Create snapshot versions
         run: |
+          if [[ -f .changeset/pre.json ]] &&
+             jq -e '.mode == "pre"' .changeset/pre.json >/dev/null; then
+            pnpm changeset pre exit
+          fi
+
           pnpm changeset version --snapshot canary
           pnpm -s sync-versions
         env:
