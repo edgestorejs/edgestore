@@ -203,7 +203,7 @@ export function AvatarDropzone({
               .join(', ')}
         </p>
         {!disabled && (
-          <div className="mt-1 flex gap-2">
+          <div className="mt-1 flex flex-wrap gap-2">
             <Button
               type="button"
               variant="outline"

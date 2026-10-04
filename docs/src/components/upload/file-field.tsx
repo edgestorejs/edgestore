@@ -81,7 +81,7 @@ export function FileField({
     .join(' · ');
 
   return (
-    <div className={cn('grid gap-1.5', className)} {...props}>
+    <div className={cn('@container grid gap-1.5', className)} {...props}>
       {fileState ? (
         <ul>
           <FileListItem fileState={fileState} disabled={disabled} />
@@ -100,14 +100,14 @@ export function FileField({
             'aria-invalid': errors.length > 0 || undefined,
             className: cn(
               dropzoneVariants,
-              'flex-row justify-start rounded-lg bg-background px-3.5 py-3 text-left hover:bg-background aria-invalid:border-destructive',
+              'grid grid-cols-[auto_minmax(0,1fr)] gap-x-2.5 gap-y-1.5 rounded-lg bg-background px-3.5 py-3 text-left hover:bg-background aria-invalid:border-destructive @min-[22rem]:grid-cols-[auto_minmax(0,1fr)_auto]',
             ),
           })}
           {...dropzoneState({ isDragActive, isDragReject, disabled })}
         >
-          <input {...getInputProps({ id: inputId })} />
-          <UploadIcon className="mr-2.5 size-4 shrink-0 text-muted-foreground group-data-[dragging]/dropzone:text-primary" />
-          <span className="min-w-0 flex-1 text-sm group-data-[rejected]/dropzone:text-destructive">
+          <input {...getInputProps({ id: inputId, className: 'absolute' })} />
+          <UploadIcon className="size-4 text-muted-foreground group-data-[dragging]/dropzone:text-primary" />
+          <span className="min-w-0 text-sm group-data-[rejected]/dropzone:text-destructive">
             {isDragReject ? (
               'File type not supported'
             ) : isDragActive ? (
@@ -120,7 +120,7 @@ export function FileField({
             )}
           </span>
           {hint && (
-            <span className="ml-2.5 shrink-0 text-xs text-muted-foreground">
+            <span className="col-start-2 text-xs text-muted-foreground @min-[22rem]:col-start-3">
               {hint}
             </span>
           )}
