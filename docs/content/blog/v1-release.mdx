@@ -113,13 +113,15 @@ In this new version the support was greatly improved. Now you can also use the [
 
 Examples of how to connect to other S3-compatible providers like Cloudflare R2, Backblaze B2, DigitalOcean Spaces, Google Cloud Storage, Tigris, Supabase Storage, and MinIO were also added to the docs.
 
-<img src="/img/blog/v1-release-providers.svg" alt="Logos of AWS, Azure, Cloudflare, DigitalOcean, Google Cloud, and Supabase." width={960} height={420} className="w-full rounded-xl" />
+<img src="/img/blog/v1-release-providers.webp" alt="Bring your own storage: logos of AWS S3, Cloudflare R2, Azure Blob Storage, Google Cloud Storage, Supabase Storage, DigitalOcean Spaces, Backblaze B2, and MinIO." width={1920} height={1080} className="w-full rounded-xl" />
 
 See the [S3-compatible services guide](/docs/providers/s3#s3-compatible-services) and [Azure guide](/docs/providers/azure-blob) for setup and provider differences.
 
 ## Standard Schema support
 
 Until now we had to use Zod for the bucket input schemas. Now we can use any Standard Schema-compatible object schema, like Zod, Valibot, and ArkType.
+
+<img src="/img/blog/v1-release-standard-schema.webp" alt="Bring your own schema: logos of Zod, Valibot, and ArkType. Inputs are validated on the server and typed on the client, with no Zod peer dependency." width={1920} height={1080} className="w-full rounded-xl" />
 
 See the [input schema configuration](/docs/configuration#metadata--file-path) for more.
 
