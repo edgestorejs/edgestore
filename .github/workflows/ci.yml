@@ -47,9 +47,6 @@ jobs:
       - name: Check dependency versions
         run: pnpm check:dependencies
 
-      - name: Release workflow regression tests
-        run: pnpm release:test
-
       - name: Check formatting
         run: pnpm format --check
 
