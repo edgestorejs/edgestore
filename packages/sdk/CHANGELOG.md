@@ -1,5 +1,16 @@
 # @edgestore/sdk
 
+## 1.0.0
+
+### Major Changes
+
+- [#194](https://github.com/edgestorejs/edgestore/pull/194) [`1bd3452`](https://github.com/edgestorejs/edgestore/commit/1bd34529d998283595aa09bd808817a67ef5a166) Thanks [@raviships](https://github.com/raviships)! - Introduce `@edgestore/sdk`, the server-only client for EdgeStore API v2. It
+  provides runtime, management, and system clients authenticated with project
+  keys or Bearer tokens, cursor pagination, typed errors, and uploads from files,
+  streams, and remote URLs with multipart transfers, retries, and progress.
+  Requires Node.js 22.22.0 or newer and includes version-matched agent
+  references.
+
 ## 1.0.0-rc.7
 
 ## 1.0.0-rc.6

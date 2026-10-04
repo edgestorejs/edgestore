@@ -1,5 +1,95 @@
 # @edgestore/server
 
+## 1.0.0
+
+### Major Changes
+
+- [#262](https://github.com/edgestorejs/edgestore/pull/262) [`17477fb`](https://github.com/edgestorejs/edgestore/commit/17477fb54c00e6653682a3ffc18d8cfef98bc9fc) Thanks [@raviships](https://github.com/raviships)! - Sign Azure Blob URLs with the storage account key: set `storageAccountKey` or
+  `ES_AZURE_ACCOUNT_KEY` in place of `sasToken` or `ES_AZURE_SAS_TOKEN`. Replace
+  `customBaseUrl` and `ES_AZURE_BASE_URL` with `endpoint` and `ES_AZURE_ENDPOINT`.
+  Azure Blob rejects `temporary`, `replaceTargetUrl`, and cookie-based
+  `accessControl` rules.
+
+- [#194](https://github.com/edgestorejs/edgestore/pull/194) [`1bd3452`](https://github.com/edgestorejs/edgestore/commit/1bd34529d998283595aa09bd808817a67ef5a166) Thanks [@raviships](https://github.com/raviships)! - Rebuild the backend client on EdgeStore API v2. Methods are renamed (`get`,
+  `list`, `confirm`, `delete`, `restore`, their `Many` variants, and
+  `createSignedUrl(s)`), files are referenced by `{ id }`, `{ key }`, or
+  `{ url }`, and `list` uses cursor pagination. Singular methods throw
+  `EdgeStoreFileMutationError`, and batch methods report per-file failures.
+
+- [#194](https://github.com/edgestorejs/edgestore/pull/194) [`1bd3452`](https://github.com/edgestorejs/edgestore/commit/1bd34529d998283595aa09bd808817a67ef5a166) Thanks [@raviships](https://github.com/raviships)! - Replace the custom provider interface with the `EdgeStoreProvider` contract and
+  the `defineProvider` helper. The backend client only exposes the operations a
+  provider implements.
+
+- [#159](https://github.com/edgestorejs/edgestore/pull/159) [`bd89793`](https://github.com/edgestorejs/edgestore/commit/bd89793834f7a8e2185fe97c82c6e842c4d3ba2b) Thanks [@raviships](https://github.com/raviships)! - Publish ESM-only packages and require Node.js 22.22.0 or newer.
+  `@edgestore/react` no longer installs server-only dependencies.
+
+- [#253](https://github.com/edgestorejs/edgestore/pull/253) [`fa37415`](https://github.com/edgestorejs/edgestore/commit/fa37415e3415bbb93422521a6538a44f31001b11) Thanks [@raviships](https://github.com/raviships)! - Rename the provider factories: `EdgeStoreProvider()` is now `edgestore()`,
+  `AWSProvider()` from `providers/aws` is now `s3()` from `providers/s3`, and
+  `AzureProvider()` from `providers/azure` is now `azureBlob()` from
+  `providers/azure-blob`.
+
+- [#263](https://github.com/edgestorejs/edgestore/pull/263) [`ed81242`](https://github.com/edgestorejs/edgestore/commit/ed812425ad7451c600115356f6c0849d8321e61a) Thanks [@raviships](https://github.com/raviships)! - Remove deprecated and duplicate APIs: `@edgestore/react/shared` (use
+  `@edgestore/react/errors`), `@edgestore/server/core` (use `@edgestore/server`),
+  `InferClientResponse` (use `InferClientOutputs`), and the S3 `accessKeyId` and
+  `secretAccessKey` options (use `credentials` or the `ES_AWS_*` variables).
+
+- [#255](https://github.com/edgestorejs/edgestore/pull/255) [`7a66d4c`](https://github.com/edgestorejs/edgestore/commit/7a66d4c6f7bec480ad3be7951c5f54d2e9cbd845) Thanks [@raviships](https://github.com/raviships)! - Load protected files directly from their file origin in development. The
+  `/proxy-file` route and the React `disableDevProxy` option are removed.
+  Adapters no longer set the `edgestore-token` cookie, so `cookieConfig.token` is
+  removed.
+
+- [#253](https://github.com/edgestorejs/edgestore/pull/253) [`fa37415`](https://github.com/edgestorejs/edgestore/commit/fa37415e3415bbb93422521a6538a44f31001b11) Thanks [@raviships](https://github.com/raviships)! - Configure the provider once with `es.router({ ... }).provider(...)` and pass
+  only the `router` to adapters. Use `router.client` in place of
+  `initEdgeStoreClient`.
+
+- [#249](https://github.com/edgestorejs/edgestore/pull/249) [`f0375e3`](https://github.com/edgestorejs/edgestore/commit/f0375e3e2a3d789f5588e5e0f3329a8c479415e5) Thanks [@raviships](https://github.com/raviships)! - Replace the S3 `overwritePath` option with `path`, which returns a key relative
+  to the router bucket. S3 rejects `temporary`, `replaceTargetUrl`, and
+  cookie-based `accessControl` rules instead of ignoring them.
+
+- [#151](https://github.com/edgestorejs/edgestore/pull/151) [`7c8a7b6`](https://github.com/edgestorejs/edgestore/commit/7c8a7b6e9146360edb4003120238f37f5ea91e92) Thanks [@raviships](https://github.com/raviships)! - Accept any Standard Schema library for bucket `input`, and drop the Zod peer
+  dependency. The server now validates upload input, rejects invalid requests
+  with `BAD_REQUEST`, and passes the parsed output to callbacks.
+
+### Minor Changes
+
+- [#248](https://github.com/edgestorejs/edgestore/pull/248) [`ae605b9`](https://github.com/edgestorejs/edgestore/commit/ae605b99a25bdd11e276d00184c9baeedcdbb1cf) Thanks [@raviships](https://github.com/raviships)! - Bundle Markdown API references that match the installed version, for coding
+  agents.
+
+- [#262](https://github.com/edgestorejs/edgestore/pull/262) [`17477fb`](https://github.com/edgestorejs/edgestore/commit/17477fb54c00e6653682a3ffc18d8cfef98bc9fc) Thanks [@raviships](https://github.com/raviships)! - Add Azure Blob block uploads for large files, backend uploads, private buckets
+  with signed downloads, a `path` callback, a `baseUrl` option for file URLs, and
+  per-object settings (cache control, content disposition, and metadata).
+
+- [#274](https://github.com/edgestorejs/edgestore/pull/274) [`8c8d8ab`](https://github.com/edgestorejs/edgestore/commit/8c8d8ab589b0957476b66d9c07955feb03ad3ed7) Thanks [@raviships](https://github.com/raviships)! - Support `EDGESTORE_*` environment variables for credentials, API and base URLs,
+  and signing secrets.
+
+- [#253](https://github.com/edgestorejs/edgestore/pull/253) [`fa37415`](https://github.com/edgestorejs/edgestore/commit/fa37415e3415bbb93422521a6538a44f31001b11) Thanks [@raviships](https://github.com/raviships)! - The `edgestore()` provider accepts a Bearer `token` with an explicit `project`
+  in place of project keys.
+
+- [#237](https://github.com/edgestorejs/edgestore/pull/237) [`31405ca`](https://github.com/edgestorejs/edgestore/commit/31405ca9ffa25d9f953a22aaf89f0287da5e9bc5) Thanks [@raviships](https://github.com/raviships)! - Initialize protected file access on the file origins returned by EdgeStore,
+  including project subdomains and the shared origin used by existing links.
+
+- [#256](https://github.com/edgestorejs/edgestore/pull/256) [`017f324`](https://github.com/edgestorejs/edgestore/commit/017f3249fb3f1e062b8080668da22e30db293689) Thanks [@raviships](https://github.com/raviships)! - Make long browser multipart uploads resilient: part URLs are signed in batches,
+  failed parts are retried with backoff, and failed or canceled uploads abort the
+  multipart session.
+
+- [#249](https://github.com/edgestorejs/edgestore/pull/249) [`f0375e3`](https://github.com/edgestorejs/edgestore/commit/f0375e3e2a3d789f5588e5e0f3329a8c479415e5) Thanks [@raviships](https://github.com/raviships)! - Add S3 multipart uploads for large files, backend uploads, private buckets with
+  signed downloads, and per-object settings (cache and download headers,
+  metadata, tags, storage class, and encryption).
+
+- [#275](https://github.com/edgestorejs/edgestore/pull/275) [`e1548ab`](https://github.com/edgestorejs/edgestore/commit/e1548abcc37b195a697e9b13689bb88bb7cf4d5c) Thanks [@raviships](https://github.com/raviships)! - Pass `options.waitForProcessing` to resolve an upload with the processed file,
+  and `onPhaseChange` to show when processing starts. Failures and timeouts reject
+  with `UploadCanceledError` and `UploadProcessingTimeoutError`. Providers opt in
+  by implementing `uploads.getStatus`.
+
+### Patch Changes
+
+- [#263](https://github.com/edgestorejs/edgestore/pull/263) [`ed81242`](https://github.com/edgestorejs/edgestore/commit/ed812425ad7451c600115356f6c0849d8321e61a) Thanks [@raviships](https://github.com/raviships)! - Respond with `401 UNAUTHORIZED` instead of a server error when the
+  `edgestore-ctx` cookie is expired, tampered with, or encrypted with a different
+  secret.
+- Updated dependencies [[`fc16f0a`](https://github.com/edgestorejs/edgestore/commit/fc16f0af18564c83c8dd2c601386a0054534de76), [`fc16f0a`](https://github.com/edgestorejs/edgestore/commit/fc16f0af18564c83c8dd2c601386a0054534de76), [`fc16f0a`](https://github.com/edgestorejs/edgestore/commit/fc16f0af18564c83c8dd2c601386a0054534de76), [`fc16f0a`](https://github.com/edgestorejs/edgestore/commit/fc16f0af18564c83c8dd2c601386a0054534de76), [`f822286`](https://github.com/edgestorejs/edgestore/commit/f82228612a7b803549169dea03b18b59b1f63ae7)]:
+  - @edgestore/shared@1.0.0
+  - @edgestore/sdk@1.0.0
+
 ## 1.0.0-rc.7
 
 ### Minor Changes

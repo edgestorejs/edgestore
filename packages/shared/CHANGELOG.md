@@ -1,5 +1,27 @@
 # @edgestore/shared
 
+## 1.0.0
+
+### Major Changes
+
+- [#194](https://github.com/edgestorejs/edgestore/pull/194) [`1bd3452`](https://github.com/edgestorejs/edgestore/commit/1bd34529d998283595aa09bd808817a67ef5a166) Thanks [@raviships](https://github.com/raviships)! - Replace the custom provider interface with the `EdgeStoreProvider` contract and
+  the `defineProvider` helper. The backend client only exposes the operations a
+  provider implements.
+
+- [#159](https://github.com/edgestorejs/edgestore/pull/159) [`bd89793`](https://github.com/edgestorejs/edgestore/commit/bd89793834f7a8e2185fe97c82c6e842c4d3ba2b) Thanks [@raviships](https://github.com/raviships)! - Publish ESM-only packages and require Node.js 22.22.0 or newer.
+  `@edgestore/react` no longer installs server-only dependencies.
+
+- [#151](https://github.com/edgestorejs/edgestore/pull/151) [`7c8a7b6`](https://github.com/edgestorejs/edgestore/commit/7c8a7b6e9146360edb4003120238f37f5ea91e92) Thanks [@raviships](https://github.com/raviships)! - Accept any Standard Schema library for bucket `input`, and drop the Zod peer
+  dependency. The server now validates upload input, rejects invalid requests
+  with `BAD_REQUEST`, and passes the parsed output to callbacks.
+
+### Minor Changes
+
+- [#275](https://github.com/edgestorejs/edgestore/pull/275) [`e1548ab`](https://github.com/edgestorejs/edgestore/commit/e1548abcc37b195a697e9b13689bb88bb7cf4d5c) Thanks [@raviships](https://github.com/raviships)! - Pass `options.waitForProcessing` to resolve an upload with the processed file,
+  and `onPhaseChange` to show when processing starts. Failures and timeouts reject
+  with `UploadCanceledError` and `UploadProcessingTimeoutError`. Providers opt in
+  by implementing `uploads.getStatus`.
+
 ## 1.0.0-rc.7
 
 ### Minor Changes

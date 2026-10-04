@@ -1,5 +1,64 @@
 # @edgestore/react
 
+## 1.0.0
+
+### Major Changes
+
+- [#159](https://github.com/edgestorejs/edgestore/pull/159) [`bd89793`](https://github.com/edgestorejs/edgestore/commit/bd89793834f7a8e2185fe97c82c6e842c4d3ba2b) Thanks [@raviships](https://github.com/raviships)! - Publish ESM-only packages and require Node.js 22.22.0 or newer.
+  `@edgestore/react` no longer installs server-only dependencies.
+
+- [#194](https://github.com/edgestorejs/edgestore/pull/194) [`1bd3452`](https://github.com/edgestorejs/edgestore/commit/1bd34529d998283595aa09bd808817a67ef5a166) Thanks [@raviships](https://github.com/raviships)! - Rename the React `confirmUpload` method to `confirm`.
+
+- [#263](https://github.com/edgestorejs/edgestore/pull/263) [`ed81242`](https://github.com/edgestorejs/edgestore/commit/ed812425ad7451c600115356f6c0849d8321e61a) Thanks [@raviships](https://github.com/raviships)! - React `confirm` and `delete` throw `EdgeStoreFileMutationError` with the
+  failure code, matching the backend client.
+
+- [#263](https://github.com/edgestorejs/edgestore/pull/263) [`ed81242`](https://github.com/edgestorejs/edgestore/commit/ed812425ad7451c600115356f6c0849d8321e61a) Thanks [@raviships](https://github.com/raviships)! - Remove `uploadedAt` from React upload results. It reported the request time,
+  not the upload time.
+
+- [#263](https://github.com/edgestorejs/edgestore/pull/263) [`ed81242`](https://github.com/edgestorejs/edgestore/commit/ed812425ad7451c600115356f6c0849d8321e61a) Thanks [@raviships](https://github.com/raviships)! - Remove deprecated and duplicate APIs: `@edgestore/react/shared` (use
+  `@edgestore/react/errors`), `@edgestore/server/core` (use `@edgestore/server`),
+  `InferClientResponse` (use `InferClientOutputs`), and the S3 `accessKeyId` and
+  `secretAccessKey` options (use `credentials` or the `ES_AWS_*` variables).
+
+- [#255](https://github.com/edgestorejs/edgestore/pull/255) [`7a66d4c`](https://github.com/edgestorejs/edgestore/commit/7a66d4c6f7bec480ad3be7951c5f54d2e9cbd845) Thanks [@raviships](https://github.com/raviships)! - Load protected files directly from their file origin in development. The
+  `/proxy-file` route and the React `disableDevProxy` option are removed.
+  Adapters no longer set the `edgestore-token` cookie, so `cookieConfig.token` is
+  removed.
+
+- [#151](https://github.com/edgestorejs/edgestore/pull/151) [`7c8a7b6`](https://github.com/edgestorejs/edgestore/commit/7c8a7b6e9146360edb4003120238f37f5ea91e92) Thanks [@raviships](https://github.com/raviships)! - Accept any Standard Schema library for bucket `input`, and drop the Zod peer
+  dependency. The server now validates upload input, rejects invalid requests
+  with `BAD_REQUEST`, and passes the parsed output to callbacks.
+
+### Minor Changes
+
+- [#248](https://github.com/edgestorejs/edgestore/pull/248) [`ae605b9`](https://github.com/edgestorejs/edgestore/commit/ae605b99a25bdd11e276d00184c9baeedcdbb1cf) Thanks [@raviships](https://github.com/raviships)! - Bundle Markdown API references that match the installed version, for coding
+  agents.
+
+- [#237](https://github.com/edgestorejs/edgestore/pull/237) [`31405ca`](https://github.com/edgestorejs/edgestore/commit/31405ca9ffa25d9f953a22aaf89f0287da5e9bc5) Thanks [@raviships](https://github.com/raviships)! - Initialize protected file access on the file origins returned by EdgeStore,
+  including project subdomains and the shared origin used by existing links.
+
+- [#194](https://github.com/edgestorejs/edgestore/pull/194) [`1bd3452`](https://github.com/edgestorejs/edgestore/commit/1bd34529d998283595aa09bd808817a67ef5a166) Thanks [@raviships](https://github.com/raviships)! - Add React `confirmMany` and `deleteMany`, which report per-file failures
+  instead of throwing.
+
+- [#256](https://github.com/edgestorejs/edgestore/pull/256) [`017f324`](https://github.com/edgestorejs/edgestore/commit/017f3249fb3f1e062b8080668da22e30db293689) Thanks [@raviships](https://github.com/raviships)! - Make long browser multipart uploads resilient: part URLs are signed in batches,
+  failed parts are retried with backoff, and failed or canceled uploads abort the
+  multipart session.
+
+- [#275](https://github.com/edgestorejs/edgestore/pull/275) [`e1548ab`](https://github.com/edgestorejs/edgestore/commit/e1548abcc37b195a697e9b13689bb88bb7cf4d5c) Thanks [@raviships](https://github.com/raviships)! - Pass `options.waitForProcessing` to resolve an upload with the processed file,
+  and `onPhaseChange` to show when processing starts. Failures and timeouts reject
+  with `UploadCanceledError` and `UploadProcessingTimeoutError`. Providers opt in
+  by implementing `uploads.getStatus`.
+
+- [#275](https://github.com/edgestorejs/edgestore/pull/275) [`e1548ab`](https://github.com/edgestorejs/edgestore/commit/e1548abcc37b195a697e9b13689bb88bb7cf4d5c) Thanks [@raviships](https://github.com/raviships)! - React upload results include the file `id` when the provider exposes one, so
+  apps can store it without a lookup.
+
+- [#256](https://github.com/edgestorejs/edgestore/pull/256) [`017f324`](https://github.com/edgestorejs/edgestore/commit/017f3249fb3f1e062b8080668da22e30db293689) Thanks [@raviships](https://github.com/raviships)! - React upload results include the object `key` when the provider exposes one.
+
+### Patch Changes
+
+- Updated dependencies [[`fc16f0a`](https://github.com/edgestorejs/edgestore/commit/fc16f0af18564c83c8dd2c601386a0054534de76), [`fc16f0a`](https://github.com/edgestorejs/edgestore/commit/fc16f0af18564c83c8dd2c601386a0054534de76), [`fc16f0a`](https://github.com/edgestorejs/edgestore/commit/fc16f0af18564c83c8dd2c601386a0054534de76), [`f822286`](https://github.com/edgestorejs/edgestore/commit/f82228612a7b803549169dea03b18b59b1f63ae7)]:
+  - @edgestore/shared@1.0.0
+
 ## 1.0.0-rc.7
 
 ### Minor Changes

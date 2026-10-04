@@ -14,8 +14,8 @@
   },
   "dependencies": {
     "@ai-sdk/react": "4.0.74",
-    "@edgestore/react": "^1.0.0-rc.7",
-    "@edgestore/server": "^1.0.0-rc.7",
+    "@edgestore/react": "^1.0.0",
+    "@edgestore/server": "^1.0.0",
     "@fumadocs/mdx-remote": "1.4.4",
     "@langfuse/otel": "5.10.1",
     "@langfuse/tracing": "5.10.1",
