@@ -6,6 +6,8 @@ export const metadata: Metadata = {
 };
 
 export const dynamic = 'force-static';
+// Pick up scheduled price changes without a redeploy.
+export const revalidate = 3600;
 
 export default function Page() {
   return <Pricing />;

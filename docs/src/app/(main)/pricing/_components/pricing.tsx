@@ -8,9 +8,14 @@ import { CampaignCountdown } from './campaign-countdown';
 
 export async function Pricing() {
   const pricingInfo = await fetchPricingInfo();
-  const { defaultPricing, campaignPricing, campaign } = pricingInfo;
+  const { defaultPricing, campaignPricing, upcomingPricing, campaign } =
+    pricingInfo;
 
-  const pricingBlocks = buildPricingBlocks(defaultPricing, campaignPricing);
+  const pricingBlocks = buildPricingBlocks(
+    defaultPricing,
+    campaignPricing,
+    upcomingPricing,
+  );
 
   return (
     <div className="px-4">
@@ -44,7 +49,7 @@ function PricingBlock(props: {
   className?: string;
 }) {
   const {
-    item: { id, title, description, price, features, action },
+    item: { id, title, description, price, upcoming, features, action },
     isMain,
     className,
   } = props;
@@ -85,6 +90,11 @@ function PricingBlock(props: {
           </div>
         )}
       </div>
+      {upcoming && (
+        <div className="-mt-2 mb-4 text-sm text-muted-foreground">
+          {`$${upcoming.price}/month for new subscribers from ${formatDate(upcoming.activeFrom)}. Subscribe before then to keep $${price}.`}
+        </div>
+      )}
       <div className="flex flex-col gap-2">
         {features.map((feature, i) => (
           <div key={i} className="flex items-center gap-2">
@@ -149,6 +159,7 @@ type PricingBlockItem = {
   title: string;
   description: string | React.ReactNode;
   price?: number;
+  upcoming?: { price: number; activeFrom: string };
   features: (string | React.ReactNode)[];
   action?: React.ReactNode;
 };
@@ -156,6 +167,7 @@ type PricingBlockItem = {
 function buildPricingBlocks(
   defaultPricing: PricingInfo['defaultPricing'],
   campaignPricing: PricingInfo['campaignPricing'],
+  upcomingPricing: PricingInfo['upcomingPricing'],
 ) {
   return [
     {
@@ -213,7 +225,8 @@ function buildPricingBlocks(
       title: 'Starter',
       description:
         'Best for start-ups and businesses who build commercial products with Edge Store.',
-      price: 5,
+      price: toDollars(defaultPricing.STARTER.basePrice, 5),
+      upcoming: toUpcoming(upcomingPricing?.STARTER),
       features: [
         'Everything in Free',
         <Fragment key="starter-storage">
@@ -274,7 +287,8 @@ function buildPricingBlocks(
       title: 'Pro',
       description:
         'Best for businesses who build larger commercial products with Edge Store.',
-      price: 35,
+      price: toDollars(defaultPricing.PRO.basePrice, 35),
+      upcoming: toUpcoming(upcomingPricing?.PRO),
       features: [
         'Everything in Starter',
         <Fragment key="pro-storage">
@@ -351,6 +365,25 @@ function buildPricingBlocks(
   ] as const satisfies PricingBlockItem[];
 }
 
+// `fallback` covers dashboards that don't return prices yet.
+function toDollars(cents: number | undefined, fallback: number) {
+  return cents === undefined ? fallback : cents / 100;
+}
+
+function toUpcoming(plan: UpcomingPlanPricing | undefined) {
+  return plan?.basePrice === undefined
+    ? undefined
+    : { price: plan.basePrice / 100, activeFrom: plan.activeFrom };
+}
+
+function formatDate(value: string) {
+  return new Date(value).toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    timeZone: 'UTC',
+  });
+}
+
 function PlanLimitItem(props: {
   defaultValue: string | number;
   campaignValue?: string | number;
@@ -407,11 +440,17 @@ export type PlanPricing = {
   aggRangeLimit: number;
   canRestore: number;
   campaignId: string | null;
+  /** Monthly base price in cents. */
+  basePrice?: number;
 };
+
+type UpcomingPlanPricing = PlanPricing & { activeFrom: string };
 
 export type PricingInfo = {
   defaultPricing: Record<PlanType, PlanPricing>;
   campaignPricing?: Record<PlanType, PlanPricing>;
+  /** Price changes scheduled for new subscribers. */
+  upcomingPricing?: Partial<Record<PlanType, UpcomingPlanPricing>>;
   campaign?: {
     id: string;
     name: string;
