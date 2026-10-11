@@ -4,7 +4,47 @@ import { cn } from '@/lib/utils';
 import * as TabsPrimitive from '@radix-ui/react-tabs';
 import * as React from 'react';
 
-const OpenTabs = TabsPrimitive.Root;
+const OpenTabs = React.forwardRef<
+  React.ComponentRef<typeof TabsPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof TabsPrimitive.Root>
+>((props, ref) => {
+  const root = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    let frame = 0;
+    function revealAnchor() {
+      const target = document.getElementById(window.location.hash.slice(1));
+      if (!target || !root.current?.contains(target)) return;
+      const panel = target.closest('[role="tabpanel"]');
+      if (panel?.getAttribute('data-state') !== 'inactive') return;
+
+      const trigger = Array.from(
+        root.current.querySelectorAll<HTMLButtonElement>('[role="tab"]'),
+      ).find((tab) => tab.getAttribute('aria-controls') === panel.id);
+      trigger?.focus();
+      frame = requestAnimationFrame(() => target.scrollIntoView());
+    }
+
+    revealAnchor();
+    window.addEventListener('hashchange', revealAnchor);
+    return () => {
+      window.removeEventListener('hashchange', revealAnchor);
+      cancelAnimationFrame(frame);
+    };
+  }, []);
+
+  return (
+    <TabsPrimitive.Root
+      {...props}
+      ref={(element) => {
+        root.current = element;
+        if (typeof ref === 'function') return ref(element);
+        if (ref) ref.current = element;
+      }}
+    />
+  );
+});
+OpenTabs.displayName = TabsPrimitive.Root.displayName;
 
 const OpenTabsList = React.forwardRef<
   React.ComponentRef<typeof TabsPrimitive.List>,
@@ -42,8 +82,9 @@ const OpenTabsContent = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <TabsPrimitive.Content
     ref={ref}
+    forceMount
     className={cn(
-      'relative mt-2 ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none [&_h3.font-heading]:text-base [&_h3.font-heading]:font-semibold',
+      'relative mt-2 ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none data-[state=inactive]:hidden [&_h3.font-heading]:text-base [&_h3.font-heading]:font-semibold',
       className,
     )}
     {...props}
