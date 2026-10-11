@@ -21,14 +21,34 @@ const OpenTabs = React.forwardRef<
       const trigger = Array.from(
         root.current.querySelectorAll<HTMLButtonElement>('[role="tab"]'),
       ).find((tab) => tab.getAttribute('aria-controls') === panel.id);
+      // Radix activates a tab when its trigger receives focus.
       trigger?.focus();
       frame = requestAnimationFrame(() => target.scrollIntoView());
     }
 
+    function onAnchorClick(event: MouseEvent) {
+      if (
+        event.defaultPrevented ||
+        event.button !== 0 ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.shiftKey ||
+        event.altKey
+      ) {
+        return;
+      }
+      const anchor =
+        event.target instanceof Element ? event.target.closest('a') : null;
+      // Clicking the current anchor does not emit another hashchange.
+      if (anchor?.href === window.location.href) revealAnchor();
+    }
+
     revealAnchor();
     window.addEventListener('hashchange', revealAnchor);
+    document.addEventListener('click', onAnchorClick);
     return () => {
       window.removeEventListener('hashchange', revealAnchor);
+      document.removeEventListener('click', onAnchorClick);
       cancelAnimationFrame(frame);
     };
   }, []);
