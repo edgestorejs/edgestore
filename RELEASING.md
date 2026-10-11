@@ -133,6 +133,14 @@ git commit -m "chore: start next prerelease cycle"
 git push
 ```
 
+Between release cycles, `next` may be dormant with no `.changeset/pre.json`.
+Automatic pushes to dormant `next` succeed with a release-skipped summary and
+skip the entire Changesets version/publish action, including for forward merges
+from `main`. Manually selecting the `release` operation on dormant `next` fails
+with instructions to start the new prerelease cycle using the commands above.
+An existing prerelease file must still contain valid JSON with `"mode": "pre"`
+and a supported `next` or `rc` tag; invalid state fails the release workflow.
+
 If `next` advanced after the promotion PR was created, resolve the merge and
 prerelease-state conflict while preserving those later changes.
 
