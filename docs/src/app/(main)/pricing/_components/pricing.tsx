@@ -224,7 +224,7 @@ function buildPricingBlocks(
       id: 'STARTER',
       title: 'Starter',
       description:
-        'Best for start-ups and businesses who build commercial products with Edge Store.',
+        'Best for start-ups and businesses who build commercial products with EdgeStore.',
       price: toDollars(defaultPricing.STARTER.basePrice, 5),
       upcoming: toUpcoming(upcomingPricing?.STARTER),
       features: [
@@ -286,7 +286,7 @@ function buildPricingBlocks(
       id: 'PRO',
       title: 'Pro',
       description:
-        'Best for businesses who build larger commercial products with Edge Store.',
+        'Best for businesses who build larger commercial products with EdgeStore.',
       price: toDollars(defaultPricing.PRO.basePrice, 35),
       upcoming: toUpcoming(upcomingPricing?.PRO),
       features: [
