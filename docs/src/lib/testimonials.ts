@@ -19,7 +19,7 @@ export const testimonials = [
     user: '@sathishkannan6600',
     image: '/img/testimonials/sathishkannan6600.jpg',
     comment:
-      'Unbelievable and exhaustive features.Edge store thought about all the use cases. Also, not using a database for protected files is a nice idea. Very clear explanation in the video.',
+      'Unbelievable and exhaustive features.EdgeStore thought about all the use cases. Also, not using a database for protected files is a nice idea. Very clear explanation in the video.',
     platform: 'youtube',
     url: 'https://www.youtube.com/watch?v=Acq9UEA2akU&lc=Ugw4ne4z1Pj3NS_MGbB4AaABAg',
   },
@@ -35,7 +35,7 @@ export const testimonials = [
     user: '@PhilippeKhin',
     image: '/img/testimonials/PhilippeKhin.jpg',
     comment:
-      "Feeling that Edge Store will take off 🚀 Great stuff you're building here Ravi 👍",
+      "Feeling that EdgeStore will take off 🚀 Great stuff you're building here Ravi 👍",
     platform: 'youtube',
     url: 'https://www.youtube.com/watch?v=Acq9UEA2akU&lc=UgyEH4ERhW0fXigeWN14AaABAg',
   },
@@ -82,7 +82,7 @@ export const testimonials = [
     user: '@developerpranav',
     image: '/img/testimonials/developerpranav.jpg',
     comment:
-      '🤯 Blown away by the simplicity of defining the types of asset uploaded, which then determines the file path. Awesome video, and amazing job on Edge Store btw! Highly considering it for my current project! Just one question, can I use my own S3 Bucket? Specifically, I use Cloudflare R2 which has compatibility with the S3 API.',
+      '🤯 Blown away by the simplicity of defining the types of asset uploaded, which then determines the file path. Awesome video, and amazing job on EdgeStore btw! Highly considering it for my current project! Just one question, can I use my own S3 Bucket? Specifically, I use Cloudflare R2 which has compatibility with the S3 API.',
     platform: 'youtube',
     url: 'https://www.youtube.com/watch?v=Acq9UEA2akU&lc=UgxL7xpOk8ygYV7iYgx4AaABAg',
   },
@@ -141,7 +141,7 @@ export const testimonials = [
     user: '@alijansoomro4277',
     image: '/img/testimonials/alijansoomro4277.jpg',
     comment:
-      'This service looks easier to use than UploadThing — I was looking for a better way to upload files in Next-JS, and I like Edge Store.',
+      'This service looks easier to use than UploadThing — I was looking for a better way to upload files in Next-JS, and I like EdgeStore.',
     platform: 'youtube',
     url: 'https://www.youtube.com/watch?v=Acq9UEA2akU&lc=Ugw9Jvy13TVCEXCvftR4AaABAg',
   },
