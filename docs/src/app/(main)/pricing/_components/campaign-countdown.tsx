@@ -1,115 +1,57 @@
 'use client';
 
+import { cn } from '@/lib/utils';
 import { useEffect, useState } from 'react';
 import { type PricingInfo } from './pricing';
 
 export function CampaignCountdown(props: {
   campaign: NonNullable<PricingInfo['campaign']>;
+  className?: string;
 }) {
-  const { campaign } = props;
-  const [timeLeft, setTimeLeft] = useState(() =>
-    getTimeDifference(new Date(), campaign.endDate),
-  );
+  const { campaign, className } = props;
+  const endTime = new Date(campaign.endDate).getTime();
+  const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
-    const intervalId = setInterval(() => {
-      setTimeLeft(getTimeDifference(new Date(), campaign.endDate));
-    }, 1000);
+    const intervalId = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(intervalId);
+  }, []);
 
-    return () => {
-      clearInterval(intervalId);
-    };
-  }, [campaign.endDate]);
-
-  if (timeLeft.diff < 0) {
+  const secondsLeft = Math.floor((endTime - now) / 1000);
+  if (secondsLeft < 0) {
     return null;
   }
 
+  const timeLeft = [
+    [Math.floor(secondsLeft / 86400), 'd'],
+    [Math.floor(secondsLeft / 3600) % 24, 'h'],
+    [Math.floor(secondsLeft / 60) % 60, 'm'],
+    [secondsLeft % 60, 's'],
+  ] as const;
+
   return (
-    <div className="mx-auto w-full rounded-lg border bg-background p-8 sm:w-min sm:min-w-96">
-      <div className="space-y-4">
-        <div className="text-center">
-          <h2 className="text-xl font-bold sm:text-3xl sm:text-nowrap">
-            {campaign.name} Ends Soon
-          </h2>
-          <p className="text-sm text-muted-foreground sm:text-base">
-            {campaign.description}
-          </p>
-        </div>
-        <div className="mx-auto grid max-w-md grid-cols-4 gap-2 text-center sm:gap-4">
-          <div className="space-y-1">
-            <div
-              className="text-4xl font-bold text-primary sm:text-5xl"
-              suppressHydrationWarning
-            >
-              {timeLeft.days}
-            </div>
-            <div className="text-sm text-muted-foreground sm:text-base">
-              Days
-            </div>
-          </div>
-          <div className="space-y-1">
-            <div
-              className="text-4xl font-bold text-primary sm:text-5xl"
-              suppressHydrationWarning
-            >
-              {timeLeft.hours}
-            </div>
-            <div
-              className="text-sm text-muted-foreground sm:text-base"
-              suppressHydrationWarning
-            >
-              Hours
-            </div>
-          </div>
-          <div className="space-y-1">
-            <div
-              className="text-4xl font-bold text-primary sm:text-5xl"
-              suppressHydrationWarning
-            >
-              {timeLeft.minutes}
-            </div>
-            <div className="text-sm text-muted-foreground sm:text-base">
-              Minutes
-            </div>
-          </div>
-          <div className="space-y-1">
-            <div
-              className="text-4xl font-bold text-primary sm:text-5xl"
-              suppressHydrationWarning
-            >
-              {timeLeft.seconds}
-            </div>
-            <div className="text-sm text-muted-foreground sm:text-base">
-              Seconds
-            </div>
-          </div>
-        </div>
-      </div>
+    <div
+      className={cn(
+        'flex items-center justify-between gap-6 rounded-xl border border-site-accent/35 bg-[color-mix(in_srgb,var(--site-accent)_8%,var(--site-bg))] px-6 py-4 max-[601px]:flex-col max-[601px]:items-start max-[601px]:gap-2 max-[601px]:px-5',
+        className,
+      )}
+    >
+      <p className="text-[15px] leading-[1.6]">
+        <span className="font-semibold">{campaign.name}.</span>{' '}
+        <span className="text-site-muted">{campaign.description}</span>
+      </p>
+      <p
+        className="shrink-0 text-[15px] font-[550] text-site-accent tabular-nums"
+        suppressHydrationWarning
+      >
+        Ends in{' '}
+        {timeLeft.map(([value, unit]) => (
+          <span key={unit} className="ml-1.5">
+            {value}
+            {unit}
+          </span>
+        ))}
+      </p>
     </div>
   );
-}
-
-function getTimeDifference(date1: Date, date2: Date) {
-  const diff = (date2.getTime() - date1.getTime()) / 1000;
-  let delta = Math.abs(diff);
-
-  const days = Math.floor(delta / 86400);
-  delta -= days * 86400;
-
-  const hours = Math.floor(delta / 3600) % 24;
-  delta -= hours * 3600;
-
-  const minutes = Math.floor(delta / 60) % 60;
-  delta -= minutes * 60;
-
-  const seconds = Math.floor(delta % 60);
-
-  return {
-    diff,
-    days,
-    hours,
-    minutes,
-    seconds,
-  };
 }
