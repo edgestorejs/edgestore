@@ -1,368 +1,389 @@
-import { ActionButton } from '@/components/action-button';
 import { env } from '@/env';
-import { formatFileSize, formatNumber } from '@/lib/formatter';
+import { formatFileSize } from '@/lib/formatter';
 import { cn } from '@/lib/utils';
-import { CheckCircleIcon, HeartIcon } from 'lucide-react';
-import { Fragment } from 'react';
+import { Check, Minus } from 'lucide-react';
+import Link from 'next/link';
+import { Fragment, type ReactNode } from 'react';
+import {
+  siteButton,
+  siteContainer,
+  sitePrimaryButton,
+  siteSecondaryButton,
+} from '../../_components/styles';
 import { CampaignCountdown } from './campaign-countdown';
+import { PlanTabs } from './plan-tabs';
 
 export async function Pricing() {
   const pricingInfo = await fetchPricingInfo();
-  const { defaultPricing, campaignPricing, upcomingPricing, campaign } =
-    pricingInfo;
-
-  const pricingBlocks = buildPricingBlocks(
-    defaultPricing,
-    campaignPricing,
-    upcomingPricing,
-  );
+  const plans = buildPlans(pricingInfo);
+  const features = buildFeatures(pricingInfo);
 
   return (
-    <div className="px-4">
-      <div className="mt-10 text-center">
-        <div className="mb-4 text-5xl font-medium text-foreground">Pricing</div>
-        <div className="mb-6 text-muted-foreground">
-          {"Choose the plan that's right for you."}
-        </div>
-      </div>
-      {campaign && (
-        <div className="mb-10">
-          <CampaignCountdown campaign={campaign} />
-        </div>
+    <div className={cn(siteContainer, 'pt-[72px] pb-24 max-[601px]:py-11')}>
+      <h1 className="text-[clamp(44px,4.8vw,64px)] leading-[1.08] font-[720] tracking-[-0.055em]">
+        Pricing
+      </h1>
+      <p className="mt-5 max-w-[620px] text-[17px] leading-[1.65] text-site-muted max-[601px]:text-[15px]">
+        Plans for EdgeStore hosted storage. The library is open source and free
+        with{' '}
+        <Link
+          className="text-site-accent underline underline-offset-4"
+          href="/docs/providers/s3"
+        >
+          your own storage provider
+        </Link>
+        .
+      </p>
+      {pricingInfo.campaign && (
+        <CampaignCountdown campaign={pricingInfo.campaign} className="mt-9" />
       )}
-      <div className="mb-14" />
-      <div className="mb-6 flex justify-center">
-        <div className="grid max-w-[90rem] gap-8 sm:grid-cols-2 lg:grid-cols-3">
-          <PricingBlock item={pricingBlocks[0]} />
-          <PricingBlock item={pricingBlocks[1]} isMain />
-          <PricingBlock item={pricingBlocks[2]} />
-          <PricingBlock item={pricingBlocks[3]} className="lg:col-span-3" />
+
+      <div className="mt-11 max-[601px]:mt-8">
+        <div className="min-[982px]:hidden">
+          <PlanTabs
+            tabs={plans.map((plan) => ({
+              name: plan.name,
+              price: `$${plan.price}`,
+            }))}
+            defaultIndex={1}
+          >
+            {plans.map((plan) => (
+              <div key={plan.id} className="rounded-xl border border-site-line">
+                <PlanSummary plan={plan} className="p-5" />
+                {features.map((group) => (
+                  <section
+                    key={group.title}
+                    className="border-t border-site-line px-5 pt-4 pb-1.5"
+                  >
+                    <h3 className="text-[13px] font-semibold">{group.title}</h3>
+                    <dl className="mt-1.5">
+                      {group.rows.map((row) => (
+                        <div
+                          key={row.label}
+                          className="flex items-baseline justify-between gap-4 border-t border-site-line/60 py-3 text-sm first:border-t-0"
+                        >
+                          <dt className="text-site-muted">{row.label}</dt>
+                          <dd className="text-right font-[550]">
+                            {row.values[plan.id]}
+                          </dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </section>
+                ))}
+              </div>
+            ))}
+          </PlanTabs>
         </div>
-      </div>
-    </div>
-  );
-}
 
-function PricingBlock(props: {
-  item: PricingBlockItem;
-  isMain?: boolean;
-  className?: string;
-}) {
-  const {
-    item: { id, title, description, price, upcoming, features, action },
-    isMain,
-    className,
-  } = props;
-
-  return (
-    <div
-      className={cn(
-        'flex flex-col rounded-md p-5',
-        isMain
-          ? 'shadow-[0px_0px_5px_0px_theme(colors.violet.500),0px_0px_20px_0px_var(--primary)] lg:-translate-y-4 lg:scale-105'
-          : 'border',
-        className,
-      )}
-    >
-      <div className="text-xl font-bold text-primary">{title}</div>
-      <div>{description}</div>
-      <div className="mt-4 mb-4 flex items-baseline gap-1">
-        {price === undefined ? (
-          <>
-            <div>
-              contact:{' '}
-              <a
-                href="mailto:support@edgestore.dev"
-                className="text-primary hover:text-primary"
-              >
-                support@edgestore.dev
-              </a>
-            </div>
-          </>
-        ) : price > 0 ? (
-          <>
-            <div className="text-3xl font-bold text-primary">${price}</div>
-            <div className="text-muted-foreground">/month</div>
-          </>
-        ) : (
-          <div>
-            <SponsorButton />
-          </div>
-        )}
-      </div>
-      {upcoming && (
-        <div className="-mt-2 mb-4 text-sm text-muted-foreground">
-          {`$${upcoming.price}/month for new subscribers from ${formatDate(upcoming.activeFrom)}. Subscribe before then to keep $${price}.`}
-        </div>
-      )}
-      <div className="flex flex-col gap-2">
-        {features.map((feature, i) => (
-          <div key={i} className="flex items-center gap-2">
-            <CheckCircleIcon size={22} className="shrink-0 text-primary" />
-            <div>{feature}</div>
-          </div>
-        ))}
-      </div>
-      <div className="mt-auto pt-6">
-        {action ??
-          (id ? (
-            <ActionButton
-              href={`${env.NEXT_PUBLIC_DASHBOARD_URL}/subscription/new?plan=${id}`}
-              className="w-full"
-            >
-              Sign Up
-            </ActionButton>
-          ) : (
-            <ActionButton
-              href={env.NEXT_PUBLIC_DASHBOARD_URL}
-              className="w-full"
-            >
-              Sign Up
-            </ActionButton>
-          ))}
-      </div>
-    </div>
-  );
-}
-
-function SponsorButton() {
-  return (
-    <ActionButton href="https://github.com/sponsors/perfectbase">
-      <HeartIcon /> Sponsor
-    </ActionButton>
-  );
-}
-
-function Strikethrough(props: {
-  children: React.ReactNode;
-  size?: 'sm' | 'lg';
-}) {
-  const { children, size = 'sm' } = props;
-  return (
-    <div className="relative inline-block text-nowrap text-muted-foreground">
-      <div className="h-full w-full">
         <div
-          className={cn(
-            'absolute right-0 bottom-[40%] left-0 -rotate-[10deg] border-primary/80',
-            size === 'sm' && 'border-t-2',
-            size === 'lg' && 'border-t-4',
-          )}
-        />
+          role="table"
+          aria-label="Plan comparison"
+          className="overflow-hidden rounded-xl border border-site-line max-[981px]:hidden"
+        >
+          <div role="row" className={cn(tableRow, 'border-b border-site-line')}>
+            <div role="columnheader">
+              <span className="sr-only">Feature</span>
+            </div>
+            {plans.map((plan) => (
+              <PlanSummary
+                key={plan.id}
+                role="columnheader"
+                plan={plan}
+                className={cn(
+                  'border-l border-site-line p-7 max-[1191px]:p-5',
+                  plan.id === 'STARTER' && featuredColumn,
+                )}
+              />
+            ))}
+          </div>
+          {features.map((group) => (
+            <Fragment key={group.title}>
+              <div role="row" className={tableRow}>
+                <div
+                  role="rowheader"
+                  className="px-7 pt-7 pb-2.5 text-[13px] font-semibold max-[1191px]:px-5"
+                >
+                  {group.title}
+                </div>
+                {plans.map((plan) => (
+                  <div
+                    key={plan.id}
+                    role="cell"
+                    className={cn(
+                      'border-l border-site-line',
+                      plan.id === 'STARTER' && featuredColumn,
+                    )}
+                  />
+                ))}
+              </div>
+              {group.rows.map((row) => (
+                <div
+                  key={row.label}
+                  role="row"
+                  className={cn(tableRow, 'border-t border-site-line/70')}
+                >
+                  <div
+                    role="rowheader"
+                    className="px-7 py-3.5 text-sm text-site-muted max-[1191px]:px-5"
+                  >
+                    {row.label}
+                  </div>
+                  {plans.map((plan) => (
+                    <div
+                      key={plan.id}
+                      role="cell"
+                      className={cn(
+                        'border-l border-site-line px-7 py-3.5 text-[15px] font-[550] max-[1191px]:px-5',
+                        plan.id === 'STARTER' && featuredColumn,
+                      )}
+                    >
+                      {row.values[plan.id]}
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </Fragment>
+          ))}
+        </div>
       </div>
-      {children}
+
+      <div className="mt-5 flex items-center justify-between gap-8 rounded-xl border border-site-line px-7 py-6 max-[1191px]:px-5 max-[601px]:flex-col max-[601px]:items-start max-[601px]:gap-4">
+        <div>
+          <h2 className="text-lg font-semibold tracking-[-0.02em]">Custom</h2>
+          <p className="mt-1 text-sm leading-[1.65] text-site-muted">
+            Higher limits, more projects and team members, and an hour of
+            one-on-one support each month.
+          </p>
+        </div>
+        <a
+          href="mailto:support@edgestore.dev"
+          className={cn(siteButton, siteSecondaryButton, 'shrink-0')}
+        >
+          Contact us
+        </a>
+      </div>
+
+      <p className="mt-7 text-[13px] leading-[1.7] text-site-muted">
+        Using EdgeStore with your own storage?{' '}
+        <a
+          className="text-site-accent underline underline-offset-4"
+          href="https://github.com/sponsors/perfectbase"
+        >
+          Sponsor the project on GitHub
+        </a>
+        .
+      </p>
     </div>
   );
 }
 
-type PricingBlockItem = {
-  id?: string;
-  title: string;
-  description: string | React.ReactNode;
-  price?: number;
+const tableRow = 'grid grid-cols-4';
+const featuredColumn =
+  'bg-[color-mix(in_srgb,var(--site-accent)_6%,var(--site-bg))]';
+
+function PlanSummary(props: { plan: Plan; role?: string; className?: string }) {
+  const { plan, role, className } = props;
+
+  return (
+    <div role={role} className={cn('flex flex-col', className)}>
+      <h2 className="text-lg font-semibold tracking-[-0.02em]">{plan.name}</h2>
+      <p className="mt-1 text-[13px] leading-[1.5] text-site-muted min-[982px]:min-h-[3em]">
+        {plan.description}
+      </p>
+      <p className="mt-5 flex items-baseline gap-1">
+        <span className="text-[44px] leading-none font-[720] tracking-[-0.05em]">
+          ${plan.price}
+        </span>
+        <span className="text-sm text-site-muted">/month</span>
+      </p>
+      {plan.upcoming && (
+        <p className="mt-3 text-xs leading-[1.55] text-site-muted">
+          {`$${plan.upcoming.price}/month for new subscribers from ${formatDate(plan.upcoming.activeFrom)}. Subscribe before then to keep $${plan.price}.`}
+        </p>
+      )}
+      <div className="mt-auto pt-6">
+        <a
+          href={plan.href}
+          className={cn(
+            siteButton,
+            plan.id === 'STARTER' ? sitePrimaryButton : siteSecondaryButton,
+            'w-full',
+          )}
+        >
+          {plan.cta}
+        </a>
+      </div>
+    </div>
+  );
+}
+
+function PlanLimit(props: {
+  value: number;
+  campaignValue?: number;
+  format?: (value: number) => string;
+}) {
+  const { value, campaignValue, format = String } = props;
+
+  if (campaignValue === undefined || campaignValue === value) {
+    return <span className="whitespace-nowrap">{format(value)}</span>;
+  }
+  return (
+    <span className="whitespace-nowrap">
+      <s className="mr-1.5 font-normal text-site-muted">{format(value)}</s>
+      <span className="text-site-accent">{format(campaignValue)}</span>
+    </span>
+  );
+}
+
+function Included({ value }: { value: boolean }) {
+  return value ? (
+    <>
+      <Check size={18} className="inline text-site-accent" aria-hidden />
+      <span className="sr-only">Included</span>
+    </>
+  ) : (
+    <>
+      <Minus size={18} className="inline text-site-muted/50" aria-hidden />
+      <span className="sr-only">Not included</span>
+    </>
+  );
+}
+
+type Plan = {
+  id: PlanType;
+  name: string;
+  description: string;
+  price: number;
   upcoming?: { price: number; activeFrom: string };
-  features: (string | React.ReactNode)[];
-  action?: React.ReactNode;
+  href: string;
+  cta: string;
 };
 
-function buildPricingBlocks(
-  defaultPricing: PricingInfo['defaultPricing'],
-  campaignPricing: PricingInfo['campaignPricing'],
-  upcomingPricing: PricingInfo['upcomingPricing'],
-) {
+function buildPlans(info: PricingInfo): Plan[] {
+  const { defaultPricing, upcomingPricing } = info;
+  const dashboardUrl = env.NEXT_PUBLIC_DASHBOARD_URL;
+
   return [
     {
-      title: 'Free',
-      description: 'Best for individuals and non-commercial projects.',
+      id: 'FREE',
+      name: 'Free',
+      description: 'For personal and non-commercial projects.',
       price: 0,
-      features: [
-        <Fragment key="free-storage">
-          <PlanLimitItem
-            defaultValue={defaultPricing.FREE.storageLimit}
-            campaignValue={campaignPricing?.FREE.storageLimit}
-            formatter={formatFileSize}
-          />{' '}
-          storage
-        </Fragment>,
-        <Fragment key="free-projects">
-          <PlanLimitItem
-            defaultValue={defaultPricing.FREE.projectLimit}
-            campaignValue={campaignPricing?.FREE.projectLimit}
-          />{' '}
-          projects
-        </Fragment>,
-        <Fragment key="free-bandwidth">
-          Up to{' '}
-          <PlanLimitItem
-            defaultValue={defaultPricing.FREE.monthlyBandwidthLimit}
-            campaignValue={campaignPricing?.FREE.monthlyBandwidthLimit}
-            formatter={formatFileSize}
-          />{' '}
-          of bandwidth per month
-        </Fragment>,
-        <Fragment key="free-uploads">
-          Up to{' '}
-          <PlanLimitItem
-            defaultValue={defaultPricing.FREE.monthlyUploadSizeLimit}
-            campaignValue={campaignPricing?.FREE.monthlyUploadSizeLimit}
-            formatter={formatFileSize}
-          />{' '}
-          of uploads per month
-        </Fragment>,
-        <Fragment key="free-metrics">
-          <PlanLimitItem
-            defaultValue={defaultPricing.FREE.aggRangeLimit}
-            campaignValue={campaignPricing?.FREE.aggRangeLimit}
-            formatter={formatNumber}
-          />{' '}
-          day of usage metrics
-        </Fragment>,
-        'Discord/Github standard support',
-        'Personal use',
-      ],
+      href: new URL('/sign-up', dashboardUrl).toString(),
+      cta: 'Start for free',
     },
     {
       id: 'STARTER',
-      title: 'Starter',
-      description:
-        'Best for start-ups and businesses who build commercial products with Edge Store.',
+      name: 'Starter',
+      description: 'For commercial apps and small teams.',
       price: toDollars(defaultPricing.STARTER.basePrice, 5),
       upcoming: toUpcoming(upcomingPricing?.STARTER),
-      features: [
-        'Everything in Free',
-        <Fragment key="starter-storage">
-          <PlanLimitItem
-            defaultValue={defaultPricing.STARTER.storageLimit}
-            campaignValue={campaignPricing?.STARTER.storageLimit}
-            formatter={formatFileSize}
-          />{' '}
-          storage
-        </Fragment>,
-        <Fragment key="starter-members">
-          <PlanLimitItem
-            defaultValue={defaultPricing.STARTER.memberLimit}
-            campaignValue={campaignPricing?.STARTER.memberLimit}
-          />{' '}
-          team members
-        </Fragment>,
-        <Fragment key="starter-projects">
-          <PlanLimitItem
-            defaultValue={defaultPricing.STARTER.projectLimit}
-            campaignValue={campaignPricing?.STARTER.projectLimit}
-          />{' '}
-          projects
-        </Fragment>,
-        <Fragment key="starter-bandwidth">
-          Up to{' '}
-          <PlanLimitItem
-            defaultValue={defaultPricing.STARTER.monthlyBandwidthLimit}
-            campaignValue={campaignPricing?.STARTER.monthlyBandwidthLimit}
-            formatter={formatFileSize}
-          />{' '}
-          of bandwidth per month
-        </Fragment>,
-        <Fragment key="starter-uploads">
-          Up to{' '}
-          <PlanLimitItem
-            defaultValue={defaultPricing.STARTER.monthlyUploadSizeLimit}
-            campaignValue={campaignPricing?.STARTER.monthlyUploadSizeLimit}
-            formatter={formatFileSize}
-          />{' '}
-          of uploads per month
-        </Fragment>,
-        <Fragment key="starter-metrics">
-          <PlanLimitItem
-            defaultValue={defaultPricing.STARTER.aggRangeLimit}
-            campaignValue={campaignPricing?.STARTER.aggRangeLimit}
-            formatter={formatNumber}
-          />{' '}
-          day of usage metrics
-        </Fragment>,
-        'Discord/Github priority support',
-        'Email support',
-        'Commercial use',
-      ],
+      href: `${dashboardUrl}/subscription/new?plan=STARTER`,
+      cta: 'Choose Starter',
     },
     {
       id: 'PRO',
-      title: 'Pro',
-      description:
-        'Best for businesses who build larger commercial products with Edge Store.',
+      name: 'Pro',
+      description: 'For apps with more files and traffic.',
       price: toDollars(defaultPricing.PRO.basePrice, 35),
       upcoming: toUpcoming(upcomingPricing?.PRO),
-      features: [
-        'Everything in Starter',
-        <Fragment key="pro-storage">
-          <PlanLimitItem
-            defaultValue={defaultPricing.PRO.storageLimit}
-            campaignValue={campaignPricing?.PRO.storageLimit}
-            formatter={formatFileSize}
-          />{' '}
-          storage
-        </Fragment>,
-        <Fragment key="pro-members">
-          <PlanLimitItem
-            defaultValue={defaultPricing.PRO.memberLimit}
-            campaignValue={campaignPricing?.PRO.memberLimit}
-          />{' '}
-          team members
-        </Fragment>,
-        'more members for $5/month each',
-        <Fragment key="pro-projects">
-          <PlanLimitItem
-            defaultValue={defaultPricing.PRO.projectLimit}
-            campaignValue={campaignPricing?.PRO.projectLimit}
-          />{' '}
-          projects
-        </Fragment>,
-        'more projects for $5/month each',
-        <Fragment key="pro-bandwidth">
-          Up to{' '}
-          <PlanLimitItem
-            defaultValue={defaultPricing.PRO.monthlyBandwidthLimit}
-            campaignValue={campaignPricing?.PRO.monthlyBandwidthLimit}
-            formatter={formatFileSize}
-          />{' '}
-          of bandwidth per month
-        </Fragment>,
-        <Fragment key="pro-uploads">
-          Up to{' '}
-          <PlanLimitItem
-            defaultValue={defaultPricing.PRO.monthlyUploadSizeLimit}
-            campaignValue={campaignPricing?.PRO.monthlyUploadSizeLimit}
-            formatter={formatFileSize}
-          />{' '}
-          of uploads per month
-        </Fragment>,
-        <Fragment key="pro-metrics">
-          <PlanLimitItem
-            defaultValue={defaultPricing.PRO.aggRangeLimit}
-            campaignValue={campaignPricing?.PRO.aggRangeLimit}
-            formatter={formatNumber}
-          />{' '}
-          day of usage metrics
-        </Fragment>,
-        'one-time 30min optional project consultation',
+      href: `${dashboardUrl}/subscription/new?plan=PRO`,
+      cta: 'Choose Pro',
+    },
+  ];
+}
+
+type PlanValues = Record<PlanType, ReactNode>;
+
+type FeatureGroup = {
+  title: string;
+  rows: { label: string; values: PlanValues }[];
+};
+
+function buildFeatures(info: PricingInfo): FeatureGroup[] {
+  const byPlan = (render: (plan: PlanType) => ReactNode): PlanValues => ({
+    FREE: render('FREE'),
+    STARTER: render('STARTER'),
+    PRO: render('PRO'),
+  });
+  const limit = (key: LimitKey, format?: (value: number) => string) =>
+    byPlan((plan) => (
+      <PlanLimit
+        value={info.defaultPricing[plan][key]}
+        campaignValue={info.campaignPricing?.[plan][key]}
+        format={format}
+      />
+    ));
+  const paidOnly = byPlan((plan) => <Included value={plan !== 'FREE'} />);
+  const withAddOn = (values: PlanValues): PlanValues => ({
+    ...values,
+    PRO: (
+      <>
+        {values.PRO}
+        <span className="ml-2 text-[13px] font-normal text-site-muted">
+          +$5/month each
+        </span>
+      </>
+    ),
+  });
+
+  return [
+    {
+      title: 'Usage',
+      rows: [
+        { label: 'Storage', values: limit('storageLimit', formatFileSize) },
+        {
+          label: 'Bandwidth per month',
+          values: limit('monthlyBandwidthLimit', formatFileSize),
+        },
+        {
+          label: 'Uploads per month',
+          values: limit('monthlyUploadSizeLimit', formatFileSize),
+        },
       ],
     },
     {
-      title: 'Custom',
-      description:
-        "If the other plans don't fit your needs, we can create a custom plan for you.",
-      features: [
-        'Everything in Pro',
-        'More storage',
-        'More team members',
-        'More projects',
-        'Bigger limits',
-        '1 hour of individual support via voice, video or email per month',
+      title: 'Workspace',
+      rows: [
+        { label: 'Projects', values: withAddOn(limit('projectLimit')) },
+        { label: 'Team members', values: withAddOn(limit('memberLimit')) },
+        {
+          label: 'Usage metrics history',
+          values: limit('aggRangeLimit', (days) => `${days} days`),
+        },
+        {
+          label: 'Restore deleted files',
+          values: byPlan((plan) => (
+            <Included value={info.defaultPricing[plan].canRestore === 1} />
+          )),
+        },
+        { label: 'Commercial use', values: paidOnly },
       ],
-      action: (
-        <ActionButton href="mailto:support@edgestore.dev">
-          Contact us
-        </ActionButton>
-      ),
     },
-  ] as const satisfies PricingBlockItem[];
+    {
+      title: 'Support',
+      rows: [
+        {
+          label: 'Discord and GitHub',
+          values: byPlan((plan) =>
+            plan === 'FREE' ? 'Community' : 'Priority',
+          ),
+        },
+        { label: 'Email', values: paidOnly },
+        {
+          label: 'Project consultation',
+          values: byPlan((plan) =>
+            plan === 'PRO' ? (
+              '30 minutes, one-time'
+            ) : (
+              <Included value={false} />
+            ),
+          ),
+        },
+      ],
+    },
+  ];
 }
 
 // `fallback` covers dashboards that don't return prices yet.
@@ -384,33 +405,6 @@ function formatDate(value: string) {
   });
 }
 
-function PlanLimitItem(props: {
-  defaultValue: string | number;
-  campaignValue?: string | number;
-  formatter?: (value: string | number) => string;
-}) {
-  const { defaultValue, campaignValue, formatter } = props;
-
-  if (campaignValue === undefined || campaignValue === defaultValue) {
-    return (
-      <span className="text-nowrap">
-        {formatter?.(defaultValue) ?? defaultValue}
-      </span>
-    );
-  } else {
-    return (
-      <>
-        <Strikethrough size="sm">
-          <>{formatter?.(defaultValue) ?? defaultValue}</>
-        </Strikethrough>{' '}
-        <span className="font-bold text-nowrap text-primary">
-          {formatter?.(campaignValue) ?? campaignValue}
-        </span>
-      </>
-    );
-  }
-}
-
 async function fetchPricingInfo() {
   const response = await fetch(`${env.NEXT_PUBLIC_DASHBOARD_URL}/api/pricing`, {
     headers: {
@@ -422,6 +416,14 @@ async function fetchPricingInfo() {
 }
 
 export type PlanType = 'FREE' | 'STARTER' | 'PRO';
+
+type LimitKey =
+  | 'storageLimit'
+  | 'projectLimit'
+  | 'memberLimit'
+  | 'monthlyBandwidthLimit'
+  | 'monthlyUploadSizeLimit'
+  | 'aggRangeLimit';
 
 export type PlanPricing = {
   id: string;
