@@ -7,8 +7,16 @@ import * as React from 'react';
 const OpenTabs = React.forwardRef<
   React.ComponentRef<typeof TabsPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof TabsPrimitive.Root>
->((props, ref) => {
+>(({ value: controlledValue, defaultValue, onValueChange, ...props }, ref) => {
   const root = React.useRef<HTMLDivElement>(null);
+  const [value, setValue] = React.useState(defaultValue);
+  const changeValue = React.useCallback(
+    (nextValue: string) => {
+      setValue(nextValue);
+      onValueChange?.(nextValue);
+    },
+    [onValueChange],
+  );
 
   React.useEffect(() => {
     let frame = 0;
@@ -18,17 +26,14 @@ const OpenTabs = React.forwardRef<
       const panel = target.closest('[role="tabpanel"]');
       if (panel?.getAttribute('data-state') !== 'inactive') return;
 
-      const trigger = Array.from(
-        root.current.querySelectorAll<HTMLButtonElement>('[role="tab"]'),
-      ).find((tab) => tab.getAttribute('aria-controls') === panel.id);
-      // Radix activates a tab when its trigger receives focus.
-      trigger?.focus();
+      const tabValue = panel.getAttribute('data-value');
+      if (!tabValue) return;
+      changeValue(tabValue);
       frame = requestAnimationFrame(() => target.scrollIntoView());
     }
 
     function onAnchorClick(event: MouseEvent) {
       if (
-        event.defaultPrevented ||
         event.button !== 0 ||
         event.metaKey ||
         event.ctrlKey ||
@@ -51,11 +56,13 @@ const OpenTabs = React.forwardRef<
       document.removeEventListener('click', onAnchorClick);
       cancelAnimationFrame(frame);
     };
-  }, []);
+  }, [changeValue]);
 
   return (
     <TabsPrimitive.Root
       {...props}
+      value={controlledValue ?? value}
+      onValueChange={changeValue}
       ref={(element) => {
         root.current = element;
         if (typeof ref === 'function') return ref(element);
@@ -102,6 +109,7 @@ const OpenTabsContent = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <TabsPrimitive.Content
     ref={ref}
+    data-value={props.value}
     forceMount
     className={cn(
       'relative mt-2 ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none data-[state=inactive]:hidden [&_h3.font-heading]:text-base [&_h3.font-heading]:font-semibold',
