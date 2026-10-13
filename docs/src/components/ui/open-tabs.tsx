@@ -4,74 +4,7 @@ import { cn } from '@/lib/utils';
 import * as TabsPrimitive from '@radix-ui/react-tabs';
 import * as React from 'react';
 
-const OpenTabs = React.forwardRef<
-  React.ComponentRef<typeof TabsPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof TabsPrimitive.Root>
->(({ value: controlledValue, defaultValue, onValueChange, ...props }, ref) => {
-  const root = React.useRef<HTMLDivElement>(null);
-  const [value, setValue] = React.useState(defaultValue);
-  const changeValue = React.useCallback(
-    (nextValue: string) => {
-      setValue(nextValue);
-      onValueChange?.(nextValue);
-    },
-    [onValueChange],
-  );
-
-  React.useEffect(() => {
-    let frame = 0;
-    function revealAnchor() {
-      const target = document.getElementById(window.location.hash.slice(1));
-      if (!target || !root.current?.contains(target)) return;
-      const panel = target.closest('[role="tabpanel"]');
-      if (panel?.getAttribute('data-state') !== 'inactive') return;
-
-      const tabValue = panel.getAttribute('data-value');
-      if (!tabValue) return;
-      changeValue(tabValue);
-      frame = requestAnimationFrame(() => target.scrollIntoView());
-    }
-
-    function onAnchorClick(event: MouseEvent) {
-      if (
-        event.button !== 0 ||
-        event.metaKey ||
-        event.ctrlKey ||
-        event.shiftKey ||
-        event.altKey
-      ) {
-        return;
-      }
-      const anchor =
-        event.target instanceof Element ? event.target.closest('a') : null;
-      // Clicking the current anchor does not emit another hashchange.
-      if (anchor?.href === window.location.href) revealAnchor();
-    }
-
-    revealAnchor();
-    window.addEventListener('hashchange', revealAnchor);
-    document.addEventListener('click', onAnchorClick);
-    return () => {
-      window.removeEventListener('hashchange', revealAnchor);
-      document.removeEventListener('click', onAnchorClick);
-      cancelAnimationFrame(frame);
-    };
-  }, [changeValue]);
-
-  return (
-    <TabsPrimitive.Root
-      {...props}
-      value={controlledValue ?? value}
-      onValueChange={changeValue}
-      ref={(element) => {
-        root.current = element;
-        if (typeof ref === 'function') return ref(element);
-        if (ref) ref.current = element;
-      }}
-    />
-  );
-});
-OpenTabs.displayName = TabsPrimitive.Root.displayName;
+const OpenTabs = TabsPrimitive.Root;
 
 const OpenTabsList = React.forwardRef<
   React.ComponentRef<typeof TabsPrimitive.List>,
@@ -109,10 +42,8 @@ const OpenTabsContent = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <TabsPrimitive.Content
     ref={ref}
-    data-value={props.value}
-    forceMount
     className={cn(
-      'relative mt-2 ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none data-[state=inactive]:hidden [&_h3.font-heading]:text-base [&_h3.font-heading]:font-semibold',
+      'relative mt-2 ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none [&_h3.font-heading]:text-base [&_h3.font-heading]:font-semibold',
       className,
     )}
     {...props}
