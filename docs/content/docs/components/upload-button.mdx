@@ -18,7 +18,7 @@ import { Step, Steps } from 'fumadocs-ui/components/steps';
   <UploadButtonBlock />
 </DemoBlock>
 
-It takes the same props as the shadcn/ui `Button`. Several buttons can feed the same `UploaderProvider`. The basic example below shows upload progress and results with `useUploader`, without extra components. For the richer file list used in the demo, also install [Multi-file](./multi-file) and add its `FileList`.
+It takes the same props as the shadcn/ui `Button`. Several buttons can feed the same `UploaderProvider`, so you can pair them with a `FileList` or build your own list with `useUploader`.
 
 ## Installation
 
@@ -87,11 +87,11 @@ Install or copy the component from [Installation](#installation) before using th
 'use client';
 
 import { UploadErrors } from '@/components/upload/dropzone';
+import { FileList } from '@/components/upload/multi-file';
 import { UploadButton } from '@/components/upload/upload-button';
 import {
   UploaderProvider,
   type UploadFn,
-  useUploader,
 } from '@/components/upload/uploader-provider';
 import { useEdgeStore } from '@/lib/edgestore';
 import { UploadIcon } from 'lucide-react';
@@ -125,32 +125,8 @@ export function UploadButtonUsage() {
         <UploadIcon /> Upload files
       </UploadButton>
       <UploadErrors errors={errors} onDismiss={() => setErrors([])} />
-      <UploadStatus />
+      <FileList />
     </UploaderProvider>
-  );
-}
-
-function UploadStatus() {
-  const { fileStates } = useUploader();
-
-  return (
-    <ul aria-live="polite">
-      {fileStates.map(({ key, file, status, progress, url, error }) => (
-        <li key={key}>
-          {file.name}{' '}
-          {status === 'COMPLETE' ? (
-            <a href={url}>Uploaded — open file</a>
-          ) : status === 'ERROR' ? (
-            <span>Upload failed: {error}</span>
-          ) : (
-            <>
-              <progress value={progress} max={100} aria-label={file.name} />
-              {status === 'PENDING' ? 'Waiting to upload' : `${progress}%`}
-            </>
-          )}
-        </li>
-      ))}
-    </ul>
   );
 }
 ```
