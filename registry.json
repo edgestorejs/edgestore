@@ -227,8 +227,8 @@
       "files": [
         {
           "path": "examples/components/src/components/upload/blocks/multi-file-block.tsx",
-          "type": "registry:block",
-          "target": "components/upload/blocks/multi-file-block.tsx"
+          "type": "registry:page",
+          "target": "app/page.tsx"
         }
       ]
     },
@@ -244,8 +244,8 @@
       "files": [
         {
           "path": "examples/components/src/components/upload/blocks/single-image-block.tsx",
-          "type": "registry:block",
-          "target": "components/upload/blocks/single-image-block.tsx"
+          "type": "registry:page",
+          "target": "app/page.tsx"
         }
       ]
     },
@@ -261,8 +261,8 @@
       "files": [
         {
           "path": "examples/components/src/components/upload/blocks/multi-image-block.tsx",
-          "type": "registry:block",
-          "target": "components/upload/blocks/multi-image-block.tsx"
+          "type": "registry:page",
+          "target": "app/page.tsx"
         }
       ]
     },
@@ -278,8 +278,8 @@
       "files": [
         {
           "path": "examples/components/src/components/upload/blocks/avatar-block.tsx",
-          "type": "registry:block",
-          "target": "components/upload/blocks/avatar-block.tsx"
+          "type": "registry:page",
+          "target": "app/page.tsx"
         }
       ]
     },
@@ -296,8 +296,8 @@
       "files": [
         {
           "path": "examples/components/src/components/upload/blocks/file-field-block.tsx",
-          "type": "registry:block",
-          "target": "components/upload/blocks/file-field-block.tsx"
+          "type": "registry:page",
+          "target": "app/page.tsx"
         }
       ]
     },
@@ -316,8 +316,8 @@
       "files": [
         {
           "path": "examples/components/src/components/upload/blocks/upload-button-block.tsx",
-          "type": "registry:block",
-          "target": "components/upload/blocks/upload-button-block.tsx"
+          "type": "registry:page",
+          "target": "app/page.tsx"
         }
       ]
     },
@@ -330,8 +330,8 @@
       "files": [
         {
           "path": "examples/components/src/components/upload/blocks/progress-bar-block.tsx",
-          "type": "registry:block",
-          "target": "components/upload/blocks/progress-bar-block.tsx"
+          "type": "registry:page",
+          "target": "app/page.tsx"
         }
       ]
     },
@@ -344,8 +344,8 @@
       "files": [
         {
           "path": "examples/components/src/components/upload/blocks/progress-circle-block.tsx",
-          "type": "registry:block",
-          "target": "components/upload/blocks/progress-circle-block.tsx"
+          "type": "registry:page",
+          "target": "app/page.tsx"
         }
       ]
     }
