@@ -57,7 +57,7 @@ First you will need to follow the [manual install setup](./manual-install) guide
 
 - [uploader-provider](./uploader-provider)
 - [dropzone](./dropzone)
-- [progress-bar](./progress-bar)
+- [file-list](./file-list)
 - [shadcn/ui button](https://ui.shadcn.com/docs/components/button)
 
 </Step>
@@ -143,8 +143,4 @@ export function MultiFileDropzoneUsage() {
 
 ### Building your own layout
 
-`multi-file.tsx` also exports the pieces it is made of, so you can arrange them differently:
-
-- `FileList` lists the files of the nearest `UploaderProvider`.
-- `FileListItem` renders one file with its status and actions.
-- `FileBadge` renders the colored file-type tile.
+`FileUploader` is a `Dropzone` and a [`FileList`](./file-list), so you can arrange the two differently.
