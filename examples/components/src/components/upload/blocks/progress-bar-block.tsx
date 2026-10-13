@@ -1,7 +1,7 @@
 'use client';
 
-import * as React from 'react';
 import { ProgressBar } from '@/components/upload/progress-bar';
+import * as React from 'react';
 
 export default function ProgressBarUsage() {
   const [progress, setProgress] = React.useState(0);
