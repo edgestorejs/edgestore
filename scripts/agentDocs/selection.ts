@@ -60,6 +60,7 @@ export const references: Record<string, Reference[]> = {
       'avatar',
       'file-field',
       'upload-button',
+      'file-list',
       'uploader-provider',
     ].map((component) => ({
       file: `${component}.md`,
