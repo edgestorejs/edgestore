@@ -5,7 +5,7 @@ import { UploadIcon } from 'lucide-react';
 import * as React from 'react';
 import { type Accept } from 'react-dropzone';
 import { dropzoneState, dropzoneVariants, useUploadDropzone } from './dropzone';
-import { FileListItem } from './multi-file';
+import { FileListItem } from './file-list';
 import { formatFileSize } from './upload-utils';
 import { useUploader } from './uploader-provider';
 
