@@ -1,5 +1,6 @@
 import { ActionButton } from '@/components/action-button';
 import { env } from '@/env';
+import { SPONSOR_URL } from '@/lib/constants';
 import { formatFileSize, formatNumber } from '@/lib/formatter';
 import { cn } from '@/lib/utils';
 import { CheckCircleIcon, HeartIcon } from 'lucide-react';
@@ -127,7 +128,7 @@ function PricingBlock(props: {
 
 function SponsorButton() {
   return (
-    <ActionButton href="https://github.com/sponsors/perfectbase">
+    <ActionButton href={SPONSOR_URL}>
       <HeartIcon /> Sponsor
     </ActionButton>
   );
