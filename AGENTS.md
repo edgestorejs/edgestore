@@ -9,7 +9,7 @@
 
 ## Setup
 
-- Use Node.js `>=24`.
+- Use the Node.js version pinned in `.nvmrc`.
 - Install dependencies with `pnpm install`.
 - Prefer existing workspace scripts over ad hoc commands.
 

@@ -6,7 +6,7 @@
   "license": "MIT",
   "packageManager": "pnpm@11.15.1",
   "engines": {
-    "node": ">=24"
+    "node": ">=24.22.1"
   },
   "scripts": {
     "build": "turbo run build --filter=@edgestore/*",
