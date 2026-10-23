@@ -501,6 +501,7 @@ describe('requestUpload', () => {
         },
         isPublic: false,
       },
+      authorizeOverwrite: expect.any(Function),
     });
     expect(res).toMatchObject({
       url: 'https://files.example.com/file.txt',
@@ -514,6 +515,144 @@ describe('requestUpload', () => {
         userId: 'user-1',
         type: 'INVOICE',
       },
+    });
+  });
+
+  describe('replacing existing files', () => {
+    const targetUrl = 'https://files.example.com/documents/old.txt';
+    const uploadedAt = new Date('2026-10-01T00:00:00Z');
+
+    function replacementRouter(beforeDelete?: () => boolean) {
+      const es = initEdgeStore.context<{ userId: string }>().create();
+      const bucket = es
+        .fileBucket()
+        .path(({ ctx }) => [{ author: ctx.userId }]);
+      return es.router({
+        documents: beforeDelete ? bucket.beforeDelete(beforeDelete) : bucket,
+      });
+    }
+
+    function providerFindingExistingFile() {
+      return createProvider({
+        uploads: {
+          request: vi.fn(async ({ authorizeOverwrite }) => {
+            await authorizeOverwrite?.({
+              url: 'https://files.example.com/documents/user-1/notes.txt',
+              sizeBytes: 5,
+              uploadedAt,
+              updatedAt: uploadedAt,
+            });
+            return { uploadUrl: 'https://upload.example.com', url: '' };
+          }),
+        },
+      });
+    }
+
+    it('requires beforeDelete to replace a file', async () => {
+      const provider = createProvider();
+
+      await expect(
+        uploadWithContext({
+          router: replacementRouter(),
+          provider,
+          ctx: { userId: 'user-1' },
+          body: { fileInfo: { replaceTargetUrl: targetUrl } },
+        }),
+      ).rejects.toMatchObject({
+        code: 'SERVER_ERROR',
+        message:
+          'You need to define beforeDelete if you want to replace or overwrite existing files from the frontend.',
+      });
+      expect(provider.uploads.request).not.toHaveBeenCalled();
+    });
+
+    it('authorizes the replaced file with beforeDelete', async () => {
+      const provider = createProvider();
+      const beforeDelete = vi.fn(() => false);
+
+      await expect(
+        uploadWithContext({
+          router: replacementRouter(beforeDelete),
+          provider,
+          ctx: { userId: 'user-1' },
+          body: { fileInfo: { replaceTargetUrl: targetUrl } },
+        }),
+      ).rejects.toMatchObject({ code: 'UPLOAD_NOT_ALLOWED' });
+      expect(provider.files.get).toHaveBeenCalledWith({
+        bucketName: 'documents',
+        file: { url: targetUrl },
+      });
+      expect(beforeDelete).toHaveBeenCalledWith({
+        ctx: expect.objectContaining({ userId: 'user-1' }),
+        fileInfo: {
+          url: targetUrl,
+          size: 10,
+          uploadedAt: expect.any(Date),
+          path: {},
+          metadata: {},
+        },
+      });
+      expect(provider.uploads.request).not.toHaveBeenCalled();
+
+      beforeDelete.mockReturnValue(true);
+      await uploadWithContext({
+        router: replacementRouter(beforeDelete),
+        provider,
+        ctx: { userId: 'user-1' },
+        body: { fileInfo: { replaceTargetUrl: targetUrl } },
+      });
+      expect(provider.uploads.request).toHaveBeenCalledWith(
+        expect.objectContaining({
+          fileInfo: expect.objectContaining({ replaceTargetUrl: targetUrl }),
+        }),
+      );
+    });
+
+    it('authorizes overwriting a file at a client-chosen name', async () => {
+      const beforeDelete = vi.fn(() => false);
+      const upload = (router: ReturnType<typeof replacementRouter>) =>
+        uploadWithContext({
+          router,
+          provider: providerFindingExistingFile(),
+          ctx: { userId: 'user-1' },
+          body: { fileInfo: { fileName: 'notes.txt' } },
+        });
+
+      await expect(upload(replacementRouter())).rejects.toMatchObject({
+        code: 'SERVER_ERROR',
+      });
+      await expect(
+        upload(replacementRouter(beforeDelete)),
+      ).rejects.toMatchObject({ code: 'UPLOAD_NOT_ALLOWED' });
+      // The overwritten file shares the upload's key, so it shares its path.
+      expect(beforeDelete).toHaveBeenCalledWith({
+        ctx: expect.objectContaining({ userId: 'user-1' }),
+        fileInfo: {
+          url: 'https://files.example.com/documents/user-1/notes.txt',
+          size: 5,
+          uploadedAt,
+          path: { author: 'user-1' },
+          metadata: {},
+        },
+      });
+
+      beforeDelete.mockReturnValue(true);
+      await expect(
+        upload(replacementRouter(beforeDelete)),
+      ).resolves.toMatchObject({ uploadUrl: 'https://upload.example.com' });
+    });
+
+    it('does not ask providers to check generated names', async () => {
+      const provider = providerFindingExistingFile();
+
+      await uploadWithContext({
+        router: replacementRouter(),
+        provider,
+        ctx: { userId: 'user-1' },
+      });
+      expect(provider.uploads.request).toHaveBeenCalledWith(
+        expect.not.objectContaining({ authorizeOverwrite: expect.anything() }),
+      );
     });
   });
 

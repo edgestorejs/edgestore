@@ -2,6 +2,7 @@ import {
   EdgeStoreError,
   type AnyContext,
   type AnyEdgeStoreProvider,
+  type BackendFile,
   type EdgeStoreRouter,
   type ProviderFileMutationResult,
   type SharedConfirmUploadsRes,
@@ -194,10 +195,34 @@ export async function requestUpload<TCtx extends AnyContext>(params: {
 
   validateFileForBucket({ bucket, fileInfo });
 
+  // Replacing or overwriting a file deletes it, so it needs the same
+  // authorization as deleting it.
+  const authorizeReplacement = async (file: BackendFile) => {
+    const beforeDelete = requireBeforeDelete(
+      bucket,
+      'replace or overwrite existing files',
+    );
+    if (
+      !(await canDelete({ provider, bucket, ctx, beforeDelete, files: [file] }))
+    ) {
+      throw new EdgeStoreError({
+        message:
+          'Replacing an existing file is not allowed for the current context',
+        code: 'UPLOAD_NOT_ALLOWED',
+      });
+    }
+  };
+  if (fileInfo.replaceTargetUrl) {
+    // The lookup is scoped to this bucket, so targets elsewhere are rejected.
+    const file = await referenceFromUrl(provider, fileInfo.replaceTargetUrl);
+    await authorizeReplacement(await provider.files.get({ bucketName, file }));
+  }
+
   const path = buildPath({
     bucket,
     pathAttrs: { ctx, input: parsedInput },
   });
+  const { parsedPath, pathOrder } = parsePath(path);
   const metadata =
     (await bucket._def.metadata?.({
       ctx,
@@ -223,8 +248,13 @@ export async function requestUpload<TCtx extends AnyContext>(params: {
       metadata,
     },
     autoSignedUrls,
+    ...(fileInfo.fileName !== undefined && {
+      // A client-chosen name can match an existing file. Object storage
+      // doesn't store path values, but a file at this key has this path.
+      authorizeOverwrite: (file: BackendFile) =>
+        authorizeReplacement({ ...file, path: file.path ?? parsedPath }),
+    }),
   });
-  const { parsedPath, pathOrder } = parsePath(path);
   const statusToken =
     provider.uploads.getStatus && requestUploadRes.id
       ? await encryptStatusToken({ id: requestUploadRes.id, bucketName })
@@ -479,14 +509,7 @@ export async function deleteFiles<TCtx extends AnyContext>(params: {
 
   const ctx = await getContext(ctxToken);
   const bucket = getBucket(router, bucketName);
-
-  if (!bucket._def.beforeDelete) {
-    throw new EdgeStoreError({
-      message:
-        'You need to define beforeDelete if you want to delete files directly from the frontend.',
-      code: 'SERVER_ERROR',
-    });
-  }
+  const beforeDelete = requireBeforeDelete(bucket, 'delete files directly');
 
   if (!provider.files.delete) {
     throw new EdgeStoreError({
@@ -502,35 +525,15 @@ export async function deleteFiles<TCtx extends AnyContext>(params: {
       Promise.resolve(provider.files.get({ bucketName, file })),
     ),
   );
-  const authorizations = await Promise.all(
-    fileRecords.map((file) => {
-      if (file.path === undefined && bucket._def.path.length > 0) {
-        throw new EdgeStoreError({
-          message: `Provider ${provider.name} must return path from files.get to authorize frontend deletion for a bucket with configured path fields.`,
-          code: 'SERVER_ERROR',
-        });
-      }
-      if (file.metadata === undefined && bucket._def.metadata !== undefined) {
-        throw new EdgeStoreError({
-          message: `Provider ${provider.name} must return metadata from files.get to authorize frontend deletion for a bucket with configured metadata fields.`,
-          code: 'SERVER_ERROR',
-        });
-      }
-      return Promise.resolve(
-        bucket._def.beforeDelete!({
-          ctx,
-          fileInfo: {
-            url: file.url,
-            size: file.sizeBytes,
-            uploadedAt: new Date(file.uploadedAt),
-            path: file.path ?? {},
-            metadata: file.metadata ?? {},
-          },
-        }),
-      );
-    }),
-  );
-  if (authorizations.some((allowed) => !allowed)) {
+  if (
+    !(await canDelete({
+      provider,
+      bucket,
+      ctx,
+      beforeDelete,
+      files: fileRecords,
+    }))
+  ) {
     throw new EdgeStoreError({
       message: 'Delete not allowed for the current context',
       code: 'DELETE_NOT_ALLOWED',
@@ -544,6 +547,70 @@ export async function deleteFiles<TCtx extends AnyContext>(params: {
   logger.debug('Finished [deleteFiles]');
 
   return mapFrontendMutationResult(urls, result);
+}
+
+type Bucket<TCtx extends AnyContext> = EdgeStoreRouter<TCtx>['buckets'][string];
+type BeforeDelete<TCtx extends AnyContext> = NonNullable<
+  Bucket<TCtx>['_def']['beforeDelete']
+>;
+
+function requireBeforeDelete<TCtx extends AnyContext>(
+  bucket: Bucket<TCtx>,
+  action: string,
+) {
+  const { beforeDelete } = bucket._def;
+  if (!beforeDelete) {
+    throw new EdgeStoreError({
+      message: `You need to define beforeDelete if you want to ${action} from the frontend.`,
+      code: 'SERVER_ERROR',
+    });
+  }
+  return beforeDelete;
+}
+
+/** Runs `beforeDelete` for every file and reports whether all are allowed. */
+async function canDelete<TCtx extends AnyContext>({
+  provider,
+  bucket,
+  ctx,
+  beforeDelete,
+  files,
+}: {
+  provider: AnyEdgeStoreProvider;
+  bucket: Bucket<TCtx>;
+  ctx: AnyContext;
+  beforeDelete: BeforeDelete<TCtx>;
+  files: BackendFile[];
+}) {
+  const authorizations = await Promise.all(
+    files.map((file) => {
+      if (file.path === undefined && bucket._def.path.length > 0) {
+        throw new EdgeStoreError({
+          message: `Provider ${provider.name} must return path from files.get to authorize frontend deletion for a bucket with configured path fields.`,
+          code: 'SERVER_ERROR',
+        });
+      }
+      if (file.metadata === undefined && bucket._def.metadata !== undefined) {
+        throw new EdgeStoreError({
+          message: `Provider ${provider.name} must return metadata from files.get to authorize frontend deletion for a bucket with configured metadata fields.`,
+          code: 'SERVER_ERROR',
+        });
+      }
+      return Promise.resolve(
+        beforeDelete({
+          ctx,
+          fileInfo: {
+            url: file.url,
+            size: file.sizeBytes,
+            uploadedAt: new Date(file.uploadedAt),
+            path: file.path ?? {},
+            metadata: file.metadata ?? {},
+          },
+        }),
+      );
+    }),
+  );
+  return authorizations.every(Boolean);
 }
 
 function mapFrontendMutationResult(
