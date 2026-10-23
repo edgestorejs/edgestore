@@ -71,27 +71,48 @@ async function uploadWithContext<TCtx extends AnyContext>({
 }
 
 describe('getCookieConfig', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   it('returns the default cookie names and options', () => {
+    vi.stubEnv('NODE_ENV', 'development');
+
     expect(getCookieConfig()).toEqual({
       ctx: {
         name: 'edgestore-ctx',
         options: {
           path: '/',
           maxAge: 30 * 24 * 60 * 60,
+          sameSite: 'lax',
+          httpOnly: true,
+          secure: false,
         },
       },
     });
   });
 
+  it('marks the cookie secure over HTTPS or in production', () => {
+    vi.stubEnv('NODE_ENV', 'development');
+    expect(getCookieConfig(undefined, { https: true }).ctx.options.secure).toBe(
+      true,
+    );
+
+    vi.stubEnv('NODE_ENV', 'production');
+    expect(getCookieConfig().ctx.options.secure).toBe(true);
+  });
+
   it('merges custom names and defined options with defaults', () => {
+    vi.stubEnv('NODE_ENV', 'production');
+
     expect(
       getCookieConfig({
         ctx: {
           name: 'custom-ctx',
           options: {
             domain: 'example.com',
-            sameSite: 'lax',
-            secure: true,
+            sameSite: 'none',
+            secure: false,
             httpOnly: undefined,
           },
         },
@@ -103,8 +124,9 @@ describe('getCookieConfig', () => {
           path: '/',
           maxAge: 30 * 24 * 60 * 60,
           domain: 'example.com',
-          sameSite: 'lax',
-          secure: true,
+          sameSite: 'none',
+          secure: false,
+          httpOnly: true,
         },
       },
     });
@@ -243,6 +265,56 @@ describe('init', () => {
     });
     // The token reaches the file origin only through clientInit headers.
     expect(res.newCookies).toEqual([expect.stringMatching(/^edgestore-ctx=/)]);
+  });
+
+  it('sets the context cookie with the hardened defaults', async () => {
+    const provider = createProvider();
+    const es = initEdgeStore.create();
+    const router = es.router({ documents: es.fileBucket() }).provider(provider);
+
+    const res = await init({ provider, router, ctx: {}, logger, https: true });
+
+    expect(res.newCookies).toEqual([
+      expect.stringMatching(
+        /^edgestore-ctx=[^;]+; Max-Age=2592000; Path=\/; HttpOnly; Secure; SameSite=Lax$/,
+      ),
+    ]);
+  });
+
+  it('expires the context token with the configured cookie max age', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    try {
+      const provider = createProvider();
+      const es = initEdgeStore.context<{ userId: string }>().create();
+      const router = es.router({ documents: es.fileBucket() });
+      const res = await init({
+        provider,
+        router,
+        ctx: { userId: 'user-1' },
+        logger,
+        cookieConfig: { ctx: { options: { maxAge: 60 } } },
+      });
+      const ctxToken = res.newCookies[0]?.split(';')[0]?.split('=')[1];
+      const upload = () =>
+        requestUpload({
+          provider,
+          router,
+          ctxToken,
+          body: uploadBody(),
+          logger,
+        });
+
+      await expect(upload()).resolves.toBeDefined();
+
+      // Past the max age plus getContext's 15 second clock tolerance.
+      vi.advanceTimersByTime(76 * 1000);
+      await expect(upload()).rejects.toMatchObject({
+        code: 'UNAUTHORIZED',
+        message: 'Invalid edgestore-ctx cookie',
+      });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('keeps running init for custom providers', async () => {

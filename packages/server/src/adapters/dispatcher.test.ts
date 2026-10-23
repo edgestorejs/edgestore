@@ -33,6 +33,7 @@ describe('adapter dispatcher', () => {
       pathname: string,
       options: {
         body?: unknown;
+        contentType?: string;
         cookieHeader?: string;
         createContext?: () => typeof testCtx;
       } = {},
@@ -44,6 +45,10 @@ describe('adapter dispatcher', () => {
         request: {
           pathname,
           readJson: async () => options.body,
+          contentType:
+            'contentType' in options
+              ? options.contentType
+              : 'application/json',
           cookieHeader: options.cookieHeader,
           createContext: options.createContext ?? (() => testCtx),
         },
@@ -170,6 +175,48 @@ describe('adapter dispatcher', () => {
     expect(provider.uploads.multipart?.abort).not.toHaveBeenCalled();
     expect(provider.files.confirm).not.toHaveBeenCalled();
     expect(provider.files.delete).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    'text/plain;charset=UTF-8',
+    'application/x-www-form-urlencoded',
+    'multipart/form-data; boundary=x',
+    undefined,
+  ])(
+    'rejects request bodies sent with Content-Type %s',
+    async (contentType) => {
+      const { dispatch, provider } = createDispatcher(createSilentLogger());
+      const init = await dispatch('/api/edgestore/init');
+      const cookieHeader = `${testCookieConfig.ctx.name}=${extractCookieValue(init.headers.getSetCookie())}`;
+
+      const response = await dispatch('/api/edgestore/request-upload', {
+        body: requestUploadBody,
+        contentType,
+        cookieHeader,
+      });
+
+      expect(response.status).toBe(400);
+      await expect(response.json()).resolves.toMatchObject({
+        code: 'BAD_REQUEST',
+        message: 'Content-Type must be application/json',
+      });
+      expect(provider.uploads.request).not.toHaveBeenCalled();
+    },
+  );
+
+  it('accepts JSON request bodies with media type parameters', async () => {
+    const { dispatch, provider } = createDispatcher();
+    const init = await dispatch('/api/edgestore/init');
+    const cookieHeader = `${testCookieConfig.ctx.name}=${extractCookieValue(init.headers.getSetCookie())}`;
+
+    const response = await dispatch('/api/edgestore/request-upload', {
+      body: requestUploadBody,
+      contentType: 'Application/JSON; charset=utf-8',
+      cookieHeader,
+    });
+
+    expect(response.status).toBe(200);
+    expect(provider.uploads.request).toHaveBeenCalledOnce();
   });
 
   it('rejects fractional upload sizes', async () => {

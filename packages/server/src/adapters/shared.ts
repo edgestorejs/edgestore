@@ -20,7 +20,7 @@ import {
 } from '../core/provider';
 import { buildPath, parseBucketInput, parsePath } from '../core/routerRules';
 import { validateFileForBucket } from '../core/validateFile';
-import { getEnv } from '../libs/env';
+import { getEnv, isProduction } from '../libs/env';
 import type { LoggerLike } from '../libs/logger';
 
 // TODO: change it to 1 hour when we have a way to refresh the token
@@ -37,7 +37,8 @@ export type CookieOptions = {
    */
   path?: string;
   /**
-   * Cookie max age in seconds
+   * Cookie max age in seconds. The encrypted context token expires at the
+   * same time.
    * @default 2592000 (30 days)
    */
   maxAge?: number;
@@ -46,15 +47,19 @@ export type CookieOptions = {
    */
   domain?: string;
   /**
-   * Cookie same site policy
+   * Cookie same site policy. Use `'none'` (with `secure: true`) only when the
+   * frontend calls the EdgeStore API from a different site.
+   * @default "lax"
    */
   sameSite?: 'strict' | 'lax' | 'none';
   /**
    * Cookie secure flag
+   * @default true over HTTPS or when NODE_ENV is "production"
    */
   secure?: boolean;
   /**
    * Cookie http only flag
+   * @default true
    */
   httpOnly?: boolean;
 };
@@ -79,15 +84,17 @@ export type CookieConfig = {
 type ResolvedCookieConfig = {
   ctx: {
     name: string;
-    options: CookieOptions;
+    options: CookieOptions & { maxAge: number };
   };
 };
 
 /**
- * Merges the provided cookie configuration with default values
+ * Merges the provided cookie configuration with default values.
+ * `https` reports whether the current request arrived over HTTPS.
  */
 export function getCookieConfig(
   cookieConfig?: CookieConfig,
+  { https = false }: { https?: boolean } = {},
 ): ResolvedCookieConfig {
   // Explicit `undefined` options keep their defaults.
   const configured = Object.fromEntries(
@@ -99,7 +106,14 @@ export function getCookieConfig(
   return {
     ctx: {
       name: cookieConfig?.ctx?.name ?? 'edgestore-ctx',
-      options: { path: '/', maxAge: DEFAULT_MAX_AGE, ...configured },
+      options: {
+        path: '/',
+        maxAge: DEFAULT_MAX_AGE,
+        sameSite: 'lax',
+        httpOnly: true,
+        secure: https || isProduction(),
+        ...configured,
+      },
     },
   };
 }
@@ -110,13 +124,18 @@ export async function init<TCtx extends AnyContext>(params: {
   ctx: TCtx;
   logger: LoggerLike;
   cookieConfig?: CookieConfig;
+  /** Whether the request arrived over HTTPS. */
+  https?: boolean;
 }): Promise<SharedInitRes> {
-  const { ctx, provider, router, logger, cookieConfig } = params;
+  const { ctx, provider, router, logger, cookieConfig, https } = params;
   logger.debug('Running [init]', { ctx });
 
-  const resolvedCookieConfig = getCookieConfig(cookieConfig);
+  const resolvedCookieConfig = getCookieConfig(cookieConfig, { https });
 
-  const ctxToken = await encryptJWT(ctx);
+  const ctxToken = await encryptJWT(
+    ctx,
+    resolvedCookieConfig.ctx.options.maxAge,
+  );
   const { clientInit } = await provider.init({ ctx, router });
   const newCookies = [
     stringifySetCookie({
@@ -579,11 +598,12 @@ function getBucket<TCtx extends AnyContext>(
   return bucket;
 }
 
-async function encryptJWT(ctx: AnyContext) {
+/** Encrypts the context into a token that expires with its cookie. */
+async function encryptJWT(ctx: AnyContext, maxAge: number) {
   return await new EncryptJWT({ ctx })
     .setProtectedHeader({ alg: 'dir', enc: 'A256GCM' })
     .setIssuedAt()
-    .setExpirationTime(Date.now() / 1000 + DEFAULT_MAX_AGE)
+    .setExpirationTime(Date.now() / 1000 + maxAge)
     .setJti(crypto.randomUUID())
     .encrypt(await getEncryptionKey());
 }

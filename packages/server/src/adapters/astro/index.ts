@@ -30,6 +30,8 @@ export function createEdgeStoreAstroHandler<TCtx extends AnyContext>(
       request: {
         pathname: url.pathname,
         readJson: () => request.json(),
+        contentType: request.headers.get('content-type') ?? undefined,
+        https: url.protocol === 'https:',
         cookieHeader: request.headers.get('cookie') ?? undefined,
         createContext: () => resolveContext<TCtx, APIContext>(config, context),
       },
