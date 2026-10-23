@@ -60,7 +60,7 @@
     "openid-client": "6.8.4",
     "package-manager-detector": "1.8.0",
     "picocolors": "1.1.1",
-    "smol-toml": "1.7.0",
+    "smol-toml": "1.9.1",
     "zod": "4.3.5"
   },
   "devDependencies": {
