@@ -1,3 +1,4 @@
+import { BlobClient, RestError } from '@azure/storage-blob';
 import type { RequestUploadParams } from '@edgestore/shared';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { initEdgeStore } from '../../core/router';
@@ -112,6 +113,40 @@ describe('azureBlob', () => {
     expect(signed.signedReadUrl).toMatchObject({ expiresIn: 60 });
     expect(publicFile.signedReadUrl).toBeUndefined();
     expect(publicFile.key).toBe('documents/_public/a b.txt');
+  });
+
+  it('authorizes overwriting an existing blob before signing upload or read URLs', async () => {
+    const provider = azureBlob(config);
+    const lastModified = new Date('2026-10-01T00:00:00Z');
+    const getProperties = vi
+      .spyOn(BlobClient.prototype, 'getProperties')
+      .mockResolvedValue({ contentLength: 5, lastModified } as never);
+    const denied = new Error('denied');
+    const authorizeOverwrite = vi.fn().mockRejectedValue(denied);
+    const params = { ...request({}, { expiresIn: 60 }), authorizeOverwrite };
+
+    await expect(provider.uploads.request(params)).rejects.toBe(denied);
+    expect(authorizeOverwrite).toHaveBeenCalledWith({
+      key: 'documents/a b.txt',
+      url: 'https://account.blob.core.windows.net/files/documents/a%20b.txt',
+      sizeBytes: 5,
+      uploadedAt: lastModified,
+      updatedAt: lastModified,
+    });
+
+    authorizeOverwrite.mockClear();
+    getProperties.mockRejectedValueOnce(
+      new RestError('missing', { statusCode: 404 }),
+    );
+    await expect(provider.uploads.request(params)).resolves.toMatchObject({
+      signedReadUrl: { expiresIn: 60 },
+    });
+    expect(authorizeOverwrite).not.toHaveBeenCalled();
+
+    getProperties.mockClear();
+    await provider.uploads.request(request());
+    expect(getProperties).not.toHaveBeenCalled();
+    getProperties.mockRestore();
   });
 
   it('starts block uploads with scoped sessions and part URLs', async () => {

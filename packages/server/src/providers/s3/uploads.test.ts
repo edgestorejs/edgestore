@@ -3,8 +3,10 @@ import {
   CompleteMultipartUploadCommand,
   CreateMultipartUploadCommand,
   GetObjectCommand,
+  HeadObjectCommand,
   PutObjectCommand,
   S3Client,
+  S3ServiceException,
   UploadPartCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
@@ -387,6 +389,65 @@ describe('S3 backend and private files', () => {
         source: new Blob(['abc']),
       }),
     ).rejects.toThrow('no credentials');
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  it('authorizes overwriting an existing object before signing upload or read URLs', async () => {
+    const { provider, send } = setup();
+    const uploadedAt = new Date('2026-10-01T00:00:00Z');
+    send.mockResolvedValue({ ContentLength: 5, LastModified: uploadedAt });
+    const denied = new Error('denied');
+    const authorizeOverwrite = vi.fn().mockRejectedValue(denied);
+    const params = {
+      ...request({ size: 3 }),
+      autoSignedUrls: { expiresIn: 300 },
+      authorizeOverwrite,
+    };
+
+    await expect(provider.uploads.request(params)).rejects.toBe(denied);
+    expect(authorizeOverwrite).toHaveBeenCalledWith({
+      key: 'documents/report.txt',
+      url: 'https://storage.s3.us-east-1.amazonaws.com/documents/report.txt',
+      sizeBytes: 5,
+      uploadedAt,
+      updatedAt: uploadedAt,
+    });
+    expect(send).toHaveBeenCalledOnce();
+    expect(send.mock.calls[0]![0]).toBeInstanceOf(HeadObjectCommand);
+    expect(getSignedUrl).not.toHaveBeenCalled();
+
+    authorizeOverwrite.mockResolvedValue(undefined);
+    await expect(provider.uploads.request(params)).resolves.toMatchObject({
+      uploadUrl: 'https://signed.example/file',
+      signedReadUrl: { signedUrl: 'https://signed.example/file' },
+    });
+  });
+
+  it('treats keys S3 reports as missing as new uploads', async () => {
+    const { provider, send } = setup();
+    const authorizeOverwrite = vi.fn();
+    const failure = (httpStatusCode: number) =>
+      new S3ServiceException({
+        name: 'Error',
+        $fault: 'client',
+        $metadata: { httpStatusCode },
+      });
+    const params = { ...request({ size: 3 }), authorizeOverwrite };
+
+    // S3 reports a missing key as 403 when the caller lacks s3:ListBucket.
+    for (const status of [403, 404]) {
+      send.mockRejectedValueOnce(failure(status));
+      await expect(provider.uploads.request(params)).resolves.toMatchObject({
+        key: 'documents/report.txt',
+      });
+    }
+    send.mockRejectedValueOnce(failure(500));
+    await expect(provider.uploads.request(params)).rejects.toThrow();
+    expect(authorizeOverwrite).not.toHaveBeenCalled();
+    expect(getSignedUrl).toHaveBeenCalledTimes(2);
+
+    send.mockClear();
+    await provider.uploads.request(request({ size: 3 }));
     expect(send).not.toHaveBeenCalled();
   });
 

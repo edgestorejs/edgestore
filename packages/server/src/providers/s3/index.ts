@@ -4,6 +4,7 @@ import {
   HeadObjectCommand,
   PutObjectCommand,
   S3Client,
+  S3ServiceException,
   type PutObjectCommandInput,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
@@ -169,6 +170,36 @@ export function s3(options: S3ProviderOptions = {}) {
     })());
   }
 
+  async function describeObject(key: string) {
+    const { ContentLength, LastModified } = await client.send(
+      new HeadObjectCommand({ Bucket: bucket(), Key: key }),
+    );
+    if (ContentLength === undefined || !LastModified)
+      throw new Error('File not found');
+    return {
+      key,
+      url: (await keys()).toUrl(key),
+      sizeBytes: ContentLength,
+      uploadedAt: LastModified,
+      updatedAt: LastModified,
+    };
+  }
+
+  /** Authorizes overwriting the object at `key`, if one exists. */
+  async function authorizeOverwrite(key: string, params: RequestUploadParams) {
+    if (!params.authorizeOverwrite) return;
+    const existing = await describeObject(key).catch((error: unknown) => {
+      // Without s3:ListBucket, S3 reports a missing key as 403, not 404.
+      const status =
+        error instanceof S3ServiceException
+          ? error.$metadata.httpStatusCode
+          : undefined;
+      if (status === 403 || status === 404) return undefined;
+      throw error;
+    });
+    if (existing) await params.authorizeOverwrite(existing);
+  }
+
   async function readForUpload(key: string, params: RequestUploadParams) {
     if (params.fileInfo.isPublic || !params.autoSignedUrls) return undefined;
     return signedRead(key, params.autoSignedUrls.expiresIn);
@@ -193,6 +224,7 @@ export function s3(options: S3ProviderOptions = {}) {
       async request(params): Promise<RequestUploadRes> {
         await assertPresignableClient();
         const prepared = await prepare(params);
+        await authorizeOverwrite(prepared.key, params);
         const read = await readForUpload(prepared.key, params);
         const access = {
           key: prepared.key,
@@ -268,20 +300,9 @@ export function s3(options: S3ProviderOptions = {}) {
     },
     files: {
       async get({ bucketName: logicalBucket, file }) {
-        const objectKeys = await keys();
-        const key = objectKeys.fromReference(logicalBucket, file);
-        const { ContentLength, LastModified } = await client.send(
-          new HeadObjectCommand({ Bucket: bucket(), Key: key }),
+        return describeObject(
+          (await keys()).fromReference(logicalBucket, file),
         );
-        if (ContentLength === undefined || !LastModified)
-          throw new Error('File not found');
-        return {
-          key,
-          url: objectKeys.toUrl(key),
-          sizeBytes: ContentLength,
-          uploadedAt: LastModified,
-          updatedAt: LastModified,
-        };
       },
       async getSignedUrls({ bucketName: logicalBucket, files, expiresIn }) {
         const objectKeys = await keys();
