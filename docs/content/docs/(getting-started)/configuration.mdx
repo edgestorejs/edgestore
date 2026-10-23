@@ -126,14 +126,14 @@ the page loads again, or the cookie expires. The encrypted context expires with
 the cookie, so lower `maxAge` to limit how long an outdated context stays
 valid.
 
-| Option     | Default                                                                |
-| ---------- | ---------------------------------------------------------------------- |
-| `path`     | `'/'`                                                                  |
-| `maxAge`   | `2592000` (30 days)                                                    |
-| `sameSite` | `'lax'`                                                                |
-| `httpOnly` | `true`                                                                 |
-| `secure`   | `true` over HTTPS or when `NODE_ENV` is `'production'`, else `false`   |
-| `domain`   | Not set                                                                |
+| Option     | Default                                                              |
+| ---------- | -------------------------------------------------------------------- |
+| `path`     | `'/'`                                                                |
+| `maxAge`   | `2592000` (30 days)                                                  |
+| `sameSite` | `'lax'`                                                              |
+| `httpOnly` | `true`                                                               |
+| `secure`   | `true` over HTTPS or when `NODE_ENV` is `'production'`, else `false` |
+| `domain`   | Not set                                                              |
 
 Override the cookie name or any option with `cookieConfig`. Every adapter
 accepts it:
