@@ -1,0 +1,103 @@
+---
+title: File List
+description: Lists the files of an UploaderProvider with their status, progress and actions.
+---
+
+import { LimitedCode } from '@/components/ui/limited-code';
+import {
+  OpenTabs,
+  OpenTabsContent,
+  OpenTabsList,
+  OpenTabsTrigger,
+} from '@/components/ui/open-tabs';
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Step, Steps } from 'fumadocs-ui/components/steps';
+
+`file-list.tsx` exports:
+
+- `FileList`: lists the files of the nearest `UploaderProvider`.
+- `FileListItem`: renders one file with its status, progress and actions (retry, cancel, remove).
+- `FileBadge`: renders the colored file-type tile.
+
+Use it next to an [Upload Button](./upload-button), or anywhere you want the files of an `UploaderProvider` shown as a list.
+
+<Callout>
+  The [multi-file](./multi-file) and [file field](./file-field) components
+  install it automatically via the CLI.
+</Callout>
+
+## Installation
+
+<OpenTabs defaultValue="cli">
+
+<OpenTabsList>
+  <OpenTabsTrigger value="cli">CLI</OpenTabsTrigger>
+  <OpenTabsTrigger value="manual">Manual</OpenTabsTrigger>
+</OpenTabsList>
+
+<OpenTabsContent value="cli">
+
+Use the shadcn CLI to add the component to your project.
+
+```package-install
+npx shadcn@latest add https://edgestore.dev/r/file-list.json
+```
+
+</OpenTabsContent>
+
+<OpenTabsContent value="manual">
+
+<Steps>
+
+<Step>
+
+### Setup for manual installation
+
+First you will need to follow the [manual install setup](./manual-install) guide.
+
+</Step>
+
+<Step>
+
+### Install required components
+
+- [uploader-provider](./uploader-provider)
+- [progress-bar](./progress-bar)
+
+</Step>
+
+<Step>
+
+### Copy this component
+
+<LimitedCode>
+
+<include lang="tsx" meta='title="components/upload/file-list.tsx"'>../../../src/components/upload/file-list.tsx</include>
+
+<include lang="tsx" meta='title="components/upload/upload-utils.ts"'>../../../src/components/upload/upload-utils.ts</include>
+
+</LimitedCode>
+
+</Step>
+
+</Steps>
+
+</OpenTabsContent>
+
+</OpenTabs>
+
+## Usage
+
+```tsx
+<UploaderProvider uploadFn={uploadFn} autoUpload>
+  {/* anything that adds files, e.g. <UploadButton /> */}
+  <FileList />
+</UploaderProvider>
+```
+
+## Props
+
+| Prop       | Type      | Default | Description                                 |
+| ---------- | --------- | ------- | ------------------------------------------- |
+| `disabled` | `boolean` | `false` | Hides the retry, cancel and remove actions. |
+| `...`      |           |         | Any other `<ul>` prop, such as `className`. |
