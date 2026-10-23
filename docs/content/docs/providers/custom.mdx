@@ -274,6 +274,12 @@ it through an encrypted status token that only the uploading browser receives.
 Providers without `getStatus` treat uploads as ready once the transfer
 completes.
 
+When the browser chooses the file name, EdgeStore passes
+`authorizeOverwrite` to `uploads.request`. If a file already exists at the
+resulting key, call it with that file before returning URLs that would write or
+read it. It runs the bucket's `beforeDelete` and throws when the requester may
+not delete the file.
+
 Set `uploads.supportedOptions` to reject upload options your storage cannot
 honor. For example, `supportedOptions: { temporary: false }` removes
 `temporary` from the browser and backend upload types, and EdgeStore rejects it

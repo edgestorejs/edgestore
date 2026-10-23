@@ -74,6 +74,10 @@ Use the router's `.path(...)` for context/input-derived folders. Use
 original filename. A repeated key overwrites the existing object (or creates a
 new version if bucket versioning is enabled). Generated names avoid accidental
 collisions; use manual names only when overwrite behavior is intentional.
+Overwriting deletes the existing object, so a browser upload to an existing key
+must pass the bucket's `beforeDelete`, which receives the upload's path values
+and the object's size and timestamps. S3 does not report router metadata, so
+buckets with `.metadata(...)` cannot authorize overwrites from the browser.
 
 For custom layouts, the async `path` callback can rewrite everything beneath the
 logical bucket prefix:
