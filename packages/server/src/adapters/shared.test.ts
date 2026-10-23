@@ -92,12 +92,7 @@ describe('getCookieConfig', () => {
     });
   });
 
-  it('marks the cookie secure over HTTPS or in production', () => {
-    vi.stubEnv('NODE_ENV', 'development');
-    expect(getCookieConfig(undefined, { https: true }).ctx.options.secure).toBe(
-      true,
-    );
-
+  it('marks the cookie secure in production', () => {
     vi.stubEnv('NODE_ENV', 'production');
     expect(getCookieConfig().ctx.options.secure).toBe(true);
   });
@@ -268,11 +263,12 @@ describe('init', () => {
   });
 
   it('sets the context cookie with the hardened defaults', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
     const provider = createProvider();
     const es = initEdgeStore.create();
     const router = es.router({ documents: es.fileBucket() }).provider(provider);
 
-    const res = await init({ provider, router, ctx: {}, logger, https: true });
+    const res = await init({ provider, router, ctx: {}, logger });
 
     expect(res.newCookies).toEqual([
       expect.stringMatching(

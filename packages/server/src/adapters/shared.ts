@@ -54,7 +54,7 @@ export type CookieOptions = {
   sameSite?: 'strict' | 'lax' | 'none';
   /**
    * Cookie secure flag
-   * @default true over HTTPS or when NODE_ENV is "production"
+   * @default true when NODE_ENV is "production", otherwise false
    */
   secure?: boolean;
   /**
@@ -90,11 +90,9 @@ type ResolvedCookieConfig = {
 
 /**
  * Merges the provided cookie configuration with default values.
- * `https` reports whether the current request arrived over HTTPS.
  */
 export function getCookieConfig(
   cookieConfig?: CookieConfig,
-  { https = false }: { https?: boolean } = {},
 ): ResolvedCookieConfig {
   // Explicit `undefined` options keep their defaults.
   const configured = Object.fromEntries(
@@ -111,7 +109,7 @@ export function getCookieConfig(
         maxAge: DEFAULT_MAX_AGE,
         sameSite: 'lax',
         httpOnly: true,
-        secure: https || isProduction(),
+        secure: isProduction(),
         ...configured,
       },
     },
@@ -124,13 +122,11 @@ export async function init<TCtx extends AnyContext>(params: {
   ctx: TCtx;
   logger: LoggerLike;
   cookieConfig?: CookieConfig;
-  /** Whether the request arrived over HTTPS. */
-  https?: boolean;
 }): Promise<SharedInitRes> {
-  const { ctx, provider, router, logger, cookieConfig, https } = params;
+  const { ctx, provider, router, logger, cookieConfig } = params;
   logger.debug('Running [init]', { ctx });
 
-  const resolvedCookieConfig = getCookieConfig(cookieConfig, { https });
+  const resolvedCookieConfig = getCookieConfig(cookieConfig);
 
   const ctxToken = await encryptJWT(
     ctx,

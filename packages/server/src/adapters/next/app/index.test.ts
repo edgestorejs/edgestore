@@ -75,18 +75,6 @@ describe('Next app adapter conformance', () => {
     expect(extractCookieValue(res.headers.get('set-cookie'))).toBeTruthy();
   });
 
-  it('/init marks the ctx cookie Secure only over HTTPS outside production', async () => {
-    const { handler } = createHandler();
-
-    const https = await handler(createRequest('/init'));
-    const http = await handler(
-      new NextRequest('http://localhost:3000/api/edgestore/init'),
-    );
-
-    expect(https.headers.get('set-cookie')).toMatch(/; HttpOnly; Secure;/);
-    expect(http.headers.get('set-cookie')).toMatch(/; HttpOnly; SameSite=Lax$/);
-  });
-
   it('rejects request bodies that are not declared as JSON', async () => {
     const { handler, provider } = createHandler();
     const initRes = await handler(createRequest('/init'));

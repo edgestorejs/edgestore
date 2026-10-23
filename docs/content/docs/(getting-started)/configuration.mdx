@@ -126,14 +126,14 @@ the page loads again, or the cookie expires. The encrypted context expires with
 the cookie, so lower `maxAge` to limit how long an outdated context stays
 valid.
 
-| Option     | Default                                                              |
-| ---------- | -------------------------------------------------------------------- |
-| `path`     | `'/'`                                                                |
-| `maxAge`   | `2592000` (30 days)                                                  |
-| `sameSite` | `'lax'`                                                              |
-| `httpOnly` | `true`                                                               |
-| `secure`   | `true` over HTTPS or when `NODE_ENV` is `'production'`, else `false` |
-| `domain`   | Not set                                                              |
+| Option     | Default                                                |
+| ---------- | ------------------------------------------------------ |
+| `path`     | `'/'`                                                  |
+| `maxAge`   | `2592000` (30 days)                                    |
+| `sameSite` | `'lax'`                                                |
+| `httpOnly` | `true`                                                 |
+| `secure`   | `true` when `NODE_ENV` is `'production'`, else `false` |
+| `domain`   | Not set                                                |
 
 Override the cookie name or any option with `cookieConfig`. Every adapter
 accepts it:
@@ -153,7 +153,9 @@ export default createEdgeStoreNextHandler({
 ```
 
 If your app serves production over plain HTTP, set `secure: false`; browsers
-don't store a `Secure` cookie from an HTTP origin other than `localhost`.
+don't store a `Secure` cookie from an HTTP origin other than `localhost`. To
+mark the cookie `Secure` outside production, for example in a development
+server that uses HTTPS, set `secure: true`.
 
 The EdgeStore API accepts request bodies only with
 `Content-Type: application/json`. `@edgestore/react` sends this header. Together

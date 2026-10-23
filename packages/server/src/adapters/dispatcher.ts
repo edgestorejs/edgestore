@@ -34,8 +34,6 @@ export type EdgeStoreDispatchRequest<TCtx extends AnyContext> = {
   pathname: string;
   readJson: () => Promise<unknown>;
   contentType?: string;
-  /** Whether the request arrived over HTTPS, when the adapter can tell. */
-  https?: boolean;
   cookieHeader?: string;
   cookies?: Readonly<Record<string, string | undefined>>;
   createContext: () => MaybePromise<TCtx>;
@@ -109,7 +107,6 @@ export async function dispatchEdgeStoreRequest<
         router,
         logger,
         cookieConfig,
-        https: request.https,
       });
       const headers = new Headers({ 'Content-Type': 'application/json' });
       for (const cookie of newCookies) headers.append('Set-Cookie', cookie);

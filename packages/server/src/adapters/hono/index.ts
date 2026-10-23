@@ -25,17 +25,15 @@ export function createEdgeStoreHonoHandler<TCtx extends AnyContext>(
   const log = new Logger(config.logLevel);
   log.debug('Creating EdgeStore Hono handler');
 
-  return async (c: HonoContext): Promise<Response> => {
-    const url = new URL(c.req.url);
-    return await dispatchEdgeStoreRequest<TCtx>({
+  return async (c: HonoContext): Promise<Response> =>
+    await dispatchEdgeStoreRequest<TCtx>({
       router: config.router,
       logger: log,
       cookieConfig,
       request: {
-        pathname: url.pathname,
+        pathname: new URL(c.req.url).pathname,
         readJson: () => c.req.json(),
         contentType: c.req.header('content-type'),
-        https: url.protocol === 'https:',
         cookieHeader: c.req.header('cookie'),
         createContext: () =>
           resolveContext<TCtx, CreateContextOptions>(config, {
@@ -43,5 +41,4 @@ export function createEdgeStoreHonoHandler<TCtx extends AnyContext>(
           }),
       },
     });
-  };
 }

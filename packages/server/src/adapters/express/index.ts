@@ -36,7 +36,6 @@ export function createEdgeStoreExpressHandler<TCtx extends AnyContext>(
         pathname: url.pathname,
         readJson: async () => req.body,
         contentType: req.headers['content-type'],
-        https: req.secure,
         cookieHeader: req.headers.cookie,
         cookies: req.cookies as Record<string, string>,
         createContext: () =>
