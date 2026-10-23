@@ -1,5 +1,6 @@
 import { ActionButton } from '@/components/action-button';
 import { env } from '@/env';
+import { SPONSOR_URL } from '@/lib/constants';
 import { formatFileSize, formatNumber } from '@/lib/formatter';
 import { cn } from '@/lib/utils';
 import { CheckCircleIcon, HeartIcon } from 'lucide-react';
@@ -127,7 +128,7 @@ function PricingBlock(props: {
 
 function SponsorButton() {
   return (
-    <ActionButton href="https://github.com/sponsors/perfectbase">
+    <ActionButton href={SPONSOR_URL}>
       <HeartIcon /> Sponsor
     </ActionButton>
   );
@@ -224,7 +225,7 @@ function buildPricingBlocks(
       id: 'STARTER',
       title: 'Starter',
       description:
-        'Best for start-ups and businesses who build commercial products with Edge Store.',
+        'Best for start-ups and businesses who build commercial products with EdgeStore.',
       price: toDollars(defaultPricing.STARTER.basePrice, 5),
       upcoming: toUpcoming(upcomingPricing?.STARTER),
       features: [
@@ -286,7 +287,7 @@ function buildPricingBlocks(
       id: 'PRO',
       title: 'Pro',
       description:
-        'Best for businesses who build larger commercial products with Edge Store.',
+        'Best for businesses who build larger commercial products with EdgeStore.',
       price: toDollars(defaultPricing.PRO.basePrice, 35),
       upcoming: toUpcoming(upcomingPricing?.PRO),
       features: [
