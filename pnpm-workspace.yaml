@@ -54,8 +54,6 @@ trustPolicyExclude:
   - semver@5.7.2
   - semver@6.3.1
   - vite@5.4.21
-# Only direct dependencies may come from git or tarball URLs.
-blockExoticSubdeps: true
 
 minimumReleaseAgeStrict: true
 # Next.js 16.4.1 is the October 14, 2026 security release. Remove these once
