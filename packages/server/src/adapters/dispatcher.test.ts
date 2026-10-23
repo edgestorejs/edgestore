@@ -46,9 +46,7 @@ describe('adapter dispatcher', () => {
           pathname,
           readJson: async () => options.body,
           contentType:
-            'contentType' in options
-              ? options.contentType
-              : 'application/json',
+            'contentType' in options ? options.contentType : 'application/json',
           cookieHeader: options.cookieHeader,
           createContext: options.createContext ?? (() => testCtx),
         },
