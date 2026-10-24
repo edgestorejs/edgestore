@@ -80,24 +80,20 @@ jobs:
       - name: Create Version PR or Publish
         if: steps.release-mode.outputs.should-release == 'true'
         id: changesets
-        uses: changesets/action@a45c4d594aa4e2c509dc14a9f2b3b67ba3780d0d # v1.9.0
+        uses: changesets/action@ae32849d5ba541f9ae29e40e22a623bc13562f51 # v2.1.2
         with:
-          version: pnpm -s run version
-          publish: pnpm run release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Use OIDC for npm authentication instead of NPM_TOKEN
-          # See: https://github.com/changesets/changesets/issues/1152#issuecomment-3190884868
-          NPM_TOKEN: ''
+          version-script: pnpm -s run version
+          publish-script: pnpm run release
 
       - name: Report published packages
         if: steps.changesets.outputs.published == 'true'
+        env:
+          PUBLISHED_PACKAGES: ${{ steps.changesets.outputs.published-packages }}
         run: |
           {
             echo '## Published packages'
             echo
-            echo '${{ steps.changesets.outputs.publishedPackages }}' |
-              jq -r '.[] | "- `\(.name)@\(.version)`"'
+            jq -r '.[] | "- `\(.name)@\(.version)`"' <<< "$PUBLISHED_PACKAGES"
           } >> "$GITHUB_STEP_SUMMARY"
 
   maintenance:
@@ -153,13 +149,10 @@ jobs:
 
       - name: Create Version PR or Publish
         id: changesets
-        uses: changesets/action@a45c4d594aa4e2c509dc14a9f2b3b67ba3780d0d # v1.9.0
+        uses: changesets/action@ae32849d5ba541f9ae29e40e22a623bc13562f51 # v2.1.2
         with:
-          version: pnpm -s run version
-          publish: pnpm run release -- --tag ${{ inputs.npm-tag }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ''
+          version-script: pnpm -s run version
+          publish-script: pnpm run release -- --tag ${{ inputs.npm-tag }}
 
       - name: Verify maintenance dist-tags
         if: steps.changesets.outputs.published == 'true'
@@ -179,12 +172,13 @@ jobs:
 
       - name: Report published packages
         if: steps.changesets.outputs.published == 'true'
+        env:
+          PUBLISHED_PACKAGES: ${{ steps.changesets.outputs.published-packages }}
         run: |
           {
             echo '## Published maintenance packages'
             echo
-            echo '${{ steps.changesets.outputs.publishedPackages }}' |
-              jq -r '.[] | "- `\(.name)@\(.version)`"'
+            jq -r '.[] | "- `\(.name)@\(.version)`"' <<< "$PUBLISHED_PACKAGES"
           } >> "$GITHUB_STEP_SUMMARY"
 
   canary:
