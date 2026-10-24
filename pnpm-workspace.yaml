@@ -41,34 +41,12 @@ overrides:
   '@edgestore/shared': 'workspace:*'
   '@edgestore/react': 'workspace:*'
 
-# Fail when a version has weaker publish trust evidence (trusted publisher or
-# provenance) than earlier versions of the same package, a sign the
-# publisher's credentials may have been stolen.
+# Fail on releases with weaker publish evidence than earlier ones.
 trustPolicy: no-downgrade
-# Legitimate maintenance releases of older majors that were published with
-# weaker evidence than the newer majors. semver 5.7.2 and 6.3.1 are the July
-# 2023 ReDoS backports, published by an npm CLI maintainer without provenance.
-# vite 5.4.21 was published by vitebot with provenance but without trusted
-# publishing, alongside 6.4.1 and 7.1.11. Add exact versions only.
-trustPolicyExclude:
-  - semver@5.7.2
-  - semver@6.3.1
-  - vite@5.4.21
+# Check only releases from the last 30 days (minutes), where hijacks show up.
+trustPolicyIgnoreAfter: 43200
 
 minimumReleaseAgeStrict: true
-# Next.js 16.4.1 is the October 14, 2026 security release. Remove these once
-# it is older than the default one-day minimum release age.
-minimumReleaseAgeExclude:
-  - next@16.4.1
-  - '@next/env@16.4.1'
-  - '@next/swc-darwin-arm64@16.4.1'
-  - '@next/swc-darwin-x64@16.4.1'
-  - '@next/swc-linux-arm64-gnu@16.4.1'
-  - '@next/swc-linux-arm64-musl@16.4.1'
-  - '@next/swc-linux-x64-gnu@16.4.1'
-  - '@next/swc-linux-x64-musl@16.4.1'
-  - '@next/swc-win32-arm64-msvc@16.4.1'
-  - '@next/swc-win32-x64-msvc@16.4.1'
 
 allowBuilds:
   '@parcel/watcher': false

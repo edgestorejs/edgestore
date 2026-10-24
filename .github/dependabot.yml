@@ -1,10 +1,6 @@
 version: 2
 updates:
-  # Keeps the SHA-pinned actions in .github/workflows current. The cooldown
-  # waits a week after an action release before proposing it, like pnpm's
-  # minimumReleaseAge for npm packages. Minor and patch updates share one PR;
-  # major updates (for example changesets/action v2) get their own PR so
-  # release-pipeline changes are reviewed separately.
+  # Keeps the SHA-pinned actions current. Majors get their own PR.
   - package-ecosystem: github-actions
     directory: /
     schedule:
