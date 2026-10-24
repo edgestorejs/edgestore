@@ -116,58 +116,6 @@ async function runAfterAuthChange() {
 }
 ```
 
-## Context Cookie
-
-The `/init` request stores the context in an encrypted, `HttpOnly` cookie named
-`edgestore-ctx`. Upload, confirm, and delete requests read the context from this
-cookie and don't call `createContext` again. Changes in your app, such as a
-logout or a changed role, reach EdgeStore only when the client calls `reset()`,
-the page loads again, or the cookie expires. The encrypted context expires with
-the cookie, so lower `maxAge` to limit how long an outdated context stays
-valid.
-
-| Option     | Default                                                |
-| ---------- | ------------------------------------------------------ |
-| `path`     | `'/'`                                                  |
-| `maxAge`   | `2592000` (30 days)                                    |
-| `sameSite` | `'lax'`                                                |
-| `httpOnly` | `true`                                                 |
-| `secure`   | `true` when `NODE_ENV` is `'production'`, else `false` |
-| `domain`   | Not set                                                |
-
-Override the cookie name or any option with `cookieConfig`. Every adapter
-accepts it:
-
-```ts
-export default createEdgeStoreNextHandler({
-  router,
-  createContext,
-  cookieConfig: {
-    ctx: {
-      options: {
-        maxAge: 60 * 60, // 1 hour
-      },
-    },
-  },
-});
-```
-
-If your app serves production over plain HTTP, set `secure: false`; browsers
-don't store a `Secure` cookie from an HTTP origin other than `localhost`. To
-mark the cookie `Secure` outside production, for example in a development
-server that uses HTTPS, set `secure: true`.
-
-The EdgeStore API accepts request bodies only with
-`Content-Type: application/json`. `@edgestore/react` sends this header. Together
-with `SameSite=Lax`, it stops other sites from sending requests with your
-users' context cookie.
-
-If your frontend calls the EdgeStore API on a different site, not only a
-different subdomain, browsers don't send a `SameSite=Lax` cookie. Prefer serving
-the API from the same site. Otherwise, set `sameSite: 'none'` and
-`secure: true`, and allow your frontend origin with credentials in CORS.
-Browsers that block third-party cookies can still drop the cookie.
-
 ## Metadata & File Path
 
 Every uploaded file can hold two types of data: `metadata` and `path`. You can use this data for access control or for filtering files. The `metadata` and `path` can be generated from the context (`ctx`) or from the `input` of the upload request.
