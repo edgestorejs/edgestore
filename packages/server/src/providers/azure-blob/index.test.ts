@@ -171,7 +171,7 @@ describe('azureBlob', () => {
       authorizeOverwrite,
     });
     expect(authorizeOverwrite).toHaveBeenCalledOnce();
-    expect(authorizeOverwrite.mock.calls[0]![0]).not.toHaveProperty('path');
+    expect(authorizeOverwrite.mock.calls[0]![0].path).toBeUndefined();
     getProperties.mockRestore();
   });
 

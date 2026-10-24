@@ -434,8 +434,26 @@ describe('S3 backend and private files', () => {
       authorizeOverwrite,
     });
     expect(authorizeOverwrite).toHaveBeenCalledOnce();
-    expect(authorizeOverwrite.mock.calls[0]![0]).not.toHaveProperty('path');
+    expect(authorizeOverwrite.mock.calls[0]![0].path).toBeUndefined();
   });
+
+  it.each([
+    ['a path value', [{ key: 'author', value: 'team/member' }], 'avatar.png'],
+    ['the file name', [{ key: 'author', value: 'team' }], 'member/avatar.png'],
+  ])(
+    'omits the path of an existing object when %s contains a slash',
+    async (_, path, fileName) => {
+      const { provider, send } = setup();
+      send.mockResolvedValue({ ContentLength: 5, LastModified: new Date() });
+      const authorizeOverwrite = vi.fn();
+      await provider.uploads.request({
+        ...request({ size: 3, path, fileName }),
+        authorizeOverwrite,
+      });
+      expect(authorizeOverwrite).toHaveBeenCalledOnce();
+      expect(authorizeOverwrite.mock.calls[0]![0].path).toBeUndefined();
+    },
+  );
 
   it('treats keys S3 reports as missing as new uploads', async () => {
     const { provider, send } = setup();

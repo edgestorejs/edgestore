@@ -19,6 +19,7 @@ import { getEnv } from '../../libs/env';
 import { createMultipartSessions } from '../storage/multipartSession';
 import {
   createObjectKeys,
+  pathFromDefaultKey,
   type ObjectPathFn,
   type ObjectPathFnArgs,
 } from '../storage/objectKeys';
@@ -227,14 +228,9 @@ export function azureBlob(options: AzureBlobProviderOptions = {}) {
       throw error;
     });
     if (!existing) return;
-    // The default key holds the upload's path values; a custom path may not.
     await params.authorizeOverwrite({
       ...existing,
-      ...(!options.path && {
-        path: Object.fromEntries(
-          params.fileInfo.path.map(({ key, value }) => [key, value]),
-        ),
-      }),
+      path: pathFromDefaultKey(params.fileInfo, options.path),
     });
   }
 

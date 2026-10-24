@@ -17,7 +17,7 @@ import { z } from 'zod';
 import { defineProvider } from '../../core/provider';
 import { getEnv } from '../../libs/env';
 import { createMultipartSessions } from '../storage/multipartSession';
-import { createObjectKeys } from '../storage/objectKeys';
+import { createObjectKeys, pathFromDefaultKey } from '../storage/objectKeys';
 import {
   assertSignedUrlAccessControl,
   signedUrlLifetime,
@@ -200,14 +200,9 @@ export function s3(options: S3ProviderOptions = {}) {
       throw error;
     });
     if (!existing) return;
-    // The default key holds the upload's path values; a custom path may not.
     await params.authorizeOverwrite({
       ...existing,
-      ...(!options.path && {
-        path: Object.fromEntries(
-          params.fileInfo.path.map(({ key, value }) => [key, value]),
-        ),
-      }),
+      path: pathFromDefaultKey(params.fileInfo, options.path),
     });
   }
 
