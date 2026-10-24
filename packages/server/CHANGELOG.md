@@ -1,5 +1,37 @@
 # @edgestore/server
 
+## 1.0.1
+
+### Patch Changes
+
+- [#309](https://github.com/edgestorejs/edgestore/pull/309) [`85791bb`](https://github.com/edgestorejs/edgestore/commit/85791bbfbaa2cd53ce9a23b13d656bc12c8393e7) Thanks [@raviships](https://github.com/raviships)! - Require `beforeDelete` to replace or overwrite existing files from the browser.
+
+  Replacing a file deletes it, so a browser upload with `replaceTargetUrl`, or
+  with a `manualFileName` that matches an existing file, now runs the bucket's
+  `beforeDelete` on that file first. Replacement targets must be in the same
+  bucket. Without `beforeDelete` these uploads fail. Generated file names and
+  backend uploads are unchanged.
+
+  Custom providers that let the browser choose file names should call the new
+  `authorizeOverwrite` request parameter with any file already at the key.
+
+- [#308](https://github.com/edgestorejs/edgestore/pull/308) [`83cba2a`](https://github.com/edgestorejs/edgestore/commit/83cba2acf21ab4999f8939dfe96dd09b57432ee3) Thanks [@raviships](https://github.com/raviships)! - Harden the `edgestore-ctx` cookie against cross-site requests.
+
+  - The cookie now defaults to `SameSite=Lax` and `HttpOnly`, and to `Secure`
+    when `NODE_ENV` is `production`. `cookieConfig.ctx.options` still overrides
+    each default; a frontend on a different site needs `sameSite: 'none'` and
+    `secure: true`. Browsers don't store `Secure` cookies over plain HTTP
+    (Safari not even on `localhost`), so set `secure: false` to test a production
+    build over HTTP.
+  - Requests with a body must use `Content-Type: application/json`, as
+    `@edgestore/react` already does. Other content types get a `400`.
+  - The encrypted context now expires with the cookie's `maxAge` instead of
+    always after 30 days.
+
+- Updated dependencies [[`85791bb`](https://github.com/edgestorejs/edgestore/commit/85791bbfbaa2cd53ce9a23b13d656bc12c8393e7)]:
+  - @edgestore/shared@1.0.1
+  - @edgestore/sdk@1.0.1
+
 ## 1.0.0
 
 ### Major Changes
