@@ -35,6 +35,7 @@ export function createEdgeStoreFastifyHandler<TCtx extends AnyContext>(
       request: {
         pathname: url.pathname,
         readJson: async () => req.body,
+        contentType: req.headers['content-type'],
         cookieHeader: req.headers.cookie,
         cookies:
           'cookies' in req

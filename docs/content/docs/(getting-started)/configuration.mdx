@@ -173,7 +173,7 @@ const router = es.router({
 
 ## Lifecycle Hooks
 
-You can use the `beforeUpload` and `beforeDelete` hooks to allow or deny file uploads and deletions. The `beforeDelete` hook must be defined if you want to delete files directly from the client.
+You can use the `beforeUpload` and `beforeDelete` hooks to allow or deny file uploads and deletions. The `beforeDelete` hook must be defined if you want to delete, replace, or overwrite files directly from the client.
 
 ```ts
 import { initEdgeStore } from '@edgestore/server';
@@ -212,7 +212,8 @@ const router = es.router({
     })
     /**
      * return `true` to allow delete
-     * This function must be defined if you want to delete files directly from the client.
+     * This function must be defined if you want to delete, replace, or
+     * overwrite files directly from the client.
      */
     .beforeDelete(({ ctx, fileInfo }) => {
       console.log('beforeDelete', ctx, fileInfo);

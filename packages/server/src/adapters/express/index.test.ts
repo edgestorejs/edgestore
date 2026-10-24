@@ -124,6 +124,7 @@ describe('Express adapter conformance', () => {
     const uploadRes = createMockResponse();
     await handler(
       createRequest('/api/edgestore/request-upload', {
+        headers: { 'content-type': 'application/json' },
         body: requestUploadBody,
         cookies: {
           [testCookieConfig.ctx.name]: ctxToken,
@@ -153,6 +154,7 @@ describe('Express adapter conformance', () => {
 
     await handler(
       createRequest('/api/edgestore/complete-multipart-upload', {
+        headers: { 'content-type': 'application/json' },
         body: completeMultipartUploadBody,
         cookies: {
           [testCookieConfig.ctx.name]: ctxToken,
