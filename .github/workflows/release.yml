@@ -35,16 +35,15 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v6
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
 
       - name: Setup Node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .nvmrc
-          cache: pnpm
           registry-url: https://registry.npmjs.org
 
       - name: Install
@@ -81,24 +80,20 @@ jobs:
       - name: Create Version PR or Publish
         if: steps.release-mode.outputs.should-release == 'true'
         id: changesets
-        uses: changesets/action@v1
+        uses: changesets/action@ae32849d5ba541f9ae29e40e22a623bc13562f51 # v2.1.2
         with:
-          version: pnpm -s run version
-          publish: pnpm run release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Use OIDC for npm authentication instead of NPM_TOKEN
-          # See: https://github.com/changesets/changesets/issues/1152#issuecomment-3190884868
-          NPM_TOKEN: ''
+          version-script: pnpm -s run version
+          publish-script: pnpm run release
 
       - name: Report published packages
         if: steps.changesets.outputs.published == 'true'
+        env:
+          PUBLISHED_PACKAGES: ${{ steps.changesets.outputs.published-packages }}
         run: |
           {
             echo '## Published packages'
             echo
-            echo '${{ steps.changesets.outputs.publishedPackages }}' |
-              jq -r '.[] | "- `\(.name)@\(.version)`"'
+            jq -r '.[] | "- `\(.name)@\(.version)`"' <<< "$PUBLISHED_PACKAGES"
           } >> "$GITHUB_STEP_SUMMARY"
 
   maintenance:
@@ -113,7 +108,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Validate branch and npm tag
         shell: bash
@@ -134,13 +129,12 @@ jobs:
           fi
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v6
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
 
       - name: Setup Node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .nvmrc
-          cache: pnpm
           registry-url: https://registry.npmjs.org
 
       - name: Install
@@ -155,13 +149,10 @@ jobs:
 
       - name: Create Version PR or Publish
         id: changesets
-        uses: changesets/action@v1
+        uses: changesets/action@ae32849d5ba541f9ae29e40e22a623bc13562f51 # v2.1.2
         with:
-          version: pnpm -s run version
-          publish: pnpm run release -- --tag ${{ inputs.npm-tag }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ''
+          version-script: pnpm -s run version
+          publish-script: pnpm run release -- --tag ${{ inputs.npm-tag }}
 
       - name: Verify maintenance dist-tags
         if: steps.changesets.outputs.published == 'true'
@@ -181,12 +172,13 @@ jobs:
 
       - name: Report published packages
         if: steps.changesets.outputs.published == 'true'
+        env:
+          PUBLISHED_PACKAGES: ${{ steps.changesets.outputs.published-packages }}
         run: |
           {
             echo '## Published maintenance packages'
             echo
-            echo '${{ steps.changesets.outputs.publishedPackages }}' |
-              jq -r '.[] | "- `\(.name)@\(.version)`"'
+            jq -r '.[] | "- `\(.name)@\(.version)`"' <<< "$PUBLISHED_PACKAGES"
           } >> "$GITHUB_STEP_SUMMARY"
 
   canary:
@@ -200,7 +192,9 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Validate branch
         shell: bash
@@ -213,13 +207,12 @@ jobs:
           fi
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v6
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
 
       - name: Setup Node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .nvmrc
-          cache: pnpm
           registry-url: https://registry.npmjs.org
 
       - name: Install

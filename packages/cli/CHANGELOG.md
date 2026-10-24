@@ -1,5 +1,13 @@
 # @edgestore/cli
 
+## 1.0.1
+
+### Patch Changes
+
+- [#307](https://github.com/edgestorejs/edgestore/pull/307) [`394fded`](https://github.com/edgestorejs/edgestore/commit/394fdedc531a97d70212dda101dc4d821b2e1697) Thanks [@raviships](https://github.com/raviships)! - Update `smol-toml` to 1.9.1 so a malformed or very large Codex `config.toml` can no longer hang the CLI (GHSA-7w5x-hrqm-74c2, GHSA-r4xh-jqrq-34v2).
+- Updated dependencies []:
+  - @edgestore/sdk@1.0.1
+
 ## 1.0.0
 
 ### Major Changes
