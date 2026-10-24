@@ -647,7 +647,8 @@ const contextPayloadSchema = z.object({
 async function getContext(token: string | undefined) {
   if (!token) {
     throw new EdgeStoreError({
-      message: 'Missing edgestore-ctx cookie',
+      message:
+        'Missing edgestore-ctx cookie. When NODE_ENV is production the cookie is Secure, so browsers drop it over plain HTTP (Safari even on localhost). To test a production build over HTTP, set cookieConfig.ctx.options.secure to false.',
       code: 'UNAUTHORIZED',
     });
   }

@@ -7,7 +7,9 @@ Harden the `edgestore-ctx` cookie against cross-site requests.
 - The cookie now defaults to `SameSite=Lax` and `HttpOnly`, and to `Secure`
   when `NODE_ENV` is `production`. `cookieConfig.ctx.options` still overrides
   each default; a frontend on a different site needs `sameSite: 'none'` and
-  `secure: true`.
+  `secure: true`. Browsers don't store `Secure` cookies over plain HTTP
+  (Safari not even on `localhost`), so set `secure: false` to test a production
+  build over HTTP.
 - Requests with a body must use `Content-Type: application/json`, as
   `@edgestore/react` already does. Other content types get a `400`.
 - The encrypted context now expires with the cookie's `maxAge` instead of
