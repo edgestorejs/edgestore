@@ -173,13 +173,7 @@ const router = es.router({
 
 ## Lifecycle Hooks
 
-You can use the `beforeUpload` and `beforeDelete` hooks to allow or deny file uploads and deletions. The `beforeDelete` hook must be defined if you want to delete files directly from the client.
-
-Replacing or overwriting an existing file from the client deletes that file, so
-it needs the same authorization. When an upload uses `replaceTargetUrl`, or a
-`manualFileName` that matches an existing file, EdgeStore runs `beforeDelete`
-with the existing file's info after `beforeUpload` allows the upload. Without
-`beforeDelete`, these uploads fail.
+You can use the `beforeUpload` and `beforeDelete` hooks to allow or deny file uploads and deletions. The `beforeDelete` hook must be defined if you want to delete, replace, or overwrite files directly from the client.
 
 ```ts
 import { initEdgeStore } from '@edgestore/server';

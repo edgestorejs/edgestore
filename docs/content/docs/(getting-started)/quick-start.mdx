@@ -220,7 +220,7 @@ It will automatically delete the old file after the upload is complete.
 
 You can also just upload the file using the same file name, but in that case, you might still see the old file for a while because of the CDN cache.
 
-Both ways delete the old file, so they need the `beforeDelete` [lifecycle hook](/docs/configuration#lifecycle-hooks) on the bucket, just like deleting a file. EdgeStore runs it with the old file's info before issuing the upload URL.
+Both ways delete the old file, so the bucket needs [`beforeDelete`](/docs/configuration#lifecycle-hooks), just like deleting.
 
 ```tsx
 const res = await edgestore.publicFiles.upload({
@@ -334,8 +334,7 @@ const res = await edgestore.publicImages.upload({
 
 If you provide `manualFileName`, EdgeStore will use that exact file name. Make
 sure the file name extension matches the transformed file type. If a file with
-that name already exists, the upload overwrites it, which requires
-`beforeDelete` to allow deleting the existing file.
+that name already exists, the upload overwrites it, which needs `beforeDelete`.
 
 ### Temporary files
 

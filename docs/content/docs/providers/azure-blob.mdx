@@ -165,10 +165,6 @@ azureBlob({
 
 - `temporary` and `replaceTargetUrl` are rejected. Track application-owned files
   in your database and delete old files after a successful replacement.
-- A browser upload whose `manualFileName` matches an existing blob overwrites
-  it, so it must pass the bucket's `beforeDelete`. Azure Blob does not report
-  router metadata, so buckets with `.metadata(...)` cannot authorize overwrites
-  from the browser.
 - Azure SAS URLs grant write access to one blob and cannot limit its size or
   the write operation. A browser holding an upload URL can therefore write
   that blob directly, with any size and blob headers. The router's `maxSize`,
