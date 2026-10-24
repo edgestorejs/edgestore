@@ -399,18 +399,19 @@ describe('S3 backend and private files', () => {
     const denied = new Error('denied');
     const authorizeOverwrite = vi.fn().mockRejectedValue(denied);
     const params = {
-      ...request({ size: 3 }),
+      ...request({ size: 3, path: [{ key: 'author', value: 'user-1' }] }),
       autoSignedUrls: { expiresIn: 300 },
       authorizeOverwrite,
     };
 
     await expect(provider.uploads.request(params)).rejects.toBe(denied);
     expect(authorizeOverwrite).toHaveBeenCalledWith({
-      key: 'documents/report.txt',
-      url: 'https://storage.s3.us-east-1.amazonaws.com/documents/report.txt',
+      key: 'documents/user-1/report.txt',
+      url: 'https://storage.s3.us-east-1.amazonaws.com/documents/user-1/report.txt',
       sizeBytes: 5,
       uploadedAt,
       updatedAt: uploadedAt,
+      path: { author: 'user-1' },
     });
     expect(send).toHaveBeenCalledOnce();
     expect(send.mock.calls[0]![0]).toBeInstanceOf(HeadObjectCommand);
@@ -421,6 +422,19 @@ describe('S3 backend and private files', () => {
       uploadUrl: 'https://signed.example/file',
       signedReadUrl: { signedUrl: 'https://signed.example/file' },
     });
+  });
+
+  it('omits the path of an existing object under a custom path layout', async () => {
+    const { provider, send } = setup({ path: () => 'shared/report.txt' });
+    send.mockResolvedValue({ ContentLength: 5, LastModified: new Date() });
+    const authorizeOverwrite = vi.fn();
+
+    await provider.uploads.request({
+      ...request({ size: 3, path: [{ key: 'author', value: 'user-1' }] }),
+      authorizeOverwrite,
+    });
+    expect(authorizeOverwrite).toHaveBeenCalledOnce();
+    expect(authorizeOverwrite.mock.calls[0]![0]).not.toHaveProperty('path');
   });
 
   it('treats keys S3 reports as missing as new uploads', async () => {

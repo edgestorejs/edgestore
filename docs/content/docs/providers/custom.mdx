@@ -276,7 +276,8 @@ completes.
 
 When the browser picks the file name, `uploads.request` receives
 `authorizeOverwrite`. If a file already exists at that key, call it with the
-file before returning any URLs; it throws when `beforeDelete` refuses.
+file, including its `path`, before returning any URLs; it throws when
+`beforeDelete` refuses.
 
 Set `uploads.supportedOptions` to reject upload options your storage cannot
 honor. For example, `supportedOptions: { temporary: false }` removes

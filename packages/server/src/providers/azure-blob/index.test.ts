@@ -123,15 +123,22 @@ describe('azureBlob', () => {
       .mockResolvedValue({ contentLength: 5, lastModified } as never);
     const denied = new Error('denied');
     const authorizeOverwrite = vi.fn().mockRejectedValue(denied);
-    const params = { ...request({}, { expiresIn: 60 }), authorizeOverwrite };
+    const params = {
+      ...request(
+        { path: [{ key: 'author', value: 'user-1' }] },
+        { expiresIn: 60 },
+      ),
+      authorizeOverwrite,
+    };
 
     await expect(provider.uploads.request(params)).rejects.toBe(denied);
     expect(authorizeOverwrite).toHaveBeenCalledWith({
-      key: 'documents/a b.txt',
-      url: 'https://account.blob.core.windows.net/files/documents/a%20b.txt',
+      key: 'documents/user-1/a b.txt',
+      url: 'https://account.blob.core.windows.net/files/documents/user-1/a%20b.txt',
       sizeBytes: 5,
       uploadedAt: lastModified,
       updatedAt: lastModified,
+      path: { author: 'user-1' },
     });
 
     authorizeOverwrite.mockClear();
@@ -146,6 +153,25 @@ describe('azureBlob', () => {
     getProperties.mockClear();
     await provider.uploads.request(request());
     expect(getProperties).not.toHaveBeenCalled();
+    getProperties.mockRestore();
+  });
+
+  it('omits the path of an existing blob under a custom path layout', async () => {
+    const provider = azureBlob({ ...config, path: () => 'shared/a b.txt' });
+    const getProperties = vi
+      .spyOn(BlobClient.prototype, 'getProperties')
+      .mockResolvedValue({
+        contentLength: 5,
+        lastModified: new Date(),
+      } as never);
+    const authorizeOverwrite = vi.fn();
+
+    await provider.uploads.request({
+      ...request({ path: [{ key: 'author', value: 'user-1' }] }),
+      authorizeOverwrite,
+    });
+    expect(authorizeOverwrite).toHaveBeenCalledOnce();
+    expect(authorizeOverwrite.mock.calls[0]![0]).not.toHaveProperty('path');
     getProperties.mockRestore();
   });
 

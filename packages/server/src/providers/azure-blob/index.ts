@@ -226,7 +226,16 @@ export function azureBlob(options: AzureBlobProviderOptions = {}) {
         return undefined;
       throw error;
     });
-    if (existing) await params.authorizeOverwrite(existing);
+    if (!existing) return;
+    // The default key holds the upload's path values; a custom path may not.
+    await params.authorizeOverwrite({
+      ...existing,
+      ...(!options.path && {
+        path: Object.fromEntries(
+          params.fileInfo.path.map(({ key, value }) => [key, value]),
+        ),
+      }),
+    });
   }
 
   function readForUpload(key: string, params: RequestUploadParams) {

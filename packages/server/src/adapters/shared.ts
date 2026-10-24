@@ -237,7 +237,6 @@ export async function requestUpload<TCtx extends AnyContext>(params: {
     bucket,
     pathAttrs: { ctx, input: parsedInput },
   });
-  const { parsedPath, pathOrder } = parsePath(path);
   const metadata =
     (await bucket._def.metadata?.({
       ctx,
@@ -264,12 +263,11 @@ export async function requestUpload<TCtx extends AnyContext>(params: {
     },
     autoSignedUrls,
     ...(fileInfo.fileName !== undefined && {
-      // A client-chosen name can match an existing file. Object storage
-      // doesn't store path values, but a file at this key has this path.
-      authorizeOverwrite: (file: BackendFile) =>
-        authorizeReplacement({ ...file, path: file.path ?? parsedPath }),
+      // A client-chosen name can match an existing file.
+      authorizeOverwrite: authorizeReplacement,
     }),
   });
+  const { parsedPath, pathOrder } = parsePath(path);
   const statusToken =
     provider.uploads.getStatus && requestUploadRes.id
       ? await encryptStatusToken({ id: requestUploadRes.id, bucketName })

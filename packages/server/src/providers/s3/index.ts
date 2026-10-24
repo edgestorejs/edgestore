@@ -190,6 +190,8 @@ export function s3(options: S3ProviderOptions = {}) {
     if (!params.authorizeOverwrite) return;
     const existing = await describeObject(key).catch((error: unknown) => {
       // Without s3:ListBucket, S3 reports a missing key as 403, not 404.
+      // Credentials without s3:GetObject can't detect overwrites; the
+      // documented policy grants it.
       const status =
         error instanceof S3ServiceException
           ? error.$metadata.httpStatusCode
@@ -197,7 +199,16 @@ export function s3(options: S3ProviderOptions = {}) {
       if (status === 403 || status === 404) return undefined;
       throw error;
     });
-    if (existing) await params.authorizeOverwrite(existing);
+    if (!existing) return;
+    // The default key holds the upload's path values; a custom path may not.
+    await params.authorizeOverwrite({
+      ...existing,
+      ...(!options.path && {
+        path: Object.fromEntries(
+          params.fileInfo.path.map(({ key, value }) => [key, value]),
+        ),
+      }),
+    });
   }
 
   async function readForUpload(key: string, params: RequestUploadParams) {

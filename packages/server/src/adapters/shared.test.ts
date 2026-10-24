@@ -600,7 +600,7 @@ describe('requestUpload', () => {
       });
     }
 
-    function providerFindingExistingFile() {
+    function providerFindingExistingFile(path?: Record<string, string>) {
       return createProvider({
         uploads: {
           request: vi.fn(async ({ authorizeOverwrite }) => {
@@ -609,6 +609,7 @@ describe('requestUpload', () => {
               sizeBytes: 5,
               uploadedAt,
               updatedAt: uploadedAt,
+              path,
             });
             return { uploadUrl: 'https://upload.example.com', url: '' };
           }),
@@ -681,7 +682,7 @@ describe('requestUpload', () => {
       const upload = (router: ReturnType<typeof replacementRouter>) =>
         uploadWithContext({
           router,
-          provider: providerFindingExistingFile(),
+          provider: providerFindingExistingFile({ author: 'user-1' }),
           ctx: { userId: 'user-1' },
           body: { fileInfo: { fileName: 'notes.txt' } },
         });
@@ -692,7 +693,6 @@ describe('requestUpload', () => {
       await expect(
         upload(replacementRouter(beforeDelete)),
       ).rejects.toMatchObject({ code: 'UPLOAD_NOT_ALLOWED' });
-      // The overwritten file shares the upload's key, so it shares its path.
       expect(beforeDelete).toHaveBeenCalledWith({
         ctx: expect.objectContaining({ userId: 'user-1' }),
         fileInfo: {
@@ -708,6 +708,23 @@ describe('requestUpload', () => {
       await expect(
         upload(replacementRouter(beforeDelete)),
       ).resolves.toMatchObject({ uploadUrl: 'https://upload.example.com' });
+    });
+
+    it('refuses overwrites when the provider cannot report the path', async () => {
+      const beforeDelete = vi.fn(() => true);
+
+      await expect(
+        uploadWithContext({
+          router: replacementRouter(beforeDelete),
+          provider: providerFindingExistingFile(),
+          ctx: { userId: 'user-1' },
+          body: { fileInfo: { fileName: 'notes.txt' } },
+        }),
+      ).rejects.toMatchObject({
+        code: 'SERVER_ERROR',
+        message: expect.stringContaining('must return path'),
+      });
+      expect(beforeDelete).not.toHaveBeenCalled();
     });
 
     it('does not ask providers to check generated names', async () => {
