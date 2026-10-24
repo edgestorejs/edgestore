@@ -23,3 +23,7 @@ export function isDev(): boolean {
     import.meta.env?.DEV
   );
 }
+
+export function isProduction(): boolean {
+  return getEnv('NODE_ENV') === 'production';
+}

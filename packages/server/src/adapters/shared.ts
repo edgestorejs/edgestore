@@ -21,7 +21,7 @@ import {
 } from '../core/provider';
 import { buildPath, parseBucketInput, parsePath } from '../core/routerRules';
 import { validateFileForBucket } from '../core/validateFile';
-import { getEnv } from '../libs/env';
+import { getEnv, isProduction } from '../libs/env';
 import type { LoggerLike } from '../libs/logger';
 
 // TODO: change it to 1 hour when we have a way to refresh the token
@@ -38,7 +38,8 @@ export type CookieOptions = {
    */
   path?: string;
   /**
-   * Cookie max age in seconds
+   * Cookie max age in seconds. The encrypted context token expires at the
+   * same time.
    * @default 2592000 (30 days)
    */
   maxAge?: number;
@@ -47,15 +48,19 @@ export type CookieOptions = {
    */
   domain?: string;
   /**
-   * Cookie same site policy
+   * Cookie same site policy. Use `'none'` (with `secure: true`) only when the
+   * frontend calls the EdgeStore API from a different site.
+   * @default "lax"
    */
   sameSite?: 'strict' | 'lax' | 'none';
   /**
    * Cookie secure flag
+   * @default true when NODE_ENV is "production", otherwise false
    */
   secure?: boolean;
   /**
    * Cookie http only flag
+   * @default true
    */
   httpOnly?: boolean;
 };
@@ -80,12 +85,12 @@ export type CookieConfig = {
 type ResolvedCookieConfig = {
   ctx: {
     name: string;
-    options: CookieOptions;
+    options: CookieOptions & { maxAge: number };
   };
 };
 
 /**
- * Merges the provided cookie configuration with default values
+ * Merges the provided cookie configuration with default values.
  */
 export function getCookieConfig(
   cookieConfig?: CookieConfig,
@@ -100,7 +105,14 @@ export function getCookieConfig(
   return {
     ctx: {
       name: cookieConfig?.ctx?.name ?? 'edgestore-ctx',
-      options: { path: '/', maxAge: DEFAULT_MAX_AGE, ...configured },
+      options: {
+        path: '/',
+        maxAge: DEFAULT_MAX_AGE,
+        sameSite: 'lax',
+        httpOnly: true,
+        secure: isProduction(),
+        ...configured,
+      },
     },
   };
 }
@@ -117,7 +129,10 @@ export async function init<TCtx extends AnyContext>(params: {
 
   const resolvedCookieConfig = getCookieConfig(cookieConfig);
 
-  const ctxToken = await encryptJWT(ctx);
+  const ctxToken = await encryptJWT(
+    ctx,
+    resolvedCookieConfig.ctx.options.maxAge,
+  );
   const { clientInit } = await provider.init({ ctx, router });
   const newCookies = [
     stringifySetCookie({
@@ -646,11 +661,12 @@ function getBucket<TCtx extends AnyContext>(
   return bucket;
 }
 
-async function encryptJWT(ctx: AnyContext) {
+/** Encrypts the context into a token that expires with its cookie. */
+async function encryptJWT(ctx: AnyContext, maxAge: number) {
   return await new EncryptJWT({ ctx })
     .setProtectedHeader({ alg: 'dir', enc: 'A256GCM' })
     .setIssuedAt()
-    .setExpirationTime(Date.now() / 1000 + DEFAULT_MAX_AGE)
+    .setExpirationTime(Date.now() / 1000 + maxAge)
     .setJti(crypto.randomUUID())
     .encrypt(await getEncryptionKey());
 }
@@ -698,7 +714,8 @@ const contextPayloadSchema = z.object({
 async function getContext(token: string | undefined) {
   if (!token) {
     throw new EdgeStoreError({
-      message: 'Missing edgestore-ctx cookie',
+      message:
+        'Missing edgestore-ctx cookie. When NODE_ENV is production the cookie is Secure, so browsers drop it over plain HTTP (Safari even on localhost). To test a production build over HTTP, set cookieConfig.ctx.options.secure to false.',
       code: 'UNAUTHORIZED',
     });
   }
