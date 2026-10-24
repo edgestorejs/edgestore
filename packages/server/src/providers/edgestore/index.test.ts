@@ -1,4 +1,4 @@
-import { createEdgeStoreSdk } from '@edgestore/sdk';
+import { createEdgeStoreSdk, EdgeStoreApiError } from '@edgestore/sdk';
 import type * as EdgeStoreSdkModule from '@edgestore/sdk';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { edgestore } from '.';
@@ -296,6 +296,64 @@ describe('edgestore provider', () => {
         },
       }),
     );
+  });
+
+  it('cancels a client-named upload unless the file it supersedes may be deleted', async () => {
+    runtime.uploads.request.mockResolvedValue({
+      file: { id: 'file-2', url: 'https://files.example/a', key: 'files/a' },
+      upload: { kind: 'single', id: 'file-2', signedUrl: 'https://upload' },
+    });
+    const existing = {
+      url: 'https://files.example/a',
+      sizeBytes: 5,
+      path: { org: 'acme' },
+      metadata: {},
+      uploadedAt: '2026-10-01T00:00:00.000Z',
+      updatedAt: '2026-10-01T00:00:00.000Z',
+    };
+    runtime.files.lookup.mockResolvedValue({ file: existing });
+    runtime.uploads.cancel.mockResolvedValue({});
+    const denied = new Error('denied');
+    const authorizeOverwrite = vi.fn().mockRejectedValue(denied);
+    const provider = edgestore({ accessKey: 'access', secretKey: 'secret' });
+    const request = () =>
+      provider.uploads.request({
+        bucketName: 'files',
+        bucketType: 'FILE',
+        fileInfo: { ...fileInfo, fileName: 'a' },
+        authorizeOverwrite,
+      });
+
+    await expect(request()).rejects.toBe(denied);
+    expect(runtime.files.lookup).toHaveBeenCalledWith({
+      bucketName: 'files',
+      file: { key: 'files/a' },
+    });
+    expect(authorizeOverwrite).toHaveBeenCalledWith({
+      ...existing,
+      uploadedAt: new Date(existing.uploadedAt),
+      updatedAt: new Date(existing.updatedAt),
+    });
+    expect(runtime.uploads.cancel).toHaveBeenCalledWith({ uploadId: 'file-2' });
+
+    authorizeOverwrite.mockResolvedValue(undefined);
+    await expect(request()).resolves.toMatchObject({
+      uploadUrl: 'https://upload',
+    });
+
+    authorizeOverwrite.mockClear();
+    runtime.files.lookup.mockRejectedValue(
+      new EdgeStoreApiError({
+        message: 'File not found',
+        status: 404,
+        code: 'file_not_found',
+      }),
+    );
+    await expect(request()).resolves.toMatchObject({
+      uploadUrl: 'https://upload',
+    });
+    expect(authorizeOverwrite).not.toHaveBeenCalled();
+    expect(runtime.uploads.cancel).toHaveBeenCalledOnce();
   });
 
   it('requests multipart uploads above the shared threshold', async () => {

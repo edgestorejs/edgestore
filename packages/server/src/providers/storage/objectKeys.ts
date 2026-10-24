@@ -104,3 +104,24 @@ export function createObjectKeys(providerName: string, baseUrl: string) {
 
   return { toUrl: objectKeyToUrl, fromReference, forUpload };
 }
+
+/**
+ * Path values of an existing object at an upload's key, when the key proves
+ * them. Only the default layout encodes the path, and a `/` inside a path
+ * value or the file name makes its segment boundaries ambiguous.
+ */
+export function pathFromDefaultKey(
+  fileInfo: RequestUploadParams['fileInfo'],
+  customPath: ObjectPathFn | undefined,
+) {
+  const segments = [
+    ...fileInfo.path.map(({ value }) => value),
+    fileInfo.fileName ?? '',
+  ];
+  if (customPath || segments.some((segment) => segment.includes('/'))) {
+    return undefined;
+  }
+  return Object.fromEntries(
+    fileInfo.path.map(({ key, value }) => [key, value]),
+  );
+}
