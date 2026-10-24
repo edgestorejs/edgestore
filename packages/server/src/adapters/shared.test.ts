@@ -630,7 +630,7 @@ describe('requestUpload', () => {
       ).rejects.toMatchObject({
         code: 'SERVER_ERROR',
         message:
-          'You need to define beforeDelete if you want to replace or overwrite existing files from the frontend.',
+          'You need to define beforeDelete if you want to replace files from the frontend.',
       });
       expect(provider.uploads.request).not.toHaveBeenCalled();
     });
@@ -689,10 +689,16 @@ describe('requestUpload', () => {
 
       await expect(upload(replacementRouter())).rejects.toMatchObject({
         code: 'SERVER_ERROR',
+        message:
+          'You need to define beforeDelete if you want to overwrite the existing file "notes.txt" from the frontend.',
       });
       await expect(
         upload(replacementRouter(beforeDelete)),
-      ).rejects.toMatchObject({ code: 'UPLOAD_NOT_ALLOWED' });
+      ).rejects.toMatchObject({
+        code: 'UPLOAD_NOT_ALLOWED',
+        message:
+          'A file named "notes.txt" already exists, and the current context may not overwrite it',
+      });
       expect(beforeDelete).toHaveBeenCalledWith({
         ctx: expect.objectContaining({ userId: 'user-1' }),
         fileInfo: {

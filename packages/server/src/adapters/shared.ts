@@ -212,25 +212,31 @@ export async function requestUpload<TCtx extends AnyContext>(params: {
 
   // Replacing or overwriting a file deletes it, so it needs the same
   // authorization as deleting it.
-  const authorizeReplacement = async (file: BackendFile) => {
-    const beforeDelete = requireBeforeDelete(
-      bucket,
-      'replace or overwrite existing files',
-    );
-    if (
-      !(await canDelete({ provider, bucket, ctx, beforeDelete, files: [file] }))
-    ) {
-      throw new EdgeStoreError({
-        message:
-          'Replacing an existing file is not allowed for the current context',
-        code: 'UPLOAD_NOT_ALLOWED',
-      });
-    }
-  };
+  const authorizeReplacement =
+    (action: string, refusal: string) => async (file: BackendFile) => {
+      const beforeDelete = requireBeforeDelete(bucket, action);
+      if (
+        !(await canDelete({
+          provider,
+          bucket,
+          ctx,
+          beforeDelete,
+          files: [file],
+        }))
+      ) {
+        throw new EdgeStoreError({
+          message: refusal,
+          code: 'UPLOAD_NOT_ALLOWED',
+        });
+      }
+    };
   if (fileInfo.replaceTargetUrl) {
     // The lookup is scoped to this bucket, so targets elsewhere are rejected.
     const file = await referenceFromUrl(provider, fileInfo.replaceTargetUrl);
-    await authorizeReplacement(await provider.files.get({ bucketName, file }));
+    await authorizeReplacement(
+      'replace files',
+      'Replacing this file is not allowed for the current context',
+    )(await provider.files.get({ bucketName, file }));
   }
 
   const path = buildPath({
@@ -264,7 +270,10 @@ export async function requestUpload<TCtx extends AnyContext>(params: {
     autoSignedUrls,
     ...(fileInfo.fileName !== undefined && {
       // A client-chosen name can match an existing file.
-      authorizeOverwrite: authorizeReplacement,
+      authorizeOverwrite: authorizeReplacement(
+        `overwrite the existing file "${fileInfo.fileName}"`,
+        `A file named "${fileInfo.fileName}" already exists, and the current context may not overwrite it`,
+      ),
     }),
   });
   const { parsedPath, pathOrder } = parsePath(path);
