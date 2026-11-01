@@ -1,7 +1,7 @@
 'use client';
 
+import { ProgressCircle } from '@/components/upload/progress-circle';
 import * as React from 'react';
-import { ProgressCircle } from '../progress-circle';
 
 export default function ProgressCircleUsage() {
   const [progress, setProgress] = React.useState(0);

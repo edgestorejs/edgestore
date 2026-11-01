@@ -3,6 +3,7 @@ import {
   BlobSASPermissions,
   BlobServiceClient,
   generateBlobSASQueryParameters,
+  RestError,
   SASProtocol,
   StorageSharedKeyCredential,
 } from '@azure/storage-blob';
@@ -18,6 +19,7 @@ import { getEnv } from '../../libs/env';
 import { createMultipartSessions } from '../storage/multipartSession';
 import {
   createObjectKeys,
+  pathFromDefaultKey,
   type ObjectPathFn,
   type ObjectPathFnArgs,
 } from '../storage/objectKeys';
@@ -204,6 +206,34 @@ export function azureBlob(options: AzureBlobProviderOptions = {}) {
     };
   }
 
+  async function describeBlob(key: string) {
+    const { contentLength, lastModified } = await blob(key).getProperties();
+    if (contentLength === undefined || !lastModified)
+      throw new Error('File not found');
+    return {
+      key,
+      url: keys.toUrl(key),
+      sizeBytes: contentLength,
+      uploadedAt: lastModified,
+      updatedAt: lastModified,
+    };
+  }
+
+  /** Authorizes overwriting the blob at `key`, if one exists. */
+  async function authorizeOverwrite(key: string, params: RequestUploadParams) {
+    if (!params.authorizeOverwrite) return;
+    const existing = await describeBlob(key).catch((error: unknown) => {
+      if (error instanceof RestError && error.statusCode === 404)
+        return undefined;
+      throw error;
+    });
+    if (!existing) return;
+    await params.authorizeOverwrite({
+      ...existing,
+      path: pathFromDefaultKey(params.fileInfo, options.path),
+    });
+  }
+
   function readForUpload(key: string, params: RequestUploadParams) {
     if (params.fileInfo.isPublic || !params.autoSignedUrls) return undefined;
     return signedRead(key, params.autoSignedUrls.expiresIn);
@@ -262,6 +292,7 @@ export function azureBlob(options: AzureBlobProviderOptions = {}) {
       supportedOptions: { temporary: false, replaceTargetUrl: false },
       async request(params): Promise<RequestUploadRes> {
         const { key, commit, plan } = await prepare(params);
+        await authorizeOverwrite(key, params);
         const signedReadUrl = readForUpload(key, params);
         const access = {
           key,
@@ -320,17 +351,7 @@ export function azureBlob(options: AzureBlobProviderOptions = {}) {
     },
     files: {
       async get({ bucketName, file }) {
-        const key = keys.fromReference(bucketName, file);
-        const { contentLength, lastModified } = await blob(key).getProperties();
-        if (contentLength === undefined || !lastModified)
-          throw new Error('File not found');
-        return {
-          key,
-          url: keys.toUrl(key),
-          sizeBytes: contentLength,
-          uploadedAt: lastModified,
-          updatedAt: lastModified,
-        };
+        return describeBlob(keys.fromReference(bucketName, file));
       },
       async getSignedUrls({ bucketName, files, expiresIn }) {
         return files.map((file) =>

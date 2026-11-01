@@ -1,5 +1,12 @@
 # @edgestore/react
 
+## 1.0.1
+
+### Patch Changes
+
+- Updated dependencies [[`85791bb`](https://github.com/edgestorejs/edgestore/commit/85791bbfbaa2cd53ce9a23b13d656bc12c8393e7)]:
+  - @edgestore/shared@1.0.1
+
 ## 1.0.0
 
 ### Major Changes

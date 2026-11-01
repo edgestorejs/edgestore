@@ -1,7 +1,7 @@
 'use client';
 
 import { UploadErrors } from '@/components/upload/dropzone';
-import { FileList } from '@/components/upload/multi-file';
+import { FileList } from '@/components/upload/file-list';
 import { UploadButton } from '@/components/upload/upload-button';
 import {
   UploaderProvider,

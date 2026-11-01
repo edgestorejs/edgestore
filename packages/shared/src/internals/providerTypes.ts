@@ -43,6 +43,12 @@ export type RequestUploadParams = {
     expiresIn?: number;
     includeThumbnails?: boolean;
   };
+  /**
+   * Set when a browser chooses the file name, so the upload can overwrite an
+   * existing file. Call it with that file before returning URLs that would
+   * write or read it; it throws when the requester may not delete the file.
+   */
+  authorizeOverwrite?: (file: BackendFile) => Promise<void>;
 };
 
 export type ProviderFilterValue =

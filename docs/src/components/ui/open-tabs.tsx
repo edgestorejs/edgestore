@@ -1,10 +1,28 @@
 'use client';
 
+import { useRevealAnchor } from '@/hooks/use-reveal-anchor';
 import { cn } from '@/lib/utils';
 import * as TabsPrimitive from '@radix-ui/react-tabs';
 import * as React from 'react';
 
-const OpenTabs = TabsPrimitive.Root;
+const SelectTabContext = React.createContext<((value: string) => void) | null>(
+  null,
+);
+
+function OpenTabs({
+  defaultValue,
+  ...props
+}: Omit<
+  React.ComponentProps<typeof TabsPrimitive.Root>,
+  'value' | 'onValueChange'
+>) {
+  const [value, setValue] = React.useState(defaultValue);
+  return (
+    <SelectTabContext value={setValue}>
+      <TabsPrimitive.Root value={value} onValueChange={setValue} {...props} />
+    </SelectTabContext>
+  );
+}
 
 const OpenTabsList = React.forwardRef<
   React.ComponentRef<typeof TabsPrimitive.List>,
@@ -36,19 +54,28 @@ const OpenTabsTrigger = React.forwardRef<
 ));
 OpenTabsTrigger.displayName = TabsPrimitive.Trigger.displayName;
 
-const OpenTabsContent = React.forwardRef<
-  React.ComponentRef<typeof TabsPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof TabsPrimitive.Content>
->(({ className, ...props }, ref) => (
-  <TabsPrimitive.Content
-    ref={ref}
-    className={cn(
-      'relative mt-2 ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none [&_h3.font-heading]:text-base [&_h3.font-heading]:font-semibold',
-      className,
-    )}
-    {...props}
-  />
-));
-OpenTabsContent.displayName = TabsPrimitive.Content.displayName;
+// Inactive panels stay mounted so links to headings inside them can open them.
+function OpenTabsContent({
+  className,
+  value,
+  ...props
+}: Omit<React.ComponentProps<typeof TabsPrimitive.Content>, 'forceMount'>) {
+  const selectTab = React.use(SelectTabContext);
+  const content = React.useRef<HTMLDivElement>(null);
+  useRevealAnchor(content, () => selectTab?.(value));
+
+  return (
+    <TabsPrimitive.Content
+      ref={content}
+      value={value}
+      forceMount
+      className={cn(
+        'relative mt-2 ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none data-[state=inactive]:hidden [&_h3.font-heading]:text-base [&_h3.font-heading]:font-semibold',
+        className,
+      )}
+      {...props}
+    />
+  );
+}
 
 export { OpenTabs, OpenTabsList, OpenTabsTrigger, OpenTabsContent };

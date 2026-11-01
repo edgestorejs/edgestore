@@ -40,7 +40,11 @@ describe('frontend file mutations', () => {
         body: { bucketName: 'documents', urls: originalUrls },
         logger,
       }),
-    ).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
+    ).rejects.toMatchObject({
+      code: 'UNAUTHORIZED',
+      // Points developers at the Secure cookie when it was dropped over HTTP.
+      message: expect.stringContaining('cookieConfig.ctx.options.secure'),
+    });
     expect(provider.files.confirm).not.toHaveBeenCalled();
   });
 

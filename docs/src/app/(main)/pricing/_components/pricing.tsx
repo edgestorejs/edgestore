@@ -1,4 +1,5 @@
 import { env } from '@/env';
+import { SPONSOR_URL } from '@/lib/constants';
 import { formatFileSize } from '@/lib/formatter';
 import { cn } from '@/lib/utils';
 import { Check, Minus } from 'lucide-react';
@@ -168,7 +169,7 @@ export async function Pricing() {
         Using EdgeStore with your own storage?{' '}
         <a
           className="text-site-accent underline underline-offset-4"
-          href="https://github.com/sponsors/perfectbase"
+          href={SPONSOR_URL}
         >
           Sponsor the project on GitHub
         </a>

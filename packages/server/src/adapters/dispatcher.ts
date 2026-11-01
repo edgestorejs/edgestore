@@ -33,6 +33,7 @@ import {
 export type EdgeStoreDispatchRequest<TCtx extends AnyContext> = {
   pathname: string;
   readJson: () => Promise<unknown>;
+  contentType?: string;
   cookieHeader?: string;
   cookies?: Readonly<Record<string, string | undefined>>;
   createContext: () => MaybePromise<TCtx>;
@@ -250,10 +251,21 @@ function jsonResponse(body: unknown, status = 200) {
   });
 }
 
+/**
+ * Requiring a JSON body makes browsers send a CORS preflight before any
+ * cross-origin request, so other sites cannot submit forms to these routes.
+ */
 async function parseRequestBody<TSchema extends z.ZodTypeAny>(
   request: EdgeStoreDispatchRequest<AnyContext>,
   schema: TSchema,
 ): Promise<z.output<TSchema>> {
+  const mediaType = request.contentType?.split(';')[0]?.trim().toLowerCase();
+  if (mediaType !== 'application/json') {
+    throw new EdgeStoreError({
+      message: 'Content-Type must be application/json',
+      code: 'BAD_REQUEST',
+    });
+  }
   try {
     return await schema.parseAsync(await request.readJson());
   } catch (error) {

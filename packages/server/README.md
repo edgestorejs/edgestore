@@ -146,6 +146,8 @@ It will automatically delete the old file after the upload is complete.
 
 You can also upload the file using the same file name, but in that case, you might still see the old file for a while because of the CDN cache.
 
+Both ways delete the old file, so the bucket needs `beforeDelete`, just like deleting.
+
 ```tsx
 const res = await edgestore.publicFiles.upload({
   file,

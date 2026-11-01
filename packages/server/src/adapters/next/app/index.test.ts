@@ -75,6 +75,26 @@ describe('Next app adapter conformance', () => {
     expect(extractCookieValue(res.headers.get('set-cookie'))).toBeTruthy();
   });
 
+  it('rejects request bodies that are not declared as JSON', async () => {
+    const { handler, provider } = createHandler();
+    const initRes = await handler(createRequest('/init'));
+    const ctxToken = extractCookieValue(initRes.headers.get('set-cookie'));
+
+    const res = await handler(
+      createRequest('/request-upload', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain',
+          cookie: createContextCookieHeader(ctxToken!),
+        },
+        body: JSON.stringify(requestUploadBody),
+      }),
+    );
+
+    expect(res.status).toBe(400);
+    expect(provider.uploads.request).not.toHaveBeenCalled();
+  });
+
   it('/request-upload reads the configured ctx cookie and calls through successfully', async () => {
     const { handler, provider } = createHandler();
     const initRes = await handler(createRequest('/init'));

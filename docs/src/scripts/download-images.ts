@@ -21,14 +21,14 @@ const testimonials = [
     image:
       'https://yt3.ggpht.com/ytc/AIdro_nzjrEGEW1ljvq0slQBOeXcZwQqHlmFzyPXXTdRQf6ZP8E=s88-c-k-c0x00ffffff-no-rj',
     comment:
-      'Unbelievable and exhaustive features.Edge store thought about all the use cases. Also, not using a database for protected files is a nice idea. Very clear explanation in the video.',
+      'Unbelievable and exhaustive features.EdgeStore thought about all the use cases. Also, not using a database for protected files is a nice idea. Very clear explanation in the video.',
   },
   {
     user: '@PhilippeKhin',
     image:
       'https://yt3.ggpht.com/ytc/AIdro_noIo8kfGBJIlJ3OqosAAIx0Wmce06n5_N-OYSxM5AhvGI=s88-c-k-c0x00ffffff-no-rj',
     comment:
-      "Feeling that Edge Store will take off 🚀 Great stuff you're building here Ravi 👍",
+      "Feeling that EdgeStore will take off 🚀 Great stuff you're building here Ravi 👍",
   },
   {
     user: '@IyanSR',
@@ -55,7 +55,7 @@ const testimonials = [
     image:
       'https://yt3.ggpht.com/ytc/AIdro_kA5_GhiyHqNvdgi44X2S1x2fkUP98mX--QS0B_N9xNGPs=s88-c-k-c0x00ffffff-no-rj',
     comment:
-      '🤯 Blown away by the simplicity of defining the types of asset uploaded, which then determines the file path. Awesome video, and amazing job on Edge Store btw! Highly considering it for my current project! Just one question, can I use my own S3 Bucket? Specifically, I use Cloudflare R2 which has compatibility with the S3 API.',
+      '🤯 Blown away by the simplicity of defining the types of asset uploaded, which then determines the file path. Awesome video, and amazing job on EdgeStore btw! Highly considering it for my current project! Just one question, can I use my own S3 Bucket? Specifically, I use Cloudflare R2 which has compatibility with the S3 API.',
   },
   {
     user: '@ryanpp27',
@@ -106,13 +106,13 @@ const testimonials = [
     image:
       'https://yt3.ggpht.com/ytc/AIdro_lBj2_SaydLARaf_VD4cxIDjF_cmHeL_5YSGeFUIfycc9w=s88-c-k-c0x00ffffff-no-rj',
     comment:
-      'This service looks easier to use than UploadThing — I was looking for a better way to upload files in Next-JS, and I like Edge Store.',
+      'This service looks easier to use than UploadThing — I was looking for a better way to upload files in Next-JS, and I like EdgeStore.',
   },
   {
     user: '@hikmatullah2131',
     image:
       'https://yt3.ggpht.com/NLFF28hZDwFf8SnxYbPyiTb9Gzg8jxa3mfC_4OYmo2gOuHmyuVTXWc9XMHgaJQAsoeBPQkXz4g=s88-c-k-c0x00ffffff-no-rj',
-    comment: 'You covered a lot in a short time, and I love Edge Store too.',
+    comment: 'You covered a lot in a short time, and I love EdgeStore too.',
   },
 ];
 

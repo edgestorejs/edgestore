@@ -1,5 +1,6 @@
 import {
   createEdgeStoreSdk,
+  EdgeStoreApiError,
   planMultipartUpload,
   type ProjectRuntimeClient,
 } from '@edgestore/sdk';
@@ -131,33 +132,44 @@ export function edgestore(options?: EdgeStoreProviderOptions) {
         bucketType,
         fileInfo,
         autoSignedUrls,
+        authorizeOverwrite,
       }): Promise<RequestUploadRes> {
         const multipartPlan = planMultipartUpload({
           sizeBytes: fileInfo.size,
         });
-        if (multipartPlan) {
-          return mapUploadResponse(
-            await runtime.uploads.request({
-              bucket: bucketName,
-              ...mapRawUploadRequest(bucketType, fileInfo, autoSignedUrls),
-              multipart: {
-                partNumbers: multipartPlan.partNumbers.slice(
-                  0,
-                  INITIAL_MULTIPART_PART_URLS,
-                ),
-              },
-            }),
-            {
-              partSize: multipartPlan.partSizeBytes,
-              totalParts: multipartPlan.totalParts,
+        const res = await runtime.uploads.request({
+          bucket: bucketName,
+          ...mapRawUploadRequest(bucketType, fileInfo, autoSignedUrls),
+          ...(multipartPlan && {
+            multipart: {
+              partNumbers: multipartPlan.partNumbers.slice(
+                0,
+                INITIAL_MULTIPART_PART_URLS,
+              ),
             },
-          );
+          }),
+        });
+        if (authorizeOverwrite) {
+          // The upload supersedes an uploaded file at the same key once it
+          // completes, so cancel it unless the requester may delete that file.
+          try {
+            const existing = await findFile(bucketName, res.file.key);
+            if (existing) await authorizeOverwrite(mapFile(existing));
+          } catch (error) {
+            await runtime.uploads
+              .cancel({ uploadId: res.file.id })
+              .catch(() => undefined);
+            throw error;
+          }
         }
         return mapUploadResponse(
-          await runtime.uploads.request({
-            bucket: bucketName,
-            ...mapRawUploadRequest(bucketType, fileInfo, autoSignedUrls),
-          }),
+          res,
+          multipartPlan
+            ? {
+                partSize: multipartPlan.partSizeBytes,
+                totalParts: multipartPlan.totalParts,
+              }
+            : undefined,
         );
       },
       multipart: {
@@ -286,6 +298,16 @@ export function edgestore(options?: EdgeStoreProviderOptions) {
       },
     },
   });
+
+  async function findFile(bucketName: string, key: string) {
+    try {
+      return (await runtime.files.lookup({ bucketName, file: { key } })).file;
+    } catch (error) {
+      if (error instanceof EdgeStoreApiError && error.code === 'file_not_found')
+        return undefined;
+      throw error;
+    }
+  }
 
   return provider;
 }

@@ -17,7 +17,7 @@ catalog:
   express: 5.2.1
   fastify: 5.10.0
   hono: 4.12.31
-  next: 16.2.10
+  next: 16.4.1
   react: 19.2.7
   react-dom: 19.2.7
   react-dropzone: 20.1.2
@@ -40,6 +40,11 @@ overrides:
   '@edgestore/sdk': 'workspace:*'
   '@edgestore/shared': 'workspace:*'
   '@edgestore/react': 'workspace:*'
+
+# Fail on releases with weaker publish evidence than earlier ones.
+trustPolicy: no-downgrade
+# Check only releases from the last 30 days (minutes), where hijacks show up.
+trustPolicyIgnoreAfter: 43200
 
 minimumReleaseAgeStrict: true
 

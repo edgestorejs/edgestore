@@ -69,7 +69,7 @@ function MyUploaderPage() {
   // Define the upload function
   const uploadFn: UploadFn = React.useCallback(
     async ({ file, onProgressChange, signal }) => {
-      // Example using Edge Store client
+      // Example using EdgeStore client
       const res = await edgestore.publicFiles.upload({
         file,
         signal,

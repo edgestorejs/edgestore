@@ -3,8 +3,10 @@ import {
   CompleteMultipartUploadCommand,
   CreateMultipartUploadCommand,
   GetObjectCommand,
+  HeadObjectCommand,
   PutObjectCommand,
   S3Client,
+  S3ServiceException,
   UploadPartCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
@@ -387,6 +389,97 @@ describe('S3 backend and private files', () => {
         source: new Blob(['abc']),
       }),
     ).rejects.toThrow('no credentials');
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  it('authorizes overwriting an existing object before signing upload or read URLs', async () => {
+    const { provider, send } = setup();
+    const uploadedAt = new Date('2026-10-01T00:00:00Z');
+    send.mockResolvedValue({ ContentLength: 5, LastModified: uploadedAt });
+    const denied = new Error('denied');
+    const authorizeOverwrite = vi.fn().mockRejectedValue(denied);
+    const params = {
+      ...request({ size: 3, path: [{ key: 'author', value: 'user-1' }] }),
+      autoSignedUrls: { expiresIn: 300 },
+      authorizeOverwrite,
+    };
+
+    await expect(provider.uploads.request(params)).rejects.toBe(denied);
+    expect(authorizeOverwrite).toHaveBeenCalledWith({
+      key: 'documents/user-1/report.txt',
+      url: 'https://storage.s3.us-east-1.amazonaws.com/documents/user-1/report.txt',
+      sizeBytes: 5,
+      uploadedAt,
+      updatedAt: uploadedAt,
+      path: { author: 'user-1' },
+    });
+    expect(send).toHaveBeenCalledOnce();
+    expect(send.mock.calls[0]![0]).toBeInstanceOf(HeadObjectCommand);
+    expect(getSignedUrl).not.toHaveBeenCalled();
+
+    authorizeOverwrite.mockResolvedValue(undefined);
+    await expect(provider.uploads.request(params)).resolves.toMatchObject({
+      uploadUrl: 'https://signed.example/file',
+      signedReadUrl: { signedUrl: 'https://signed.example/file' },
+    });
+  });
+
+  it('omits the path of an existing object under a custom path layout', async () => {
+    const { provider, send } = setup({ path: () => 'shared/report.txt' });
+    send.mockResolvedValue({ ContentLength: 5, LastModified: new Date() });
+    const authorizeOverwrite = vi.fn();
+
+    await provider.uploads.request({
+      ...request({ size: 3, path: [{ key: 'author', value: 'user-1' }] }),
+      authorizeOverwrite,
+    });
+    expect(authorizeOverwrite).toHaveBeenCalledOnce();
+    expect(authorizeOverwrite.mock.calls[0]![0].path).toBeUndefined();
+  });
+
+  it.each([
+    ['a path value', [{ key: 'author', value: 'team/member' }], 'avatar.png'],
+    ['the file name', [{ key: 'author', value: 'team' }], 'member/avatar.png'],
+  ])(
+    'omits the path of an existing object when %s contains a slash',
+    async (_, path, fileName) => {
+      const { provider, send } = setup();
+      send.mockResolvedValue({ ContentLength: 5, LastModified: new Date() });
+      const authorizeOverwrite = vi.fn();
+      await provider.uploads.request({
+        ...request({ size: 3, path, fileName }),
+        authorizeOverwrite,
+      });
+      expect(authorizeOverwrite).toHaveBeenCalledOnce();
+      expect(authorizeOverwrite.mock.calls[0]![0].path).toBeUndefined();
+    },
+  );
+
+  it('treats keys S3 reports as missing as new uploads', async () => {
+    const { provider, send } = setup();
+    const authorizeOverwrite = vi.fn();
+    const failure = (httpStatusCode: number) =>
+      new S3ServiceException({
+        name: 'Error',
+        $fault: 'client',
+        $metadata: { httpStatusCode },
+      });
+    const params = { ...request({ size: 3 }), authorizeOverwrite };
+
+    // S3 reports a missing key as 403 when the caller lacks s3:ListBucket.
+    for (const status of [403, 404]) {
+      send.mockRejectedValueOnce(failure(status));
+      await expect(provider.uploads.request(params)).resolves.toMatchObject({
+        key: 'documents/report.txt',
+      });
+    }
+    send.mockRejectedValueOnce(failure(500));
+    await expect(provider.uploads.request(params)).rejects.toThrow();
+    expect(authorizeOverwrite).not.toHaveBeenCalled();
+    expect(getSignedUrl).toHaveBeenCalledTimes(2);
+
+    send.mockClear();
+    await provider.uploads.request(request({ size: 3 }));
     expect(send).not.toHaveBeenCalled();
   });
 

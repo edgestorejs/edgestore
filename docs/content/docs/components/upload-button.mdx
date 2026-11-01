@@ -18,7 +18,7 @@ import { Step, Steps } from 'fumadocs-ui/components/steps';
   <UploadButtonBlock />
 </DemoBlock>
 
-It takes the same props as the shadcn/ui `Button`. Several buttons can feed the same `UploaderProvider`, so you can pair them with a `FileList` or build your own list with `useUploader`.
+It takes the same props as the shadcn/ui `Button`. Several buttons can feed the same `UploaderProvider`, so you can pair them with a [`FileList`](./file-list) or build your own list with `useUploader`.
 
 ## Installation
 
@@ -81,13 +81,17 @@ First you will need to follow the [manual install setup](./manual-install) guide
 
 ## Usage
 
-Install or copy the component from [Installation](#installation) before using this example.
+Install or copy the component from [Installation](#installation) before using this example. It also uses [`FileList`](./file-list):
+
+```package-install
+npx shadcn@latest add https://edgestore.dev/r/file-list.json
+```
 
 ```tsx
 'use client';
 
 import { UploadErrors } from '@/components/upload/dropzone';
-import { FileList } from '@/components/upload/multi-file';
+import { FileList } from '@/components/upload/file-list';
 import { UploadButton } from '@/components/upload/upload-button';
 import {
   UploaderProvider,
