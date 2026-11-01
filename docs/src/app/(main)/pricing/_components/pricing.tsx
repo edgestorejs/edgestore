@@ -338,10 +338,6 @@ function buildFeatures(info: PricingInfo): FeatureGroup[] {
           label: 'Bandwidth per month',
           values: limit('monthlyBandwidthLimit', formatFileSize),
         },
-        {
-          label: 'Uploads per month',
-          values: limit('monthlyUploadSizeLimit', formatFileSize),
-        },
       ],
     },
     {
@@ -423,7 +419,6 @@ type LimitKey =
   | 'projectLimit'
   | 'memberLimit'
   | 'monthlyBandwidthLimit'
-  | 'monthlyUploadSizeLimit'
   | 'aggRangeLimit';
 
 export type PlanPricing = {
@@ -439,7 +434,6 @@ export type PlanPricing = {
   memberLimit: number;
   monthlyAccessLimit: number;
   monthlyBandwidthLimit: number;
-  monthlyUploadSizeLimit: number;
   aggRangeLimit: number;
   canRestore: number;
   campaignId: string | null;
