@@ -12,7 +12,7 @@ import {
 } from '@edgestore/shared';
 import { type z, type ZodNever } from 'zod';
 import { type Comparison } from '..';
-import { buildPath, isDev, parsePath } from '../../adapters/shared';
+import { buildPath, parsePath } from '../../adapters/shared';
 import { initEdgeStoreSdk } from '../sdk';
 
 export type GetFileRes<TBucket extends AnyBuilder> = {
@@ -305,11 +305,8 @@ export function initEdgeStoreClient<TRouter extends AnyRouter>(config: {
   accessKey?: string;
   secretKey?: string;
   /**
-   * The base URL of your application.
-   *
-   * This is only needed for getting protected files in a development environment.
-   *
-   * @example http://localhost:3000/api/edgestore
+   * @deprecated No longer used. Protected files load directly from their file
+   * URL in every environment.
    */
   baseUrl?: string;
 }) {
@@ -434,7 +431,7 @@ export function initEdgeStoreClient<TRouter extends AnyRouter>(config: {
         async getFile(params) {
           const res = await sdk.getFile(params);
           return {
-            url: getUrl(res.url, config.baseUrl),
+            url: res.url,
             size: res.size,
             uploadedAt: new Date(res.uploadedAt),
             metadata: res.metadata,
@@ -460,7 +457,7 @@ export function initEdgeStoreClient<TRouter extends AnyRouter>(config: {
 
           const files = res.data.map((file) => {
             return {
-              url: getUrl(file.url, config.baseUrl),
+              url: file.url,
               thumbnailUrl: file.thumbnailUrl,
               size: file.size,
               uploadedAt: new Date(file.uploadedAt),
@@ -512,28 +509,6 @@ export function initEdgeStoreClient<TRouter extends AnyRouter>(config: {
       return client;
     },
   });
-}
-
-/**
- * Protected files need third-party cookies to work.
- * Since third party cookies don't work on localhost,
- * we need to proxy the file through the server.
- */
-function getUrl(url: string, baseUrl?: string) {
-  if (isDev() && !url.includes('/_public/')) {
-    if (!baseUrl) {
-      throw new Error(
-        'Missing baseUrl. You need to pass the baseUrl to `initEdgeStoreClient` to get protected files in development.',
-      );
-    }
-    const proxyUrl = new URL(baseUrl);
-    proxyUrl.pathname = `${proxyUrl.pathname}/proxy-file`;
-    proxyUrl.search = new URLSearchParams({
-      url,
-    }).toString();
-    return proxyUrl.toString();
-  }
-  return url;
 }
 
 async function getBlobFromUrl(url: string) {
