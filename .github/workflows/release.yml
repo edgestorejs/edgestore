@@ -149,11 +149,12 @@ jobs:
 
       - name: Create Version PR or Publish
         id: changesets
-        # 0.x uses Changesets CLI v2, which needs the v1 action.
+        # 0.x uses Changesets CLI v2, which needs the v1 action, and pnpm 10,
+        # which forwards a literal `--` to the script.
         uses: changesets/action@v1
         with:
           version: pnpm -s run version
-          publish: pnpm run release -- --tag ${{ inputs.npm-tag }}
+          publish: pnpm run release --tag ${{ inputs.npm-tag }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Use OIDC for npm authentication instead of NPM_TOKEN
