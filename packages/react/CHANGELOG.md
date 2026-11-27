@@ -1,5 +1,14 @@
 # @edgestore/react
 
+## 0.8.1
+
+### Patch Changes
+
+- [#319](https://github.com/edgestorejs/edgestore/pull/319) [`edc3811`](https://github.com/edgestorejs/edgestore/commit/edc3811e6d402a5fc7e06db6591db6ce9448cca1) Thanks [@raviships](https://github.com/raviships)! - Security: remove the `/proxy-file` route ([GHSA-q5q6-5j7p-935p](https://github.com/edgestorejs/edgestore/security/advisories/GHSA-q5q6-5j7p-935p)). Upgrade `@edgestore/server` and `@edgestore/react` together.
+
+- Updated dependencies []:
+  - @edgestore/shared@0.8.1
+
 ## 0.8.0
 
 ### Minor Changes
