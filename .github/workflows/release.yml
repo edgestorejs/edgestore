@@ -149,10 +149,15 @@ jobs:
 
       - name: Create Version PR or Publish
         id: changesets
-        uses: changesets/action@ae32849d5ba541f9ae29e40e22a623bc13562f51 # v2.1.2
+        # 0.x uses Changesets CLI v2, which needs the v1 action.
+        uses: changesets/action@v1
         with:
-          version-script: pnpm -s run version
-          publish-script: pnpm run release -- --tag ${{ inputs.npm-tag }}
+          version: pnpm -s run version
+          publish: pnpm run release -- --tag ${{ inputs.npm-tag }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Use OIDC for npm authentication instead of NPM_TOKEN
+          NPM_TOKEN: ''
 
       - name: Verify maintenance dist-tags
         if: steps.changesets.outputs.published == 'true'
@@ -173,7 +178,7 @@ jobs:
       - name: Report published packages
         if: steps.changesets.outputs.published == 'true'
         env:
-          PUBLISHED_PACKAGES: ${{ steps.changesets.outputs.published-packages }}
+          PUBLISHED_PACKAGES: ${{ steps.changesets.outputs.publishedPackages }}
         run: |
           {
             echo '## Published maintenance packages'
