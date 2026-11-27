@@ -14,7 +14,6 @@ import {
   completeMultipartUpload,
   confirmUpload,
   deleteFile,
-  fetchProxyFile,
   getCookieConfig,
   init,
   requestUpload,
@@ -168,25 +167,6 @@ export function createEdgeStoreAstroHandler<TCtx>(config: Config<TCtx>) {
         return new Response(JSON.stringify(result), {
           headers: { 'Content-Type': 'application/json' },
         });
-      } else if (matchPath(url.pathname, 'proxy-file')) {
-        const url = new URL(request.url).searchParams.get('url');
-
-        if (typeof url === 'string') {
-          const proxyRes = await fetchProxyFile({
-            cookieHeader: request.headers.get('cookie') ?? undefined,
-            url,
-          });
-
-          const headers = new Headers();
-          headers.set('Content-Type', proxyRes.contentType);
-
-          return new Response(proxyRes.body, {
-            headers,
-            status: proxyRes.status,
-          });
-        } else {
-          return new Response(null, { status: 400 });
-        }
       } else {
         return new Response(null, { status: 404 });
       }

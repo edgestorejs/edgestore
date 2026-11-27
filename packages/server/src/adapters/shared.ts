@@ -22,33 +22,6 @@ declare const globalThis: {
   _EDGE_STORE_LOGGER: Logger;
 };
 
-const NO_BODY_STATUSES = new Set([204, 205, 304]);
-
-export async function fetchProxyFile({
-  cookieHeader,
-  url,
-}: {
-  cookieHeader?: string;
-  url: string;
-}) {
-  const proxyRes = await fetch(url, {
-    headers: {
-      cookie: cookieHeader ?? '',
-    },
-  });
-
-  const body = NO_BODY_STATUSES.has(proxyRes.status)
-    ? null
-    : await proxyRes.arrayBuffer();
-
-  return {
-    body,
-    contentType:
-      proxyRes.headers.get('Content-Type') ?? 'application/octet-stream',
-    status: proxyRes.status,
-  };
-}
-
 export type CookieOptions = {
   /**
    * Cookie path
@@ -700,11 +673,9 @@ async function getContext(token: string) {
 }
 
 /**
- * On local development, protected files are proxied to the server,
- * which changes the original URL.
- *
- * This function is used to get the original URL,
- * so that we can delete or confirm the upload.
+ * Older clients rewrote protected file URLs to the removed `/proxy-file` route
+ * in development. This recovers the original URL from those rewritten URLs,
+ * so that we can still delete or confirm the upload.
  */
 function unproxyUrl(url: string) {
   if (isDev() && url.startsWith('http://')) {

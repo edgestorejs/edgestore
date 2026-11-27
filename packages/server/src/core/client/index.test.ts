@@ -293,7 +293,7 @@ describe('initEdgeStoreClient', () => {
     ).rejects.toThrow('Upload failed with status 403: Forbidden');
   });
 
-  it('converts uploadedAt to Date and proxies protected dev file URLs', async () => {
+  it('converts uploadedAt to Date and returns protected file URLs unchanged in development', async () => {
     vi.stubEnv('NODE_ENV', 'development');
     const client = createClient({
       baseUrl: 'http://localhost:3000/api/edgestore',
@@ -337,9 +337,7 @@ describe('initEdgeStoreClient', () => {
     const files = await client.documents.listFiles();
 
     expect(file.uploadedAt).toEqual(new Date('2024-01-02T03:04:05.000Z'));
-    expect(file.url).toBe(
-      'http://localhost:3000/api/edgestore/proxy-file?url=https%3A%2F%2Ffiles.example.com%2F_protected%2Ffile.txt',
-    );
+    expect(file.url).toBe('https://files.example.com/_protected/file.txt');
     expect(files.data[0].uploadedAt).toEqual(
       new Date('2024-02-03T04:05:06.000Z'),
     );
@@ -350,31 +348,11 @@ describe('initEdgeStoreClient', () => {
       new Date('2024-03-04T05:06:07.000Z'),
     );
     expect(files.data[1].url).toBe(
-      'http://localhost:3000/api/edgestore/proxy-file?url=https%3A%2F%2Ffiles.example.com%2F_protected%2Fprivate.txt',
+      'https://files.example.com/_protected/private.txt',
     );
     expect(sdk.listFiles).toHaveBeenCalledWith({
       bucketName: 'documents',
     });
-  });
-
-  it('throws for protected dev file URLs when baseUrl is missing', async () => {
-    vi.stubEnv('NODE_ENV', 'development');
-    const client = createClient();
-    sdk.getFile.mockResolvedValue({
-      url: 'https://files.example.com/_protected/file.txt',
-      size: 10,
-      uploadedAt: '2024-01-02T03:04:05.000Z',
-      metadata: {},
-      path: {},
-    });
-
-    await expect(
-      client.documents.getFile({
-        url: 'https://files.example.com/_protected/file.txt',
-      }),
-    ).rejects.toThrow(
-      'Missing baseUrl. You need to pass the baseUrl to `initEdgeStoreClient` to get protected files in development.',
-    );
   });
 
   it('throws for unknown buckets', () => {
